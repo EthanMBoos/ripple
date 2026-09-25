@@ -28,7 +28,7 @@ Ordinary Rust tests should consume saved fixtures without needing JSBSim.
 Curate mission coverage. XML and YAML missions are both supported
 permanently through one typed `ScenarioConfig`: XML is frozen for single runs,
 and only YAML gets templates and sweeps (both implemented); see
-`docs/TODO.md` section 2 and `book/src/guides/yaml-missions.md`. A `.yaml` beside a `.xml` mission must
+`docs/TODO.md` section 1 and `book/src/guides/yaml-missions.md`. A `.yaml` beside a `.xml` mission must
 run identically (`scrimmage compare`, `crates/core/tests/yaml_missions.rs`). Typed runtime spawning and the remaining model
 catalog still need explicit prioritization. Keep optional adapters out of
 the default runtime dependency path.

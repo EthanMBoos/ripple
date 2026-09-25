@@ -23,38 +23,7 @@ remain the normal development path.
 Additional model candidates are recorded in the [plugin audit](PLUGIN_COVERAGE_AUDIT.md).
 Select them for a research need rather than treating the C++ catalog as a checklist.
 
-## 1. Keep spawning typed and engine-owned
-
-The first connection pilot needs one creation path shared by schedules and
-external readiness requests. [generation.rs](../crates/core/src/simcontrol/generation.rs)
-currently combines scheduling, spawn randomization, and construction.
-
-- [ ] Separate request production from construction. Resolve configured template
-  and instance keys before runtime; requests carry a validated template handle,
-  stable connection identity, and typed initial state.
-- [ ] Keep templates separate from activation: a connection-bound template must
-  not also spawn through a default count. Validate models and wiring before
-  opening endpoints, even if the peer never connects.
-- [ ] Commit requests at a documented generation boundary in stable order. The
-  coordinator owns IDs, RNG draws, insertion, and events; preserve scheduled
-  spawn behavior and draw order.
-- [ ] Bind one configured ROS robot session or ArduPilot connection to one live
-  entity after successful construction. Readiness means a valid peer exchange,
-  not merely an open socket. Duplicate packets, reconnects, and packets after
-  removal must not create another entity.
-- [ ] Return explicit creation success/failure. Test missing templates,
-  conflicting bindings, invalid initial state, partial construction failure,
-  removal, and cleanup. Bound pending requests and fail on required-peer timeout
-  or disconnect; automatic reconnect/resume can wait.
-- [ ] Record accepted inputs and their application ticks. Use a typed structural
-  request path, separate from potentially lossy simulated network messages.
-- [ ] Add a regression test for Straight's existing rejection of
-  `generate_entities=true`.
-
-The adapter owns protocol details; the generation loop receives ordinary Rust
-requests. Legacy `frames.bin` protobuf output remains independent of spawning.
-
-## 2. Mission input and experiments
+## 1. Mission input and experiments
 
 The [mission guide](../book/src/guides/yaml-missions.md) covers the implemented
 XML/YAML, template, override, comparison, and sweep behavior.
@@ -75,9 +44,35 @@ XML/YAML, template, override, comparison, and sweep behavior.
 XML is frozen. Its inherited-motion replacement and entity-tag differences are
 recorded in [reference notes](REFERENCE_NOTES.md#mission-compatibility).
 
-## 3. Optional integrations
+## 2. Optional integrations
 
-Implement one end-to-end pilot at a time using section 1's creation path.
+Implement one end-to-end pilot at a time using `spawn(SpawnRequest)` in
+[generation.rs](../crates/core/src/simcontrol/generation.rs).
+
+### First pilot: creating entities from a connection
+
+Do these with the first ROS or ArduPilot pilot, when there is a real peer to
+test against:
+
+- [ ] Resolve the configured group and supply the peer's starting state through
+  `SpawnRequest`; add velocity and attitude fields as the pilot requires.
+- [ ] Bind one configured ROS robot session or ArduPilot connection to one live
+  entity after successful construction. Readiness means a valid peer exchange,
+  not merely an open socket. Duplicate packets, reconnects, and packets after
+  removal must not create another entity.
+- [ ] Let a YAML group be connection-bound (for example a `connection:` key) so
+  it spawns only through its connection, never through `count`. XML stays frozen.
+- [ ] Commit connection requests at the generation boundary in stable order,
+  after scheduled spawns; the coordinator owns IDs, insertion, and events.
+- [ ] Return explicit creation success/failure. Test missing groups, conflicting
+  bindings, invalid initial state, partial construction failure, removal, and
+  cleanup. Bound pending requests and fail on required-peer timeout or
+  disconnect; automatic reconnect/resume can wait.
+- [ ] Record accepted inputs and their application ticks. Use a typed structural
+  request path, separate from potentially lossy simulated network messages.
+
+The adapter owns protocol details; generation receives ordinary Rust
+`SpawnRequest`s. Legacy `frames.bin` protobuf output stays independent of spawning.
 Adapters keep sockets and wire types outside model equations and default-build
 dependencies. Apply typed inputs at defined phases with explicit units and
 ENU/NED/body transforms. Bound waits/queues, reject stale inputs, and define
@@ -143,7 +138,7 @@ saved reference corpus. The aircraft, envelope, and fidelity target remain open.
 Keep SimpleAircraft's existing C++ contract separate from aerodynamic model
 validation. Saved JSBSim outputs do not establish real-aircraft fidelity.
 
-## 4. Burn experiment
+## 3. Burn experiment
 
 - [ ] Pick one workload, such as batched policy inference or a tensor-friendly
   sensor; establish a CPU baseline and test an optional Burn backend on this Mac.
@@ -158,7 +153,7 @@ validation. Saved JSBSim outputs do not establish real-aircraft fidelity.
 
 Start with [Burn's backend documentation](https://burn.dev/docs/burn/).
 
-## 5. Verification gaps
+## 4. Verification gaps
 
 Existing coverage and reproduction commands are in [EVIDENCE.md](EVIDENCE.md).
 
@@ -179,7 +174,7 @@ Existing coverage and reproduction commands are in [EVIDENCE.md](EVIDENCE.md).
 Retain `straight_cpu_mul.xml` as the upstream typo fixture; genuine substep
 coverage comes from `verification/aircraft-substeps-spawning.xml`.
 
-## 6. Packaging and checks
+## 5. Packaging and checks
 
 - [ ] Let the installed shared command find missions/assets without the source
   checkout. Plugin defaults are already compiled in.
@@ -189,7 +184,7 @@ coverage comes from `verification/aircraft-substeps-spawning.xml`.
 Keep the current Rerun view and replay controls. The recorded visual limitations
 and checks still needed are in [EVIDENCE.md](EVIDENCE.md#visual-checks).
 
-## 7. Spatial queries and routing performance
+## 6. Spatial queries and routing performance
 
 - [ ] Benchmark collision checks, spatial sensors, and routing on spread-out and
   clustered populations. Keep the simple implementation as the correctness baseline.
@@ -206,7 +201,7 @@ C++ shares an R-tree for SphereNetwork/Boids, but SimpleCollision and
 ContactBlobCamera still scan entities. Its pre-motion rebuild is stale for
 post-motion consumers; do not inherit that timing accidentally.
 
-## 8. Optional terrain experiment
+## 7. Optional terrain experiment
 
 Try streamed Cesium terrain alongside Rerun debug panels in one window using
 saved recordings. This is an unprototyped visualization experiment.

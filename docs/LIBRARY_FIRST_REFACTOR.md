@@ -28,7 +28,7 @@ Rust values -- typed assembly --+
 
 Use the existing crates. YAML remains the normal configuration and sweep path;
 arbitrary Rust setup functions do not automatically fit YAML-based sweeps.
-[Connection spawning](TODO.md#1-keep-spawning-typed-and-engine-owned) should share
+[Connection spawning](TODO.md#first-pilot-creating-entities-from-a-connection) should share
 validated definitions and creation logic, but does not need this entire API first.
 
 ## Acceptance

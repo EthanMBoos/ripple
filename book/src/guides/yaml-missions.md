@@ -2,7 +2,7 @@
 
 YAML is the native mission format; XML stays supported for single runs. Both
 load into the same typed `ScenarioConfig`, so the simulation cannot tell which
-file it came from. See [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md) section 2 for the plan.
+file it came from. See [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md) section 1 for the plan.
 
 | | Status |
 | --- | --- |

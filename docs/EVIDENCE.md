@@ -4,6 +4,18 @@ Run checks from the repository root. Results below are historical observations,
 not fresh verification of the current tree. Generated reports live under ignored
 `runs/`; the commands and limits here are enough to repeat the checks.
 
+## Spawn request split (2026-09-25)
+
+`generation.rs` now separates which groups spawn (`generate_entities`), the
+legacy C++ start randomization (`sample_spawn_start`), and construction
+(`spawn(SpawnRequest)`, which takes a position and heading; other starting state
+still comes from the group definition). Starts are still drawn and built one
+entity at a time, so collision checks see entities spawned earlier in the tick.
+A readability change: all 14 curated missions, at 1
+and 8 workers, stayed byte-identical in `frames.bin`, `events.json`, and
+`summary.csv`, including the randomized spawning in
+`verification/aircraft-substeps-spawning.xml`.
+
 ## Routine checks
 
 ```sh

@@ -46,11 +46,16 @@ The port is not finished. Read `docs/TODO.md` for remaining work and scope decis
 and `docs/REFERENCE_NOTES.md` for reference details and compatibility gaps.
 Do not infer full parity from matching a few missions.
 
-The user intends a later library-first refactor:
-user application crates assemble their own models and call the core directly.
-Read `docs/LIBRARY_FIRST_REFACTOR.md` for the reasoning and proposed boundaries.
-Establish selected behavior/contracts first; do not implement that redesign
-prematurely or make copying excluded features a prerequisite.
+User research plugins live in user crates in this workspace, such as
+`crates/starter`, not among the stock plugins in `crates/core`. The one
+`scrimmage` binary depends on each user crate and calls its `register()` in
+`crates/cli/src/main.rs`, so user missions use run/sweep/compare and
+`scripts/bulk_run.py` unchanged. The CLI is a library (`scrimmage_cli::main`)
+taking that registry. See `docs/USER_PROJECTS.md`. Keep the starter building
+and its tests passing; do not add per-user copies of shared tooling.
+The broader library-first refactor (typed assembly without mission files) is
+still later: read `docs/LIBRARY_FIRST_REFACTOR.md`, establish selected
+behavior/contracts first, and do not implement that redesign prematurely.
 
 ## Read before changing code
 

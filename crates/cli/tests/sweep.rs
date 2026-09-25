@@ -94,3 +94,34 @@ fn a_misspelled_path_fails_before_creating_output() {
     assert!(String::from_utf8_lossy(&result.stderr).contains("field `sped` does not exist"));
     assert!(!temp.path().join("sweeps").exists());
 }
+
+/// User plugin crates are compiled into `scrimmage`: the starter's FollowNearest
+/// runs through the stock command's sweep like a stock plugin.
+#[test]
+fn the_command_sweeps_a_user_plugin() {
+    let temp = tempfile::tempdir().unwrap();
+    let sweep =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../starter/missions/follow-nearest.sweep.yaml");
+    let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+        .arg("sweep")
+        .arg(sweep)
+        .arg("--root")
+        .arg(temp.path())
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let rows = fs::read_to_string(
+        temp.path()
+            .join("sweeps/follow-nearest/run000/results.jsonl"),
+    )
+    .unwrap();
+    assert_eq!(rows.lines().count(), 4);
+    assert!(
+        rows.lines().all(|row| row.contains(r#""error":null"#)),
+        "{rows}"
+    );
+}

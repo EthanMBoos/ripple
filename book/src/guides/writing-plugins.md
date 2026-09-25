@@ -55,7 +55,24 @@ impl Autonomy for MyPlugin {           // or Controller, MotionModel, Sensor, ..
 
 ## Files and registration
 
-Each plugin gets its own folder:
+Write your plugins in a user crate such as `crates/starter` (see [Your first
+autonomy plugin](../tutorial/first-autonomy.md) and
+[Writing your own plugins](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/USER_PROJECTS.md)):
+one file per plugin under `src/`, a `mod` line in `src/lib.rs`, and one line
+in its `register()`:
+
+```rust,ignore
+registry.register_motion::<MyPlugin>("MyPlugin")?;
+```
+
+Use `register_autonomy`, `register_controller`, `register_motion`,
+`register_sensor`, `register_interaction`, `register_network`, or
+`register_metrics` to match the type. Missions refer to the registered name.
+
+### Adding a stock plugin to the simulator
+
+Only when a plugin should ship with scrimmage-rs itself does it go in the
+simulator's source. Each stock plugin gets its own folder:
 
 ```text
 crates/core/src/plugin/<type>/<my_plugin>/
@@ -79,11 +96,7 @@ Then make two edits:
    registry.register_motion::<motion::MyPlugin>("MyPlugin")?;
    ```
 
-   Use `register_autonomy`, `register_controller`, `register_motion`,
-   `register_sensor`, `register_interaction`, `register_network`, or
-   `register_metrics` to match the type.
-
-Missions refer to the registered name.
+   with the `register_*` call that matches the type.
 
 ## Parameters and defaults
 
@@ -210,9 +223,11 @@ Two kinds of tests work well:
   plugin file. Call `configure`, `new`, and your equations directly with
   hand-picked inputs. For example: "at zero noise, the measurement equals truth
   plus bias".
-- **Mission tests** in `crates/core/tests/`. Load a mission, run it to the end,
-  and check the events or scores. The
-  [tutorial](../tutorial/first-autonomy.md#6-test-it) shows one.
+- **Mission tests** in your crate's `tests/` folder, such as
+  `crates/starter/tests/`. Build the registry `scrimmage` uses (stock plugins
+  plus your crate's `register`), load a mission, run it to the end, and check
+  the events or scores. The [tutorial](../tutorial/first-autonomy.md#6-test-it)
+  shows one. Stock plugins keep theirs in `crates/core/tests/`.
 
 Before submitting a change, run the same checks as the project:
 

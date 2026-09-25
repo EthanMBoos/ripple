@@ -16,7 +16,9 @@
 //! runs are deterministic, so it is the same run.
 use anyhow::{Context, Result, bail, ensure};
 use clap::Args;
-use scrimmage_core::{Params, ScenarioConfig, Simulation, TerminationReason};
+use scrimmage_core::{
+    Params, ScenarioConfig, Simulation, TerminationReason, plugin::PluginRegistry,
+};
 use serde::{Deserialize, Serialize};
 use serde_yaml_ng::Value;
 use std::{
@@ -32,8 +34,9 @@ pub(crate) struct SweepOptions {
     /// Output directory; defaults to the next <root>/sweeps/<sweep name>/run000, run001, ...
     #[arg(long)]
     output: Option<PathBuf>,
-    #[arg(long, default_value_os_t = crate::run::default_root())]
-    root: PathBuf,
+    /// Project folder (missions/, runs/, sweeps/); defaults to this repository.
+    #[arg(long)]
+    root: Option<PathBuf>,
     /// Zero-based shard to run; cases index, index + count, index + 2 * count, ...
     #[arg(long, requires = "shard_count")]
     shard_index: Option<usize>,
@@ -96,7 +99,12 @@ struct CaseRow {
     metrics: BTreeMap<String, BTreeMap<i32, BTreeMap<String, f64>>>,
 }
 
-pub(crate) fn sweep(options: SweepOptions) -> Result<()> {
+pub(crate) fn sweep(
+    options: SweepOptions,
+    registry: &PluginRegistry,
+    project_root: &Path,
+) -> Result<()> {
+    let root = options.root.as_deref().unwrap_or(project_root);
     let file_name = options
         .sweep
         .file_name()
@@ -110,13 +118,19 @@ pub(crate) fn sweep(options: SweepOptions) -> Result<()> {
             options.sweep.display()
         );
     };
-    let text = fs::read_to_string(&options.sweep)
+    // Like a mission, a sweep file given by name is also looked for in the
+    // project's missions/ folder.
+    let sweep_path = if options.sweep.is_file() {
+        options.sweep.clone()
+    } else {
+        root.join("missions").join(&options.sweep)
+    };
+    let text = fs::read_to_string(&sweep_path)
         .with_context(|| format!("read {}", options.sweep.display()))?;
     let spec: SweepFile = serde_yaml_ng::from_str(&text)
-        .with_context(|| format!("invalid sweep {}", options.sweep.display()))?;
+        .with_context(|| format!("invalid sweep {}", sweep_path.display()))?;
     validate(&spec)?;
-    let base = options
-        .sweep
+    let base = sweep_path
         .parent()
         .unwrap_or_else(|| Path::new("."))
         .join(&spec.base_scenario);
@@ -141,12 +155,12 @@ pub(crate) fn sweep(options: SweepOptions) -> Result<()> {
 
     // Load case 0 before creating any output, so a misspelled path fails here
     // instead of in every row. A bad value in a later case becomes that row's error.
-    load_case(&spec, &base, &options.root, 0)
+    load_case(&spec, &base, root, registry, 0)
         .context("the first case does not load; check the sweep paths")?;
 
     let output = crate::run::output::create_directory(
         options.output.as_deref(),
-        &options.root.join("sweeps").join(sweep_name),
+        &root.join("sweeps").join(sweep_name),
     )?;
     let record = SweepRecord {
         name: &spec.name,
@@ -163,7 +177,7 @@ pub(crate) fn sweep(options: SweepOptions) -> Result<()> {
     let mut rows = fs::File::create_new(output.join("results.jsonl"))?;
     let mut errors = 0;
     for index in cases {
-        let row = run_case(&spec, &base, &options.root, index, options.max_steps);
+        let row = run_case(&spec, &base, root, registry, index, options.max_steps);
         errors += usize::from(row.error.is_some());
         serde_json::to_writer(&mut rows, &row)?;
         rows.write_all(b"\n")?;
@@ -237,7 +251,13 @@ fn case_inputs(spec: &SweepFile, index: usize) -> (Option<u32>, BTreeMap<String,
 
 /// Loads the base mission with this case's values, applied exactly like
 /// command-line overrides (after template expansion, every path must exist).
-fn load_case(spec: &SweepFile, base: &Path, root: &Path, index: usize) -> Result<ScenarioConfig> {
+fn load_case(
+    spec: &SweepFile,
+    base: &Path,
+    root: &Path,
+    registry: &PluginRegistry,
+    index: usize,
+) -> Result<ScenarioConfig> {
     let (seed, parameters) = case_inputs(spec, index);
     let mut overrides = Params::new();
     for (path, value) in parameters {
@@ -246,10 +266,17 @@ fn load_case(spec: &SweepFile, base: &Path, root: &Path, index: usize) -> Result
     if let Some(seed) = seed {
         overrides.insert("run.seed".into(), seed.to_string());
     }
-    ScenarioConfig::load(base, root, &overrides)
+    ScenarioConfig::load_with_registry(base, root, &overrides, registry)
 }
 
-fn run_case(spec: &SweepFile, base: &Path, root: &Path, index: usize, max_steps: usize) -> CaseRow {
+fn run_case(
+    spec: &SweepFile,
+    base: &Path,
+    root: &Path,
+    registry: &PluginRegistry,
+    index: usize,
+    max_steps: usize,
+) -> CaseRow {
     let (seed, parameters) = case_inputs(spec, index);
     let mut row = CaseRow {
         case_id: format!("case-{index:04}"),
@@ -261,10 +288,10 @@ fn run_case(spec: &SweepFile, base: &Path, root: &Path, index: usize, max_steps:
         metrics: BTreeMap::new(),
     };
     let result = (|| -> Result<()> {
-        let config = load_case(spec, base, root, index)?;
+        let config = load_case(spec, base, root, registry, index)?;
         row.seed = config.seed;
         // One worker per case: Slurm gives each shard one CPU.
-        let mut simulation = Simulation::new(config.resolve()?, 1)?;
+        let mut simulation = Simulation::new(config.resolve_with_registry(registry)?, 1)?;
         while simulation.step()?.is_some() {
             ensure!(
                 simulation.step_count() <= max_steps,

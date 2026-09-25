@@ -112,6 +112,15 @@ factory erasure, worker joins, locks, and scheduling rules behind the core's
 implementation boundary. Avoid replacing C++ registration boilerplate with a
 large generic builder or a new configuration language.
 
+## Done so far: the runner is a library
+
+The command line is `scrimmage_cli::main(registry, project_root)`. The
+`scrimmage` binary passes it the stock plugins plus the user crates in this
+workspace ([USER_PROJECTS.md](USER_PROJECTS.md)), so user plugins reach run,
+sweep, and compare with no privileged path for stock plugins. A separate
+application could make the same call; that and typed assembly without a
+mission file are the remaining work below.
+
 ## What still couples today's core to the application
 
 We already have `scrimmage-core`, and Rerun lives in the CLI. That is a useful

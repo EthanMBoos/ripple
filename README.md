@@ -45,6 +45,10 @@ generation, and simulation settings. Each plugin's Rust parameter struct
 supplies the defaults that a mission can override. Each run writes frames, events, team summaries, run metadata, and,
 unless disabled, a Rerun recording.
 
+Write your own plugins in `crates/starter` (or a crate like it). The `scrimmage`
+command is compiled with them, so your missions run, sweep, and shard like the
+stock ones; see [docs/USER_PROJECTS.md](docs/USER_PROJECTS.md).
+
 `scrimmage-core` owns entity state, plugin lifecycles, communication, and the
 simulation loop. Entity work runs across workers with barriers between phases;
 world-level plugins run on the coordinator. Plugins implement their category's

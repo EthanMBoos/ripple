@@ -2,22 +2,30 @@
 //! its YAML form) set up the same simulation and record the same outputs.
 use anyhow::{Result, bail, ensure};
 use clap::Args;
-use scrimmage_core::{Params, ScenarioConfig, Simulation, write_frame};
-use std::path::PathBuf;
+use scrimmage_core::{Params, ScenarioConfig, Simulation, plugin::PluginRegistry, write_frame};
+use std::path::{Path, PathBuf};
 
 #[derive(Args)]
 pub(crate) struct CompareOptions {
     first: PathBuf,
     second: PathBuf,
-    #[arg(long, default_value_os_t = crate::run::default_root())]
-    root: PathBuf,
+    /// Project folder (missions/, runs/, sweeps/); defaults to this repository.
+    #[arg(long)]
+    root: Option<PathBuf>,
     #[arg(long, default_value_t = 1_000_000)]
     max_steps: usize,
 }
 
-pub(crate) fn compare(options: CompareOptions) -> Result<()> {
-    let first = ScenarioConfig::load(&options.first, &options.root, &Params::new())?;
-    let second = ScenarioConfig::load(&options.second, &options.root, &Params::new())?;
+pub(crate) fn compare(
+    options: CompareOptions,
+    registry: &PluginRegistry,
+    project_root: &Path,
+) -> Result<()> {
+    let root = options.root.as_deref().unwrap_or(project_root);
+    let load =
+        |path: &Path| ScenarioConfig::load_with_registry(path, root, &Params::new(), registry);
+    let first = load(&options.first)?;
+    let second = load(&options.second)?;
 
     let differences = first.setup_differences(&second)?;
     if !differences.is_empty() {
@@ -28,8 +36,8 @@ pub(crate) fn compare(options: CompareOptions) -> Result<()> {
     }
 
     // Step both together so a mismatch stops at its first frame.
-    let mut first = Simulation::new(first.resolve()?, 1)?;
-    let mut second = Simulation::new(second.resolve()?, 1)?;
+    let mut first = Simulation::new(first.resolve_with_registry(registry)?, 1)?;
+    let mut second = Simulation::new(second.resolve_with_registry(registry)?, 1)?;
     loop {
         let (frame_a, frame_b) = (first.step()?, second.step()?);
         let (mut bytes_a, mut bytes_b) = (Vec::new(), Vec::new());

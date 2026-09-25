@@ -2,15 +2,18 @@
 
 In this tutorial you will write an autonomy plugin called `FollowNearest`. Each
 tick, it finds the closest vehicle on another team and steers toward it. You
-will then run it in a mission, watch it in Rerun, and write a test that checks
-the chaser actually catches its target.
+will then run it in a mission, watch it in Rerun, write a test that checks the
+chaser actually catches its target, and sweep its speed to find how fast it
+must be.
 
 Along the way you will touch every part of a plugin:
 
 - reading your own state and the other vehicles' states,
 - writing commands for the controller through *ports*,
-- reading a parameter from the mission XML,
+- reading a parameter from the mission file,
 - registering the plugin so missions can use it by name.
+
+You work in the `starter` user crate, not in the simulator's source.
 
 It takes about 30 lines of Rust.
 
@@ -35,32 +38,38 @@ The names in that chain are **ports**. An autonomy's output ports must match the
 controller's input ports. The simulator checks this before the mission starts,
 so a typo is an error, not a silently ignored command.
 
-## 1. Create the plugin folder
+## 1. Find the starter crate
 
-Every built-in plugin lives in its own folder. Create:
+User plugins live in a crate in the repository, `crates/starter`. The
+`scrimmage` command is compiled with that crate's plugins, so its missions run
+with `scrimmage run` and `scrimmage sweep` like any other (see
+[Writing your own plugins](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/USER_PROJECTS.md)).
 
 ```text
-crates/core/src/plugin/autonomy/follow_nearest/
-    follow_nearest.rs
+crates/starter/
+  src/lib.rs               register(): adds the crate's plugins
+  src/follow_nearest.rs    the plugin you are about to write
+  missions/                follow-nearest.yaml and follow-nearest.sweep.yaml
+  tests/                   follow_nearest.rs
 ```
 
-The plugin's parameters and their default values live in that Rust file, as
-you'll see next.
+The starter already contains the finished plugin, so everything builds and runs
+straight away. To write it yourself, empty `src/follow_nearest.rs` and follow
+along; the next sections explain every line.
 
 ## 2. Write the plugin
 
-Put this in `follow_nearest.rs`. We'll walk through it below.
+Put this in `crates/starter/src/follow_nearest.rs`. We'll walk through it below.
 
 ```rust,ignore
 //! Head toward the nearest active entity on another team, matching its altitude.
 //! Autonomy phase: read contacts, write desired heading, altitude, and speed.
 
 use anyhow::{Result, ensure};
-use serde::Deserialize;
-
-use crate::plugin::{
+use scrimmage_core::plugin::{
     AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
+use serde::Deserialize;
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -170,9 +179,9 @@ impl Autonomy for FollowNearest {
 | `new` | Once per vehicle | Copies the configuration into the vehicle's state. |
 | `ports` | While the mission loads | Declares the three outputs, with units and frames. The simulator checks them against the controller's inputs. |
 
-Because `configure` runs before anything moves, a mistake like `speed="-5"`
+Because `configure` runs before anything moves, a mistake like `speed: -5`
 stops the mission immediately with a clear error. You won't discover it halfway
-through a run. So does a typo: `sped="30"` is rejected as an unknown field
+through a run. So does a typo: `sped: 30` is rejected as an unknown field
 instead of silently leaving the speed at 25.
 
 ### `impl Autonomy`: the decision
@@ -199,88 +208,108 @@ for "no target found".
 
 ## 3. Register the plugin
 
-Two small edits make the plugin available to missions.
-
-In `crates/core/src/plugin/autonomy.rs`, load the module. Entries are in
-alphabetical order, so this one goes first:
+`crates/starter/src/lib.rs` lists the crate's plugins. It loads the module and
+registers the type under the name missions will use:
 
 ```rust,ignore
-#[path = "autonomy/follow_nearest/follow_nearest.rs"]
 mod follow_nearest;
 pub use follow_nearest::FollowNearest;
+
+/// Adds this crate's plugins to `registry`.
+pub fn register(registry: &mut PluginRegistry) -> Result<()> {
+    registry.register_autonomy::<FollowNearest>("FollowNearest")?;
+    Ok(())
+}
 ```
 
-In `crates/core/src/plugin_manager/builtins.rs`, give it the name that missions
-will use:
-
-```rust,ignore
-registry.register_autonomy::<autonomy::FollowNearest>("FollowNearest")?;
-```
-
-Missions refer to the plugin by this name.
+Missions refer to the plugin by this name. The `scrimmage` command calls
+`starter::register` when it starts, next to the stock plugins, so you don't
+touch the command itself.
 
 ## 4. Write a mission
 
-Create `missions/follow-nearest.xml`. Team 1 flies east in a straight line.
-Team 2 starts behind it, to the side and higher, and chases it with your plugin:
+`crates/starter/missions/follow-nearest.yaml` pits the plugin against a target. Team 1 flies
+east in a straight line. Team 2 starts behind it, to the side and higher, and
+chases it with your plugin:
 
-```xml
-<?xml version="1.0"?>
-<runscript name="Follow the nearest opponent">
-  <run start="0" end="60" dt="0.1" enable_gui="false" />
-  <seed>1</seed>
-  <end_condition>time, one_team</end_condition>
+```yaml
+format_version: 1
+name: Follow the nearest opponent
 
-  <network>LocalNetwork</network>
-  <network>GlobalNetwork</network>
-  <entity_interaction>SimpleCollision</entity_interaction>
-  <metrics>SimpleCollisionMetrics</metrics>
+run:
+  end_s: 60
+  dt_s: 0.1
+  seed: 1
+end_conditions: [time, one_team]
 
-  <!-- Team 1: a target flying east in a straight line. -->
-  <entity>
-    <team_id>1</team_id><color>77 77 255</color>
-    <x>0</x><y>0</y><z>200</z><heading>0</heading>
-    <autonomy speed="18">Straight</autonomy>
-    <controller>SimpleAircraftControllerPID</controller>
-    <motion_model>SimpleAircraft</motion_model>
-    <visual_model>aircraft</visual_model>
-  </entity>
+interactions:
+  SimpleCollision:
+networks:
+  LocalNetwork:           # Straight listens on it for sensor updates
+  GlobalNetwork:
+metrics:
+  SimpleCollisionMetrics:
 
-  <!-- Team 2: the chaser, starting behind, to the side, and higher. -->
-  <entity>
-    <team_id>2</team_id><color>255 0 0</color>
-    <x>-300</x><y>150</y><z>220</z><heading>0</heading>
-    <autonomy speed="30">FollowNearest</autonomy>
-    <controller>SimpleAircraftControllerPID</controller>
-    <motion_model>SimpleAircraft</motion_model>
-    <visual_model>aircraft</visual_model>
-  </entity>
-</runscript>
+templates:
+  aircraft:
+    visual_model: aircraft
+    controller:
+      SimpleAircraftControllerPID:
+    motion_model:
+      SimpleAircraft:
+
+entities:
+  target:
+    template: aircraft
+    team: 1
+    color: [77, 77, 255]
+    position_m: [0, 0, 200]
+    heading_deg: 0
+    autonomy:
+      Straight:
+        speed: 18
+
+  chaser:
+    template: aircraft
+    team: 2
+    color: [255, 0, 0]
+    position_m: [-300, 150, 220]
+    heading_deg: 0
+    autonomy:
+      FollowNearest:
+        speed: 30
 ```
 
 A few things to notice:
 
-- `speed="30"` on the `<autonomy>` tag overrides the default of 25.
-  Mission attributes always win over plugin defaults.
-- `heading` is in degrees in mission files, with 0 meaning east.
+- `speed: 30` under `FollowNearest` overrides the default of 25.
+  Values in the mission always win over plugin defaults.
+- The `aircraft` template holds what both vehicles share; each group adds its
+  own team, position, and autonomy.
+- `heading_deg` is in degrees, with 0 meaning east.
 - `SimpleCollision` removes two vehicles that come within 2 m of each other, and
   `SimpleCollisionMetrics` scores it.
 - `LocalNetwork` is listed because `Straight` listens on it for sensor updates.
   Leaving it out is an error.
 
+The full mission format is in
+[YAML missions](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/MISSION_YAML.md).
+
 ## 5. Run it and watch
 
+From the repository root:
+
 ```sh
-cargo run -p scrimmage-rs --bin scrimmage -- run missions/follow-nearest.xml --headless
-cargo run -p scrimmage-rs --bin scrimmage -- replay runs/follow-nearest/run000
+cargo run -- run crates/starter/missions/follow-nearest.yaml --headless
+cargo run -- replay runs/follow-nearest/run000
 ```
 
 Use the run folder that the first command prints.
 
 > [!IMPORTANT]
-> Plugins are compiled into the `scrimmage` program. A `scrimmage` you installed
-> earlier with `cargo install` does not know about `FollowNearest` until you
-> reinstall it, so use `cargo run` while developing.
+> Plugins are compiled into `scrimmage`. A `scrimmage` you installed earlier
+> with `cargo install` does not know about `FollowNearest` until you reinstall
+> it, so use `cargo run` while developing.
 
 The red chaser turns toward the blue target, descends to its altitude, and
 closes in. At about 32 s they
@@ -295,23 +324,25 @@ EntityRemoved     at 32.0 s  entity 2
 ## 6. Test it
 
 Watching a run is useful, but a test keeps the behavior from breaking silently
-later. Create `crates/core/tests/follow_nearest.rs`:
+later. `crates/starter/tests/follow_nearest.rs` contains this one:
 
 ```rust,ignore
-use std::path::PathBuf;
-
 use anyhow::Result;
-use scrimmage_core::{EventKind, Params, ScenarioConfig, Simulation};
+use scrimmage_core::{EventKind, Params, ScenarioConfig, Simulation, plugin::PluginRegistry};
+use std::path::Path;
 
 #[test]
 fn chaser_catches_the_target() -> Result<()> {
-    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let mission = ScenarioConfig::load(
-        &root.join("missions/follow-nearest.xml"),
-        &root,
+    let crate_folder = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut registry = PluginRegistry::with_builtins();
+    starter::register(&mut registry)?;
+    let mission = ScenarioConfig::load_with_registry(
+        &crate_folder.join("missions/follow-nearest.yaml"),
+        crate_folder,
         &Params::new(),
+        &registry,
     )?;
-    let mut simulation = Simulation::new(mission.resolve()?, 1)?;
+    let mut simulation = Simulation::new(mission.resolve_with_registry(&registry)?, 1)?;
     while simulation.step()?.is_some() {}
 
     let caught = simulation
@@ -326,40 +357,68 @@ fn chaser_catches_the_target() -> Result<()> {
 Run it:
 
 ```sh
-cargo test -p scrimmage-core --test follow_nearest
+cargo test -p starter
 ```
 
 This is a *mission-level* test. Instead of checking one function, it runs the
 whole simulation and checks the outcome. It catches problems that only show up
 when plugins work together, such as a wrong sign in a heading.
+The test builds the same registry as `scrimmage` (stock plugins plus
+`starter::register`), and `load_with_registry` loads the mission with it.
 
 > [!NOTE]
 > The `1` in `Simulation::new(..., 1)` is the worker count. Results are identical
 > for any worker count, so tests can use 1.
 
+## 7. Sweep the speed
+
+How fast must the chaser be? `crates/starter/missions/follow-nearest.sweep.yaml`
+runs the mission once for each chaser speed:
+
+```yaml
+name: follow-nearest
+base_scenario: follow-nearest.yaml
+seeds: [1]
+parameter_combinations: cartesian
+parameters:
+  entities.chaser.autonomy.FollowNearest.speed: [17, 20, 25, 30]
+```
+
+```sh
+cargo run --release -- sweep crates/starter/missions/follow-nearest.sweep.yaml
+```
+
+Each case is one line of `sweeps/follow-nearest/run000/results.jsonl`, with the
+speed and the final metrics. `non_team_coll` shows whether the chaser caught
+the target: at 25 and 30 m/s it does, at 17 and 20 m/s it does not within 60 s.
+To watch one case, run it with that speed and open Rerun:
+`cargo run -- run crates/starter/missions/follow-nearest.yaml entities.chaser.autonomy.FollowNearest.speed:=20 --viewer`.
+
 ## Exercises
 
-1. **Slow chaser.** Set the chaser's `speed` to 17, below the target's 18. Does
-   it still catch up? Why, or why not? (SimpleAircraft clamps speed to at least
-   15 m/s.)
+1. **Slow chaser.** The sweep shows that at 20 m/s, faster than the target's
+   18, the chaser still does not catch up within 60 s. Watch that case in Rerun.
+   Why not?
 2. **Lead the target.** Pure pursuit aims at where the target *is*. Aim at where
    it *will be* instead: add `target.truth.velocity_world_mps * t_go`, where
-   `t_go` is distance divided by closing speed. Does the catch happen sooner?
-   Update the test to check the time.
+   `t_go` is distance divided by closing speed. Rerun the sweep: which speeds
+   catch the target now? Update the test to check the time.
 3. **Keep your distance.** Add a `standoff_m` parameter. Fly toward the target
    while farther than `standoff_m`, and away from it when closer.
-4. **Many chasers.** Change the chaser entity to `<count>3</count>` and use
-   `<variance_x>` / `<variance_y>` to spread them out. Do they all pick the same
-   target?
+4. **Many chasers.** Give the chaser group `count: 3`, and add a second target
+   group at another position. Do the chasers all pick the same target?
 
 ## What you learned
 
 - A plugin is a configuration struct, a state struct, `impl Plugin` for
   lifecycle, and one category trait (here `impl Autonomy`) for the per-tick work.
 - Ports connect the plugin stack and are checked before the mission runs.
-- Parameters are a serde struct with a `Default`. Mission attributes override
-  the defaults, and unknown keys are errors.
-- Mission-level tests run the full simulation and check events or scores.
+- Parameters are a serde struct with a `Default`. Mission values override the
+  defaults, and unknown keys are errors.
+- A user crate registers its plugins in one `register()`, which the `scrimmage`
+  command and the crate's tests both call.
+- Mission-level tests run the full simulation and check events or scores, and
+  sweeps run it across parameter values.
 
 Next, read [Coordinate frames](../concepts/coordinate-frames.md) before
 writing anything that uses angles.

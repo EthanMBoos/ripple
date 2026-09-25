@@ -8,6 +8,15 @@ supporting files stay in its matching directory; there are no `mod.rs` files.
 This is a structural reorganization, not a change to physics, scheduling,
 mission syntax, or the public plugin API. The copied C++ guides remain unchanged.
 
+## Crates
+
+```text
+crates/core      scrimmage-core: the simulator and its stock plugins
+crates/cli       scrimmage-rs: the command line as a library (scrimmage_cli),
+                 plus the stock `scrimmage` binary (src/main.rs)
+crates/starter   user plugins, missions, and tests; compiled into `scrimmage`
+```
+
 ## File layout
 
 ```text
@@ -28,7 +37,6 @@ crates/core/src/
     motion/
       simple_aircraft/
         simple_aircraft.rs
-        SimpleAircraft.xml
 ```
 
 Core files use ordinary Rust module discovery. For example, `mod generation;`
@@ -36,9 +44,9 @@ in `simcontrol.rs` loads `simcontrol/generation.rs`. The file and directory
 serve one subsystem, not duplicate implementations. A one-file interface such
 as `autonomy.rs` does not need an empty `autonomy/` directory.
 
-Plugins keep implementation and XML together. Each named category file uses a
-small `#[path]` declaration to load its plugins; see
-[plugin authoring](RUST_PLUGINS.md#plugin-files-and-defaults). The category files
+Each plugin folder holds its implementation, including its parameter struct
+and defaults. Each named category file uses a small `#[path]` declaration to
+load its plugins; see [plugin authoring](RUST_PLUGINS.md#add-a-plugin). The category files
 contain module wiring and re-exports, while model code lives in named files.
 Test models use `tests/support/plugin_fixtures.rs` and adjacent category files,
 loaded by `tests/plugin_contracts.rs`; they are not extra Cargo test targets.

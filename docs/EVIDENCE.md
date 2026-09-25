@@ -7,6 +7,22 @@ tools live in the repository; generated recordings and reports belong under igno
 Run commands from the `scrimmage-rs` repository root. Recorded results below describe
 the named batch, not a claim that every later change or the whole port is verified.
 
+## User plugin crates (2026-09-25)
+
+```sh
+cargo test --locked -p starter
+cargo test --locked -p scrimmage-rs --test sweep the_command_sweeps_a_user_plugin
+cargo run -- run crates/starter/missions/follow-nearest.yaml --no-rerun
+```
+
+- The CLI became a library, and `scrimmage` registers the starter crate's
+  plugins next to the stock ones; all 14 curated XML missions stayed
+  byte-identical at 1 and 8 workers.
+- The starter's test runs its FollowNearest mission with the same registry as
+  `scrimmage`. The stock `scrimmage sweep` and an unchanged `bulk_run.py local
+  --jobs 2` both ran the starter's 4-case sweep; speeds 25 and 30 catch the
+  18 m/s target, 17 and 20 do not within 60 s.
+
 ## Sweeps and shards (2026-09-25)
 
 ```sh

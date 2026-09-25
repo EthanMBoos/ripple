@@ -1,0 +1,9 @@
+# How fast must the chaser be to catch the target (which flies at 18 m/s)?
+# 4 speeds x 1 seed = 4 cases. Each results.jsonl row's non_team_coll shows
+# whether that case ended in a catch.
+name: follow-nearest
+base_scenario: follow-nearest.yaml
+seeds: [1]
+parameter_combinations: cartesian
+parameters:
+  entities.chaser.autonomy.FollowNearest.speed: [17, 20, 25, 30]

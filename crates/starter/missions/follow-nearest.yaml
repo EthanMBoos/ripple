@@ -1,0 +1,47 @@
+# Team 1 flies east in a straight line. Team 2 starts behind it, to the side
+# and higher, and chases it with this project's FollowNearest plugin.
+format_version: 1
+name: Follow the nearest opponent
+
+run:
+  end_s: 60
+  dt_s: 0.1
+  seed: 1
+end_conditions: [time, one_team]
+
+interactions:
+  SimpleCollision:
+networks:
+  LocalNetwork:           # Straight listens on it for sensor updates
+  GlobalNetwork:
+metrics:
+  SimpleCollisionMetrics:
+
+templates:
+  aircraft:
+    visual_model: aircraft
+    controller:
+      SimpleAircraftControllerPID:
+    motion_model:
+      SimpleAircraft:
+
+entities:
+  target:
+    template: aircraft
+    team: 1
+    color: [77, 77, 255]
+    position_m: [0, 0, 200]
+    heading_deg: 0
+    autonomy:
+      Straight:
+        speed: 18
+
+  chaser:
+    template: aircraft
+    team: 2
+    color: [255, 0, 0]
+    position_m: [-300, 150, 220]
+    heading_deg: 0
+    autonomy:
+      FollowNearest:
+        speed: 30

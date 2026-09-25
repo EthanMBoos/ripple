@@ -79,6 +79,11 @@ for attitude construction and `rotate_body_to_world` to rotate vectors.
 
 ## Add a plugin
 
+A research plugin belongs in a user crate such as `crates/starter`, not among
+the stock plugins: see [USER_PROJECTS.md](USER_PROJECTS.md). It implements the
+same traits below and registers itself in the crate's `register()`, which the
+`scrimmage` command calls. The steps here are for adding a stock plugin.
+
 1. Use the built-in for your category as a reference. Add the plugin's named
    `<plugin>.rs` implementation under `plugin/<category>/<plugin>/`. Declare and
    re-export it in the named category module, following the example below.

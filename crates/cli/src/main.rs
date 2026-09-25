@@ -1,42 +1,15 @@
-use anyhow::Result;
-use clap::{Parser, Subcommand};
-use std::path::PathBuf;
-mod compare;
-mod replay;
-mod run;
-mod sweep;
-mod viewer;
+//! The `scrimmage` command: the stock plugins plus the user plugin crates in
+//! this workspace, with this repository as the project folder.
+//!
+//! This project deliberately does not load plugins at runtime, so user plugins
+//! are compiled in: each user crate is a dependency of this package and adds
+//! its plugins here.
+//! To add another user crate, add it to crates/cli/Cargo.toml and call its
+//! `register` below (see docs/USER_PROJECTS.md).
+use scrimmage_core::plugin::PluginRegistry;
 
-#[derive(Parser)]
-#[command(
-    name = "scrimmage",
-    version,
-    about = "SCRIMMAGE Rust port with Rerun visualization"
-)]
-struct Cli {
-    #[command(subcommand)]
-    command: Command,
-}
-#[derive(Subcommand)]
-enum Command {
-    /// Run a mission, recording frames, metrics, and Rerun data.
-    Run(run::RunOptions),
-    /// Check that two missions (such as an XML file and its YAML form) run identically.
-    Compare(compare::CompareOptions),
-    /// Run a YAML mission across seeds and parameter values (a `*.sweep.yaml`), whole or one shard.
-    Sweep(sweep::SweepOptions),
-    /// Open a saved Rerun recording without rerunning the mission.
-    Replay {
-        /// Run directory containing recording.rrd, or the recording file itself.
-        path: PathBuf,
-    },
-}
-fn main() -> Result<()> {
-    match Cli::parse().command {
-        Command::Run(options) => run::run(options)?,
-        Command::Compare(options) => compare::compare(options)?,
-        Command::Sweep(options) => sweep::sweep(options)?,
-        Command::Replay { path } => replay::replay(&path)?,
-    }
-    Ok(())
+fn main() -> anyhow::Result<()> {
+    let mut registry = PluginRegistry::with_builtins();
+    starter::register(&mut registry)?;
+    scrimmage_cli::main(registry, concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))
 }

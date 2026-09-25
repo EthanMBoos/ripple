@@ -4,12 +4,20 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+# The library is the command-line interface; src/main.rs builds the plugin
+# registry (stock plugins plus the user crates below) and calls it.
+[lib]
+name = "scrimmage_cli"
+path = "src/lib.rs"
+
 [[bin]]
 name = "scrimmage"
 path = "src/main.rs"
 
 [dependencies]
 scrimmage-core = { path = "../core" }
+# User plugin crates compiled into `scrimmage`; each is registered in src/main.rs.
+starter = { path = "../starter" }
 anyhow.workspace = true
 clap.workspace = true
 serde_json.workspace = true

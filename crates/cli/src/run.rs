@@ -1,11 +1,11 @@
 use crate::viewer::Viewer;
 use anyhow::{Context, Result, ensure};
 use clap::Args;
-use scrimmage_core::{Params, ScenarioConfig, Simulation, write_frame};
+use scrimmage_core::{Params, ScenarioConfig, Simulation, plugin::PluginRegistry, write_frame};
 use std::{
     fs,
     io::{BufWriter, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 pub(crate) mod output;
@@ -18,8 +18,9 @@ pub(crate) struct RunOptions {
     output: Option<PathBuf>,
     #[arg(long)]
     workers: Option<usize>,
-    #[arg(long, default_value_os_t = default_root())]
-    root: PathBuf,
+    /// Project folder (missions/, runs/, sweeps/); defaults to this repository.
+    #[arg(long)]
+    root: Option<PathBuf>,
     /// Open Rerun and stream live, also keeping recording.rrd.
     #[arg(long, conflicts_with_all = ["headless", "no_rerun"])]
     viewer: bool,
@@ -35,10 +36,12 @@ pub(crate) struct RunOptions {
     /// (`entities.red.count:=20`).
     overrides: Vec<String>,
 }
-pub(crate) fn default_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
-}
-pub(crate) fn run(options: RunOptions) -> Result<()> {
+pub(crate) fn run(
+    options: RunOptions,
+    registry: &PluginRegistry,
+    project_root: &Path,
+) -> Result<()> {
+    let root = options.root.as_deref().unwrap_or(project_root);
     ensure!(options.max_steps > 0, "max_steps must be positive");
     let mut overrides = Params::new();
     for argument in &options.overrides {
@@ -48,7 +51,8 @@ pub(crate) fn run(options: RunOptions) -> Result<()> {
         ensure!(!name.is_empty(), "override name must not be empty");
         overrides.insert(name.to_owned(), value.to_owned());
     }
-    let mut config = ScenarioConfig::load(&options.mission, &options.root, &overrides)?;
+    let mut config =
+        ScenarioConfig::load_with_registry(&options.mission, root, &overrides, registry)?;
     let launch_viewer =
         !options.headless && !options.no_rerun && (options.viewer || config.enable_gui);
     let worker_count = options.workers.unwrap_or(config.worker_count);
@@ -58,7 +62,7 @@ pub(crate) fn run(options: RunOptions) -> Result<()> {
     config.time_warp = 0.0;
     config.worker_count = worker_count;
     let resolved_config = serde_json::to_value(&config)?;
-    let mut simulation = Simulation::new(config.resolve()?, worker_count)?;
+    let mut simulation = Simulation::new(config.resolve_with_registry(registry)?, worker_count)?;
 
     // Runs always go under the repository root, grouped by mission file name, so
     // `straight-no-gui.xml` and `straight-no-gui.yaml` share runs/straight-no-gui/.
@@ -67,7 +71,7 @@ pub(crate) fn run(options: RunOptions) -> Result<()> {
         .mission
         .file_stem()
         .context("mission path must name a file")?;
-    let runs = options.root.join("runs").join(mission_name);
+    let runs = root.join("runs").join(mission_name);
     let output = output::create_directory(options.output.as_deref(), &runs)?;
     let mut viewer = if options.no_rerun {
         None

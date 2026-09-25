@@ -199,10 +199,15 @@ keeps `"1, 2"` lists and `1`/`0` booleans) or from YAML values natively.
   summaries, `status`, and Slurm job watching.
   Rows keep only post-run metric reports (what `summary.csv` holds); for in-run
   detail, rerun one case with `scrimmage run` and open it in Rerun.
-- [ ] `scrimmage sweep` uses the built-in registry, like `scrimmage run`: plugins
-  added under `crates/core/src/plugin/` work, but a separate application crate
-  with its own plugins would need its own sweep entry point. Revisit with the
-  library-first work ([LIBRARY_FIRST_REFACTOR.md](LIBRARY_FIRST_REFACTOR.md)).
+- [x] User plugins: user crates in this workspace (`crates/starter` first) are
+  dependencies of the `scrimmage` binary, which calls each crate's `register()`
+  (`crates/cli/src/main.rs`). User missions then use run/sweep/compare and
+  `bulk_run.py` unchanged, and `git pull` updates everyone; nothing is copied.
+  The CLI is a library (`scrimmage_cli::main(registry, root)`). See
+  [USER_PROJECTS.md](USER_PROJECTS.md).
+- [ ] Plugins in a separate repository cannot use the stock `scrimmage` without
+  editing this one. A separate application calling `scrimmage_cli::main` would
+  work; revisit with the library-first work.
 - [x] Add YAML templates, before sweeps: one template per entity group; the
   group's own keys replace the template's wholesale (a plugin slot or `spawn`
   is replaced, not merged); no template inherits another. Loading order is

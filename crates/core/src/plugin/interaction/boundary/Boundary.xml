@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<params>
-  <library>Boundary_plugin</library>
-  <network_name>GlobalNetwork</network_name>
-  <type>cuboid</type><center>0 0 0</center><lengths>10 10 10</lengths><rpy>0 0 0</rpy>
-  <!-- Intentional v1 limit: geometry is delivered, but no boundary overlay is drawn. -->
-  <show_boundary>false</show_boundary>
-</params>

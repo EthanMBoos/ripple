@@ -1,20 +1,28 @@
 //! Measure east position. A bias lets the mission distinguish belief from truth.
 use anyhow::Result;
 use scrimmage_core::plugin::*;
+use serde::{Deserialize, Serialize};
 
 pub struct PositionReading {
     pub x_world_m: f64,
+}
+#[derive(Default, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct PositionSensorConfig {
+    bias_m: f64,
 }
 pub struct PositionSensor {
     bias_m: f64,
 }
 impl Plugin for PositionSensor {
-    type Config = f64;
-    fn configure(params: &PluginParams<'_>) -> Result<f64> {
-        params.number("bias_m", 0.0)
+    type Config = PositionSensorConfig;
+    fn configure(params: &PluginParams<'_>) -> Result<PositionSensorConfig> {
+        params.parse()
     }
-    fn new(bias_m: &f64) -> Self {
-        Self { bias_m: *bias_m }
+    fn new(config: &PositionSensorConfig) -> Self {
+        Self {
+            bias_m: config.bias_m,
+        }
     }
 }
 impl Sensor for PositionSensor {

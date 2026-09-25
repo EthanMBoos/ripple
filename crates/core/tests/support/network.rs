@@ -1,8 +1,10 @@
 //! A communication model: configurable fixed delay or complete packet loss.
 use anyhow::{Result, ensure};
 use scrimmage_core::plugin::{Delivery, Network, NetworkContext, Plugin, PluginParams, Update};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct RadioConfig {
     delay_s: f64,
     drop_messages: bool,
@@ -13,12 +15,9 @@ pub struct ExampleNetwork {
 impl Plugin for ExampleNetwork {
     type Config = RadioConfig;
     fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
-        let delay_s = params.number("delay_s", 0.0)?;
-        ensure!(delay_s >= 0.0, "delay_s must be nonnegative");
-        Ok(RadioConfig {
-            delay_s,
-            drop_messages: params.boolean("drop_messages", false)?,
-        })
+        let config: RadioConfig = params.parse()?;
+        ensure!(config.delay_s >= 0.0, "delay_s must be nonnegative");
+        Ok(config)
     }
     fn new(config: &Self::Config) -> Self {
         Self { config: *config }

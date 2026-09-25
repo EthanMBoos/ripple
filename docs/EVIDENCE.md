@@ -7,6 +7,28 @@ tools live in the repository; generated recordings and reports belong under igno
 Run commands from the `scrimmage-rs` repository root. Recorded results below describe
 the named batch, not a claim that every later change or the whole port is verified.
 
+## Typed plugin parameters (2026-09-24)
+
+Every plugin's parameters became a serde struct whose `Default` replaced the
+bundled `PluginName.xml` defaults, and unknown keys became errors. This is a
+readability change: simulation behavior must not move.
+
+- All 14 curated missions, at 1 and 8 workers, produced byte-identical
+  `frames.bin`, `events.json`, and `summary.csv` before and after.
+- Each old manifest recorded the XML-derived parameters. For every plugin in
+  every mission, all 716 of those values equal the new manifest's
+  `effective_plugin_params`, which confirms the hand-written `Default` impls.
+  NoisyPosition, used by no mission, was checked against its deleted XML.
+- [params.rs](../crates/core/src/parse/params.rs) tests typed parsing, error
+  messages that name the key, and unknown-key rejection;
+  [mission.rs](../crates/core/src/parse/mission.rs) tests that a misspelled
+  mission key fails to resolve.
+- Review fixes, rechecked against the same byte-identical outputs: `u8`/`u16`/
+  `i8`/`i16` fields parse; `f32` fields reject values that overflow to infinity;
+  and FixedWing6DOF takes either `inertia_matrix_slug_ft_sq` or SI
+  `inertia_matrix` (not both), falling back to the C++ slug default. Before this
+  fix, the compiled slug default silently overrode an SI matrix.
+
 ## NoisyContacts and SphereNetwork + AuctionAssign (2026-09-24)
 
 These are the only accepted additions from the plugin audit. Repeat the focused

@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<params>
-  <library>GroundCollision_plugin</library>
-  <ground_collision_z>0</ground_collision_z>
-  <enable_startup_collisions>true</enable_startup_collisions>
-  <remove_on_collision>true</remove_on_collision>
-  <team>all</team>
-</params>

@@ -37,24 +37,15 @@ so a typo is an error, not a silently ignored command.
 
 ## 1. Create the plugin folder
 
-Every built-in plugin lives in its own folder containing its Rust code and
-its default parameters. Create:
+Every built-in plugin lives in its own folder. Create:
 
 ```text
 crates/core/src/plugin/autonomy/follow_nearest/
     follow_nearest.rs
-    FollowNearest.xml
 ```
 
-`FollowNearest.xml` holds the default parameter values. Missions can override them:
-
-```xml
-<?xml version="1.0"?>
-<!-- Tutorial autonomy: chase the nearest opponent. -->
-<params>
-  <speed>25</speed> <!-- m/s -->
-</params>
-```
+The plugin's parameters and their default values live in that Rust file, as
+you'll see next.
 
 ## 2. Write the plugin
 
@@ -65,13 +56,24 @@ Put this in `follow_nearest.rs`. We'll walk through it below.
 //! Autonomy phase: read contacts, write desired heading, altitude, and speed.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::plugin::{
     AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
 
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct FollowNearestConfig {
+    #[serde(rename = "speed")]
     speed_mps: f64,
+}
+
+impl Default for FollowNearestConfig {
+    fn default() -> Self {
+        Self { speed_mps: 25.0 }
+    }
 }
 
 pub struct FollowNearest {
@@ -82,9 +84,9 @@ impl Plugin for FollowNearest {
     type Config = FollowNearestConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<FollowNearestConfig> {
-        let speed_mps = params.number("speed", 25.0)?;
-        ensure!(speed_mps > 0.0, "FollowNearest speed must be positive");
-        Ok(FollowNearestConfig { speed_mps })
+        let config: FollowNearestConfig = params.parse()?;
+        ensure!(config.speed_mps > 0.0, "FollowNearest speed must be positive");
+        Ok(config)
     }
 
     fn new(config: &FollowNearestConfig) -> Self {
@@ -152,7 +154,10 @@ impl Autonomy for FollowNearest {
 ### The two structs
 
 - `FollowNearestConfig` is the **validated configuration**. It is built once
-  from the XML, before the simulation starts.
+  from the mission, before the simulation starts. Its fields are the mission
+  parameters: `#[serde(rename = "speed")]` says the mission calls it `speed`,
+  while the Rust name `speed_mps` carries the unit. `Default` gives the value
+  used when the mission doesn't set one.
 - `FollowNearest` is the **per-vehicle state**. Each vehicle using this plugin
   gets its own copy. This plugin only needs the speed. A plugin that remembers
   things between ticks, such as a PID controller's integral, keeps them here.
@@ -161,13 +166,14 @@ impl Autonomy for FollowNearest {
 
 | Method | When it runs | What it does here |
 | --- | --- | --- |
-| `configure` | Once, while the mission loads | Reads `speed` and rejects bad values. `params.number("speed", 25.0)` uses 25 when the XML has no `speed`. |
+| `configure` | Once, while the mission loads | `params.parse()` fills the config from the mission, using 25 when it has no `speed`. Then it rejects bad values. |
 | `new` | Once per vehicle | Copies the configuration into the vehicle's state. |
 | `ports` | While the mission loads | Declares the three outputs, with units and frames. The simulator checks them against the controller's inputs. |
 
 Because `configure` runs before anything moves, a mistake like `speed="-5"`
 stops the mission immediately with a clear error. You won't discover it halfway
-through a run.
+through a run. So does a typo: `sped="30"` is rejected as an unknown field
+instead of silently leaving the speed at 25.
 
 ### `impl Autonomy`: the decision
 
@@ -211,8 +217,7 @@ will use:
 registry.register_autonomy::<autonomy::FollowNearest>("FollowNearest")?;
 ```
 
-The mission name and the XML file name must match (`FollowNearest` and
-`FollowNearest.xml`). That's how the simulator finds the defaults.
+Missions refer to the plugin by this name.
 
 ## 4. Write a mission
 
@@ -255,7 +260,7 @@ Team 2 starts behind it, to the side and higher, and chases it with your plugin:
 
 A few things to notice:
 
-- `speed="30"` on the `<autonomy>` tag overrides the 25 in `FollowNearest.xml`.
+- `speed="30"` on the `<autonomy>` tag overrides the default of 25.
   Mission attributes always win over plugin defaults.
 - `heading` is in degrees in mission files, with 0 meaning east.
 - `SimpleCollision` removes two vehicles that come within 2 m of each other, and
@@ -352,8 +357,8 @@ when plugins work together, such as a wrong sign in a heading.
 - A plugin is a configuration struct, a state struct, `impl Plugin` for
   lifecycle, and one category trait (here `impl Autonomy`) for the per-tick work.
 - Ports connect the plugin stack and are checked before the mission runs.
-- Mission XML attributes override plugin XML defaults, which override the
-  fallback in `configure`.
+- Parameters are a serde struct with a `Default`. Mission attributes override
+  the defaults, and unknown keys are errors.
 - Mission-level tests run the full simulation and check events or scores.
 
 Next, read [Coordinate frames](../concepts/coordinate-frames.md) before

@@ -161,6 +161,8 @@ are the substantive work.
   custom tags, or interpolation must not become an undocumented template DSL.
 - [ ] Save effective configuration/provenance: defaults/overrides, assets,
   selected registrations, seeds, and applicable adapter/backend versions.
+  Plugin parameters with their defaults are recorded as `effective_plugin_params`
+  in `manifest.json`; the rest remains.
   Parse-time strings must not become runtime world-mutation commands.
 - [ ] Revisit environment-based defaults separately. `SCRIMMAGE_PLUGIN_PATH`
   currently searches XML, not code. Do not remove working overlays just because
@@ -459,8 +461,8 @@ controls; do not add coordinated simulation/peer pausing.
 
 ### Packaging work
 
-- [ ] Make installed runs find their bundled defaults/assets without requiring
-  the source checkout. Do this with the later application/core boundary work.
+- [ ] Make installed runs find missions and assets without requiring the source
+  checkout; plugin defaults are already compiled in. Do this with the later application/core boundary work.
 - [ ] Put the verified test/comparison subset in CI and clearly list known gaps.
   Incomplete coverage does not prevent a reviewable v1 commit.
 

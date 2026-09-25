@@ -57,7 +57,9 @@ pub(crate) fn run(options: RunOptions) -> Result<()> {
     config.time_warp = 0.0;
     config.worker_count = worker_count;
     let resolved_config = serde_json::to_value(&config)?;
-    let mut simulation = Simulation::new(config.resolve()?, worker_count)?;
+    let scenario = config.resolve()?;
+    let effective_plugin_params = scenario.effective_plugin_params();
+    let mut simulation = Simulation::new(scenario, worker_count)?;
 
     let output = output::create_directory(options.output.as_deref(), Path::new("runs"))?;
     let mut viewer = if options.no_rerun {
@@ -99,6 +101,7 @@ pub(crate) fn run(options: RunOptions) -> Result<()> {
         "rerun_recording": !options.no_rerun,
         "viewer": launch_viewer,
         "scenario": resolved_config,
+        "effective_plugin_params": effective_plugin_params,
         "steps": simulation.step_count(),
         "termination": simulation.termination(),
         "error": step_result.as_ref().err().map(|error| format!("{error:#}")),

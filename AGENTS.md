@@ -79,8 +79,10 @@ core responsibilities around the C++ names: `simcontrol`, `entity`, `parse`,
 Keep one implementation tree, grouped by the seven categories. Do not keep
 parallel old/new `plugin/` and `plugins/` implementation folders.
 Each concrete built-in has a `plugin/<category>/<plugin>/` directory containing
-`<plugin>.rs` and its mission-facing `PluginName.xml` defaults. Bundle defaults only
-for implemented plugins. Consult sibling `../scrimmage` for unported C++ code
+`<plugin>.rs`. Its mission parameters are a `#[derive(Deserialize, Serialize)]`
+struct with `#[serde(default, deny_unknown_fields)]`; the struct's `Default`
+holds the mission defaults (formerly the C++ `PluginName.xml` values), and
+`configure` calls `params.parse()` and then validates. Consult sibling `../scrimmage` for unported C++ code
 and schemas; do not copy a reference tree into this repository.
 Interfaces, registration, scheduling, queues, and erased adapters are framework
 code; they must not masquerade as concrete sensor or motion plugins.
@@ -100,10 +102,11 @@ All seven types are first-class extension points:
 Keep the seven category interfaces extensible through the public registry and
 mission configuration; do not replace them with a whitelist of built-in names.
 The application's registered constructors define available executable plugins.
-Validate names/categories and configuration before execution; XML defaults on
-disk do not prove a plugin is compiled/registered. `SCRIMMAGE_PLUGIN_PATH`
-currently discovers XML only, not executable libraries. Do not remove static
-extension support or configuration overlays when excluding runtime loading.
+Validate names/categories and configuration before execution; unknown plugin
+parameters are errors. `SCRIMMAGE_PLUGIN_PATH` discovers optional
+`PluginName.xml` overlays that replace defaults, not executable libraries. Do not
+remove static extension support or configuration overlays when excluding runtime
+loading.
 There is no standalone examples application. Test-only models and the nine
 preserved plugin contract regressions live under `crates/core/tests/`.
 Use the built-in plugins as the current implementation references. Do not

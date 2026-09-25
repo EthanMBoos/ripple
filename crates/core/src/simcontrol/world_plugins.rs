@@ -115,6 +115,16 @@ impl CompiledWorld {
             metrics,
         })
     }
+    /// Each plugin's parsed parameters, for the run manifest. Networks are listed
+    /// in execution order, including an implicit GlobalNetwork.
+    pub fn effective_params(&self) -> serde_json::Value {
+        serde_json::json!({
+            "entity_interactions": self.interactions.iter().map(CompiledPlugin::describe).collect::<Vec<_>>(),
+            "networks": self.networks.iter().map(CompiledPlugin::describe).collect::<Vec<_>>(),
+            "metrics": self.metrics.iter().map(CompiledPlugin::describe).collect::<Vec<_>>(),
+        })
+    }
+
     pub fn instantiate(&self, seed: u32) -> WorldPlugins {
         WorldPlugins {
             interactions: self

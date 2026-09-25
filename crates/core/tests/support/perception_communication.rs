@@ -12,20 +12,29 @@ use scrimmage_core::plugin::{
     PluginRegistry, Port, Ports, Sensor, SensorContext, Unit, Update,
 };
 use scrimmage_core::{Params, ScenarioConfig, Simulation};
+use serde::{Deserialize, Serialize};
+
+#[derive(Default, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+struct ContactFollowerConfig {
+    follow: bool,
+}
 
 struct ContactFollower {
     follow: bool,
 }
 
 impl Plugin for ContactFollower {
-    type Config = bool;
-    fn configure(params: &PluginParams<'_>) -> Result<bool> {
-        params.boolean("follow", false)
+    type Config = ContactFollowerConfig;
+    fn configure(params: &PluginParams<'_>) -> Result<ContactFollowerConfig> {
+        params.parse()
     }
-    fn new(follow: &bool) -> Self {
-        Self { follow: *follow }
+    fn new(config: &ContactFollowerConfig) -> Self {
+        Self {
+            follow: config.follow,
+        }
     }
-    fn ports(_: &bool) -> Ports {
+    fn ports(_: &ContactFollowerConfig) -> Ports {
         Ports::default().output(Port::new("velocity_x", Unit::MetersPerSecond, Frame::World))
     }
 }
@@ -69,8 +78,8 @@ struct Observer {
 
 impl Plugin for Observer {
     type Config = ();
-    fn configure(_: &PluginParams<'_>) -> Result<()> {
-        Ok(())
+    fn configure(params: &PluginParams<'_>) -> Result<()> {
+        params.parse()
     }
     fn new(_: &()) -> Self {
         Self {
@@ -129,16 +138,29 @@ impl Sensor for Observer {
     }
 }
 
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+struct RemoveContactsConfig {
+    remove_at_s: f64,
+}
+impl Default for RemoveContactsConfig {
+    fn default() -> Self {
+        Self { remove_at_s: 100.0 }
+    }
+}
+
 struct RemoveContacts {
     at_s: f64,
 }
 impl Plugin for RemoveContacts {
-    type Config = f64;
-    fn configure(params: &PluginParams<'_>) -> Result<f64> {
-        params.number("remove_at_s", 100.0)
+    type Config = RemoveContactsConfig;
+    fn configure(params: &PluginParams<'_>) -> Result<RemoveContactsConfig> {
+        params.parse()
     }
-    fn new(at_s: &f64) -> Self {
-        Self { at_s: *at_s }
+    fn new(config: &RemoveContactsConfig) -> Self {
+        Self {
+            at_s: config.remove_at_s,
+        }
     }
 }
 impl Interaction for RemoveContacts {

@@ -11,15 +11,26 @@ use scrimmage_core::{
         Update,
     },
 };
+use serde::{Deserialize, Serialize};
 
 static CLOSED: AtomicUsize = AtomicUsize::new(0);
 
-#[derive(Clone, Copy)]
+/// Mission values: `normal`, `fail_init`, `fail_step`, or `stop`.
+#[derive(Clone, Copy, Default, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
 enum Action {
+    #[default]
     Normal,
+    #[serde(rename = "fail_init")]
     FailInitialization,
     FailStep,
     Stop,
+}
+
+#[derive(Default, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+struct LifecycleConfig {
+    action: Action,
 }
 
 struct LifecycleSensor {
@@ -27,20 +38,16 @@ struct LifecycleSensor {
 }
 
 impl Plugin for LifecycleSensor {
-    type Config = Action;
+    type Config = LifecycleConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<Action> {
-        match params.text("action").unwrap_or("normal") {
-            "normal" => Ok(Action::Normal),
-            "fail_init" => Ok(Action::FailInitialization),
-            "fail_step" => Ok(Action::FailStep),
-            "stop" => Ok(Action::Stop),
-            value => bail!("unknown test action '{value}'"),
-        }
+    fn configure(params: &PluginParams<'_>) -> Result<LifecycleConfig> {
+        params.parse()
     }
 
-    fn new(action: &Action) -> Self {
-        Self { action: *action }
+    fn new(config: &LifecycleConfig) -> Self {
+        Self {
+            action: config.action,
+        }
     }
 
     fn close(&mut self, _: StepTime) -> Result<()> {
@@ -70,8 +77,8 @@ struct RemoveEntities;
 
 impl Plugin for RemoveEntities {
     type Config = ();
-    fn configure(_: &PluginParams<'_>) -> Result<()> {
-        Ok(())
+    fn configure(params: &PluginParams<'_>) -> Result<()> {
+        params.parse()
     }
     fn new(_: &()) -> Self {
         Self
@@ -101,7 +108,8 @@ fn initialization_failure_step_failure_and_removal_close_each_plugin_once() -> R
             CLOSED.store(0, Ordering::SeqCst);
             let overrides = Params::from([
                 ("sensor".into(), "LifecycleSensor".into()),
-                ("sensor_action".into(), action.into()),
+                ("sensor_key".into(), "action".into()),
+                ("sensor_value".into(), action.into()),
                 ("interaction".into(), "RemoveEntities".into()),
             ]);
             let scenario = plugin_fixtures::scenario(&overrides, &registry)?;

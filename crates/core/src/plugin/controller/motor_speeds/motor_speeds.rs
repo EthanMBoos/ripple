@@ -2,11 +2,30 @@
 //! Controller phase: write configured constant shaft speeds to motor_0, motor_1, ...
 //! The reference fixture supplies the same commands to the upstream C++ motion model.
 
-use anyhow::{Context, Result, ensure};
+use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::plugin::{
     AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
+
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+struct MotorSpeedsParams {
+    /// Shaft speeds in rad/s written to motor_0, motor_1, ...; a mission must
+    /// list one per rotor.
+    #[serde(rename = "speeds")]
+    speeds_radps: Vec<f64>,
+}
+
+impl Default for MotorSpeedsParams {
+    fn default() -> Self {
+        Self {
+            speeds_radps: vec![0.0; 4],
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct MotorSpeedsConfig {
@@ -27,13 +46,9 @@ impl Plugin for MotorSpeeds {
     type Config = MotorSpeedsConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
-        let text = params
-            .text("speeds")
-            .context("MotorSpeeds requires speeds in rad/s")?;
+        let params: MotorSpeedsParams = params.parse()?;
         let mut commands = Vec::new();
-        for (index, value) in text.split_whitespace().enumerate() {
-            let speed_radps: f64 = value.parse().context("invalid motor speed")?;
-            ensure!(speed_radps.is_finite(), "motor speed must be finite");
+        for (index, speed_radps) in params.speeds_radps.into_iter().enumerate() {
             commands.push(MotorCommand {
                 port: format!("motor_{index}"),
                 speed_radps,

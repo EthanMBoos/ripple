@@ -4,6 +4,7 @@
 //! Autonomy phase: read current state, write desired altitude, speed, and heading.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::math::{self, Vec3};
 use crate::plugin::interaction::{BOUNDARY_TOPIC, BoundaryRegion};
@@ -16,9 +17,35 @@ const ALTITUDE: &str = "desired_altitude";
 const SPEED: &str = "desired_speed";
 const HEADING: &str = "desired_heading";
 
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct StraightConfig {
+    #[serde(rename = "speed")]
     speed_mps: f64,
+    #[serde(rename = "enable_boundary_control")]
     boundary_control: bool,
+    /// Excluded; missions schedule entities instead. Must stay false.
+    generate_entities: bool,
+    /// Not supported; visualization belongs to Rerun. Must stay false.
+    show_camera_images: bool,
+    save_camera_images: bool,
+    /// Accepted and ignored: the Rerun adapter already labels every entity.
+    #[serde(rename = "show_text_label")]
+    _show_text_label: bool,
+}
+
+impl Default for StraightConfig {
+    fn default() -> Self {
+        Self {
+            speed_mps: 21.0,
+            boundary_control: false,
+            generate_entities: false,
+            show_camera_images: false,
+            save_camera_images: false,
+            _show_text_label: false,
+        }
+    }
 }
 
 pub struct Straight {
@@ -32,21 +59,20 @@ impl Plugin for Straight {
     type Config = StraightConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<StraightConfig> {
+        let config: StraightConfig = params.parse()?;
         ensure!(
-            !params.boolean("generate_entities", false)?,
+            !config.generate_entities,
             "Straight.generate_entities is excluded; use mission-scheduled entities"
         );
-        // Legacy show_text_label is superseded by the Rerun adapter's entity labels.
-        for option in ["show_camera_images", "save_camera_images"] {
-            ensure!(
-                !params.boolean(option, false)?,
-                "Straight.{option} is not supported; visualization belongs to Rerun"
-            );
-        }
-        Ok(StraightConfig {
-            speed_mps: params.number("speed", 0.0)?,
-            boundary_control: params.boolean("enable_boundary_control", false)?,
-        })
+        ensure!(
+            !config.show_camera_images,
+            "Straight.show_camera_images is not supported; visualization belongs to Rerun"
+        );
+        ensure!(
+            !config.save_camera_images,
+            "Straight.save_camera_images is not supported; visualization belongs to Rerun"
+        );
+        Ok(config)
     }
 
     fn new(config: &StraightConfig) -> Self {
@@ -147,7 +173,7 @@ mod tests {
         use crate::{KinematicState, Vec3};
 
         let params = Params::new();
-        let config = Straight::configure(&PluginParams(&params))?;
+        let config = Straight::configure(&PluginParams::new(&params))?;
         let state = KinematicState::default();
         let observations = Observations::default();
         let time = StepTime {
@@ -187,7 +213,7 @@ mod tests {
                 },
             )?;
         }
-        let mut network = LocalNetwork::new(&LocalNetwork::configure(&PluginParams(&params))?);
+        let mut network = LocalNetwork::new(&LocalNetwork::configure(&PluginParams::new(&params))?);
         let endpoint = MessageEndpoint {
             entity_id: None,
             plugin: "LocalNetwork".into(),
@@ -259,7 +285,7 @@ mod tests {
     #[test]
     fn configured_speed_is_copied_into_independent_autonomy_instances() -> anyhow::Result<()> {
         let params = Params::from([("speed".into(), "24".into())]);
-        let config = Straight::configure(&PluginParams(&params))?;
+        let config = Straight::configure(&PluginParams::new(&params))?;
         let mut first = Straight::new(&config);
         let second = Straight::new(&config);
         first.goal_world_m.x = 100.0;

@@ -58,12 +58,12 @@ Paths in the middle column are relative to `crates/core/src/`.
 | `math/State`, `Quaternion`, `Angles` | [math/state.rs](../crates/core/src/math/state.rs), `math/quaternion.rs`, `math/angles.rs` | Physical state and coordinate conventions |
 | Numerical integration | [math/integration.rs](../crates/core/src/math/integration.rs) | RK4 with the reference arithmetic order |
 | `common/PID`, `VariableIO`, `Random` | [common/pid.rs](../crates/core/src/common/pid.rs), `common/variable_io.rs`, `common/random.rs` | Control helpers, named ports and legacy spawn randomness |
-| Plugin timing and new sensor randomness | `common/loop_rate.rs`, `common/sensor_random.rs` | Simulation-time rates and stable per-sensor streams |
+| Plugin timing and new plugin randomness | `common/loop_rate.rs`, `common/plugin_random.rs` | Simulation-time rates and stable per-plugin streams |
 | `plugin_manager/EntityPlugin`, `PluginManager` | [plugin_manager/entity_plugin.rs](../crates/core/src/plugin_manager/entity_plugin.rs), `plugin_manager/registry.rs`, `plugin_manager/builtins.rs` | Shared lifecycle/context types, typed factories and bundled registrations |
 | `pubsub/` | [pubsub/messages.rs](../crates/core/src/pubsub/messages.rs), `pubsub/network.rs` | Publications, subscriber queues, delivery and the network interface |
 | Legacy frame/log protocol | [protocol/frame.rs](../crates/core/src/protocol/frame.rs), `protocol/wire.rs` | Validated legacy protobuf frame I/O |
 | `src/plugins/<category>/` | [plugin/](../crates/core/src/plugin) | The single concrete model/algorithm implementation tree |
-| `include/scrimmage/plugins/<category>/<Plugin>/<Plugin>.xml` | `plugin/<category>/<plugin>/<Plugin>.xml` | Mission defaults, beside that plugin's named `<plugin>.rs` implementation |
+| `include/scrimmage/plugins/<category>/<Plugin>/<Plugin>.xml` | The parameter struct's `Default` in `plugin/<category>/<plugin>/<plugin>.rs` | Mission defaults, beside the parameters they fill |
 
 The C++ source is the sibling `../scrimmage`, branch `Ubuntu-24.04`; exact
 reference provenance and compatibility gaps are in [REFERENCE_NOTES.md](REFERENCE_NOTES.md).
@@ -83,8 +83,8 @@ These locations map responsibilities, not claims of complete C++ class parity.
 
 For example, `sensor.rs` defines the contract and `sensor/observations.rs`
 implements observation delivery;
-`plugin/sensor/noisy_position/noisy_position.rs` is an actual sensor model, with defaults
-in the adjacent `NoisyPosition.xml`. Those are different
+`plugin/sensor/noisy_position/noisy_position.rs` is an actual sensor model, with its
+parameters and defaults at the top of the same file. Those are different
 responsibilities, not competing implementation folders. There is no `plugins/`
 tree beside `plugin/`.
 

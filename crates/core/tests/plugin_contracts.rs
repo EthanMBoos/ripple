@@ -31,7 +31,7 @@ fn all_seven_user_plugin_types_work_without_engine_edits() -> Result<()> {
 }
 #[test]
 fn autonomy_uses_delivered_sensor_data_not_hidden_truth() -> Result<()> {
-    let overrides = Params::from([("bias_m".into(), "1".into())]);
+    let overrides = Params::from([("sensor_value".into(), "1".into())]);
     let simulation = simulate(4, &overrides)?;
     // First autonomy update has no measurement. The sensor samples after motion;
     // only the next autonomy update can react to its biased position.
@@ -159,8 +159,8 @@ fn all_world_plugin_categories_resolve_through_the_registry() -> Result<()> {
 struct FailingInteraction;
 impl scrimmage_core::plugin::Plugin for FailingInteraction {
     type Config = ();
-    fn configure(_: &scrimmage_core::plugin::PluginParams<'_>) -> Result<()> {
-        Ok(())
+    fn configure(params: &scrimmage_core::plugin::PluginParams<'_>) -> Result<()> {
+        params.parse()
     }
     fn new(_: &()) -> Self {
         Self
@@ -197,8 +197,8 @@ fn world_plugin_failure_terminates_the_run_and_closes_other_plugins() -> Result<
 struct StopInteraction;
 impl scrimmage_core::plugin::Plugin for StopInteraction {
     type Config = ();
-    fn configure(_: &scrimmage_core::plugin::PluginParams<'_>) -> Result<()> {
-        Ok(())
+    fn configure(params: &scrimmage_core::plugin::PluginParams<'_>) -> Result<()> {
+        params.parse()
     }
     fn new(_: &()) -> Self {
         Self
@@ -239,6 +239,7 @@ fn world_plugin_stop_emits_terminal_frame_and_closes_once() -> Result<()> {
 struct PanicNetwork;
 impl scrimmage_core::plugin::Plugin for PanicNetwork {
     type Config = ();
+    // Stands in for ExampleNetwork under the same name, so it ignores that network's parameters.
     fn configure(_: &scrimmage_core::plugin::PluginParams<'_>) -> Result<()> {
         Ok(())
     }

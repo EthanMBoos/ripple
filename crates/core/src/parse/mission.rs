@@ -24,6 +24,19 @@ pub struct ResolvedScenario {
     pub(crate) end_conditions: EndConditions,
 }
 
+impl ResolvedScenario {
+    /// Every plugin's parsed parameters, defaults included, for the run manifest.
+    pub fn effective_plugin_params(&self) -> serde_json::Value {
+        let mut plugins = self.world.effective_params();
+        plugins["entities"] = self
+            .definitions
+            .iter()
+            .map(EntityDefinition::effective_params)
+            .collect();
+        plugins
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default)]
 pub(crate) struct EndConditions {
     pub time: bool,
@@ -183,21 +196,14 @@ impl ScenarioConfig {
             .find(|node| node.name == "run")
             .context("missing run element")?
             .attrs;
+        // Plugin defaults live in each plugin's `Default`. Optional overlay files
+        // on SCRIMMAGE_PLUGIN_PATH replace individual defaults for every use.
         let mut plugins = BTreeMap::new();
         if let Some(paths) = std::env::var_os("SCRIMMAGE_PLUGIN_PATH") {
             for plugin_path in std::env::split_paths(&paths) {
                 collect_xml(&plugin_path, &mut plugins)?;
             }
         }
-        // Built-in XML defaults are required: the Rust fallback defaults are not kept
-        // in sync with them, so a missing folder would silently change the mission.
-        let builtin_defaults = root.join("crates/core/src/plugin");
-        ensure!(
-            builtin_defaults.is_dir(),
-            "built-in plugin defaults not found at {}; pass --root <scrimmage-rs checkout>",
-            builtin_defaults.display()
-        );
-        collect_xml(&builtin_defaults, &mut plugins)?;
         let mut parameter_groups = BTreeMap::new();
         let mut entity_groups = BTreeMap::new();
         for node in &expanded_xml.children {
@@ -227,6 +233,8 @@ impl ScenarioConfig {
             } else {
                 Params::new()
             };
+            // C++ overlay files name their shared library; Rust plugins are compiled in.
+            params.remove("library");
 
             if let Some(group_name) = node.attrs.get("param_common") {
                 let group = parameter_groups
@@ -241,6 +249,7 @@ impl ScenarioConfig {
             params.extend(
                 node.attrs
                     .iter()
+                    .filter(|(key, _)| key.as_str() != "param_common")
                     .map(|(key, value)| (key.clone(), value.clone())),
             );
             Ok(PluginConfig {
@@ -371,94 +380,63 @@ impl ScenarioConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugin::PluginRegistry;
 
     fn root() -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
     }
 
     #[test]
-    fn bundled_defaults_belong_to_implemented_plugins() -> Result<()> {
-        let mut plugins = BTreeMap::new();
-        collect_xml(&root().join("crates/core/src/plugin"), &mut plugins)?;
-        assert!(!plugins.is_empty(), "no bundled plugin defaults found");
-        let registry = PluginRegistry::with_builtins();
-        for name in plugins.keys() {
-            assert!(
-                registry.contains(name),
-                "defaults without a Rust plugin: {name}"
-            );
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn colocated_defaults_and_mission_overrides_are_preserved() -> Result<()> {
+    fn mission_values_and_param_common_reach_the_plugin() -> Result<()> {
         let root = root();
         let mission = ScenarioConfig::load(
             &root.join("crates/core/tests/fixtures/plugin_defaults.xml"),
             &root,
             &Params::new(),
         )?;
+        // Omitted keys are left to each plugin's `Default`.
         let defaults = &mission.entities[0];
-        assert_eq!(defaults.autonomy[0].params["speed"], "21");
-        assert_eq!(
-            defaults.controllers[0].params["heading_pid"],
-            "1, 0.01, 2, 9"
-        );
-        assert_eq!(defaults.motion.params["turning_radius"], "13");
-        assert_eq!(defaults.motion.params["max_velocity"], "40");
-        assert_eq!(defaults.sensors[0].params["stddev_m"], "0.1");
-        assert_eq!(defaults.sensors[0].params["bias_world_m"], "0 0 0");
-        assert_eq!(defaults.sensors[0].params["topic"], "position");
-        assert_eq!(mission.interactions[0].params["collision_range"], "2");
-        assert_eq!(mission.metrics[0].params["team_collisions_w"], "-1.0");
-        assert_eq!(mission.networks[0].params["library"], "LocalNetwork_plugin");
-        assert_eq!(
-            mission.networks[1].params["library"],
-            "GlobalNetwork_plugin"
-        );
+        assert!(defaults.autonomy[0].params.is_empty());
+        assert!(defaults.motion.params.is_empty());
 
         let overrides = &mission.entities[1];
         assert_eq!(overrides.autonomy[0].params["speed"], "26");
         assert_eq!(overrides.motion.params["turning_radius"], "23");
         assert_eq!(overrides.motion.params["min_velocity"], "16");
-        assert_eq!(overrides.motion.params["max_velocity"], "40");
+        assert!(!overrides.motion.params.contains_key("param_common"));
         assert_eq!(overrides.sensors[0].params["stddev_m"], "0");
         mission.resolve()?;
         Ok(())
     }
 
     #[test]
-    fn missing_bundled_defaults_are_an_error() {
+    fn misspelled_plugin_parameters_are_errors() -> Result<()> {
         let root = root();
-        let error = ScenarioConfig::load(
-            &root.join("missions/straight-no-gui.xml"),
-            &root.join("missions"),
+        let mut mission = ScenarioConfig::load(
+            &root.join("crates/core/tests/fixtures/plugin_defaults.xml"),
+            &root,
             &Params::new(),
-        )
-        .unwrap_err();
-        assert!(
-            error
-                .to_string()
-                .contains("built-in plugin defaults not found")
-        );
+        )?;
+        mission.entities[1]
+            .motion
+            .params
+            .insert("turning_radus".into(), "30".into());
+        let error = format!("{:#}", mission.resolve().err().expect("unknown key"));
+        assert!(error.contains("unknown field `turning_radus`"), "{error}");
+        Ok(())
     }
 
     #[test]
-    fn earlier_plugin_search_paths_override_bundled_defaults() -> Result<()> {
+    fn plugin_path_overlays_are_found_first() -> Result<()> {
         let root = root();
         let overlay = root.join("crates/core/tests/fixtures/plugin_overlay");
         let mut plugins = BTreeMap::new();
         collect_xml(&overlay, &mut plugins)?;
-        collect_xml(&root.join("crates/core/src/plugin"), &mut plugins)?;
         assert_eq!(
             plugins["SimpleAircraft"],
             overlay.join("SimpleAircraft.xml")
         );
         let defaults = read_xml(&plugins["SimpleAircraft"], &Params::new(), &mut Vec::new())?;
         assert_eq!(defaults.params()["turning_radius"], "37");
-        assert!(plugins.contains_key("Straight"));
         Ok(())
     }
 }

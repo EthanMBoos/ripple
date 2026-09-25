@@ -11,8 +11,8 @@ pub struct SingleIntegratorControllerSimple;
 
 impl Plugin for SingleIntegratorControllerSimple {
     type Config = ();
-    fn configure(_: &PluginParams<'_>) -> Result<()> {
-        Ok(())
+    fn configure(params: &PluginParams<'_>) -> Result<()> {
+        params.parse()
     }
     fn new(_: &()) -> Self {
         Self

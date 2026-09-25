@@ -6,6 +6,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 
 use crate::plugin::{
     MetricReport, Metrics, Plugin, PluginParams, TeamMetrics, Update, WorldContext,
@@ -22,11 +23,26 @@ const EVENT_KINDS: [EventKind; 6] = [
     EventKind::EntityPresentAtEnd,
 ];
 
-#[derive(Clone, Copy)]
+/// Score weights from the mission; `Default` supplies any key the mission leaves out.
+#[derive(Clone, Copy, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct CollisionWeights {
+    #[serde(rename = "flight_time_w")]
     flight_time: f64,
+    #[serde(rename = "team_collisions_w")]
     same_team: f64,
+    #[serde(rename = "non_team_collisions_w")]
     opposing_team: f64,
+}
+
+impl Default for CollisionWeights {
+    fn default() -> Self {
+        Self {
+            flight_time: 0.0,
+            same_team: -1.0,
+            opposing_team: -1.0,
+        }
+    }
 }
 
 #[derive(Default)]
@@ -51,11 +67,7 @@ impl Plugin for SimpleCollisionMetrics {
     type Config = CollisionWeights;
 
     fn configure(params: &PluginParams<'_>) -> Result<CollisionWeights> {
-        Ok(CollisionWeights {
-            flight_time: params.number("flight_time_w", 0.0)?,
-            same_team: params.number("team_collisions_w", 0.0)?,
-            opposing_team: params.number("non_team_collisions_w", 0.0)?,
-        })
+        params.parse()
     }
 
     fn new(weights: &CollisionWeights) -> Self {

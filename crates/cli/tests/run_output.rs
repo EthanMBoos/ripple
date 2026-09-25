@@ -150,7 +150,7 @@ fn unavailable_sensor_reports_its_category_before_creating_a_run() {
     let xml = fs::read_to_string(fixture).unwrap();
     let mission = temp.path().join("mission.xml");
 
-    // A missing name and a name with XML defaults but registered as a motion model.
+    // A missing name and a real plugin name registered in the wrong category (motion).
     for name in ["RayTrace", "SimpleAircraft"] {
         fs::write(&mission, xml.replace("NoisyPosition", name)).unwrap();
         let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))

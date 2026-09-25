@@ -6,6 +6,7 @@
 
 use anyhow::{Result, ensure};
 use nalgebra::{Matrix3, UnitQuaternion};
+use serde::{Deserialize, Serialize};
 
 use crate::math::{KinematicState, Quaternion, Vec3};
 use crate::plugin::{Plugin, PluginParams, PluginRandom, Sensor, SensorContext, Update};
@@ -13,7 +14,8 @@ use crate::plugin::{Plugin, PluginParams, PluginRandom, Sensor, SensorContext, U
 pub const STATE_TOPIC: &str = "StateWithCovariance";
 
 /// Legacy `mean standard_deviation` noise for one axis.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
+#[serde(from = "[f64; 2]", into = "[f64; 2]")]
 pub(super) struct AxisNoise {
     pub(super) mean: f64,
     pub(super) stddev: f64,
@@ -26,6 +28,39 @@ pub(super) struct StateNoise {
     pub(super) position_m: [AxisNoise; 3],
     pub(super) velocity_mps: [AxisNoise; 3],
     pub(super) orientation_rad: [AxisNoise; 3],
+}
+
+/// Mission parameters, each `mean standard_deviation`; `Default` supplies any key
+/// the mission leaves out. NoisyContacts reads the same nine keys.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+struct NoisyStateParams {
+    pos_noise_0: AxisNoise,
+    pos_noise_1: AxisNoise,
+    pos_noise_2: AxisNoise,
+    vel_noise_0: AxisNoise,
+    vel_noise_1: AxisNoise,
+    vel_noise_2: AxisNoise,
+    orient_noise_0: AxisNoise,
+    orient_noise_1: AxisNoise,
+    orient_noise_2: AxisNoise,
+}
+
+impl Default for NoisyStateParams {
+    fn default() -> Self {
+        let noise = StateNoise::default();
+        Self {
+            pos_noise_0: noise.position_m[0],
+            pos_noise_1: noise.position_m[1],
+            pos_noise_2: noise.position_m[2],
+            vel_noise_0: noise.velocity_mps[0],
+            vel_noise_1: noise.velocity_mps[1],
+            vel_noise_2: noise.velocity_mps[2],
+            orient_noise_0: noise.orientation_rad[0],
+            orient_noise_1: noise.orientation_rad[1],
+            orient_noise_2: noise.orientation_rad[2],
+        }
+    }
 }
 
 pub struct NoisyStateConfig {
@@ -49,9 +84,18 @@ impl Plugin for NoisyState {
     type Config = NoisyStateConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<NoisyStateConfig> {
-        Ok(NoisyStateConfig {
-            noise: StateNoise::parse(params)?,
-        })
+        let params: NoisyStateParams = params.parse()?;
+        let noise = StateNoise {
+            position_m: [params.pos_noise_0, params.pos_noise_1, params.pos_noise_2],
+            velocity_mps: [params.vel_noise_0, params.vel_noise_1, params.vel_noise_2],
+            orientation_rad: [
+                params.orient_noise_0,
+                params.orient_noise_1,
+                params.orient_noise_2,
+            ],
+        };
+        noise.validate()?;
+        Ok(NoisyStateConfig { noise })
     }
 
     fn new(config: &NoisyStateConfig) -> Self {
@@ -96,15 +140,58 @@ impl NoisyState {
     }
 }
 
+impl From<[f64; 2]> for AxisNoise {
+    fn from([mean, stddev]: [f64; 2]) -> Self {
+        Self { mean, stddev }
+    }
+}
+
+impl From<AxisNoise> for [f64; 2] {
+    fn from(noise: AxisNoise) -> Self {
+        [noise.mean, noise.stddev]
+    }
+}
+
+impl Default for StateNoise {
+    /// The bundled C++ defaults: 5 m horizontal and 1 m vertical position noise,
+    /// the same in m/s for velocity, and no attitude noise.
+    fn default() -> Self {
+        let horizontal = AxisNoise {
+            mean: 0.0,
+            stddev: 5.0,
+        };
+        let vertical = AxisNoise {
+            mean: 0.0,
+            stddev: 1.0,
+        };
+        let none = AxisNoise {
+            mean: 0.0,
+            stddev: 0.0,
+        };
+        Self {
+            position_m: [horizontal, horizontal, vertical],
+            velocity_mps: [horizontal, horizontal, vertical],
+            orientation_rad: [none; 3],
+        }
+    }
+}
+
 impl StateNoise {
-    /// Reads `pos_noise_0..2`, `vel_noise_0..2`, and `orient_noise_0..2`.
-    /// A missing axis defaults to mean 0 and standard deviation 1, as in C++.
-    pub(super) fn parse(params: &PluginParams<'_>) -> Result<Self> {
-        Ok(Self {
-            position_m: parse_axes(params, "pos_noise")?,
-            velocity_mps: parse_axes(params, "vel_noise")?,
-            orientation_rad: parse_axes(params, "orient_noise")?,
-        })
+    pub(super) fn validate(&self) -> Result<()> {
+        let groups = [
+            ("pos_noise", self.position_m),
+            ("vel_noise", self.velocity_mps),
+            ("orient_noise", self.orientation_rad),
+        ];
+        for (prefix, axes) in groups {
+            for (axis, noise) in axes.iter().enumerate() {
+                ensure!(
+                    noise.stddev >= 0.0,
+                    "{prefix}_{axis} standard deviation must be nonnegative"
+                );
+            }
+        }
+        Ok(())
     }
 
     /// Returns truth with noisy position, velocity, and attitude.
@@ -151,23 +238,6 @@ impl StateNoise {
         };
         Ok(measured)
     }
-}
-
-fn parse_axes(params: &PluginParams<'_>, prefix: &str) -> Result<[AxisNoise; 3]> {
-    let mut axes = [AxisNoise {
-        mean: 0.0,
-        stddev: 1.0,
-    }; 3];
-    for (axis, noise) in axes.iter_mut().enumerate() {
-        let key = format!("{prefix}_{axis}");
-        let [mean, stddev] = params.vector(&key, [0.0, 1.0])?;
-        ensure!(
-            stddev >= 0.0,
-            "{key} standard deviation must be nonnegative"
-        );
-        *noise = AxisNoise { mean, stddev };
-    }
-    Ok(axes)
 }
 
 #[cfg(test)]
@@ -276,7 +346,7 @@ mod tests {
     fn invalid_noise_parameters_are_rejected() {
         for value in ["0 -1", "NaN 1", "0 inf", "0 1 2"] {
             let params = Params::from([("pos_noise_0".into(), value.into())]);
-            assert!(NoisyState::configure(&PluginParams(&params)).is_err());
+            assert!(NoisyState::configure(&PluginParams::new(&params)).is_err());
         }
     }
 }

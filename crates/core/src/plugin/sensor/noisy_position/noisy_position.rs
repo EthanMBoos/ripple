@@ -3,16 +3,30 @@
 //! Sensor phase: sample post-motion truth, apply bias/noise, queue a local observation.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     Vec3,
     plugin::{Plugin, PluginParams, Sensor, SensorContext, Update},
 };
 
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct SensorConfig {
-    bias_world_m: Vec3,
+    bias_world_m: [f64; 3],
     stddev_m: f64,
     topic: String,
+}
+
+impl Default for SensorConfig {
+    fn default() -> Self {
+        Self {
+            bias_world_m: [0.0; 3],
+            stddev_m: 0.1,
+            topic: "position".into(),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -30,18 +44,14 @@ impl Plugin for NoisyPosition {
     type Config = SensorConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<SensorConfig> {
-        let stddev_m = params.number("stddev_m", 0.1)?;
-        ensure!(stddev_m >= 0.0, "stddev_m must be nonnegative");
-        Ok(SensorConfig {
-            bias_world_m: Vec3::from(params.vector("bias_world_m", [0.0; 3])?),
-            stddev_m,
-            topic: params.text("topic").unwrap_or("position").to_owned(),
-        })
+        let config: SensorConfig = params.parse()?;
+        ensure!(config.stddev_m >= 0.0, "stddev_m must be nonnegative");
+        Ok(config)
     }
 
     fn new(config: &SensorConfig) -> Self {
         Self {
-            bias_world_m: config.bias_world_m,
+            bias_world_m: Vec3::from(config.bias_world_m),
             stddev_m: config.stddev_m,
             topic: config.topic.clone(),
         }
@@ -86,7 +96,7 @@ mod tests {
 
     fn check_observation(stddev_m: f64) -> anyhow::Result<()> {
         let config = SensorConfig {
-            bias_world_m: Vec3::new(1.0, -2.0, 3.0),
+            bias_world_m: [1.0, -2.0, 3.0],
             stddev_m,
             topic: "position".into(),
         };
@@ -103,7 +113,7 @@ mod tests {
             expected_random.normal(0.0, stddev_m)?,
         );
         let expected_position_world_m =
-            truth.position_world_m + config.bias_world_m + expected_noise_world_m;
+            truth.position_world_m + Vec3::from(config.bias_world_m) + expected_noise_world_m;
         let mut messages = Messages::default();
         let mut pending = Observations::default();
         let mut belief = None;

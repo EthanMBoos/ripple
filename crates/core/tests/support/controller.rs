@@ -1,19 +1,31 @@
 //! A minimal controller demonstrating composable named input/output channels.
 use anyhow::Result;
 use scrimmage_core::plugin::*;
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct ScaleSpeedConfig {
+    gain: f64,
+}
+impl Default for ScaleSpeedConfig {
+    fn default() -> Self {
+        Self { gain: 1.0 }
+    }
+}
 
 pub struct ScaleSpeed {
     gain: f64,
 }
 impl Plugin for ScaleSpeed {
-    type Config = f64;
-    fn configure(params: &PluginParams<'_>) -> Result<f64> {
-        params.number("gain", 1.0)
+    type Config = ScaleSpeedConfig;
+    fn configure(params: &PluginParams<'_>) -> Result<ScaleSpeedConfig> {
+        params.parse()
     }
-    fn new(gain: &f64) -> Self {
-        Self { gain: *gain }
+    fn new(config: &ScaleSpeedConfig) -> Self {
+        Self { gain: config.gain }
     }
-    fn ports(_: &f64) -> Ports {
+    fn ports(_: &ScaleSpeedConfig) -> Ports {
         let speed = Port::new("speed", Unit::MetersPerSecond, Frame::World);
         Ports::default().input(speed.clone()).output(speed)
     }

@@ -2,21 +2,33 @@
 use super::sensor::PositionReading;
 use anyhow::Result;
 use scrimmage_core::plugin::*;
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct DriveToGoalConfig {
+    goal_world_m: f64,
+}
+impl Default for DriveToGoalConfig {
+    fn default() -> Self {
+        Self { goal_world_m: 1.0 }
+    }
+}
 
 pub struct DriveToGoal {
     goal_world_m: f64,
 }
 impl Plugin for DriveToGoal {
-    type Config = f64;
-    fn configure(params: &PluginParams<'_>) -> Result<f64> {
-        params.number("goal_world_m", 1.0)
+    type Config = DriveToGoalConfig;
+    fn configure(params: &PluginParams<'_>) -> Result<DriveToGoalConfig> {
+        params.parse()
     }
-    fn new(goal_world_m: &f64) -> Self {
+    fn new(config: &DriveToGoalConfig) -> Self {
         Self {
-            goal_world_m: *goal_world_m,
+            goal_world_m: config.goal_world_m,
         }
     }
-    fn ports(_: &f64) -> Ports {
+    fn ports(_: &DriveToGoalConfig) -> Ports {
         Ports::default().output(Port::new("speed", Unit::MetersPerSecond, Frame::World))
     }
 }

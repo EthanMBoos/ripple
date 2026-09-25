@@ -89,8 +89,8 @@ implementations into artificial header/source pairs or add namespace wrappers.
 Use descriptive module filenames rather than `mod.rs`. Core modules use the
 standard sibling pattern: `simcontrol.rs` declares helpers in `simcontrol/`.
 Only keep a supporting directory when it contains files. Plugins are the
-intentional exception: keep `<plugin>.rs` beside `<Plugin>.xml` inside the
-plugin's own folder. The named category module uses `#[path]` to load that
+intentional exception: keep `<plugin>.rs`, and any private submodules, inside
+the plugin's own folder. The named category module uses `#[path]` to load that
 implementation, preserving the existing logical module name and public imports.
 Keep those path declarations at the module-wiring boundary, not in model code.
 Test support also uses named files under `tests/support/` to avoid accidental

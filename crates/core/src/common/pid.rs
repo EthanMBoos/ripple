@@ -1,15 +1,40 @@
 //! PID control helper; angular loops use radians.
 
+use serde::{Deserialize, Serialize};
+
 use crate::math::angle_pi;
 
 /// Gains parsed from the C++ controller's [P, I, D, integral band] XML values.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(from = "[f64; 4]", into = "[f64; 4]")]
 pub struct PidGains {
     pub proportional: f64,
     pub integral: f64,
     pub derivative: f64,
     /// Error units for linear loops; degrees at the XML boundary for angular loops.
     pub integral_band: f64,
+}
+
+impl From<[f64; 4]> for PidGains {
+    fn from([proportional, integral, derivative, integral_band]: [f64; 4]) -> Self {
+        Self {
+            proportional,
+            integral,
+            derivative,
+            integral_band,
+        }
+    }
+}
+
+impl From<PidGains> for [f64; 4] {
+    fn from(gains: PidGains) -> Self {
+        [
+            gains.proportional,
+            gains.integral,
+            gains.derivative,
+            gains.integral_band,
+        ]
+    }
 }
 
 #[derive(Clone, Debug)]

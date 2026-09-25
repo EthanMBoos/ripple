@@ -14,8 +14,8 @@ pub struct PopulationMetrics {
 }
 impl Plugin for PopulationMetrics {
     type Config = ();
-    fn configure(_params: &PluginParams<'_>) -> Result<()> {
-        Ok(())
+    fn configure(params: &PluginParams<'_>) -> Result<()> {
+        params.parse()
     }
     fn new(_config: &()) -> Self {
         Self {

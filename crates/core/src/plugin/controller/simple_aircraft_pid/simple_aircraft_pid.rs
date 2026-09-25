@@ -4,6 +4,7 @@
 //! Controller phase: read desired/current state, write throttle and model angular rates.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::plugin::{
     AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
@@ -13,10 +14,32 @@ use crate::{
     math,
 };
 
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+/// Each PID is `P, I, D, integral band`.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct ControllerConfig {
+    #[serde(rename = "heading_pid")]
     heading_gains: PidGains,
+    #[serde(rename = "alt_pid")]
     altitude_gains: PidGains,
+    #[serde(rename = "vel_pid")]
     speed_gains: PidGains,
+    /// Not yet implemented; must stay false.
+    use_roll: bool,
+    use_glide_slope: bool,
+}
+
+impl Default for ControllerConfig {
+    fn default() -> Self {
+        Self {
+            heading_gains: PidGains::from([1.0, 0.01, 2.0, 9.0]),
+            altitude_gains: PidGains::from([1.0, 0.0, 0.8, 1.0]),
+            speed_gains: PidGains::from([1.0, 0.1, 0.0, 1.0]),
+            use_roll: false,
+            use_glide_slope: false,
+        }
+    }
 }
 
 pub struct SimpleAircraftControllerPid {
@@ -29,15 +52,12 @@ impl Plugin for SimpleAircraftControllerPid {
     type Config = ControllerConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<ControllerConfig> {
+        let config: ControllerConfig = params.parse()?;
         ensure!(
-            !params.boolean("use_roll", false)? && !params.boolean("use_glide_slope", false)?,
+            !config.use_roll && !config.use_glide_slope,
             "roll/glide-slope PID inputs are not yet implemented"
         );
-        Ok(ControllerConfig {
-            heading_gains: parse_pid_gains(params, "heading_pid", [1.0, 0.01, 2.0, 9.0])?,
-            altitude_gains: parse_pid_gains(params, "alt_pid", [1.0, 0.0, 0.8, 1.0])?,
-            speed_gains: parse_pid_gains(params, "vel_pid", [1.0, 0.1, 0.0, 1.0])?,
-        })
+        Ok(config)
     }
 
     fn new(config: &ControllerConfig) -> Self {
@@ -96,16 +116,6 @@ impl Controller for SimpleAircraftControllerPid {
 }
 
 /// The positional C++ XML format ends here; controller code uses named gains.
-fn parse_pid_gains(params: &PluginParams<'_>, key: &str, defaults: [f64; 4]) -> Result<PidGains> {
-    let [proportional, integral, derivative, integral_band] = params.vector(key, defaults)?;
-    Ok(PidGains {
-        proportional,
-        integral,
-        derivative,
-        integral_band,
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::{Plugin, PluginParams, SimpleAircraftControllerPid};
@@ -114,7 +124,7 @@ mod tests {
     #[test]
     fn xml_gains_retain_the_legacy_order_and_heading_band_units() -> anyhow::Result<()> {
         let params = Params::from([("heading_pid".into(), "2,3,4,9".into())]);
-        let config = SimpleAircraftControllerPid::configure(&PluginParams(&params))?;
+        let config = SimpleAircraftControllerPid::configure(&PluginParams::new(&params))?;
         assert!((config.heading_gains.proportional - 2.0).abs() < 1e-12);
         assert!((config.heading_gains.integral - 3.0).abs() < 1e-12);
         assert!((config.heading_gains.derivative - 4.0).abs() < 1e-12);

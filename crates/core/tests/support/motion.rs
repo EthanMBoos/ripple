@@ -5,8 +5,8 @@ use scrimmage_core::{Vec3, plugin::*};
 pub struct EastwardMotion;
 impl Plugin for EastwardMotion {
     type Config = ();
-    fn configure(_: &PluginParams<'_>) -> Result<()> {
-        Ok(())
+    fn configure(params: &PluginParams<'_>) -> Result<()> {
+        params.parse()
     }
     fn new(_: &()) -> Self {
         Self

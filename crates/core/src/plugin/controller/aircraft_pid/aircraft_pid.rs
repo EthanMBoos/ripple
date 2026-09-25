@@ -4,21 +4,48 @@
 //! Controller phase: read desired commands and belief, output throttle and surfaces.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::common::{Pid, PidGains};
 use crate::plugin::{
     AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
 
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+/// Each PID is `P, I, D, integral band`.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct AircraftPidConfig {
+    #[serde(rename = "heading_pid")]
     heading: PidGains,
+    #[serde(rename = "altitude_pid")]
     altitude: PidGains,
+    #[serde(rename = "speed_pid")]
     speed: PidGains,
+    #[serde(rename = "pitch_pid")]
     pitch: PidGains,
+    #[serde(rename = "roll_pid")]
     roll: PidGains,
-    max_pitch_rad: f64,
-    max_roll_rad: f64,
+    #[serde(rename = "max_pitch")]
+    max_pitch_deg: f64,
+    #[serde(rename = "max_roll")]
+    max_roll_deg: f64,
     use_roll_control: bool,
+}
+
+impl Default for AircraftPidConfig {
+    fn default() -> Self {
+        Self {
+            heading: PidGains::from([1.0, 0.2, 1.0, 45.0]),
+            altitude: PidGains::from([0.1, 0.0001, 0.01, 10.0]),
+            speed: PidGains::from([1.0, 0.1, 0.03, 10.0]),
+            pitch: PidGains::from([5.0, 0.01, 0.01, 9.0]),
+            roll: PidGains::from([0.3, 0.1, 0.001, 9.0]),
+            max_pitch_deg: 45.0,
+            max_roll_deg: 60.0,
+            use_roll_control: false,
+        }
+    }
 }
 
 pub struct AircraftPidController {
@@ -36,18 +63,9 @@ impl Plugin for AircraftPidController {
     type Config = AircraftPidConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<AircraftPidConfig> {
-        let config = AircraftPidConfig {
-            heading: gains(params, "heading_pid", [1.0, 0.2, 1.0, 45.0])?,
-            altitude: gains(params, "altitude_pid", [0.1, 0.0001, 0.01, 10.0])?,
-            speed: gains(params, "speed_pid", [1.0, 0.1, 0.03, 10.0])?,
-            pitch: gains(params, "pitch_pid", [5.0, 0.01, 0.01, 9.0])?,
-            roll: gains(params, "roll_pid", [0.3, 0.1, 0.001, 9.0])?,
-            max_pitch_rad: params.number("max_pitch", 45.0)?.to_radians(),
-            max_roll_rad: params.number("max_roll", 45.0)?.to_radians(),
-            use_roll_control: params.boolean("use_roll_control", false)?,
-        };
+        let config: AircraftPidConfig = params.parse()?;
         ensure!(
-            config.max_pitch_rad >= 0.0 && config.max_roll_rad >= 0.0,
+            config.max_pitch_deg >= 0.0 && config.max_roll_deg >= 0.0,
             "AircraftPIDController attitude limits must be nonnegative"
         );
         Ok(config)
@@ -60,8 +78,8 @@ impl Plugin for AircraftPidController {
             speed: Pid::linear(config.speed),
             pitch: Pid::angular(config.pitch),
             roll: Pid::angular(config.roll),
-            max_pitch_rad: config.max_pitch_rad,
-            max_roll_rad: config.max_roll_rad,
+            max_pitch_rad: config.max_pitch_deg.to_radians(),
+            max_roll_rad: config.max_roll_deg.to_radians(),
             use_roll_control: config.use_roll_control,
         }
     }
@@ -133,16 +151,6 @@ impl Controller for AircraftPidController {
     }
 }
 
-fn gains(params: &PluginParams<'_>, key: &str, defaults: [f64; 4]) -> Result<PidGains> {
-    let [proportional, integral, derivative, integral_band] = params.vector(key, defaults)?;
-    Ok(PidGains {
-        proportional,
-        integral,
-        derivative,
-        integral_band,
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::AircraftPidController;
@@ -158,7 +166,7 @@ mod tests {
         // With constant speed error 1, I grows by 0.02 each update; D is
         // 0.01 / 0.02 = 0.5 on the first update and zero thereafter.
         let params = Params::from([("speed_pid".into(), "0,1,0.01,10".into())]);
-        let config = AircraftPidController::configure(&PluginParams(&params))?;
+        let config = AircraftPidController::configure(&PluginParams::new(&params))?;
         let mut controller = AircraftPidController::new(&config);
         let mut io = PluginIo::new(&AircraftPidController::ports(&config));
         io.receive(

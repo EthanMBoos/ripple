@@ -55,6 +55,10 @@ pub(crate) struct EntityDefinition {
 }
 
 impl EntityDefinition {
+    pub(crate) fn effective_params(&self) -> serde_json::Value {
+        self.plugins.effective_params()
+    }
+
     pub(crate) fn parse(config: &EntityConfig, registry: &PluginRegistry) -> Result<Self> {
         let params = &config.params;
         let position_world_m = Vec3::new(

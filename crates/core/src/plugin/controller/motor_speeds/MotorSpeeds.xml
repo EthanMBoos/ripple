@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<!-- Rust open-loop test driver; reference/fixtures/MotorSpeeds.cpp is its C++ twin. -->
-<params>
-  <!-- rad/s written to motor_0, motor_1, ...; a mission must match its rotor count. -->
-  <speeds>0 0 0 0</speeds>
-</params>

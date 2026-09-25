@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<params>
-  <library>AuctionAssign_plugin</library>
-  <auctioneer>true</auctioneer>
-  <auction_duration_s>5</auction_duration_s>
-  <network_name>SphereNetwork</network_name>
-</params>

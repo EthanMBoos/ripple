@@ -4,6 +4,7 @@
 //! Motion phase: read throttle/model angular rates, integrate, update mutable truth.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     math::{self, EulerAngles, KinematicState, Quaternion, Vec3},
@@ -12,6 +13,46 @@ use crate::{
         Update,
     },
 };
+
+/// Mission parameters in the C++ units; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+struct SimpleAircraftParams {
+    #[serde(rename = "min_velocity")]
+    min_speed_mps: f64,
+    #[serde(rename = "max_velocity")]
+    max_speed_mps: f64,
+    #[serde(rename = "max_roll")]
+    max_roll_deg: f64,
+    #[serde(rename = "max_pitch")]
+    max_pitch_deg: f64,
+    #[serde(rename = "max_roll_rate")]
+    max_roll_rate_degps: f64,
+    #[serde(rename = "max_pitch_rate")]
+    max_pitch_rate_degps: f64,
+    #[serde(rename = "turning_radius")]
+    turning_radius_m: f64,
+    #[serde(rename = "speed_target")]
+    reference_speed_mps: f64,
+    #[serde(rename = "radius_slope_per_speed")]
+    radius_slope_s: f64,
+}
+
+impl Default for SimpleAircraftParams {
+    fn default() -> Self {
+        Self {
+            min_speed_mps: 15.0,
+            max_speed_mps: 40.0,
+            max_roll_deg: 30.0,
+            max_pitch_deg: 30.0,
+            max_roll_rate_degps: 57.3,
+            max_pitch_rate_degps: 57.3,
+            turning_radius_m: 13.0,
+            reference_speed_mps: 50.0,
+            radius_slope_s: 0.0,
+        }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct AircraftConfig {
@@ -54,16 +95,17 @@ impl Plugin for SimpleAircraft {
     type Config = AircraftConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<AircraftConfig> {
+        let params: SimpleAircraftParams = params.parse()?;
         let config = AircraftConfig {
-            min_speed_mps: params.number("min_velocity", 15.0)?,
-            max_speed_mps: params.number("max_velocity", 40.0)?,
-            max_roll_model_rad: params.number("max_roll", 30.0)?.to_radians(),
-            max_pitch_model_rad: params.number("max_pitch", 30.0)?.to_radians(),
-            max_roll_rate_model_radps: params.number("max_roll_rate", 57.3)?.to_radians(),
-            max_pitch_rate_model_radps: params.number("max_pitch_rate", 57.3)?.to_radians(),
-            turning_radius_m: params.number("turning_radius", 50.0)?,
-            reference_speed_mps: params.number("speed_target", 50.0)?,
-            radius_slope_s: params.number("radius_slope_per_speed", 0.0)?,
+            min_speed_mps: params.min_speed_mps,
+            max_speed_mps: params.max_speed_mps,
+            max_roll_model_rad: params.max_roll_deg.to_radians(),
+            max_pitch_model_rad: params.max_pitch_deg.to_radians(),
+            max_roll_rate_model_radps: params.max_roll_rate_degps.to_radians(),
+            max_pitch_rate_model_radps: params.max_pitch_rate_degps.to_radians(),
+            turning_radius_m: params.turning_radius_m,
+            reference_speed_mps: params.reference_speed_mps,
+            radius_slope_s: params.radius_slope_s,
         };
 
         ensure!(
@@ -274,7 +316,7 @@ mod tests {
     #[test]
     fn nonfinite_integration_returns_an_explanatory_error() -> anyhow::Result<()> {
         let params = Params::from([("turning_radius".into(), "0".into())]);
-        let config = SimpleAircraft::configure(&PluginParams(&params))?;
+        let config = SimpleAircraft::configure(&PluginParams::new(&params))?;
         let mut aircraft = SimpleAircraft::new(&config);
         let mut truth = crate::KinematicState::default();
         let error = aircraft
@@ -290,7 +332,7 @@ mod tests {
     #[test]
     fn level_uncontrolled_aircraft_moves_forward_at_constant_speed() -> anyhow::Result<()> {
         let params = Params::new();
-        let config = SimpleAircraft::configure(&PluginParams(&params))?;
+        let config = SimpleAircraft::configure(&PluginParams::new(&params))?;
         let state = AircraftState {
             speed_mps: 20.0,
             ..AircraftState::default()
@@ -305,7 +347,7 @@ mod tests {
 
     #[test]
     fn model_pitch_roll_and_limits_retain_legacy_signs_and_operation_order() -> anyhow::Result<()> {
-        let config = SimpleAircraft::configure(&PluginParams(&Params::new()))?;
+        let config = SimpleAircraft::configure(&PluginParams::new(&Params::new()))?;
         let mut aircraft = SimpleAircraft::new(&config);
         aircraft.state = AircraftState {
             speed_mps: 100.0,

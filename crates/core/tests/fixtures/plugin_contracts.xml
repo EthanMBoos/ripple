@@ -16,6 +16,8 @@
     <controller gain="2">ScaleSpeed</controller>
     <controller gain="0.5">ScaleSpeed</controller>
     <motion_model>${motion=EastwardMotion}</motion_model>
-    <sensor bias_m="${bias_m=0}" action="${sensor_action=normal}">${sensor=PositionSensor}</sensor>
+    <!-- One parameter for whichever test sensor is selected: PositionSensor's bias_m
+         or LifecycleSensor's action. Plugins reject parameters they don't read. -->
+    <sensor ${sensor_key=bias_m}="${sensor_value=0}">${sensor=PositionSensor}</sensor>
   </entity>
 </runscript>

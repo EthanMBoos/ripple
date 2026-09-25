@@ -8,8 +8,9 @@
 mod aerodynamics;
 mod dynamics;
 
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result, bail, ensure};
 use nalgebra::{Matrix3, UnitQuaternion};
+use serde::{Deserialize, Serialize};
 
 use crate::math::{self, KinematicState, Vec3};
 use crate::plugin::{
@@ -22,6 +23,192 @@ use dynamics::{AircraftState, derivative, flip_yz};
 // Preserve the C++ rounded limit rather than replacing it with exactly pi/6.
 #[allow(clippy::approx_constant)]
 const LEGACY_SURFACE_LIMIT_RAD: f64 = 0.5236;
+/// The C++ `FixedWing6DOF.xml` inertia.
+const DEFAULT_INERTIA_SLUG_FT_SQ: &str = "[8090 0 1300] [0 25900 0] [1300 0 29200]";
+const SLUG_FT_SQ_TO_KGM2: f64 = 1.35581795;
+
+/// Mission parameters in SI units unless marked; `Default` supplies any key the
+/// mission leaves out (the C++ large-aircraft configuration).
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+struct FixedWingParams {
+    #[serde(rename = "mass")]
+    mass_kg: f64,
+    #[serde(rename = "gravity_magnitude")]
+    gravity_mps2: f64,
+    /// Three bracketed rows, in slug·ft² or SI. Give at most one; with neither,
+    /// the C++ default `DEFAULT_INERTIA_SLUG_FT_SQ` applies.
+    inertia_matrix_slug_ft_sq: Option<String>,
+    inertia_matrix: Option<String>,
+    #[serde(rename = "air_density")]
+    density_kgpm3: f64,
+    #[serde(rename = "wing_span")]
+    span_m: f64,
+    #[serde(rename = "surface_area_of_wing")]
+    area_m2: f64,
+    #[serde(rename = "chord_length")]
+    chord_m: f64,
+    #[serde(rename = "efficiency_factor")]
+    efficiency: f64,
+    #[serde(rename = "wind_E")]
+    wind_east_mps: f64,
+    #[serde(rename = "wind_N")]
+    wind_north_mps: f64,
+    #[serde(rename = "wind_U")]
+    wind_up_mps: f64,
+    #[serde(rename = "throttle_input_min")]
+    throttle_min: f64,
+    #[serde(rename = "throttle_input_max")]
+    throttle_max: f64,
+    #[serde(rename = "thrust_min")]
+    thrust_min_n: f64,
+    #[serde(rename = "thrust_max")]
+    thrust_max_n: f64,
+    #[serde(rename = "delta_elevator_min")]
+    elevator_min_rad: f64,
+    #[serde(rename = "delta_elevator_max")]
+    elevator_max_rad: f64,
+    #[serde(rename = "delta_aileron_min")]
+    aileron_min_rad: f64,
+    #[serde(rename = "delta_aileron_max")]
+    aileron_max_rad: f64,
+    #[serde(rename = "delta_rudder_min")]
+    rudder_min_rad: f64,
+    #[serde(rename = "delta_rudder_max")]
+    rudder_max_rad: f64,
+    #[serde(rename = "C_D0")]
+    c_d0: f64,
+    #[serde(rename = "C_D_alpha")]
+    c_d_alpha: f64,
+    /// C++ reads the key WITH the trailing underscore.
+    #[serde(rename = "C_D_delta_elevator_")]
+    c_d_elevator: f64,
+    #[serde(rename = "C_L0")]
+    c_l0: f64,
+    #[serde(rename = "C_L_alpha")]
+    c_l_alpha: f64,
+    #[serde(rename = "C_LQ")]
+    c_lq: f64,
+    /// Always zero in the reference; read only so a bad value is still an error.
+    #[serde(rename = "C_L_alpha_dot")]
+    _c_l_alpha_dot: f64,
+    #[serde(rename = "C_L_delta_elevator")]
+    c_l_elevator: f64,
+    #[serde(rename = "C_Y_beta")]
+    c_y_beta: f64,
+    #[serde(rename = "C_Y_delta_rudder")]
+    c_y_rudder: f64,
+    #[serde(rename = "C_L_beta")]
+    c_roll_beta: f64,
+    #[serde(rename = "C_LP")]
+    c_roll_p: f64,
+    #[serde(rename = "C_LR")]
+    c_roll_r: f64,
+    #[serde(rename = "C_L_delta_aileron")]
+    c_roll_aileron: f64,
+    #[serde(rename = "C_L_delta_rudder")]
+    c_roll_rudder: f64,
+    #[serde(rename = "C_M0")]
+    c_m0: f64,
+    #[serde(rename = "C_M_alpha")]
+    c_m_alpha: f64,
+    #[serde(rename = "C_MQ")]
+    c_mq: f64,
+    /// Always zero in the reference; read only so a bad value is still an error.
+    #[serde(rename = "C_M_alpha_dot")]
+    _c_m_alpha_dot: f64,
+    #[serde(rename = "C_M_delta_elevator")]
+    c_m_elevator: f64,
+    #[serde(rename = "C_N_beta")]
+    c_n_beta: f64,
+    #[serde(rename = "C_NP")]
+    c_np: f64,
+    #[serde(rename = "C_NR")]
+    c_nr: f64,
+    #[serde(rename = "C_N_delta_aileron")]
+    c_n_aileron: f64,
+    #[serde(rename = "C_N_delta_rudder")]
+    c_n_rudder: f64,
+    /// The key C++ does NOT read (no trailing underscore); rejected so a tuning
+    /// value is not silently ignored.
+    #[serde(rename = "C_D_delta_elevator")]
+    c_d_elevator_ignored_by_cpp: Option<f64>,
+    use_ground_model: bool,
+    use_launcher: bool,
+    #[serde(rename = "launch_time")]
+    launch_time_s: f64,
+    #[serde(rename = "launch_accel")]
+    launch_accel_mps2: f64,
+    #[serde(rename = "launch_speed")]
+    launch_speed_mps: f64,
+    /// Not supported; use the run's frames and Rerun recording. Must stay false.
+    write_csv: bool,
+    draw_vel: bool,
+    draw_ang_vel: bool,
+}
+
+impl Default for FixedWingParams {
+    fn default() -> Self {
+        Self {
+            mass_kg: 7973.2467,
+            gravity_mps2: 9.81,
+            inertia_matrix_slug_ft_sq: None,
+            inertia_matrix: None,
+            density_kgpm3: 1.225,
+            span_m: 8.382,
+            area_m2: 24.1548,
+            chord_m: 3.29184,
+            efficiency: 0.995,
+            wind_east_mps: 0.0,
+            wind_north_mps: 0.0,
+            wind_up_mps: 0.0,
+            throttle_min: 0.0,
+            throttle_max: 1.0,
+            thrust_min_n: -36000.0,
+            thrust_max_n: 36000.0,
+            elevator_min_rad: -LEGACY_SURFACE_LIMIT_RAD,
+            elevator_max_rad: LEGACY_SURFACE_LIMIT_RAD,
+            aileron_min_rad: -LEGACY_SURFACE_LIMIT_RAD,
+            aileron_max_rad: LEGACY_SURFACE_LIMIT_RAD,
+            rudder_min_rad: -0.2618,
+            rudder_max_rad: 0.2618,
+            c_d0: 0.03,
+            c_d_alpha: 0.3,
+            c_d_elevator: 0.01,
+            c_l0: 0.28,
+            c_l_alpha: 3.45,
+            c_lq: 0.0,
+            _c_l_alpha_dot: 0.72,
+            c_l_elevator: 0.36,
+            c_y_beta: -0.98,
+            c_y_rudder: 0.17,
+            c_roll_beta: -0.12,
+            c_roll_p: -0.26,
+            c_roll_r: 0.14,
+            c_roll_aileron: 0.08,
+            c_roll_rudder: -0.105,
+            c_m0: 0.0,
+            c_m_alpha: -0.38,
+            c_mq: -3.6,
+            _c_m_alpha_dot: -1.1,
+            c_m_elevator: -0.5,
+            c_n_beta: 0.25,
+            c_np: 0.022,
+            c_nr: -0.35,
+            c_n_aileron: 0.06,
+            c_n_rudder: 0.032,
+            c_d_elevator_ignored_by_cpp: None,
+            use_ground_model: true,
+            use_launcher: false,
+            launch_time_s: 30.0,
+            launch_accel_mps2: 200.0,
+            launch_speed_mps: 20.0,
+            write_csv: false,
+            draw_vel: false,
+            draw_ang_vel: false,
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct FixedWingConfig {
@@ -73,64 +260,59 @@ impl Plugin for FixedWing6Dof {
     type Config = FixedWingConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<FixedWingConfig> {
-        for key in ["write_csv", "draw_vel", "draw_ang_vel"] {
+        let params: FixedWingParams = params.parse()?;
+        for (key, enabled) in [
+            ("write_csv", params.write_csv),
+            ("draw_vel", params.draw_vel),
+            ("draw_ang_vel", params.draw_ang_vel),
+        ] {
             ensure!(
-                !params.boolean(key, false)?,
+                !enabled,
                 "FixedWing6DOF {key}=true is not supported; use the run's frames and Rerun recording"
             );
         }
-        // Do not silently accept a tuning value that the C++ source ignores.
         ensure!(
-            params.number("C_D_delta_elevator", 0.01)? == 0.01,
+            params.c_d_elevator_ignored_by_cpp.is_none(),
             "use C_D_delta_elevator_ (trailing underscore), the key read by C++ FixedWing6DOF"
         );
-        let inertia_kgm2 = parse_inertia(params)?;
+        ensure!(
+            params.elevator_min_rad <= params.elevator_max_rad
+                && params.aileron_min_rad <= params.aileron_max_rad
+                && params.rudder_min_rad <= params.rudder_max_rad,
+            "FixedWing6DOF requires each delta_*_min <= delta_*_max"
+        );
+        let inertia_kgm2 = parse_inertia(&params)?;
         let inverse_inertia = inertia_kgm2
             .try_inverse()
             .context("FixedWing6DOF inertia must be invertible")?;
         let config = FixedWingConfig {
-            mass_kg: params.number("mass", 1.2)?,
-            gravity_mps2: params.number("gravity_magnitude", 9.81)?,
+            mass_kg: params.mass_kg,
+            gravity_mps2: params.gravity_mps2,
             inertia_kgm2,
             inverse_inertia,
-            density_kgpm3: params.number("air_density", 1.225)?,
-            span_m: params.number("wing_span", 8.382)?,
-            area_m2: params.number("surface_area_of_wing", 24.1548)?,
-            chord_m: params.number("chord_length", 3.29184)?,
-            efficiency: params.number("efficiency_factor", 0.995)?,
+            density_kgpm3: params.density_kgpm3,
+            span_m: params.span_m,
+            area_m2: params.area_m2,
+            chord_m: params.chord_m,
+            efficiency: params.efficiency,
             wind_world_mps: Vec3::new(
-                params.number("wind_E", 0.0)?,
-                params.number("wind_N", 0.0)?,
-                params.number("wind_U", 0.0)?,
+                params.wind_east_mps,
+                params.wind_north_mps,
+                params.wind_up_mps,
             ),
-            throttle_min: params.number("throttle_input_min", 0.0)?,
-            throttle_max: params.number("throttle_input_max", 1.0)?,
-            thrust_min_n: params.number("thrust_min", -100_000.0)?,
-            thrust_max_n: params.number("thrust_max", 100_000.0)?,
-            elevator_limits_rad: surface_limits(
-                params,
-                "delta_elevator_min",
-                "delta_elevator_max",
-                LEGACY_SURFACE_LIMIT_RAD,
-            )?,
-            aileron_limits_rad: surface_limits(
-                params,
-                "delta_aileron_min",
-                "delta_aileron_max",
-                LEGACY_SURFACE_LIMIT_RAD,
-            )?,
-            rudder_limits_rad: surface_limits(
-                params,
-                "delta_rudder_min",
-                "delta_rudder_max",
-                0.2618,
-            )?,
-            aerodynamics: Aerodynamics::parse(params)?,
-            use_ground_model: params.boolean("use_ground_model", true)?,
-            use_launcher: params.boolean("use_launcher", false)?,
-            launch_time_s: params.number("launch_time", 30.0)?,
-            launch_accel_mps2: params.number("launch_accel", 200.0)?,
-            launch_speed_mps: params.number("launch_speed", 20.0)?,
+            throttle_min: params.throttle_min,
+            throttle_max: params.throttle_max,
+            thrust_min_n: params.thrust_min_n,
+            thrust_max_n: params.thrust_max_n,
+            elevator_limits_rad: [params.elevator_min_rad, params.elevator_max_rad],
+            aileron_limits_rad: [params.aileron_min_rad, params.aileron_max_rad],
+            rudder_limits_rad: [params.rudder_min_rad, params.rudder_max_rad],
+            aerodynamics: Aerodynamics::new(&params),
+            use_ground_model: params.use_ground_model,
+            use_launcher: params.use_launcher,
+            launch_time_s: params.launch_time_s,
+            launch_accel_mps2: params.launch_accel_mps2,
+            launch_speed_mps: params.launch_speed_mps,
         };
         ensure!(
             config.mass_kg > 0.0
@@ -311,30 +493,14 @@ impl FixedWingConfig {
     }
 }
 
-fn surface_limits(
-    params: &PluginParams<'_>,
-    min_key: &str,
-    max_key: &str,
-    magnitude_rad: f64,
-) -> Result<[f64; 2]> {
-    let min_rad = params.number(min_key, -magnitude_rad)?;
-    let max_rad = params.number(max_key, magnitude_rad)?;
-    ensure!(
-        min_rad <= max_rad,
-        "FixedWing6DOF requires {min_key} <= {max_key}"
-    );
-    Ok([min_rad, max_rad])
-}
-
-fn parse_inertia(params: &PluginParams<'_>) -> Result<Matrix3<f64>> {
-    // Legacy precedence: bundled slug defaults hide a mission's SI override.
-    // Change the bundled defaults to SI when correcting this model locally.
-    let (text, factor) = if let Some(text) = params.text("inertia_matrix_slug_ft_sq") {
-        (text, 1.35581795)
-    } else if let Some(text) = params.text("inertia_matrix") {
-        (text, 1.0)
-    } else {
-        return Ok(Matrix3::identity());
+fn parse_inertia(params: &FixedWingParams) -> Result<Matrix3<f64>> {
+    let (text, factor) = match (&params.inertia_matrix_slug_ft_sq, &params.inertia_matrix) {
+        (Some(_), Some(_)) => {
+            bail!("FixedWing6DOF takes inertia_matrix_slug_ft_sq or inertia_matrix, not both")
+        }
+        (Some(text), None) => (text.as_str(), SLUG_FT_SQ_TO_KGM2),
+        (None, Some(text)) => (text.as_str(), 1.0),
+        (None, None) => (DEFAULT_INERTIA_SLUG_FT_SQ, SLUG_FT_SQ_TO_KGM2),
     };
     let text = text.replace(['[', ']'], " ");
     let mut values = Vec::new();
@@ -365,6 +531,7 @@ mod tests {
         Params,
         plugin::{Plugin, PluginParams},
     };
+    use nalgebra::{Matrix3, Vector3};
 
     #[test]
     fn throttle_scaling_clamps_like_cpp_utilities_scale() -> anyhow::Result<()> {
@@ -372,7 +539,7 @@ mod tests {
             ("thrust_min".into(), "-36000".into()),
             ("thrust_max".into(), "36000".into()),
         ]);
-        let config = FixedWing6Dof::configure(&PluginParams(&params))?;
+        let config = FixedWing6Dof::configure(&PluginParams::new(&params))?;
         for (input, expected_n) in [
             (-2.0, -36000.0),
             (-1.0, -36000.0),
@@ -383,6 +550,32 @@ mod tests {
         ] {
             assert!((config.thrust_n(input) - expected_n).abs() < 1e-9);
         }
+        Ok(())
+    }
+
+    #[test]
+    fn either_inertia_unit_takes_effect_but_not_both() -> anyhow::Result<()> {
+        let slug = "[8090 0 1300] [0 25900 0] [1300 0 29200]";
+        let default = FixedWing6Dof::configure(&PluginParams::new(&Params::new()))?;
+        let params = Params::from([("inertia_matrix_slug_ft_sq".into(), slug.into())]);
+        let explicit = FixedWing6Dof::configure(&PluginParams::new(&params))?;
+        assert_eq!(default.inertia_kgm2, explicit.inertia_kgm2);
+
+        let si = "[2 0 0] [0 3 0] [0 0 4]";
+        let params = Params::from([("inertia_matrix".into(), si.into())]);
+        let config = FixedWing6Dof::configure(&PluginParams::new(&params))?;
+        assert_eq!(
+            config.inertia_kgm2,
+            Matrix3::from_diagonal(&Vector3::new(2.0, 3.0, 4.0))
+        );
+
+        let params = Params::from([("inertia_matrix".into(), "[1 2 3] [4 5 6]".into())]);
+        assert!(FixedWing6Dof::configure(&PluginParams::new(&params)).is_err());
+        let params = Params::from([
+            ("inertia_matrix".into(), si.into()),
+            ("inertia_matrix_slug_ft_sq".into(), slug.into()),
+        ]);
+        assert!(FixedWing6Dof::configure(&PluginParams::new(&params)).is_err());
         Ok(())
     }
 }

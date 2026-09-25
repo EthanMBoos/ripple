@@ -6,6 +6,7 @@
 //! Bids come from this plugin's mission-seeded stream, not C++'s shared generator.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::plugin::{
     AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
@@ -15,10 +16,25 @@ pub const START_AUCTION_TOPIC: &str = "StartAuction";
 pub const BID_AUCTION_TOPIC: &str = "BidAuction";
 pub const RESULT_AUCTION_TOPIC: &str = "ResultAuction";
 
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct AuctionAssignConfig {
     auctioneer: bool,
+    #[serde(rename = "auction_duration_s")]
     duration_s: f64,
+    #[serde(rename = "network_name")]
     network: String,
+}
+
+impl Default for AuctionAssignConfig {
+    fn default() -> Self {
+        Self {
+            auctioneer: true,
+            duration_s: 5.0,
+            network: "SphereNetwork".into(),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -51,18 +67,16 @@ impl Plugin for AuctionAssign {
     type Config = AuctionAssignConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<AuctionAssignConfig> {
-        let duration_s = params.number("auction_duration_s", 5.0)?;
-        ensure!(duration_s >= 0.0, "auction_duration_s must be nonnegative");
-        let network = params.text("network_name").unwrap_or("SphereNetwork");
+        let config: AuctionAssignConfig = params.parse()?;
         ensure!(
-            !network.trim().is_empty(),
+            config.duration_s >= 0.0,
+            "auction_duration_s must be nonnegative"
+        );
+        ensure!(
+            !config.network.trim().is_empty(),
             "AuctionAssign network_name must not be empty"
         );
-        Ok(AuctionAssignConfig {
-            auctioneer: params.boolean("auctioneer", true)?,
-            duration_s,
-            network: network.to_owned(),
-        })
+        Ok(config)
     }
 
     fn new(config: &AuctionAssignConfig) -> Self {

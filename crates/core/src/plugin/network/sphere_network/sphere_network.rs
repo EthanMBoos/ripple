@@ -5,17 +5,43 @@
 //! Loss draws come from this network's mission-seeded stream, not C++'s shared generator.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::plugin::{
     Delivery, Network, NetworkContext, Plugin, PluginParams, Transmission, Update,
 };
 
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct SphereNetworkConfig {
+    #[serde(rename = "range")]
     range_m: f64,
+    #[serde(rename = "prob_transmit")]
     probability_transmit: f64,
     filter_comms_plane: bool,
+    #[serde(rename = "comms_boundary_altitude")]
     boundary_altitude_m: f64,
+    #[serde(rename = "comms_boundary_epsilon")]
     boundary_epsilon_m: f64,
+    /// Legacy delay modes are not implemented; must stay false and negative.
+    is_stochastic_delay: bool,
+    #[serde(rename = "comm_delay")]
+    comm_delay_s: f64,
+}
+
+impl Default for SphereNetworkConfig {
+    fn default() -> Self {
+        Self {
+            range_m: 100.0,
+            probability_transmit: 1.0,
+            filter_comms_plane: false,
+            boundary_altitude_m: 0.0,
+            boundary_epsilon_m: 0.0,
+            is_stochastic_delay: false,
+            comm_delay_s: -1.0,
+        }
+    }
 }
 
 pub struct SphereNetwork {
@@ -30,30 +56,24 @@ impl Plugin for SphereNetwork {
     type Config = SphereNetworkConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<SphereNetworkConfig> {
-        let range_m = params.number("range", 100.0)?;
-        let probability_transmit = params.number("prob_transmit", 1.0)?;
-        let boundary_epsilon_m = params.number("comms_boundary_epsilon", 0.0)?;
-        ensure!(range_m >= 0.0, "SphereNetwork range must be nonnegative");
+        let config: SphereNetworkConfig = params.parse()?;
         ensure!(
-            (0.0..=1.0).contains(&probability_transmit),
+            config.range_m >= 0.0,
+            "SphereNetwork range must be nonnegative"
+        );
+        ensure!(
+            (0.0..=1.0).contains(&config.probability_transmit),
             "prob_transmit must be in [0, 1]"
         );
         ensure!(
-            boundary_epsilon_m >= 0.0,
+            config.boundary_epsilon_m >= 0.0,
             "comms_boundary_epsilon must be nonnegative"
         );
         ensure!(
-            !params.boolean("is_stochastic_delay", false)?
-                && params.number("comm_delay", -1.0)? < 0.0,
+            !config.is_stochastic_delay && config.comm_delay_s < 0.0,
             "SphereNetwork supports immediate delivery only; legacy delay modes are not implemented"
         );
-        Ok(SphereNetworkConfig {
-            range_m,
-            probability_transmit,
-            filter_comms_plane: params.boolean("filter_comms_plane", false)?,
-            boundary_altitude_m: params.number("comms_boundary_altitude", 0.0)?,
-            boundary_epsilon_m,
-        })
+        Ok(config)
     }
 
     fn new(config: &SphereNetworkConfig) -> Self {
@@ -174,7 +194,7 @@ mod tests {
     #[test]
     fn range_is_three_dimensional_and_uses_each_current_snapshot() -> anyhow::Result<()> {
         let params = Params::from([("range".into(), "5".into())]);
-        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams(&params))?);
+        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams::new(&params))?);
         for (position, expected) in [
             (Vec3::new(3.0, 0.0, 3.999), true),
             (Vec3::new(3.0, 0.0, 4.0), false),
@@ -201,7 +221,7 @@ mod tests {
             ("comms_boundary_altitude".into(), "10".into()),
             ("comms_boundary_epsilon".into(), "1".into()),
         ]);
-        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams(&params))?);
+        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams::new(&params))?);
         for (z1, z2, expected) in [
             (8.0, 12.0, false),
             (9.0, 12.0, true),
@@ -240,7 +260,7 @@ mod tests {
         ] {
             let params = Params::from([(key.into(), value.into())]);
             assert!(
-                SphereNetwork::configure(&PluginParams(&params)).is_err(),
+                SphereNetwork::configure(&PluginParams::new(&params)).is_err(),
                 "{key}={value}"
             );
         }

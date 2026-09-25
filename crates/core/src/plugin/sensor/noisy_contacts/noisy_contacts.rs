@@ -6,8 +6,9 @@
 
 use anyhow::{Result, ensure};
 use nalgebra::Matrix3;
+use serde::{Deserialize, Serialize};
 
-use super::noisy_state::StateNoise;
+use super::noisy_state::{AxisNoise, StateNoise};
 use crate::math::KinematicState;
 use crate::plugin::sensor::StateWithCovariance;
 use crate::plugin::{
@@ -15,6 +16,41 @@ use crate::plugin::{
 };
 
 pub const CONTACTS_TOPIC: &str = "ContactsWithCovariances";
+
+/// Mission parameters: the topic plus NoisyState's nine `mean standard_deviation`
+/// keys. `Default` supplies any key the mission leaves out.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+struct NoisyContactsParams {
+    topic_name: String,
+    pos_noise_0: AxisNoise,
+    pos_noise_1: AxisNoise,
+    pos_noise_2: AxisNoise,
+    vel_noise_0: AxisNoise,
+    vel_noise_1: AxisNoise,
+    vel_noise_2: AxisNoise,
+    orient_noise_0: AxisNoise,
+    orient_noise_1: AxisNoise,
+    orient_noise_2: AxisNoise,
+}
+
+impl Default for NoisyContactsParams {
+    fn default() -> Self {
+        let noise = StateNoise::default();
+        Self {
+            topic_name: CONTACTS_TOPIC.into(),
+            pos_noise_0: noise.position_m[0],
+            pos_noise_1: noise.position_m[1],
+            pos_noise_2: noise.position_m[2],
+            vel_noise_0: noise.velocity_mps[0],
+            vel_noise_1: noise.velocity_mps[1],
+            vel_noise_2: noise.velocity_mps[2],
+            orient_noise_0: noise.orientation_rad[0],
+            orient_noise_1: noise.orientation_rad[1],
+            orient_noise_2: noise.orientation_rad[2],
+        }
+    }
+}
 
 pub struct NoisyContactsConfig {
     topic: String,
@@ -44,14 +80,24 @@ impl Plugin for NoisyContacts {
     type Config = NoisyContactsConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<NoisyContactsConfig> {
-        let topic = params.text("topic_name").unwrap_or(CONTACTS_TOPIC);
+        let params: NoisyContactsParams = params.parse()?;
         ensure!(
-            !topic.trim().is_empty(),
+            !params.topic_name.trim().is_empty(),
             "NoisyContacts topic_name must not be empty"
         );
+        let noise = StateNoise {
+            position_m: [params.pos_noise_0, params.pos_noise_1, params.pos_noise_2],
+            velocity_mps: [params.vel_noise_0, params.vel_noise_1, params.vel_noise_2],
+            orientation_rad: [
+                params.orient_noise_0,
+                params.orient_noise_1,
+                params.orient_noise_2,
+            ],
+        };
+        noise.validate()?;
         Ok(NoisyContactsConfig {
-            topic: topic.to_owned(),
-            noise: StateNoise::parse(params)?,
+            topic: params.topic_name,
+            noise,
         })
     }
 
@@ -217,7 +263,7 @@ mod tests {
     fn invalid_noise_parameters_are_rejected() {
         for value in ["0 -1", "NaN 1", "0 inf", "0 1 2"] {
             let params = Params::from([("pos_noise_0".into(), value.into())]);
-            assert!(NoisyContacts::configure(&PluginParams(&params)).is_err());
+            assert!(NoisyContacts::configure(&PluginParams::new(&params)).is_err());
         }
     }
 }

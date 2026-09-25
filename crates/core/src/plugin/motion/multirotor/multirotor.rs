@@ -10,6 +10,7 @@ mod dynamics;
 
 use anyhow::{Context, Result, ensure};
 use nalgebra::Matrix3;
+use serde::{Deserialize, Serialize};
 
 use crate::math::{self, KinematicState, Vec3};
 use crate::plugin::{
@@ -17,6 +18,58 @@ use crate::plugin::{
 };
 
 use dynamics::{RotorcraftState, derivative};
+
+/// Mission parameters; `Default` supplies any key the mission leaves out
+/// (the C++ quadrotor defaults).
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+struct MultirotorParams {
+    #[serde(rename = "mass")]
+    mass_kg: f64,
+    #[serde(rename = "gravity_magnitude")]
+    gravity_mps2: f64,
+    /// Three bracketed rows, kg m^2.
+    inertia_matrix: String,
+    /// Drag D = 0.5 c_D |V| V.
+    #[serde(rename = "c_D")]
+    drag_coefficient: f64,
+    /// Thrust = c_T w^2 (N).
+    #[serde(rename = "c_T")]
+    thrust_coefficient: f64,
+    /// Torque = c_Q w^2 (N m).
+    #[serde(rename = "c_Q")]
+    torque_coefficient: f64,
+    #[serde(rename = "omega_min")]
+    omega_min_radps: f64,
+    #[serde(rename = "omega_max")]
+    omega_max_radps: f64,
+    /// One row per rotor, `[direction x y z roll pitch yaw]` in body forward/left/up.
+    /// Rotor i reads input motor_i (rad/s).
+    rotor_config: String,
+    /// Not supported; use the run's frames and Rerun. Must stay false.
+    write_csv: bool,
+    show_shapes: bool,
+}
+
+impl Default for MultirotorParams {
+    fn default() -> Self {
+        Self {
+            mass_kg: 1.5,
+            gravity_mps2: 9.81,
+            inertia_matrix: "[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]".into(),
+            drag_coefficient: 0.058,
+            thrust_coefficient: 5.45e-6,
+            torque_coefficient: 2.284e-7,
+            omega_min_radps: 346.41,
+            omega_max_radps: 1200.0,
+            rotor_config: "[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] \
+                           [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]"
+                .into(),
+            write_csv: false,
+            show_shapes: false,
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct MultirotorConfig {
@@ -56,19 +109,18 @@ impl Plugin for Multirotor {
     type Config = MultirotorConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
-        for key in ["write_csv", "show_shapes"] {
-            ensure!(
-                !params.boolean(key, false)?,
-                "Multirotor {key}=true is not supported; use run frames and Rerun"
-            );
-        }
-        let inertia_kgm2 = if let Some(text) = params.text("inertia_matrix") {
-            let values = numbers(&text.replace(['[', ']'], " "))?;
-            ensure!(values.len() == 9, "Multirotor inertia requires nine values");
-            Matrix3::from_row_slice(&values)
-        } else {
-            Matrix3::identity()
-        };
+        let params: MultirotorParams = params.parse()?;
+        ensure!(
+            !params.write_csv,
+            "Multirotor write_csv=true is not supported; use run frames and Rerun"
+        );
+        ensure!(
+            !params.show_shapes,
+            "Multirotor show_shapes=true is not supported; use run frames and Rerun"
+        );
+        let values = numbers(&params.inertia_matrix.replace(['[', ']'], " "))?;
+        ensure!(values.len() == 9, "Multirotor inertia requires nine values");
+        let inertia_kgm2 = Matrix3::from_row_slice(&values);
         ensure!(
             (inertia_kgm2 - inertia_kgm2.transpose()).norm() < 1e-9
                 && inertia_kgm2.cholesky().is_some(),
@@ -78,20 +130,16 @@ impl Plugin for Multirotor {
             .try_inverse()
             .context("Multirotor inertia must be invertible")?;
         let config = MultirotorConfig {
-            mass_kg: params.number("mass", 1.2)?,
-            gravity_mps2: params.number("gravity_magnitude", 9.81)?,
+            mass_kg: params.mass_kg,
+            gravity_mps2: params.gravity_mps2,
             inertia_kgm2,
             inverse_inertia,
-            drag_coefficient: params.number("c_D", 0.058)?,
-            thrust_coefficient: params.number("c_T", 5.45e-6)?,
-            torque_coefficient: params.number("c_Q", 2.284e-7)?,
-            omega_min_radps: params.number("omega_min", 346.41)?,
-            omega_max_radps: params.number("omega_max", 1200.0)?,
-            rotors: parse_rotors(
-                params
-                    .text("rotor_config")
-                    .context("Multirotor requires rotor_config")?,
-            )?,
+            drag_coefficient: params.drag_coefficient,
+            thrust_coefficient: params.thrust_coefficient,
+            torque_coefficient: params.torque_coefficient,
+            omega_min_radps: params.omega_min_radps,
+            omega_max_radps: params.omega_max_radps,
+            rotors: parse_rotors(&params.rotor_config)?,
         };
         ensure!(
             config.mass_kg > 0.0
@@ -250,11 +298,13 @@ mod tests {
         let params = Params::from([
             ("mass".into(), "1.5".into()),
             ("c_D".into(), "0".into()),
+            // Unit inertia keeps the expected rates equal to the applied torques.
+            ("inertia_matrix".into(), "[1 0 0] [0 1 0] [0 0 1]".into()),
             ("rotor_config".into(), "[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]".into()),
         ]);
-        Ok(Multirotor::new(&Multirotor::configure(&PluginParams(
-            &params,
-        ))?))
+        Ok(Multirotor::new(&Multirotor::configure(
+            &PluginParams::new(&params),
+        )?))
     }
 
     #[test]

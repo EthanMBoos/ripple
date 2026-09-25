@@ -4,18 +4,40 @@
 //! Startup checks candidate positions; the interaction phase marks collisions and emits events.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
 use crate::{Entity, EventKind, Vec3};
 
-#[derive(Clone)]
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct CollisionConfig {
+    #[serde(rename = "collision_range")]
     collision_range_m: f64,
+    #[serde(rename = "startup_collision_range")]
     startup_collision_range_m: f64,
+    #[serde(rename = "startup_collisions_only")]
     startup_only: bool,
+    #[serde(rename = "enable_team_collisions")]
     same_team_enabled: bool,
+    #[serde(rename = "enable_non_team_collisions")]
     opposing_team_enabled: bool,
+    #[serde(rename = "init_alt_deconflict")]
     altitude_deconfliction: bool,
+}
+
+impl Default for CollisionConfig {
+    fn default() -> Self {
+        Self {
+            collision_range_m: 2.0,
+            startup_collision_range_m: 2.0,
+            startup_only: false,
+            same_team_enabled: true,
+            opposing_team_enabled: true,
+            altitude_deconfliction: false,
+        }
+    }
 }
 
 pub struct SimpleCollision {
@@ -26,21 +48,12 @@ impl Plugin for SimpleCollision {
     type Config = CollisionConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<CollisionConfig> {
-        let collision_range_m = params.number("collision_range", 0.0)?;
-        let startup_collision_range_m =
-            params.number("startup_collision_range", collision_range_m)?;
+        let config: CollisionConfig = params.parse()?;
         ensure!(
-            collision_range_m >= 0.0 && startup_collision_range_m >= 0.0,
+            config.collision_range_m >= 0.0 && config.startup_collision_range_m >= 0.0,
             "collision ranges must be nonnegative"
         );
-        Ok(CollisionConfig {
-            collision_range_m,
-            startup_collision_range_m,
-            startup_only: params.boolean("startup_collisions_only", false)?,
-            same_team_enabled: params.boolean("enable_team_collisions", true)?,
-            opposing_team_enabled: params.boolean("enable_non_team_collisions", true)?,
-            altitude_deconfliction: params.boolean("init_alt_deconflict", false)?,
-        })
+        Ok(config)
     }
 
     fn new(config: &CollisionConfig) -> Self {

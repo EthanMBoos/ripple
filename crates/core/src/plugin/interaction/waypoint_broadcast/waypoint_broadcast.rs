@@ -2,14 +2,31 @@
 //! Interaction phase; ordinary typed GlobalNetwork messages, no services or spawn commands.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::common::{WAYPOINT_TOPIC, WaypointList};
 use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
 
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct WaypointBroadcastConfig {
+    #[serde(rename = "waypoints")]
     initial: WaypointList,
+    /// Optional replacement route, published once `update_at_s` is reached.
+    #[serde(rename = "update_waypoints")]
     replacement: Option<WaypointList>,
-    update_at_s: f64,
+    update_at_s: Option<f64>,
+}
+
+impl Default for WaypointBroadcastConfig {
+    fn default() -> Self {
+        Self {
+            initial: WaypointList::default_route(),
+            replacement: None,
+            update_at_s: None,
+        }
+    }
 }
 
 pub struct WaypointBroadcast {
@@ -22,25 +39,20 @@ impl Plugin for WaypointBroadcast {
     type Config = WaypointBroadcastConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
+        let config: WaypointBroadcastConfig = params.parse()?;
         ensure!(
-            params.text("update_waypoints").is_some() == params.text("update_at_s").is_some(),
+            config.replacement.is_some() == config.update_at_s.is_some(),
             "provide both update_waypoints and update_at_s"
         );
-        Ok(WaypointBroadcastConfig {
-            initial: WaypointList::parse(params.text("waypoints").unwrap_or("0,0,200"))?,
-            replacement: params
-                .text("update_waypoints")
-                .map(WaypointList::parse)
-                .transpose()?,
-            update_at_s: params.number("update_at_s", 0.0)?,
-        })
+        Ok(config)
     }
 
     fn new(config: &Self::Config) -> Self {
         Self {
             initial: Some(config.initial.clone()),
             replacement: config.replacement.clone(),
-            update_at_s: config.update_at_s,
+            // Unused when there is no replacement route.
+            update_at_s: config.update_at_s.unwrap_or(0.0),
         }
     }
 }

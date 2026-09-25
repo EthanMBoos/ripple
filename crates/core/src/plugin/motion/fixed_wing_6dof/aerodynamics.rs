@@ -3,11 +3,9 @@
 
 use std::f64::consts::PI;
 
-use anyhow::Result;
+use crate::math::Vec3;
 
-use crate::{math::Vec3, plugin::PluginParams};
-
-use super::Control;
+use super::{Control, FixedWingParams};
 
 /// Coefficient names deliberately match the aircraft equations and XML keys.
 #[derive(Clone)]
@@ -51,37 +49,32 @@ pub(super) struct Loads {
 }
 
 impl Aerodynamics {
-    pub fn parse(params: &PluginParams<'_>) -> Result<Self> {
-        // Alpha-dot is always zero in the reference. Parse the values for basic
-        // input checking, but do not invent a new unsteady aerodynamic model.
-        params.number("C_L_alpha_dot", 0.72)?;
-        params.number("C_M_alpha_dot", -1.1)?;
-        Ok(Self {
-            c_d0: params.number("C_D0", 0.03)?,
-            c_d_alpha: params.number("C_D_alpha", 0.3)?,
-            // Preserve the source's trailing-underscore key (not the XML typo).
-            c_d_elevator: params.number("C_D_delta_elevator_", 0.01)?,
-            c_l0: params.number("C_L0", 0.28)?,
-            c_l_alpha: params.number("C_L_alpha", 3.45)?,
-            c_lq: params.number("C_LQ", 0.0)?,
-            c_l_elevator: params.number("C_L_delta_elevator", 0.36)?,
-            c_y_beta: params.number("C_Y_beta", -0.98)?,
-            c_y_rudder: params.number("C_Y_delta_rudder", 0.17)?,
-            c_roll_beta: params.number("C_L_beta", -0.12)?,
-            c_roll_p: params.number("C_LP", -0.26)?,
-            c_roll_r: params.number("C_LR", 0.14)?,
-            c_roll_aileron: params.number("C_L_delta_aileron", 0.08)?,
-            c_roll_rudder: params.number("C_L_delta_rudder", -0.105)?,
-            c_m0: params.number("C_M0", 0.0)?,
-            c_m_alpha: params.number("C_M_alpha", -0.38)?,
-            c_mq: params.number("C_MQ", -3.6)?,
-            c_m_elevator: params.number("C_M_delta_elevator", -0.5)?,
-            c_n_beta: params.number("C_N_beta", 0.25)?,
-            c_np: params.number("C_NP", 0.022)?,
-            c_nr: params.number("C_NR", -0.35)?,
-            c_n_aileron: params.number("C_N_delta_aileron", 0.06)?,
-            c_n_rudder: params.number("C_N_delta_rudder", 0.032)?,
-        })
+    pub(super) fn new(params: &FixedWingParams) -> Self {
+        Self {
+            c_d0: params.c_d0,
+            c_d_alpha: params.c_d_alpha,
+            c_d_elevator: params.c_d_elevator,
+            c_l0: params.c_l0,
+            c_l_alpha: params.c_l_alpha,
+            c_lq: params.c_lq,
+            c_l_elevator: params.c_l_elevator,
+            c_y_beta: params.c_y_beta,
+            c_y_rudder: params.c_y_rudder,
+            c_roll_beta: params.c_roll_beta,
+            c_roll_p: params.c_roll_p,
+            c_roll_r: params.c_roll_r,
+            c_roll_aileron: params.c_roll_aileron,
+            c_roll_rudder: params.c_roll_rudder,
+            c_m0: params.c_m0,
+            c_m_alpha: params.c_m_alpha,
+            c_mq: params.c_mq,
+            c_m_elevator: params.c_m_elevator,
+            c_n_beta: params.c_n_beta,
+            c_np: params.c_np,
+            c_nr: params.c_nr,
+            c_n_aileron: params.c_n_aileron,
+            c_n_rudder: params.c_n_rudder,
+        }
     }
 
     pub fn loads(

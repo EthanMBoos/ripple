@@ -23,12 +23,15 @@ Start by copying the built-in for your type. They all follow the same layout.
 ## Anatomy of a plugin
 
 ```rust,ignore
-pub struct MyConfig { /* validated parameters */ }
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct MyConfig { /* mission parameters */ }
+impl Default for MyConfig { /* the value of each parameter a mission omits */ }
 pub struct MyPlugin { /* per-entity state that persists between ticks */ }
 
 impl Plugin for MyPlugin {
     type Config = MyConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<MyConfig> { /* parse + validate */ }
+    fn configure(params: &PluginParams<'_>) -> Result<MyConfig> { /* params.parse() + validate */ }
     fn new(config: &MyConfig) -> Self { /* fresh state for one instance */ }
     fn ports(config: &MyConfig) -> Ports { /* inputs/outputs, if any */ }
 }
@@ -52,12 +55,11 @@ impl Autonomy for MyPlugin {           // or Controller, MotionModel, Sensor, ..
 
 ## Files and registration
 
-Each plugin gets its own folder with its code and default parameters:
+Each plugin gets its own folder:
 
 ```text
 crates/core/src/plugin/<type>/<my_plugin>/
     my_plugin.rs
-    MyPlugin.xml
 ```
 
 Then make two edits:
@@ -81,20 +83,46 @@ Then make two edits:
    `register_sensor`, `register_interaction`, `register_network`, or
    `register_metrics` to match the type.
 
-Missions refer to the registered name, which must also match the XML file name.
+Missions refer to the registered name.
 
 ## Parameters and defaults
+
+Declare the parameters as a struct, and let serde fill it:
+
+```rust,ignore
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct StraightConfig {
+    #[serde(rename = "speed")]   // what the mission calls it
+    speed_mps: f64,              // the Rust name, with its unit
+}
+
+impl Default for StraightConfig {
+    fn default() -> Self {
+        Self { speed_mps: 21.0 }
+    }
+}
+
+fn configure(params: &PluginParams<'_>) -> Result<StraightConfig> {
+    let config: StraightConfig = params.parse()?;
+    ensure!(config.speed_mps >= 0.0, "speed must be nonnegative");
+    Ok(config)
+}
+```
 
 A parameter's value comes from the first of these that sets it:
 
 1. an attribute on the mission tag: `<autonomy speed="30">Straight</autonomy>`,
 2. a `param_common` group the tag references,
-3. the plugin's XML defaults file (`MyPlugin.xml`),
-4. the fallback in `configure`: `params.number("speed", 25.0)`.
+3. an optional `Straight.xml` overlay file on `SCRIMMAGE_PLUGIN_PATH`,
+4. the struct's `Default`.
 
-`PluginParams` provides `number`, `boolean`, `vector::<N>` (for values like
-`"1 2 3"`), and `text`. Each returns an error for unparseable values, so you
-never silently get a default because of a typo in a number.
+Mission values are text. Numbers must be finite, booleans are `true`/`false`
+(or `1`/`0`), and lists such as `"1 2 3"` or `"1, 2, 3"` fill a `Vec` or a fixed
+array like `[f64; 3]`. A bad value is an error that names the key, and so is a
+key the struct doesn't have: a typo never silently gives you the default.
+Each run's `manifest.json` lists every plugin's final parameters under
+`effective_plugin_params`.
 
 ## Ports: the control chain
 

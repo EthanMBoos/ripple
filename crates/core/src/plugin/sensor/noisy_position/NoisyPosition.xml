@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<!-- Rust example sensor; not a port of C++ NoisyState. -->
-<params>
-  <bias_world_m>0 0 0</bias_world_m>
-  <stddev_m>0.1</stddev_m>
-  <topic>position</topic>
-</params>

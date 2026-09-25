@@ -50,7 +50,7 @@ simulation loop. Entity work runs across workers with barriers between phases;
 world-level plugins run on the coordinator. Plugins implement their category's
 interface without managing threads or modifying the simulator.
 
-Each built-in keeps its Rust implementation and XML defaults in one directory.
+Each built-in is one Rust file in its own directory: parameters, defaults, and equations.
 The framework keeps familiar SCRIMMAGE responsibilities such as
 `simcontrol`, `entity`, `parse`, `pubsub`,
 and `plugin_manager`; see [docs/SOURCE_LAYOUT.md](docs/SOURCE_LAYOUT.md).

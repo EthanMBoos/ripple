@@ -79,13 +79,13 @@ for attitude construction and `rotate_body_to_world` to rotate vectors.
 
 ## Add a plugin
 
-1. Use the built-in for your category as a reference. Add the ported plugin's
-   named `<plugin>.rs` implementation and XML defaults under
-   `plugin/<category>/<plugin>/`. Declare and re-export it in the named category
-   module, following the example below.
-2. Implement `Plugin::configure` to parse and validate XML parameters into a
-   typed configuration. Implement `Plugin::new` to construct independent
-   mutable state for each instance.
+1. Use the built-in for your category as a reference. Add the plugin's named
+   `<plugin>.rs` implementation under `plugin/<category>/<plugin>/`. Declare and
+   re-export it in the named category module, following the example below.
+2. Declare the mission parameters as a serde struct with a `Default`, and
+   implement `Plugin::configure` to parse and validate it (see
+   [Parameters and defaults](#parameters-and-defaults)). Implement `Plugin::new`
+   to construct independent mutable state for each instance.
 3. Implement your category's `step`. Use optional `initialize` for initial
    state and subscriptions, and `Plugin::close` for shutdown.
 4. Register the type with `register_autonomy`, `register_controller`,
@@ -115,19 +115,18 @@ models are test fixtures, not a separate application or a prescribed project
 layout. The intended later top-level application API is described in
 [LIBRARY_FIRST_REFACTOR.md](LIBRARY_FIRST_REFACTOR.md) and remains deferred.
 
-## Plugin files and defaults
+## Plugin files
 
-Each built-in has one directory containing its implementation and defaults:
+Each built-in has one directory containing its implementation:
 
 ```text
 crates/core/src/plugin/motion/simple_aircraft/
-    simple_aircraft.rs   # Rust struct, configuration, and motion equations
-    SimpleAircraft.xml   # SCRIMMAGE mission-facing defaults
+    simple_aircraft.rs   # parameters and defaults, state, and motion equations
 ```
 
-This folds C++'s separate header/implementation and XML directories into one
-Rust plugin directory. All seven categories follow this layout. The small
-category file `plugin/motion.rs` loads it explicitly:
+This folds C++'s separate header, implementation, and XML defaults into one
+Rust file. All seven categories follow this layout. The small category file
+`plugin/motion.rs` loads it explicitly:
 
 ```rust,ignore
 #[path = "motion/simple_aircraft/simple_aircraft.rs"]
@@ -142,26 +141,63 @@ duplicate implementation is needed. Keep category interfaces in named framework
 files such as `motion.rs`, and registrations in
 `plugin_manager/builtins.rs`; neither belongs in the model equations.
 
-`SCRIMMAGE_PLUGIN_PATH` directories are searched first, in order, followed by
-`crates/core/src/plugin` under the supplied repository root. Search is recursive;
-the first `PluginName.xml` found wins. XML defaults are overlaid by `param_common`
-values, then mission attributes. A registered type without a defaults XML file
-uses the fallbacks in its `configure` implementation.
+Reference headers, build files, schemas, and unported plugins remain in sibling
+`../scrimmage`, branch `Ubuntu-24.04`; do not recreate a parallel reference tree
+in this repo.
 
-For an external plugin, keep `PluginName.xml` beside its Rust module and put
-that directory on `SCRIMMAGE_PLUGIN_PATH`. Registration and public imports are
-unchanged. This only discovers XML: custom code must already be compiled into
-the caller and registered there; the stock command does not load user Rust crates.
+## Parameters and defaults
 
-The ported C++ plugins retain their mission defaults, including `<library>`
-metadata. Rust currently selects the registered type by the mission's plugin
-name; it does not load that C++ library. Plugins are linked as Rust code;
-runtime shared-library loading is intentionally out of scope. NoisyPosition has
-its own Rust-example defaults and is not a C++ sensor port.
+Each plugin declares its mission parameters as a struct. Serde fills it from the
+mission's text values, and `Default` supplies every key the mission leaves out:
 
-Only implemented plugins ship defaults here. Reference headers, build files,
-schemas, and unported plugins remain in sibling `../scrimmage`, branch
-`Ubuntu-24.04`; do not recreate a parallel reference tree in this repo.
+```rust,ignore
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct SphereNetworkConfig {
+    #[serde(rename = "range")]   // the mission key
+    range_m: f64,                // the Rust name, with its unit
+    #[serde(rename = "prob_transmit")]
+    probability_transmit: f64,
+}
+
+impl Default for SphereNetworkConfig {
+    fn default() -> Self {
+        Self { range_m: 100.0, probability_transmit: 1.0 }
+    }
+}
+
+fn configure(params: &PluginParams<'_>) -> Result<SphereNetworkConfig> {
+    let config: SphereNetworkConfig = params.parse()?;
+    ensure!(config.range_m >= 0.0, "SphereNetwork range must be nonnegative");
+    Ok(config)
+}
+```
+
+- Numbers must be finite; booleans are `true`, `false`, `1`, or `0`. Lists
+  (`Vec` or a fixed array) are separated by commas or whitespace, so
+  `"1, 0.01, 2, 9"` fills `[f64; 4]` and `PidGains`.
+- `deny_unknown_fields` makes a misspelled or unsupported key an error that
+  names the key, instead of silently using the default.
+- A C++ option that Rust does not implement stays a named field with a comment,
+  and `configure` rejects any value other than the one that means "off". An
+  option that is safe to ignore (Straight's `show_text_label`) is a `_`-prefixed field.
+- When the runtime needs derived values (radians, an inverse inertia, rotor
+  geometry), parse a private `...Params` struct and build the `Config` from it,
+  as SimpleAircraft and Multirotor do.
+- A plugin with no parameters uses `Config = ()`; `params.parse()` still
+  rejects any key the mission gives it. `loop_rate` is read by the framework.
+
+Values are resolved in this order, first match wins: an attribute on the mission
+tag, a `param_common` group the tag references, a `PluginName.xml` overlay found
+on `SCRIMMAGE_PLUGIN_PATH`, then `Default`. Overlays are optional: a lab can use
+one to change a default for every mission without editing code. Their `<library>`
+element is ignored, and any other key must be one the plugin declares. Each run's
+`manifest.json` records every plugin's parsed parameters, defaults included,
+under `effective_plugin_params`.
+
+The C++ plugins' XML defaults became these `Default` impls. Plugins are linked as
+Rust code; runtime shared-library loading is intentionally out of scope.
+NoisyPosition has its own Rust-example defaults and is not a C++ sensor port.
 
 ## Control signals and state
 

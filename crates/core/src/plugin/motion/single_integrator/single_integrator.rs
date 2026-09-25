@@ -2,14 +2,31 @@
 //! Motion phase. Legacy max_speed >= 0 sets speed magnitude; it is not a speed cap.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::math::{EulerAngles, Quaternion, Vec3};
 use crate::plugin::{
     Frame, MotionContext, MotionModel, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
 
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct SingleIntegratorConfig {
+    /// Negative means "use the commanded speed".
+    #[serde(rename = "max_speed")]
     max_speed_mps: f64,
+    /// Not implemented; must stay false.
+    override_heading: bool,
+}
+
+impl Default for SingleIntegratorConfig {
+    fn default() -> Self {
+        Self {
+            max_speed_mps: -1.0,
+            override_heading: false,
+        }
+    }
 }
 
 pub struct SingleIntegrator {
@@ -20,13 +37,12 @@ impl Plugin for SingleIntegrator {
     type Config = SingleIntegratorConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
+        let config: SingleIntegratorConfig = params.parse()?;
         ensure!(
-            !params.boolean("override_heading", false)?,
+            !config.override_heading,
             "SingleIntegrator override_heading is not implemented"
         );
-        Ok(SingleIntegratorConfig {
-            max_speed_mps: params.number("max_speed", -1.0)?,
-        })
+        Ok(config)
     }
 
     fn new(config: &Self::Config) -> Self {
@@ -106,7 +122,10 @@ mod tests {
             (10.0, Vec3::zeros(), Vec3::zeros()),
             (-1.0, Vec3::new(0.0, 0.0, 2.0), Vec3::new(0.0, 0.0, 2.0)),
         ] {
-            let config = SingleIntegratorConfig { max_speed_mps };
+            let config = SingleIntegratorConfig {
+                max_speed_mps,
+                ..SingleIntegratorConfig::default()
+            };
             let mut model = SingleIntegrator::new(&config);
             let mut io = PluginIo::new(&SingleIntegrator::ports(&config));
             io.receive(

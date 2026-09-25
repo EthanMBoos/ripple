@@ -145,6 +145,11 @@ and visualization settings must not alter physics, random draws, or events.
   report time. Frames and events are unchanged; `summary.csv` differs only in
   missions where an entity is removed (currently `networks-local-global.xml`,
   where survivors now report 29.9 s instead of 0.4 s).
+- **FixedWing6DOF inertia units.** C++ prefers `inertia_matrix_slug_ft_sq`
+  whenever it is present, and its bundled defaults file always sets it, so a
+  mission's SI `inertia_matrix` is silently ignored. Rust applies either key and
+  rejects both together; with neither, it uses the C++ slug default. No curated
+  mission sets either key.
 
 ## Current evidence and remaining work
 

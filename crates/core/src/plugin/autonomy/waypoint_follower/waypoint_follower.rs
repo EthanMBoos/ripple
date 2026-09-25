@@ -3,6 +3,7 @@
 //! Aircraft missions should loop their route: a fixed-wing model cannot stop at the last point.
 
 use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::common::{WAYPOINT_TOPIC, WaypointList};
 use crate::math::{self, Vec3};
@@ -10,12 +11,28 @@ use crate::plugin::{
     AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
 
-#[derive(Clone)]
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct WaypointFollowerConfig {
+    /// Initial route, replaced by any route received on `Waypoints`.
+    #[serde(rename = "waypoints")]
     route: WaypointList,
+    #[serde(rename = "speed")]
     speed_mps: f64,
     arrival_radius_m: f64,
     repeat: bool,
+}
+
+impl Default for WaypointFollowerConfig {
+    fn default() -> Self {
+        Self {
+            route: WaypointList::default_route(),
+            speed_mps: 20.0,
+            arrival_radius_m: 10.0,
+            repeat: false,
+        }
+    }
 }
 
 pub struct WaypointFollower {
@@ -30,18 +47,12 @@ impl Plugin for WaypointFollower {
     type Config = WaypointFollowerConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
-        let speed_mps = params.number("speed", 20.0)?;
-        let arrival_radius_m = params.number("arrival_radius_m", 10.0)?;
+        let config: WaypointFollowerConfig = params.parse()?;
         ensure!(
-            speed_mps > 0.0 && arrival_radius_m > 0.0,
+            config.speed_mps > 0.0 && config.arrival_radius_m > 0.0,
             "waypoint speed and arrival radius must be positive"
         );
-        Ok(WaypointFollowerConfig {
-            route: WaypointList::parse(params.text("waypoints").unwrap_or("0,0,200"))?,
-            speed_mps,
-            arrival_radius_m,
-            repeat: params.boolean("repeat", false)?,
-        })
+        Ok(config)
     }
 
     fn new(config: &Self::Config) -> Self {

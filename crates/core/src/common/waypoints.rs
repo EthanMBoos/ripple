@@ -1,17 +1,27 @@
 //! Typed local-ENU route shared by the waypoint publisher and autonomy.
 
 use anyhow::{Context, Result, ensure};
+use serde::{Deserialize, Serialize};
 
 use crate::Vec3;
 
 pub const WAYPOINT_TOPIC: &str = "Waypoints";
 
-#[derive(Clone, Debug)]
+/// Deserializes from mission text such as `"0,0,200; 100,0,200"`.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(try_from = "String")]
 pub struct WaypointList {
     pub positions_world_m: Vec<Vec3>,
 }
 
 impl WaypointList {
+    /// The single point used when a mission gives no route.
+    pub(crate) fn default_route() -> Self {
+        Self {
+            positions_world_m: vec![Vec3::new(0.0, 0.0, 200.0)],
+        }
+    }
+
     pub fn validate(&self) -> Result<()> {
         ensure!(
             !self.positions_world_m.is_empty(),
@@ -45,5 +55,12 @@ impl WaypointList {
         let list = Self { positions_world_m };
         list.validate()?;
         Ok(list)
+    }
+}
+
+impl TryFrom<String> for WaypointList {
+    type Error = anyhow::Error;
+    fn try_from(text: String) -> Result<Self> {
+        Self::parse(&text)
     }
 }

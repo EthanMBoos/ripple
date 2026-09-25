@@ -18,7 +18,7 @@ robotics simulation. It is both:
 | Visualization | VTK viewer and plugin drawing. | Rerun map, debug panels, recordings, and looping replay. No VTK or general plugin drawing yet. |
 | Parallel execution | Legacy C++ threading implementation. | Entity-owned state and barriers between phases; selected missions match at 1/2/8 workers. |
 | Preliminary performance | Single-thread reference. | C++-mimic baseline: 1.24–1.36× faster at one worker for two 128-aircraft workloads; eight workers slower. Same emulated Linux container, not a general speed claim. [Benchmark](reference/benchmark.py). |
-| Mission input | XML and the wider legacy template/parameter surface. | Curated XML, kept permanently for single runs. YAML missions and `scrimmage compare` work; YAML templates and sweeps are planned ([MISSION_YAML.md](docs/MISSION_YAML.md)). |
+| Mission input | XML and the wider legacy template/parameter surface. | Curated XML, kept permanently for single runs. YAML missions, templates, and `scrimmage compare` work; sweeps are planned ([MISSION_YAML.md](docs/MISSION_YAML.md)). |
 | Communication / spawning | Typed pub/sub plus legacy protobuf/string-map spawn commands. | Typed in-process pub/sub and scheduled spawning. No legacy spawn commands; connection-triggered spawning is planned. |
 | Integrations / GPU | ROS 1, ArduPilot, JSBSim, and legacy OpenCL paths. | None implemented yet. ROS 1/2, ArduPilot UDP, and optional Burn are planned; JSBSim is verification-only. |
 | Running / outputs | Legacy run options and log-directory conventions. | `scrimmage run` / `replay`; automatic `runs/runNNN` folders. Comparisons are Python tooling. |

@@ -24,6 +24,9 @@ scrimmage compare missions/straight-no-gui.xml missions/straight-no-gui.yaml
   differences and byte-identical outputs against their XML.
 - Unit tests cover defaults, sensor labels, dotted-path overrides, unknown keys,
   wrong types, non-finite numbers, and unregistered plugins.
+- `multirotor.yaml` uses a template for its four groups and still matches
+  `multirotor.xml`. Unit tests cover whole-value replacement, overrides reaching
+  inherited fields, and unknown or nested templates.
 
 ## Typed plugin parameters (2026-09-24)
 

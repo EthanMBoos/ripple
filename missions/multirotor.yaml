@@ -16,11 +16,9 @@ networks:
 metrics:
   SimpleCollisionMetrics:
 
-entities:
-  level_hover:
-    team: 1
+templates:
+  hovering_quad:
     visual_model: sphere
-    position_m: [-10, -10, 30]
     autonomy:
       Straight:
         speed: 0
@@ -30,48 +28,38 @@ entities:
     motion_model:
       Multirotor:
 
+entities:
+  level_hover:
+    template: hovering_quad
+    team: 1
+    position_m: [-10, -10, 30]
+
   # Tilted thrust translates the vehicle; no stabilizer levels it.
   tilted:
+    template: hovering_quad
     team: 2
-    visual_model: sphere
     position_m: [10, -10, 30]
     heading_deg: 45
     roll_deg: 5
     pitch_deg: 8
-    autonomy:
-      Straight:
-        speed: 0
-    controller:
-      MotorSpeeds:
-        speeds: [821.5838362577492, 821.5838362577492, 821.5838362577492, 821.5838362577492]
-    motion_model:
-      Multirotor:
 
   # Slightly unequal motors exercise roll, pitch, yaw and body/world rates.
   unequal_motors:
+    template: hovering_quad
     team: 3
-    visual_model: sphere
     position_m: [-10, 10, 30]
     heading_deg: 90
     roll_deg: 3
-    autonomy:
-      Straight:
-        speed: 0
     controller:
       MotorSpeeds:
         speeds: [820, 821, 823, 822]
-    motion_model:
-      Multirotor:
 
   # Six rotors demonstrate configured channel names, not a quad-only engine.
   hexacopter:
+    template: hovering_quad
     team: 4
-    visual_model: sphere
     position_m: [10, 10, 30]
     heading_deg: 180
-    autonomy:
-      Straight:
-        speed: 0
     controller:
       MotorSpeeds:
         speeds: [680, 680, 680, 680, 680, 680]

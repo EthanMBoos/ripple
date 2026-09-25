@@ -468,5 +468,5 @@ discovery/loading and legacy protobuf/string-map spawning are explicitly exclude
 Burn and optional ROS 1/2 and ArduPilot adapters are future work, not current
 capabilities. JSBSim is planned only as offline flight-model reference tooling,
 not a production plugin or FFI integration. XML/template coverage is partial.
-YAML missions work, but YAML templates, sweeps, and typed runtime spawn
-requests are not implemented.
+YAML missions and templates work; sweeps and typed runtime spawn requests
+are not implemented.

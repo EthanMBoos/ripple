@@ -184,9 +184,6 @@ keeps `"1, 2"` lists and `1`/`0` booleans) or from YAML values natively.
   runs must give byte-identical `frames.bin`, `events.json`, and `summary.csv`.
   [yaml_missions.rs](../crates/core/tests/yaml_missions.rs) checks every paired
   mission; unit tests cover defaults, overrides, unknown keys, and invalid values.
-- [ ] Decide whether templates come before sweeps. A review suggested
-  load -> expand templates -> apply overrides -> validate, so overrides and
-  sweep paths can reach inherited fields; that order fixes how sweeps work.
 - [ ] Startup message queues cap large populations: a 1,500-agent mission fails
   with `publisher queue full (1024 messages)` publishing
   `GlobalNetwork/EntityGenerated` ([messages.rs](../crates/core/src/pubsub/messages.rs)).
@@ -195,11 +192,11 @@ keeps `"1, 2"` lists and `1`/`0` booleans) or from YAML values natively.
   multirotor, waypoints-point-agents, verification/noisy-state-bias.
 - [ ] Port Ripple's sweep runner and Slurm launcher: `scrimmage sweep`, stable
   case IDs, shard selection, one result row per case, `bulk_run.py`.
-- [ ] Add YAML templates: template identities, typed inputs/defaults,
-  duplicate/unknown-name errors, include-relative paths/cycles/depth, and
-  override precedence. Choose replace versus append for lists. Prefer shallow
-  composition to inheritance or deep merge. Templates feed the typed creation
-  path in section 1.
+- [x] Add YAML templates, before sweeps: one template per entity group; the
+  group's own keys replace the template's wholesale (a plugin slot or `spawn`
+  is replaced, not merged); no template inherits another. Loading order is
+  read -> expand templates -> apply overrides -> validate, so overrides (and
+  later sweeps) reach inherited fields. `templates` itself is not addressable.
 - [ ] XML template gaps stay documented, not fixed: C++ lets a child replace an
   inherited motion model, while Rust concatenates both and rejects the second;
   Rust does not keep entity `tag` attributes as template IDs. See
@@ -502,12 +499,11 @@ controls; do not add coordinated simulation/peer pausing.
 
 1. Commit the XML-based baseline when requested, with working features and gaps
    documented. Do not add temporary compatibility code to make it look complete.
-2. Typed `Mission` struct with the XML reader moved onto it (byte-identical).
-3. YAML reader, paired fixtures, and `scrimmage compare`.
-4. Ripple-style sweeps and the Slurm launcher.
-5. YAML templates and one typed creation path before connection spawning.
-   XML schedules, YAML templates, and external connections use that same path.
-6. Verify one ROS or ArduPilot connection-to-entity case, then expand deliberately.
+2. Done: typed mission struct, YAML reader, `scrimmage compare`, YAML templates.
+3. Ripple-style sweeps and the Slurm launcher.
+4. One typed creation path before connection spawning. XML schedules, YAML
+   groups, and external connections use that same path.
+5. Verify one ROS or ArduPilot connection-to-entity case, then expand deliberately.
    Leave unsupported cases explicit rather than adding workarounds.
 
 Current-model tests, validation, and the documented RNG/lifecycle gaps remain

@@ -146,7 +146,10 @@ fn parse(
     overrides: &Params,
     registry: &crate::plugin::PluginRegistry,
 ) -> Result<ScenarioConfig> {
+    // Order: expand templates, then apply overrides, so an override can
+    // reach a field a group inherited.
     let mut tree: Value = serde_yaml_ng::from_str(text)?;
+    expand_templates(&mut tree)?;
     for (path, value) in overrides {
         let value: Value = serde_yaml_ng::from_str(value)?;
         set_path(&mut tree, path, value)
@@ -272,6 +275,50 @@ fn plugins(
         });
     }
     Ok(configs)
+}
+
+/// Replaces each entity's `template: name` with that template's keys. The
+/// entity's own keys win, and each replaces the template's value wholesale:
+/// an entity's `autonomy` replaces the template's whole `autonomy` slot.
+fn expand_templates(tree: &mut Value) -> Result<()> {
+    let Value::Mapping(root) = tree else {
+        bail!("a mission must be a map");
+    };
+    let templates = match root.remove("templates") {
+        Some(Value::Mapping(templates)) => templates,
+        Some(_) => bail!("templates must be a map of named entity groups"),
+        None => Mapping::new(),
+    };
+    let Some(Value::Mapping(entities)) = root.get_mut("entities") else {
+        return Ok(());
+    };
+    for (label, entity) in entities.iter_mut() {
+        let Value::Mapping(fields) = entity else {
+            continue;
+        };
+        let Some(name) = fields.remove("template") else {
+            continue;
+        };
+        let label = key(label)?;
+        let name = name
+            .as_str()
+            .with_context(|| format!("entity {label}: template must be a name"))?;
+        let template = match templates.get(name) {
+            Some(Value::Mapping(template)) => template,
+            Some(_) => bail!("template {name} must be a map"),
+            None => bail!("entity {label}: unknown template `{name}`"),
+        };
+        ensure!(
+            !template.contains_key("template"),
+            "template {name}: templates cannot use other templates"
+        );
+        let mut expanded = template.clone();
+        for (field, value) in fields.iter() {
+            expanded.insert(field.clone(), value.clone());
+        }
+        *fields = expanded;
+    }
+    Ok(())
 }
 
 /// A bare key (`SimpleAircraft:`) means "no values".
@@ -453,6 +500,71 @@ entities:
             let message_seen = error(&MISSION.replace(from, to), &[]);
             assert!(message_seen.contains(message), "{to}: {message_seen}");
         }
+    }
+
+    const TEMPLATED: &str = "
+format_version: 1
+name: test
+templates:
+  aircraft:
+    team: 1
+    heading_deg: 90
+    autonomy:
+      Straight:
+        speed: 25
+    controller:
+      SimpleAircraftControllerPID:
+    motion_model:
+      SimpleAircraft:
+entities:
+  blue:
+    template: aircraft
+  red:
+    template: aircraft
+    team: 2
+    autonomy:
+      Straight:
+";
+
+    #[test]
+    fn templates_fill_groups_and_own_keys_replace_whole_values() -> Result<()> {
+        let mission = load(TEMPLATED, &[])?;
+        let (blue, red) = (&mission.entities[0], &mission.entities[1]);
+        assert_eq!((blue.team_id, blue.heading_deg), (1, 90.0));
+        assert_eq!((red.team_id, red.heading_deg), (2, 90.0));
+        // Red's own `autonomy` replaced the template's, parameters and all.
+        let PluginValues::Yaml(params) = &red.autonomy[0].params else {
+            panic!("YAML plugins hold YAML values");
+        };
+        assert!(params.is_empty());
+        mission.resolve()?;
+        Ok(())
+    }
+
+    #[test]
+    fn overrides_reach_inherited_fields_but_not_templates() -> Result<()> {
+        let mission = load(
+            TEMPLATED,
+            &[("entities.blue.autonomy.Straight.speed", "30")],
+        )?;
+        let PluginValues::Yaml(params) = &mission.entities[0].autonomy[0].params else {
+            panic!("YAML plugins hold YAML values");
+        };
+        assert_eq!(params["speed"], Value::from(30));
+        let message = error(TEMPLATED, &[("templates.aircraft.team", "3")]);
+        assert!(
+            message.contains("field `templates` does not exist"),
+            "{message}"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn unknown_and_nested_templates_are_errors() {
+        let unknown = TEMPLATED.replace("template: aircraft\n  red", "template: jet\n  red");
+        assert!(error(&unknown, &[]).contains("unknown template `jet`"));
+        let nested = TEMPLATED.replace("    team: 1\n", "    team: 1\n    template: other\n");
+        assert!(error(&nested, &[]).contains("cannot use other templates"));
     }
 
     #[test]

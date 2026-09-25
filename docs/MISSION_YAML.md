@@ -8,8 +8,8 @@ file it came from. See [TODO.md](TODO.md) section 2 for the plan.
 | --- | --- |
 | Single missions, plugin parameters, command-line overrides | Implemented |
 | `scrimmage compare a.xml b.yaml` | Implemented |
+| Templates | Implemented |
 | Sweeps (`*.sweep.yaml`) and the Slurm launcher | Planned |
-| Templates | Planned |
 
 Paired examples, each checked against its XML by `crates/core/tests/yaml_missions.rs`:
 [straight-no-gui](../missions/straight-no-gui.yaml),
@@ -150,9 +150,11 @@ For YAML, the same arguments take a dotted path, as a sweep will:
 scrimmage run missions/straight-no-gui.yaml entities.red.heading_deg:=170 run.seed:=7
 ```
 
-Every part of the path must already exist, so a typo is an error rather than a
-new key. To override a plugin parameter, write it in the file first; a bare
-`Straight:` has no `speed` to replace.
+Every part of the path must already exist (after template expansion), so a
+typo is an error rather than a new key. To override a plugin parameter, write
+it in the file or template first; a bare `Straight:` has no `speed` to replace.
+Quote a value containing brackets or spaces for the shell:
+`'entities.red.color:=[255, 0, 0]'`.
 
 ## Checking a YAML mission against its XML
 
@@ -196,35 +198,52 @@ python3 scripts/bulk_run.py submit missions/straight.sweep.yaml --jobs 18 \
 ```
 
 Each case gets a stable ID, its own run directory, and one result row, as in
-Ripple. Sweep paths reach `run`, world plugins, and `entities`, not `templates`.
+Ripple. Sweep values are applied after template expansion, like overrides.
 
-## Templates (planned)
+## Templates
 
-Templates replace XML's `entity_common` and `param_common`. Composition is
-shallow: an entity's own slot (such as `autonomy`) replaces the template's slot
-wholesale. This fixes the XML gap where a child cannot replace an inherited
-motion model.
+A template is a named set of entity fields. A group names one with
+`template:`, and its own keys replace the template's. The replacement is
+whole: a group's `controller` replaces the template's entire `controller`
+slot, and a group's `spawn` replaces the template's whole `spawn`. Templates
+replace XML's `entity_common` and `param_common`, and unlike XML, a group can
+replace an inherited motion model.
 
 ```yaml
 templates:
-  zephyr:
-    controller:
-      SimpleAircraftControllerPID:
-    motion_model:
-      SimpleAircraft:
+  hovering_quad:
+    visual_model: sphere
     autonomy:
       Straight:
+        speed: 0
+    controller:
+      MotorSpeeds:
+        speeds: [821.58, 821.58, 821.58, 821.58]
+    motion_model:
+      Multirotor:
 
 entities:
-  blue:
-    template: zephyr
+  level_hover:
+    template: hovering_quad
     team: 1
-    position_m: [-1000, 0, 200]
-  red:
-    template: zephyr
-    team: 2
-    position_m: [1000, 0, 200]
-    autonomy:                # replaces the template's autonomy slot
-      Straight:
-        speed: 25
+    position_m: [-10, -10, 30]
+  unequal_motors:
+    template: hovering_quad
+    team: 3
+    position_m: [-10, 10, 30]
+    controller:              # replaces the template's controller slot
+      MotorSpeeds:
+        speeds: [820, 821, 823, 822]
 ```
+
+Loading happens in this order: read the file, expand templates, apply
+command-line overrides (and, later, sweep values), then validate. So an override
+can change a field a group inherited:
+
+```sh
+scrimmage run missions/multirotor.yaml 'entities.level_hover.controller.MotorSpeeds.speeds:=[800, 800, 800, 800]'
+```
+
+Overrides cannot address `templates` itself; change the groups instead. One
+template per group, and a template cannot use another template.
+[multirotor.yaml](../missions/multirotor.yaml) is the full example.

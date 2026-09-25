@@ -5,15 +5,15 @@ use scrimmage_core::{Params, ScenarioConfig, Simulation, write_frame};
 use std::{
     fs,
     io::{BufWriter, Write},
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
-mod output;
+pub(crate) mod output;
 
 #[derive(Args)]
 pub(crate) struct RunOptions {
     mission: PathBuf,
-    /// Output directory; defaults to the next runs/run000, run001, ... in the current directory.
+    /// Output directory; defaults to the next <root>/runs/<mission file name>/run000, run001, ...
     #[arg(long)]
     output: Option<PathBuf>,
     #[arg(long)]
@@ -60,7 +60,15 @@ pub(crate) fn run(options: RunOptions) -> Result<()> {
     let resolved_config = serde_json::to_value(&config)?;
     let mut simulation = Simulation::new(config.resolve()?, worker_count)?;
 
-    let output = output::create_directory(options.output.as_deref(), Path::new("runs"))?;
+    // Runs always go under the repository root, grouped by mission file name, so
+    // `straight-no-gui.xml` and `straight-no-gui.yaml` share runs/straight-no-gui/.
+    // XML's <log_dir> is not read.
+    let mission_name = options
+        .mission
+        .file_stem()
+        .context("mission path must name a file")?;
+    let runs = options.root.join("runs").join(mission_name);
+    let output = output::create_directory(options.output.as_deref(), &runs)?;
     let mut viewer = if options.no_rerun {
         None
     } else {

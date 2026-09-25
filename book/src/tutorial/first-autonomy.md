@@ -272,7 +272,7 @@ A few things to notice:
 
 ```sh
 cargo run -p scrimmage-rs --bin scrimmage -- run missions/follow-nearest.xml --headless
-cargo run -p scrimmage-rs --bin scrimmage -- replay runs/run000
+cargo run -p scrimmage-rs --bin scrimmage -- replay runs/follow-nearest/run000
 ```
 
 Use the run folder that the first command prints.

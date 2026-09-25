@@ -183,8 +183,10 @@ For a headless run with a Rerun recording:
 scrimmage run missions/straight-no-gui.xml --workers 8 --headless
 ```
 
-Without `--output`, runs are allocated automatically as `runs/run000`,
-`runs/run001`, and so on under the current working directory. Numbering continues
+Without `--output`, runs are allocated automatically as
+`<root>/runs/<mission file name>/run000`, `run001`, and so on, where `<root>` is
+the repository checkout (`--root`), not the current directory. The XML and YAML
+forms of a mission share one folder; XML's `<log_dir>` is ignored. Numbering continues
 after the highest existing run number; simultaneous runs claim distinct paths.
 Parent directories are created automatically. Use `--output path/to/run` for
 a descriptive location, which must not already exist. Never overwrite a
@@ -199,10 +201,19 @@ previous run merely to reuse a command. Outputs include `frames.bin`,
 - The runner is currently unpaced; pause/time-warp/live simulation controls
   must not be described as implemented.
 
+## Sweeps
+
+`scrimmage sweep x.sweep.yaml` runs a YAML mission across seeds and parameter
+values (Ripple's format; see `docs/MISSION_YAML.md`) into
+`<root>/sweeps/<sweep name>/runNNN`, one `results.jsonl` row per case.
+`scripts/bulk_run.py local|submit|collect` runs it in shards locally or as one
+Slurm array. Only the machinery sharding needs is implemented; keep it that way
+unless asked.
+
 ## Replay saved runs
 
-For saved recordings, use `scrimmage replay runs/run000` or
-`scrimmage replay runs/run000/recording.rrd`. Replay launches `rerun` from PATH
+For saved recordings, use `scrimmage replay runs/straight-no-gui/run000` or
+`scrimmage replay runs/straight-no-gui/run000/recording.rrd`. Replay launches `rerun` from PATH
 with the existing recording and waits for it to exit; it never runs a mission
 or allocates another output directory. The dedicated Viewer MCP commands below
 remain the low-level workflow when headless/port/window arguments are needed.
@@ -298,7 +309,7 @@ Store recordings, screenshots, and a short `REPORT.md` under ignored
 Launch a separate viewer for QA, using an available local port:
 
 ```sh
-rerun runs/run000/recording.rrd --headless --window-size 1920x1200 --bind 127.0.0.1 --port 9878
+rerun runs/straight-no-gui/run000/recording.rrd --headless --window-size 1920x1200 --bind 127.0.0.1 --port 9878
 ```
 
 Headless Rerun still needs a working graphics adapter. This is not the C++ GUI.

@@ -9,7 +9,7 @@ file it came from. See [TODO.md](TODO.md) section 2 for the plan.
 | Single missions, plugin parameters, command-line overrides | Implemented |
 | `scrimmage compare a.xml b.yaml` | Implemented |
 | Templates | Implemented |
-| Sweeps (`*.sweep.yaml`) and the Slurm launcher | Planned |
+| Sweeps (`*.sweep.yaml`), shards, and the Slurm launcher | Implemented (minimal) |
 
 Paired examples, each checked against its XML by `crates/core/tests/yaml_missions.rs`:
 [straight-no-gui](../missions/straight-no-gui.yaml),
@@ -35,6 +35,8 @@ Paired examples, each checked against its XML by `crates/core/tests/yaml_mission
 - Only fields Rust uses are accepted. XML's GUI and C++ logging tags
   (`stream_port`, `grid_size`, `terrain`, `log_dir`, and so on) have no YAML form.
 - No anchors or interpolation. Custom tags (`!name value`) are errors.
+- `SCRIMMAGE_PLUGIN_PATH` overlays apply to XML only; a YAML mission's values
+  are all in the file, so results do not depend on an environment variable.
 
 ## A mission
 
@@ -172,33 +174,55 @@ Plugin parameter values are checked only through those outputs, since XML holds
 them as text. A value that no recorded output reflects (such as a sensor's noise
 when nothing uses its observations) can differ without `compare` noticing.
 
-## Sweeps (planned)
+## Sweeps
 
-A sweep is a separate file ending in `.sweep.yaml`, using
-[Ripple's](../../ripple) syntax. It names a base mission, which must be YAML:
+A sweep is a separate file ending in `.sweep.yaml`, in
+[Ripple's](../../ripple) format. It names a base mission, which must be YAML:
 
 ```yaml
-name: straight_speed
-base_scenario: straight.yaml
-seeds: [1, 2, 3]                     # replaces run.seed; optional
-parameter_combinations: cartesian    # or zip: lists must be the same length
+name: waypoints-point-agents
+base_scenario: waypoints-point-agents.yaml   # relative to the sweep file
+seeds: [1, 2]                                # sets run.seed; optional
+parameter_combinations: cartesian            # or zip: lists must be the same length
 parameters:
-  entities.red.autonomy.Straight.speed: [15, 21, 30]
-  entities.red.spawn.batch_size: [2, 4]
+  entities.blue.autonomy.WaypointFollower.speed: [3, 5]
+  interactions.WaypointBroadcast.update_at_s: [3, 100]
 ```
 
-This is 3 seeds × 3 speeds × 2 batch sizes = 18 cases. Each case sets the paths
-exactly as a command-line override does, then loads the result like any mission.
+This is 2 seeds × 2 speeds × 2 update times = 8 cases, numbered as Ripple
+numbers them: seeds change fastest, then the last path. Each case sets its paths
+exactly as a command-line override does (after template expansion), so a path
+must already exist in the base mission. Case 0 is loaded before any output is
+created, so a misspelled path fails immediately.
 
 ```sh
-scrimmage sweep missions/straight.sweep.yaml
-python3 scripts/bulk_run.py local  missions/straight.sweep.yaml --jobs 4
-python3 scripts/bulk_run.py submit missions/straight.sweep.yaml --jobs 18 \
+scrimmage sweep missions/waypoints-point-agents.sweep.yaml                        # all cases
+scrimmage sweep missions/waypoints-point-agents.sweep.yaml --shard-index 1 --shard-count 3
+python3 scripts/bulk_run.py local  missions/waypoints-point-agents.sweep.yaml --jobs 4
+python3 scripts/bulk_run.py submit missions/waypoints-point-agents.sweep.yaml --jobs 4 \
     -- --account=<account> --partition=<partition>
+python3 scripts/bulk_run.py collect sweeps/waypoints-point-agents/run000         # after Slurm
 ```
 
-Each case gets a stable ID, its own run directory, and one result row, as in
-Ripple. Sweep values are applied after template expansion, like overrides.
+Output goes to `sweeps/<sweep name>/runNNN` under the repository root; running
+the same sweep again makes the next `runNNN`. Each case is one line of
+`results.jsonl`: case ID, seed, parameter values, error, steps, termination,
+and each metrics plugin's per-team values. A shard runs cases `i`, `i + n`,
+`i + 2n`, ...; `bulk_run.py` puts shards in `shard-NNNN/` folders and `collect`
+merges them in case order after checking every case appears exactly once.
+
+Cases keep no frames or recordings. To look at one, rerun it with its values
+as overrides; runs are deterministic, so it is the same run:
+
+```sh
+scrimmage run missions/waypoints-point-agents.yaml run.seed:=2 \
+    entities.blue.autonomy.WaypointFollower.speed:=5
+```
+
+Only what sharding needs is implemented. Ripple's full per-case output,
+`--case-id` replay, digests, input hashing, summaries, and Slurm job watching
+are not. Cluster setup: `conda env create -f environment.yaml`, activate it,
+and `cargo build --release -p scrimmage-rs` once on shared storage.
 
 ## Templates
 

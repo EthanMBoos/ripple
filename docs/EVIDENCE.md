@@ -7,6 +7,22 @@ tools live in the repository; generated recordings and reports belong under igno
 Run commands from the `scrimmage-rs` repository root. Recorded results below describe
 the named batch, not a claim that every later change or the whole port is verified.
 
+## Sweeps and shards (2026-09-25)
+
+```sh
+cargo test --locked -p scrimmage-rs --test sweep
+(cd scripts && python3 -m unittest test_bulk_run)
+python3 scripts/bulk_run.py local missions/waypoints-point-agents.sweep.yaml --jobs 3
+```
+
+- Three shards of the 8-case example, run separately, reproduce the whole
+  sweep's rows exactly; so does `bulk_run.py local --jobs 3` after `collect`
+  (byte-identical `results.jsonl`), and `--jobs 10` (more shards than cases).
+- A misspelled sweep path fails before any output folder is created.
+- `collect` rejects a missing row or a shard from a different campaign and
+  leaves no partial `results.jsonl`. The Slurm submission is tested with a
+  mocked `sbatch`; it has not been run on a cluster yet.
+
 ## YAML missions (2026-09-25)
 
 `ScenarioConfig` became the typed mission that both readers fill. Repeat with:

@@ -21,7 +21,7 @@ robotics simulation. It is both:
 | Mission input | XML and the wider legacy template/parameter surface. | Curated XML, kept permanently for single runs. YAML missions, templates, and `scrimmage compare` work; sweeps are planned ([MISSION_YAML.md](docs/MISSION_YAML.md)). |
 | Communication / spawning | Typed pub/sub plus legacy protobuf/string-map spawn commands. | Typed in-process pub/sub and scheduled spawning. No legacy spawn commands; connection-triggered spawning is planned. |
 | Integrations / GPU | ROS 1, ArduPilot, JSBSim, and legacy OpenCL paths. | None implemented yet. ROS 1/2, ArduPilot UDP, and optional Burn are planned; JSBSim is verification-only. |
-| Running / outputs | Legacy run options and log-directory conventions. | `scrimmage run` / `replay`; automatic `runs/runNNN` folders. Comparisons are Python tooling. |
+| Running / outputs | Legacy run options and log-directory conventions. | `scrimmage run` / `replay`; automatic `runs/<mission>/runNNN` folders; `scrimmage sweep` and Slurm shards. Comparisons are Python tooling. |
 | Compatibility | Reference implementation. | Selected equations and mission outputs checked against C++; known RNG differences remain. |
 
 See [working missions](missions/README.md), [verification evidence](docs/EVIDENCE.md),
@@ -94,18 +94,19 @@ Then run a mission from the repository root:
 scrimmage run missions/straight-no-gui.xml --workers 8 --headless
 ```
 
-Runs are saved as `runs/run000`, `runs/run001`, and so on, under the current
-directory. Directories are created automatically. Use `--output path/to/run`
+Runs are saved as `runs/straight-no-gui/run000`, `run001`, and so on: one
+folder per mission file, under the repository root wherever you run from.
+Directories are created automatically. Use `--output path/to/run`
 to choose a different location; existing output directories are never overwritten.
 This produces `frames.bin`, `events.json`, `summary.csv`, `manifest.json`, and
 `recording.rrd`. With the matching Rerun viewer on your PATH, open the recording:
 
 ```sh
-scrimmage replay runs/run000
+scrimmage replay runs/straight-no-gui/run000
 ```
 
 You can also pass the recording directly:
-`scrimmage replay runs/run000/recording.rrd`. Replay opens the saved dashboard
+`scrimmage replay runs/straight-no-gui/run000/recording.rrd`. Replay opens the saved dashboard
 in Rerun without rerunning the mission or creating another run directory.
 The command stays in the foreground until the viewer exits and reports launch
 or viewer failures. It still requires the matching `rerun` executable on PATH.

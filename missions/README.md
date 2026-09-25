@@ -1,7 +1,8 @@
 # Working missions
 
 Run from the repository root with `scrimmage run missions/<file> --headless`.
-Replay the printed run directory with `scrimmage replay runs/runNNN`.
+Replay the printed run directory with `scrimmage replay runs/<mission>/runNNN`.
+`waypoints-point-agents.sweep.yaml` is a small example sweep (`scrimmage sweep`).
 These fourteen XML files use the compiled built-ins. They are examples and regression
 inputs, not a copy of every upstream demo. A `.yaml` file beside an XML file is its
 [YAML form](../docs/MISSION_YAML.md) and must run identically; check one with

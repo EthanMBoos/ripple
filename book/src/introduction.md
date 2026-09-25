@@ -30,12 +30,13 @@ Run a mission with two teams of aircraft flying toward each other:
 scrimmage run missions/straight-no-gui.xml --headless
 ```
 
-Each run is saved in a new folder: `runs/run000`, then `runs/run001`, and so on.
+Each run is saved in a new folder under the repository: `runs/straight-no-gui/run000`,
+then `run001`, and so on.
 To watch it, install the [Rerun viewer](https://rerun.io/docs/getting-started/installing-viewer)
 and replay the run:
 
 ```sh
-scrimmage replay runs/run000
+scrimmage replay runs/straight-no-gui/run000
 ```
 
 Use `--viewer` instead of `--headless` to watch while the mission runs.

@@ -1,0 +1,11 @@
+# Cluster environment for scripts/bulk_run.py (copied from Ripple). Create it once
+# on shared storage: conda env create -f environment.yaml
+name: scrimmage-rs
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - rust=1.98.1  # Includes rustc and cargo.
+  - c-compiler
+  - python=3.11
+  - git

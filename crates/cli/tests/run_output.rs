@@ -61,7 +61,9 @@ fn cli_allocates_runs_and_accepts_explicit_output_without_changing_results() {
             .current_dir(temp.path())
             .arg("run")
             .arg(&mission)
-            .arg("--no-rerun");
+            .arg("--no-rerun")
+            .arg("--root")
+            .arg(temp.path());
         if let Some(output) = output {
             command.args(["--output", output]);
         }
@@ -73,8 +75,9 @@ fn cli_allocates_runs_and_accepts_explicit_output_without_changing_results() {
         );
     }
     for file in ["frames.bin", "events.json", "summary.csv", "manifest.json"] {
-        let first = fs::read(temp.path().join("runs/run000").join(file)).unwrap();
-        for directory in ["runs/run001", "custom/nested/run", "named"] {
+        // Automatic runs are grouped by mission file name under <root>/runs.
+        let first = fs::read(temp.path().join("runs/plugin_defaults/run000").join(file)).unwrap();
+        for directory in ["runs/plugin_defaults/run001", "custom/nested/run", "named"] {
             assert_eq!(
                 first,
                 fs::read(temp.path().join(directory).join(file)).unwrap()
@@ -85,7 +88,7 @@ fn cli_allocates_runs_and_accepts_explicit_output_without_changing_results() {
         .current_dir(temp.path())
         .arg("run")
         .arg(mission)
-        .args(["--no-rerun", "--output", "runs/run000"])
+        .args(["--no-rerun", "--output", "runs/plugin_defaults/run000"])
         .output()
         .unwrap();
     assert!(!result.status.success());
@@ -135,7 +138,8 @@ fn invalid_missions_do_not_allocate_run_directories() {
     let temp = tempfile::tempdir().unwrap();
     let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
         .current_dir(temp.path())
-        .args(["run", "missing-mission.xml", "--no-rerun"])
+        .args(["run", "missing-mission.xml", "--no-rerun", "--root"])
+        .arg(temp.path())
         .output()
         .unwrap();
     assert!(!result.status.success());
@@ -158,6 +162,8 @@ fn unavailable_sensor_reports_its_category_before_creating_a_run() {
             .arg("run")
             .arg(&mission)
             .arg("--no-rerun")
+            .arg("--root")
+            .arg(temp.path())
             .output()
             .unwrap();
         assert!(!result.status.success());

@@ -7,7 +7,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub(super) fn create_directory(explicit: Option<&Path>, runs: &Path) -> Result<PathBuf> {
+pub(crate) fn create_directory(explicit: Option<&Path>, runs: &Path) -> Result<PathBuf> {
     if let Some(output) = explicit {
         if let Some(parent) = output.parent().filter(|path| !path.as_os_str().is_empty()) {
             fs::create_dir_all(parent)

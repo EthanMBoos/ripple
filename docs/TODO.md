@@ -190,8 +190,19 @@ keeps `"1, 2"` lists and `1`/`0` booleans) or from YAML values natively.
   Fix before promising thousand-agent runs.
 - [ ] Write YAML forms of the remaining curated missions. Done: straight-no-gui,
   multirotor, waypoints-point-agents, verification/noisy-state-bias.
-- [ ] Port Ripple's sweep runner and Slurm launcher: `scrimmage sweep`, stable
-  case IDs, shard selection, one result row per case, `bulk_run.py`.
+- [x] Port the minimum of Ripple's sweeps that sharding needs: `scrimmage sweep`
+  (Ripple's file format and case numbering, `--shard-index/--shard-count`,
+  `results.jsonl` + `sweep.json`), `scripts/bulk_run.py` (`local`, `submit`,
+  `worker`, `collect`), `bulk_run.slurm`, and `environment.yaml`. Output goes to
+  `<root>/sweeps/<name>/runNNN`; single runs moved to `<root>/runs/<mission>/runNNN`.
+  Not ported: full per-case output, `--case-id` replay, digests, input hashes,
+  summaries, `status`, and Slurm job watching.
+  Rows keep only post-run metric reports (what `summary.csv` holds); for in-run
+  detail, rerun one case with `scrimmage run` and open it in Rerun.
+- [ ] `scrimmage sweep` uses the built-in registry, like `scrimmage run`: plugins
+  added under `crates/core/src/plugin/` work, but a separate application crate
+  with its own plugins would need its own sweep entry point. Revisit with the
+  library-first work ([LIBRARY_FIRST_REFACTOR.md](LIBRARY_FIRST_REFACTOR.md)).
 - [x] Add YAML templates, before sweeps: one template per entity group; the
   group's own keys replace the template's wholesale (a plugin slot or `spawn`
   is replaced, not merged); no template inherits another. Loading order is
@@ -500,7 +511,7 @@ controls; do not add coordinated simulation/peer pausing.
 1. Commit the XML-based baseline when requested, with working features and gaps
    documented. Do not add temporary compatibility code to make it look complete.
 2. Done: typed mission struct, YAML reader, `scrimmage compare`, YAML templates.
-3. Ripple-style sweeps and the Slurm launcher.
+3. Done: minimal Ripple-style sweeps, shards, and the Slurm launcher.
 4. One typed creation path before connection spawning. XML schedules, YAML
    groups, and external connections use that same path.
 5. Verify one ROS or ArduPilot connection-to-entity case, then expand deliberately.

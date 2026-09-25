@@ -6,7 +6,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::plugin::{
     MetricReport, Metrics, Plugin, PluginParams, TeamMetrics, Update, WorldContext,
@@ -24,7 +24,7 @@ const EVENT_KINDS: [EventKind; 6] = [
 ];
 
 /// Score weights from the mission; `Default` supplies any key the mission leaves out.
-#[derive(Clone, Copy, Deserialize, Serialize)]
+#[derive(Clone, Copy, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct CollisionWeights {
     #[serde(rename = "flight_time_w")]

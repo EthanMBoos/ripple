@@ -7,32 +7,18 @@ use crate::{
     sensor::Observations,
 };
 use anyhow::Result;
-use serde::{Serialize, de::DeserializeOwned};
-use std::cell::RefCell;
+use serde::de::DeserializeOwned;
 use std::collections::BTreeMap;
 
 /// A plugin's mission parameters: its tag's attributes, `param_common` groups, and
 /// any `SCRIMMAGE_PLUGIN_PATH` overlay file, all still as text.
-pub struct PluginParams<'a> {
-    pub(crate) text: &'a Params,
-    /// The parsed values, defaults included, for the run manifest.
-    pub(crate) effective: RefCell<serde_json::Value>,
-}
-impl<'a> PluginParams<'a> {
-    pub(crate) fn new(text: &'a Params) -> Self {
-        Self {
-            text,
-            effective: RefCell::new(serde_json::Value::Null),
-        }
-    }
-
-    /// Fills a `#[derive(Deserialize, Serialize)]` parameter struct. Give the struct
+pub struct PluginParams<'a>(pub(crate) &'a Params);
+impl PluginParams<'_> {
+    /// Fills a `#[derive(Deserialize)]` parameter struct. Give the struct
     /// `#[serde(default, deny_unknown_fields)]` so omitted keys take its `Default`
     /// and a misspelled key is an error instead of being silently ignored.
-    pub fn parse<T: DeserializeOwned + Serialize>(&self) -> Result<T> {
-        let value: T = crate::parse::deserialize(self.text)?;
-        *self.effective.borrow_mut() = serde_json::to_value(&value)?;
-        Ok(value)
+    pub fn parse<T: DeserializeOwned>(&self) -> Result<T> {
+        crate::parse::deserialize(self.0)
     }
 }
 

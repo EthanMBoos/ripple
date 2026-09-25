@@ -18,7 +18,7 @@ fn excluded_straight_spawning_and_camera_options_are_errors() {
         "save_camera_images",
     ] {
         let params = Params::from([(key.into(), "true".into())]);
-        let error = Straight::configure(&PluginParams::new(&params))
+        let error = Straight::configure(&PluginParams(&params))
             .err()
             .expect("unsupported option");
         assert!(error.to_string().contains(key));
@@ -29,10 +29,10 @@ fn excluded_straight_spawning_and_camera_options_are_errors() {
 fn unported_controller_and_motion_modes_are_errors() {
     for key in ["use_roll", "use_glide_slope"] {
         let params = Params::from([(key.into(), "true".into())]);
-        assert!(SimpleAircraftControllerPid::configure(&PluginParams::new(&params)).is_err());
+        assert!(SimpleAircraftControllerPid::configure(&PluginParams(&params)).is_err());
     }
     let params = Params::from([("override_heading".into(), "true".into())]);
-    assert!(SingleIntegrator::configure(&PluginParams::new(&params)).is_err());
+    assert!(SingleIntegrator::configure(&PluginParams(&params)).is_err());
 }
 
 #[test]
@@ -45,7 +45,7 @@ fn boundary_and_ground_reject_unimplemented_geometry_and_response() {
     ] {
         let params = Params::from([(key.into(), value.into())]);
         assert!(
-            Boundary::configure(&PluginParams::new(&params)).is_err(),
+            Boundary::configure(&PluginParams(&params)).is_err(),
             "{key}"
         );
     }
@@ -56,7 +56,7 @@ fn boundary_and_ground_reject_unimplemented_geometry_and_response() {
     ] {
         let params = Params::from([(key.into(), value.into())]);
         assert!(
-            GroundCollision::configure(&PluginParams::new(&params)).is_err(),
+            GroundCollision::configure(&PluginParams(&params)).is_err(),
             "{key}"
         );
     }
@@ -73,12 +73,12 @@ fn routes_require_finite_points_positive_motion_and_a_complete_update() {
     ] {
         let params = Params::from([(key.into(), value.into())]);
         assert!(
-            WaypointFollower::configure(&PluginParams::new(&params)).is_err(),
+            WaypointFollower::configure(&PluginParams(&params)).is_err(),
             "{key}={value}"
         );
     }
     for (key, value) in [("update_at_s", "1"), ("update_waypoints", "1,2,3")] {
         let params = Params::from([(key.into(), value.into())]);
-        assert!(WaypointBroadcast::configure(&PluginParams::new(&params)).is_err());
+        assert!(WaypointBroadcast::configure(&PluginParams(&params)).is_err());
     }
 }

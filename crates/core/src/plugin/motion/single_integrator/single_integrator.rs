@@ -2,7 +2,7 @@
 //! Motion phase. Legacy max_speed >= 0 sets speed magnitude; it is not a speed cap.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::math::{EulerAngles, Quaternion, Vec3};
 use crate::plugin::{
@@ -10,7 +10,7 @@ use crate::plugin::{
 };
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct SingleIntegratorConfig {
     /// Negative means "use the commanded speed".

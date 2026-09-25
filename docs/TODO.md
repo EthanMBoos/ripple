@@ -144,9 +144,18 @@ Rust implements part of that path. Changing syntax alone will not shorten
 missions or make them safe. Composition/override rules and typed validation
 are the substantive work.
 
+- [x] Type plugin parameters. Each plugin deserializes a serde struct whose
+  `Default` holds its defaults; unknown keys and invalid values are errors
+  before the run starts. These structs are the format-neutral plugin layer.
 - [ ] Define a format-neutral typed scenario/template representation feeding
   one resolver and one simulation. Do not duplicate domain validation for XML
   and YAML or force future Rust callers to round-trip typed values through strings.
+  Today `ScenarioConfig` still holds expanded XML, and plugin structs are filled
+  from text by the XML adapter in [params.rs](../crates/core/src/parse/params.rs).
+  Keep legacy text conversion (`"1, 2"` lists, `1`/`0` booleans) in that adapter;
+  YAML should deserialize the same structs from native numbers, booleans, and lists.
+  The finite-number check currently lives only in the text adapter. YAML accepts
+  `.inf`/`.nan`, so move that check to the shared path when YAML is added.
 - [ ] Specify template identities, typed inputs/defaults, duplicate/unknown-name
   errors, include-relative paths/cycles/depth, and override precedence. Explicitly
   choose replace versus append for lists and identify plugin slots. Prefer shallow
@@ -161,8 +170,8 @@ are the substantive work.
   custom tags, or interpolation must not become an undocumented template DSL.
 - [ ] Save effective configuration/provenance: defaults/overrides, assets,
   selected registrations, seeds, and applicable adapter/backend versions.
-  Plugin parameters with their defaults are recorded as `effective_plugin_params`
-  in `manifest.json`; the rest remains.
+  The manifest records the mission's plugin values, not the `Default` values
+  a plugin filled in.
   Parse-time strings must not become runtime world-mutation commands.
 - [ ] Revisit environment-based defaults separately. `SCRIMMAGE_PLUGIN_PATH`
   currently searches XML, not code. Do not remove working overlays just because

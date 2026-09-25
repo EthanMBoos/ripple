@@ -5,14 +5,14 @@
 //! Loss draws come from this network's mission-seeded stream, not C++'s shared generator.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::plugin::{
     Delivery, Network, NetworkContext, Plugin, PluginParams, Transmission, Update,
 };
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct SphereNetworkConfig {
     #[serde(rename = "range")]
@@ -194,7 +194,7 @@ mod tests {
     #[test]
     fn range_is_three_dimensional_and_uses_each_current_snapshot() -> anyhow::Result<()> {
         let params = Params::from([("range".into(), "5".into())]);
-        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams::new(&params))?);
+        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams(&params))?);
         for (position, expected) in [
             (Vec3::new(3.0, 0.0, 3.999), true),
             (Vec3::new(3.0, 0.0, 4.0), false),
@@ -221,7 +221,7 @@ mod tests {
             ("comms_boundary_altitude".into(), "10".into()),
             ("comms_boundary_epsilon".into(), "1".into()),
         ]);
-        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams::new(&params))?);
+        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams(&params))?);
         for (z1, z2, expected) in [
             (8.0, 12.0, false),
             (9.0, 12.0, true),
@@ -260,7 +260,7 @@ mod tests {
         ] {
             let params = Params::from([(key.into(), value.into())]);
             assert!(
-                SphereNetwork::configure(&PluginParams::new(&params)).is_err(),
+                SphereNetwork::configure(&PluginParams(&params)).is_err(),
                 "{key}={value}"
             );
         }

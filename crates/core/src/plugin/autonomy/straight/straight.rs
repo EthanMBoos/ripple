@@ -4,7 +4,7 @@
 //! Autonomy phase: read current state, write desired altitude, speed, and heading.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::math::{self, Vec3};
 use crate::plugin::interaction::{BOUNDARY_TOPIC, BoundaryRegion};
@@ -18,7 +18,7 @@ const SPEED: &str = "desired_speed";
 const HEADING: &str = "desired_heading";
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct StraightConfig {
     #[serde(rename = "speed")]
@@ -173,7 +173,7 @@ mod tests {
         use crate::{KinematicState, Vec3};
 
         let params = Params::new();
-        let config = Straight::configure(&PluginParams::new(&params))?;
+        let config = Straight::configure(&PluginParams(&params))?;
         let state = KinematicState::default();
         let observations = Observations::default();
         let time = StepTime {
@@ -213,7 +213,7 @@ mod tests {
                 },
             )?;
         }
-        let mut network = LocalNetwork::new(&LocalNetwork::configure(&PluginParams::new(&params))?);
+        let mut network = LocalNetwork::new(&LocalNetwork::configure(&PluginParams(&params))?);
         let endpoint = MessageEndpoint {
             entity_id: None,
             plugin: "LocalNetwork".into(),
@@ -285,7 +285,7 @@ mod tests {
     #[test]
     fn configured_speed_is_copied_into_independent_autonomy_instances() -> anyhow::Result<()> {
         let params = Params::from([("speed".into(), "24".into())]);
-        let config = Straight::configure(&PluginParams::new(&params))?;
+        let config = Straight::configure(&PluginParams(&params))?;
         let mut first = Straight::new(&config);
         let second = Straight::new(&config);
         first.goal_world_m.x = 100.0;

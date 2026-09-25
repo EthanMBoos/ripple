@@ -6,7 +6,7 @@
 
 use anyhow::{Result, ensure};
 use nalgebra::Matrix3;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use super::noisy_state::{AxisNoise, StateNoise};
 use crate::math::KinematicState;
@@ -19,7 +19,7 @@ pub const CONTACTS_TOPIC: &str = "ContactsWithCovariances";
 
 /// Mission parameters: the topic plus NoisyState's nine `mean standard_deviation`
 /// keys. `Default` supplies any key the mission leaves out.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct NoisyContactsParams {
     topic_name: String,
@@ -263,7 +263,7 @@ mod tests {
     fn invalid_noise_parameters_are_rejected() {
         for value in ["0 -1", "NaN 1", "0 inf", "0 1 2"] {
             let params = Params::from([("pos_noise_0".into(), value.into())]);
-            assert!(NoisyContacts::configure(&PluginParams::new(&params)).is_err());
+            assert!(NoisyContacts::configure(&PluginParams(&params)).is_err());
         }
     }
 }

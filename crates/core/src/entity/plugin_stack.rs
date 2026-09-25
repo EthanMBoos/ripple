@@ -78,16 +78,6 @@ pub(crate) struct CompiledStack {
     sensor_identities: Vec<String>,
 }
 impl CompiledStack {
-    /// Each plugin's parsed parameters, for the run manifest.
-    pub fn effective_params(&self) -> serde_json::Value {
-        serde_json::json!({
-            "autonomy": self.autonomies.iter().map(CompiledPlugin::describe).collect::<Vec<_>>(),
-            "controllers": self.controllers.iter().map(CompiledPlugin::describe).collect::<Vec<_>>(),
-            "motion_model": self.motion.describe(),
-            "sensors": self.sensors.iter().map(CompiledPlugin::describe).collect::<Vec<_>>(),
-        })
-    }
-
     pub fn compile(config: &EntityConfig, registry: &PluginRegistry) -> Result<Self> {
         let autonomies = config
             .autonomy

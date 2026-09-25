@@ -1,9 +1,9 @@
 //! A minimal controller demonstrating composable named input/output channels.
 use anyhow::Result;
 use scrimmage_core::plugin::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct ScaleSpeedConfig {
     gain: f64,

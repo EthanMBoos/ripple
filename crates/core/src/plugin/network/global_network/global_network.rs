@@ -4,12 +4,12 @@
 //! Network phase: route every matching publisher/subscriber link immediately.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::plugin::{Delivery, Network, NetworkContext, Plugin, PluginParams, Update};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct GlobalNetworkConfig {
     /// Stochastic delay is not implemented; must stay false.
@@ -65,7 +65,7 @@ mod tests {
     #[test]
     fn negative_legacy_delay_is_accepted() -> anyhow::Result<()> {
         let params = Params::from([("comm_delay".into(), "-2".into())]);
-        GlobalNetwork::configure(&PluginParams::new(&params))?;
+        GlobalNetwork::configure(&PluginParams(&params))?;
         Ok(())
     }
 
@@ -77,7 +77,7 @@ mod tests {
             ("is_stochastic_delay", "true"),
         ] {
             let params = Params::from([(key.into(), value.into())]);
-            assert!(GlobalNetwork::configure(&PluginParams::new(&params)).is_err());
+            assert!(GlobalNetwork::configure(&PluginParams(&params)).is_err());
         }
     }
 }

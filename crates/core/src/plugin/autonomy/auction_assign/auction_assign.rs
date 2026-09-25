@@ -6,7 +6,7 @@
 //! Bids come from this plugin's mission-seeded stream, not C++'s shared generator.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::plugin::{
     AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
@@ -17,7 +17,7 @@ pub const BID_AUCTION_TOPIC: &str = "BidAuction";
 pub const RESULT_AUCTION_TOPIC: &str = "ResultAuction";
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct AuctionAssignConfig {
     auctioneer: bool,

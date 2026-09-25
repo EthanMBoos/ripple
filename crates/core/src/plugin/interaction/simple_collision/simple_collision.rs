@@ -4,13 +4,13 @@
 //! Startup checks candidate positions; the interaction phase marks collisions and emits events.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
 use crate::{Entity, EventKind, Vec3};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct CollisionConfig {
     #[serde(rename = "collision_range")]

@@ -23,7 +23,7 @@ Start by copying the built-in for your type. They all follow the same layout.
 ## Anatomy of a plugin
 
 ```rust,ignore
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct MyConfig { /* mission parameters */ }
 impl Default for MyConfig { /* the value of each parameter a mission omits */ }
@@ -90,7 +90,7 @@ Missions refer to the registered name.
 Declare the parameters as a struct, and let serde fill it:
 
 ```rust,ignore
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct StraightConfig {
     #[serde(rename = "speed")]   // what the mission calls it
@@ -121,8 +121,6 @@ Mission values are text. Numbers must be finite, booleans are `true`/`false`
 (or `1`/`0`), and lists such as `"1 2 3"` or `"1, 2, 3"` fill a `Vec` or a fixed
 array like `[f64; 3]`. A bad value is an error that names the key, and so is a
 key the struct doesn't have: a typo never silently gives you the default.
-Each run's `manifest.json` lists every plugin's final parameters under
-`effective_plugin_params`.
 
 ## Ports: the control chain
 

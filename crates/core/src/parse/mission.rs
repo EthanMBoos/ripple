@@ -24,19 +24,6 @@ pub struct ResolvedScenario {
     pub(crate) end_conditions: EndConditions,
 }
 
-impl ResolvedScenario {
-    /// Every plugin's parsed parameters, defaults included, for the run manifest.
-    pub fn effective_plugin_params(&self) -> serde_json::Value {
-        let mut plugins = self.world.effective_params();
-        plugins["entities"] = self
-            .definitions
-            .iter()
-            .map(EntityDefinition::effective_params)
-            .collect();
-        plugins
-    }
-}
-
 #[derive(Clone, Copy, Debug, Default)]
 pub(crate) struct EndConditions {
     pub time: bool,

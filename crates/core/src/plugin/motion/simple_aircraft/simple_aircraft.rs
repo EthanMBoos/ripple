@@ -4,7 +4,7 @@
 //! Motion phase: read throttle/model angular rates, integrate, update mutable truth.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
     math::{self, EulerAngles, KinematicState, Quaternion, Vec3},
@@ -15,7 +15,7 @@ use crate::{
 };
 
 /// Mission parameters in the C++ units; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct SimpleAircraftParams {
     #[serde(rename = "min_velocity")]
@@ -316,7 +316,7 @@ mod tests {
     #[test]
     fn nonfinite_integration_returns_an_explanatory_error() -> anyhow::Result<()> {
         let params = Params::from([("turning_radius".into(), "0".into())]);
-        let config = SimpleAircraft::configure(&PluginParams::new(&params))?;
+        let config = SimpleAircraft::configure(&PluginParams(&params))?;
         let mut aircraft = SimpleAircraft::new(&config);
         let mut truth = crate::KinematicState::default();
         let error = aircraft
@@ -332,7 +332,7 @@ mod tests {
     #[test]
     fn level_uncontrolled_aircraft_moves_forward_at_constant_speed() -> anyhow::Result<()> {
         let params = Params::new();
-        let config = SimpleAircraft::configure(&PluginParams::new(&params))?;
+        let config = SimpleAircraft::configure(&PluginParams(&params))?;
         let state = AircraftState {
             speed_mps: 20.0,
             ..AircraftState::default()
@@ -347,7 +347,7 @@ mod tests {
 
     #[test]
     fn model_pitch_roll_and_limits_retain_legacy_signs_and_operation_order() -> anyhow::Result<()> {
-        let config = SimpleAircraft::configure(&PluginParams::new(&Params::new()))?;
+        let config = SimpleAircraft::configure(&PluginParams(&Params::new()))?;
         let mut aircraft = SimpleAircraft::new(&config);
         aircraft.state = AircraftState {
             speed_mps: 100.0,

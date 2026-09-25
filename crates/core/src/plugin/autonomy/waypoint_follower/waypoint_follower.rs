@@ -3,7 +3,7 @@
 //! Aircraft missions should loop their route: a fixed-wing model cannot stop at the last point.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::common::{WAYPOINT_TOPIC, WaypointList};
 use crate::math::{self, Vec3};
@@ -12,7 +12,7 @@ use crate::plugin::{
 };
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct WaypointFollowerConfig {
     /// Initial route, replaced by any route received on `Waypoints`.

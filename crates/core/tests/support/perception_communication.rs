@@ -12,9 +12,9 @@ use scrimmage_core::plugin::{
     PluginRegistry, Port, Ports, Sensor, SensorContext, Unit, Update,
 };
 use scrimmage_core::{Params, ScenarioConfig, Simulation};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct ContactFollowerConfig {
     follow: bool,
@@ -138,7 +138,7 @@ impl Sensor for Observer {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct RemoveContactsConfig {
     remove_at_s: f64,

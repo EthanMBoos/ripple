@@ -10,7 +10,7 @@ mod dynamics;
 
 use anyhow::{Context, Result, ensure};
 use nalgebra::Matrix3;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::math::{self, KinematicState, Vec3};
 use crate::plugin::{
@@ -21,7 +21,7 @@ use dynamics::{RotorcraftState, derivative};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out
 /// (the C++ quadrotor defaults).
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct MultirotorParams {
     #[serde(rename = "mass")]
@@ -302,9 +302,9 @@ mod tests {
             ("inertia_matrix".into(), "[1 0 0] [0 1 0] [0 0 1]".into()),
             ("rotor_config".into(), "[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]".into()),
         ]);
-        Ok(Multirotor::new(&Multirotor::configure(
-            &PluginParams::new(&params),
-        )?))
+        Ok(Multirotor::new(&Multirotor::configure(&PluginParams(
+            &params,
+        ))?))
     }
 
     #[test]

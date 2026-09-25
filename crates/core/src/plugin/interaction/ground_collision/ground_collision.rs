@@ -3,13 +3,13 @@
 //! No terrain lookup, geodetic conversion, or external-force response in this version.
 
 use anyhow::{Context, Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
 use crate::{Entity, EventKind, Vec3};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct GroundCollisionParams {
     ground_collision_z: f64,

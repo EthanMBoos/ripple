@@ -16,9 +16,10 @@ readability change: simulation behavior must not move.
 - All 14 curated missions, at 1 and 8 workers, produced byte-identical
   `frames.bin`, `events.json`, and `summary.csv` before and after.
 - Each old manifest recorded the XML-derived parameters. For every plugin in
-  every mission, all 716 of those values equal the new manifest's
-  `effective_plugin_params`, which confirms the hand-written `Default` impls.
-  NoisyPosition, used by no mission, was checked against its deleted XML.
+  every mission, all 716 of those values equaled the parsed structs, which
+  confirms the hand-written `Default` impls. NoisyPosition, used by no mission,
+  was checked against its deleted XML. That one-time check used a manifest
+  field (`effective_plugin_params`) that was later removed as unneeded.
 - [params.rs](../crates/core/src/parse/params.rs) tests typed parsing, error
   messages that name the key, and unknown-key rejection;
   [mission.rs](../crates/core/src/parse/mission.rs) tests that a misspelled

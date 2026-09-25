@@ -11,20 +11,11 @@ use std::collections::BTreeMap;
 
 pub(crate) struct CompiledPlugin<T: ?Sized> {
     pub name: String,
-    /// Parsed parameters with defaults, recorded in the run manifest.
-    pub params: serde_json::Value,
     pub ports: Ports,
     pub rate: Rate,
     pub instantiate: Box<dyn Fn() -> Box<T> + Send + Sync>,
 }
 type Compiler<T> = Box<dyn Fn(&PluginParams<'_>) -> Result<CompiledPlugin<T>> + Send + Sync>;
-
-impl<T: ?Sized> CompiledPlugin<T> {
-    /// Name and parsed parameters, for the run manifest.
-    pub(crate) fn describe(&self) -> serde_json::Value {
-        serde_json::json!({ "name": self.name, "params": self.params })
-    }
-}
 
 /// One category's named constructors. The result keeps its category through spawning.
 pub(crate) struct Catalog<T: ?Sized> {
@@ -56,11 +47,9 @@ impl<T: ?Sized> Catalog<T> {
             .compilers
             .get(&source.name)
             .with_context(|| format!("unregistered {} plugin '{}'", self.kind, source.name))?;
-        let params = PluginParams::new(&source.params);
-        let mut plugin = compiler(&params)
+        let mut plugin = compiler(&PluginParams(&source.params))
             .with_context(|| format!("configure {} '{}'", self.kind, source.name))?;
         plugin.name = source.name.clone();
-        plugin.params = params.effective.into_inner();
         plugin
             .ports
             .validate()
@@ -106,9 +95,8 @@ impl PluginRegistry {
                 let config = T::configure(params)?;
                 Ok(CompiledPlugin {
                     name: String::new(),
-                    params: serde_json::Value::Null,
                     ports: T::ports(&config),
-                    rate: Rate::new(params.text)?,
+                    rate: Rate::new(params.0)?,
                     instantiate: Box::new(move || Box::new(AutonomyAdapter(T::new(&config)))),
                 })
             }),
@@ -121,9 +109,8 @@ impl PluginRegistry {
                 let config = T::configure(params)?;
                 Ok(CompiledPlugin {
                     name: String::new(),
-                    params: serde_json::Value::Null,
                     ports: T::ports(&config),
-                    rate: Rate::new(params.text)?,
+                    rate: Rate::new(params.0)?,
                     instantiate: Box::new(move || Box::new(ControllerAdapter(T::new(&config)))),
                 })
             }),
@@ -136,9 +123,8 @@ impl PluginRegistry {
                 let config = T::configure(params)?;
                 Ok(CompiledPlugin {
                     name: String::new(),
-                    params: serde_json::Value::Null,
                     ports: T::ports(&config),
-                    rate: Rate::new(params.text)?,
+                    rate: Rate::new(params.0)?,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -151,9 +137,8 @@ impl PluginRegistry {
                 let config = T::configure(params)?;
                 Ok(CompiledPlugin {
                     name: String::new(),
-                    params: serde_json::Value::Null,
                     ports: T::ports(&config),
-                    rate: Rate::new(params.text)?,
+                    rate: Rate::new(params.0)?,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -166,9 +151,8 @@ impl PluginRegistry {
                 let config = T::configure(params)?;
                 Ok(CompiledPlugin {
                     name: String::new(),
-                    params: serde_json::Value::Null,
                     ports: T::ports(&config),
-                    rate: Rate::new(params.text)?,
+                    rate: Rate::new(params.0)?,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -181,9 +165,8 @@ impl PluginRegistry {
                 let config = T::configure(params)?;
                 Ok(CompiledPlugin {
                     name: String::new(),
-                    params: serde_json::Value::Null,
                     ports: T::ports(&config),
-                    rate: Rate::new(params.text)?,
+                    rate: Rate::new(params.0)?,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -196,9 +179,8 @@ impl PluginRegistry {
                 let config = T::configure(params)?;
                 Ok(CompiledPlugin {
                     name: String::new(),
-                    params: serde_json::Value::Null,
                     ports: T::ports(&config),
-                    rate: Rate::new(params.text)?,
+                    rate: Rate::new(params.0)?,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),

@@ -11,12 +11,12 @@ use scrimmage_core::{
         Update,
     },
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 static CLOSED: AtomicUsize = AtomicUsize::new(0);
 
 /// Mission values: `normal`, `fail_init`, `fail_step`, or `stop`.
-#[derive(Clone, Copy, Default, Deserialize, Serialize)]
+#[derive(Clone, Copy, Default, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum Action {
     #[default]
@@ -27,7 +27,7 @@ enum Action {
     Stop,
 }
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct LifecycleConfig {
     action: Action,

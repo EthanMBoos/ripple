@@ -1,14 +1,14 @@
 //! Typed local-ENU route shared by the waypoint publisher and autonomy.
 
 use anyhow::{Context, Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::Vec3;
 
 pub const WAYPOINT_TOPIC: &str = "Waypoints";
 
 /// Deserializes from mission text such as `"0,0,200; 100,0,200"`.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(try_from = "String")]
 pub struct WaypointList {
     pub positions_world_m: Vec<Vec3>,

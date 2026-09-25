@@ -3,7 +3,7 @@
 //! Sensor phase: sample post-motion truth, apply bias/noise, queue a local observation.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
     Vec3,
@@ -11,7 +11,7 @@ use crate::{
 };
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct SensorConfig {
     bias_world_m: [f64; 3],

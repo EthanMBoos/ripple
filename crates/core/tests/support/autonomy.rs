@@ -2,9 +2,9 @@
 use super::sensor::PositionReading;
 use anyhow::Result;
 use scrimmage_core::plugin::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct DriveToGoalConfig {
     goal_world_m: f64,

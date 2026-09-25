@@ -151,7 +151,7 @@ Each plugin declares its mission parameters as a struct. Serde fills it from the
 mission's text values, and `Default` supplies every key the mission leaves out:
 
 ```rust,ignore
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct SphereNetworkConfig {
     #[serde(rename = "range")]   // the mission key
@@ -191,9 +191,7 @@ Values are resolved in this order, first match wins: an attribute on the mission
 tag, a `param_common` group the tag references, a `PluginName.xml` overlay found
 on `SCRIMMAGE_PLUGIN_PATH`, then `Default`. Overlays are optional: a lab can use
 one to change a default for every mission without editing code. Their `<library>`
-element is ignored, and any other key must be one the plugin declares. Each run's
-`manifest.json` records every plugin's parsed parameters, defaults included,
-under `effective_plugin_params`.
+element is ignored, and any other key must be one the plugin declares.
 
 The C++ plugins' XML defaults became these `Default` impls. Plugins are linked as
 Rust code; runtime shared-library loading is intentionally out of scope.

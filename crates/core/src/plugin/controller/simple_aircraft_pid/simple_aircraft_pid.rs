@@ -4,7 +4,7 @@
 //! Controller phase: read desired/current state, write throttle and model angular rates.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::plugin::{
     AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
@@ -16,7 +16,7 @@ use crate::{
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 /// Each PID is `P, I, D, integral band`.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct ControllerConfig {
     #[serde(rename = "heading_pid")]
@@ -124,7 +124,7 @@ mod tests {
     #[test]
     fn xml_gains_retain_the_legacy_order_and_heading_band_units() -> anyhow::Result<()> {
         let params = Params::from([("heading_pid".into(), "2,3,4,9".into())]);
-        let config = SimpleAircraftControllerPid::configure(&PluginParams::new(&params))?;
+        let config = SimpleAircraftControllerPid::configure(&PluginParams(&params))?;
         assert!((config.heading_gains.proportional - 2.0).abs() < 1e-12);
         assert!((config.heading_gains.integral - 3.0).abs() < 1e-12);
         assert!((config.heading_gains.derivative - 4.0).abs() < 1e-12);

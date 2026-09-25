@@ -3,14 +3,14 @@
 //! The reference fixture supplies the same commands to the upstream C++ motion model.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::plugin::{
     AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct MotorSpeedsParams {
     /// Shaft speeds in rad/s written to motor_0, motor_1, ...; a mission must

@@ -6,7 +6,7 @@
 
 use anyhow::{Result, ensure};
 use nalgebra::{Matrix3, UnitQuaternion};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::math::{KinematicState, Quaternion, Vec3};
 use crate::plugin::{Plugin, PluginParams, PluginRandom, Sensor, SensorContext, Update};
@@ -14,8 +14,8 @@ use crate::plugin::{Plugin, PluginParams, PluginRandom, Sensor, SensorContext, U
 pub const STATE_TOPIC: &str = "StateWithCovariance";
 
 /// Legacy `mean standard_deviation` noise for one axis.
-#[derive(Clone, Copy, Deserialize, Serialize)]
-#[serde(from = "[f64; 2]", into = "[f64; 2]")]
+#[derive(Clone, Copy, Deserialize)]
+#[serde(from = "[f64; 2]")]
 pub(super) struct AxisNoise {
     pub(super) mean: f64,
     pub(super) stddev: f64,
@@ -32,7 +32,7 @@ pub(super) struct StateNoise {
 
 /// Mission parameters, each `mean standard_deviation`; `Default` supplies any key
 /// the mission leaves out. NoisyContacts reads the same nine keys.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct NoisyStateParams {
     pos_noise_0: AxisNoise,
@@ -143,12 +143,6 @@ impl NoisyState {
 impl From<[f64; 2]> for AxisNoise {
     fn from([mean, stddev]: [f64; 2]) -> Self {
         Self { mean, stddev }
-    }
-}
-
-impl From<AxisNoise> for [f64; 2] {
-    fn from(noise: AxisNoise) -> Self {
-        [noise.mean, noise.stddev]
     }
 }
 
@@ -346,7 +340,7 @@ mod tests {
     fn invalid_noise_parameters_are_rejected() {
         for value in ["0 -1", "NaN 1", "0 inf", "0 1 2"] {
             let params = Params::from([("pos_noise_0".into(), value.into())]);
-            assert!(NoisyState::configure(&PluginParams::new(&params)).is_err());
+            assert!(NoisyState::configure(&PluginParams(&params)).is_err());
         }
     }
 }

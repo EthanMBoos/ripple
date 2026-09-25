@@ -1,12 +1,12 @@
 //! A world interaction: keep every entity above a floor and publish the resulting population.
 use anyhow::Result;
 use scrimmage_core::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 pub struct Population {
     pub entity_count: usize,
 }
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct FloorConfig {
     height_world_m: f64,

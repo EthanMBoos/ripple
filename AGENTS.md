@@ -79,7 +79,7 @@ core responsibilities around the C++ names: `simcontrol`, `entity`, `parse`,
 Keep one implementation tree, grouped by the seven categories. Do not keep
 parallel old/new `plugin/` and `plugins/` implementation folders.
 Each concrete built-in has a `plugin/<category>/<plugin>/` directory containing
-`<plugin>.rs`. Its mission parameters are a `#[derive(Deserialize, Serialize)]`
+`<plugin>.rs`. Its mission parameters are a `#[derive(Deserialize)]`
 struct with `#[serde(default, deny_unknown_fields)]`; the struct's `Default`
 holds the mission defaults (formerly the C++ `PluginName.xml` values), and
 `configure` calls `params.parse()` and then validates. Consult sibling `../scrimmage` for unported C++ code

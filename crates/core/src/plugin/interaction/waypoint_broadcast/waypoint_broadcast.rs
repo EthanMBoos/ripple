@@ -2,13 +2,13 @@
 //! Interaction phase; ordinary typed GlobalNetwork messages, no services or spawn commands.
 
 use anyhow::{Result, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::common::{WAYPOINT_TOPIC, WaypointList};
 use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct WaypointBroadcastConfig {
     #[serde(rename = "waypoints")]

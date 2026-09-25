@@ -3,6 +3,7 @@
 use crate::{
     EntitySnapshot, KinematicState, Params,
     common::{PluginRandom, Ports},
+    parse::{PluginConfig, PluginValues},
     pubsub::Messages,
     sensor::Observations,
 };
@@ -10,15 +11,58 @@ use anyhow::Result;
 use serde::de::DeserializeOwned;
 use std::collections::BTreeMap;
 
-/// A plugin's mission parameters: its tag's attributes, `param_common` groups, and
-/// any `SCRIMMAGE_PLUGIN_PATH` overlay file, all still as text.
-pub struct PluginParams<'a>(pub(crate) &'a Params);
-impl PluginParams<'_> {
+/// A plugin's mission parameters, as its mission file gave them.
+pub struct PluginParams<'a> {
+    values: Values<'a>,
+    pub(crate) loop_rate_hz: f64,
+}
+enum Values<'a> {
+    Text(&'a Params),
+    Yaml(&'a serde_yaml_ng::Mapping),
+}
+impl<'a> PluginParams<'a> {
+    pub(crate) fn new(config: &'a PluginConfig) -> Self {
+        let values = match &config.params {
+            PluginValues::Text(params) => Values::Text(params),
+            PluginValues::Yaml(params) => Values::Yaml(params),
+        };
+        Self {
+            values,
+            loop_rate_hz: config.loop_rate_hz,
+        }
+    }
+
+    /// XML-style text values, for unit tests of a single plugin.
+    #[cfg(test)]
+    pub(crate) fn text(params: &'a Params) -> Self {
+        Self {
+            values: Values::Text(params),
+            loop_rate_hz: 0.0,
+        }
+    }
+
     /// Fills a `#[derive(Deserialize)]` parameter struct. Give the struct
     /// `#[serde(default, deny_unknown_fields)]` so omitted keys take its `Default`
     /// and a misspelled key is an error instead of being silently ignored.
     pub fn parse<T: DeserializeOwned>(&self) -> Result<T> {
-        crate::parse::deserialize(self.0)
+        match self.values {
+            Values::Text(params) => crate::parse::deserialize(params),
+            // No values: the same as an XML tag without attributes. This also
+            // covers plugins whose config is `()`, which YAML cannot express.
+            Values::Yaml(params) if params.is_empty() => crate::parse::deserialize(&Params::new()),
+            // Going through text makes serde_yaml name the key in a type error. Its
+            // line numbers would refer to that text, not the mission file, so drop them.
+            Values::Yaml(params) => serde_yaml_ng::from_str(&serde_yaml_ng::to_string(params)?)
+                .map_err(|error| {
+                    let message = error.to_string();
+                    let message = message.split(" at line ").next().unwrap_or(&message);
+                    if message.contains("expected unit") {
+                        anyhow::anyhow!("this plugin takes no parameters")
+                    } else {
+                        anyhow::anyhow!("{message}")
+                    }
+                }),
+        }
     }
 }
 

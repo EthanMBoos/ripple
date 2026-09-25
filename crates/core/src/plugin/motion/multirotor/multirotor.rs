@@ -302,9 +302,9 @@ mod tests {
             ("inertia_matrix".into(), "[1 0 0] [0 1 0] [0 0 1]".into()),
             ("rotor_config".into(), "[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]".into()),
         ]);
-        Ok(Multirotor::new(&Multirotor::configure(&PluginParams(
-            &params,
-        ))?))
+        Ok(Multirotor::new(&Multirotor::configure(
+            &PluginParams::text(&params),
+        )?))
     }
 
     #[test]

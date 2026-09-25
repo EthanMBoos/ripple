@@ -263,7 +263,7 @@ mod tests {
     fn invalid_noise_parameters_are_rejected() {
         for value in ["0 -1", "NaN 1", "0 inf", "0 1 2"] {
             let params = Params::from([("pos_noise_0".into(), value.into())]);
-            assert!(NoisyContacts::configure(&PluginParams(&params)).is_err());
+            assert!(NoisyContacts::configure(&PluginParams::text(&params)).is_err());
         }
     }
 }

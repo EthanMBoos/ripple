@@ -25,9 +25,12 @@ compatibility alongside ROS 2) and ArduPilot. JSBSim is verification-only:
 optional offline fixture generation for selected Rust flight models, not a
 production plugin, CXX bridge, engine port, or aircraft-XML compatibility layer.
 Ordinary Rust tests should consume saved fixtures without needing JSBSim.
-Curate mission coverage. YAML/templates
-are a later direction, not implemented; typed runtime spawning and the remaining
-model catalog still need explicit prioritization. Keep optional adapters out of
+Curate mission coverage. XML and YAML missions are both supported
+permanently through one typed `ScenarioConfig`: XML is frozen for single runs,
+and only YAML gets templates and sweeps (both still planned; see `docs/TODO.md`
+section 2 and `docs/MISSION_YAML.md`). A `.yaml` beside a `.xml` mission must
+run identically (`scrimmage compare`, `crates/core/tests/yaml_missions.rs`). Typed runtime spawning and the remaining model
+catalog still need explicit prioritization. Keep optional adapters out of
 the default runtime dependency path.
 
 - Rust workspace: this repository, `scrimmage-rs`.

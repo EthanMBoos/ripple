@@ -97,7 +97,9 @@ impl CompiledWorld {
         if !networks.iter().any(|plugin| plugin.name == "GlobalNetwork") {
             networks.push(registry.networks.compile(&crate::parse::PluginConfig {
                 name: "GlobalNetwork".into(),
-                params: crate::Params::new(),
+                instance: None,
+                loop_rate_hz: 0.0,
+                params: crate::parse::PluginValues::Text(crate::Params::new()),
             })?);
         }
         networks.sort_by(|first, second| first.name.cmp(&second.name));

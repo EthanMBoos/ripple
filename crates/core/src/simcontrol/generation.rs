@@ -1,7 +1,7 @@
 //! Mission-controlled generation schedules.
 
 use super::{Event, EventKind, Simulation};
-use crate::parse::{EntityConfig, integer, number};
+use crate::parse::EntityConfig;
 use crate::{common::random::Normal, entity::Entity, math::Vec3};
 use anyhow::{Context, Result, ensure};
 
@@ -127,36 +127,16 @@ impl Generator {
         definition_index: usize,
         start_s: f64,
     ) -> Result<Self> {
-        let params = &config.params;
-        let count = integer(params, "count", 1)?;
-        let mut rate_hz = -1.0;
-        let mut batch = count;
-        let mut first_spawn_s = start_s - 1.0;
-        if let (Some(rate_text), Some(_)) =
-            (params.get("generate_rate"), params.get("generate_count"))
-        {
-            let values: Vec<f64> = rate_text
-                .split('/')
-                .map(|s| s.trim().parse())
-                .collect::<std::result::Result<_, _>>()?;
-            let rate_value_hz = match values.as_slice() {
-                [a, b] => a / b,
-                [a] => *a,
-                _ => anyhow::bail!("invalid generate_rate"),
-            };
-            let batch_size = integer(params, "generate_count", 1)?;
-            if rate_value_hz > 0.0 && batch_size > 0 {
-                rate_hz = rate_value_hz;
-                batch = batch_size;
-                first_spawn_s = number(params, "generate_start_time", 0.0)?;
-            }
-        }
-        let time_stddev_s = number(params, "generate_time_variance", 0.0)?;
+        let (rate_hz, batch, first_spawn_s) = match &config.schedule {
+            Some(schedule) => (schedule.rate_hz, schedule.count, schedule.start_s),
+            None => (-1.0, config.count, start_s - 1.0),
+        };
+        let time_stddev_s = config.spawn_time_stddev_s;
         ensure!(time_stddev_s >= 0.0, "negative generation variance");
         Ok(Self {
             definition_index,
-            heading_world_deg: number(params, "heading", 0.0)?,
-            remaining: count,
+            heading_world_deg: config.heading_deg,
+            remaining: config.count,
             next_spawn_times_s: vec![first_spawn_s; batch],
             rate_hz,
             time_stddev_s,

@@ -1,0 +1,51 @@
+# The YAML form of waypoints-point-agents.xml; both produce identical output.
+format_version: 1
+name: Point agents sharing a route
+
+run:
+  end_s: 12
+  dt_s: 0.1
+  seed: 12345
+
+interactions:
+  WaypointBroadcast:
+    waypoints: [[10, 0, 0], [10, 10, 0]]
+    update_at_s: 3
+    update_waypoints: [[0, 20, 0], [-10, 20, 0]]
+networks:
+  GlobalNetwork:
+metrics:
+  SimpleCollisionMetrics:
+
+entities:
+  blue:
+    team: 1
+    color: [70, 130, 255]
+    visual_model: sphere
+    position_m: [0, -2, 0]
+    position_variance_m2: [0, 0, 0]
+    autonomy:
+      WaypointFollower:
+        waypoints: [[10, 0, 0], [10, 10, 0]]
+        arrival_radius_m: 0.01
+        speed: 5
+    controller:
+      SingleIntegratorControllerSimple:
+    motion_model:
+      SingleIntegrator:
+
+  red:
+    team: 2
+    color: [255, 100, 70]
+    visual_model: sphere
+    position_m: [0, 2, 0]
+    position_variance_m2: [0, 0, 0]
+    autonomy:
+      WaypointFollower:
+        waypoints: [[10, 0, 0], [10, 10, 0]]
+        arrival_radius_m: 0.01
+        speed: 5
+    controller:
+      SingleIntegratorControllerSimple:
+    motion_model:
+      SingleIntegrator:

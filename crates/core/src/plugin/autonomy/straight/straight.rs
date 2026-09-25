@@ -173,7 +173,7 @@ mod tests {
         use crate::{KinematicState, Vec3};
 
         let params = Params::new();
-        let config = Straight::configure(&PluginParams(&params))?;
+        let config = Straight::configure(&PluginParams::text(&params))?;
         let state = KinematicState::default();
         let observations = Observations::default();
         let time = StepTime {
@@ -213,7 +213,8 @@ mod tests {
                 },
             )?;
         }
-        let mut network = LocalNetwork::new(&LocalNetwork::configure(&PluginParams(&params))?);
+        let mut network =
+            LocalNetwork::new(&LocalNetwork::configure(&PluginParams::text(&params))?);
         let endpoint = MessageEndpoint {
             entity_id: None,
             plugin: "LocalNetwork".into(),
@@ -285,7 +286,7 @@ mod tests {
     #[test]
     fn configured_speed_is_copied_into_independent_autonomy_instances() -> anyhow::Result<()> {
         let params = Params::from([("speed".into(), "24".into())]);
-        let config = Straight::configure(&PluginParams(&params))?;
+        let config = Straight::configure(&PluginParams::text(&params))?;
         let mut first = Straight::new(&config);
         let second = Straight::new(&config);
         first.goal_world_m.x = 100.0;

@@ -148,7 +148,8 @@ in this repo.
 ## Parameters and defaults
 
 Each plugin declares its mission parameters as a struct. Serde fills it from the
-mission's text values, and `Default` supplies every key the mission leaves out:
+mission's values (XML text or YAML), and `Default` supplies every key the
+mission leaves out:
 
 ```rust,ignore
 #[derive(Deserialize)]
@@ -173,9 +174,10 @@ fn configure(params: &PluginParams<'_>) -> Result<SphereNetworkConfig> {
 }
 ```
 
-- Numbers must be finite; booleans are `true`, `false`, `1`, or `0`. Lists
-  (`Vec` or a fixed array) are separated by commas or whitespace, so
-  `"1, 0.01, 2, 9"` fills `[f64; 4]` and `PidGains`.
+- Numbers must be finite. In XML, booleans are `true`, `false`, `1`, or `0`, and
+  lists (`Vec` or a fixed array) are separated by commas or whitespace, so
+  `"1, 0.01, 2, 9"` fills `[f64; 4]` and `PidGains`. YAML uses its own
+  booleans and lists (`[1, 0.01, 2, 9]`).
 - `deny_unknown_fields` makes a misspelled or unsupported key an error that
   names the key, instead of silently using the default.
 - A C++ option that Rust does not implement stays a named field with a comment,
@@ -465,5 +467,6 @@ Compiled downstream Rust plugins remain supported. Runtime shared-library
 discovery/loading and legacy protobuf/string-map spawning are explicitly excluded.
 Burn and optional ROS 1/2 and ArduPilot adapters are future work, not current
 capabilities. JSBSim is planned only as offline flight-model reference tooling,
-not a production plugin or FFI integration. XML/template coverage is partial;
-a YAML frontend and typed runtime spawn requests are not implemented.
+not a production plugin or FFI integration. XML/template coverage is partial.
+YAML missions work, but YAML templates, sweeps, and typed runtime spawn
+requests are not implemented.

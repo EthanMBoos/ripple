@@ -132,9 +132,8 @@ impl CompiledStack {
         for source in &config.sensors {
             let count = occurrences.entry(&source.name).or_insert(0);
             let identity = source
-                .params
-                .get("instance")
-                .cloned()
+                .instance
+                .clone()
                 .unwrap_or_else(|| format!("{}:{}", source.name, count));
             *count += 1;
             ensure!(

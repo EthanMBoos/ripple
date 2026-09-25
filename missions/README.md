@@ -3,7 +3,10 @@
 Run from the repository root with `scrimmage run missions/<file> --headless`.
 Replay the printed run directory with `scrimmage replay runs/runNNN`.
 These fourteen XML files use the compiled built-ins. They are examples and regression
-inputs, not a copy of every upstream demo.
+inputs, not a copy of every upstream demo. A `.yaml` file beside an XML file is its
+[YAML form](../docs/MISSION_YAML.md) and must run identically; check one with
+`scrimmage compare <file>.xml <file>.yaml`. YAML overrides take dotted paths
+(`entities.red.heading_deg:=170`) instead of XML variable names.
 
 | Mission | What to try or verify |
 | --- | --- |

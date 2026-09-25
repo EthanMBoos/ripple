@@ -124,7 +124,7 @@ mod tests {
     #[test]
     fn xml_gains_retain_the_legacy_order_and_heading_band_units() -> anyhow::Result<()> {
         let params = Params::from([("heading_pid".into(), "2,3,4,9".into())]);
-        let config = SimpleAircraftControllerPid::configure(&PluginParams(&params))?;
+        let config = SimpleAircraftControllerPid::configure(&PluginParams::text(&params))?;
         assert!((config.heading_gains.proportional - 2.0).abs() < 1e-12);
         assert!((config.heading_gains.integral - 3.0).abs() < 1e-12);
         assert!((config.heading_gains.derivative - 4.0).abs() < 1e-12);

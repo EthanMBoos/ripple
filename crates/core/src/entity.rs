@@ -9,7 +9,7 @@ use serde::Serialize;
 use crate::{
     entity::plugin_stack::{CompiledStack, PluginStack},
     math::{EulerAngles, KinematicState, Quaternion, Vec3},
-    parse::{EntityConfig, boolean, number, vector},
+    parse::EntityConfig,
     plugin::{EntityInfo, Observations, PluginRegistry, StepTime},
 };
 
@@ -56,83 +56,48 @@ pub(crate) struct EntityDefinition {
 
 impl EntityDefinition {
     pub(crate) fn parse(config: &EntityConfig, registry: &PluginRegistry) -> Result<Self> {
-        let params = &config.params;
-        let position_world_m = Vec3::new(
-            number(params, "x", 0.0)?,
-            number(params, "y", 0.0)?,
-            number(params, "z", 0.0)?,
-        );
-        let position_variance_world_m2 = Vec3::new(
-            number(params, "variance_x", 100.0)?,
-            number(params, "variance_y", 100.0)?,
-            number(params, "variance_z", 0.0)?,
-        );
-        let heading_variance_deg2 = number(params, "variance_heading", 0.0)?;
         ensure!(
-            position_variance_world_m2
+            config
+                .position_variance_world_m2
                 .iter()
                 .all(|variance| *variance >= 0.0)
-                && heading_variance_deg2 >= 0.0,
+                && config.heading_variance_deg2 >= 0.0,
             "spawn variances must be nonnegative"
         );
 
-        let mut initial_velocity_world_mps = Vec3::new(
-            number(params, "vx", 0.0)?,
-            number(params, "vy", 0.0)?,
-            number(params, "vz", 0.0)?,
-        );
-        let initial_speed_mps = number(params, "speed", 0.0)?;
-        if initial_speed_mps > 0.0 && initial_velocity_world_mps == Vec3::zeros() {
+        let mut initial_velocity_world_mps = config.velocity_world_mps;
+        if config.speed_mps > 0.0 && initial_velocity_world_mps == Vec3::zeros() {
             // Matches C++ for now, though we don't consider it correct: scalar speed is
             // applied along world X before the initial attitude, so an aircraft facing north
             // can start moving east. Motion models that rebuild velocity hide this.
-            initial_velocity_world_mps = Vec3::new(initial_speed_mps, 0.0, 0.0);
+            initial_velocity_world_mps = Vec3::new(config.speed_mps, 0.0, 0.0);
         }
 
-        let visual_model = params
-            .get("visual_model")
-            .cloned()
-            .unwrap_or_else(|| "sphere".into());
-        let contact_type = match visual_model.to_lowercase().as_str() {
+        let contact_type = match config.visual_model.to_lowercase().as_str() {
             "sphere" => EntityKind::Sphere,
             "aircraft" => EntityKind::Aircraft,
             "quadrotor" => EntityKind::Quadrotor,
             _ => EntityKind::Mesh,
         };
-        let color = vector(params, "color", [255.0, 255.0, 255.0])?
-            .map(|channel| channel.clamp(0.0, 255.0) as u8);
-        let team_id = params
-            .get("team_id")
-            .map_or(Ok(-1), |value| value.parse())
-            .context("invalid team_id")?;
-        let initial_health = params
-            .get("health")
-            .map_or(Ok(1), |value| value.parse())
-            .context("invalid health")?;
-        let requested_id = params
-            .get("id")
-            .map(|value| value.parse())
-            .transpose()
-            .context("invalid entity id")?;
 
         Ok(Self {
             spawn: SpawnConfig {
-                position_world_m,
-                position_variance_world_m2,
-                heading_variance_deg2,
-                randomize_every_spawn: boolean(params, "use_variance_all_ents", false)?,
-                requested_id,
+                position_world_m: config.position_world_m,
+                position_variance_world_m2: config.position_variance_world_m2,
+                heading_variance_deg2: config.heading_variance_deg2,
+                randomize_every_spawn: config.randomize_every_spawn,
+                requested_id: config.requested_id,
             },
-            team_id,
-            initial_health,
+            team_id: config.team_id,
+            initial_health: config.health,
             initial_velocity_world_mps,
             initial_attitude: EulerAngles {
-                roll_world_from_body_rad: number(params, "roll", 0.0)?.to_radians(),
-                pitch_world_from_body_rad: number(params, "pitch", 0.0)?.to_radians(),
+                roll_world_from_body_rad: config.roll_deg.to_radians(),
+                pitch_world_from_body_rad: config.pitch_deg.to_radians(),
                 yaw_world_from_body_rad: 0.0,
             },
-            color,
-            visual_model,
+            color: config.color,
+            visual_model: config.visual_model.clone(),
             contact_type,
             plugins: CompiledStack::compile(config, registry)?,
         })

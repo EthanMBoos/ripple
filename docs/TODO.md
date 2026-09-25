@@ -40,7 +40,7 @@ intentional behavior changes explicit.
 | Legacy GPU path | Do not port OpenCL/kernel-path machinery. Burn is the preferred technology to evaluate for new GPU work. | No legacy GPU XML/kernel compatibility; no promise that every model will run on a GPU. |
 | Integrations | Limit runtime candidates to ROS and ArduPilot. ROS 1 compatibility is required alongside ROS 2; exact message/control coverage is open. | Separate optional adapters and acceptance environments, not a universal bridge or default-build dependencies. |
 | JSBSim | Verification-only: offline reference fixtures for selected Rust flight models. No production plugin, runtime integration, or CXX bridge. | Maintain a small reproducible test corpus, not a JSBSim engine port or general aircraft-XML compatibility. |
-| Mission format | XML for the initial baseline; later migrate to YAML with reusable typed templates and explicit spawn schedules/triggers. | Replace legacy input/generation plumbing after migration coverage exists, not the engine's typed entity lifecycle. No indefinite XML compatibility commitment. |
+| Mission format | XML and YAML both supported permanently, feeding one typed `Mission`. XML is frozen for single runs; YAML is native and alone gets templates and Ripple-style sweeps. | No XML templates or sweeps. XML/YAML equivalence is checked by paired fixtures and `scrimmage compare`. |
 | Mission corpus | Curated regression/stress fixtures, not every upstream mission. | Coverage follows shipped models and failure modes, not XML file count. Fourteen working missions are retained; unported demos stay upstream. |
 | Remaining model catalog | Inventory/prioritize standalone C++ models separately from integrations; final selection is open. The [plugin audit](PLUGIN_COVERAGE_AUDIT.md) added NoisyContacts and SphereNetwork + AuctionAssign. | Not copying every mission does **not** automatically mean dropping its useful motion/sensor/autonomy models. |
 
@@ -137,37 +137,74 @@ Retain legacy `frames.bin` protobuf I/O for selected C++ comparisons for now.
 That output format is independent of protobuf-driven spawning. Internal events
 should remain ordinary Rust data, serialized only at output/transport boundaries.
 
-## 2. Templates first; YAML later
+## 2. Mission input: XML kept, YAML added, sweeps in YAML
 
-XML already has `entity_common`, `param_common`, includes, and substitutions;
-Rust implements part of that path. Changing syntax alone will not shorten
-missions or make them safe. Composition/override rules and typed validation
-are the substantive work.
+Decided (2026-09-25): both formats stay supported permanently.
+
+- **XML** remains the input for ordinary single runs and keeps working
+  unchanged, including the baseline and reference-comparison missions. It is
+  frozen: its existing `entity_common`, `param_common`, includes, and
+  substitutions stay, and it gets no new features.
+- **YAML** is the native format. It runs the same single missions, and only
+  YAML gets templates and parameter sweeps.
+- **Sweeps** follow [Ripple](../../ripple): a `*.sweep.yaml` names a base YAML
+  mission, `seeds`, `parameter_combinations: cartesian | zip`, and dotted-path
+  `parameters` lists. Each case patches the base YAML tree, then loads it like
+  any other mission. Patching a tree is why sweeps are YAML-only; XML would need
+  a second mechanism. Ripple's `crates/ripple/src/sweep.rs` (stable case IDs,
+  shards, per-case result rows) and `scripts/bulk_run.py` + `bulk_run.slurm`
+  (local or Slurm shards, collection) are the implementation to port.
+
+```
+mission.xml  --(XML reader: text values)--+
+                                          +--> Mission --> resolve/validate --> run
+mission.yaml --(YAML reader: native)------+
+     ^
+sweep.yaml -- patches base YAML per case -- case IDs/shards -- bulk_run.py
+```
+
+Plugin code does not change: `params.parse()` fills the same struct from XML
+text (the adapter in [params.rs](../crates/core/src/parse/params.rs), which
+keeps `"1, 2"` lists and `1`/`0` booleans) or from YAML values natively.
 
 - [x] Type plugin parameters. Each plugin deserializes a serde struct whose
   `Default` holds its defaults; unknown keys and invalid values are errors
   before the run starts. These structs are the format-neutral plugin layer.
-- [ ] Define a format-neutral typed scenario/template representation feeding
-  one resolver and one simulation. Do not duplicate domain validation for XML
-  and YAML or force future Rust callers to round-trip typed values through strings.
-  Today `ScenarioConfig` still holds expanded XML, and plugin structs are filled
-  from text by the XML adapter in [params.rs](../crates/core/src/parse/params.rs).
-  Keep legacy text conversion (`"1, 2"` lists, `1`/`0` booleans) in that adapter;
-  YAML should deserialize the same structs from native numbers, booleans, and lists.
-  The finite-number check currently lives only in the text adapter. YAML accepts
-  `.inf`/`.nan`, so move that check to the shared path when YAML is added.
-- [ ] Specify template identities, typed inputs/defaults, duplicate/unknown-name
-  errors, include-relative paths/cycles/depth, and override precedence. Explicitly
-  choose replace versus append for lists and identify plugin slots. Prefer shallow
-  composition to arbitrary inheritance/deep merge.
-- [ ] Test the selected XML template surface. C++ allows a child to replace an
-  inherited motion model; Rust concatenates both and rejects the second. Rust
-  also does not retain entity `tag` attributes as runtime template IDs. See
+- [x] Make `ScenarioConfig` the typed mission: entity fields are numbers and
+  vectors, and each plugin holds its values as XML text or YAML. The XML reader
+  ([xml_mission.rs](../crates/core/src/parse/xml_mission.rs)) fills it and no
+  longer keeps the expanded XML. All curated missions stayed byte-identical.
+  `loop_rate` and a sensor's `instance` are now framework fields removed before
+  the plugin parses, fixing a latent bug where `instance` was rejected.
+- [x] Add the YAML reader ([yaml_mission.rs](../crates/core/src/parse/yaml_mission.rs)).
+  Unknown keys are errors, non-finite numbers are rejected by path, and entities
+  and plugins are map keys (see [MISSION_YAML.md](MISSION_YAML.md)). Trailing
+  `path:=value` arguments override YAML by dotted path; every part must exist.
+- [x] Add `scrimmage compare a.xml b.yaml`: setup differences by path, then both
+  runs must give byte-identical `frames.bin`, `events.json`, and `summary.csv`.
+  [yaml_missions.rs](../crates/core/tests/yaml_missions.rs) checks every paired
+  mission; unit tests cover defaults, overrides, unknown keys, and invalid values.
+- [ ] Decide whether templates come before sweeps. A review suggested
+  load -> expand templates -> apply overrides -> validate, so overrides and
+  sweep paths can reach inherited fields; that order fixes how sweeps work.
+- [ ] Startup message queues cap large populations: a 1,500-agent mission fails
+  with `publisher queue full (1024 messages)` publishing
+  `GlobalNetwork/EntityGenerated` ([messages.rs](../crates/core/src/pubsub/messages.rs)).
+  Fix before promising thousand-agent runs.
+- [ ] Write YAML forms of the remaining curated missions. Done: straight-no-gui,
+  multirotor, waypoints-point-agents, verification/noisy-state-bias.
+- [ ] Port Ripple's sweep runner and Slurm launcher: `scrimmage sweep`, stable
+  case IDs, shard selection, one result row per case, `bulk_run.py`.
+- [ ] Add YAML templates: template identities, typed inputs/defaults,
+  duplicate/unknown-name errors, include-relative paths/cycles/depth, and
+  override precedence. Choose replace versus append for lists. Prefer shallow
+  composition to inheritance or deep merge. Templates feed the typed creation
+  path in section 1.
+- [ ] XML template gaps stay documented, not fixed: C++ lets a child replace an
+  inherited motion model, while Rust concatenates both and rejects the second;
+  Rust does not keep entity `tag` attributes as template IDs. See
   [MissionParse.cpp](../../scrimmage/src/parse/MissionParse.cpp) and
-  [mission.rs](../crates/core/src/parse/mission.rs). Template parity is partial.
-- [ ] Later add strict YAML plus paired XML/YAML fixtures yielding identical
-  resolved models, state, and outputs. Reject unknown fields. YAML anchors,
-  custom tags, or interpolation must not become an undocumented template DSL.
+  [mission.rs](../crates/core/src/parse/mission.rs).
 - [ ] Save effective configuration/provenance: defaults/overrides, assets,
   selected registrations, seeds, and applicable adapter/backend versions.
   The manifest records the mission's plugin values, not the `Default` values
@@ -177,20 +214,6 @@ are the substantive work.
   currently searches XML, not code. Do not remove working overlays just because
   library loading is excluded. Explicit application-owned defaults/asset paths
   are the proposed later boundary.
-
-The intended destination is YAML with better templates and spawn timing, not
-permanent support for every legacy XML mechanism. XML is acceptable for v1.
-Introduce format-neutral definitions before the integration pilot; YAML later
-feeds the same definitions and must not require rewriting runtime spawning.
-
-- [ ] After YAML covers the curated missions, template/instance definitions,
-  and chosen spawn triggers, migrate those fixtures and explicitly retire the
-  superseded XML frontend and legacy generation-compatibility code. Preserve
-  reference evidence and document changed semantics. Remove replaced paths;
-  keep one typed entity creation/lifecycle implementation, not two engines.
-
-This is a staged migration, not authorization for an immediate parser rewrite
-or deletion of working XML support. No need to finish every C++ feature first.
 
 ## 3. Optional integrations: use the natural boundary
 
@@ -479,12 +502,13 @@ controls; do not add coordinated simulation/peer pausing.
 
 1. Commit the XML-based baseline when requested, with working features and gaps
    documented. Do not add temporary compatibility code to make it look complete.
-2. Build keyed templates and one typed creation path before connection spawning.
-   Existing XML schedules and external connections should use that same path.
-3. Verify one ROS or ArduPilot connection-to-entity case, then expand deliberately.
+2. Typed `Mission` struct with the XML reader moved onto it (byte-identical).
+3. YAML reader, paired fixtures, and `scrimmage compare`.
+4. Ripple-style sweeps and the Slurm launcher.
+5. YAML templates and one typed creation path before connection spawning.
+   XML schedules, YAML templates, and external connections use that same path.
+6. Verify one ROS or ArduPilot connection-to-entity case, then expand deliberately.
    Leave unsupported cases explicit rather than adding workarounds.
-4. Later migrate the selected missions to YAML/templates and remove the replaced
-   XML/legacy input paths. Keep the typed entity lifecycle.
 
 Current-model tests, validation, and the documented RNG/lifecycle gaps remain
 the priorities. Extra viewer features are not prerequisites for any of this.

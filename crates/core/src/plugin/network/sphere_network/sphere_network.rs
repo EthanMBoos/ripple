@@ -194,7 +194,7 @@ mod tests {
     #[test]
     fn range_is_three_dimensional_and_uses_each_current_snapshot() -> anyhow::Result<()> {
         let params = Params::from([("range".into(), "5".into())]);
-        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams(&params))?);
+        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams::text(&params))?);
         for (position, expected) in [
             (Vec3::new(3.0, 0.0, 3.999), true),
             (Vec3::new(3.0, 0.0, 4.0), false),
@@ -221,7 +221,7 @@ mod tests {
             ("comms_boundary_altitude".into(), "10".into()),
             ("comms_boundary_epsilon".into(), "1".into()),
         ]);
-        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams(&params))?);
+        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams::text(&params))?);
         for (z1, z2, expected) in [
             (8.0, 12.0, false),
             (9.0, 12.0, true),
@@ -260,7 +260,7 @@ mod tests {
         ] {
             let params = Params::from([(key.into(), value.into())]);
             assert!(
-                SphereNetwork::configure(&PluginParams(&params)).is_err(),
+                SphereNetwork::configure(&PluginParams::text(&params)).is_err(),
                 "{key}={value}"
             );
         }

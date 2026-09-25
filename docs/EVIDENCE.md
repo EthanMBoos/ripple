@@ -7,6 +7,24 @@ tools live in the repository; generated recordings and reports belong under igno
 Run commands from the `scrimmage-rs` repository root. Recorded results below describe
 the named batch, not a claim that every later change or the whole port is verified.
 
+## YAML missions (2026-09-25)
+
+`ScenarioConfig` became the typed mission that both readers fill. Repeat with:
+
+```sh
+cargo test --locked -p scrimmage-core --test yaml_missions
+cargo test --locked -p scrimmage-core yaml_mission
+scrimmage compare missions/straight-no-gui.xml missions/straight-no-gui.yaml
+```
+
+- Moving the XML reader onto typed fields left all 14 curated missions, at 1
+  and 8 workers, byte-identical in `frames.bin`, `events.json`, and `summary.csv`.
+- The four paired YAML missions (straight-no-gui, multirotor,
+  waypoints-point-agents, verification/noisy-state-bias) report no setup
+  differences and byte-identical outputs against their XML.
+- Unit tests cover defaults, sensor labels, dotted-path overrides, unknown keys,
+  wrong types, non-finite numbers, and unregistered plugins.
+
 ## Typed plugin parameters (2026-09-24)
 
 Every plugin's parameters became a serde struct whose `Default` replaced the

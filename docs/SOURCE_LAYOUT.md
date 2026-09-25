@@ -54,7 +54,7 @@ Paths in the middle column are relative to `crates/core/src/`.
 | SimControl threaded execution | [simcontrol/scheduler.rs](../crates/core/src/simcontrol/scheduler.rs) | Joined parallel entity phases, including failures/panics |
 | SimControl global plugins | [simcontrol/world_plugins.rs](../crates/core/src/simcontrol/world_plugins.rs) | Interaction/network/metrics ownership and dispatch, not model equations |
 | `entity/Entity` | [entity.rs](../crates/core/src/entity.rs), [entity/plugin_stack.rs](../crates/core/src/entity/plugin_stack.rs) | Entity state/lifecycle and its configured plugin instances |
-| `parse/MissionParse` | [parse/mission.rs](../crates/core/src/parse/mission.rs), `parse/params.rs`, `parse/xml.rs` | XML/default resolution and validated configuration |
+| `parse/MissionParse` | [parse/mission.rs](../crates/core/src/parse/mission.rs) (typed mission, validation), `parse/xml_mission.rs` + `parse/xml.rs` + `parse/params.rs` (XML), `parse/yaml_mission.rs` (YAML) | Mission loading and validated configuration |
 | `math/State`, `Quaternion`, `Angles` | [math/state.rs](../crates/core/src/math/state.rs), `math/quaternion.rs`, `math/angles.rs` | Physical state and coordinate conventions |
 | Numerical integration | [math/integration.rs](../crates/core/src/math/integration.rs) | RK4 with the reference arithmetic order |
 | `common/PID`, `VariableIO`, `Random` | [common/pid.rs](../crates/core/src/common/pid.rs), `common/variable_io.rs`, `common/random.rs` | Control helpers, named ports and legacy spawn randomness |

@@ -1,0 +1,43 @@
+# The YAML form of noisy-state-bias.xml; both produce identical output.
+# Deterministic NoisyState equation/feedback fixture, not stochastic RNG parity.
+# Every distribution has zero standard deviation; nonzero means exercise feedback.
+format_version: 1
+name: NoisyState deterministic feedback
+
+run:
+  end_s: 3
+  dt_s: 0.1
+  seed: 12345
+
+networks:
+  LocalNetwork:
+  GlobalNetwork:
+metrics:
+  SimpleCollisionMetrics:
+
+entities:
+  aircraft:
+    team: 1
+    visual_model: sphere
+    position_m: [10, 20, 200]
+    position_variance_m2: [0, 0, 0]
+    heading_deg: 30
+    speed_mps: 20
+    autonomy:
+      Straight:
+        speed: 20
+    controller:
+      SimpleAircraftControllerPID:
+    motion_model:
+      SimpleAircraft:
+    sensors:
+      NoisyState:            # each axis is [mean, stddev]
+        pos_noise_0: [1, 0]
+        pos_noise_1: [-2, 0]
+        pos_noise_2: [3, 0]
+        vel_noise_0: [0.2, 0]
+        vel_noise_1: [-0.1, 0]
+        vel_noise_2: [0.3, 0]
+        orient_noise_0: [0.01, 0]
+        orient_noise_1: [0.02, 0]
+        orient_noise_2: [-0.03, 0]

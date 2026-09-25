@@ -166,7 +166,7 @@ mod tests {
         // With constant speed error 1, I grows by 0.02 each update; D is
         // 0.01 / 0.02 = 0.5 on the first update and zero thereafter.
         let params = Params::from([("speed_pid".into(), "0,1,0.01,10".into())]);
-        let config = AircraftPidController::configure(&PluginParams(&params))?;
+        let config = AircraftPidController::configure(&PluginParams::text(&params))?;
         let mut controller = AircraftPidController::new(&config);
         let mut io = PluginIo::new(&AircraftPidController::ports(&config));
         io.receive(

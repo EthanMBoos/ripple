@@ -361,8 +361,9 @@ mod tests {
     #[test]
     fn local_network_is_same_entity_and_global_network_is_not() -> Result<()> {
         let params = Params::new();
-        let mut local = LocalNetwork::new(&LocalNetwork::configure(&PluginParams(&params))?);
-        let mut global = GlobalNetwork::new(&GlobalNetwork::configure(&PluginParams(&params))?);
+        let mut local = LocalNetwork::new(&LocalNetwork::configure(&PluginParams::text(&params))?);
+        let mut global =
+            GlobalNetwork::new(&GlobalNetwork::configure(&PluginParams::text(&params))?);
         let mut mailboxes = TestMailboxes::new()?;
         mailboxes.sender.publish("test", "sample", 42_i32)?;
         mailboxes.phase(0.0, |context| Network::step(&mut local, context))?;

@@ -9,9 +9,6 @@ use std::fmt;
 
 pub type Params = BTreeMap<String, String>;
 
-/// Keys the framework reads itself; a plugin's parameter struct never sees them.
-const FRAMEWORK_KEYS: [&str; 1] = ["loop_rate"];
-
 /// Deserializes a plugin's `#[derive(Deserialize)]` parameter struct.
 ///
 /// Every mission value is text. Numbers must be finite, booleans are `true`,
@@ -77,15 +74,12 @@ impl<'de> MapAccess<'de> for Entries<'_> {
         &mut self,
         seed: K,
     ) -> Result<Option<K::Value>, Error> {
-        for (key, text) in self.entries.by_ref() {
-            if FRAMEWORK_KEYS.contains(&key.as_str()) {
-                continue;
-            }
-            self.value = Some((key, text));
-            let key: StrDeserializer<'_, Error> = key.as_str().into_deserializer();
-            return seed.deserialize(key).map(Some);
-        }
-        Ok(None)
+        let Some((key, text)) = self.entries.next() else {
+            return Ok(None);
+        };
+        self.value = Some((key, text));
+        let key: StrDeserializer<'_, Error> = key.as_str().into_deserializer();
+        seed.deserialize(key).map(Some)
     }
 
     fn next_value_seed<V: DeserializeSeed<'de>>(&mut self, seed: V) -> Result<V::Value, Error> {
@@ -325,7 +319,6 @@ mod tests {
             ("small", "42"),
             ("offset", "-7"),
             ("scale", "0.5"),
-            ("loop_rate", "10"),
         ]))?;
         assert_eq!(
             example,
@@ -363,7 +356,7 @@ mod tests {
 
     #[test]
     fn a_plugin_without_parameters_rejects_every_key() -> anyhow::Result<()> {
-        deserialize::<()>(&params(&[("loop_rate", "10")]))?;
+        deserialize::<()>(&params(&[]))?;
         let error = deserialize::<()>(&params(&[("speed", "30")])).unwrap_err();
         assert!(error.to_string().contains("unknown parameter `speed`"));
         Ok(())

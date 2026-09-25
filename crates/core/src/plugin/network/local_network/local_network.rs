@@ -73,7 +73,7 @@ mod tests {
     #[test]
     fn negative_legacy_delay_is_accepted() -> anyhow::Result<()> {
         let params = Params::from([("comm_delay".into(), "-2".into())]);
-        LocalNetwork::configure(&PluginParams(&params))?;
+        LocalNetwork::configure(&PluginParams::text(&params))?;
         Ok(())
     }
 
@@ -85,7 +85,7 @@ mod tests {
             ("is_stochastic_delay", "true"),
         ] {
             let params = Params::from([(key.into(), value.into())]);
-            assert!(LocalNetwork::configure(&PluginParams(&params)).is_err());
+            assert!(LocalNetwork::configure(&PluginParams::text(&params)).is_err());
         }
     }
 }

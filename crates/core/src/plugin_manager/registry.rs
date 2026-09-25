@@ -47,7 +47,7 @@ impl<T: ?Sized> Catalog<T> {
             .compilers
             .get(&source.name)
             .with_context(|| format!("unregistered {} plugin '{}'", self.kind, source.name))?;
-        let mut plugin = compiler(&PluginParams(&source.params))
+        let mut plugin = compiler(&PluginParams::new(source))
             .with_context(|| format!("configure {} '{}'", self.kind, source.name))?;
         plugin.name = source.name.clone();
         plugin
@@ -96,7 +96,7 @@ impl PluginRegistry {
                 Ok(CompiledPlugin {
                     name: String::new(),
                     ports: T::ports(&config),
-                    rate: Rate::new(params.0)?,
+                    rate: Rate::new(params.loop_rate_hz)?,
                     instantiate: Box::new(move || Box::new(AutonomyAdapter(T::new(&config)))),
                 })
             }),
@@ -110,7 +110,7 @@ impl PluginRegistry {
                 Ok(CompiledPlugin {
                     name: String::new(),
                     ports: T::ports(&config),
-                    rate: Rate::new(params.0)?,
+                    rate: Rate::new(params.loop_rate_hz)?,
                     instantiate: Box::new(move || Box::new(ControllerAdapter(T::new(&config)))),
                 })
             }),
@@ -124,7 +124,7 @@ impl PluginRegistry {
                 Ok(CompiledPlugin {
                     name: String::new(),
                     ports: T::ports(&config),
-                    rate: Rate::new(params.0)?,
+                    rate: Rate::new(params.loop_rate_hz)?,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -138,7 +138,7 @@ impl PluginRegistry {
                 Ok(CompiledPlugin {
                     name: String::new(),
                     ports: T::ports(&config),
-                    rate: Rate::new(params.0)?,
+                    rate: Rate::new(params.loop_rate_hz)?,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -152,7 +152,7 @@ impl PluginRegistry {
                 Ok(CompiledPlugin {
                     name: String::new(),
                     ports: T::ports(&config),
-                    rate: Rate::new(params.0)?,
+                    rate: Rate::new(params.loop_rate_hz)?,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -166,7 +166,7 @@ impl PluginRegistry {
                 Ok(CompiledPlugin {
                     name: String::new(),
                     ports: T::ports(&config),
-                    rate: Rate::new(params.0)?,
+                    rate: Rate::new(params.loop_rate_hz)?,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -180,7 +180,7 @@ impl PluginRegistry {
                 Ok(CompiledPlugin {
                     name: String::new(),
                     ports: T::ports(&config),
-                    rate: Rate::new(params.0)?,
+                    rate: Rate::new(params.loop_rate_hz)?,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),

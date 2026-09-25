@@ -1,0 +1,80 @@
+# The YAML form of multirotor.xml; both produce identical output.
+# Open-loop physics checks, not an autopilot demo. MotorSpeeds supplies rad/s.
+# 821.5838362577492 rad/s balances the default 1.5 kg quad's weight.
+# Straight speed 0 is only a placeholder autonomy; MotorSpeeds reads no inputs.
+format_version: 1
+name: Multirotor open-loop flight
+
+run:
+  end_s: 4
+  dt_s: 0.001
+  seed: 12345
+
+networks:
+  LocalNetwork:
+  GlobalNetwork:
+metrics:
+  SimpleCollisionMetrics:
+
+entities:
+  level_hover:
+    team: 1
+    visual_model: sphere
+    position_m: [-10, -10, 30]
+    autonomy:
+      Straight:
+        speed: 0
+    controller:
+      MotorSpeeds:
+        speeds: [821.5838362577492, 821.5838362577492, 821.5838362577492, 821.5838362577492]
+    motion_model:
+      Multirotor:
+
+  # Tilted thrust translates the vehicle; no stabilizer levels it.
+  tilted:
+    team: 2
+    visual_model: sphere
+    position_m: [10, -10, 30]
+    heading_deg: 45
+    roll_deg: 5
+    pitch_deg: 8
+    autonomy:
+      Straight:
+        speed: 0
+    controller:
+      MotorSpeeds:
+        speeds: [821.5838362577492, 821.5838362577492, 821.5838362577492, 821.5838362577492]
+    motion_model:
+      Multirotor:
+
+  # Slightly unequal motors exercise roll, pitch, yaw and body/world rates.
+  unequal_motors:
+    team: 3
+    visual_model: sphere
+    position_m: [-10, 10, 30]
+    heading_deg: 90
+    roll_deg: 3
+    autonomy:
+      Straight:
+        speed: 0
+    controller:
+      MotorSpeeds:
+        speeds: [820, 821, 823, 822]
+    motion_model:
+      Multirotor:
+
+  # Six rotors demonstrate configured channel names, not a quad-only engine.
+  hexacopter:
+    team: 4
+    visual_model: sphere
+    position_m: [10, 10, 30]
+    heading_deg: 180
+    autonomy:
+      Straight:
+        speed: 0
+    controller:
+      MotorSpeeds:
+        speeds: [680, 680, 680, 680, 680, 680]
+    motion_model:
+      Multirotor:
+        rotor_config: "[CW 0.2 0 0 0 0 0] [CCW 0.1 0.17320508075688773 0 0 0 0] [CW -0.1 0.17320508075688773 0 0 0 0] [CCW -0.2 0 0 0 0 0] [CW -0.1 -0.17320508075688773 0 0 0 0] [CCW 0.1 -0.17320508075688773 0 0 0 0]"

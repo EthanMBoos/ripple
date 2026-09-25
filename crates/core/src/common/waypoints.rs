@@ -7,9 +7,10 @@ use crate::Vec3;
 
 pub const WAYPOINT_TOPIC: &str = "Waypoints";
 
-/// Deserializes from mission text such as `"0,0,200; 100,0,200"`.
+/// Deserializes from XML text such as `"0,0,200; 100,0,200"`, or from a YAML
+/// list of points such as `[[0, 0, 200], [100, 0, 200]]`.
 #[derive(Clone, Debug, Deserialize)]
-#[serde(try_from = "String")]
+#[serde(try_from = "WaypointInput")]
 pub struct WaypointList {
     pub positions_world_m: Vec<Vec3>,
 }
@@ -58,9 +59,25 @@ impl WaypointList {
     }
 }
 
-impl TryFrom<String> for WaypointList {
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum WaypointInput {
+    Text(String),
+    Points(Vec<[f64; 3]>),
+}
+
+impl TryFrom<WaypointInput> for WaypointList {
     type Error = anyhow::Error;
-    fn try_from(text: String) -> Result<Self> {
-        Self::parse(&text)
+    fn try_from(input: WaypointInput) -> Result<Self> {
+        match input {
+            WaypointInput::Text(text) => Self::parse(&text),
+            WaypointInput::Points(points) => {
+                let list = Self {
+                    positions_world_m: points.into_iter().map(Vec3::from).collect(),
+                };
+                list.validate()?;
+                Ok(list)
+            }
+        }
     }
 }

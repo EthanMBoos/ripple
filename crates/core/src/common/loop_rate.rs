@@ -1,5 +1,4 @@
 //! Per-plugin simulation-time update rates.
-use crate::parse::{Params, number};
 use anyhow::{Result, ensure};
 
 #[derive(Clone, Debug)]
@@ -8,8 +7,7 @@ pub(crate) struct Rate {
     remaining_s: f64,
 }
 impl Rate {
-    pub(crate) fn new(params: &Params) -> Result<Self> {
-        let rate_hz = number(params, "loop_rate", 0.0)?;
+    pub(crate) fn new(rate_hz: f64) -> Result<Self> {
         ensure!(rate_hz >= 0.0, "loop_rate must be nonnegative");
         Ok(Self {
             period_s: if rate_hz == 0.0 { 0.0 } else { 1.0 / rate_hz },

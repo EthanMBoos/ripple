@@ -117,9 +117,10 @@ A parameter's value comes from the first of these that sets it:
 3. an optional `Straight.xml` overlay file on `SCRIMMAGE_PLUGIN_PATH`,
 4. the struct's `Default`.
 
-Mission values are text. Numbers must be finite, booleans are `true`/`false`
+In a YAML mission the values are ordinary YAML: `speed: 25`, `gains: [1, 0, 2, 9]`.
+In XML every value is text: numbers must be finite, booleans are `true`/`false`
 (or `1`/`0`), and lists such as `"1 2 3"` or `"1, 2, 3"` fill a `Vec` or a fixed
-array like `[f64; 3]`. A bad value is an error that names the key, and so is a
+array like `[f64; 3]`. The same struct reads either. A bad value is an error that names the key, and so is a
 key the struct doesn't have: a typo never silently gives you the default.
 
 ## Ports: the control chain

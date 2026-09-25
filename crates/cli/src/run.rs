@@ -31,10 +31,11 @@ pub(crate) struct RunOptions {
     no_rerun: bool,
     #[arg(long, default_value_t = 1_000_000)]
     max_steps: usize,
-    /// Legacy mission substitutions, for example count:=20.
+    /// Mission overrides: XML substitutions (`count:=20`) or YAML dotted paths
+    /// (`entities.red.count:=20`).
     overrides: Vec<String>,
 }
-fn default_root() -> PathBuf {
+pub(crate) fn default_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 pub(crate) fn run(options: RunOptions) -> Result<()> {

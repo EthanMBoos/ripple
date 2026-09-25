@@ -1,16 +1,12 @@
+//! The typed mission that every input format loads into, and its validation.
+//! `xml_mission.rs` reads legacy XML into it; nothing downstream sees the file format.
 use anyhow::{Context, Result, bail, ensure};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use std::path::{Path, PathBuf};
 
-use super::xml::{Node, read_xml};
-use super::{Params, boolean, integer, number};
-use std::{
-    collections::BTreeMap,
-    fs,
-    path::{Path, PathBuf},
-};
-
+use super::Params;
 use crate::{
-    entity::EntityDefinition, simcontrol::generation::Generator,
+    entity::EntityDefinition, math::Vec3, simcontrol::generation::Generator,
     simcontrol::world_plugins::CompiledWorld,
 };
 
@@ -24,7 +20,7 @@ pub struct ResolvedScenario {
     pub(crate) end_conditions: EndConditions,
 }
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
 pub(crate) struct EndConditions {
     pub time: bool,
     pub all_dead: bool,
@@ -32,14 +28,10 @@ pub(crate) struct EndConditions {
 }
 
 impl EndConditions {
-    fn parse(params: &Params) -> Result<Self> {
-        let specification = params
-            .get("end_condition")
-            .map(String::as_str)
-            .unwrap_or("time");
+    pub(crate) fn from_names<'a>(names: impl IntoIterator<Item = &'a str>) -> Result<Self> {
         let mut conditions = Self::default();
-        for condition in specification.split(',').map(str::trim) {
-            match condition {
+        for name in names {
+            match name {
                 "time" => conditions.time = true,
                 "all_dead" => conditions.all_dead = true,
                 "one_team" => conditions.one_team = true,
@@ -50,20 +42,67 @@ impl EndConditions {
         Ok(conditions)
     }
 }
-#[derive(Clone, Debug, Serialize, Deserialize)]
+
+/// A plugin's mission values, in the form its file gave them. The plugin's
+/// `params.parse()` reads either one into the same parameter struct.
+#[derive(Clone, Debug, Serialize)]
+#[serde(untagged)]
+pub(crate) enum PluginValues {
+    /// XML text, read with the legacy conversions in `params.rs`.
+    Text(Params),
+    /// YAML values, read natively.
+    Yaml(serde_yaml_ng::Mapping),
+}
+
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct PluginConfig {
     pub name: String,
-    pub params: Params,
+    /// A sensor's stable identity for its random stream; defaults to `Name:index`.
+    pub instance: Option<String>,
+    /// The framework's `loop_rate`; 0 runs the plugin every step.
+    pub loop_rate_hz: f64,
+    pub params: PluginValues,
 }
-#[derive(Clone, Debug, Serialize, Deserialize)]
+
+/// A repeating spawn: `count` entities every `1 / rate_hz` seconds from `start_s`.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub(crate) struct SpawnSchedule {
+    pub rate_hz: f64,
+    pub count: usize,
+    pub start_s: f64,
+}
+
+/// One entity block: how to build its entities, and when to spawn them.
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct EntityConfig {
-    pub params: Params,
+    /// For messages: the YAML group name, or `block N` for XML.
+    pub label: String,
+    pub team_id: i32,
+    pub color: [u8; 3],
+    pub visual_model: String,
+    pub health: i32,
+    pub requested_id: Option<i32>,
+    /// Entities in total; without a schedule they all spawn at the start.
+    pub count: usize,
+    pub schedule: Option<SpawnSchedule>,
+    pub spawn_time_stddev_s: f64,
+    pub position_world_m: Vec3,
+    pub position_variance_world_m2: Vec3,
+    pub heading_deg: f64,
+    pub heading_variance_deg2: f64,
+    pub roll_deg: f64,
+    pub pitch_deg: f64,
+    pub velocity_world_mps: Vec3,
+    /// Legacy scalar speed, applied only when the velocity is zero.
+    pub speed_mps: f64,
+    pub randomize_every_spawn: bool,
     pub autonomy: Vec<PluginConfig>,
     pub controllers: Vec<PluginConfig>,
     pub motion: PluginConfig,
     pub sensors: Vec<PluginConfig>,
 }
-#[derive(Clone, Debug, Serialize, Deserialize)]
+
+#[derive(Clone, Debug, Serialize)]
 pub struct ScenarioConfig {
     pub source: PathBuf,
     pub start_s: f64,
@@ -75,34 +114,11 @@ pub struct ScenarioConfig {
     pub enable_gui: bool,
     pub time_warp: f64,
     pub start_paused: bool,
-    pub params: Params,
+    pub(crate) end_conditions: EndConditions,
     pub(crate) entities: Vec<EntityConfig>,
     pub(crate) interactions: Vec<PluginConfig>,
     pub(crate) networks: Vec<PluginConfig>,
     pub(crate) metrics: Vec<PluginConfig>,
-    pub(crate) expanded_xml: Node,
-}
-fn collect_xml(directory: &Path, paths_by_name: &mut BTreeMap<String, PathBuf>) -> Result<()> {
-    if !directory.is_dir() {
-        return Ok(());
-    }
-    let mut entries = fs::read_dir(directory)?.collect::<std::io::Result<Vec<_>>>()?;
-    entries.sort_by_key(|entry| entry.file_name());
-
-    for entry in entries {
-        let path = entry.path();
-        if entry.file_type()?.is_dir() {
-            collect_xml(&path, paths_by_name)?;
-        } else if path.extension().is_some_and(|extension| extension == "xml") {
-            let name = path
-                .file_stem()
-                .context("XML filename has no stem")?
-                .to_string_lossy()
-                .into_owned();
-            paths_by_name.entry(name).or_insert(path);
-        }
-    }
-    Ok(())
 }
 
 impl ScenarioConfig {
@@ -114,7 +130,6 @@ impl ScenarioConfig {
         self,
         registry: &crate::plugin::PluginRegistry,
     ) -> Result<ResolvedScenario> {
-        self.validate_supported()?;
         ensure!(
             self.dt_s.is_finite() && self.dt_s > 0.0,
             "dt must be positive and finite"
@@ -134,13 +149,13 @@ impl ScenarioConfig {
         for (index, entity) in self.entities.iter().enumerate() {
             definitions.push(
                 EntityDefinition::parse(entity, registry)
-                    .with_context(|| format!("entity block {index}"))?,
+                    .with_context(|| format!("entity {}", entity.label))?,
             );
             generators.push(Generator::new(entity, index, self.start_s)?);
         }
 
         let world = CompiledWorld::compile(&self, registry)?;
-        let end_conditions = EndConditions::parse(&self.params)?;
+        let end_conditions = self.end_conditions;
 
         Ok(ResolvedScenario {
             config: self,
@@ -149,6 +164,16 @@ impl ScenarioConfig {
             world,
             end_conditions,
         })
+    }
+
+    /// Where two missions set up the simulation differently, as dotted paths
+    /// (`entities.1.heading_deg: 180 vs 0`). Plugin parameter values are left
+    /// out: XML holds them as text and YAML as numbers, so compare those by
+    /// running both missions.
+    pub fn setup_differences(&self, other: &Self) -> Result<Vec<String>> {
+        let mut found = Vec::new();
+        json_differences("", &outline(self)?, &outline(other)?, &mut found);
+        Ok(found)
     }
 
     pub fn load(path: &Path, root: &Path, overrides: &Params) -> Result<Self> {
@@ -175,255 +200,82 @@ impl ScenarioConfig {
             .iter()
             .find(|plugin| plugin.is_file())
             .with_context(|| format!("mission not found: {}", path.display()))?;
-        let expanded_xml = read_xml(path, overrides, &mut Vec::new())?;
-        ensure!(expanded_xml.name == "runscript", "expected runscript root");
-        let run = &expanded_xml
-            .children
-            .iter()
-            .find(|node| node.name == "run")
-            .context("missing run element")?
-            .attrs;
-        // Plugin defaults live in each plugin's `Default`. Optional overlay files
-        // on SCRIMMAGE_PLUGIN_PATH replace individual defaults for every use.
-        let mut plugins = BTreeMap::new();
-        if let Some(paths) = std::env::var_os("SCRIMMAGE_PLUGIN_PATH") {
-            for plugin_path in std::env::split_paths(&paths) {
-                collect_xml(&plugin_path, &mut plugins)?;
-            }
+        match path.extension().and_then(|extension| extension.to_str()) {
+            Some("yaml" | "yml") => super::yaml_mission::load(path, overrides, registry),
+            _ => super::xml_mission::load(path, overrides, registry),
         }
-        let mut parameter_groups = BTreeMap::new();
-        let mut entity_groups = BTreeMap::new();
-        for node in &expanded_xml.children {
-            let Some(name) = node.attrs.get("name") else {
-                continue;
-            };
-            match node.name.as_str() {
-                "param_common" => {
-                    parameter_groups.insert(name, node.params());
-                }
-                "entity_common" => {
-                    entity_groups.insert(name, node);
-                }
-                _ => {}
-            }
-        }
-
-        let parse_plugin = |node: &Node| -> Result<PluginConfig> {
-            let name = &node.text;
-            ensure!(
-                registry.contains_in_category(&node.name, name),
-                "Mission requests {} '{name}', but it isn't registered in this executable.",
-                node.name
-            );
-            let mut params = if let Some(path) = plugins.get(name) {
-                read_xml(path, overrides, &mut Vec::new())?.params()
-            } else {
-                Params::new()
-            };
-            // C++ overlay files name their shared library; Rust plugins are compiled in.
-            params.remove("library");
-
-            if let Some(group_name) = node.attrs.get("param_common") {
-                let group = parameter_groups
-                    .get(group_name)
-                    .with_context(|| format!("unknown param_common {group_name}"))?;
-                params.extend(
-                    group
-                        .iter()
-                        .map(|(key, value)| (key.clone(), value.clone())),
-                );
-            }
-            params.extend(
-                node.attrs
-                    .iter()
-                    .filter(|(key, _)| key.as_str() != "param_common")
-                    .map(|(key, value)| (key.clone(), value.clone())),
-            );
-            Ok(PluginConfig {
-                name: name.clone(),
-                params,
-            })
-        };
-
-        let mut entities = Vec::new();
-        for entity_node in expanded_xml
-            .children
-            .iter()
-            .filter(|node| node.name == "entity")
-        {
-            let mut children = Vec::new();
-            if let Some(group_name) = entity_node.attrs.get("entity_common") {
-                let group = entity_groups
-                    .get(group_name)
-                    .with_context(|| format!("unknown entity_common {group_name}"))?;
-                children.extend(group.children.iter());
-            }
-            children.extend(entity_node.children.iter());
-
-            let mut entity_params = Params::new();
-            let mut autonomy = Vec::new();
-            let mut controllers = Vec::new();
-            let mut sensors = Vec::new();
-            let mut motion = None;
-            for node in children {
-                entity_params.insert(node.name.clone(), node.text.clone());
-                match node.name.as_str() {
-                    "autonomy" => autonomy.push(parse_plugin(node)?),
-                    "controller" => controllers.push(parse_plugin(node)?),
-                    "sensor" => sensors.push(parse_plugin(node)?),
-                    "motion_model" => {
-                        ensure!(motion.is_none(), "entity requires one motion_model");
-                        motion = Some(parse_plugin(node)?);
-                    }
-                    _ => {}
-                }
-            }
-            entities.push(EntityConfig {
-                params: entity_params,
-                autonomy,
-                controllers,
-                sensors,
-                motion: motion.context("entity requires one motion_model")?,
-            });
-        }
-
-        let mut interactions = Vec::new();
-        let mut networks = Vec::new();
-        let mut metrics = Vec::new();
-        for node in &expanded_xml.children {
-            match node.name.as_str() {
-                "entity_interaction" => interactions.push(parse_plugin(node)?),
-                "network" => networks.push(parse_plugin(node)?),
-                "metrics" => metrics.push(parse_plugin(node)?),
-                _ => {}
-            }
-        }
-        let params = expanded_xml.params();
-        let start_s = number(run, "start", 0.0)?;
-        let end_s = number(run, "end", 100.0)?;
-        let dt_s = number(run, "dt", 0.1)?;
-        ensure!(
-            dt_s > 0.0 && end_s >= start_s,
-            "run requires dt > 0 and end >= start"
-        );
-        let motion_multiplier = integer(run, "motion_multiplier", 1)?;
-        ensure!(motion_multiplier > 0, "motion_multiplier must be positive");
-        let multithread = expanded_xml
-            .children
-            .iter()
-            .find(|node| node.name == "multi_threaded");
-        let worker_count = if boolean(&params, "multi_threaded", false)? {
-            integer(
-                &multithread
-                    .context("missing threading configuration")?
-                    .attrs,
-                "num_threads",
-                1,
-            )?
-        } else {
-            1
-        };
-        ensure!(worker_count > 0, "num_threads must be positive");
-        let seed = integer(&params, "seed", 2_147_483_648)?;
-        ensure!(seed <= u32::MAX as usize, "seed exceeds uint32");
-        Ok(Self {
-            source: path.canonicalize()?,
-            start_s,
-            end_s,
-            dt_s,
-            motion_multiplier,
-            seed: seed as u32,
-            worker_count,
-            enable_gui: boolean(run, "enable_gui", false)?,
-            time_warp: number(run, "time_warp", 0.0)?,
-            start_paused: boolean(run, "start_paused", false)?,
-            params,
-            entities,
-            interactions,
-            networks,
-            metrics,
-            expanded_xml,
-        })
-    }
-    fn validate_supported(&self) -> Result<()> {
-        let mut unsupported: Vec<String> = Vec::new();
-        for entity in &self.entities {
-            if entity.params.contains_key("gpu_motion_model") {
-                unsupported.push("GPU motion execution".into());
-            }
-            if entity.params.contains_key("latitude") || entity.params.contains_key("longitude") {
-                unsupported.push("geodetic entity initialization".into());
-            }
-        }
-        ensure!(
-            unsupported.is_empty(),
-            "not yet implemented: {}",
-            unsupported.join(", ")
-        );
-        Ok(())
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn root() -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
+/// The mission as JSON, without what cannot change the recorded outputs: the
+/// file path, entity labels, and pacing/viewer/worker settings (the command line
+/// overrides those, and YAML cannot express some of them). Plugin parameter
+/// values are also left out; see `setup_differences`.
+fn outline(config: &ScenarioConfig) -> Result<serde_json::Value> {
+    let mut value = serde_json::to_value(config)?;
+    for field in [
+        "source",
+        "worker_count",
+        "enable_gui",
+        "time_warp",
+        "start_paused",
+    ] {
+        value[field] = serde_json::Value::Null;
     }
-
-    #[test]
-    fn mission_values_and_param_common_reach_the_plugin() -> Result<()> {
-        let root = root();
-        let mission = ScenarioConfig::load(
-            &root.join("crates/core/tests/fixtures/plugin_defaults.xml"),
-            &root,
-            &Params::new(),
-        )?;
-        // Omitted keys are left to each plugin's `Default`.
-        let defaults = &mission.entities[0];
-        assert!(defaults.autonomy[0].params.is_empty());
-        assert!(defaults.motion.params.is_empty());
-
-        let overrides = &mission.entities[1];
-        assert_eq!(overrides.autonomy[0].params["speed"], "26");
-        assert_eq!(overrides.motion.params["turning_radius"], "23");
-        assert_eq!(overrides.motion.params["min_velocity"], "16");
-        assert!(!overrides.motion.params.contains_key("param_common"));
-        assert_eq!(overrides.sensors[0].params["stddev_m"], "0");
-        mission.resolve()?;
-        Ok(())
+    if let Some(entities) = value["entities"].as_array_mut() {
+        for entity in entities {
+            entity["label"] = serde_json::Value::Null;
+        }
     }
+    strip_plugin_params(&mut value);
+    Ok(value)
+}
 
-    #[test]
-    fn misspelled_plugin_parameters_are_errors() -> Result<()> {
-        let root = root();
-        let mut mission = ScenarioConfig::load(
-            &root.join("crates/core/tests/fixtures/plugin_defaults.xml"),
-            &root,
-            &Params::new(),
-        )?;
-        mission.entities[1]
-            .motion
-            .params
-            .insert("turning_radus".into(), "30".into());
-        let error = format!("{:#}", mission.resolve().err().expect("unknown key"));
-        assert!(error.contains("unknown field `turning_radus`"), "{error}");
-        Ok(())
+fn strip_plugin_params(value: &mut serde_json::Value) {
+    match value {
+        serde_json::Value::Object(fields) => {
+            // Only a plugin config has a loop rate.
+            if fields.contains_key("loop_rate_hz") {
+                fields.remove("params");
+            }
+            fields.values_mut().for_each(strip_plugin_params);
+        }
+        serde_json::Value::Array(items) => items.iter_mut().for_each(strip_plugin_params),
+        _ => {}
     }
+}
 
-    #[test]
-    fn plugin_path_overlays_are_found_first() -> Result<()> {
-        let root = root();
-        let overlay = root.join("crates/core/tests/fixtures/plugin_overlay");
-        let mut plugins = BTreeMap::new();
-        collect_xml(&overlay, &mut plugins)?;
-        assert_eq!(
-            plugins["SimpleAircraft"],
-            overlay.join("SimpleAircraft.xml")
-        );
-        let defaults = read_xml(&plugins["SimpleAircraft"], &Params::new(), &mut Vec::new())?;
-        assert_eq!(defaults.params()["turning_radius"], "37");
-        Ok(())
+fn json_differences(
+    path: &str,
+    first: &serde_json::Value,
+    second: &serde_json::Value,
+    found: &mut Vec<String>,
+) {
+    use serde_json::Value;
+    let child = |key: &str| {
+        if path.is_empty() {
+            key.to_owned()
+        } else {
+            format!("{path}.{key}")
+        }
+    };
+    match (first, second) {
+        (Value::Object(a), Value::Object(b)) => {
+            let missing = Value::Null;
+            for key in a.keys().chain(b.keys().filter(|key| !a.contains_key(*key))) {
+                let (x, y) = (
+                    a.get(key).unwrap_or(&missing),
+                    b.get(key).unwrap_or(&missing),
+                );
+                json_differences(&child(key), x, y, found);
+            }
+        }
+        (Value::Array(a), Value::Array(b)) if a.len() == b.len() => {
+            for (index, (x, y)) in a.iter().zip(b).enumerate() {
+                json_differences(&child(&index.to_string()), x, y, found);
+            }
+        }
+        (a, b) if a != b => found.push(format!("{path}: {a} vs {b}")),
+        _ => {}
     }
 }

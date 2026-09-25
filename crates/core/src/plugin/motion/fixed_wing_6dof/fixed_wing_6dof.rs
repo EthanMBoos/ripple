@@ -539,7 +539,7 @@ mod tests {
             ("thrust_min".into(), "-36000".into()),
             ("thrust_max".into(), "36000".into()),
         ]);
-        let config = FixedWing6Dof::configure(&PluginParams(&params))?;
+        let config = FixedWing6Dof::configure(&PluginParams::text(&params))?;
         for (input, expected_n) in [
             (-2.0, -36000.0),
             (-1.0, -36000.0),
@@ -556,26 +556,26 @@ mod tests {
     #[test]
     fn either_inertia_unit_takes_effect_but_not_both() -> anyhow::Result<()> {
         let slug = "[8090 0 1300] [0 25900 0] [1300 0 29200]";
-        let default = FixedWing6Dof::configure(&PluginParams(&Params::new()))?;
+        let default = FixedWing6Dof::configure(&PluginParams::text(&Params::new()))?;
         let params = Params::from([("inertia_matrix_slug_ft_sq".into(), slug.into())]);
-        let explicit = FixedWing6Dof::configure(&PluginParams(&params))?;
+        let explicit = FixedWing6Dof::configure(&PluginParams::text(&params))?;
         assert_eq!(default.inertia_kgm2, explicit.inertia_kgm2);
 
         let si = "[2 0 0] [0 3 0] [0 0 4]";
         let params = Params::from([("inertia_matrix".into(), si.into())]);
-        let config = FixedWing6Dof::configure(&PluginParams(&params))?;
+        let config = FixedWing6Dof::configure(&PluginParams::text(&params))?;
         assert_eq!(
             config.inertia_kgm2,
             Matrix3::from_diagonal(&Vector3::new(2.0, 3.0, 4.0))
         );
 
         let params = Params::from([("inertia_matrix".into(), "[1 2 3] [4 5 6]".into())]);
-        assert!(FixedWing6Dof::configure(&PluginParams(&params)).is_err());
+        assert!(FixedWing6Dof::configure(&PluginParams::text(&params)).is_err());
         let params = Params::from([
             ("inertia_matrix".into(), si.into()),
             ("inertia_matrix_slug_ft_sq".into(), slug.into()),
         ]);
-        assert!(FixedWing6Dof::configure(&PluginParams(&params)).is_err());
+        assert!(FixedWing6Dof::configure(&PluginParams::text(&params)).is_err());
         Ok(())
     }
 }

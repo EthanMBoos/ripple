@@ -1,6 +1,6 @@
 # A small sweep over waypoints-point-agents.yaml: 2 seeds x 2 speeds x 2 update
 # times = 8 cases. Run it whole with `scrimmage sweep`, or in shards with
-# scripts/bulk_run.py (see docs/MISSION_YAML.md).
+# scripts/bulk_run.py (see book/src/guides/yaml-missions.md).
 name: waypoints-point-agents
 base_scenario: waypoints-point-agents.yaml
 seeds: [1, 2]

@@ -1,0 +1,176 @@
+% Working outline adapted from Ripple's paper structure.
+% Choose the venue and replace prompts after the experiments establish results.
+\documentclass[conference]{IEEEtran}
+\usepackage{times}
+\usepackage[numbers]{natbib}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage[bookmarks=true]{hyperref}
+
+\newcommand{\stub}[1]{\par\noindent\textit{TODO: #1}\par}
+
+\begin{document}
+
+\title{SCRIMMAGE-RS: A Rust Testbed for Reproducible Multi-Agent Robotics Experiments}
+\author{Author names and affiliations to be added}
+\maketitle
+
+\begin{abstract}
+\stub{State the research problem, the retained SCRIMMAGE design, and the
+changes evaluated in Rust. Summarize the C++ comparison, one demonstrated
+research extension, and measured outcomes after the experiments are complete.}
+\end{abstract}
+
+\IEEEpeerreviewmaketitle
+
+\section{Introduction}
+
+SCRIMMAGE provides a plugin-based environment for multi-agent robotics
+experiments \cite{demarco2018}. This paper will evaluate a Rust implementation
+that retains its useful simulation structure while simplifying mission
+configuration and the path from a user plugin to repeatable experiments.
+
+\stub{Introduce the research use case and concrete difficulties motivating the
+changes. Explain what users gain from a single mission description, workspace
+plugins, and shared run, sweep, and Slurm tooling.}
+
+The planned evaluation asks:
+\begin{description}
+  \item[RQ1:] Where do the C++ and Rust implementations agree in behavior, and
+  how do their runtime and memory costs change with workload and agent count?
+  \item[RQ2:] What work does the Rust configuration and plugin workflow remove
+  when building and repeating a multi-agent experiment?
+  \item[RQ3:] What additional experiment does a selected new capability enable,
+  and what does that capability cost?
+\end{description}
+
+\stub{State the final contributions once supported by evidence.}
+
+\section{How the Field Reached This Point}
+\label{sec:background}
+
+\subsection{The Original SCRIMMAGE Design}
+\stub{Review the original paper's design guidelines, plugin architecture,
+integrations, and predator/prey study. Distinguish the published system from
+the current C++ branch used for the comparison.}
+
+\subsection{Current Research Needs and Related Systems}
+\stub{Select recent primary sources relevant to the chosen experiment, such as
+learned or hybrid autonomy, batched inference, and reproducible multi-agent
+evaluation. Compare their assumptions and workloads. Add citations as sources
+are reviewed; library availability alone does not establish a contribution.}
+
+\section{SCRIMMAGE-RS}
+\label{sec:system}
+
+\subsection{Experiment and Data Path}
+\stub{Show one small YAML mission with templates, a parameter sweep, and the
+path through validation, execution, saved results, and Rerun inspection.
+Explain how XML and YAML share construction. Add one dataflow figure.}
+
+\subsection{Plugin Authoring and Execution}
+\stub{Describe the seven model roles, workspace starter, compiled registration,
+entity ownership, phase barriers, and message timing. Use a small plugin
+example to show what the researcher writes and what the engine handles.}
+
+\subsection{Shared Research Tools}
+\stub{Walk through the same custom plugin running locally and in a Slurm
+campaign through the shared command and tools. Show how framework upgrades
+reach workspace experiments without copying runners or schedulers.}
+
+\subsection{Selected Research Extension}
+\stub{Choose one concrete experiment. Candidates from the roadmap include
+Burn-backed policy inference, a ROS or ArduPilot connection, or direct typed
+Rust construction. These remain planned work. Describe the implemented
+boundary, research use, and comparison only when a pilot exists.}
+
+\subsection{Validation}
+\stub{Explain analytical and plugin tests, selected C++ trajectory and summary
+comparisons, and exact Rust frame/event/summary checks at 1, 2, and 8 workers.
+Describe XML/YAML equivalence and recording on/off checks. List known
+differences and the absence of direct C++ event-stream comparison.}
+
+\section{Benchmark Design}
+\label{sec:benchmark}
+
+\subsection{Baseline and Workloads}
+\stub{Select a small shared set: simple motion, controller substeps, sensing or
+communication, and spawn/removal. Scale populations and model complexity
+separately. Record equivalent parameters, initial states, timestep, seeds,
+horizon, plugin behavior, and output settings for both implementations.}
+
+\subsection{Measurements}
+\stub{Measure end-to-end wall time, startup, simulation cost where instrumented,
+peak memory, output size, and failures. Report simulated seconds per wall
+second and worker scaling. Treat unsupported or failed cases explicitly.}
+
+\subsection{Configuration and Extension Effort}
+\stub{Use the same concrete tasks in both systems: add an agent type, change a
+population, add a custom plugin, and launch a sweep. Show files and edits
+required. Keep descriptive code comparisons separate from claims about human
+usability unless a user study is performed.}
+
+\subsection{New Capability Evaluation}
+\stub{Compare the selected extension against a useful baseline and isolate its
+effect. For accelerated inference, include packing, transfers, synchronization,
+and readback in full-run cost; for an external controller, report timing and
+failure behavior as well as task performance.}
+
+\section{Experimental Design}
+\label{sec:experiments}
+
+\stub{Freeze the C++ branch revision and Rust revision for the campaign. Record
+hardware, OS, compiler versions, release flags, dependencies, threading,
+container architecture, and whether execution is native or emulated. Run both
+implementations on the same hardware and execution environment for timing.}
+
+\stub{Check behavior before interpreting speed differences. Save initial states
+when random generators differ. Separate deliberate semantic differences from
+regressions, and report the covered subset of models.}
+
+\stub{Specify workload sizes, independent seeds, warm-up policy, timing repeats,
+run ordering, and uncertainty estimates. Separate repeated timing measurements
+of one case from independent task trials. Compare recording modes explicitly.}
+
+\stub{Use the existing reference and bulk-run tools. Save commands, inputs,
+raw measurements, and failures. Complete an actual Slurm campaign before
+claiming cluster validation.}
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Behavioral Agreement and Differences}
+\stub{Add the comparison matrix, tolerances, failures, and explanations.}
+
+\subsection{Runtime, Memory, and Scaling}
+\stub{Add measured curves and uncertainty. Separate one-worker C++/Rust
+comparisons from Rust worker scaling and from recording overhead.}
+
+\subsection{Configuration and Experiment Workflow}
+\stub{Show the worked configuration/plugin comparison and campaign results.}
+
+\subsection{Selected Research Extension}
+\stub{Report task outcomes, integration effort, and complete execution cost.}
+
+\section{Discussion and Limitations}
+
+\stub{Explain what the measurements support and where they do not generalize:
+model coverage, fidelity, stochastic differences, platform effects, bottlenecks,
+and external integrations. Distinguish gains due to implementation choices
+from claims about Rust as a language. Compare benefits with added complexity.}
+
+\section{Conclusion}
+
+\stub{Answer the research questions using measured results and identify the
+most useful next experiment.}
+
+\section*{Generative AI Disclosure}
+
+OpenAI Codex assisted with the initial manuscript outline and reference-file
+organization. \stub{Update this statement to reflect actual assistance and
+author review, following the selected venue's policy.}
+
+\bibliographystyle{plainnat}
+\bibliography{../references}
+
+\end{document}

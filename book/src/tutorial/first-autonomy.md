@@ -43,7 +43,7 @@ so a typo is an error, not a silently ignored command.
 User plugins live in a crate in the repository, `crates/starter`. The
 `scrimmage` command is compiled with that crate's plugins, so its missions run
 with `scrimmage run` and `scrimmage sweep` like any other (see
-[Writing your own plugins](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/USER_PROJECTS.md)).
+[Writing your own plugins](../guides/user-plugins.md)).
 
 ```text
 crates/starter/
@@ -293,7 +293,7 @@ A few things to notice:
   Leaving it out is an error.
 
 The full mission format is in
-[YAML missions](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/MISSION_YAML.md).
+[YAML missions](../guides/yaml-missions.md).
 
 ## 5. Run it and watch
 

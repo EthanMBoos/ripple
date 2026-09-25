@@ -1,5 +1,5 @@
 //! Reads a native YAML mission into the typed `ScenarioConfig`.
-//! The syntax is described in `docs/MISSION_YAML.md`.
+//! The syntax is described in `book/src/guides/yaml-missions.md`.
 use anyhow::{Context, Result, bail, ensure};
 use serde::Deserialize;
 use serde_yaml_ng::{Mapping, Value};

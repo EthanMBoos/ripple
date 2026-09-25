@@ -2,7 +2,7 @@
 
 YAML is the native mission format; XML stays supported for single runs. Both
 load into the same typed `ScenarioConfig`, so the simulation cannot tell which
-file it came from. See [TODO.md](TODO.md) section 2 for the plan.
+file it came from. See [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md) section 2 for the plan.
 
 | | Status |
 | --- | --- |
@@ -12,10 +12,10 @@ file it came from. See [TODO.md](TODO.md) section 2 for the plan.
 | Sweeps (`*.sweep.yaml`), shards, and the Slurm launcher | Implemented (minimal) |
 
 Paired examples, each checked against its XML by `crates/core/tests/yaml_missions.rs`:
-[straight-no-gui](../missions/straight-no-gui.yaml),
-[multirotor](../missions/multirotor.yaml),
-[waypoints-point-agents](../missions/waypoints-point-agents.yaml), and
-[verification/noisy-state-bias](../missions/verification/noisy-state-bias.yaml).
+[straight-no-gui](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/straight-no-gui.yaml),
+[multirotor](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/multirotor.yaml),
+[waypoints-point-agents](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/waypoints-point-agents.yaml), and
+[verification/noisy-state-bias](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/verification/noisy-state-bias.yaml).
 
 ## Rules
 
@@ -176,8 +176,8 @@ when nothing uses its observations) can differ without `compare` noticing.
 
 ## Sweeps
 
-A sweep is a separate file ending in `.sweep.yaml`, in
-[Ripple's](../../ripple) format. It names a base mission, which must be YAML:
+A sweep is a separate file ending in `.sweep.yaml`, in Ripple's format.
+It names a base mission, which must be YAML:
 
 ```yaml
 name: waypoints-point-agents
@@ -261,7 +261,7 @@ entities:
 ```
 
 Loading happens in this order: read the file, expand templates, apply
-command-line overrides (and, later, sweep values), then validate. So an override
+command-line overrides or sweep values, then validate. So an override
 can change a field a group inherited:
 
 ```sh
@@ -270,4 +270,4 @@ scrimmage run missions/multirotor.yaml 'entities.level_hover.controller.MotorSpe
 
 Overrides cannot address `templates` itself; change the groups instead. One
 template per group, and a template cannot use another template.
-[multirotor.yaml](../missions/multirotor.yaml) is the full example.
+[multirotor.yaml](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/multirotor.yaml) is the full example.

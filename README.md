@@ -18,7 +18,7 @@ robotics simulation. It is both:
 | Visualization | VTK viewer and plugin drawing. | Rerun map, debug panels, recordings, and looping replay. No VTK or general plugin drawing yet. |
 | Parallel execution | Legacy C++ threading implementation. | Entity-owned state and barriers between phases; selected missions match at 1/2/8 workers. |
 | Preliminary performance | Single-thread reference. | C++-mimic baseline: 1.24–1.36× faster at one worker for two 128-aircraft workloads; eight workers slower. Same emulated Linux container, not a general speed claim. [Benchmark](reference/benchmark.py). |
-| Mission input | XML and the wider legacy template/parameter surface. | Curated XML, kept permanently for single runs. YAML missions, templates, and `scrimmage compare` work; sweeps are planned ([MISSION_YAML.md](docs/MISSION_YAML.md)). |
+| Mission input | XML and the wider legacy template/parameter surface. | Curated XML, kept permanently for single runs. YAML missions, templates, sweeps, and `scrimmage compare` work ([YAML missions](book/src/guides/yaml-missions.md)). |
 | Communication / spawning | Typed pub/sub plus legacy protobuf/string-map spawn commands. | Typed in-process pub/sub and scheduled spawning. No legacy spawn commands; connection-triggered spawning is planned. |
 | Integrations / GPU | ROS 1, ArduPilot, JSBSim, and legacy OpenCL paths. | None implemented yet. ROS 1/2, ArduPilot UDP, and optional Burn are planned; JSBSim is verification-only. |
 | Running / outputs | Legacy run options and log-directory conventions. | `scrimmage run` / `replay`; automatic `runs/<mission>/runNNN` folders; `scrimmage sweep` and Slurm shards. Comparisons are Python tooling. |
@@ -47,7 +47,7 @@ unless disabled, a Rerun recording.
 
 Write your own plugins in `crates/starter` (or a crate like it). The `scrimmage`
 command is compiled with them, so your missions run, sweep, and shard like the
-stock ones; see [docs/USER_PROJECTS.md](docs/USER_PROJECTS.md).
+stock ones; see [User plugins and the starter crate](book/src/guides/user-plugins.md).
 
 `scrimmage-core` owns entity state, plugin lifecycles, communication, and the
 simulation loop. Entity work runs across workers with barriers between phases;
@@ -57,7 +57,7 @@ interface without managing threads or modifying the simulator.
 Each built-in is one Rust file in its own directory: parameters, defaults, and equations.
 The framework keeps familiar SCRIMMAGE responsibilities such as
 `simcontrol`, `entity`, `parse`, `pubsub`,
-and `plugin_manager`; see [docs/SOURCE_LAYOUT.md](docs/SOURCE_LAYOUT.md).
+and `plugin_manager`; see [Source map](book/src/development/source-layout.md).
 
 The current built-ins cover aircraft and point-agent navigation, PID control,
 boundary response, air/ground collisions and scoring, local/global messages,
@@ -65,24 +65,24 @@ NoisyState sensing with separate belief feedback, NoisyContacts measurements,
 and a SphereNetwork/AuctionAssign radio exchange. Try
 `missions/networks-local-global.xml` for the aircraft/sensor/world example or
 `missions/waypoints-point-agents.xml` for the smallest navigation model.
-The [mission guide](missions/README.md) and [model selection](docs/MODEL_SCOPE.md)
+The [mission guide](missions/README.md) and [model selection](book/src/reference/models.md)
 describe the supported subset; [verification evidence](docs/EVIDENCE.md) explains
 what to run and what is actually established.
 The port keeps SCRIMMAGE's useful mission and plugin design, with Rerun replacing
 VTK and deterministic CPU scheduling replacing the C++ threading path. Compiled
 Rust extensions stay; runtime plugin loading and legacy string-map/protobuf
 spawning are intentionally excluded. The reviewed scope and tradeoffs are in
-[docs/TODO.md](docs/TODO.md), including optional integrations and later Burn/YAML work.
+[docs/TODO.md](docs/TODO.md), including optional integrations and later Burn work.
 
 Run the aircraft missions to explore the current simulator. Use
-[docs/RUST_PLUGINS.md](docs/RUST_PLUGINS.md) to add a sensor, motion model,
+[Plugin API reference](book/src/reference/plugin-api.md) to add a sensor, motion model,
 autonomy, controller, interaction, network, or metrics plugin.
 
-After the selected behavior and lifecycle contracts are covered, user-owned
-application crates should become the primary way to assemble and run simulations.
-The rationale and boundaries are
-in [docs/LIBRARY_FIRST_REFACTOR.md](docs/LIBRARY_FIRST_REFACTOR.md); that redesign
-is deferred, not the current porting task.
+Later, experiments that calculate their setup in code can gain direct typed
+Rust construction alongside XML/YAML mission loading. The workspace starter
+and shared CLI/sweep/Slurm tools remain the normal workflow. The plan is in
+[docs/LIBRARY_FIRST_REFACTOR.md](docs/LIBRARY_FIRST_REFACTOR.md); this API is
+deferred, not implemented.
 
 ## Run it
 
@@ -126,16 +126,20 @@ terrain, meshes, and arbitrary plugin shapes remain to be implemented.
 
 Remaining implementation work is in [docs/TODO.md](docs/TODO.md). C++ comparisons and
 compatibility limits are documented in [docs/REFERENCE_NOTES.md](docs/REFERENCE_NOTES.md).
-The copied [architecture](docs/ARCHITECTURE.md), [dataflow](docs/DATA_FLOW.md),
-[plugin](docs/PLUGIN_DEVELOPMENT.md), and [mission](docs/MISSION_CONFIG.md)
+The copied [architecture](book/src/appendix/cpp/architecture.md), [dataflow](book/src/appendix/cpp/data-flow.md),
+[plugin](book/src/appendix/cpp/plugin-development.md), and [mission](book/src/appendix/cpp/mission-config.md)
 guides describe the original C++ design.
 
 ## Documentation
 
-The student-facing book in [`book/`](book/) has a first-plugin tutorial and
-pages on coordinate frames, belief vs truth, and writing plugins. Preview it with
-`mdbook serve book --open` (install with `cargo install mdbook --locked`). The
-`docs/` folder holds the engineering notes, design records, and evidence.
+The [book](book/src/SUMMARY.md) contains the starter tutorial, mission and sweep
+guides, plugin and model references, Rust style, and source map. The original
+C++ guides are collected in its appendix. Preview it with
+`mdbook serve book --open` (install with `cargo install mdbook --locked`).
+The [docs/ folder](docs/README.md) holds working plans, audits, investigations,
+and verification records.
+The [paper folder](paper/README.md) contains the manuscript outline and original
+SCRIMMAGE paper for the planned C++/Rust comparison.
 
 ## Development
 

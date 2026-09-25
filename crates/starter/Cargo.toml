@@ -1,7 +1,7 @@
 # User plugins. The stock `scrimmage` command registers this crate's plugins
 # (crates/cli/src/main.rs), so its missions run with `scrimmage run` and
 # `scrimmage sweep` like any other. To add another crate like this one, see
-# docs/USER_PROJECTS.md.
+# book/src/guides/user-plugins.md.
 [package]
 name = "starter"
 version.workspace = true

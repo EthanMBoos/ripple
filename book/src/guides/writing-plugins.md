@@ -1,10 +1,9 @@
 # Writing plugins
 
 This guide covers what is common to all seven plugin types. It assumes you have
-done [Your first autonomy plugin](../tutorial/first-autonomy.md). The complete
-reference, with every rule and edge case, is
-[`docs/RUST_PLUGINS.md`](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/RUST_PLUGINS.md)
-in the repository.
+done [Your first autonomy plugin](../tutorial/first-autonomy.md). The
+[plugin API reference](../reference/plugin-api.md) covers parameters, state,
+messages, and lifecycle in detail.
 
 ## The seven plugin types
 
@@ -57,7 +56,7 @@ impl Autonomy for MyPlugin {           // or Controller, MotionModel, Sensor, ..
 
 Write your plugins in a user crate such as `crates/starter` (see [Your first
 autonomy plugin](../tutorial/first-autonomy.md) and
-[Writing your own plugins](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/USER_PROJECTS.md)):
+[Writing your own plugins](user-plugins.md)):
 one file per plugin under `src/`, a `mod` line in `src/lib.rs`, and one line
 in its `register()`:
 

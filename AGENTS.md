@@ -27,8 +27,8 @@ production plugin, CXX bridge, engine port, or aircraft-XML compatibility layer.
 Ordinary Rust tests should consume saved fixtures without needing JSBSim.
 Curate mission coverage. XML and YAML missions are both supported
 permanently through one typed `ScenarioConfig`: XML is frozen for single runs,
-and only YAML gets templates (implemented) and sweeps (planned); see
-`docs/TODO.md` section 2 and `docs/MISSION_YAML.md`. A `.yaml` beside a `.xml` mission must
+and only YAML gets templates and sweeps (both implemented); see
+`docs/TODO.md` section 2 and `book/src/guides/yaml-missions.md`. A `.yaml` beside a `.xml` mission must
 run identically (`scrimmage compare`, `crates/core/tests/yaml_missions.rs`). Typed runtime spawning and the remaining model
 catalog still need explicit prioritization. Keep optional adapters out of
 the default runtime dependency path.
@@ -51,22 +51,33 @@ User research plugins live in user crates in this workspace, such as
 `scrimmage` binary depends on each user crate and calls its `register()` in
 `crates/cli/src/main.rs`, so user missions use run/sweep/compare and
 `scripts/bulk_run.py` unchanged. The CLI is a library (`scrimmage_cli::main`)
-taking that registry. See `docs/USER_PROJECTS.md`. Keep the starter building
+taking that registry. See `book/src/guides/user-plugins.md`. Keep the starter building
 and its tests passing; do not add per-user copies of shared tooling.
-The broader library-first refactor (typed assembly without mission files) is
-still later: read `docs/LIBRARY_FIRST_REFACTOR.md`, establish selected
-behavior/contracts first, and do not implement that redesign prematurely.
+The later library-first work is direct typed Rust assembly without mission
+files, sharing validation/construction with XML/YAML. Develop experiments in this
+repository using workspace crates and shared tools.
+Read `docs/LIBRARY_FIRST_REFACTOR.md`, establish selected
+behavior/contracts first, and do not implement that API prematurely.
 
 ## Read before changing code
 
-Read these documents completely, as relevant to the task:
+Read these book chapters completely, as relevant to the task:
 
-- `docs/RUST_STYlE.md` — exact filename, with a lowercase `l`.
-- `docs/ARCHITECTURE.md`
-- `docs/DATA_FLOW.md`
-- `docs/PLUGIN_DEVELOPMENT.md`
-- `docs/MISSION_CONFIG.md`
-- `docs/RUST_PLUGINS.md` and `docs/REFERENCE_NOTES.md`
+- [Rust style](book/src/development/rust-style.md)
+- [Source map](book/src/development/source-layout.md)
+- [Plugin API and lifecycle](book/src/reference/plugin-api.md)
+- [User plugins and the starter crate](book/src/guides/user-plugins.md)
+- [YAML missions, templates, and sweeps](book/src/guides/yaml-missions.md)
+- [C++ architecture](book/src/appendix/cpp/architecture.md)
+- [C++ data flow](book/src/appendix/cpp/data-flow.md)
+- [C++ plugin development](book/src/appendix/cpp/plugin-development.md)
+- [C++ mission configuration](book/src/appendix/cpp/mission-config.md)
+- [Reference findings and compatibility gaps](docs/REFERENCE_NOTES.md)
+
+Keep user/developer guidance in `book/src/`, listed in `book/src/SUMMARY.md`.
+Use `docs/` for working plans, audits, investigations, and verification records.
+See [Editing this book](book/src/development/documentation.md) for the build and
+link conventions.
 
 The four copied C++ architecture/dataflow/plugin/mission guides are reference
 documents; keep them unchanged unless explicitly asked to edit them. Record
@@ -126,8 +137,8 @@ out of plugin author code. Update imports, docs, and tests together
 when reorganizing files or changing the API. Do not make unrelated behavior
 changes during a structural move.
 
-Follow the consistent concrete-plugin layout in `docs/RUST_STYlE.md` and the
-seven working patterns in `docs/RUST_PLUGINS.md`. Keep named configuration and
+Follow the consistent concrete-plugin layout in `book/src/development/rust-style.md` and the
+seven working patterns in `book/src/reference/plugin-api.md`. Keep named configuration and
 physical fields, explicit imports, and input/calculation/output stages. Prefer
 loops for stateful algorithms without banning clear iterator predicates. Keep
 ownership visible rather than hiding borrows behind aliases. Readability-only
@@ -209,7 +220,7 @@ previous run merely to reuse a command. Outputs include `frames.bin`,
 ## Sweeps
 
 `scrimmage sweep x.sweep.yaml` runs a YAML mission across seeds and parameter
-values (Ripple's format; see `docs/MISSION_YAML.md`) into
+values (Ripple's format; see `book/src/guides/yaml-missions.md`) into
 `<root>/sweeps/<sweep name>/runNNN`, one `results.jsonl` row per case.
 `scripts/bulk_run.py local|submit|collect` runs it in shards locally or as one
 Slurm array. Only the machinery sharding needs is implemented; keep it that way

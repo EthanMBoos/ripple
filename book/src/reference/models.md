@@ -43,16 +43,16 @@ the simulation loop. No runtime library loading is planned.
   inputs is superseded by Rerun's labels, not a plugin drawing API.
 - NoisyState estimates own state, not probabilistic target detection. Rust's
   independent sensor RNG streams differ from C++; its inherited covariance
-  payload is not calibrated uncertainty. See [evidence](EVIDENCE.md).
+  payload is not calibrated uncertainty. See [evidence](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/EVIDENCE.md).
 
 ROS 1/2 and ArduPilot are separate future adapter work. They are not reasons to
-add default ROS/C++ build dependencies. Burn, YAML/templates, terrain, and
-spatial acceleration remain in [TODO.md](TODO.md), outside this v1 slice.
+add default ROS/C++ build dependencies. Burn, terrain, and
+spatial acceleration remain in [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md), outside this v1 slice.
 
 The plugin audit's selected additions are complete: NoisyContacts and
 SphereNetwork + AuctionAssign. The other proposed ports and the force, dynamics
 telemetry, battery, game, and geometry extensions they motivate are not selected
 backlog. Keep their limitations documented; do not add them for completeness.
 AuctionAssign is a single random-bid messaging demonstration with stationary
-agents, not a task planner. See [plugin contracts](RUST_PLUGINS.md#noisycontacts)
+agents, not a task planner. See [plugin contracts](plugin-api.md#noisycontacts)
 for observation types, radio policies, random streams, and examples.

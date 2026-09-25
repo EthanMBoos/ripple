@@ -5,14 +5,14 @@ It is a port of the useful core of [SCRIMMAGE](https://github.com/gtri/scrimmage
 a C++ simulator from Georgia Tech Research Institute, rebuilt to be easy to read,
 modify, and learn from.
 
-You describe a scenario in an XML mission file: which vehicles exist, what
+You describe a scenario in a YAML or XML mission file: which vehicles exist, what
 software runs on each one, and how the world behaves. The simulator steps every
 vehicle forward in time, records what happened, and shows it in the
 [Rerun](https://rerun.io) viewer.
 
 > [!NOTE]
 > This is a small, checked subset of SCRIMMAGE, not a drop-in replacement. The
-> [model scope](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/MODEL_SCOPE.md)
+> [model scope](reference/models.md)
 > lists what is implemented today.
 
 ## Quick start
@@ -75,6 +75,9 @@ by name in a mission.
 - **Confused by angles or signs?** Read [Coordinate frames](concepts/coordinate-frames.md).
 - **Adding sensors or noise?** Read [Belief vs truth](concepts/belief-vs-truth.md).
 - **Writing a plugin of another type?** See [Writing plugins](guides/writing-plugins.md).
+- **Configuring an experiment?** See [YAML missions, templates, and sweeps](guides/yaml-missions.md).
+- **Working on the engine?** Start with the [source map](development/source-layout.md)
+  and [Rust style](development/rust-style.md).
 
 The repository's
 [`missions/README.md`](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/README.md)

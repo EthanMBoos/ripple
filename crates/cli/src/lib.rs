@@ -3,7 +3,7 @@
 //! `src/main.rs` builds the plugin registry (the stock plugins plus the user
 //! plugin crates in this workspace, such as crates/starter) and hands it to
 //! [`main`]. Every command (`run`, `sweep`, `compare`) uses that registry, so
-//! user plugins work everywhere stock plugins do. See docs/USER_PROJECTS.md.
+//! user plugins work everywhere stock plugins do. See book/src/guides/user-plugins.md.
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use scrimmage_core::plugin::PluginRegistry;

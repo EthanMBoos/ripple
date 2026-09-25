@@ -21,4 +21,5 @@ cargo test -p starter
 
 To add a plugin, write it in its own file under `src/`, add a `mod` line in
 `src/lib.rs`, and register it in `register()` under the name missions will use.
-See docs/USER_PROJECTS.md and the book's "Your first autonomy plugin" tutorial.
+See [User plugins and the starter crate](../../book/src/guides/user-plugins.md)
+and [Your first autonomy plugin](../../book/src/tutorial/first-autonomy.md).

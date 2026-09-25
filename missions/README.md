@@ -5,7 +5,7 @@ Replay the printed run directory with `scrimmage replay runs/<mission>/runNNN`.
 `waypoints-point-agents.sweep.yaml` is a small example sweep (`scrimmage sweep`).
 These fourteen XML files use the compiled built-ins. They are examples and regression
 inputs, not a copy of every upstream demo. A `.yaml` file beside an XML file is its
-[YAML form](../docs/MISSION_YAML.md) and must run identically; check one with
+[YAML form](../book/src/guides/yaml-missions.md) and must run identically; check one with
 `scrimmage compare <file>.xml <file>.yaml`. YAML overrides take dotted paths
 (`entities.red.heading_deg:=170`) instead of XML variable names.
 
@@ -40,4 +40,4 @@ Malformed/missing-plugin cases live under `crates/*/tests/`, not this folder.
 The copied C++ guides still describe upstream inputs and are intentionally unchanged.
 
 See [verification evidence](../docs/EVIDENCE.md) for commands, expected results,
-and comparison limits; [model scope](../docs/MODEL_SCOPE.md) explains the selection.
+and comparison limits; [model scope](../book/src/reference/models.md) explains the selection.

@@ -46,7 +46,7 @@ as `autonomy.rs` does not need an empty `autonomy/` directory.
 
 Each plugin folder holds its implementation, including its parameter struct
 and defaults. Each named category file uses a small `#[path]` declaration to
-load its plugins; see [plugin authoring](RUST_PLUGINS.md#add-a-plugin). The category files
+load its plugins; see [plugin authoring](../reference/plugin-api.md#add-a-plugin). The category files
 contain module wiring and re-exports, while model code lives in named files.
 Test models use `tests/support/plugin_fixtures.rs` and adjacent category files,
 loaded by `tests/plugin_contracts.rs`; they are not extra Cargo test targets.
@@ -57,24 +57,24 @@ Paths in the middle column are relative to `crates/core/src/`.
 
 | C++ location / responsibility | Rust location | What belongs here |
 | --- | --- | --- |
-| `simcontrol/SimControl` | [simcontrol.rs](../crates/core/src/simcontrol.rs) | Simulation ownership, phase order, termination and cleanup |
-| SimControl entity generation | [simcontrol/generation.rs](../crates/core/src/simcontrol/generation.rs) | Spawn timing, IDs and coordinator-owned random draws |
-| SimControl threaded execution | [simcontrol/scheduler.rs](../crates/core/src/simcontrol/scheduler.rs) | Joined parallel entity phases, including failures/panics |
-| SimControl global plugins | [simcontrol/world_plugins.rs](../crates/core/src/simcontrol/world_plugins.rs) | Interaction/network/metrics ownership and dispatch, not model equations |
-| `entity/Entity` | [entity.rs](../crates/core/src/entity.rs), [entity/plugin_stack.rs](../crates/core/src/entity/plugin_stack.rs) | Entity state/lifecycle and its configured plugin instances |
-| `parse/MissionParse` | [parse/mission.rs](../crates/core/src/parse/mission.rs) (typed mission, validation), `parse/xml_mission.rs` + `parse/xml.rs` + `parse/params.rs` (XML), `parse/yaml_mission.rs` (YAML) | Mission loading and validated configuration |
-| `math/State`, `Quaternion`, `Angles` | [math/state.rs](../crates/core/src/math/state.rs), `math/quaternion.rs`, `math/angles.rs` | Physical state and coordinate conventions |
-| Numerical integration | [math/integration.rs](../crates/core/src/math/integration.rs) | RK4 with the reference arithmetic order |
-| `common/PID`, `VariableIO`, `Random` | [common/pid.rs](../crates/core/src/common/pid.rs), `common/variable_io.rs`, `common/random.rs` | Control helpers, named ports and legacy spawn randomness |
+| `simcontrol/SimControl` | [simcontrol.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/simcontrol.rs) | Simulation ownership, phase order, termination and cleanup |
+| SimControl entity generation | [simcontrol/generation.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/simcontrol/generation.rs) | Spawn timing, IDs and coordinator-owned random draws |
+| SimControl threaded execution | [simcontrol/scheduler.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/simcontrol/scheduler.rs) | Joined parallel entity phases, including failures/panics |
+| SimControl global plugins | [simcontrol/world_plugins.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/simcontrol/world_plugins.rs) | Interaction/network/metrics ownership and dispatch, not model equations |
+| `entity/Entity` | [entity.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/entity.rs), [entity/plugin_stack.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/entity/plugin_stack.rs) | Entity state/lifecycle and its configured plugin instances |
+| `parse/MissionParse` | [parse/mission.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/parse/mission.rs) (typed mission, validation), `parse/xml_mission.rs` + `parse/xml.rs` + `parse/params.rs` (XML), `parse/yaml_mission.rs` (YAML) | Mission loading and validated configuration |
+| `math/State`, `Quaternion`, `Angles` | [math/state.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/math/state.rs), `math/quaternion.rs`, `math/angles.rs` | Physical state and coordinate conventions |
+| Numerical integration | [math/integration.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/math/integration.rs) | RK4 with the reference arithmetic order |
+| `common/PID`, `VariableIO`, `Random` | [common/pid.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/common/pid.rs), `common/variable_io.rs`, `common/random.rs` | Control helpers, named ports and legacy spawn randomness |
 | Plugin timing and new plugin randomness | `common/loop_rate.rs`, `common/plugin_random.rs` | Simulation-time rates and stable per-plugin streams |
-| `plugin_manager/EntityPlugin`, `PluginManager` | [plugin_manager/entity_plugin.rs](../crates/core/src/plugin_manager/entity_plugin.rs), `plugin_manager/registry.rs`, `plugin_manager/builtins.rs` | Shared lifecycle/context types, typed factories and bundled registrations |
-| `pubsub/` | [pubsub/messages.rs](../crates/core/src/pubsub/messages.rs), `pubsub/network.rs` | Publications, subscriber queues, delivery and the network interface |
-| Legacy frame/log protocol | [protocol/frame.rs](../crates/core/src/protocol/frame.rs), `protocol/wire.rs` | Validated legacy protobuf frame I/O |
-| `src/plugins/<category>/` | [plugin/](../crates/core/src/plugin) | The single concrete model/algorithm implementation tree |
+| `plugin_manager/EntityPlugin`, `PluginManager` | [plugin_manager/entity_plugin.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin_manager/entity_plugin.rs), `plugin_manager/registry.rs`, `plugin_manager/builtins.rs` | Shared lifecycle/context types, typed factories and bundled registrations |
+| `pubsub/` | [pubsub/messages.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/pubsub/messages.rs), `pubsub/network.rs` | Publications, subscriber queues, delivery and the network interface |
+| Legacy frame/log protocol | [protocol/frame.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/protocol/frame.rs), `protocol/wire.rs` | Validated legacy protobuf frame I/O |
+| `src/plugins/<category>/` | [plugin/](https://github.com/EthanMBoos/scrimmage-rs/tree/main/crates/core/src/plugin) | The single concrete model/algorithm implementation tree |
 | `include/scrimmage/plugins/<category>/<Plugin>/<Plugin>.xml` | The parameter struct's `Default` in `plugin/<category>/<plugin>/<plugin>.rs` | Mission defaults, beside the parameters they fill |
 
 The C++ source is the sibling `../scrimmage`, branch `Ubuntu-24.04`; exact
-reference provenance and compatibility gaps are in [REFERENCE_NOTES.md](REFERENCE_NOTES.md).
+reference provenance and compatibility gaps are in [Reference notes](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/REFERENCE_NOTES.md).
 These locations map responsibilities, not claims of complete C++ class parity.
 
 ## Interfaces are not implementations
@@ -96,13 +96,13 @@ parameters and defaults at the top of the same file. Those are different
 responsibilities, not competing implementation folders. There is no `plugins/`
 tree beside `plugin/`.
 
-[plugin.rs](../crates/core/src/plugin.rs) is a small public-import facade.
+[plugin.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin.rs) is a small public-import facade.
 It exposes the category implementations and re-exports the framework API.
 Authors continue to use `scrimmage_core::plugin::*`; internal module moves do
-not leak into their model code. [Plugin contract tests](../crates/core/tests/plugin_contracts.rs)
+not leak into their model code. [Plugin contract tests](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/tests/plugin_contracts.rs)
 exercise all seven categories through the public API, with test-only models
 under `crates/core/tests/support/`. There is no separate example application.
-The [library-first refactor](LIBRARY_FIRST_REFACTOR.md) is planned for after parity.
+The [library-first refactor](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/LIBRARY_FIRST_REFACTOR.md) is planned for after parity.
 
 ## Follow a mission through the source
 
@@ -120,5 +120,5 @@ The [library-first refactor](LIBRARY_FIRST_REFACTOR.md) is planned for after par
    output. The CLI owns files and Rerun through `crates/cli/src/viewer/` and
    `viewer.rs`; the viewer does not own simulation time or physics.
 
-See [RUST_PLUGINS.md](RUST_PLUGINS.md) for authoring and phase semantics,
-and [TODO.md](TODO.md) for remaining implementation work and intentional breaks.
+See [Plugin API reference](../reference/plugin-api.md) for authoring and phase semantics,
+and [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md) for remaining implementation work and intentional breaks.

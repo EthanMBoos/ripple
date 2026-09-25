@@ -88,10 +88,10 @@ States should receive the tracks and known map information they need, not the
 entire mutable simulation. Mission-provided knowledge, such as a known home base,
 is different from hidden targets that must be detected.
 
-Current limitation: `AgentContext.state` aliases truth and `contacts_truth` is
-still exposed. The current API does not enforce perception isolation. The
-belief/sensor work in [TODO.md](TODO.md) must make that boundary explicit; this
-document does not claim it is already implemented.
+`AgentContext.state` reads the entity's owned belief when one is installed,
+otherwise truth. `contacts_truth` still exposes exact world state, so an autonomy
+must deliberately consume measurements when sensing matters. See
+[Belief vs truth](../concepts/belief-vs-truth.md) for the current behavior.
 
 ## A giant state-machine match is still a giant function
 
@@ -151,8 +151,7 @@ A possible layout for a larger built-in:
 
 ```text
 plugin/autonomy/rescue_autonomy/
-    rescue_autonomy.rs   # Plugin entry point and composition
-    RescueAutonomy.xml  # One set of mission-facing defaults
+    rescue_autonomy.rs   # Plugin entry point, configuration/defaults, and composition
     tracks.rs           # Observations and remembered targets
     mission.rs          # Mission state and dispatch
     search.rs           # Search behavior and progress

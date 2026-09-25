@@ -1,10 +1,10 @@
-# Writing Rust plugins
+# Plugin API and lifecycle
 
-Use [PLUGIN_DEVELOPMENT.md](PLUGIN_DEVELOPMENT.md) for the SCRIMMAGE design.
+Use [C++ plugin guide](../appendix/cpp/plugin-development.md) for the SCRIMMAGE design.
 This document maps that design to the current Rust API; it does not redefine
 the original documentation or claim that every legacy service is ported.
 
-For engine navigation, see [SOURCE_LAYOUT.md](SOURCE_LAYOUT.md). Category
+For engine navigation, see [Source map](../development/source-layout.md). Category
 interfaces live in named framework modules; concrete built-ins
 live only under `crates/core/src/plugin/<category>/`. The public authoring
 imports remain `scrimmage_core::plugin::*`; the source moves do not require
@@ -14,13 +14,13 @@ changes to an external plugin project.
 
 | Type | Owned by | Built-in implementation |
 | --- | --- | --- |
-| Autonomy | Entity | [Straight](../crates/core/src/plugin/autonomy/straight/straight.rs); [AuctionAssign](../crates/core/src/plugin/autonomy/auction_assign/auction_assign.rs) |
-| Controller | Entity | [SimpleAircraftControllerPID](../crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
-| MotionModel | Entity | [SimpleAircraft](../crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
-| Sensor | Entity | [NoisyState](../crates/core/src/plugin/sensor/noisy_state/noisy_state.rs); [NoisyContacts](../crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs); [NoisyPosition](../crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) (Rust-only illustration) |
-| Interaction | Simulation | [SimpleCollision](../crates/core/src/plugin/interaction/simple_collision/simple_collision.rs) |
-| Network | Simulation | [LocalNetwork](../crates/core/src/plugin/network/local_network/local_network.rs), [GlobalNetwork](../crates/core/src/plugin/network/global_network/global_network.rs), [SphereNetwork](../crates/core/src/plugin/network/sphere_network/sphere_network.rs) |
-| Metrics | Simulation | [SimpleCollisionMetrics](../crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
+| Autonomy | Entity | [Straight](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs); [AuctionAssign](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/autonomy/auction_assign/auction_assign.rs) |
+| Controller | Entity | [SimpleAircraftControllerPID](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
+| MotionModel | Entity | [SimpleAircraft](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
+| Sensor | Entity | [NoisyState](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_state/noisy_state.rs); [NoisyContacts](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs); [NoisyPosition](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) (Rust-only illustration) |
+| Interaction | Simulation | [SimpleCollision](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/interaction/simple_collision/simple_collision.rs) |
+| Network | Simulation | [LocalNetwork](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/network/local_network/local_network.rs), [GlobalNetwork](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/network/global_network/global_network.rs), [SphereNetwork](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/network/sphere_network/sphere_network.rs) |
+| Metrics | Simulation | [SimpleCollisionMetrics](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
 
 Each implementation is an ordinary struct containing its own state and model code.
 No plugin author needs to implement the engine's erased adapters, manage
@@ -34,13 +34,13 @@ plugin traits and registration methods are unchanged.
 ## Where to put your model code
 
 For growing autonomy implementations, see
-[Fighting autonomy plugin bloat](FIGHTING_AUTONOMY_PLUGIN_BLOAT.md). It describes
+[Fighting autonomy plugin bloat](../guides/autonomy-composition.md). It describes
 ordinary component and state composition without adding another plugin framework.
 
 Every built-in follows the same layout: imports and configuration, owned state,
 `impl Plugin`, the category implementation, private helpers, then tests. Read
 the category's `step` first to understand the algorithm; `configure` explains
-how mission parameters reach it. See [Rust style](RUST_STYlE.md#familiar-plugin-authoring)
+how mission parameters reach it. See [Rust style](../development/rust-style.md#familiar-plugin-authoring)
 for the layout and ownership rules.
 
 These are the seven working patterns; the linked built-ins above contain the
@@ -80,7 +80,7 @@ for attitude construction and `rotate_body_to_world` to rotate vectors.
 ## Add a plugin
 
 A research plugin belongs in a user crate such as `crates/starter`, not among
-the stock plugins: see [USER_PROJECTS.md](USER_PROJECTS.md). It implements the
+the stock plugins: see [User plugins and the starter crate](../guides/user-plugins.md). It implements the
 same traits below and registers itself in the crate's `register()`, which the
 `scrimmage` command calls. The steps here are for adding a stock plugin.
 
@@ -99,7 +99,7 @@ same traits below and registers itself in the crate's `register()`, which the
    for a bundled plugin.
 5. Reference that registration name in the mission.
 
-[builtins.rs](../crates/core/src/plugin_manager/builtins.rs) shows all seven
+[builtins.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin_manager/builtins.rs) shows all seven
 registration categories. Missions select the registered names:
 
 ```xml
@@ -115,10 +115,10 @@ the `GlobalNetwork` used by simulator events. As in C++, the mission gets an
 implicit GlobalNetwork when it does not explicitly list one.
 
 The public registry is still covered by
-[plugin_contracts.rs](../crates/core/tests/plugin_contracts.rs). Its supporting
+[plugin_contracts.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/tests/plugin_contracts.rs). Its supporting
 models are test fixtures, not a separate application or a prescribed project
-layout. The intended later top-level application API is described in
-[LIBRARY_FIRST_REFACTOR.md](LIBRARY_FIRST_REFACTOR.md) and remains deferred.
+layout. The intended later direct Rust construction API is described in
+[Direct Rust construction plan](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/LIBRARY_FIRST_REFACTOR.md) and remains deferred.
 
 ## Plugin files
 
@@ -460,9 +460,9 @@ scores and qualifies duplicate column names with the plugin instance identity.
 
 ## What remains
 
-See [MODEL_SCOPE.md](MODEL_SCOPE.md) for the selected aircraft, world, and waypoint
-models, their options, and deliberate limits. [EVIDENCE.md](EVIDENCE.md) provides
-runnable checks. [TODO.md](TODO.md) lists current priorities. Legacy delay
+See [Built-in models](models.md) for the selected aircraft, world, and waypoint
+models, their options, and deliberate limits. [Verification evidence](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/EVIDENCE.md) provides
+runnable checks. [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md) lists current priorities. Legacy delay
 behavior, additional sensor models, and plugin debug
 geometry need further work. Services, runtime parameters, and
 callbacks should be implemented where selected simulation models need them,
@@ -473,5 +473,5 @@ discovery/loading and legacy protobuf/string-map spawning are explicitly exclude
 Burn and optional ROS 1/2 and ArduPilot adapters are future work, not current
 capabilities. JSBSim is planned only as offline flight-model reference tooling,
 not a production plugin or FFI integration. XML/template coverage is partial.
-YAML missions and templates work; sweeps and typed runtime spawn requests
+YAML missions, templates, and sweeps work; typed runtime spawn requests
 are not implemented.

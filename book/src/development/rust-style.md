@@ -94,7 +94,7 @@ the plugin's own folder. The named category module uses `#[path]` to load that
 implementation, preserving the existing logical module name and public imports.
 Keep those path declarations at the module-wiring boundary, not in model code.
 Test support also uses named files under `tests/support/` to avoid accidental
-Cargo integration-test targets. See [SOURCE_LAYOUT.md](SOURCE_LAYOUT.md).
+Cargo integration-test targets. See [Source map](source-layout.md).
 
 Prefer named configurations even for a single physical parameter, such as
 `StraightConfig { speed_mps }`. Use `()` when there really is no configuration.

@@ -77,9 +77,7 @@ fn a_registered_name_in_the_wrong_category_is_rejected() -> Result<()> {
         ),
     ] {
         let overrides = Params::from([(category.into(), name.into())]);
-        let error = scenario(&overrides, &registry)
-            .err()
-            .expect("wrong category must fail");
+        let error = scenario(&overrides, &registry).expect_err("wrong category must fail");
         assert!(format!("{error:#}").contains(expected));
     }
     Ok(())
@@ -97,7 +95,7 @@ fn different_categories_can_register_the_same_name() -> Result<()> {
     );
 
     let overrides = Params::from([("motion".into(), "PositionSensor".into())]);
-    let mut simulation = Simulation::new(scenario(&overrides, &registry)?, 2)?;
+    let mut simulation = Simulation::new(scenario(&overrides, &registry)?, &registry, 2)?;
     while simulation.step()?.is_some() {}
     for entity in simulation.entities() {
         assert!((entity.truth().position_world_m.x - 1.0).abs() < 1e-12);
@@ -107,7 +105,7 @@ fn different_categories_can_register_the_same_name() -> Result<()> {
 
 #[test]
 fn interaction_messages_reach_both_metrics_in_the_same_tick() -> Result<()> {
-    let mut simulation = Simulation::new(scenario(&Params::new(), &registry()?)?, 8)?;
+    let mut simulation = Simulation::new(scenario(&Params::new(), &registry()?)?, &registry()?, 8)?;
     simulation.step()?;
     for (_, report) in simulation.metric_reports() {
         // Pre-start interaction plus current interaction, delivered before the first metric step.
@@ -152,7 +150,7 @@ fn all_world_plugin_categories_resolve_through_the_registry() -> Result<()> {
         assert!(scenario(&overrides, &registry).is_err(), "{category}");
     }
     let negative_delay = Params::from([("delay_s".into(), "-1".into())]);
-    assert!(scenario(&negative_delay, &registry).is_err());
+    assert!(Simulation::new(scenario(&negative_delay, &registry)?, &registry, 1).is_err());
     Ok(())
 }
 
@@ -180,7 +178,7 @@ fn world_plugin_failure_terminates_the_run_and_closes_other_plugins() -> Result<
     let mut registry = registry()?;
     registry.register_interaction::<FailingInteraction>("FailingInteraction")?;
     let overrides = Params::from([("interaction".into(), "FailingInteraction".into())]);
-    let mut simulation = Simulation::new(scenario(&overrides, &registry)?, 8)?;
+    let mut simulation = Simulation::new(scenario(&overrides, &registry)?, &registry, 8)?;
     let error = simulation.step().unwrap_err();
     assert!(format!("{error:#}").contains("FailingInteraction"));
     assert_eq!(
@@ -221,7 +219,7 @@ fn world_plugin_stop_emits_terminal_frame_and_closes_once() -> Result<()> {
     let mut registry = registry()?;
     registry.register_interaction::<StopInteraction>("StopInteraction")?;
     let overrides = Params::from([("interaction".into(), "StopInteraction".into())]);
-    let mut simulation = Simulation::new(scenario(&overrides, &registry)?, 8)?;
+    let mut simulation = Simulation::new(scenario(&overrides, &registry)?, &registry, 8)?;
     assert!(simulation.step()?.is_some());
     assert_eq!(
         simulation.termination(),
@@ -266,7 +264,7 @@ fn network_panic_is_reported_and_other_plugins_are_closed() -> Result<()> {
     registry.register_interaction::<interaction::Floor>("Floor")?;
     registry.register_network::<PanicNetwork>("ExampleNetwork")?;
     registry.register_metrics::<metrics::PopulationMetrics>("PopulationMetrics")?;
-    let mut simulation = Simulation::new(scenario(&Params::new(), &registry)?, 8)?;
+    let mut simulation = Simulation::new(scenario(&Params::new(), &registry)?, &registry, 8)?;
     assert!(simulation.step().is_err());
     assert_eq!(
         simulation.termination(),

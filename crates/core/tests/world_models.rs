@@ -1,16 +1,20 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use scrimmage_core::{EventKind, Params, ScenarioConfig, Simulation};
+use scrimmage_core::{EventKind, Mission, Params, Simulation};
 
 fn run(overrides: Params) -> Result<Simulation> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let mission = ScenarioConfig::load(
+    let mission = Mission::load(
         &root.join("missions/networks-local-global.xml"),
         &root,
         &overrides,
     )?;
-    let mut simulation = Simulation::new(mission.resolve()?, 2)?;
+    let mut simulation = Simulation::new(
+        mission.scenario,
+        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        2,
+    )?;
     while simulation.step()?.is_some() {}
     Ok(simulation)
 }

@@ -85,5 +85,6 @@ cargo build --release
 python3 scripts/bulk_run.py local crates/starter/missions/follow-nearest.sweep.yaml --jobs 4
 ```
 
-The later [library-first work](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/LIBRARY_FIRST_REFACTOR.md) adds direct Rust
-construction for experiments in workspace crates, alongside mission loading.
+For experiments that calculate their setup in code, see
+[Building a scenario in Rust](rust-scenarios.md). Rust and mission inputs share
+validation and registered plugins; the CLI library provides the shared runner.

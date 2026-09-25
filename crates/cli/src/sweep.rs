@@ -17,7 +17,7 @@
 use anyhow::{Context, Result, bail, ensure};
 use clap::Args;
 use scrimmage_core::{
-    Params, ScenarioConfig, Simulation, TerminationReason, plugin::PluginRegistry,
+    Mission, Params, ScenarioConfig, Simulation, TerminationReason, plugin::PluginRegistry,
 };
 use serde::{Deserialize, Serialize};
 use serde_yaml_ng::Value;
@@ -153,8 +153,8 @@ pub(crate) fn sweep(
         .step_by(shard_count)
         .collect();
 
-    // Load case 0 before creating any output, so a misspelled path fails here
-    // instead of in every row. A bad value in a later case becomes that row's error.
+    // Check file syntax and override paths before creating output. Scenario
+    // validation happens per case, so a bad configuration is recorded in its row.
     load_case(&spec, &base, root, registry, 0)
         .context("the first case does not load; check the sweep paths")?;
 
@@ -266,7 +266,7 @@ fn load_case(
     if let Some(seed) = seed {
         overrides.insert("run.seed".into(), seed.to_string());
     }
-    ScenarioConfig::load_with_registry(base, root, &overrides, registry)
+    Ok(Mission::load_with_registry(base, root, &overrides, registry)?.scenario)
 }
 
 fn run_case(
@@ -289,9 +289,9 @@ fn run_case(
     };
     let result = (|| -> Result<()> {
         let config = load_case(spec, base, root, registry, index)?;
-        row.seed = config.seed;
+        row.seed = config.run.seed;
         // One worker per case: Slurm gives each shard one CPU.
-        let mut simulation = Simulation::new(config.resolve_with_registry(registry)?, 1)?;
+        let mut simulation = Simulation::new(config, registry, 1)?;
         while simulation.step()?.is_some() {
             ensure!(
                 simulation.step_count() <= max_steps,

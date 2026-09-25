@@ -9,7 +9,7 @@ mod perception_communication;
 pub(super) mod sensor;
 
 use anyhow::Result;
-use scrimmage_core::{Params, ScenarioConfig, Simulation, plugin::PluginRegistry};
+use scrimmage_core::{Mission, Params, Simulation, plugin::PluginRegistry};
 use std::path::PathBuf;
 
 pub(super) fn registry() -> Result<PluginRegistry> {
@@ -26,19 +26,20 @@ pub(super) fn registry() -> Result<PluginRegistry> {
 pub(super) fn scenario(
     overrides: &Params,
     registry: &PluginRegistry,
-) -> Result<scrimmage_core::ResolvedScenario> {
+) -> Result<scrimmage_core::ScenarioConfig> {
     let core = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let root = core.join("../..");
-    ScenarioConfig::load_with_registry(
+    Ok(Mission::load_with_registry(
         &core.join("tests/fixtures/plugin_contracts.xml"),
         &root,
         overrides,
         registry,
     )?
-    .resolve_with_registry(registry)
+    .scenario)
 }
 pub(super) fn simulate(workers: usize, overrides: &Params) -> Result<Simulation> {
-    let mut simulation = Simulation::new(scenario(overrides, &registry()?)?, workers)?;
+    let mut simulation =
+        Simulation::new(scenario(overrides, &registry()?)?, &registry()?, workers)?;
     while simulation.step()?.is_some() {}
     Ok(simulation)
 }

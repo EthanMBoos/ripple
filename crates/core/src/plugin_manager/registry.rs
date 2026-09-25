@@ -5,7 +5,7 @@ use crate::plugin::{
     Autonomy, Controller, Interaction, Metrics, MotionModel, Network, PluginParams, Ports, Sensor,
 };
 use crate::simcontrol::world_plugins::{InteractionBehavior, MetricsBehavior, NetworkBehavior};
-use crate::{common::Rate, parse::PluginConfig};
+use crate::{common::Rate, scenario::PluginConfig};
 use anyhow::{Context, Result, ensure};
 use std::collections::BTreeMap;
 
@@ -43,6 +43,9 @@ impl<T: ?Sized> Catalog<T> {
     }
 
     pub(crate) fn compile(&self, source: &PluginConfig) -> Result<CompiledPlugin<T>> {
+        source
+            .validate()
+            .with_context(|| format!("configure {} '{}'", self.kind, source.name))?;
         let compiler = self
             .compilers
             .get(&source.name)

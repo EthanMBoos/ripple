@@ -1,13 +1,17 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use scrimmage_core::{Params, ScenarioConfig, Simulation, Vec3};
+use scrimmage_core::{Mission, Params, Simulation, Vec3};
 
 fn run(name: &str, update_at: f64) -> Result<Simulation> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let overrides = Params::from([("update_at".into(), update_at.to_string())]);
-    let mission = ScenarioConfig::load(&root.join("missions").join(name), &root, &overrides)?;
-    let mut simulation = Simulation::new(mission.resolve()?, 2)?;
+    let mission = Mission::load(&root.join("missions").join(name), &root, &overrides)?;
+    let mut simulation = Simulation::new(
+        mission.scenario,
+        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        2,
+    )?;
     while simulation.step()?.is_some() {}
     Ok(simulation)
 }

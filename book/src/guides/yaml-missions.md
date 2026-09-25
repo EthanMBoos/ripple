@@ -107,11 +107,10 @@ YAML form.
 | `id` | assigned | `id` |
 | `count` | 1 | `count`: entities in total |
 | `position_m` | `[0, 0, 0]` | `x`, `y`, `z` |
-| `position_variance_m2` | `[100, 100, 0]` | `variance_x`, `variance_y`, `variance_z` (variances, m²) |
+| `position_variance_m2` | `[0, 0, 0]` | `variance_x`, `variance_y`, `variance_z` (variances, m²) |
 | `heading_deg`, `roll_deg`, `pitch_deg` | 0 | `heading`, `roll`, `pitch` |
 | `heading_variance_deg2` | 0 | `variance_heading` |
 | `velocity_mps` | `[0, 0, 0]` | `vx`, `vy`, `vz` |
-| `speed_mps` | 0 | `speed` (legacy: applied along world x when velocity is zero) |
 | `randomize_every_spawn` | false | `use_variance_all_ents` |
 | `spawn.rate_hz` | required in `spawn` | `generate_rate` (`"1 / 2"` becomes `0.5`) |
 | `spawn.batch_size` | required in `spawn` | `generate_count` |
@@ -119,6 +118,9 @@ YAML form.
 | `spawn.time_stddev_s` | 0 | `generate_time_variance` (C++ uses it as a standard deviation) |
 | `autonomy`, `controller`, `sensors` | empty | `<autonomy>`, `<controller>`, `<sensor>` |
 | `motion_model` | exactly one | `<motion_model>` |
+
+Positions and velocities use the local ENU world frame. Use `velocity_mps` for
+initial velocity; XML scalar `speed` is translated by the XML reader.
 
 Without `spawn`, all `count` entities spawn at the start. With it,
 `batch_size` spawn every `1 / rate_hz` seconds until `count` have spawned.

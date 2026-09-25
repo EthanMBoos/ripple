@@ -34,6 +34,10 @@ Rust lifecycle and delivery rules are in the
   fixture unchanged; `verification/aircraft-substeps-spawning.xml` tests real substeps.
 - `SCRIMMAGE_PLUGIN_PATH` discovers optional XML defaults overlays, not code.
   YAML configuration does not depend on these overlays.
+- Rust/YAML position variance defaults to zero; XML retains its legacy default
+  of `[100, 100, 0]` m². The XML reader translates positive scalar `speed` into
+  world-X velocity when the velocity vector is zero. Native scenarios specify
+  `velocity_mps` directly. Spawn sampling and draw order are shared afterward.
 
 ## Intentional differences from C++
 

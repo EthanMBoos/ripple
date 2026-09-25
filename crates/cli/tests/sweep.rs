@@ -125,3 +125,50 @@ fn the_command_sweeps_a_user_plugin() {
         "{rows}"
     );
 }
+
+#[test]
+fn invalid_case_values_remain_error_rows_when_sharded() {
+    let temp = tempfile::tempdir().unwrap();
+    let base =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../missions/waypoints-point-agents.yaml");
+    let spec = temp.path().join("invalid-value.sweep.yaml");
+    fs::write(
+        &spec,
+        format!(
+            "name: invalid-value\nbase_scenario: {}\nparameter_combinations: cartesian\nparameters:\n  run.dt_s: [0.1, 0]\n  run.end_s: [0.2]\n",
+            base.display()
+        ),
+    ).unwrap();
+    for index in 0..2 {
+        let output = temp.path().join(format!("shard-{index}"));
+        let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+            .arg("sweep")
+            .arg(&spec)
+            .arg("--shard-index")
+            .arg(index.to_string())
+            .args(["--shard-count", "2", "--output"])
+            .arg(&output)
+            .output()
+            .unwrap();
+        let rows = fs::read_to_string(output.join("results.jsonl")).unwrap();
+        assert_eq!(rows.lines().count(), 1);
+        let row: serde_json::Value = serde_json::from_str(rows.trim()).unwrap();
+        assert_eq!(row["case_id"], format!("case-{index:04}"));
+        if index == 0 {
+            assert!(
+                result.status.success(),
+                "{}",
+                String::from_utf8_lossy(&result.stderr)
+            );
+            assert!(row["error"].is_null());
+        } else {
+            assert!(!result.status.success());
+            assert!(
+                row["error"]
+                    .as_str()
+                    .unwrap()
+                    .contains("dt must be positive and finite")
+            );
+        }
+    }
+}

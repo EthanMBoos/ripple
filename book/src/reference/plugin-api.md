@@ -117,8 +117,9 @@ implicit GlobalNetwork when it does not explicitly list one.
 The public registry is still covered by
 [plugin_contracts.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/tests/plugin_contracts.rs). Its supporting
 models are test fixtures, not a separate application or a prescribed project
-layout. The intended later direct Rust construction API is described in
-[Direct Rust construction plan](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/LIBRARY_FIRST_REFACTOR.md) and remains deferred.
+layout. Public scenario construction is described in
+[Building a scenario in Rust](../guides/rust-scenarios.md). File and Rust inputs
+use the same registry and plugin configuration checks.
 
 ## Plugin files
 

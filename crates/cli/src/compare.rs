@@ -2,7 +2,7 @@
 //! its YAML form) set up the same simulation and record the same outputs.
 use anyhow::{Result, bail, ensure};
 use clap::Args;
-use scrimmage_core::{Params, ScenarioConfig, Simulation, plugin::PluginRegistry, write_frame};
+use scrimmage_core::{Mission, Params, Simulation, plugin::PluginRegistry, write_frame};
 use std::path::{Path, PathBuf};
 
 #[derive(Args)]
@@ -22,12 +22,11 @@ pub(crate) fn compare(
     project_root: &Path,
 ) -> Result<()> {
     let root = options.root.as_deref().unwrap_or(project_root);
-    let load =
-        |path: &Path| ScenarioConfig::load_with_registry(path, root, &Params::new(), registry);
+    let load = |path: &Path| Mission::load_with_registry(path, root, &Params::new(), registry);
     let first = load(&options.first)?;
     let second = load(&options.second)?;
 
-    let differences = first.setup_differences(&second)?;
+    let differences = first.scenario.setup_differences(&second.scenario)?;
     if !differences.is_empty() {
         for difference in &differences {
             println!("  {difference}");
@@ -36,8 +35,8 @@ pub(crate) fn compare(
     }
 
     // Step both together so a mismatch stops at its first frame.
-    let mut first = Simulation::new(first.resolve_with_registry(registry)?, 1)?;
-    let mut second = Simulation::new(second.resolve_with_registry(registry)?, 1)?;
+    let mut first = Simulation::new(first.scenario, registry, 1)?;
+    let mut second = Simulation::new(second.scenario, registry, 1)?;
     loop {
         let (frame_a, frame_b) = (first.step()?, second.step()?);
         let (mut bytes_a, mut bytes_b) = (Vec::new(), Vec::new());

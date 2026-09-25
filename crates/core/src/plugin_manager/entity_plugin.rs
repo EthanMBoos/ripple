@@ -3,8 +3,8 @@
 use crate::{
     EntitySnapshot, KinematicState, Params,
     common::{PluginRandom, Ports},
-    parse::{PluginConfig, PluginValues},
     pubsub::Messages,
+    scenario::{PluginConfig, PluginValues},
     sensor::Observations,
 };
 use anyhow::Result;

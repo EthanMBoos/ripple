@@ -36,7 +36,9 @@ scrimmage-core --test <target>` for core integration targets below.
 | [noisy_state](../crates/core/tests/noisy_state.rs) | Owned belief, unchanged truth during sensing, next-tick feedback, and held estimates between sensor updates. Equation/RNG tests also live beside the sensor implementations. |
 | [world_models](../crates/core/tests/world_models.rs), [navigation](../crates/core/tests/navigation.rs) | Boundary messages, ground removal/team scoring, shared route replacement, and final positions. |
 | [yaml_missions](../crates/core/tests/yaml_missions.rs) | Four paired XML/YAML missions produce identical setup and outputs. Parser unit tests cover templates, overrides, defaults and invalid input. |
+| [rust_scenario](../crates/core/tests/rust_scenario.rs) | Rust and YAML scheduled populations produce identical outputs at 1/2/8 workers; shared construction rejects invalid physical/model settings and nonfinite typed parameters. |
 | CLI [run_output](../crates/cli/tests/run_output.rs) | Every shipped XML runs, recording on/off preserves simulation outputs, failed runs retain diagnostics, invalid missions allocate no output. Run with `-p scrimmage-rs --test run_output`. |
+| CLI [rust_runner](../crates/cli/tests/rust_runner.rs) | Rust setup uses the shared runner, matching YAML outputs with recording on/off and checking manifest settings and validation before output allocation. Run with `-p scrimmage-rs --test rust_runner`. |
 | CLI [sweep](../crates/cli/tests/sweep.rs) | Whole/sharded results agree, bad paths fail early, and the stock executable runs the starter plugin. Run with `-p scrimmage-rs --test sweep`. |
 | [Starter](../crates/starter/tests/follow_nearest.rs) | FollowNearest catches its target; run `cargo test --locked -p starter`. |
 
@@ -49,6 +51,18 @@ Additional recorded checks on 2026-09-24/25:
   complete `results.jsonl`; collection rejected missing/mismatched shards.
   The starter's four-case sweep also ran through the unchanged bulk launcher.
   Slurm submission is mock-tested; an actual cluster run remains open.
+
+The scenario API refactor was checked on 2026-09-25 against a saved binary of
+`2cd820a`: 14 curated XML missions, four paired YAML missions, and the starter
+mission at 1 and 8 workers. All 114 frame, event, and summary files across 38
+runs were byte-identical. Commands, hashes, and before/after artifacts are in
+the local ignored `runs/scenario-api-qa/report.json` and adjacent directories.
+To repeat, build both revisions separately and run those missions with explicit
+fresh output directories, comparing `frames.bin`, `events.json`, and `summary.csv`.
+Workspace tests, formatting, Clippy, both Python suites above, and `mdbook build
+book` passed. This was a Rust behavior-preservation check, not a fresh C++ or
+visual comparison. See the [design notes](RUST_API.md) for intentional API and
+configuration-default changes.
 
 To repeat the bulk check after building the release binary:
 

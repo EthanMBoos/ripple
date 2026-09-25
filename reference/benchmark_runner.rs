@@ -8,7 +8,7 @@ use std::{
 };
 
 use anyhow::{Result, ensure};
-use scrimmage_core::{Params, ScenarioConfig, Simulation, write_frame};
+use scrimmage_core::{Mission, Params, Simulation, write_frame};
 
 fn main() -> Result<()> {
     let args: Vec<_> = env::args().collect();
@@ -16,8 +16,12 @@ fn main() -> Result<()> {
         args.len() == 5,
         "usage: reference MISSION ROOT OUTPUT WORKERS"
     );
-    let config = ScenarioConfig::load(Path::new(&args[1]), Path::new(&args[2]), &Params::new())?;
-    let mut simulation = Simulation::new(config.resolve()?, args[4].parse()?)?;
+    let config = Mission::load(Path::new(&args[1]), Path::new(&args[2]), &Params::new())?;
+    let mut simulation = Simulation::new(
+        config.scenario,
+        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        args[4].parse()?,
+    )?;
     let output = Path::new(&args[3]);
     fs::create_dir(output)?;
     let mut frames = BufWriter::new(fs::File::create_new(output.join("frames.bin"))?);

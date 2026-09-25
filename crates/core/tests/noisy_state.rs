@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use scrimmage_core::{Params, ScenarioConfig, Simulation};
+use scrimmage_core::{Mission, Params, Simulation};
 
 fn simulation(altitude_bias: f64, sensor_rate: f64) -> Result<Simulation> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
@@ -11,8 +11,12 @@ fn simulation(altitude_bias: f64, sensor_rate: f64) -> Result<Simulation> {
         ("altitude_bias".into(), altitude_bias.to_string()),
         ("sensor_rate".into(), sensor_rate.to_string()),
     ]);
-    let mission = ScenarioConfig::load(&root.join("missions/noisy-state.xml"), &root, &overrides)?;
-    Simulation::new(mission.resolve()?, 2)
+    let mission = Mission::load(&root.join("missions/noisy-state.xml"), &root, &overrides)?;
+    Simulation::new(
+        mission.scenario,
+        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        2,
+    )
 }
 
 #[test]
@@ -55,12 +59,16 @@ fn slower_sensor_holds_owned_belief_while_truth_keeps_moving() -> Result<()> {
 #[test]
 fn no_sensor_keeps_ideal_feedback() -> Result<()> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let mission = ScenarioConfig::load(
+    let mission = Mission::load(
         &root.join("missions/straight-no-gui.xml"),
         &root,
         &Params::new(),
     )?;
-    let mut simulation = Simulation::new(mission.resolve()?, 1)?;
+    let mut simulation = Simulation::new(
+        mission.scenario,
+        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        1,
+    )?;
     for _ in 0..3 {
         simulation.step()?;
         for entity in simulation.entities() {

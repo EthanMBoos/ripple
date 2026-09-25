@@ -1,7 +1,7 @@
 //! Type erasure and scheduling stay inside the engine, not in plugin author code.
 use crate::plugin::*;
 use crate::{EntitySnapshot, KinematicState};
-use crate::{common::Rate, parse::EntityConfig};
+use crate::{common::Rate, scenario::EntityGroupConfig};
 use crate::{common::variable_io::Signals, plugin_manager::CompiledPlugin};
 use anyhow::{Context, Result, ensure};
 
@@ -78,18 +78,18 @@ pub(crate) struct CompiledStack {
     sensor_identities: Vec<String>,
 }
 impl CompiledStack {
-    pub fn compile(config: &EntityConfig, registry: &PluginRegistry) -> Result<Self> {
+    pub fn compile(config: &EntityGroupConfig, registry: &PluginRegistry) -> Result<Self> {
         let autonomies = config
             .autonomy
             .iter()
             .map(|plugin| registry.autonomies.compile(plugin))
             .collect::<Result<Vec<_>>>()?;
         let controllers = config
-            .controllers
+            .controller
             .iter()
             .map(|plugin| registry.controllers.compile(plugin))
             .collect::<Result<Vec<_>>>()?;
-        let motion = registry.motion.compile(&config.motion)?;
+        let motion = registry.motion.compile(&config.motion_model)?;
         let sensors = config
             .sensors
             .iter()

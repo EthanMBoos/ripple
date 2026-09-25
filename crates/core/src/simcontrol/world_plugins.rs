@@ -1,5 +1,5 @@
 //! World plugin ownership and dispatch. Model logic belongs under plugin/{interaction,network,metrics}.
-use crate::{Entity, EntitySnapshot, Event, Vec3, parse::ScenarioConfig, plugin::*};
+use crate::{Entity, EntitySnapshot, Event, Vec3, plugin::*, scenario::ScenarioConfig};
 use crate::{
     plugin_manager::{Catalog, CompiledPlugin},
     pubsub::messages::{Mailbox, ScheduledMessage},
@@ -74,7 +74,7 @@ pub(crate) struct CompiledWorld {
 
 fn compile_world_plugins<T: ?Sized>(
     catalog: &Catalog<T>,
-    sources: &[crate::parse::PluginConfig],
+    sources: &[crate::scenario::PluginConfig],
 ) -> Result<Vec<CompiledPlugin<T>>> {
     sources
         .iter()
@@ -95,12 +95,11 @@ impl CompiledWorld {
         let interactions = compile_world_plugins(&registry.interactions, &config.interactions)?;
         let mut networks = compile_world_plugins(&registry.networks, &config.networks)?;
         if !networks.iter().any(|plugin| plugin.name == "GlobalNetwork") {
-            networks.push(registry.networks.compile(&crate::parse::PluginConfig {
-                name: "GlobalNetwork".into(),
-                instance: None,
-                loop_rate_hz: 0.0,
-                params: crate::parse::PluginValues::Text(crate::Params::new()),
-            })?);
+            networks.push(
+                registry
+                    .networks
+                    .compile(&crate::scenario::PluginConfig::new("GlobalNetwork"))?,
+            );
         }
         networks.sort_by(|first, second| first.name.cmp(&second.name));
         for pair in networks.windows(2) {

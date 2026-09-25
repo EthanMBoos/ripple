@@ -8,8 +8,8 @@ use serde::Serialize;
 use crate::{
     common::random::LegacyRng,
     entity::{Entity, EntityDefinition, EntitySnapshot},
-    parse::{EndConditions, ResolvedScenario, ScenarioConfig},
-    plugin::{Messages, MetricReport, StepTime},
+    plugin::{Messages, MetricReport, PluginRegistry, StepTime},
+    scenario::{EndConditions, ResolvedScenario, ScenarioConfig},
     simcontrol::scheduler::Scheduler,
     simcontrol::world_plugins::WorldPlugins,
 };
@@ -88,7 +88,12 @@ pub struct Simulation {
 }
 
 impl Simulation {
-    pub fn new(scenario: ResolvedScenario, worker_count: usize) -> Result<Self> {
+    pub fn new(
+        scenario: ScenarioConfig,
+        registry: &PluginRegistry,
+        worker_count: usize,
+    ) -> Result<Self> {
+        let scenario = scenario.resolve(registry)?;
         let ResolvedScenario {
             config,
             definitions,
@@ -98,10 +103,10 @@ impl Simulation {
         } = scenario;
         let scheduler = Scheduler::new(worker_count)?;
 
-        let world = world.instantiate(config.seed);
+        let world = world.instantiate(config.run.seed);
         let mut simulation = Self {
-            time_s: config.start_s - config.dt_s,
-            rng: LegacyRng::new(config.seed),
+            time_s: config.run.start_s - config.run.dt_s,
+            rng: LegacyRng::new(config.run.seed),
             config,
             definitions,
             entities: Vec::new(),
@@ -121,8 +126,8 @@ impl Simulation {
 
         simulation.world.initialize(
             StepTime {
-                time_s: simulation.config.start_s,
-                dt_s: simulation.config.dt_s,
+                time_s: simulation.config.run.start_s,
+                dt_s: simulation.config.run.dt_s,
             },
             &[],
             &simulation.entity_teams,
@@ -130,7 +135,7 @@ impl Simulation {
         // Legacy missions can create entities one step before the start time.
         simulation.generate_entities()?;
         simulation.apply_interactions()?;
-        simulation.time_s = simulation.config.start_s;
+        simulation.time_s = simulation.config.run.start_s;
         Ok(simulation)
     }
 
@@ -174,7 +179,7 @@ impl Simulation {
         entities.sort_by_key(|entity| entity.id);
         SimulationFrame {
             // SCRIMMAGE labels pre-step state with the following step's timestamp.
-            time_s: self.time_s + self.config.dt_s,
+            time_s: self.time_s + self.config.run.dt_s,
             entities,
         }
     }
@@ -201,14 +206,14 @@ impl Simulation {
 
         self.generate_entities()?;
         let frame = self.snapshot();
-        let dt_s = self.config.dt_s;
+        let dt_s = self.config.run.dt_s;
         let time_s = self.time_s;
         self.run_phase(|entity| entity.step_autonomy(StepTime { time_s, dt_s }, &frame.entities))?;
 
         // Match the reference: all controller substeps precede all motion substeps.
-        let motion_dt_s = dt_s / self.config.motion_multiplier as f64;
+        let motion_dt_s = dt_s / self.config.run.motion_multiplier as f64;
         let mut substep_time_s = time_s;
-        for _ in 0..self.config.motion_multiplier {
+        for _ in 0..self.config.run.motion_multiplier {
             let time = StepTime {
                 time_s: substep_time_s,
                 dt_s: motion_dt_s,
@@ -217,7 +222,7 @@ impl Simulation {
             substep_time_s += motion_dt_s;
         }
         substep_time_s = time_s;
-        for _ in 0..self.config.motion_multiplier {
+        for _ in 0..self.config.run.motion_multiplier {
             let time = StepTime {
                 time_s: substep_time_s,
                 dt_s: motion_dt_s,
@@ -263,7 +268,9 @@ impl Simulation {
         if self.world_stop || self.entities.iter().any(Entity::stop_requested) {
             return Some(TerminationReason::PluginRequestedStop);
         }
-        if self.end_conditions.time && self.time_s > self.config.end_s - self.config.dt_s / 2.0 {
+        if self.end_conditions.time
+            && self.time_s > self.config.run.end_s - self.config.run.dt_s / 2.0
+        {
             return Some(TerminationReason::TimeLimit);
         }
         if self.entities.is_empty()
@@ -286,7 +293,7 @@ impl Simulation {
         // Matches C++ for now, though we'd prefer a monotonic clock: rewinding repeats the
         // final timestamp in legacy logs, but terminal events, plugin close, and the
         // metrics report also see this rewound time, not only the frame writer.
-        self.time_s -= self.config.dt_s;
+        self.time_s -= self.config.run.dt_s;
         for entity in &self.entities {
             self.events.push(Event {
                 time_s: self.time_s,
@@ -301,7 +308,7 @@ impl Simulation {
     fn close_plugins(&mut self) -> Result<()> {
         let time = StepTime {
             time_s: self.time_s,
-            dt_s: self.config.dt_s,
+            dt_s: self.config.run.dt_s,
         };
         let mut failure = None;
         for entity in &mut self.entities {
@@ -323,7 +330,7 @@ impl Simulation {
     fn apply_interactions(&mut self) -> Result<()> {
         let time = StepTime {
             time_s: self.time_s,
-            dt_s: self.config.dt_s,
+            dt_s: self.config.run.dt_s,
         };
         self.world_stop |= self
             .world

@@ -53,11 +53,11 @@ User research plugins live in user crates in this workspace, such as
 `scripts/bulk_run.py` unchanged. The CLI is a library (`scrimmage_cli::main`)
 taking that registry. See `book/src/guides/user-plugins.md`. Keep the starter building
 and its tests passing; do not add per-user copies of shared tooling.
-The later library-first work is direct typed Rust assembly without mission
-files, sharing validation/construction with XML/YAML. Develop experiments in this
-repository using workspace crates and shared tools.
-Read `docs/LIBRARY_FIRST_REFACTOR.md`, establish selected
-behavior/contracts first, and do not implement that API prematurely.
+Experiments can build a public `ScenarioConfig` in Rust or load one through
+`Mission`. `Simulation::new(scenario, &registry, workers)` validates either path.
+Use the existing `scrimmage_cli::run_scenario` for shared output/recording tools;
+keep scenario functions in workspace research crates. See
+`book/src/guides/rust-scenarios.md` and the design notes in `docs/RUST_API.md`.
 
 ## Read before changing code
 
@@ -129,7 +129,7 @@ loading.
 There is no standalone examples application. Test-only models and the nine
 preserved plugin contract regressions live under `crates/core/tests/`.
 Use the built-in plugins as the current implementation references. Do not
-recreate an example application or introduce the later composition API now.
+recreate a standalone example application.
 
 Use ordinary structs, named physical fields, and direct equations. Follow
 Rustfmt and Clippy. Keep type erasure, threads, locks, and dispatch machinery
@@ -154,7 +154,7 @@ their named entry point; do not add a standalone Cargo test target for that glue
 
 ## Execution invariants
 
-- Validate `ScenarioConfig -> ResolvedScenario` before execution.
+- `Simulation::new` validates `ScenarioConfig` and compiles internal definitions before execution.
 - Preserve global phase boundaries: generate; autonomy; all controller
   substeps; all motion substeps; sensors; interactions; networks; metrics;
   removal/output/time advancement.

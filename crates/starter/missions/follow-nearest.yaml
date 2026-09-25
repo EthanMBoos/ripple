@@ -19,6 +19,7 @@ metrics:
 
 templates:
   aircraft:
+    position_variance_m2: [100, 100, 0]
     visual_model: aircraft
     controller:
       SimpleAircraftControllerPID:

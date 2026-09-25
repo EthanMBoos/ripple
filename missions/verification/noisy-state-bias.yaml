@@ -22,7 +22,7 @@ entities:
     position_m: [10, 20, 200]
     position_variance_m2: [0, 0, 0]
     heading_deg: 30
-    speed_mps: 20
+    velocity_mps: [20, 0, 0]
     autonomy:
       Straight:
         speed: 20

@@ -1,11 +1,15 @@
 //! Every YAML mission beside an XML mission of the same name must describe the
 //! same simulation: the same setup, and byte-identical frames, events, and summary.
 use anyhow::Result;
-use scrimmage_core::{Params, ScenarioConfig, Simulation, write_frame};
+use scrimmage_core::{Mission, Params, ScenarioConfig, Simulation, write_frame};
 use std::path::{Path, PathBuf};
 
 fn outputs(config: ScenarioConfig) -> Result<(Vec<u8>, Vec<u8>, String)> {
-    let mut simulation = Simulation::new(config.resolve()?, 1)?;
+    let mut simulation = Simulation::new(
+        config,
+        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        1,
+    )?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
         write_frame(&mut frames, &frame)?;
@@ -41,16 +45,16 @@ fn paired_xml_and_yaml_missions_run_identically() -> Result<()> {
         if !xml.is_file() {
             continue;
         }
-        let from_xml = ScenarioConfig::load(&xml, &root, &Params::new())?;
-        let from_yaml = ScenarioConfig::load(&yaml, &root, &Params::new())?;
-        let differences = from_xml.setup_differences(&from_yaml)?;
+        let from_xml = Mission::load(&xml, &root, &Params::new())?;
+        let from_yaml = Mission::load(&yaml, &root, &Params::new())?;
+        let differences = from_xml.scenario.setup_differences(&from_yaml.scenario)?;
         assert!(
             differences.is_empty(),
             "{}: {differences:?}",
             yaml.display()
         );
         assert!(
-            outputs(from_xml)? == outputs(from_yaml)?,
+            outputs(from_xml.scenario)? == outputs(from_yaml.scenario)?,
             "{}: outputs differ",
             yaml.display()
         );

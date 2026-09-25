@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use scrimmage_core::{Params, ScenarioConfig, Simulation, write_frame};
+use scrimmage_core::{Mission, Params, Simulation, write_frame};
 
 #[derive(Debug, PartialEq, Eq)]
 struct MissionOutput {
@@ -12,8 +12,12 @@ struct MissionOutput {
 
 fn run_mission(name: &str, threads: usize) -> Result<MissionOutput> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let mission = ScenarioConfig::load(&root.join("missions").join(name), &root, &Params::new())?;
-    let mut simulation = Simulation::new(mission.resolve()?, threads)?;
+    let mission = Mission::load(&root.join("missions").join(name), &root, &Params::new())?;
+    let mut simulation = Simulation::new(
+        mission.scenario,
+        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        threads,
+    )?;
     let mut frames = Vec::new();
 
     while let Some(frame) = simulation.step()? {
@@ -60,12 +64,16 @@ fn mission_output_is_independent_of_worker_count() -> Result<()> {
 #[test]
 fn contacts_retain_their_mission_entity_block_id() -> Result<()> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let mission = ScenarioConfig::load(
+    let mission = Mission::load(
         &root.join("missions/straight-no-gui.xml"),
         &root,
         &Params::new(),
     )?;
-    let mut simulation = Simulation::new(mission.resolve()?, 2)?;
+    let mut simulation = Simulation::new(
+        mission.scenario,
+        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        2,
+    )?;
     let initial = simulation.step()?.expect("mission emits an initial frame");
     let block_ids: Vec<_> = initial
         .entities

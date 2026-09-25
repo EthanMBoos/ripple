@@ -33,8 +33,6 @@ XML/YAML, template, override, comparison, and sweep behavior.
   large populations and cleanup before promising thousand-agent runs.
 - [ ] Add YAML forms of the remaining curated missions. The four existing pairs
   are listed in [yaml_missions.rs](../crates/core/tests/yaml_missions.rs).
-- [ ] Add [direct Rust construction](LIBRARY_FIRST_REFACTOR.md) for experiments
-  that calculate their setup in code, sharing validation with mission loading.
 - [ ] Record effective configuration: filled plugin defaults, overrides, assets,
   registrations, seeds, and applicable adapter/backend versions. The current
   manifest records supplied plugin values, not every value filled by `Default`.

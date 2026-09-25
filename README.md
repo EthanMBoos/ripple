@@ -78,11 +78,10 @@ Run the aircraft missions to explore the current simulator. Use
 [Plugin API reference](book/src/reference/plugin-api.md) to add a sensor, motion model,
 autonomy, controller, interaction, network, or metrics plugin.
 
-Later, experiments that calculate their setup in code can gain direct typed
-Rust construction alongside XML/YAML mission loading. The workspace starter
-and shared CLI/sweep/Slurm tools remain the normal workflow. The plan is in
-[docs/LIBRARY_FIRST_REFACTOR.md](docs/LIBRARY_FIRST_REFACTOR.md); this API is
-deferred, not implemented.
+Experiments can also build a `ScenarioConfig` directly in Rust, using the same
+validation and registered plugins as mission files. The shared
+`scrimmage_cli::run_scenario` runner handles outputs and recordings; see
+[Building a scenario in Rust](book/src/guides/rust-scenarios.md).
 
 ## Run it
 

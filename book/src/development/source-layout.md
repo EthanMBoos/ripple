@@ -5,8 +5,8 @@ build layout. Named snake_case module files make editor tabs and file searches
 useful: `simcontrol.rs`, `entity.rs`, `sensor.rs`, and so on. A subsystem's
 supporting files stay in its matching directory; there are no `mod.rs` files.
 
-This is a structural reorganization, not a change to physics, scheduling,
-mission syntax, or the public plugin API. The copied C++ guides remain unchanged.
+The public scenario describes an experiment; the engine owns its running state.
+The copied C++ guides remain historical reference material.
 
 ## Crates
 
@@ -22,6 +22,7 @@ crates/starter   user plugins, missions, and tests; compiled into `scrimmage`
 ```text
 crates/core/src/
   lib.rs
+  scenario.rs
   simcontrol.rs
   simcontrol/
     generation.rs
@@ -62,7 +63,7 @@ Paths in the middle column are relative to `crates/core/src/`.
 | SimControl threaded execution | [simcontrol/scheduler.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/simcontrol/scheduler.rs) | Joined parallel entity phases, including failures/panics |
 | SimControl global plugins | [simcontrol/world_plugins.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/simcontrol/world_plugins.rs) | Interaction/network/metrics ownership and dispatch, not model equations |
 | `entity/Entity` | [entity.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/entity.rs), [entity/plugin_stack.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/entity/plugin_stack.rs) | Entity state/lifecycle and its configured plugin instances |
-| `parse/MissionParse` | [parse/mission.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/parse/mission.rs) (typed mission, validation), `parse/xml_mission.rs` + `parse/xml.rs` + `parse/params.rs` (XML), `parse/yaml_mission.rs` (YAML) | Mission loading and validated configuration |
+| `parse/MissionParse` | [scenario.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/scenario.rs) (public experiment data, validation), `parse/mission.rs` (file discovery and metadata), `parse/xml_mission.rs` + `parse/xml.rs` + `parse/params.rs` (XML), `parse/yaml_mission.rs` (YAML) | Mission loading and validated configuration |
 | `math/State`, `Quaternion`, `Angles` | [math/state.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/math/state.rs), `math/quaternion.rs`, `math/angles.rs` | Physical state and coordinate conventions |
 | Numerical integration | [math/integration.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/math/integration.rs) | RK4 with the reference arithmetic order |
 | `common/PID`, `VariableIO`, `Random` | [common/pid.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/common/pid.rs), `common/variable_io.rs`, `common/random.rs` | Control helpers, named ports and legacy spawn randomness |
@@ -102,11 +103,12 @@ Authors continue to use `scrimmage_core::plugin::*`; internal module moves do
 not leak into their model code. [Plugin contract tests](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/tests/plugin_contracts.rs)
 exercise all seven categories through the public API, with test-only models
 under `crates/core/tests/support/`. There is no separate example application.
-The [library-first refactor](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/LIBRARY_FIRST_REFACTOR.md) is planned for after parity.
+The same registry supports [Rust-built scenarios](../guides/rust-scenarios.md).
 
 ## Follow a mission through the source
 
-1. `parse/mission.rs`: load a `ScenarioConfig`, then validate and resolve it.
+1. `parse/mission.rs`: load a `Mission` containing scenario data and file defaults.
+   `scenario.rs`: define the shared data and validate it inside `Simulation::new`.
 2. `plugin_manager/registry.rs`: compile registered types from mission parameters.
 3. `entity/plugin_stack.rs` and `simcontrol/world_plugins.rs`: create and own
    independent entity-local and world-level plugin instances.

@@ -11,7 +11,7 @@ use scrimmage_core::plugin::{
     AgentContext, Autonomy, Frame, Interaction, InteractionContext, Plugin, PluginIo, PluginParams,
     PluginRegistry, Port, Ports, Sensor, SensorContext, Unit, Update,
 };
-use scrimmage_core::{Params, ScenarioConfig, Simulation};
+use scrimmage_core::{Mission, Params, Simulation};
 use serde::Deserialize;
 
 #[derive(Default, Deserialize)]
@@ -182,14 +182,14 @@ fn simulation(workers: usize, overrides: &Params) -> Result<Simulation> {
     registry.register_autonomy::<ContactFollower>("ContactFollower")?;
     registry.register_sensor::<Observer>("Observer")?;
     registry.register_interaction::<RemoveContacts>("RemoveContacts")?;
-    let scenario = ScenarioConfig::load_with_registry(
+    let scenario = Mission::load_with_registry(
         &root.join("crates/core/tests/fixtures/perception_communication.xml"),
         &root,
         overrides,
         &registry,
     )?
-    .resolve_with_registry(&registry)?;
-    Simulation::new(scenario, workers)
+    .scenario;
+    Simulation::new(scenario, &registry, workers)
 }
 
 /// The newest contact snapshot this entity has received, if any yet.

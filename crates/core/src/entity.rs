@@ -2,15 +2,15 @@
 
 pub(crate) mod plugin_stack;
 
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result};
 
 use serde::Serialize;
 
 use crate::{
     entity::plugin_stack::{CompiledStack, PluginStack},
     math::{EulerAngles, KinematicState, Quaternion, Vec3},
-    parse::EntityConfig,
     plugin::{EntityInfo, Observations, PluginRegistry, StepTime},
+    scenario::EntityGroupConfig,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -55,24 +55,7 @@ pub(crate) struct EntityDefinition {
 }
 
 impl EntityDefinition {
-    pub(crate) fn parse(config: &EntityConfig, registry: &PluginRegistry) -> Result<Self> {
-        ensure!(
-            config
-                .position_variance_world_m2
-                .iter()
-                .all(|variance| *variance >= 0.0)
-                && config.heading_variance_deg2 >= 0.0,
-            "spawn variances must be nonnegative"
-        );
-
-        let mut initial_velocity_world_mps = config.velocity_world_mps;
-        if config.speed_mps > 0.0 && initial_velocity_world_mps == Vec3::zeros() {
-            // Matches C++ for now, though we don't consider it correct: scalar speed is
-            // applied along world X before the initial attitude, so an aircraft facing north
-            // can start moving east. Motion models that rebuild velocity hide this.
-            initial_velocity_world_mps = Vec3::new(config.speed_mps, 0.0, 0.0);
-        }
-
+    pub(crate) fn parse(config: &EntityGroupConfig, registry: &PluginRegistry) -> Result<Self> {
         let contact_type = match config.visual_model.to_lowercase().as_str() {
             "sphere" => EntityKind::Sphere,
             "aircraft" => EntityKind::Aircraft,
@@ -82,15 +65,15 @@ impl EntityDefinition {
 
         Ok(Self {
             spawn: SpawnConfig {
-                position_world_m: config.position_world_m,
-                position_variance_world_m2: config.position_variance_world_m2,
+                position_world_m: config.position_m,
+                position_variance_world_m2: config.position_variance_m2,
                 heading_variance_deg2: config.heading_variance_deg2,
                 randomize_every_spawn: config.randomize_every_spawn,
-                requested_id: config.requested_id,
+                requested_id: config.id,
             },
-            team_id: config.team_id,
+            team_id: config.team,
             initial_health: config.health,
-            initial_velocity_world_mps,
+            initial_velocity_world_mps: config.velocity_mps,
             initial_attitude: EulerAngles {
                 roll_world_from_body_rad: config.roll_deg.to_radians(),
                 pitch_world_from_body_rad: config.pitch_deg.to_radians(),

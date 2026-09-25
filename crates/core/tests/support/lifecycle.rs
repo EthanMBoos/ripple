@@ -113,7 +113,7 @@ fn initialization_failure_step_failure_and_removal_close_each_plugin_once() -> R
                 ("interaction".into(), "RemoveEntities".into()),
             ]);
             let scenario = plugin_fixtures::scenario(&overrides, &registry)?;
-            let result = Simulation::new(scenario, workers);
+            let result = Simulation::new(scenario, &registry, workers);
             if action == "fail_init" {
                 let error = result.err().expect("initialization must fail");
                 let message = format!("{error:#}");

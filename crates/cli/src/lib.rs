@@ -15,6 +15,8 @@ mod run;
 mod sweep;
 mod viewer;
 
+pub use run::{RunSettings, run_scenario};
+
 #[derive(Parser)]
 #[command(
     name = "scrimmage",

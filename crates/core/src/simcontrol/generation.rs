@@ -1,7 +1,7 @@
 //! Mission-controlled generation schedules.
 
 use super::{Event, EventKind, Simulation};
-use crate::parse::EntityConfig;
+use crate::scenario::EntityGroupConfig;
 use crate::{common::random::Normal, entity::Entity, math::Vec3};
 use anyhow::{Context, Result, ensure};
 
@@ -134,7 +134,7 @@ impl Simulation {
             request.position_world_m,
             request.heading_world_deg,
             self.time_s,
-            self.config.seed,
+            self.config.run.seed,
         )?;
         self.entity_teams.insert(id, entity.team_id);
         let event = Event {
@@ -160,15 +160,18 @@ fn legacy_decimal_roundtrip(value: f64) -> f64 {
 }
 impl Generator {
     pub(crate) fn new(
-        config: &EntityConfig,
+        config: &EntityGroupConfig,
         definition_index: usize,
         start_s: f64,
     ) -> Result<Self> {
-        let (rate_hz, batch, first_spawn_s) = match &config.schedule {
-            Some(schedule) => (schedule.rate_hz, schedule.count, schedule.start_s),
+        let (rate_hz, batch, first_spawn_s) = match &config.spawn {
+            Some(schedule) => (schedule.rate_hz, schedule.batch_size, schedule.start_s),
             None => (-1.0, config.count, start_s - 1.0),
         };
-        let time_stddev_s = config.spawn_time_stddev_s;
+        let time_stddev_s = config
+            .spawn
+            .as_ref()
+            .map_or(0.0, |spawn| spawn.time_stddev_s);
         ensure!(time_stddev_s >= 0.0, "negative generation variance");
         Ok(Self {
             definition_index,

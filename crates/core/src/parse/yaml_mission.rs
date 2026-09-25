@@ -1,153 +1,24 @@
-//! Reads a native YAML mission into the typed `ScenarioConfig`.
-//! The syntax is described in `book/src/guides/yaml-missions.md`.
+//! Reads native YAML missions into the public scenario types.
+//! Templates and overrides are expanded before deserializing the scenario.
 use anyhow::{Context, Result, bail, ensure};
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer, de::Error};
 use serde_yaml_ng::{Mapping, Value};
 use std::{
     fs,
     path::{Path, PathBuf},
 };
 
-use super::Params;
-use super::mission::{
-    EndConditions, EntityConfig, PluginConfig, PluginValues, ScenarioConfig, SpawnSchedule,
-};
-use crate::math::Vec3;
+use super::{Mission, Params};
+use crate::scenario::{EntityGroupConfig, PluginConfig, PluginValues};
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct MissionFile {
-    format_version: u32,
-    /// Shown in output; not otherwise used.
-    #[serde(rename = "name")]
-    _name: String,
-    #[serde(default)]
-    run: RunSection,
-    #[serde(default = "default_end_conditions")]
-    end_conditions: Vec<String>,
-    #[serde(default)]
-    interactions: Mapping,
-    #[serde(default)]
-    networks: Mapping,
-    #[serde(default)]
-    metrics: Mapping,
-    entities: Mapping,
-}
-
-fn default_end_conditions() -> Vec<String> {
-    vec!["time".into()]
-}
-
-/// The same defaults as an XML `<run>` tag that leaves an attribute out.
-#[derive(Deserialize)]
-#[serde(default, deny_unknown_fields)]
-struct RunSection {
-    start_s: f64,
-    end_s: f64,
-    dt_s: f64,
-    seed: u32,
-    motion_multiplier: usize,
-    /// Open the Rerun viewer unless the command line says `--headless`.
-    viewer: bool,
-}
-
-impl Default for RunSection {
-    fn default() -> Self {
-        Self {
-            start_s: 0.0,
-            end_s: 100.0,
-            dt_s: 0.1,
-            seed: 2_147_483_648,
-            motion_multiplier: 1,
-            viewer: false,
-        }
-    }
-}
-
-/// The same defaults as an XML entity block that leaves a tag out.
-#[derive(Deserialize)]
-#[serde(default, deny_unknown_fields)]
-struct EntityFile {
-    team: i32,
-    color: [u8; 3],
-    visual_model: String,
-    health: i32,
-    id: Option<i32>,
-    count: usize,
-    spawn: Option<SpawnFile>,
-    position_m: [f64; 3],
-    position_variance_m2: [f64; 3],
-    heading_deg: f64,
-    heading_variance_deg2: f64,
-    roll_deg: f64,
-    pitch_deg: f64,
-    velocity_mps: [f64; 3],
-    speed_mps: f64,
-    randomize_every_spawn: bool,
-    autonomy: Mapping,
-    controller: Mapping,
-    motion_model: Mapping,
-    sensors: Mapping,
-}
-
-impl Default for EntityFile {
-    fn default() -> Self {
-        Self {
-            team: -1,
-            color: [255, 255, 255],
-            visual_model: "sphere".into(),
-            health: 1,
-            id: None,
-            count: 1,
-            spawn: None,
-            position_m: [0.0; 3],
-            position_variance_m2: [100.0, 100.0, 0.0],
-            heading_deg: 0.0,
-            heading_variance_deg2: 0.0,
-            roll_deg: 0.0,
-            pitch_deg: 0.0,
-            velocity_mps: [0.0; 3],
-            speed_mps: 0.0,
-            randomize_every_spawn: false,
-            autonomy: Mapping::new(),
-            controller: Mapping::new(),
-            motion_model: Mapping::new(),
-            sensors: Mapping::new(),
-        }
-    }
-}
-
-/// `batch_size` entities every `1 / rate_hz` seconds from `start_s`, until the
-/// entity's `count` have spawned.
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct SpawnFile {
-    rate_hz: f64,
-    batch_size: usize,
-    #[serde(default)]
-    start_s: f64,
-    #[serde(default)]
-    time_stddev_s: f64,
-}
-
-pub(super) fn load(
-    path: &Path,
-    overrides: &Params,
-    registry: &crate::plugin::PluginRegistry,
-) -> Result<ScenarioConfig> {
+pub(super) fn load(path: &Path, overrides: &Params) -> Result<Mission> {
     let text = fs::read_to_string(path).with_context(|| format!("read {}", path.display()))?;
-    parse(&text, path.canonicalize()?, overrides, registry)
+    parse(&text, path.canonicalize()?, overrides)
         .with_context(|| format!("mission {}", path.display()))
 }
 
-fn parse(
-    text: &str,
-    source: PathBuf,
-    overrides: &Params,
-    registry: &crate::plugin::PluginRegistry,
-) -> Result<ScenarioConfig> {
-    // Order: expand templates, then apply overrides, so an override can
-    // reach a field a group inherited.
+fn parse(text: &str, source: PathBuf, overrides: &Params) -> Result<Mission> {
+    // Overrides can address fields inherited from a template.
     let mut tree: Value = serde_yaml_ng::from_str(text)?;
     expand_templates(&mut tree)?;
     for (path, value) in overrides {
@@ -156,115 +27,85 @@ fn parse(
             .with_context(|| format!("cannot apply override `{path}`"))?;
     }
     check_values(&tree, "")?;
-    let file: MissionFile = serde_yaml_ng::from_value(tree)?;
-    ensure!(file.format_version == 1, "unsupported format_version");
-
-    let mut entities = Vec::new();
-    for (label, value) in &file.entities {
-        let label = key(label)?;
-        let entity: EntityFile = serde_yaml_ng::from_value(or_empty(value))
-            .with_context(|| format!("entity {label}"))?;
-        entities.push(
-            entity_config(label, entity, registry).with_context(|| format!("entity {label}"))?,
-        );
-    }
-
-    Ok(ScenarioConfig {
-        source,
-        start_s: file.run.start_s,
-        end_s: file.run.end_s,
-        dt_s: file.run.dt_s,
-        motion_multiplier: file.run.motion_multiplier,
-        seed: file.run.seed,
-        worker_count: 1,
-        enable_gui: file.run.viewer,
-        time_warp: 0.0,
-        start_paused: false,
-        end_conditions: EndConditions::from_names(file.end_conditions.iter().map(String::as_str))?,
-        entities,
-        interactions: plugins(&file.interactions, "entity_interaction", registry)?,
-        networks: plugins(&file.networks, "network", registry)?,
-        metrics: plugins(&file.metrics, "metrics", registry)?,
-    })
-}
-
-fn entity_config(
-    label: &str,
-    entity: EntityFile,
-    registry: &crate::plugin::PluginRegistry,
-) -> Result<EntityConfig> {
-    let schedule = match &entity.spawn {
-        Some(spawn) => {
-            ensure!(
-                spawn.rate_hz > 0.0 && spawn.batch_size > 0,
-                "spawn requires rate_hz > 0 and batch_size > 0"
-            );
-            Some(SpawnSchedule {
-                rate_hz: spawn.rate_hz,
-                count: spawn.batch_size,
-                start_s: spawn.start_s,
-            })
-        }
-        None => None,
+    let root = tree.as_mapping_mut().context("a mission must be a map")?;
+    let version = root
+        .remove("format_version")
+        .context("missing format_version")?;
+    ensure!(version.as_u64() == Some(1), "unsupported format_version");
+    let name = root.remove("name").context("missing name")?;
+    ensure!(name.is_string(), "name must be a string");
+    ensure!(root.contains_key("entities"), "missing entities");
+    let viewer = match root.get_mut("run") {
+        Some(Value::Mapping(run)) => run
+            .remove("viewer")
+            .map(serde_yaml_ng::from_value)
+            .transpose()?
+            .unwrap_or(false),
+        _ => false,
     };
-    let mut motion = plugins(&entity.motion_model, "motion_model", registry)?;
-    ensure!(motion.len() == 1, "entity requires one motion_model");
-    Ok(EntityConfig {
-        label: label.to_owned(),
-        team_id: entity.team,
-        color: entity.color,
-        visual_model: entity.visual_model,
-        health: entity.health,
-        requested_id: entity.id,
-        count: entity.count,
-        schedule,
-        spawn_time_stddev_s: entity
-            .spawn
-            .as_ref()
-            .map_or(0.0, |spawn| spawn.time_stddev_s),
-        position_world_m: Vec3::from(entity.position_m),
-        position_variance_world_m2: Vec3::from(entity.position_variance_m2),
-        heading_deg: entity.heading_deg,
-        heading_variance_deg2: entity.heading_variance_deg2,
-        roll_deg: entity.roll_deg,
-        pitch_deg: entity.pitch_deg,
-        velocity_world_mps: Vec3::from(entity.velocity_mps),
-        speed_mps: entity.speed_mps,
-        randomize_every_spawn: entity.randomize_every_spawn,
-        autonomy: plugins(&entity.autonomy, "autonomy", registry)?,
-        controllers: plugins(&entity.controller, "controller", registry)?,
-        motion: motion.remove(0),
-        sensors: plugins(&entity.sensors, "sensor", registry)?,
+    Ok(Mission {
+        scenario: serde_yaml_ng::from_value(tree)?,
+        workers: 1,
+        viewer,
+        source,
     })
 }
 
-/// One plugin slot: each key is a label, and its map holds the plugin's
-/// parameters plus the framework keys `plugin` and `loop_rate`.
-fn plugins(
-    slot: &Mapping,
-    category: &str,
-    registry: &crate::plugin::PluginRegistry,
-) -> Result<Vec<PluginConfig>> {
+/// Preserve file order: it controls entity IDs, random draws, and plugin order.
+pub(crate) fn entity_groups<'de, D>(
+    deserializer: D,
+) -> std::result::Result<Vec<EntityGroupConfig>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let groups = Mapping::deserialize(deserializer)?;
+    let mut entities = Vec::new();
+    for (label, value) in groups {
+        let label = key(&label).map_err(D::Error::custom)?;
+        let mut entity: EntityGroupConfig = serde_yaml_ng::from_value(or_empty(&value))
+            .map_err(|error| D::Error::custom(format!("entity {label}: {error}")))?;
+        entity.label = label.to_owned();
+        entities.push(entity);
+    }
+    Ok(entities)
+}
+
+pub(crate) fn plugins<'de, D>(deserializer: D) -> std::result::Result<Vec<PluginConfig>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let slot = Mapping::deserialize(deserializer)?;
+    plugin_configs(slot).map_err(D::Error::custom)
+}
+
+pub(crate) fn motion_plugin<'de, D>(deserializer: D) -> std::result::Result<PluginConfig, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let mut configs = plugins(deserializer)?;
+    if configs.len() != 1 {
+        return Err(D::Error::custom("entity requires one motion_model"));
+    }
+    Ok(configs.remove(0))
+}
+
+/// The map key names the plugin, unless an explicit `plugin` gives its type.
+fn plugin_configs(slot: Mapping) -> Result<Vec<PluginConfig>> {
     let mut configs = Vec::new();
     for (label, value) in slot {
-        let label = key(label)?;
-        let Value::Mapping(mut params) = or_empty(value) else {
-            bail!("{category} `{label}`: expected a map of parameters");
+        let label = key(&label)?;
+        let Value::Mapping(mut params) = or_empty(&value) else {
+            bail!("plugin `{label}`: expected a map of parameters");
         };
-        // A label that is not the plugin's name also names a sensor's random stream.
         let (name, instance) = match params.remove("plugin") {
             Some(Value::String(name)) => (name, Some(label.to_owned())),
-            Some(_) => bail!("{category} `{label}`: `plugin` must be a name"),
+            Some(_) => bail!("plugin `{label}`: `plugin` must be a name"),
             None => (label.to_owned(), None),
         };
-        ensure!(
-            registry.contains_in_category(category, &name),
-            "Mission requests {category} '{name}', but it isn't registered in this executable."
-        );
         let loop_rate_hz = match params.remove("loop_rate") {
             Some(value) => value
                 .as_f64()
-                .with_context(|| format!("{category} `{label}`: loop_rate must be a number"))?,
+                .with_context(|| format!("plugin `{label}`: loop_rate must be a number"))?,
             None => 0.0,
         };
         configs.push(PluginConfig {
@@ -396,7 +237,7 @@ pub(crate) fn set_path(root: &mut Value, path: &str, replacement: Value) -> Resu
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugin::PluginRegistry;
+    use crate::{plugin::PluginRegistry, scenario::ScenarioConfig};
 
     const MISSION: &str = "
 format_version: 1
@@ -425,16 +266,12 @@ entities:
             .iter()
             .map(|(path, value)| (path.to_string(), value.to_string()))
             .collect();
-        parse(
-            text,
-            PathBuf::from("test.yaml"),
-            &overrides,
-            &PluginRegistry::with_builtins(),
-        )
+        parse(text, PathBuf::from("test.yaml"), &overrides).map(|mission| mission.scenario)
     }
 
     fn error(text: &str, overrides: &[(&str, &str)]) -> String {
-        let result = load(text, overrides).and_then(ScenarioConfig::resolve);
+        let result = load(text, overrides)
+            .and_then(|scenario| scenario.resolve(&PluginRegistry::with_builtins()));
         format!("{:#}", result.err().expect("mission must be rejected"))
     }
 
@@ -442,25 +279,34 @@ entities:
     fn labels_defaults_and_plugin_values_resolve() -> Result<()> {
         let mission = load(MISSION, &[])?;
         let entity = &mission.entities[0];
-        assert_eq!(entity.team_id, 1);
+        assert_eq!(entity.team, 1);
         assert_eq!(entity.visual_model, "sphere");
-        assert_eq!(
-            entity.position_variance_world_m2,
-            Vec3::new(100.0, 100.0, 0.0)
-        );
+        assert_eq!(entity.position_variance_m2, crate::math::Vec3::zeros());
         // A label naming another plugin becomes the sensor's identity.
         assert_eq!(entity.sensors[0].name, "NoisyState");
         assert_eq!(entity.sensors[0].instance.as_deref(), Some("coarse"));
         assert_eq!(entity.sensors[1].instance, None);
-        mission.resolve()?;
+        mission.resolve(&PluginRegistry::with_builtins())?;
+        Ok(())
+    }
+
+    #[test]
+    fn file_execution_defaults_stay_outside_the_scenario() -> Result<()> {
+        let text = MISSION.replace("  end_s: 1", "  end_s: 1\n  viewer: true");
+        let mission = parse(&text, PathBuf::from("test.yaml"), &Params::new())?;
+        assert!(mission.viewer);
+        assert_eq!(mission.workers, 1);
+        assert_eq!(mission.source, PathBuf::from("test.yaml"));
+        assert_eq!(mission.scenario.run.end_s, 1.0);
+        assert!(mission.scenario.end_conditions.time);
         Ok(())
     }
 
     #[test]
     fn overrides_follow_dotted_paths_that_exist() -> Result<()> {
         let mission = load(MISSION, &[("entities.blue.team", "3"), ("run.end_s", "2")])?;
-        assert_eq!(mission.entities[0].team_id, 3);
-        assert_eq!(mission.end_s, 2.0);
+        assert_eq!(mission.entities[0].team, 3);
+        assert_eq!(mission.run.end_s, 2.0);
         for (path, message) in [
             ("entities.blue.teem", "field `teem` does not exist"),
             (
@@ -484,7 +330,11 @@ entities:
                 "speed: .inf",
                 "entities.blue.autonomy.Straight.speed: expected a finite number",
             ),
-            ("SimpleAircraft:", "SimpleAircraftt:", "isn't registered"),
+            (
+                "SimpleAircraft:",
+                "SimpleAircraftt:",
+                "unregistered Motion plugin",
+            ),
             (
                 "format_version: 1",
                 "format_version: 2",
@@ -530,14 +380,14 @@ entities:
     fn templates_fill_groups_and_own_keys_replace_whole_values() -> Result<()> {
         let mission = load(TEMPLATED, &[])?;
         let (blue, red) = (&mission.entities[0], &mission.entities[1]);
-        assert_eq!((blue.team_id, blue.heading_deg), (1, 90.0));
-        assert_eq!((red.team_id, red.heading_deg), (2, 90.0));
+        assert_eq!((blue.team, blue.heading_deg), (1, 90.0));
+        assert_eq!((red.team, red.heading_deg), (2, 90.0));
         // Red's own `autonomy` replaced the template's, parameters and all.
         let PluginValues::Yaml(params) = &red.autonomy[0].params else {
             panic!("YAML plugins hold YAML values");
         };
         assert!(params.is_empty());
-        mission.resolve()?;
+        mission.resolve(&PluginRegistry::with_builtins())?;
         Ok(())
     }
 

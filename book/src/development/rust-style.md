@@ -29,9 +29,9 @@ private behind a small set of operations.
 ## Parse into stronger types
 
 Serde types describe what can appear in a file. They do not prove that rates
-are positive, IDs are unique, or required combinations are present. Parse a
-`ScenarioConfig`, validate it, and construct a `ResolvedScenario` that cannot
-bypass those checks. This input-to-runtime boundary is used clearly by
+are positive, IDs are unique, or required combinations are present. Build or parse a
+`ScenarioConfig`; `Simulation::new` validates it and constructs internal resolved
+definitions before execution. This input-to-runtime boundary is used clearly by
 [fd](https://github.com/sharkdp/fd),
 [rust-analyzer](https://github.com/rust-lang/rust-analyzer), and
 [Serde](https://github.com/serde-rs/serde).

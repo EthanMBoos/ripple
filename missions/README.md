@@ -3,7 +3,7 @@
 Run from the repository root with `scrimmage run missions/<file> --headless`.
 Replay the printed run directory with `scrimmage replay runs/<mission>/runNNN`.
 `waypoints-point-agents.sweep.yaml` is a small example sweep (`scrimmage sweep`).
-These fourteen XML files use the compiled built-ins. They are examples and regression
+These twenty XML files use the compiled built-ins. They are examples and regression
 inputs, not a copy of every upstream demo. A `.yaml` file beside an XML file is its
 [YAML form](../book/src/guides/yaml-missions.md) and must run identically; check one with
 `scrimmage compare <file>.xml <file>.yaml`. YAML overrides take dotted paths
@@ -24,7 +24,13 @@ inputs, not a copy of every upstream demo. A `.yaml` file beside an XML file is 
 | `test_missions/straight_cpu_mul.xml` | Preserves upstream's `motion_multipler` typo; this does **not** enable substeps. |
 | `test_missions/straight_cpu_threaded.xml` | Selects workers through the XML setting. |
 | `verification/aircraft-substeps-spawning.xml` | Actual substeps, update rates, scheduled spawning, and randomized state. Known Ubuntu spawn RNG mismatch. |
+| `verification/aircraft-substeps-scheduled.xml` | Zero-variance twin with two spawn schedules; the deterministic C++ comparison for substeps and generation. |
 | `verification/noisy-state-bias.xml` | Deterministic NoisyState means/attitude and closed-loop feedback against C++. |
+| `verification/single-integrator.xml` | SingleIntegrator direct, normalized, zero, and vertical commands from the `ConstantVelocity` test driver. |
+| `verification/noisy-contacts-bias.xml` | Deterministic NoisyContacts biases, attitude order, and covariance, compared through published payloads. |
+| `verification/noisy-contacts-noise.xml` | NoisyContacts with real noise: frames match C++, measurement errors compared by distribution. |
+| `verification/collision-boundary.xml` | SimpleCollision's strict range: pairs exactly at range survive, closing pairs collide (opposing and same team). |
+| `verification/sphere-network-auction.xml` | SphereNetwork reach (inside, exactly at, and beyond range) through AuctionAssign messages on a network named `CommsNetwork`. |
 
 WaypointFollower and WaypointBroadcast are small Rust replacements, not ports of
 MotorSchemas or the legacy waypoint composition. Their routes use local ENU
@@ -39,5 +45,5 @@ collision demo or `networks-local-global.xml` for boundary/ground behavior here.
 Malformed/missing-plugin cases live under `crates/*/tests/`, not this folder.
 The copied C++ guides still describe upstream inputs and are intentionally unchanged.
 
-See [verification evidence](../docs/EVIDENCE.md) for commands, expected results,
+See the [paper's validation sections](../paper/README.md) for results, reproduction,
 and comparison limits; [model scope](../book/src/reference/models.md) explains the selection.

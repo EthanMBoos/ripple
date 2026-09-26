@@ -75,8 +75,8 @@ impl EntityDefinition {
             initial_health: config.health,
             initial_velocity_world_mps: config.velocity_mps,
             initial_attitude: EulerAngles {
-                roll_world_from_body_rad: config.roll_deg.to_radians(),
-                pitch_world_from_body_rad: config.pitch_deg.to_radians(),
+                roll_world_from_body_rad: crate::math::deg_to_rad(config.roll_deg),
+                pitch_world_from_body_rad: crate::math::deg_to_rad(config.pitch_deg),
                 yaw_world_from_body_rad: 0.0,
             },
             color: config.color,
@@ -112,7 +112,7 @@ impl Entity {
         seed: u32,
     ) -> Result<Self> {
         let mut attitude = definition.initial_attitude;
-        attitude.yaw_world_from_body_rad = heading_world_deg.to_radians();
+        attitude.yaw_world_from_body_rad = crate::math::deg_to_rad(heading_world_deg);
 
         let mut truth = KinematicState {
             position_world_m,
@@ -212,6 +212,9 @@ impl Entity {
         }
     }
 
+    pub(crate) fn plugin_outputs(&self) -> Vec<(&str, &str, f64)> {
+        self.plugins.outputs()
+    }
     pub fn observations(&self) -> &Observations {
         self.plugins.observations()
     }

@@ -27,18 +27,23 @@ RUN cmake --build /opt/build --parallel ${BUILD_JOBS} --target \
       FixedWing6DOF_plugin AircraftPIDController_plugin
 
 RUN cmake --build /opt/build --parallel ${BUILD_JOBS} --target Multirotor_plugin
-# Command fixture only: never patch the upstream motion equations for parity.
+RUN cmake --build /opt/build --parallel ${BUILD_JOBS} --target \
+      SingleIntegrator_plugin SingleIntegratorControllerSimple_plugin \
+      NoisyContacts_plugin SphereNetwork_plugin AuctionAssign_plugin
+# Command fixtures only: never patch the upstream models for parity.
 # The -D flags and include paths below must match the upstream CMake build above;
-# if that configuration changes, update them or the fixture may not link cleanly.
+# if that configuration changes, update them or the fixtures may not link cleanly.
 COPY fixtures/ /opt/fixtures/
-RUN g++ -std=c++20 -O3 -fPIC -shared /opt/fixtures/MotorSpeeds.cpp \
-      -DENABLE_VTK=0 -DENABLE_GRPC=0 -DENABLE_OPENCV=0 -DENABLE_GPU_ACCELERATION=0 \
-      -DENABLE_AIRSIM=0 -DENABLE_JSBSIM=1 -DENABLE_LIBXML2_PARSER=1 \
-      -I/opt/source/include -I/opt/build/src/proto -I/opt/build/msgs \
-      -I/usr/include/eigen3 -I/usr/include/libxml2 \
-      -L/opt/build/lib -lscrimmage-core \
-      -o /opt/build/plugin_libs/libMotorSpeeds_plugin.so \
-    && cp /opt/fixtures/MotorSpeeds.xml /opt/build/plugin_libs/
+RUN for fixture in MotorSpeeds ConstantVelocity; do \
+      g++ -std=c++20 -O3 -fPIC -shared /opt/fixtures/${fixture}.cpp \
+        -DENABLE_VTK=0 -DENABLE_GRPC=0 -DENABLE_OPENCV=0 -DENABLE_GPU_ACCELERATION=0 \
+        -DENABLE_AIRSIM=0 -DENABLE_JSBSIM=1 -DENABLE_LIBXML2_PARSER=1 \
+        -I/opt/source/include -I/opt/build/src/proto -I/opt/build/msgs \
+        -I/usr/include/eigen3 -I/usr/include/libxml2 \
+        -L/opt/build/lib -lscrimmage-core \
+        -o /opt/build/plugin_libs/lib${fixture}_plugin.so \
+      && cp /opt/fixtures/${fixture}.xml /opt/build/plugin_libs/ || exit 1; \
+    done
 
 ENV SCRIMMAGE_DIR=/opt/source \
     SCRIMMAGE_PLUGIN_PATH=/opt/build/plugin_libs:/opt/source/include/scrimmage/plugins \

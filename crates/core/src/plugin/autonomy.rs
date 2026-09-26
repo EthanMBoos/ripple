@@ -11,3 +11,6 @@ pub use auction_assign::{
     AuctionAssign, AuctionBid, AuctionResult, AuctionStart, BID_AUCTION_TOPIC,
     RESULT_AUCTION_TOPIC, START_AUCTION_TOPIC,
 };
+#[path = "autonomy/constant_velocity/constant_velocity.rs"]
+mod constant_velocity;
+pub use constant_velocity::ConstantVelocity;

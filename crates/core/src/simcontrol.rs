@@ -1,6 +1,7 @@
 //! Fixed-step orchestration with explicit phase boundaries.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::io::Write;
 
 use anyhow::Result;
 use serde::Serialize;
@@ -9,14 +10,17 @@ use crate::{
     common::random::LegacyRng,
     entity::{Entity, EntityDefinition, EntitySnapshot},
     plugin::{Messages, MetricReport, PluginRegistry, StepTime},
+    pubsub::messages::NetworkTrace,
     scenario::{EndConditions, ResolvedScenario, ScenarioConfig},
     simcontrol::scheduler::Scheduler,
+    simcontrol::trace::Trace,
     simcontrol::world_plugins::WorldPlugins,
 };
 
 pub(crate) mod generation;
 mod scheduler;
 mod summary;
+mod trace;
 pub(crate) mod world_plugins;
 
 use generation::Generator;
@@ -85,6 +89,7 @@ pub struct Simulation {
     used_ids: BTreeSet<i32>,
     end_conditions: EndConditions,
     finished: bool,
+    trace: Option<Trace>,
 }
 
 impl Simulation {
@@ -122,6 +127,7 @@ impl Simulation {
             used_ids: BTreeSet::from([0]),
             end_conditions,
             finished: false,
+            trace: None,
         };
 
         simulation.world.initialize(
@@ -157,6 +163,16 @@ impl Simulation {
 
     pub fn termination(&self) -> Option<TerminationReason> {
         self.termination
+    }
+
+    /// Write the C++ comparison trace (see `simcontrol/trace.rs`) to `out`.
+    /// Tracing only reads state; simulation outputs are unchanged.
+    pub fn enable_trace(&mut self, out: Box<dyn Write + Send>) {
+        self.trace = Some(Trace::new(out));
+    }
+
+    pub fn flush_trace(&mut self) -> Result<()> {
+        self.trace.as_mut().map_or(Ok(()), Trace::flush)
     }
 
     fn run_phase(&mut self, update: impl Fn(&mut Entity) -> Result<()> + Sync) -> Result<()> {
@@ -208,6 +224,9 @@ impl Simulation {
         let frame = self.snapshot();
         let dt_s = self.config.run.dt_s;
         let time_s = self.time_s;
+        if let Some(trace) = &mut self.trace {
+            trace.beliefs(time_s, &self.entities)?;
+        }
         self.run_phase(|entity| entity.step_autonomy(StepTime { time_s, dt_s }, &frame.entities))?;
 
         // Match the reference: all controller substeps precede all motion substeps.
@@ -220,6 +239,9 @@ impl Simulation {
             };
             self.run_phase(|entity| entity.step_controller(time, &frame.entities))?;
             substep_time_s += motion_dt_s;
+        }
+        if let Some(trace) = &mut self.trace {
+            trace.outputs(time_s, &self.entities)?;
         }
         substep_time_s = time_s;
         for _ in 0..self.config.run.motion_multiplier {
@@ -238,9 +260,17 @@ impl Simulation {
         self.apply_interactions()?;
         let time = StepTime { time_s, dt_s };
         let contacts = self.snapshot().entities;
-        self.world_stop |=
-            self.world
-                .networks(time, &contacts, &mut self.entities, &mut self.messages)?;
+        let mut network_trace = self.trace.as_ref().map(|_| NetworkTrace::default());
+        self.world_stop |= self.world.networks(
+            time,
+            &contacts,
+            &mut self.entities,
+            &mut self.messages,
+            network_trace.as_mut(),
+        )?;
+        if let (Some(trace), Some(network_trace)) = (&mut self.trace, &network_trace) {
+            trace.network(network_trace)?;
+        }
         self.run_phase(Entity::deliver_observations)?;
         self.world_stop |= self.world.metrics(time, &contacts, &self.entity_teams)?;
         // Retain a stop request even when its entity is removed in this same tick.
@@ -301,6 +331,10 @@ impl Simulation {
                 entity_ids: vec![entity.id],
             });
         }
+        // C++ logs the terminal frame here too, at the rewound time.
+        if let Some(trace) = &mut self.trace {
+            trace.beliefs(self.time_s, &self.entities)?;
+        }
         self.close_plugins()?;
         Ok(self.snapshot())
     }
@@ -348,7 +382,7 @@ impl Simulation {
                 entity_ids: vec![entity.id],
             };
             self.messages
-                .publish("GlobalNetwork", event.kind.topic(), event.clone())?;
+                .publish_engine_event("GlobalNetwork", event.kind.topic(), event.clone());
             self.events.push(event);
         }
         Ok(())

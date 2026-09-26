@@ -462,8 +462,8 @@ scores and qualifies duplicate column names with the plugin instance identity.
 ## What remains
 
 See [Built-in models](models.md) for the selected aircraft, world, and waypoint
-models, their options, and deliberate limits. [Verification evidence](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/EVIDENCE.md) provides
-runnable checks. [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md) lists current priorities. Legacy delay
+models, their options, and deliberate limits. The [paper's validation](https://github.com/EthanMBoos/scrimmage-rs/blob/main/paper/README.md) records
+checks and results. [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md) lists current priorities. Legacy delay
 behavior, additional sensor models, and plugin debug
 geometry need further work. Services, runtime parameters, and
 callbacks should be implemented where selected simulation models need them,

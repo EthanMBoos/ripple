@@ -1,0 +1,83 @@
+{
+  "passed": true,
+  "per_test_threshold": 0.0071428571428571435,
+  "quantities": {
+    "pos_x": {
+      "cpp_samples": 3600,
+      "rust_samples": 3600,
+      "cpp_mean": 1.1214494248247757,
+      "rust_mean": 1.0168422859089252,
+      "cpp_std": 4.9699396308251576,
+      "rust_std": 4.98048992394042,
+      "ks_statistic": 0.02027777777777784,
+      "p_value": 0.44608563315498184,
+      "passed": true
+    },
+    "pos_y": {
+      "cpp_samples": 3600,
+      "rust_samples": 3600,
+      "cpp_mean": -2.0166495957144654,
+      "rust_mean": -1.8495339121955061,
+      "cpp_std": 5.011693576756789,
+      "rust_std": 4.92688992762024,
+      "ks_statistic": 0.01833333333333334,
+      "p_value": 0.5768904445545582,
+      "passed": true
+    },
+    "pos_z": {
+      "cpp_samples": 3600,
+      "rust_samples": 3600,
+      "cpp_mean": 0.5180369177619077,
+      "rust_mean": 0.4841435212866318,
+      "cpp_std": 1.0032249071981116,
+      "rust_std": 0.9794368231305738,
+      "ks_statistic": 0.026388888888888906,
+      "p_value": 0.16060220283734217,
+      "passed": true
+    },
+    "vel_x": {
+      "cpp_samples": 3600,
+      "rust_samples": 3600,
+      "cpp_mean": 0.11106546740568746,
+      "rust_mean": 0.0963193880329072,
+      "cpp_std": 4.999421155511613,
+      "rust_std": 4.964945287838473,
+      "ks_statistic": 0.018055555555555602,
+      "p_value": 0.5965567163846316,
+      "passed": true
+    },
+    "vel_y": {
+      "cpp_samples": 3600,
+      "rust_samples": 3600,
+      "cpp_mean": 0.3809155717179146,
+      "rust_mean": 0.2751074402780477,
+      "cpp_std": 4.981263386624087,
+      "rust_std": 4.995243807682925,
+      "ks_statistic": 0.03388888888888891,
+      "p_value": 0.031265848626504486,
+      "passed": true
+    },
+    "vel_z": {
+      "cpp_samples": 3600,
+      "rust_samples": 3600,
+      "cpp_mean": -0.02147720127188444,
+      "rust_mean": 0.01934646243153596,
+      "cpp_std": 0.9893373125117074,
+      "rust_std": 0.9939130914900337,
+      "ks_statistic": 0.0213888888888889,
+      "p_value": 0.3789699262384204,
+      "passed": true
+    },
+    "attitude_rad": {
+      "cpp_samples": 3600,
+      "rust_samples": 3600,
+      "cpp_mean": 0.14058634443843632,
+      "rust_mean": 0.14126478071244206,
+      "cpp_std": 0.07180309981973487,
+      "rust_std": 0.07081615496086081,
+      "ks_statistic": 0.01694444444444443,
+      "p_value": 0.6761038374917275,
+      "passed": true
+    }
+  }
+}

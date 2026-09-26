@@ -7,6 +7,7 @@ pub(crate) fn register_builtins(registry: &mut PluginRegistry) -> Result<()> {
     registry.register_autonomy::<autonomy::Straight>("Straight")?;
     registry.register_autonomy::<autonomy::WaypointFollower>("WaypointFollower")?;
     registry.register_autonomy::<autonomy::AuctionAssign>("AuctionAssign")?;
+    registry.register_autonomy::<autonomy::ConstantVelocity>("ConstantVelocity")?;
     registry.register_controller::<controller::SingleIntegratorControllerSimple>(
         "SingleIntegratorControllerSimple",
     )?;

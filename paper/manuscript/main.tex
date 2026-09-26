@@ -5,9 +5,14 @@
 \usepackage[numbers]{natbib}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{array}
+% Ragged-right paragraph column for narrow table cells.
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
 \usepackage[bookmarks=true]{hyperref}
 
 \newcommand{\stub}[1]{\par\noindent\textit{TODO: #1}\par}
+% Marks results from the working tree that the frozen campaign must replace.
+\newcommand{\prov}{\textbf{[Provisional]}~}
 
 \begin{document}
 
@@ -34,14 +39,12 @@ configuration and the path from a user plugin to repeatable experiments.
 changes. Explain what users gain from a single mission description, workspace
 plugins, and shared run, sweep, and Slurm tooling.}
 
-The planned evaluation asks:
+The paper asks:
 \begin{description}
-  \item[RQ1:] Where do the C++ and Rust implementations agree in behavior, and
-  how do their runtime and memory costs change with workload and agent count?
-  \item[RQ2:] What work does the Rust configuration and plugin workflow remove
-  when building and repeating a multi-agent experiment?
-  \item[RQ3:] What additional experiment does a selected new capability enable,
-  and what does that capability cost?
+  \item[RQ1:] Does the Rust implementation behave like SCRIMMAGE?
+  \item[RQ2:] Is it easier to set up, change, and repeat an experiment with
+  YAML missions, compiled workspace plugins, and built-in sweeps?
+  \item[RQ3:] How do runtime and memory compare, and how do they scale?
 \end{description}
 
 \stub{State the final contributions once supported by evidence.}
@@ -60,13 +63,136 @@ learned or hybrid autonomy, batched inference, and reproducible multi-agent
 evaluation. Compare their assumptions and workloads. Add citations as sources
 are reviewed; library availability alone does not establish a contribution.}
 
-\section{SCRIMMAGE-RS}
-\label{sec:system}
+\section{Parity with SCRIMMAGE}
+\label{sec:parity}
+
+In the tested configurations, SCRIMMAGE-RS and SCRIMMAGE agree in trajectories,
+selected sensor and command values, and message-delivery timing, subject to
+the documented differences. The claim covers the retained models and the
+configurations we tested (Appendix~\ref{app:coverage}), not the whole C++ plugin
+catalog. This section shows how we established it.
+
+\subsection{Method}
+Both simulators run the same mission files. C++ comes from the current
+\texttt{Ubuntu-24.04} branch, built headless in its own Docker image.
+
+Trajectories alone can hide differences in what agents believe, what their
+plugins command, and what messages they send. We therefore added an optional
+trace to a separate C++ branch. It records each message delivery (tick,
+sender, and receiver), the entities named in lifecycle and collision events,
+published sensor readings, each agent's belief, and the commands each plugin
+passes to the next. Other message contents, such as auction bids, are not
+compared. Rust writes the same trace. Instrumentation that changed C++ would invalidate the
+comparison, so every run is repeated on the unmodified build: frames and
+summaries must be byte-identical.
+
+Randomized runs only compare if both simulators draw the same random numbers.
+The C++ standard leaves its default generator up to each compiler's library, so
+the C++ branch can switch spawning to the same fully specified generator Rust
+uses. Rust's sensor noise uses its own random streams by design, so noise is
+compared by distribution instead of sample by sample.
+
+A comparison that cannot fail proves nothing. Beyond thirteen hand-written
+missions, we ran 100 randomly generated scenarios and ten long ones of up to
+1{,}000~s, planted twelve plausible porting bugs to confirm the comparison
+catches them, and tested the noise distributions. Appendix~\ref{app:method}
+gives the details.
+
+\subsection{Results}
+Table~\ref{tab:parity} summarizes the evidence. All curated missions and
+generated scenarios pass, and every planted bug is detected. In passing runs,
+trajectories agree to $3.7\times10^{-10}$~m at worst and usually to
+$10^{-14}$~m or better. No difference was detected in seven NoisyContacts
+marginal error distributions at the corrected significance threshold.
+
+Eight of the ten long runs pass. In the other two, an aircraft oscillates in
+its control loop, and C++ and Rust exceed the tolerance after 25.7~s and
+69.3~s, ending $1.9\times10^{-4}$~m and $7.1\times10^{-5}$~m apart. In the
+second, changing one input of Rust by one unit in the last place makes Rust
+diverge from itself at about the same time (69.7~s), which is consistent with
+numerical sensitivity. In the first, the same control does not reproduce the
+divergence, so its cause is unresolved; the trace shows the first difference
+in the last digit of a heading computation (Appendix~\ref{app:results}).
+
+For RQ1, then: in the tested configurations of the retained models,
+SCRIMMAGE-RS agrees with SCRIMMAGE in trajectories, the compared sensor and
+command values, and message-delivery timing, to floating-point rounding.
+Summaries match or are validated against the documented scoring differences.
+The exceptions are listed in Table~\ref{tab:differences}.
+
+These results come from the SCRIMMAGE-RS code committed with them (the
+retained reports record a hash of every Rust source file) and C++ commits
+\texttt{4bdf41fb0} (\texttt{Ubuntu-24.04}) and \texttt{747a28069}
+(\texttt{benchmarking-edits}).
+
+\input{generated/parity}
+
+\subsection{What differs}
+Apart from the unresolved long-run divergence above, every remaining difference
+is a C++ defect that Rust corrects or a deliberate choice
+(Table~\ref{tab:differences}). Examples are C++ scoring teams that spawn
+late as NaN, and entities destroyed before the first step still running for a
+tick. None is hidden. Where Rust's summary differs, entity and collision counts
+still match exactly, and Rust's own messages reproduce the C++ summary under the
+C++ scoring rule and the Rust summary under Rust's documented rule.
+
+\section{Upgrades}
+\label{sec:upgrades}
+
+\subsection{One Experiment in Both}
+SCRIMMAGE-RS keeps SCRIMMAGE's models but changes how experiments are
+described and run. Missions can be written in YAML, with templates for shared
+entity setup; every setting is typed and checked before the run starts; and a
+sweep file names any mission key and its values. Old XML missions still run,
+through the same typed scenario. Plugins are compiled into the one
+\texttt{scrimmage} command from a workspace crate.
+
+To answer RQ2 we built the same small experiment in each simulator, following
+each one's own documented workflow. One aircraft flies straight at 18~m/s;
+another chases it with a new FollowNearest autonomy plugin. The question is how
+fast the chaser must be to catch it, so we swept its speed over 18, 22, 26, and
+30~m/s. Table~\ref{tab:workflow} compares the steps.
+
+\begin{table}[t]
+\centering
+\small
+\caption{The FollowNearest speed sweep built in each simulator.}
+\label{tab:workflow}
+\begin{tabular}{@{}p{0.16\linewidth}p{0.37\linewidth}p{0.37\linewidth}@{}}
+\toprule
+Step & SCRIMMAGE (C++) & SCRIMMAGE-RS \\
+\midrule
+Mission & XML; each entity lists its own controller, motion model, and spread & YAML; entities share an \texttt{aircraft} template \\
+Mistyped key & Ignored; runs with defaults & Rejected before the run, naming the expected key \\
+Plugin & Generate a 41-file CMake project and 4 plugin files; fix the template by hand & One file in the starter crate; register in 3 lines \\
+Build & CMake; set plugin and library paths & \texttt{cargo build} \\
+Sweep & Mark values as \texttt{\$\{speed=30\}} in the XML; batch scripts broken, so write a loop & 9-line sweep file naming any key; \texttt{scrimmage sweep} \\
+Cluster & \texttt{qsub} helper removed & Same sweep file via \texttt{bulk\_run.py} \\
+Results & One \texttt{summary.csv} per log folder & One \texttt{results.jsonl} row per case \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both give the same answer: the chaser catches the target at 26 and 30~m/s, at
+45.3~s and 32.0~s, and not at 18 or 22~m/s. The difference is in the work
+around the model. The mission files are the same length, but the YAML one
+states shared setup once, and its sweep needs no edits to the mission. Checking
+matters most: with the end time mistyped as \texttt{ending} and the speed as
+\texttt{initial\_sped}, C++ ran without a warning for its default 50~s at the
+plugin's default 24.3~m/s, and the chaser never caught the target. SCRIMMAGE's
+own test missions \texttt{straight\_cpu\_mul.xml} and \texttt{straight\_gpu\_mul.xml}
+carry such a typo (\texttt{motion\_multipler}), so they never run substeps. In YAML, the same mistakes stop the run before it starts.
+
+The plugin code is similar in size (54 lines of C++ against 82 of Rust, which
+also declares its ports and checks its parameter). On the C++ side, the
+generated plugin does not compile until its placeholders are fixed, and neither
+batch script runs, because both need a Python package that is no longer in the
+branch. Appendix~\ref{app:rq2} gives the details, and \texttt{paper/rq2/} holds
+both versions and the commands.
 
 \subsection{Experiment and Data Path}
-\stub{Show one small YAML mission with templates, a parameter sweep, and the
-path through validation, execution, saved results, and Rerun inspection.
-Explain how XML and YAML share construction. Add one dataflow figure.}
+\stub{Show the path through validation, execution, saved results, and Rerun
+inspection, and how XML and YAML share construction. Add one dataflow figure.}
 
 \subsection{Plugin Authoring and Execution}
 \stub{Describe the seven model roles, workspace starter, compiled registration,
@@ -84,80 +210,41 @@ Burn-backed policy inference, a ROS or ArduPilot connection, or direct typed
 Rust construction. These remain planned work. Describe the implemented
 boundary, research use, and comparison only when a pilot exists.}
 
-\subsection{Validation}
-\stub{Explain analytical and plugin tests, selected C++ trajectory and summary
-comparisons, and exact Rust frame/event/summary checks at 1, 2, and 8 workers.
-Describe XML/YAML equivalence and recording on/off checks. List known
-differences and the absence of direct C++ event-stream comparison.}
+\section{Performance}
+\label{sec:performance}
 
-\section{Benchmark Design}
-\label{sec:benchmark}
+\prov Table~\ref{tab:benchmark} is a first measurement under emulation, not a
+native result. With one worker, Rust is 1.4 to 1.6 times faster than C++. With
+eight workers it is slower, which we must explain before reporting scaling.
 
-\subsection{Baseline and Workloads}
-\stub{Select a small shared set: simple motion, controller substeps, sensing or
-communication, and spawn/removal. Scale populations and model complexity
-separately. Record equivalent parameters, initial states, timestep, seeds,
-horizon, plugin behavior, and output settings for both implementations.}
+\IfFileExists{generated/benchmark.tex}{\input{generated/benchmark}}{}
 
-\subsection{Measurements}
-\stub{Measure end-to-end wall time, startup, simulation cost where instrumented,
-peak memory, output size, and failures. Report simulated seconds per wall
-second and worker scaling. Treat unsupported or failed cases explicitly.}
-
-\subsection{Configuration and Extension Effort}
-\stub{Use the same concrete tasks in both systems: add an agent type, change a
-population, add a custom plugin, and launch a sweep. Show files and edits
-required. Keep descriptive code comparisons separate from claims about human
-usability unless a user study is performed.}
-
-\subsection{New Capability Evaluation}
-\stub{Compare the selected extension against a useful baseline and isolate its
-effect. For accelerated inference, include packing, transfers, synchronization,
-and readback in full-run cost; for an external controller, report timing and
-failure behavior as well as task performance.}
-
-\section{Experimental Design}
-\label{sec:experiments}
-
-\stub{Freeze the C++ branch revision and Rust revision for the campaign. Record
-hardware, OS, compiler versions, release flags, dependencies, threading,
-container architecture, and whether execution is native or emulated. Run both
-implementations on the same hardware and execution environment for timing.}
-
-\stub{Check behavior before interpreting speed differences. Save initial states
-when random generators differ. Separate deliberate semantic differences from
-regressions, and report the covered subset of models.}
-
-\stub{Specify workload sizes, independent seeds, warm-up policy, timing repeats,
-run ordering, and uncertainty estimates. Separate repeated timing measurements
-of one case from independent task trials. Compare recording modes explicitly.}
-
-\stub{Use the existing reference and bulk-run tools. Save commands, inputs,
-raw measurements, and failures. Complete an actual Slurm campaign before
-claiming cluster validation.}
-
-\section{Results}
-\label{sec:results}
-
-\subsection{Behavioral Agreement and Differences}
-\stub{Add the comparison matrix, tolerances, failures, and explanations.}
-
-\subsection{Runtime, Memory, and Scaling}
-\stub{Add measured curves and uncertainty. Separate one-worker C++/Rust
-comparisons from Rust worker scaling and from recording overhead.}
-
-\subsection{Configuration and Experiment Workflow}
-\stub{Show the worked configuration/plugin comparison and campaign results.}
-
-\subsection{Selected Research Extension}
-\stub{Report task outcomes, integration effort, and complete execution cost.}
+\stub{Native x86 Linux measurements across agent counts and workloads, with
+peak memory, uncertainty, and C++'s own multithreaded mode.}
 
 \section{Discussion and Limitations}
+\label{sec:discussion}
 
-\stub{Explain what the measurements support and where they do not generalize:
-model coverage, fidelity, stochastic differences, platform effects, bottlenecks,
-and external integrations. Distinguish gains due to implementation choices
-from claims about Rust as a language. Compare benefits with added complexity.}
+The comparison found defects on both sides. Tracing and generated scenarios
+exposed C++ defects that trajectories alone would have hidden, and Rust defects
+that we fixed, down to the order of floating-point operations. The limits of
+the parity claim are:
+\begin{itemize}
+\item \emph{Scope.} Parity covers the tested configurations of the retained
+models, not the full C++ catalog.
+\item \emph{Message contents.} Only lifecycle, collision, and sensor messages
+are compared by content; other messages, such as auction bids, by delivery only.
+\item \emph{Stochastic behavior.} Sensor noise is tested by seven marginal
+distributions in one NoisyContacts fixture, not for temporal or cross-axis
+dependence, and NoisyState noise is not tested by distribution.
+\item \emph{Rounding.} Results agree to rounding, not bit for bit: C++ and Rust
+call different math libraries and group some operations differently. Two long
+runs diverge late; one is consistent with numerical sensitivity, and the other's
+cause is unresolved.
+\end{itemize}
+
+\stub{What the performance results support, and gains due to design choices
+versus the language.}
 
 \section{Conclusion}
 
@@ -167,8 +254,281 @@ most useful next experiment.}
 \section*{Generative AI Disclosure}
 
 OpenAI Codex assisted with the initial manuscript outline and reference-file
-organization. \stub{Update this statement to reflect actual assistance and
+organization. Claude (Anthropic) assisted with implementation, running the
+verification checks, and drafting the validation, agreement, and appendix text
+from retained data. \stub{Update this statement to reflect actual assistance and
 author review, following the selected venue's policy.}
+
+\appendices
+
+\section{Comparison Method}
+\label{app:method}
+
+\paragraph{Builds}
+A checker builds each C++ branch from a \texttt{git archive} inside the
+unmodified upstream dependency image (\texttt{linux/amd64}, GCC~13.3), headless
+and single-threaded. \texttt{Ubuntu-24.04} is the unmodified reference;
+\texttt{benchmarking-edits} adds only opt-in comparison support. No
+model equation is patched. Two command drivers exist in both implementations:
+\texttt{MotorSpeeds}, because the upstream multirotor controller no longer
+matches the multirotor model, and \texttt{ConstantVelocity}, because no retained
+upstream autonomy commands a velocity. Rust runs at 1, 2, and 8 workers, with
+recording, and with tracing; all must be byte-identical.
+
+\paragraph{Trace}
+Set with \texttt{SCRIMMAGE\_TRACE} in C++ and \texttt{-{}-trace} in Rust. It
+records every message delivery (tick, network, topic, sender, receiver, and the
+entities in lifecycle and collision events), every published sensor state and
+covariance, each entity's belief when its frame is logged, and every output the
+next plugin reads. Each mission runs on the unmodified build, the instrumented
+build, and the instrumented build with tracing; all three must write
+byte-identical frames and summaries.
+
+\paragraph{Criteria}
+Frames must contain the same entities at every tick. States, beliefs, and
+sensor readings must agree within $10^{-8}$~m, $10^{-8}$~m/s, $10^{-9}$~rad, and
+$10^{-9}$~rad/s; outputs within $10^{-8}$; covariances within $10^{-9}$;
+summaries within $10^{-6}$. Deliveries must match exactly, in order. The
+position limit is 27 times the largest difference measured in a passing run
+($3.7\times10^{-10}$~m).
+They replace the original 0.01~m and $10^{-3}$, which let a planted
+sub-micrometre bug through.
+
+\paragraph{Random draws}
+The C++ standard leaves the default random engine and the normal
+distribution's algorithm to each standard library. The reference build's
+library (GCC's) and the one Rust reproduces (LLVM's) differ in both. With
+\texttt{SCRIMMAGE\_LIBCXX\_SPAWN\_RANDOM}, the C++ branch draws spawns from the
+standard-defined \texttt{std::minstd\_rand} with the same normal algorithm as
+Rust. Without it, the randomized mission differs by up to 8.42~m; with it, it
+agrees to $1.4\times10^{-14}$~m. Sensor noise is compared with
+fixed-bias, zero-noise fixtures and, separately, by distribution.
+
+\paragraph{Long runs}
+Ten generated scenarios run for 1{,}000~s (fixed-wing: 100~s at 0.01~s steps).
+A run agrees if every check passes over its whole length. For a run that
+diverges, a control changes Rust's initial roll, commanded speeds, and turning
+radii by one unit in the last place and measures when Rust diverges from itself.
+
+\paragraph{Summaries and one exclusion}
+A differing summary passes only if entity and collision counts match exactly,
+and the Rust run's metrics messages reproduce the C++ summary under the C++
+scoring rule and the Rust summary under Rust's documented rule
+(\texttt{reference/metrics\_model.py}). For entities C++ destroys before
+the first step, their first-step trace records are excluded and counted, because
+C++ still runs them for that step. No other difference is excluded.
+
+\section{Full Results}
+\label{app:results}
+
+Table~\ref{tab:agreement} gives each curated mission, Table~\ref{tab:generated}
+the generated scenarios, Table~\ref{tab:sensitivity} the planted bugs,
+Table~\ref{tab:noise} the noise distributions, Table~\ref{tab:long} the long
+runs, and Table~\ref{tab:differences} every known difference. Retained data is
+under \texttt{paper/data/}.
+
+\input{generated/cpp_agreement}
+\input{generated/generated}
+\input{generated/sensitivity}
+\input{generated/noise}
+\input{generated/long}
+
+\begin{table*}[t]
+\centering
+\caption{Known C++/Rust differences and how the comparison treats them.}
+\label{tab:differences}
+\small
+\begin{tabularx}{\textwidth}{P{0.18\textwidth}>{\raggedright\arraybackslash}XP{0.22\textwidth}}
+\toprule
+Difference & Cause & Treatment \\
+\midrule
+Survivor flight time &
+C++ publishes \texttt{EntityPresentAtEnd} after its last network phase, so
+metrics credit survivors only until the latest removal. Rust credits them until
+the end. &
+Summary must equal the C++ rule applied to Rust's messages. \\
+Teams first spawned after $t=0$ &
+C++ scores such a team without a normalization window: infinite
+\texttt{flight\_time\_norm}, NaN \texttt{score}. &
+As above. \\
+Entities destroyed before the first step &
+C++ keeps them for one step: they still run their plugins, are reported removed
+twice, and score as surviving. Rust removes them once. &
+First-step trace records excluded and counted; summary as above. \\
+Randomized spawning &
+C++ leaves its default random generator to the standard library; the reference
+build's differs from the one Rust uses. &
+C++ branch uses the same generator as Rust. \\
+Sensor noise samples &
+Rust gives each sensor its own random stream; C++ shares one. &
+Compared by distribution. \\
+SphereNetwork positions &
+C++ queries a range tree built before motion; Rust uses current post-motion
+positions. &
+No compared delivery differed. \\
+FixedWing6DOF inertia &
+C++'s default silently overrides a supplied SI inertia matrix; Rust accepts
+either and rejects both together. &
+Fixtures use the default. \\
+AircraftPIDController with substeps &
+C++ uses the full step as the controller timestep during substeps; Rust uses
+the substep. &
+FixedWing6DOF scenarios run without substeps. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\section{Coverage}
+\label{app:coverage}
+
+Compared: SimpleAircraft, FixedWing6DOF, Multirotor, and SingleIntegrator with
+their controllers; Straight; AuctionAssign's message-delivery timing and
+topology; NoisyState and
+NoisyContacts; SimpleCollision, GroundCollision, and Boundary; Global, Local,
+and SphereNetwork; and SimpleCollisionMetrics. Also compared: motion substeps,
+update rates, scheduled and randomized spawning, and startup placement.
+AuctionAssign's bids are random and its result message differs on purpose, so
+its bids and winners are not compared. WaypointFollower, WaypointBroadcast, NoisyPosition,
+and the two command drivers are Rust-only.
+
+\section{Rust Self-Consistency}
+\label{app:self}
+
+Rust results are byte-identical across 1, 2, and 8 workers, with and without
+recording and tracing, and whether a scenario comes from XML, YAML, or Rust
+code. Built for another operating system and processor (Linux/amd64 versus
+macOS/arm64), events and summaries stay identical in all 248 runs checked and
+trajectories differ by at most $5.6\times10^{-11}$~m, because each system's math
+library rounds differently (\texttt{reference/platform\_check.py}). This is exact because workers own separate entities, every phase finishes
+before the next starts, and random draws are tied to entities and plugins
+rather than workers.
+
+\section{Verification Suites}
+\label{app:suites}
+
+Table~\ref{tab:suites} lists the executable checks. They run with
+\texttt{cargo test -{}-workspace -{}-locked} together with
+\texttt{cargo fmt -{}-check} and \texttt{cargo clippy -{}- -D warnings}. The Python
+comparison and bulk-run tools have their own unit tests under
+\texttt{reference/} and \texttt{scripts/}.
+
+\begin{table}[h]
+\centering
+\caption{Executable verification suites.}
+\label{tab:suites}
+\footnotesize
+\begin{tabularx}{\columnwidth}{P{0.36\columnwidth}>{\raggedright\arraybackslash}X}
+\toprule
+Suite & What it checks \\
+\midrule
+\texttt{plugin\_contracts} & Seven roles, registration errors, independent
+subscribers, phase visibility, delay/loss, stop, failure, removal, cleanup. \\
+\texttt{simulation\_regression} & Every curated XML mission byte-identical at
+1, 2, 8 workers; tracing leaves outputs unchanged. \\
+\texttt{noisy\_state} & Owned belief, unchanged truth during sensing,
+next-tick feedback, held estimates. \\
+\texttt{world\_models}, \texttt{navigation} & Boundary messages, ground
+removal and scoring, route replacement. \\
+\texttt{yaml\_missions} & Four XML/YAML pairs produce identical setup and
+outputs. \\
+\texttt{rust\_scenario} & Rust API and YAML identical at 1, 2, 8 workers;
+invalid construction rejected; 5{,}000 agents spawned and 1{,}500 removed in one
+tick. \\
+CLI \texttt{run\_output} & Every shipped mission identical with recording on
+and off; failed runs keep diagnostics. \\
+CLI \texttt{sweep} & Whole and sharded sweeps agree; bad paths fail early. \\
+\texttt{reference/tests/} & Comparators, trace rules, C++ scoring model,
+KS test, generator determinism, and checker failure handling. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Behavior-Preservation Records}
+\label{app:refactors}
+
+Structural changes were accepted only when every curated mission reproduced the
+previous revision's frames, events, and summaries byte for byte. Retained
+records are under \texttt{paper/data/refactor-equivalence/}.
+\begin{itemize}
+\item Scenario API unification, against \texttt{2cd820a}: 38 runs (14 XML
+missions, four YAML pairs, and the starter mission at 1 and 8 workers), 114
+files, all identical.
+\item Metrics team reporting and queue limits, against \texttt{613a62f}: 18
+curated XML and YAML missions at 1 and 8 workers, 108 files, all identical.
+The new two-team fixture is excluded because it did not exist at the baseline;
+the behavior it changes is described in Table~\ref{tab:differences}.
+\item Spawn request separation, against its predecessor: 14 missions at 1 and 8
+workers, identical including randomized spawning. The raw artifacts for this
+check were not retained.
+\end{itemize}
+
+\section{Workflow and Visual Checks}
+\label{app:workflow}
+
+Local bulk runs with 3 and 10 shards reproduced the eight-case waypoint sweep's
+complete \texttt{results.jsonl}. Collection rejected missing and mismatched
+shards. Slurm submission has been tested only against a mock scheduler; no
+cluster campaign has run.
+
+Visual review of \texttt{networks-local-global} (Rerun 0.36.2, 1920$\times$1200,
+checkpoints at 0, 0.3, 0.6, 10, and 29.9~s) confirmed map framing, labels,
+status, complete paths, and ground removal
+(\texttt{paper/data/visual-qa/}). The speed plot of a nearly constant-speed
+aircraft autoscaled into unreadable spikes, so the dashboard has not passed a
+complete visual review. The waypoint demonstrations have not been reviewed with
+screenshots.
+
+\section{The Workflow Example}
+\label{app:rq2}
+
+The C++ side used the unmodified \texttt{Ubuntu-24.04} reference image.
+\texttt{create-scrimmage-project.py} generated the project, and
+\texttt{generate-plugin.sh autonomy FollowNearest} generated the header,
+source, parameter XML, and CMake file. The templates on this branch were
+reformatted to \texttt{(>{}>{}> PLUGIN\_NAME < < <)}, which the generator's
+substitution no longer matches, so four placeholders in the source and three in
+the header had to be fixed by hand. The template's example logic already
+follows the nearest opponent, so the plugin body is unchanged from it. Running
+the plugin requires adding the build and header folders to
+\texttt{SCRIMMAGE\_PLUGIN\_PATH} and \texttt{LD\_LIBRARY\_PATH}.
+\texttt{run\_experiments.py} and \texttt{scrimmage\_runner.sh} both import
+\texttt{scrimmage.utils}, which was removed from the branch, and need
+\texttt{pyDOE}, \texttt{pandas}, and \texttt{tqdm}; the \texttt{scrimmage}
+command has no option to set a mission variable. The sweep is therefore a
+shell loop that writes one mission per speed with \texttt{sed}.
+\texttt{paper/rq2/run-cpp.sh} repeats all of this in one command.
+
+The Rust side is the book's first-plugin tutorial: \texttt{follow\_nearest.rs}
+in the starter crate, three lines in its \texttt{lib.rs}, a 48-line YAML
+mission, and a 9-line sweep file. The same sweep file runs locally with
+\texttt{scrimmage sweep} or as Slurm array shards with
+\texttt{scripts/bulk\_run.py}. Line counts exclude blank and comment lines;
+the C++ count covers the header and source, not the generated CMake file.
+Both place the two aircraft at fixed positions, and all four outcomes and
+both catch times agree.
+
+\section{Reproduction}
+\label{app:reproduction}
+
+From the repository root, with Docker and the sibling C++ checkout on both
+branches, \texttt{python3 reference/campaign.py} reruns the C++ comparisons
+(agreement matrix, sensitivity, noise, generated and long scenarios, platform),
+replaces their folders in \texttt{paper/data/}, and regenerates the tables; with
+\texttt{-{}-quick} it runs only the agreement matrix. The individual tools are
+in \texttt{reference/}: \texttt{reference\_check.py} (matrix, traces, and
+non-interference), \texttt{generate\_scenarios.py}, \texttt{sensitivity.py},
+\texttt{noise\_statistics.py}, \texttt{divergence.py},
+\texttt{platform\_check.py}, and \texttt{benchmark.py}. The compared missions
+are listed in \texttt{reference/missions.txt}, and \texttt{reference/README.md}
+documents the builds, tolerances, trace records, and how to add a model. The
+C++ branch \texttt{benchmarking-edits} holds the instrumentation as
+reviewable commits on top of \texttt{Ubuntu-24.04}.
+
+The campaign does not rerun the rest: the timing in Table~\ref{tab:benchmark}
+(\texttt{reference/benchmark.py}), the workflow example
+(\texttt{paper/rq2/run-cpp.sh} and \texttt{scrimmage sweep}), and the Rust and
+Python test suites (\texttt{cargo test -{}-workspace} and
+\texttt{python3 -m unittest discover -s reference -p 'test\_*.py'}).
 
 \bibliographystyle{plainnat}
 \bibliography{../references}

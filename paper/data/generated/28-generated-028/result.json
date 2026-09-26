@@ -1,0 +1,125 @@
+{
+  "mission": "<check>-missions/generated-028.xml",
+  "passed": true,
+  "input": {
+    "input_sha256": "e1fe83c381812c6c62d0ecb8b24dd91cb0717f1926d02d2bffab7bf74ae76836",
+    "effective_sha256": "920b569ef738a24a9e6188860df1c218e3af6a5c6fc16c60fcb3c2615d90ef84",
+    "run_overrides": {
+      "enable_gui": "false",
+      "network_gui": "false",
+      "start_paused": "false",
+      "time_warp": "0"
+    },
+    "root_overrides": {
+      "log_dir": "/run/logs",
+      "create_latest_dir": "false",
+      "multi_threaded": "false",
+      "display_progress": "false",
+      "output_type": "all",
+      "no_bin_logging": "false"
+    }
+  },
+  "cpp_non_interference": {
+    "untraced": {
+      "frames.bin": true,
+      "summary.csv": true
+    },
+    "traced": {
+      "frames.bin": true,
+      "summary.csv": true
+    }
+  },
+  "cpp_log_directory": "cpp/logs/2026-09-26_00-11-50",
+  "cpp_output_hashes": {
+    "frames.bin": "edeab10f13cf0bbf7f0725e346f94063f0ae33f4a98dd6a4a17e398e483b02b1",
+    "summary.csv": "1eb592293a4445e4e839856e701695aac67040de5c9c90ed0879ebdd84f18723"
+  },
+  "worker_equality": {
+    "2": {
+      "frames.bin": true,
+      "events.json": true,
+      "summary.csv": true
+    },
+    "8": {
+      "frames.bin": true,
+      "events.json": true,
+      "summary.csv": true
+    }
+  },
+  "recording_equality": {
+    "frames.bin": true,
+    "events.json": true,
+    "summary.csv": true
+  },
+  "recording_sha256": "154fff8588d1ddbc4ae9c234056a2bdeb362a961ab16da83ff1e2250dbaeb1b9",
+  "trace_equality": {
+    "frames.bin": true,
+    "events.json": true,
+    "summary.csv": true
+  },
+  "rust_output_hashes": {
+    "rust-1": {
+      "frames.bin": "edeab10f13cf0bbf7f0725e346f94063f0ae33f4a98dd6a4a17e398e483b02b1",
+      "events.json": "97015c4062bdb3ed498ca2d116817e8e5933f5ee2d8f3f51493ed36bf17c98e6",
+      "summary.csv": "1eb592293a4445e4e839856e701695aac67040de5c9c90ed0879ebdd84f18723"
+    },
+    "rust-2": {
+      "frames.bin": "edeab10f13cf0bbf7f0725e346f94063f0ae33f4a98dd6a4a17e398e483b02b1",
+      "events.json": "97015c4062bdb3ed498ca2d116817e8e5933f5ee2d8f3f51493ed36bf17c98e6",
+      "summary.csv": "1eb592293a4445e4e839856e701695aac67040de5c9c90ed0879ebdd84f18723"
+    },
+    "rust-8": {
+      "frames.bin": "edeab10f13cf0bbf7f0725e346f94063f0ae33f4a98dd6a4a17e398e483b02b1",
+      "events.json": "97015c4062bdb3ed498ca2d116817e8e5933f5ee2d8f3f51493ed36bf17c98e6",
+      "summary.csv": "1eb592293a4445e4e839856e701695aac67040de5c9c90ed0879ebdd84f18723"
+    },
+    "rust-rerun": {
+      "frames.bin": "edeab10f13cf0bbf7f0725e346f94063f0ae33f4a98dd6a4a17e398e483b02b1",
+      "events.json": "97015c4062bdb3ed498ca2d116817e8e5933f5ee2d8f3f51493ed36bf17c98e6",
+      "summary.csv": "1eb592293a4445e4e839856e701695aac67040de5c9c90ed0879ebdd84f18723"
+    },
+    "rust-trace": {
+      "frames.bin": "edeab10f13cf0bbf7f0725e346f94063f0ae33f4a98dd6a4a17e398e483b02b1",
+      "events.json": "97015c4062bdb3ed498ca2d116817e8e5933f5ee2d8f3f51493ed36bf17c98e6",
+      "summary.csv": "1eb592293a4445e4e839856e701695aac67040de5c9c90ed0879ebdd84f18723"
+    }
+  },
+  "comparison": {
+    "passed": true,
+    "reference_frames": 51,
+    "candidate_frames": 51,
+    "compared_entity_states": 51,
+    "max_position_error_m": 0.0,
+    "max_velocity_error_mps": 0.0,
+    "max_orientation_error_rad": 0.0,
+    "max_angular_velocity_error_radps": 0.0,
+    "max_timestamp_error_s": 0.0,
+    "mismatch_count": 0,
+    "first_mismatches": [],
+    "direct_event_stream_compared": false
+  },
+  "trace_comparison": {
+    "passed": true,
+    "deliveries": 1,
+    "beliefs": 51,
+    "outputs": 300,
+    "published_states": 0,
+    "max_belief_position_error_m": 0.0,
+    "max_belief_velocity_error_mps": 0.0,
+    "max_belief_orientation_error_rad": 0.0,
+    "max_belief_angular_velocity_error_radps": 0.0,
+    "max_payload_position_error_m": 0.0,
+    "max_payload_velocity_error_mps": 0.0,
+    "max_payload_orientation_error_rad": 0.0,
+    "max_payload_covariance_error": 0.0,
+    "max_output_error": 0.0,
+    "max_output_error_port": "",
+    "excluded_pre_start_records": 0,
+    "delivery_mismatches": 0,
+    "mismatch_count": 0,
+    "first_mismatches": []
+  },
+  "summary_differences": [],
+  "summary_agreement": "agree",
+  "pre_start_removed": []
+}

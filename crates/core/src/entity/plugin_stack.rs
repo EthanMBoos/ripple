@@ -364,6 +364,38 @@ impl PluginStack {
     pub fn observations(&self) -> &Observations {
         &self.observations
     }
+    /// Autonomy then controller outputs as (plugin, port, value), for the comparison
+    /// trace. Like C++ VariableIO after connect(), only ports the next plugin reads.
+    pub fn outputs(&self) -> Vec<(&str, &str, f64)> {
+        let mut outputs = Vec::new();
+        let first_consumer = self
+            .controllers
+            .first()
+            .map_or(&self.motion.io, |slot| &slot.io);
+        // Autonomies feed one merged set (later writers win), which is what the
+        // first consumer reads; C++ connects them to one shared buffer.
+        for slot in &self.autonomies {
+            for port in slot.io.outputs.keys() {
+                if first_consumer.reads(port)
+                    && let Some(value) = self.outputs.get(port)
+                {
+                    outputs.push((slot.name.as_str(), port.as_str(), *value));
+                }
+            }
+        }
+        for (index, slot) in self.controllers.iter().enumerate() {
+            let consumer = self
+                .controllers
+                .get(index + 1)
+                .map_or(&self.motion.io, |next| &next.io);
+            for (port, value) in slot.io.outputs.iter() {
+                if consumer.reads(port) {
+                    outputs.push((slot.name.as_str(), port.as_str(), *value));
+                }
+            }
+        }
+        outputs
+    }
     pub fn belief<'a>(&'a self, truth: &'a KinematicState) -> &'a KinematicState {
         self.belief.as_ref().unwrap_or(truth)
     }

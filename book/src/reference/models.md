@@ -12,7 +12,7 @@ the simulation loop. No runtime library loading is planned.
 | Motion | SimpleAircraft; SingleIntegrator; FixedWing6DOF; Multirotor | Flight-model limitations are commented beside their equations. Multirotor retains C++ behavior; external-force contact and acceleration sensor access are not exposed. JSBSim is an offline verification candidate, not a runtime plugin. |
 | Sensor | NoisyState; NoisyContacts; NoisyPosition (Rust-only teaching example) | NoisyContacts measures every other live entity; no range/FOV, missed detections, or tracker. Cameras and richer sensors are not selected. |
 | Interaction | SimpleCollision; GroundCollision; Boundary; Rust-native WaypointBroadcast | Physics-engine collisions, richer geometry, and games/scoring environments deferred. No integration-specific spawning here. |
-| Network | GlobalNetwork; LocalNetwork; SphereNetwork | SphereNetwork uses direct 3D distance checks and optional altitude-plane filtering; no spatial index. Legacy delay modes remain rejected; compiled networks can use explicit delay/loss. No OpenCL path. |
+| Network | GlobalNetwork; LocalNetwork; SphereNetwork | SphereNetwork uses direct 3D distance checks and optional altitude-plane filtering; no spatial index. Legacy delay modes remain rejected; compiled networks can use explicit delay/loss. XML `name="CommsNetwork"` names an instance, as in C++. No OpenCL path. |
 | Metrics | SimpleCollisionMetrics, including ground counts | Add experiment-specific metrics as ordinary plugins. No generic statistics/service framework. |
 
 ## Deliberate limits
@@ -43,7 +43,7 @@ the simulation loop. No runtime library loading is planned.
   inputs is superseded by Rerun's labels, not a plugin drawing API.
 - NoisyState estimates own state, not probabilistic target detection. Rust's
   independent sensor RNG streams differ from C++; its inherited covariance
-  payload is not calibrated uncertainty. See [evidence](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/EVIDENCE.md).
+  payload is not calibrated uncertainty. See the [paper's validation](https://github.com/EthanMBoos/scrimmage-rs/blob/main/paper/README.md).
 
 ROS 1/2 and ArduPilot are separate future adapter work. They are not reasons to
 add default ROS/C++ build dependencies. Burn, terrain, and

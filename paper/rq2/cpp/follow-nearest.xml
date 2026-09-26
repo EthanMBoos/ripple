@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="http://gtri.gatech.edu"?>
+<runscript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="Follow the nearest opponent">
+  <!-- Team 1 flies east in a straight line. Team 2 starts behind it, to the
+       side and higher, and chases it with this project's FollowNearest plugin. -->
+  <run start="0.0" end="60" dt="0.1" time_warp="0"
+       enable_gui="false" network_gui="false" start_paused="false"/>
+  <end_condition>time, one_team</end_condition>
+  <output_type>all</output_type>
+  <log_dir>~/.scrimmage/logs</log_dir>
+  <seed>1</seed>
+
+  <entity_interaction>SimpleCollision</entity_interaction>
+  <network>LocalNetwork</network>
+  <network>GlobalNetwork</network>
+  <metrics>SimpleCollisionMetrics</metrics>
+
+  <entity>
+    <team_id>1</team_id>
+    <color>77 77 255</color>
+    <count>1</count>
+    <variance_x>100</variance_x>
+    <variance_y>100</variance_y>
+    <variance_z>0</variance_z>
+    <x>0</x><y>0</y><z>200</z>
+    <heading>0</heading>
+    <autonomy speed="18">Straight</autonomy>
+    <controller>SimpleAircraftControllerPID</controller>
+    <motion_model>SimpleAircraft</motion_model>
+    <visual_model>zephyr-blue</visual_model>
+  </entity>
+
+  <entity>
+    <team_id>2</team_id>
+    <color>255 0 0</color>
+    <count>1</count>
+    <variance_x>100</variance_x>
+    <variance_y>100</variance_y>
+    <variance_z>0</variance_z>
+    <x>-300</x><y>150</y><z>220</z>
+    <heading>0</heading>
+    <autonomy initial_speed="${speed=30}">FollowNearest</autonomy>
+    <controller>SimpleAircraftControllerPID</controller>
+    <motion_model>SimpleAircraft</motion_model>
+    <visual_model>zephyr-red</visual_model>
+  </entity>
+</runscript>

@@ -1,0 +1,167 @@
+{
+  "mission": "<runs>/long-missions/generated-000.xml",
+  "passed": false,
+  "input": {
+    "input_sha256": "1a7519ed3737a2e6041dcf4bdd0d9d0020e87ba97c25227fa7753b7b2db84f76",
+    "effective_sha256": "fe005a0f6eaa80bd8ca517b41657a2b2fc282f12e6999842cdf1ded202147269",
+    "run_overrides": {
+      "enable_gui": "false",
+      "network_gui": "false",
+      "start_paused": "false",
+      "time_warp": "0"
+    },
+    "root_overrides": {
+      "log_dir": "/run/logs",
+      "create_latest_dir": "false",
+      "multi_threaded": "false",
+      "display_progress": "false",
+      "output_type": "all",
+      "no_bin_logging": "false"
+    }
+  },
+  "cpp_non_interference": {
+    "untraced": {
+      "frames.bin": true,
+      "summary.csv": true
+    },
+    "traced": {
+      "frames.bin": true,
+      "summary.csv": true
+    }
+  },
+  "cpp_log_directory": "cpp/logs/2026-09-26_00-15-57",
+  "cpp_output_hashes": {
+    "frames.bin": "4d728089df7350119eb74f692c8163ffec4f1561277efb6e031b363a25db56a9",
+    "summary.csv": "0c152c641213c21b699733cb45d0b208d72703a77f2ff9121b027a27cbad7d55"
+  },
+  "worker_equality": {
+    "2": {
+      "frames.bin": true,
+      "events.json": true,
+      "summary.csv": true
+    },
+    "8": {
+      "frames.bin": true,
+      "events.json": true,
+      "summary.csv": true
+    }
+  },
+  "recording_equality": {
+    "frames.bin": true,
+    "events.json": true,
+    "summary.csv": true
+  },
+  "recording_sha256": "eb9dfc72db55822e71bab45647e50287c90c7af9ba6a00fafddb6ad4ff9fa78e",
+  "trace_equality": {
+    "frames.bin": true,
+    "events.json": true,
+    "summary.csv": true
+  },
+  "rust_output_hashes": {
+    "rust-1": {
+      "frames.bin": "6e66aafb436458362886cf7a960a8d29f3cb6d58cd846a7621ff28cdcce7f646",
+      "events.json": "cd71d821abf1ea36309941613717ee46003b130d3def2595688e62551fa4257f",
+      "summary.csv": "0c152c641213c21b699733cb45d0b208d72703a77f2ff9121b027a27cbad7d55"
+    },
+    "rust-2": {
+      "frames.bin": "6e66aafb436458362886cf7a960a8d29f3cb6d58cd846a7621ff28cdcce7f646",
+      "events.json": "cd71d821abf1ea36309941613717ee46003b130d3def2595688e62551fa4257f",
+      "summary.csv": "0c152c641213c21b699733cb45d0b208d72703a77f2ff9121b027a27cbad7d55"
+    },
+    "rust-8": {
+      "frames.bin": "6e66aafb436458362886cf7a960a8d29f3cb6d58cd846a7621ff28cdcce7f646",
+      "events.json": "cd71d821abf1ea36309941613717ee46003b130d3def2595688e62551fa4257f",
+      "summary.csv": "0c152c641213c21b699733cb45d0b208d72703a77f2ff9121b027a27cbad7d55"
+    },
+    "rust-rerun": {
+      "frames.bin": "6e66aafb436458362886cf7a960a8d29f3cb6d58cd846a7621ff28cdcce7f646",
+      "events.json": "cd71d821abf1ea36309941613717ee46003b130d3def2595688e62551fa4257f",
+      "summary.csv": "0c152c641213c21b699733cb45d0b208d72703a77f2ff9121b027a27cbad7d55"
+    },
+    "rust-trace": {
+      "frames.bin": "6e66aafb436458362886cf7a960a8d29f3cb6d58cd846a7621ff28cdcce7f646",
+      "events.json": "cd71d821abf1ea36309941613717ee46003b130d3def2595688e62551fa4257f",
+      "summary.csv": "0c152c641213c21b699733cb45d0b208d72703a77f2ff9121b027a27cbad7d55"
+    }
+  },
+  "comparison": {
+    "passed": false,
+    "reference_frames": 20001,
+    "candidate_frames": 20001,
+    "compared_entity_states": 80004,
+    "max_position_error_m": 0.0003381978099169652,
+    "max_velocity_error_mps": 0.0008006085174962852,
+    "max_orientation_error_rad": 3.3752423687902306e-05,
+    "max_angular_velocity_error_radps": 0.0,
+    "max_timestamp_error_s": 0.0,
+    "mismatch_count": 77122,
+    "first_mismatches": [
+      "frame 506, t=25.350000000000225 s, entity 1: position=2.2914745120783824e-10 m, velocity=3.140713371672938e-08 m/s, orientation=1.3265572247849586e-09 rad, angular velocity=0.0 rad/s",
+      "frame 507, t=25.400000000000226 s, entity 1: position=1.79882789854788e-09 m, velocity=3.140798145074528e-08 m/s, orientation=1.3265572408361306e-09 rad, angular velocity=0.0 rad/s",
+      "frame 508, t=25.450000000000227 s, entity 1: position=3.3689557481744043e-09 m, velocity=3.1408819489718265e-08 m/s, orientation=1.3265572263252666e-09 rad, angular velocity=0.0 rad/s",
+      "frame 509, t=25.500000000000227 s, entity 1: position=4.9381112362981725e-09 m, velocity=3.140964901157167e-08 m/s, orientation=1.3265572314245323e-09 rad, angular velocity=0.0 rad/s",
+      "frame 510, t=25.550000000000228 s, entity 1: position=6.507950327178121e-09 m, velocity=3.141047073670729e-08 m/s, orientation=1.3265572317154986e-09 rad, angular velocity=0.0 rad/s",
+      "frame 511, t=25.60000000000023 s, entity 1: position=8.077802832439366e-09 m, velocity=3.1411284020057906e-08 m/s, orientation=1.3265572675788807e-09 rad, angular velocity=0.0 rad/s",
+      "frame 512, t=25.65000000000023 s, entity 1: position=9.647920194205735e-09 m, velocity=3.141208803957853e-08 m/s, orientation=1.3265572401493453e-09 rad, angular velocity=0.0 rad/s",
+      "frame 513, t=25.70000000000023 s, entity 1: position=1.1217653012451302e-08 m, velocity=3.1412883906116014e-08 m/s, orientation=1.3265572524865624e-09 rad, angular velocity=0.0 rad/s",
+      "frame 514, t=25.75000000000023 s, entity 1: position=1.278766614211679e-08 m, velocity=3.1413671885629946e-08 m/s, orientation=1.3265572458607334e-09 rad, angular velocity=0.0 rad/s",
+      "frame 515, t=25.80000000000023 s, entity 1: position=1.4357735199447733e-08 m, velocity=3.141445183047874e-08 m/s, orientation=1.3265572711596756e-09 rad, angular velocity=0.0 rad/s",
+      "frame 516, t=25.850000000000232 s, entity 1: position=1.5928124636951563e-08 m, velocity=3.141522301134955e-08 m/s, orientation=1.3265572539173625e-09 rad, angular velocity=0.0 rad/s",
+      "frame 517, t=25.900000000000233 s, entity 1: position=1.749810343459154e-08 m, velocity=3.141598601654333e-08 m/s, orientation=1.3265572509806422e-09 rad, angular velocity=0.0 rad/s",
+      "frame 518, t=25.950000000000234 s, entity 1: position=1.4832750062248851e-08 m, velocity=1.3804441706366368e-07 m/s, orientation=5.828861067772088e-09 rad, angular velocity=0.0 rad/s",
+      "frame 519, t=26.000000000000234 s, entity 1: position=7.93399006442867e-09 m, velocity=1.380477008997115e-07 m/s, orientation=5.828861048231437e-09 rad, angular velocity=0.0 rad/s",
+      "frame 520, t=26.050000000000235 s, entity 1: position=1.072628563161395e-09 m, velocity=1.3805095137522615e-07 m/s, orientation=5.828861066360561e-09 rad, angular velocity=0.0 rad/s",
+      "frame 521, t=26.100000000000236 s, entity 1: position=5.867213841194296e-09 m, velocity=1.3805416729079303e-07 m/s, orientation=5.82886105898376e-09 rad, angular velocity=0.0 rad/s",
+      "frame 522, t=26.150000000000237 s, entity 1: position=1.276621264991677e-08 m, velocity=1.380573491628022e-07 m/s, orientation=5.82886106068802e-09 rad, angular velocity=0.0 rad/s",
+      "frame 523, t=26.200000000000237 s, entity 1: position=1.9666577448924736e-08 m, velocity=1.3806049722576e-07 m/s, orientation=5.828861035351115e-09 rad, angular velocity=0.0 rad/s",
+      "frame 524, t=26.250000000000238 s, entity 1: position=2.656807517259926e-08 m, velocity=1.38063612923253e-07 m/s, orientation=5.828861052528206e-09 rad, angular velocity=0.0 rad/s",
+      "frame 525, t=26.30000000000024 s, entity 1: position=3.3467147409911114e-08 m, velocity=1.3806669557549435e-07 m/s, orientation=5.828861055185223e-09 rad, angular velocity=0.0 rad/s"
+    ],
+    "direct_event_stream_compared": false
+  },
+  "trace_comparison": {
+    "passed": false,
+    "deliveries": 8,
+    "beliefs": 80004,
+    "outputs": 480000,
+    "published_states": 0,
+    "max_belief_position_error_m": 0.0003381978099169652,
+    "max_belief_velocity_error_mps": 0.0008006085174962852,
+    "max_belief_orientation_error_rad": 3.3752423687902306e-05,
+    "max_belief_angular_velocity_error_radps": 0.0,
+    "max_payload_position_error_m": 0.0,
+    "max_payload_velocity_error_mps": 0.0,
+    "max_payload_orientation_error_rad": 0.0,
+    "max_payload_covariance_error": 0.0,
+    "max_output_error": 0.003226138438662929,
+    "max_output_error_port": "SimpleAircraftControllerPID.pitch_rate",
+    "excluded_pre_start_records": 0,
+    "delivery_mismatches": 0,
+    "mismatch_count": 154268,
+    "first_mismatches": [
+      "belief (25.3, 1, 0) differs: (2.2914745120783824e-10, 3.140713371672938e-08, 1.3265572247849586e-09, 0.0)",
+      "belief (25.35, 1, 0) differs: (1.79882789854788e-09, 3.140798145074528e-08, 1.3265572408361306e-09, 0.0)",
+      "belief (25.4, 1, 0) differs: (3.3689557481744043e-09, 3.1408819489718265e-08, 1.3265572263252666e-09, 0.0)",
+      "belief (25.45, 1, 0) differs: (4.9381112362981725e-09, 3.140964901157167e-08, 1.3265572314245323e-09, 0.0)",
+      "belief (25.5, 1, 0) differs: (6.507950327178121e-09, 3.141047073670729e-08, 1.3265572317154986e-09, 0.0)",
+      "belief (25.55, 1, 0) differs: (8.077802832439366e-09, 3.1411284020057906e-08, 1.3265572675788807e-09, 0.0)",
+      "belief (25.6, 1, 0) differs: (9.647920194205735e-09, 3.141208803957853e-08, 1.3265572401493453e-09, 0.0)",
+      "belief (25.65, 1, 0) differs: (1.1217653012451302e-08, 3.1412883906116014e-08, 1.3265572524865624e-09, 0.0)",
+      "belief (25.7, 1, 0) differs: (1.278766614211679e-08, 3.1413671885629946e-08, 1.3265572458607334e-09, 0.0)",
+      "belief (25.75, 1, 0) differs: (1.4357735199447733e-08, 3.141445183047874e-08, 1.3265572711596756e-09, 0.0)",
+      "belief (25.8, 1, 0) differs: (1.5928124636951563e-08, 3.141522301134955e-08, 1.3265572539173625e-09, 0.0)",
+      "belief (25.85, 1, 0) differs: (1.749810343459154e-08, 3.141598601654333e-08, 1.3265572509806422e-09, 0.0)",
+      "belief (25.9, 1, 0) differs: (1.4832750062248851e-08, 1.3804441706366368e-07, 5.828861067772088e-09, 0.0)",
+      "belief (25.95, 1, 0) differs: (7.93399006442867e-09, 1.380477008997115e-07, 5.828861048231437e-09, 0.0)",
+      "belief (26.0, 1, 0) differs: (1.072628563161395e-09, 1.3805095137522615e-07, 5.828861066360561e-09, 0.0)",
+      "belief (26.05, 1, 0) differs: (5.867213841194296e-09, 1.3805416729079303e-07, 5.82886105898376e-09, 0.0)",
+      "belief (26.1, 1, 0) differs: (1.276621264991677e-08, 1.380573491628022e-07, 5.82886106068802e-09, 0.0)",
+      "belief (26.15, 1, 0) differs: (1.9666577448924736e-08, 1.3806049722576e-07, 5.828861035351115e-09, 0.0)",
+      "belief (26.2, 1, 0) differs: (2.656807517259926e-08, 1.38063612923253e-07, 5.828861052528206e-09, 0.0)",
+      "belief (26.25, 1, 0) differs: (3.3467147409911114e-08, 1.3806669557549435e-07, 5.828861055185223e-09, 0.0)"
+    ]
+  },
+  "summary_differences": [],
+  "summary_agreement": "agree",
+  "pre_start_removed": []
+}

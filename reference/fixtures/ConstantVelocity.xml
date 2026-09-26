@@ -1,0 +1,4 @@
+<params>
+  <library>ConstantVelocity_plugin</library>
+  <velocity>0 0 0</velocity>
+</params>

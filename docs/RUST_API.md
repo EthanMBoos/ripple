@@ -86,4 +86,4 @@ boundary. Implement its state and timing requirements with the first pilot.
 There is no separate typed-object assembly plan. This design replaces the older
 proposal to split every plugin's decode and validation methods. Current usage
 belongs in the [Rust setup guide](../book/src/guides/rust-scenarios.md);
-verification is recorded in [EVIDENCE.md](EVIDENCE.md).
+verification is recorded in the [paper](../paper/README.md).

@@ -72,4 +72,4 @@ source, not instructions to change the C++ reference.
   deterministic behavior need explicit treatment.
 
 The audit inspected source and public interfaces, not numerical correctness of
-all C++ models. Selected behavior and comparison evidence remain in [EVIDENCE.md](EVIDENCE.md).
+all C++ models. Selected behavior and comparison evidence are in the [paper](../paper/README.md).

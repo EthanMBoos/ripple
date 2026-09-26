@@ -1,0 +1,84 @@
+{
+  "cases": [
+    {
+      "mission": "generated-000.xml",
+      "end_s": 999.9999999996382,
+      "cpp_vs_rust_exceeds_tolerance_at_s": 25.70000000000023,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 0.00018896032564504056,
+      "rust_vs_nudged_rust_final_m": 3.750911963176954e-12
+    },
+    {
+      "mission": "generated-001.xml",
+      "end_s": 999.9999999996382,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 8.134767913360665e-12,
+      "rust_vs_nudged_rust_final_m": 8.134767913360665e-12
+    },
+    {
+      "mission": "generated-002.xml",
+      "end_s": 1000.0000000001588,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 9.124004430475509e-11,
+      "rust_vs_nudged_rust_final_m": 6.67100569294862e-11
+    },
+    {
+      "mission": "generated-003.xml",
+      "end_s": 999.9999999996382,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 7.275957614183426e-12,
+      "rust_vs_nudged_rust_final_m": 7.332580706405269e-12
+    },
+    {
+      "mission": "generated-004.xml",
+      "end_s": 999.9999999996382,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 3.637978807091713e-12,
+      "rust_vs_nudged_rust_final_m": 8.134767913360665e-12
+    },
+    {
+      "mission": "generated-005.xml",
+      "end_s": 1000.0000000001588,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 0.0,
+      "rust_vs_nudged_rust_final_m": 0.0
+    },
+    {
+      "mission": "generated-006.xml",
+      "end_s": 1000.0000000001588,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 9.620702881871291e-11,
+      "rust_vs_nudged_rust_final_m": 1.8189894035458565e-11
+    },
+    {
+      "mission": "generated-007.xml",
+      "end_s": 100.00000000001425,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 3.6591017833219327e-10,
+      "rust_vs_nudged_rust_final_m": 2.011958979087193e-10
+    },
+    {
+      "mission": "generated-008.xml",
+      "end_s": 100.00000000001425,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 6.931467010416631e-11,
+      "rust_vs_nudged_rust_final_m": 1.8058680918024748e-11
+    },
+    {
+      "mission": "generated-009.xml",
+      "end_s": 999.9999999996382,
+      "cpp_vs_rust_exceeds_tolerance_at_s": 69.2999999999982,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": 69.69999999999818,
+      "cpp_vs_rust_final_m": 7.07062527872288e-05,
+      "rust_vs_nudged_rust_final_m": 4.835653940277191e-05
+    }
+  ]
+}

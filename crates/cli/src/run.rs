@@ -34,6 +34,9 @@ pub(crate) struct RunOptions {
     no_rerun: bool,
     #[arg(long, default_value_t = 1_000_000)]
     max_steps: usize,
+    /// Also write trace.jsonl, the C++ comparison trace (see reference/README.md).
+    #[arg(long)]
+    trace: bool,
     /// Mission overrides: XML substitutions (`count:=20`) or YAML dotted paths
     /// (`entities.red.count:=20`).
     overrides: Vec<String>,
@@ -71,6 +74,7 @@ pub(crate) fn run(
             viewer: !options.headless && !options.no_rerun && (options.viewer || mission.viewer),
             recording: !options.no_rerun,
             max_steps: options.max_steps,
+            trace: options.trace,
             source: Some(mission.source),
         },
     )?;
@@ -94,6 +98,8 @@ pub struct RunSettings {
     /// Save `recording.rrd` in addition to frames, events, and summary.
     pub recording: bool,
     pub max_steps: usize,
+    /// Write `trace.jsonl` for C++ comparison; outputs are unchanged.
+    pub trace: bool,
     /// Optional mission-file provenance; Rust-built scenarios can leave it unset.
     pub source: Option<PathBuf>,
 }
@@ -108,6 +114,7 @@ impl Default for RunSettings {
             viewer: false,
             recording: true,
             max_steps: 1_000_000,
+            trace: false,
             source: None,
         }
     }
@@ -141,6 +148,10 @@ pub fn run_scenario(
         None
     };
     let mut frames = BufWriter::new(fs::File::create_new(output.join("frames.bin"))?);
+    if settings.trace {
+        let trace = fs::File::create_new(output.join("trace.jsonl"))?;
+        simulation.enable_trace(Box::new(BufWriter::new(trace)));
+    }
     // Keep the step error instead of returning early, so a failed run still records
     // its frames so far, events, summary, and the reason in manifest.json.
     let mut frame_index = 0;
@@ -160,6 +171,7 @@ pub fn run_scenario(
         Ok(())
     })();
     frames.flush()?;
+    simulation.flush_trace()?;
     if let Some(viewer) = viewer {
         viewer.finish()?;
     }

@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!-- Added verification fixture: NoisyContacts noise distributions. The measured
+     contacts feed nothing that moves, so frames still match C++ while the random
+     samples differ (Rust uses independent per-sensor streams). Compared with
+     reference/noise_statistics.py, not sample for sample. -->
+<runscript name="NoisyContacts noise distributions">
+  <run start="0" end="30" dt="0.1"
+       enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+  <seed>23</seed>
+  <end_condition>time</end_condition>
+  <output_type>all</output_type>
+  <create_latest_dir>false</create_latest_dir>
+  <network>GlobalNetwork</network>
+  <network>LocalNetwork</network>
+  <metrics>SimpleCollisionMetrics</metrics>
+  <entity_common name="aircraft">
+    <count>1</count>
+    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <autonomy speed="22">Straight</autonomy>
+    <controller>SimpleAircraftControllerPID</controller>
+    <motion_model turning_radius="30">SimpleAircraft</motion_model>
+    <sensor pos_noise_0="1 5" pos_noise_1="-2 5" pos_noise_2="0.5 1"
+            vel_noise_0="0 5" vel_noise_1="0.3 5" vel_noise_2="0 1"
+            orient_noise_0="0 0.05" orient_noise_1="0 0.05" orient_noise_2="0.1 0.1">NoisyContacts</sensor>
+    <visual_model>sphere</visual_model>
+  </entity_common>
+  <entity entity_common="aircraft"><team_id>1</team_id><x>0</x><y>0</y><z>200</z><heading>0</heading></entity>
+  <entity entity_common="aircraft"><team_id>1</team_id><x>100</x><y>50</y><z>210</z><heading>90</heading></entity>
+  <entity entity_common="aircraft"><team_id>2</team_id><x>400</x><y>-80</y><z>190</z><heading>200</heading></entity>
+  <entity entity_common="aircraft"><team_id>2</team_id><x>-300</x><y>200</y><z>220</z><heading>-45</heading></entity>
+</runscript>

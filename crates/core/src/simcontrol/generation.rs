@@ -144,7 +144,7 @@ impl Simulation {
         };
         self.messages.time_s = self.time_s;
         self.messages
-            .publish("GlobalNetwork", event.kind.topic(), event.clone())?;
+            .publish_engine_event("GlobalNetwork", event.kind.topic(), event.clone());
         self.events.push(event);
         self.entities.push(entity);
         Ok(())

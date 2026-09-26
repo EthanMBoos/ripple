@@ -1,0 +1,128 @@
+{
+  "mission": "<check>-missions/generated-096.xml",
+  "passed": true,
+  "input": {
+    "input_sha256": "441530e7d658c6167a4efe403de5e59b57a4ce29dd9e8577946c1906da1f2c68",
+    "effective_sha256": "cc680f79ee798e6610588faf81675133c203ea48f967a7975d30cc54b6cecdaf",
+    "run_overrides": {
+      "enable_gui": "false",
+      "network_gui": "false",
+      "start_paused": "false",
+      "time_warp": "0"
+    },
+    "root_overrides": {
+      "log_dir": "/run/logs",
+      "create_latest_dir": "false",
+      "multi_threaded": "false",
+      "display_progress": "false",
+      "output_type": "all",
+      "no_bin_logging": "false"
+    }
+  },
+  "cpp_non_interference": {
+    "untraced": {
+      "frames.bin": true,
+      "summary.csv": true
+    },
+    "traced": {
+      "frames.bin": true,
+      "summary.csv": true
+    }
+  },
+  "cpp_log_directory": "cpp/logs/2026-09-26_00-15-36",
+  "cpp_output_hashes": {
+    "frames.bin": "a8815d9142f1eb2466b69b15890e3171d28ff3123f43c71b9868664b3e6dc83f",
+    "summary.csv": "92ea482a1f7028eb6846bd74fadefaac7a2c1f59865661911829c8a890863f01"
+  },
+  "worker_equality": {
+    "2": {
+      "frames.bin": true,
+      "events.json": true,
+      "summary.csv": true
+    },
+    "8": {
+      "frames.bin": true,
+      "events.json": true,
+      "summary.csv": true
+    }
+  },
+  "recording_equality": {
+    "frames.bin": true,
+    "events.json": true,
+    "summary.csv": true
+  },
+  "recording_sha256": "e893b6f032fd0d069736be22df117e26d15a7657aee78245328bfcfa5f118072",
+  "trace_equality": {
+    "frames.bin": true,
+    "events.json": true,
+    "summary.csv": true
+  },
+  "rust_output_hashes": {
+    "rust-1": {
+      "frames.bin": "c9ef844b383841c62cc5b682a3a2e76730a75c3cc5ad8651518451051b6aa38b",
+      "events.json": "902ffa715f1e7b30201b71fd4b9f55eeb638f2b06690ec2b234c3e6f27ebe4db",
+      "summary.csv": "ae445d105472ea92498f6caef130c27c089fa65b6f377599b10b70db6a20c325"
+    },
+    "rust-2": {
+      "frames.bin": "c9ef844b383841c62cc5b682a3a2e76730a75c3cc5ad8651518451051b6aa38b",
+      "events.json": "902ffa715f1e7b30201b71fd4b9f55eeb638f2b06690ec2b234c3e6f27ebe4db",
+      "summary.csv": "ae445d105472ea92498f6caef130c27c089fa65b6f377599b10b70db6a20c325"
+    },
+    "rust-8": {
+      "frames.bin": "c9ef844b383841c62cc5b682a3a2e76730a75c3cc5ad8651518451051b6aa38b",
+      "events.json": "902ffa715f1e7b30201b71fd4b9f55eeb638f2b06690ec2b234c3e6f27ebe4db",
+      "summary.csv": "ae445d105472ea92498f6caef130c27c089fa65b6f377599b10b70db6a20c325"
+    },
+    "rust-rerun": {
+      "frames.bin": "c9ef844b383841c62cc5b682a3a2e76730a75c3cc5ad8651518451051b6aa38b",
+      "events.json": "902ffa715f1e7b30201b71fd4b9f55eeb638f2b06690ec2b234c3e6f27ebe4db",
+      "summary.csv": "ae445d105472ea92498f6caef130c27c089fa65b6f377599b10b70db6a20c325"
+    },
+    "rust-trace": {
+      "frames.bin": "c9ef844b383841c62cc5b682a3a2e76730a75c3cc5ad8651518451051b6aa38b",
+      "events.json": "902ffa715f1e7b30201b71fd4b9f55eeb638f2b06690ec2b234c3e6f27ebe4db",
+      "summary.csv": "ae445d105472ea92498f6caef130c27c089fa65b6f377599b10b70db6a20c325"
+    }
+  },
+  "comparison": {
+    "passed": true,
+    "reference_frames": 101,
+    "candidate_frames": 101,
+    "compared_entity_states": 370,
+    "max_position_error_m": 0.0,
+    "max_velocity_error_mps": 0.0,
+    "max_orientation_error_rad": 0.0,
+    "max_angular_velocity_error_radps": 0.0,
+    "max_timestamp_error_s": 0.0,
+    "mismatch_count": 0,
+    "first_mismatches": [],
+    "direct_event_stream_compared": false
+  },
+  "trace_comparison": {
+    "passed": true,
+    "deliveries": 4,
+    "beliefs": 370,
+    "outputs": 2196,
+    "published_states": 0,
+    "max_belief_position_error_m": 0.0,
+    "max_belief_velocity_error_mps": 0.0,
+    "max_belief_orientation_error_rad": 0.0,
+    "max_belief_angular_velocity_error_radps": 0.0,
+    "max_payload_position_error_m": 0.0,
+    "max_payload_velocity_error_mps": 0.0,
+    "max_payload_orientation_error_rad": 0.0,
+    "max_payload_covariance_error": 0.0,
+    "max_output_error": 0.0,
+    "max_output_error_port": "",
+    "excluded_pre_start_records": 0,
+    "delivery_mismatches": 0,
+    "mismatch_count": 0,
+    "first_mismatches": []
+  },
+  "summary_differences": [
+    "summary team 2, score: reference nan, candidate 0.0",
+    "summary team 2, flight_time_norm: reference inf, candidate 2.656566"
+  ],
+  "summary_agreement": "explained_by_scoring_rules",
+  "pre_start_removed": []
+}

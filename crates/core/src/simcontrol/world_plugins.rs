@@ -2,7 +2,7 @@
 use crate::{Entity, EntitySnapshot, Event, Vec3, plugin::*, scenario::ScenarioConfig};
 use crate::{
     plugin_manager::{Catalog, CompiledPlugin},
-    pubsub::messages::{Mailbox, ScheduledMessage},
+    pubsub::messages::{Mailbox, NetworkTrace, ScheduledMessage},
 };
 use anyhow::{Context, Result, ensure};
 use std::collections::BTreeMap;
@@ -94,6 +94,12 @@ impl CompiledWorld {
     pub fn compile(config: &ScenarioConfig, registry: &PluginRegistry) -> Result<Self> {
         let interactions = compile_world_plugins(&registry.interactions, &config.interactions)?;
         let mut networks = compile_world_plugins(&registry.networks, &config.networks)?;
+        // A network's name is its instance name when given (C++ `name`), else its plugin.
+        for (network, source) in networks.iter_mut().zip(&config.networks) {
+            if let Some(instance) = &source.instance {
+                network.name = instance.clone();
+            }
+        }
         if !networks.iter().any(|plugin| plugin.name == "GlobalNetwork") {
             networks.push(
                 registry
@@ -160,7 +166,7 @@ impl<T: ?Sized> WorldSlot<T> {
                 plugin: identity,
             },
             plugin: (plugin.instantiate)(),
-            messages: Messages::default(),
+            messages: Messages::for_world_plugin(),
             scheduled: Vec::new(),
             closed: false,
         }
@@ -265,6 +271,7 @@ impl WorldPlugins {
         contacts: &[EntitySnapshot],
         entities: &mut [Entity],
         simulator: &mut Messages,
+        mut trace: Option<&mut NetworkTrace>,
     ) -> Result<bool> {
         let names: Vec<_> = self.networks.iter().map(|slot| slot.name.clone()).collect();
         let mut mailboxes = vec![Mailbox {
@@ -314,6 +321,7 @@ impl WorldPlugins {
                 scheduled,
                 random,
                 routed: false,
+                trace: trace.as_deref_mut(),
             };
             let update = plugin
                 .step(&mut context)

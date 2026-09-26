@@ -28,6 +28,7 @@
 
 - [Source map](development/source-layout.md)
 - [Rust style](development/rust-style.md)
+- [Visual checks with Rerun](development/visual-qa.md)
 - [Editing this book](development/documentation.md)
 
 # Appendix

@@ -4,7 +4,7 @@ Source review: sibling `../scrimmage`, branch `Ubuntu-24.04`, commit
 `4bdf41fb06facaea358d478d9a07aa4d77fcac27` (2026-09-23/24). This identifies the
 reviewed source, not a required pin. Follow the branch for new comparisons.
 The [roadmap](TODO.md) defines selected scope; the [book](../book/src/SUMMARY.md)
-describes current Rust APIs. Comparison results are in [EVIDENCE.md](EVIDENCE.md).
+describes current Rust APIs. Comparison results are in the [paper](../paper/README.md).
 
 ## Corrections to the copied C++ guides
 
@@ -25,6 +25,11 @@ Rust lifecycle and delivery rules are in the
 [plugin reference](../book/src/reference/plugin-api.md#execution-and-lifecycle).
 
 ## Mission compatibility
+
+- `<network name="CommsNetwork">SphereNetwork</network>` names a network
+  instance, as upstream `missions/auction_assign.xml` does. Rust honors the
+  attribute; the default name is the plugin name. Networks run in name order,
+  like C++'s map.
 
 - C++ can replace an inherited motion model. Rust's XML reader concatenates
   inherited and local declarations, then rejects the second model. It also does
@@ -47,10 +52,18 @@ Rust lifecycle and delivery rules are in the
   teams report 29.9 s instead of 0.4 s. Frames are unaffected; flight-time summary
   columns differ. See the regression in
   [SimpleCollisionMetrics](../crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs).
+- **Teams that first spawn after t=0:** C++ SimpleCollisionMetrics lists teams
+  at its first step, then totals later teams with no normalization time: their
+  `flight_time_norm` is infinite and `score` NaN. Rust reports every team with a
+  generated entity using the same normalization as other teams; `flight_time`
+  and collision counts match. Seen in `verification/aircraft-substeps-scheduled.xml`.
 - **FixedWing6DOF inertia:** C++'s bundled slug-unit default silently overrides a
   supplied SI matrix. Rust accepts either `inertia_matrix_slug_ft_sq` or
   `inertia_matrix`, rejects both together, and uses the slug default if neither
   is supplied.
+- **AircraftPIDController with substeps:** C++ uses the full step as the
+  controller timestep during substeps; Rust uses the substep. The compared
+  FixedWing6DOF scenarios run without substeps.
 - **Stochastic sensors/communication:** Rust uses per-plugin, mission-seeded
   streams rather than C++'s shared generator. Measured contacts use sorted typed
   vectors. SphereNetwork queries current post-motion positions rather than the
@@ -65,7 +78,19 @@ altitude-plane bounds, and same-parent geometry bypass that still draws for loss
 AuctionAssign includes self-bidding, keeps the first maximum on ties, and closes
 strictly after its deadline. See [plugin behavior](../book/src/reference/plugin-api.md#noisycontacts).
 
-## Unresolved spawn RNG mismatch
+## Findings from the comparison trace
+
+- C++ Straight subscribes to `ContactsWithCovariances` and stores the map without
+  reading it. Rust Straight subscribes and discards the messages so deliveries
+  match; behavior is unaffected.
+- C++ `VariableIO::connect` replaces a plugin's output index with the next
+  plugin's input index. Outputs the next plugin does not read are silently
+  dropped, and reading them returns NaN with a warning. The trace records only
+  outputs the next plugin reads, in both implementations.
+- C++ logs the final tick twice: before its step and as the terminal frame in
+  `finalize()`. Both traces record both.
+
+## Spawn RNG mismatch (accepted)
 
 The native macOS baseline matched; the Ubuntu Docker fixture diverges at
 initialization. The inspected libstdc++ uses `minstd_rand0` (multiplier 16807)
@@ -75,9 +100,13 @@ the first variate first, matching Apple libc++.
 
 The recorded randomized-spawn comparison had 90/90 mismatched states and about
 8.41934 m maximum position error. Rust outputs still matched across 1/2/8 workers
-and recording on/off. Fix engine/distribution compatibility while preserving
-coordinator draw order; changing seeds or tolerances would hide the problem.
+and recording on/off. This is an accepted difference of the unmodified Linux
+build: C++ itself differs between libc++ and libstdc++. Comparisons remove it
+with the instrumentation branch's opt-in libc++-compatible spawn stream
+(`SCRIMMAGE_LIBCXX_SPAWN_RANDOM=1`), and keep a zero-variance twin that needs no
+option. Do not change seeds or tolerances to hide randomized mismatches.
 
-Use the [Docker workflow](../reference/README.md) for fresh comparisons. Direct
-C++ event-stream comparison remains absent; historical native passes and recorded
-frames alone do not establish it.
+Use the [Docker workflow](../reference/README.md) for fresh comparisons. Its
+traces compare message deliveries, lifecycle and collision events, sensor
+payloads, beliefs, and plugin commands against the `benchmarking-edits` branch;
+other message contents, such as auction bids, are compared by delivery only.

@@ -1,0 +1,4 @@
+team_id,score,entity_count,flight_time,flight_time_norm,non_team_coll,team_coll,ground_coll
+1,nan,3.000000,26.800000,inf,0.000000,0.000000,0.000000
+2,nan,1.000000,9.250000,inf,0.000000,0.000000,0.000000
+3,0.000000,4.000000,39.750000,3.994975,0.000000,0.000000,0.000000

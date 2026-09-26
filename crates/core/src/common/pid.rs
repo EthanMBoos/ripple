@@ -49,7 +49,7 @@ impl Pid {
 
     fn new(gains: PidGains, wrap_angle: bool) -> Self {
         let integral_band = if wrap_angle {
-            gains.integral_band.to_radians()
+            crate::math::deg_to_rad(gains.integral_band)
         } else {
             gains.integral_band
         };

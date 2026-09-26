@@ -59,8 +59,6 @@ struct Score {
 pub struct SimpleCollisionMetrics {
     weights: CollisionWeights,
     scores: BTreeMap<i32, Score>,
-    teams: BTreeSet<i32>,
-    initialized: bool,
 }
 
 impl Plugin for SimpleCollisionMetrics {
@@ -74,8 +72,6 @@ impl Plugin for SimpleCollisionMetrics {
         Self {
             weights: *weights,
             scores: BTreeMap::new(),
-            teams: BTreeSet::new(),
-            initialized: false,
         }
     }
 }
@@ -111,11 +107,6 @@ impl Metrics for SimpleCollisionMetrics {
                 }
             }
         }
-
-        if !self.initialized {
-            self.teams.extend(context.entity_teams.values().copied());
-            self.initialized = true;
-        }
         Ok(Update::Applied)
     }
 
@@ -148,7 +139,11 @@ impl Metrics for SimpleCollisionMetrics {
             last_end_s
         };
 
-        for team_id in &self.teams {
+        // Intentional C++ difference: C++ lists teams at its first metrics step, so a
+        // team whose entities all spawn later gets an infinite normalized flight
+        // time and NaN score. Every team with a generated entity is reported here.
+        let teams: BTreeSet<i32> = self.scores.values().map(|score| score.team_id).collect();
+        for team_id in &teams {
             let mut entity_count = 0;
             let mut flight_time_s = 0.0;
             let mut same_team_collisions = 0;
@@ -192,7 +187,7 @@ impl Metrics for SimpleCollisionMetrics {
 #[cfg(test)]
 mod tests {
     use super::{CollisionWeights, Metrics, Plugin, Score, SimpleCollisionMetrics};
-    use std::collections::{BTreeMap, BTreeSet};
+    use std::collections::BTreeMap;
 
     #[test]
     fn team_totals_do_not_mix_entities_or_collision_weights() {
@@ -201,7 +196,6 @@ mod tests {
             same_team: 2.0,
             opposing_team: 3.0,
         });
-        metrics.teams = BTreeSet::from([1, 2]);
         metrics.scores = BTreeMap::from([
             (
                 1,
@@ -255,7 +249,6 @@ mod tests {
             same_team: 0.0,
             opposing_team: 0.0,
         });
-        metrics.teams = BTreeSet::from([1, 2]);
         metrics.scores = BTreeMap::from([
             (
                 1,
@@ -278,5 +271,34 @@ mod tests {
         assert!((report.teams[&1].values["flight_time"] - 30.0).abs() < 1e-12);
         assert!((report.teams[&1].values["flight_time_norm"] - 1.0).abs() < 1e-12);
         assert!((report.teams[&2].values["flight_time"] - 0.4).abs() < 1e-12);
+    }
+
+    #[test]
+    fn a_team_that_first_spawns_late_is_still_reported() {
+        let mut metrics = SimpleCollisionMetrics::new(&CollisionWeights {
+            flight_time: 1.0,
+            same_team: 0.0,
+            opposing_team: 0.0,
+        });
+        metrics.scores = BTreeMap::from([
+            (
+                1,
+                Score {
+                    team_id: 1,
+                    ..Score::default()
+                },
+            ),
+            (
+                2,
+                Score {
+                    team_id: 2,
+                    flight_start_s: 1.0,
+                    ..Score::default()
+                },
+            ),
+        ]);
+        let report = metrics.report(4.0);
+        assert!((report.teams[&2].values["flight_time"] - 3.0).abs() < 1e-12);
+        assert!((report.teams[&2].score - 0.75).abs() < 1e-12);
     }
 }

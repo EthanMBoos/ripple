@@ -1,0 +1,16 @@
+# Missions compared with C++ by reference_check.py, and the short label each has
+# in the paper's agreement table. One per line: path under missions/ | label.
+# Add a mission here when it exercises a C++-compared model (see README.md).
+straight-no-gui.xml | SimpleAircraft, PID, collision, removal
+test_missions/straight_cpu.xml | SimpleAircraft, PID, long horizon
+test_missions/straight_cpu_mul.xml | as above; upstream multiplier typo
+verification/aircraft-substeps-spawning.xml | substeps, rates, randomized spawning
+verification/aircraft-substeps-scheduled.xml | substeps, rates, two spawn schedules
+verification/noisy-state-bias.xml | NoisyState bias, belief feedback
+networks-local-global.xml | Boundary, GroundCollision, networks
+fixed-wing-6dof.xml | FixedWing6DOF, AircraftPID, wind
+multirotor.xml | Multirotor (4 and 6 rotors)
+verification/single-integrator.xml | SingleIntegrator command paths
+verification/noisy-contacts-bias.xml | NoisyContacts bias, attitude, covariance
+verification/sphere-network-auction.xml | SphereNetwork reach, AuctionAssign
+verification/collision-boundary.xml | SimpleCollision range boundary

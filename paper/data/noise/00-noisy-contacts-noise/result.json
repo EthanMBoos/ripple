@@ -1,0 +1,146 @@
+{
+  "mission": "<workspace>/scrimmage-rs/missions/verification/noisy-contacts-noise.xml",
+  "passed": false,
+  "input": {
+    "input_sha256": "b0d6a17f5882ae55ac967fbabdc6ea7b71fcb415f854ddfae356ca7005ce17ce",
+    "effective_sha256": "5abadeb2d41b32bc3d1214547835b3c6c31de29b931fbda9d32fe38bad998569",
+    "run_overrides": {
+      "enable_gui": "false",
+      "network_gui": "false",
+      "start_paused": "false",
+      "time_warp": "0"
+    },
+    "root_overrides": {
+      "log_dir": "/run/logs",
+      "create_latest_dir": "false",
+      "multi_threaded": "false",
+      "display_progress": "false",
+      "output_type": "all",
+      "no_bin_logging": "false"
+    }
+  },
+  "cpp_non_interference": {
+    "untraced": {
+      "frames.bin": true,
+      "summary.csv": true
+    },
+    "traced": {
+      "frames.bin": true,
+      "summary.csv": true
+    }
+  },
+  "cpp_log_directory": "cpp/logs/2026-09-26_00-10-07",
+  "cpp_output_hashes": {
+    "frames.bin": "9af30cd92f10049dfe00aacf67f694672ac5c469ac970c04dc81945e3d2864d5",
+    "summary.csv": "538c02ca0461227a828f74c4476504e128236da5713700a89f9af209236e7829"
+  },
+  "worker_equality": {
+    "2": {
+      "frames.bin": true,
+      "events.json": true,
+      "summary.csv": true
+    },
+    "8": {
+      "frames.bin": true,
+      "events.json": true,
+      "summary.csv": true
+    }
+  },
+  "recording_equality": {
+    "frames.bin": true,
+    "events.json": true,
+    "summary.csv": true
+  },
+  "recording_sha256": "de231b05fd787744881b62a393e97f3233ddef437fc86458872dbdf900577996",
+  "trace_equality": {
+    "frames.bin": true,
+    "events.json": true,
+    "summary.csv": true
+  },
+  "rust_output_hashes": {
+    "rust-1": {
+      "frames.bin": "bd8b1d097e9de2b788cfbf3f6d21a89ab02648d6e8ccd271f9f04e0ddfe6269a",
+      "events.json": "182d2cba138cf1dbc64eba7a376676198e1f19cfb86d76a4d884cf12fdc46cbb",
+      "summary.csv": "538c02ca0461227a828f74c4476504e128236da5713700a89f9af209236e7829"
+    },
+    "rust-2": {
+      "frames.bin": "bd8b1d097e9de2b788cfbf3f6d21a89ab02648d6e8ccd271f9f04e0ddfe6269a",
+      "events.json": "182d2cba138cf1dbc64eba7a376676198e1f19cfb86d76a4d884cf12fdc46cbb",
+      "summary.csv": "538c02ca0461227a828f74c4476504e128236da5713700a89f9af209236e7829"
+    },
+    "rust-8": {
+      "frames.bin": "bd8b1d097e9de2b788cfbf3f6d21a89ab02648d6e8ccd271f9f04e0ddfe6269a",
+      "events.json": "182d2cba138cf1dbc64eba7a376676198e1f19cfb86d76a4d884cf12fdc46cbb",
+      "summary.csv": "538c02ca0461227a828f74c4476504e128236da5713700a89f9af209236e7829"
+    },
+    "rust-rerun": {
+      "frames.bin": "bd8b1d097e9de2b788cfbf3f6d21a89ab02648d6e8ccd271f9f04e0ddfe6269a",
+      "events.json": "182d2cba138cf1dbc64eba7a376676198e1f19cfb86d76a4d884cf12fdc46cbb",
+      "summary.csv": "538c02ca0461227a828f74c4476504e128236da5713700a89f9af209236e7829"
+    },
+    "rust-trace": {
+      "frames.bin": "bd8b1d097e9de2b788cfbf3f6d21a89ab02648d6e8ccd271f9f04e0ddfe6269a",
+      "events.json": "182d2cba138cf1dbc64eba7a376676198e1f19cfb86d76a4d884cf12fdc46cbb",
+      "summary.csv": "538c02ca0461227a828f74c4476504e128236da5713700a89f9af209236e7829"
+    }
+  },
+  "comparison": {
+    "passed": true,
+    "reference_frames": 301,
+    "candidate_frames": 301,
+    "compared_entity_states": 1204,
+    "max_position_error_m": 6.355287432313019e-14,
+    "max_velocity_error_mps": 2.957509087578544e-14,
+    "max_orientation_error_rad": 4.678752369364491e-15,
+    "max_angular_velocity_error_radps": 0.0,
+    "max_timestamp_error_s": 0.0,
+    "mismatch_count": 0,
+    "first_mismatches": [],
+    "direct_event_stream_compared": false
+  },
+  "trace_comparison": {
+    "passed": false,
+    "deliveries": 1204,
+    "beliefs": 1204,
+    "outputs": 7200,
+    "published_states": 3600,
+    "max_belief_position_error_m": 6.355287432313019e-14,
+    "max_belief_velocity_error_mps": 2.957509087578544e-14,
+    "max_belief_orientation_error_rad": 4.678752369364491e-15,
+    "max_belief_angular_velocity_error_radps": 0.0,
+    "max_payload_position_error_m": 29.88004451876259,
+    "max_payload_velocity_error_mps": 30.835900420874466,
+    "max_payload_orientation_error_rad": 0.5694534621253282,
+    "max_payload_covariance_error": 0.0,
+    "max_output_error": 1.861466536468015e-14,
+    "max_output_error_port": "SimpleAircraftControllerPID.roll_rate",
+    "excluded_pre_start_records": 0,
+    "delivery_mismatches": 0,
+    "mismatch_count": 3600,
+    "first_mismatches": [
+      "publication (0.0, (1, 'NoisyContacts0'), 'ContactsWithCovariances') contact 2 differs: (18.065070875239247, 14.404596598471166, 0.15973819541224596, 0.0), covariance 0.0",
+      "publication (0.0, (1, 'NoisyContacts0'), 'ContactsWithCovariances') contact 3 differs: (5.6316163224201015, 19.315441184742348, 0.22883552699293186, 0.0), covariance 0.0",
+      "publication (0.0, (1, 'NoisyContacts0'), 'ContactsWithCovariances') contact 4 differs: (11.414721698499925, 2.8313340882893607, 0.2535482959172137, 0.0), covariance 0.0",
+      "publication (0.0, (2, 'NoisyContacts0'), 'ContactsWithCovariances') contact 1 differs: (12.159200390248758, 4.931664925524881, 0.1044232206268129, 0.0), covariance 0.0",
+      "publication (0.0, (2, 'NoisyContacts0'), 'ContactsWithCovariances') contact 3 differs: (18.816894546692005, 9.533540548554434, 0.25778228429527583, 0.0), covariance 0.0",
+      "publication (0.0, (2, 'NoisyContacts0'), 'ContactsWithCovariances') contact 4 differs: (2.231097878164038, 8.938437454818391, 0.1929231484856059, 0.0), covariance 0.0",
+      "publication (0.0, (3, 'NoisyContacts0'), 'ContactsWithCovariances') contact 1 differs: (14.518558090142706, 11.24076905149156, 0.14232997667280095, 0.0), covariance 0.0",
+      "publication (0.0, (3, 'NoisyContacts0'), 'ContactsWithCovariances') contact 2 differs: (14.69420955706719, 13.646411064104607, 0.16557059744008368, 0.0), covariance 0.0",
+      "publication (0.0, (3, 'NoisyContacts0'), 'ContactsWithCovariances') contact 4 differs: (13.012969189973722, 3.418207055501518, 0.13245221839655297, 0.0), covariance 0.0",
+      "publication (0.0, (4, 'NoisyContacts0'), 'ContactsWithCovariances') contact 1 differs: (5.741277913153275, 12.513722949246466, 0.04820205695649094, 0.0), covariance 0.0",
+      "publication (0.0, (4, 'NoisyContacts0'), 'ContactsWithCovariances') contact 2 differs: (10.001909028206686, 3.8204937271492434, 0.08596553448897332, 0.0), covariance 0.0",
+      "publication (0.0, (4, 'NoisyContacts0'), 'ContactsWithCovariances') contact 3 differs: (8.200427928786537, 5.5846748227664005, 0.11766003685600057, 0.0), covariance 0.0",
+      "publication (0.1, (1, 'NoisyContacts0'), 'ContactsWithCovariances') contact 2 differs: (12.862195712015028, 3.899525172038673, 0.2251749174036442, 0.0), covariance 0.0",
+      "publication (0.1, (1, 'NoisyContacts0'), 'ContactsWithCovariances') contact 3 differs: (4.590302944259038, 3.2338142025840084, 0.1330348114335684, 0.0), covariance 0.0",
+      "publication (0.1, (1, 'NoisyContacts0'), 'ContactsWithCovariances') contact 4 differs: (5.653881112521454, 11.721587842542352, 0.07109773011765204, 0.0), covariance 0.0",
+      "publication (0.1, (2, 'NoisyContacts0'), 'ContactsWithCovariances') contact 1 differs: (5.696582688396673, 3.134415055970898, 0.12638572929093694, 0.0), covariance 0.0",
+      "publication (0.1, (2, 'NoisyContacts0'), 'ContactsWithCovariances') contact 3 differs: (9.58059694475613, 5.237538492701584, 0.2604189982701517, 0.0), covariance 0.0",
+      "publication (0.1, (2, 'NoisyContacts0'), 'ContactsWithCovariances') contact 4 differs: (5.670479234445683, 11.436931697636338, 0.1944905196993162, 0.0), covariance 0.0",
+      "publication (0.1, (3, 'NoisyContacts0'), 'ContactsWithCovariances') contact 1 differs: (3.3534029148321136, 13.401699073423668, 0.11921364574101717, 0.0), covariance 0.0",
+      "publication (0.1, (3, 'NoisyContacts0'), 'ContactsWithCovariances') contact 2 differs: (10.447473463567208, 5.051359729755178, 0.14217632213574866, 0.0), covariance 0.0"
+    ]
+  },
+  "summary_differences": [],
+  "summary_agreement": "agree",
+  "pre_start_removed": []
+}

@@ -29,8 +29,12 @@ type Payload = Arc<dyn Any + Send + Sync>;
 
 // Message counts, not byte limits. Fail clearly instead of silently losing data.
 // Keep these ordinary constants until a real experiment needs per-queue tuning.
+// An entity's plugin publishing more than OUTBOX_CAPACITY in one step is probably
+// a bug. World plugins (interactions, networks, metrics) act on every entity, so
+// one message per entity per step is normal for them; they, and every subscriber
+// inbox, get the same limit as one network's pending deliveries.
 const OUTBOX_CAPACITY: usize = 1024;
-const SUBSCRIBER_CAPACITY: usize = 1024;
+const SUBSCRIBER_CAPACITY: usize = 65_536;
 const NETWORK_CAPACITY: usize = 65_536;
 
 struct Publication {
@@ -46,14 +50,32 @@ struct Envelope {
 }
 
 /// One mailbox per plugin instance. Multicast shares immutable payloads, never plugin state.
-#[derive(Default)]
 pub struct Messages {
     subscriptions: BTreeMap<Channel, TypeId>,
     inbox: BTreeMap<Channel, Vec<Envelope>>,
     outbox: Vec<Publication>,
+    outbox_capacity: usize,
     pub(crate) time_s: f64,
 }
+impl Default for Messages {
+    fn default() -> Self {
+        Self {
+            subscriptions: BTreeMap::new(),
+            inbox: BTreeMap::new(),
+            outbox: Vec::new(),
+            outbox_capacity: OUTBOX_CAPACITY,
+            time_s: 0.0,
+        }
+    }
+}
 impl Messages {
+    /// A world plugin's mailbox, which may publish one message per entity per step.
+    pub(crate) fn for_world_plugin() -> Self {
+        Self {
+            outbox_capacity: NETWORK_CAPACITY,
+            ..Self::default()
+        }
+    }
     pub fn subscribe<T: Send + Sync + 'static>(
         &mut self,
         network: &str,
@@ -84,15 +106,26 @@ impl Messages {
             "network and topic must not be empty"
         );
         ensure!(
-            self.outbox.len() < OUTBOX_CAPACITY,
-            "publisher queue full ({OUTBOX_CAPACITY} messages), publishing {network}/{topic}"
+            self.outbox.len() < self.outbox_capacity,
+            "publisher queue full ({} messages), publishing {network}/{topic}",
+            self.outbox_capacity
         );
+        self.publish_engine_event(network, topic, value);
+        Ok(())
+    }
+    /// Engine lifecycle events are bounded by the population, not by plugin code,
+    /// so they skip the per-plugin publisher limit.
+    pub(crate) fn publish_engine_event<T: Send + Sync + 'static>(
+        &mut self,
+        network: &str,
+        topic: &str,
+        value: T,
+    ) {
         self.outbox.push(Publication {
             channel: (network.to_owned(), topic.to_owned()),
             sent_at_s: self.time_s,
             value: Arc::new(value),
         });
-        Ok(())
     }
     /// Drain this plugin's delivered messages. Other subscribers have independent queues.
     pub fn receive<T: Send + Sync + 'static>(
@@ -154,6 +187,53 @@ pub(crate) struct Mailbox<'a> {
     pub endpoint: MessageEndpoint,
     pub messages: &'a mut Messages,
 }
+/// Records for the opt-in comparison trace (see `simcontrol/trace.rs`).
+#[derive(Default)]
+pub(crate) struct NetworkTrace {
+    pub deliveries: Vec<DeliveryRecord>,
+    pub publications: Vec<PublicationRecord>,
+}
+/// A published sensor payload: one state, or one per measured contact.
+pub(crate) struct PublicationRecord {
+    pub time_s: f64,
+    pub topic: String,
+    pub sender: MessageEndpoint,
+    pub states: Vec<(Option<i32>, crate::plugin::sensor::StateWithCovariance)>,
+}
+fn sensor_states(
+    value: &Payload,
+) -> Option<Vec<(Option<i32>, crate::plugin::sensor::StateWithCovariance)>> {
+    use crate::plugin::sensor::{ContactsWithCovariances, StateWithCovariance};
+    if let Some(state) = value.downcast_ref::<StateWithCovariance>() {
+        return Some(vec![(None, state.clone())]);
+    }
+    value
+        .downcast_ref::<ContactsWithCovariances>()
+        .map(|message| {
+            message
+                .contacts
+                .iter()
+                .map(|contact| (Some(contact.entity.id), contact.measurement.clone()))
+                .collect()
+        })
+}
+/// One message reaching one subscriber, for the opt-in comparison trace.
+pub(crate) struct DeliveryRecord {
+    pub time_s: f64,
+    pub network: String,
+    pub topic: String,
+    pub sender: MessageEndpoint,
+    pub receiver: MessageEndpoint,
+    /// Entity IDs for engine lifecycle and collision events.
+    pub entity_ids: Option<Vec<i32>>,
+    /// Set when the message was queued with a positive delay.
+    pub deliver_at_s: Option<f64>,
+}
+fn event_ids(value: &Payload) -> Option<Vec<i32>> {
+    value
+        .downcast_ref::<crate::Event>()
+        .map(|event| event.entity_ids.clone())
+}
 pub(crate) struct ScheduledMessage {
     receiver: MessageEndpoint,
     channel: Channel,
@@ -170,6 +250,8 @@ pub struct NetworkContext<'a, 'mailbox> {
     pub(crate) scheduled: &'a mut Vec<ScheduledMessage>,
     pub(crate) random: &'a mut PluginRandom,
     pub(crate) routed: bool,
+    /// Present only when the simulation writes a comparison trace.
+    pub(crate) trace: Option<&'a mut NetworkTrace>,
 }
 impl NetworkContext<'_, '_> {
     /// This network plugin can also publish and subscribe like every other plugin type.
@@ -200,6 +282,16 @@ impl NetworkContext<'_, '_> {
             mailbox.messages.outbox = other_networks;
         }
         for (sender, publication) in publications {
+            if let Some(trace) = self.trace.as_deref_mut()
+                && let Some(states) = sensor_states(&publication.value)
+            {
+                trace.publications.push(PublicationRecord {
+                    time_s: publication.sent_at_s,
+                    topic: publication.channel.1.clone(),
+                    sender: sender.clone(),
+                    states,
+                });
+            }
             for mailbox in self.mailboxes.iter() {
                 let Some(expected_type) = mailbox.messages.subscriptions.get(&publication.channel)
                 else {
@@ -225,6 +317,19 @@ impl NetworkContext<'_, '_> {
                     );
                     let delivered_at_s = self.time.time_s + delay_s;
                     ensure!(delivered_at_s.is_finite(), "network delivery time overflow");
+                    if let Some(trace) = self.trace.as_deref_mut()
+                        && delay_s > 0.0
+                    {
+                        trace.deliveries.push(DeliveryRecord {
+                            time_s: self.time.time_s,
+                            network: publication.channel.0.clone(),
+                            topic: publication.channel.1.clone(),
+                            sender: sender.clone(),
+                            receiver: mailbox.endpoint.clone(),
+                            entity_ids: event_ids(&publication.value),
+                            deliver_at_s: Some(delivered_at_s),
+                        });
+                    }
                     ensure!(
                         self.scheduled.len() < NETWORK_CAPACITY,
                         "network '{}' queue full ({NETWORK_CAPACITY} deliveries)",
@@ -267,6 +372,17 @@ impl NetworkContext<'_, '_> {
                     message.channel.0,
                     message.channel.1
                 );
+                if let Some(trace) = self.trace.as_deref_mut() {
+                    trace.deliveries.push(DeliveryRecord {
+                        time_s: self.time.time_s,
+                        network: message.channel.0.clone(),
+                        topic: message.channel.1.clone(),
+                        sender: message.envelope.sender.clone(),
+                        receiver: receiver.endpoint.clone(),
+                        entity_ids: event_ids(&message.envelope.value),
+                        deliver_at_s: None,
+                    });
+                }
                 inbox.push(message.envelope);
             } else {
                 pending.push(message);
@@ -353,6 +469,7 @@ mod tests {
                 scheduled: &mut self.scheduled,
                 random: &mut PluginRandom::new(1, 0, "test"),
                 routed: false,
+                trace: None,
             })?;
             Ok(())
         }

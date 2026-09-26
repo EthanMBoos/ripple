@@ -16,10 +16,15 @@ import sys
 from frames import read_frames
 
 
-POSITION_TOLERANCE_M = 0.01
-VELOCITY_TOLERANCE_MPS = 0.001
-ORIENTATION_TOLERANCE_RAD = 0.001
-ANGULAR_VELOCITY_TOLERANCE_RADPS = 0.001
+# Set from measured agreement, not inherited. In the 2026-09-25 campaign the
+# largest differences in passing runs were 3.7e-10 m (a 100 s fixed-wing run),
+# 9.6e-11 m/s, 2.2e-12 rad, and 8.9e-12 rad/s: the position limit has 27x
+# headroom and still catches sub-micrometre defects (the original comparator
+# used 0.01 m and 1e-3, which let one through).
+POSITION_TOLERANCE_M = 1e-8
+VELOCITY_TOLERANCE_MPS = 1e-8
+ORIENTATION_TOLERANCE_RAD = 1e-9
+ANGULAR_VELOCITY_TOLERANCE_RADPS = 1e-9
 TIMESTAMP_TOLERANCE_S = 1e-9
 SUMMARY_TOLERANCE = 1e-6  # C++ summaries print six decimal places.
 
@@ -115,10 +120,8 @@ def read_summary(path):
                 raise ValueError(f"{path}: team ID exceeds int32")
             if team_id in teams:
                 raise ValueError(f"{path}: duplicate summary team {team_id}")
-            values = [float(value) for value in row[1:]]
-            if not all(math.isfinite(value) for value in values):
-                raise ValueError(f"{path}: summary contains nonfinite values")
-            teams[team_id] = values
+            # C++ can print nan/inf. Infinity matches itself; NaN never matches.
+            teams[team_id] = [float(value) for value in row[1:]]
     return header, teams
 
 
@@ -130,9 +133,10 @@ def compare_summaries(reference, candidate, result):
         return
     for team_id, expected in sorted(expected_teams.items()):
         for column, (left, right) in enumerate(zip(expected, actual_teams[team_id]), start=1):
-            if abs(left - right) > SUMMARY_TOLERANCE:
-                result.mismatch(f"summary team {team_id}, {expected_header[column]}: "
-                                f"reference {left}, candidate {right}")
+            if left == right or abs(left - right) <= SUMMARY_TOLERANCE:
+                continue
+            result.mismatch(f"summary team {team_id}, {expected_header[column]}: "
+                            f"reference {left}, candidate {right}")
 
 
 def compare_runs(reference, candidate):

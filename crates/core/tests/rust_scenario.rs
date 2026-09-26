@@ -132,3 +132,86 @@ fn typed_parameter_values_reject_nonfinite_numbers_before_conversion() {
         );
     }
 }
+
+#[test]
+fn thousands_of_agents_spawned_together_reach_metrics() -> Result<()> {
+    // Every entity publishes EntityGenerated in the first tick. This used to
+    // overflow the engine publisher and metrics subscriber queues at 1,500.
+    let config = ScenarioConfig {
+        run: RunConfig {
+            end_s: 0.2,
+            ..RunConfig::default()
+        },
+        networks: vec![
+            PluginConfig::new("GlobalNetwork"),
+            PluginConfig::new("LocalNetwork"),
+        ],
+        metrics: vec![PluginConfig::new("SimpleCollisionMetrics")],
+        entities: vec![EntityGroupConfig {
+            label: "crowd".into(),
+            team: 1,
+            count: 5000,
+            position_m: Vec3::new(0.0, 0.0, 100.0),
+            autonomy: vec![PluginConfig::new("Straight")],
+            controller: vec![PluginConfig::new("SimpleAircraftControllerPID")],
+            motion_model: PluginConfig::new("SimpleAircraft"),
+            ..EntityGroupConfig::default()
+        }],
+        ..ScenarioConfig::default()
+    };
+    let mut simulation = Simulation::new(config, &PluginRegistry::with_builtins(), 4)?;
+    while simulation.step()?.is_some() {}
+    assert!(
+        simulation
+            .summary_csv()
+            .contains("\n1,0.000000,5000.000000,")
+    );
+    Ok(())
+}
+
+#[derive(Serialize)]
+struct VelocityParams {
+    velocity: [f64; 3],
+}
+
+#[test]
+fn thousands_of_agents_removed_together_reach_metrics() -> Result<()> {
+    // GroundCollision publishes one event per entity in the same step. This used
+    // to overflow its 1,024-message publisher limit at 1,500 agents.
+    let config = ScenarioConfig {
+        run: RunConfig {
+            end_s: 2.0,
+            ..RunConfig::default()
+        },
+        networks: vec![
+            PluginConfig::new("GlobalNetwork"),
+            PluginConfig::new("LocalNetwork"),
+        ],
+        interactions: vec![PluginConfig::new("GroundCollision")],
+        metrics: vec![PluginConfig::new("SimpleCollisionMetrics")],
+        entities: vec![EntityGroupConfig {
+            label: "falling".into(),
+            team: 1,
+            count: 1500,
+            position_m: Vec3::new(0.0, 0.0, 5.0),
+            autonomy: vec![
+                PluginConfig::new("ConstantVelocity").with_params(VelocityParams {
+                    velocity: [0.0, 0.0, -10.0],
+                })?,
+            ],
+            controller: vec![PluginConfig::new("SingleIntegratorControllerSimple")],
+            motion_model: PluginConfig::new("SingleIntegrator"),
+            ..EntityGroupConfig::default()
+        }],
+        ..ScenarioConfig::default()
+    };
+    let mut simulation = Simulation::new(config, &PluginRegistry::with_builtins(), 4)?;
+    while simulation.step()?.is_some() {}
+    assert!(simulation.entities().is_empty());
+    let summary = simulation.summary_csv();
+    assert!(
+        summary.lines().nth(1).unwrap().ends_with(",1500.000000"),
+        "{summary}"
+    );
+    Ok(())
+}

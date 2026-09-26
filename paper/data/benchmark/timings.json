@@ -1,0 +1,162 @@
+{
+  "platform": "Linux-7.0.12-linuxkit-x86_64-with-glibc2.39",
+  "rust_compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cpp_compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+  "cases": [
+    {
+      "mission": "straight_cpu.xml",
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            0.6755119589999765,
+            0.6697407089999956,
+            0.6711560829999996,
+            0.6708128749999958,
+            0.6716182090000018
+          ],
+          "median_s": 0.6711560829999996,
+          "min_s": 0.6697407089999956,
+          "max_s": 0.6755119589999765
+        },
+        "rust-1": {
+          "samples_s": [
+            0.4670705420000161,
+            0.4721041249999871,
+            0.47219933299999184,
+            0.47157641599997646,
+            0.46824887500000045
+          ],
+          "median_s": 0.47157641599997646,
+          "min_s": 0.4670705420000161,
+          "max_s": 0.47219933299999184,
+          "cpp_over_rust": 1.4232180834930328
+        },
+        "rust-8": {
+          "samples_s": [
+            2.12106029200001,
+            2.326169625999995,
+            2.326084960000003,
+            2.2770307520000017,
+            2.426305167999999
+          ],
+          "median_s": 2.326084960000003,
+          "min_s": 2.12106029200001,
+          "max_s": 2.426305167999999,
+          "cpp_over_rust": 0.2885346384768331
+        }
+      },
+      "comparisons": {
+        "rust-1": {
+          "passed": true,
+          "reference_frames": 1001,
+          "candidate_frames": 1001,
+          "compared_entity_states": 128128,
+          "max_position_error_m": 0.0,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "known_summary_differences": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": true,
+          "reference_frames": 1001,
+          "candidate_frames": 1001,
+          "compared_entity_states": 128128,
+          "max_position_error_m": 0.0,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "known_summary_differences": [],
+          "direct_event_stream_compared": false
+        }
+      }
+    },
+    {
+      "mission": "fixed-wing-6dof.xml",
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            0.8206228759999874,
+            0.8217419169999971,
+            0.7685160419999875,
+            0.8753095840000071,
+            0.8214053750000119
+          ],
+          "median_s": 0.8214053750000119,
+          "min_s": 0.7685160419999875,
+          "max_s": 0.8753095840000071
+        },
+        "rust-1": {
+          "samples_s": [
+            0.5760625000000061,
+            0.518807000999999,
+            0.516696292000006,
+            0.5206597080000108,
+            0.5171288329999868
+          ],
+          "median_s": 0.518807000999999,
+          "min_s": 0.516696292000006,
+          "max_s": 0.5760625000000061,
+          "cpp_over_rust": 1.5832580775061929
+        },
+        "rust-8": {
+          "samples_s": [
+            2.4784200010000177,
+            2.4786259600000164,
+            2.3304246680000062,
+            2.3790833350000185,
+            2.3787083759999916
+          ],
+          "median_s": 2.3790833350000185,
+          "min_s": 2.3304246680000062,
+          "max_s": 2.4786259600000164,
+          "cpp_over_rust": 0.345261287368904
+        }
+      },
+      "comparisons": {
+        "rust-1": {
+          "passed": true,
+          "reference_frames": 1001,
+          "candidate_frames": 1001,
+          "compared_entity_states": 128128,
+          "max_position_error_m": 4.334593964114607e-11,
+          "max_velocity_error_mps": 2.5199591461137754e-11,
+          "max_orientation_error_rad": 4.218043673962434e-13,
+          "max_angular_velocity_error_radps": 1.0180575786044777e-12,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "known_summary_differences": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": true,
+          "reference_frames": 1001,
+          "candidate_frames": 1001,
+          "compared_entity_states": 128128,
+          "max_position_error_m": 4.334593964114607e-11,
+          "max_velocity_error_mps": 2.5199591461137754e-11,
+          "max_orientation_error_rad": 4.218043673962434e-13,
+          "max_angular_velocity_error_radps": 1.0180575786044777e-12,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "known_summary_differences": [],
+          "direct_event_stream_compared": false
+        }
+      }
+    }
+  ],
+  "passed": true,
+  "timing": "process startup, mission parsing, simulation and output; container startup excluded",
+  "entities": 128,
+  "steps": 1000,
+  "repetitions": 5
+}

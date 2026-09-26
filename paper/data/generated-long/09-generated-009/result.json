@@ -1,0 +1,170 @@
+{
+  "mission": "<runs>/long-missions/generated-009.xml",
+  "passed": false,
+  "input": {
+    "input_sha256": "7db937c8a79685f1a55e8db0389262943a30c8957cfdf3ea171328547f1a3836",
+    "effective_sha256": "09e93b3d1a7cf53960c09820e0b1a4ee0ddc39ed58e1404cd0d992ba1e0245ac",
+    "run_overrides": {
+      "enable_gui": "false",
+      "network_gui": "false",
+      "start_paused": "false",
+      "time_warp": "0"
+    },
+    "root_overrides": {
+      "log_dir": "/run/logs",
+      "create_latest_dir": "false",
+      "multi_threaded": "false",
+      "display_progress": "false",
+      "output_type": "all",
+      "no_bin_logging": "false"
+    }
+  },
+  "cpp_non_interference": {
+    "untraced": {
+      "frames.bin": true,
+      "summary.csv": true
+    },
+    "traced": {
+      "frames.bin": true,
+      "summary.csv": true
+    }
+  },
+  "cpp_log_directory": "cpp/logs/2026-09-26_00-22-56",
+  "cpp_output_hashes": {
+    "frames.bin": "b95880dbad23c0ccf0114c44931d27b339e7a90043f9fcca3e94fa2859c1020f",
+    "summary.csv": "360d3c398e75b6dc37cf823805e3c81cc52aa3d497b6cc6f8a1aabefa53682ea"
+  },
+  "worker_equality": {
+    "2": {
+      "frames.bin": true,
+      "events.json": true,
+      "summary.csv": true
+    },
+    "8": {
+      "frames.bin": true,
+      "events.json": true,
+      "summary.csv": true
+    }
+  },
+  "recording_equality": {
+    "frames.bin": true,
+    "events.json": true,
+    "summary.csv": true
+  },
+  "recording_sha256": "636b703ceb2fb81190c3765090f8e92736e70265e6d2fb8a76ed467b7acecfad",
+  "trace_equality": {
+    "frames.bin": true,
+    "events.json": true,
+    "summary.csv": true
+  },
+  "rust_output_hashes": {
+    "rust-1": {
+      "frames.bin": "5fb9212f177629fc790434ca5c59a9329343f96fb5b9b4fd188bdbe4639f203e",
+      "events.json": "02d0c90be1a42d0a7c353404418a956017418b1f05ce47c4f7aaa9a74dc095f2",
+      "summary.csv": "2d07ac598912e4140783f8a505faa940dd901e02d176b9728b73fdc1025f5c68"
+    },
+    "rust-2": {
+      "frames.bin": "5fb9212f177629fc790434ca5c59a9329343f96fb5b9b4fd188bdbe4639f203e",
+      "events.json": "02d0c90be1a42d0a7c353404418a956017418b1f05ce47c4f7aaa9a74dc095f2",
+      "summary.csv": "2d07ac598912e4140783f8a505faa940dd901e02d176b9728b73fdc1025f5c68"
+    },
+    "rust-8": {
+      "frames.bin": "5fb9212f177629fc790434ca5c59a9329343f96fb5b9b4fd188bdbe4639f203e",
+      "events.json": "02d0c90be1a42d0a7c353404418a956017418b1f05ce47c4f7aaa9a74dc095f2",
+      "summary.csv": "2d07ac598912e4140783f8a505faa940dd901e02d176b9728b73fdc1025f5c68"
+    },
+    "rust-rerun": {
+      "frames.bin": "5fb9212f177629fc790434ca5c59a9329343f96fb5b9b4fd188bdbe4639f203e",
+      "events.json": "02d0c90be1a42d0a7c353404418a956017418b1f05ce47c4f7aaa9a74dc095f2",
+      "summary.csv": "2d07ac598912e4140783f8a505faa940dd901e02d176b9728b73fdc1025f5c68"
+    },
+    "rust-trace": {
+      "frames.bin": "5fb9212f177629fc790434ca5c59a9329343f96fb5b9b4fd188bdbe4639f203e",
+      "events.json": "02d0c90be1a42d0a7c353404418a956017418b1f05ce47c4f7aaa9a74dc095f2",
+      "summary.csv": "2d07ac598912e4140783f8a505faa940dd901e02d176b9728b73fdc1025f5c68"
+    }
+  },
+  "comparison": {
+    "passed": false,
+    "reference_frames": 20001,
+    "candidate_frames": 20001,
+    "compared_entity_states": 39968,
+    "max_position_error_m": 7.07062527872288e-05,
+    "max_velocity_error_mps": 9.03738720734983e-08,
+    "max_orientation_error_rad": 3.514992383123947e-09,
+    "max_angular_velocity_error_radps": 0.0,
+    "max_timestamp_error_s": 0.0,
+    "mismatch_count": 18663,
+    "first_mismatches": [
+      "frame 1338, t=66.94999999999834 s, entity 1: position=1.8278681525006396e-09 m, velocity=1.2587012164968214e-08 m/s, orientation=4.894857861057135e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1339, t=66.99999999999834 s, entity 1: position=1.1987892957806474e-09 m, velocity=1.258697580316562e-08 m/s, orientation=4.894857843931315e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1340, t=67.04999999999833 s, entity 1: position=5.703090504797044e-10 m, velocity=1.2586939229869652e-08 m/s, orientation=4.894857852383324e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1341, t=67.09999999999833 s, entity 1: position=6.027922958108214e-11 m, velocity=1.2586903098279493e-08 m/s, orientation=4.894857955738478e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1342, t=67.14999999999833 s, entity 1: position=4.004746946017628e-11 m, velocity=1.3369642853562785e-08 m/s, orientation=5.199268585115012e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1343, t=67.19999999999833 s, entity 1: position=6.287710984355378e-10 m, velocity=1.33696049763454e-08 m/s, orientation=5.199268537846443e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1344, t=67.24999999999832 s, entity 1: position=1.2971911310675465e-09 m, velocity=1.3369566497258241e-08 m/s, orientation=5.199268585117152e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1345, t=67.29999999999832 s, entity 1: position=1.9651685761642262e-09 m, velocity=1.3369528561856474e-08 m/s, orientation=5.199268646788724e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1346, t=67.34999999999832 s, entity 1: position=1.8830415837597424e-09 m, velocity=1.6650746831767094e-08 m/s, orientation=6.475318094232384e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1347, t=67.39999999999831 s, entity 1: position=1.0509046601499815e-09 m, velocity=1.6650700126583745e-08 m/s, orientation=6.475317991932454e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1348, t=67.44999999999831 s, entity 1: position=2.214391852323721e-10 m, velocity=1.6650652988853996e-08 m/s, orientation=6.47531805965806e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1349, t=67.49999999999831 s, entity 1: position=6.135987230282132e-10 m, velocity=1.6650606447578087e-08 m/s, orientation=6.475317994955606e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1350, t=67.5499999999983 s, entity 1: position=1.4456301435243222e-09 m, velocity=1.6650559900471782e-08 m/s, orientation=6.475318059537492e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1351, t=67.5999999999983 s, entity 1: position=2.277761778720519e-09 m, velocity=1.6650513790515804e-08 m/s, orientation=6.475318188955452e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1352, t=67.6499999999983 s, entity 1: position=3.1100145603836444e-09 m, velocity=1.6650467473428582e-08 m/s, orientation=6.475318059538749e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1353, t=67.6999999999983 s, entity 1: position=3.942061705290794e-09 m, velocity=1.6650421570650486e-08 m/s, orientation=6.475318044341167e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1354, t=67.7499999999983 s, entity 1: position=3.791698077578641e-09 m, velocity=2.265665728341426e-08 m/s, orientation=8.811156257845245e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1355, t=67.79999999999829 s, entity 1: position=2.6593669628451206e-09 m, velocity=2.2656595286684007e-08 m/s, orientation=8.81115625358999e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1356, t=67.84999999999829 s, entity 1: position=1.5275942221051201e-09 m, velocity=2.2656533276550724e-08 m/s, orientation=8.81115624906697e-10 rad, angular velocity=0.0 rad/s",
+      "frame 1357, t=67.89999999999829 s, entity 1: position=3.9490633123251123e-10 m, velocity=2.2656471585639495e-08 m/s, orientation=8.81115616718474e-10 rad, angular velocity=0.0 rad/s"
+    ],
+    "direct_event_stream_compared": false
+  },
+  "trace_comparison": {
+    "passed": false,
+    "deliveries": 2,
+    "beliefs": 39968,
+    "outputs": 239796,
+    "published_states": 0,
+    "max_belief_position_error_m": 7.07062527872288e-05,
+    "max_belief_velocity_error_mps": 9.03738720734983e-08,
+    "max_belief_orientation_error_rad": 3.514992383123947e-09,
+    "max_belief_angular_velocity_error_radps": 0.0,
+    "max_payload_position_error_m": 0.0,
+    "max_payload_velocity_error_mps": 0.0,
+    "max_payload_orientation_error_rad": 0.0,
+    "max_payload_covariance_error": 0.0,
+    "max_output_error": 7.082408484393454e-05,
+    "max_output_error_port": "SimpleAircraftControllerPID.pitch_rate",
+    "excluded_pre_start_records": 0,
+    "delivery_mismatches": 0,
+    "mismatch_count": 37329,
+    "first_mismatches": [
+      "belief (66.9, 1, 0) differs: (1.8278681525006396e-09, 1.2587012164968214e-08, 4.894857861057135e-10, 0.0)",
+      "belief (66.95, 1, 0) differs: (1.1987892957806474e-09, 1.258697580316562e-08, 4.894857843931315e-10, 0.0)",
+      "belief (67.0, 1, 0) differs: (5.703090504797044e-10, 1.2586939229869652e-08, 4.894857852383324e-10, 0.0)",
+      "belief (67.05, 1, 0) differs: (6.027922958108214e-11, 1.2586903098279493e-08, 4.894857955738478e-10, 0.0)",
+      "belief (67.1, 1, 0) differs: (4.004746946017628e-11, 1.3369642853562785e-08, 5.199268585115012e-10, 0.0)",
+      "belief (67.15, 1, 0) differs: (6.287710984355378e-10, 1.33696049763454e-08, 5.199268537846443e-10, 0.0)",
+      "belief (67.2, 1, 0) differs: (1.2971911310675465e-09, 1.3369566497258241e-08, 5.199268585117152e-10, 0.0)",
+      "belief (67.25, 1, 0) differs: (1.9651685761642262e-09, 1.3369528561856474e-08, 5.199268646788724e-10, 0.0)",
+      "belief (67.3, 1, 0) differs: (1.8830415837597424e-09, 1.6650746831767094e-08, 6.475318094232384e-10, 0.0)",
+      "belief (67.35, 1, 0) differs: (1.0509046601499815e-09, 1.6650700126583745e-08, 6.475317991932454e-10, 0.0)",
+      "belief (67.4, 1, 0) differs: (2.214391852323721e-10, 1.6650652988853996e-08, 6.47531805965806e-10, 0.0)",
+      "belief (67.45, 1, 0) differs: (6.135987230282132e-10, 1.6650606447578087e-08, 6.475317994955606e-10, 0.0)",
+      "belief (67.5, 1, 0) differs: (1.4456301435243222e-09, 1.6650559900471782e-08, 6.475318059537492e-10, 0.0)",
+      "belief (67.55, 1, 0) differs: (2.277761778720519e-09, 1.6650513790515804e-08, 6.475318188955452e-10, 0.0)",
+      "belief (67.6, 1, 0) differs: (3.1100145603836444e-09, 1.6650467473428582e-08, 6.475318059538749e-10, 0.0)",
+      "belief (67.65, 1, 0) differs: (3.942061705290794e-09, 1.6650421570650486e-08, 6.475318044341167e-10, 0.0)",
+      "belief (67.7, 1, 0) differs: (3.791698077578641e-09, 2.265665728341426e-08, 8.811156257845245e-10, 0.0)",
+      "belief (67.75, 1, 0) differs: (2.6593669628451206e-09, 2.2656595286684007e-08, 8.81115625358999e-10, 0.0)",
+      "belief (67.8, 1, 0) differs: (1.5275942221051201e-09, 2.2656533276550724e-08, 8.81115624906697e-10, 0.0)",
+      "belief (67.85, 1, 0) differs: (3.9490633123251123e-10, 2.2656471585639495e-08, 8.81115616718474e-10, 0.0)"
+    ]
+  },
+  "summary_differences": [
+    "summary team 2, score: reference nan, candidate 0.0",
+    "summary team 2, flight_time_norm: reference inf, candidate 2.0"
+  ],
+  "summary_agreement": "explained_by_scoring_rules",
+  "pre_start_removed": []
+}

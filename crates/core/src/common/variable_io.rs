@@ -110,6 +110,10 @@ impl PluginIo {
                 .collect(),
         }
     }
+    /// Whether this plugin declares `name` as an input port.
+    pub(crate) fn reads(&self, name: &str) -> bool {
+        self.inputs.contains_key(name)
+    }
     pub fn read(&self, name: &str) -> Result<f64> {
         self.inputs
             .get(name)

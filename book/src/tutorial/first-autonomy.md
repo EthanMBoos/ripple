@@ -381,7 +381,7 @@ base_scenario: follow-nearest.yaml
 seeds: [1]
 parameter_combinations: cartesian
 parameters:
-  entities.chaser.autonomy.FollowNearest.speed: [17, 20, 25, 30]
+  entities.chaser.autonomy.FollowNearest.speed: [18, 22, 26, 30]
 ```
 
 ```sh
@@ -390,13 +390,13 @@ cargo run --release -- sweep crates/starter/missions/follow-nearest.sweep.yaml
 
 Each case is one line of `sweeps/follow-nearest/run000/results.jsonl`, with the
 speed and the final metrics. `non_team_coll` shows whether the chaser caught
-the target: at 25 and 30 m/s it does, at 17 and 20 m/s it does not within 60 s.
+the target: at 26 and 30 m/s it does, at 18 and 22 m/s it does not within 60 s.
 To watch one case, run it with that speed and open Rerun:
-`cargo run -- run crates/starter/missions/follow-nearest.yaml entities.chaser.autonomy.FollowNearest.speed:=20 --viewer`.
+`cargo run -- run crates/starter/missions/follow-nearest.yaml entities.chaser.autonomy.FollowNearest.speed:=22 --viewer`.
 
 ## Exercises
 
-1. **Slow chaser.** The sweep shows that at 20 m/s, faster than the target's
+1. **Slow chaser.** The sweep shows that at 22 m/s, faster than the target's
    18, the chaser still does not catch up within 60 s. Watch that case in Rerun.
    Why not?
 2. **Lead the target.** Pure pursuit aims at where the target *is*. Aim at where

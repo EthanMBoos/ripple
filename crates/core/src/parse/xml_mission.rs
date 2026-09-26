@@ -153,7 +153,16 @@ pub(super) fn load(
     for node in &expanded_xml.children {
         match node.name.as_str() {
             "entity_interaction" => interactions.push(parse_plugin(node)?),
-            "network" => networks.push(parse_plugin(node)?),
+            "network" => {
+                let mut network = parse_plugin(node)?;
+                // C++ names a network instance with `name`; the default is the plugin name.
+                if let PluginValues::Text(params) = &mut network.params
+                    && let Some(name) = params.remove("name")
+                {
+                    network.instance = Some(name);
+                }
+                networks.push(network);
+            }
             "metrics" => metrics.push(parse_plugin(node)?),
             _ => {}
         }

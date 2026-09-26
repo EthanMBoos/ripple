@@ -1,13 +1,21 @@
-# Remaining work
+# Roadmap
 
-Current usage and implemented behavior are in the [book](../book/src/SUMMARY.md).
-[Evidence](EVIDENCE.md) records checks and known failures;
-[reference notes](REFERENCE_NOTES.md) explain C++ differences.
+## Initial release
 
-Priorities: fix the scale/RNG gaps, extend useful model coverage, then implement
-one ROS or ArduPilot connection-to-entity pilot. Build new interfaces around a
-concrete experiment. The existing starter and shared CLI/sweep/Slurm workflow
-remain the normal development path.
+SCRIMMAGE-RS is at its initial release. In the tested configurations of the
+retained models, its closed simulation loop agrees with C++ SCRIMMAGE in
+trajectories, selected sensor and command values, and message-delivery timing,
+to floating-point rounding and subject to documented differences. The
+[paper](../paper/README.md) shows how and states the limits, and
+`python3 reference/campaign.py` reruns every check (see
+[reference/README.md](../reference/README.md)).
+Intentional differences from C++ are in [reference notes](REFERENCE_NOTES.md);
+current usage is in the [book](../book/src/SUMMARY.md).
+
+Everything below is optional: external integrations and core upgrades beyond
+the release. Build each around a concrete experiment. The starter crate and the
+shared run/sweep/Slurm workflow stay the normal development path, and any change
+to the simulation must keep the C++ comparison passing.
 
 ## Scope decisions
 
@@ -17,207 +25,131 @@ remain the normal development path.
 | Runtime integrations | Optional ROS 1 and ROS 2 via a separate bridge; ArduPilot via UDP. |
 | JSBSim | Offline flight-model verification fixtures. |
 | GPU work | Evaluate Burn for one useful workload. |
-| Viewer | Keep Rerun and its current recording playback. Terrain is an optional experiment below. |
+| Viewer | Keep Rerun and its current recording playback. Terrain is an optional experiment. |
 | C++ machinery excluded | Runtime plugin-library discovery/loading, legacy protobuf/string-map spawning, OpenCL, VTK, and production JSBSim integration. |
-
-Additional model candidates are recorded in the [plugin audit](PLUGIN_COVERAGE_AUDIT.md).
-Select them for a research need rather than treating the C++ catalog as a checklist.
-
-## 1. Mission input and experiments
-
-The [mission guide](../book/src/guides/yaml-missions.md) covers the implemented
-XML/YAML, template, override, comparison, and sweep behavior.
-
-- [ ] Fix startup queue overflow: the recorded 1,500-agent case fills the 1,024
-  message publisher queue with `GlobalNetwork/EntityGenerated` events. Recheck
-  large populations and cleanup before promising thousand-agent runs.
-- [ ] Add YAML forms of the remaining curated missions. The four existing pairs
-  are listed in [yaml_missions.rs](../crates/core/tests/yaml_missions.rs).
-- [ ] Record effective configuration: filled plugin defaults, overrides, assets,
-  registrations, seeds, and applicable adapter/backend versions. The current
-  manifest records supplied plugin values, not every value filled by `Default`.
-- [ ] Revisit explicit defaults/asset paths when needed. Preserve working
-  `SCRIMMAGE_PLUGIN_PATH` XML overlays in the meantime.
 
 XML is frozen. Its inherited-motion replacement and entity-tag differences are
 recorded in [reference notes](REFERENCE_NOTES.md#mission-compatibility).
 
-## 2. Optional integrations
+## 1. Performance
 
-Implement one end-to-end pilot at a time using `spawn(SpawnRequest)` in
-[generation.rs](../crates/core/src/simcontrol/generation.rs).
+`python3 reference/perf.py` tracks Rust speed against a committed history (see
+[reference/README.md](../reference/README.md#performance-tracking)); record a
+baseline before a core upgrade and compare after it. The paper's C++-versus-Rust
+timing uses [benchmark.py](../reference/benchmark.py) and still needs these:
 
-### First pilot: creating entities from a connection
+- [ ] Explain why eight workers are slower than one at 128 aircraft (2.33 s versus
+  0.47 s under emulation) before reporting worker scaling.
+- [ ] Benchmark the paper's workloads (simple motion, controller substeps,
+  sensing/communication, spawn/removal) across agent counts, with peak memory
+  and C++'s own multithreaded mode.
+- [ ] Time on native x86 Linux, for example the Slurm cluster, not emulation.
+  This is also the first real Slurm campaign; submission is only mock-tested.
+- [ ] Speed up spatial queries if profiling shows they matter:
+  - Benchmark collision checks, spatial sensors, and routing on spread-out and
+    clustered populations, keeping the simple scan as the correctness baseline.
+  - Try one engine-owned read-only spatial lookup (grid or tree), refreshed at the
+    snapshot each consumer reads, preserving event order and random draws.
+  - Index subscribers by topic and, for LocalNetwork, by entity.
 
-Do these with the first ROS or ArduPilot pilot, when there is a real peer to
-test against:
+  C++ shares a pre-motion R-tree for SphereNetwork/Boids; don't inherit its stale
+  timing for post-motion consumers.
 
-- [ ] Resolve the configured group and supply the peer's starting state through
-  `SpawnRequest`; add velocity and attitude fields as the pilot requires.
-- [ ] Bind one configured ROS robot session or ArduPilot connection to one live
-  entity after successful construction. Readiness means a valid peer exchange,
-  not merely an open socket. Duplicate packets, reconnects, and packets after
-  removal must not create another entity.
-- [ ] Let a YAML group be connection-bound (for example a `connection:` key) so
-  it spawns only through its connection, never through `count`. XML stays frozen.
+Tested at scale: 5,000 agents spawning in one tick and 1,500 removed in one tick.
+World plugins may publish up to 65,536 messages per step; an entity's plugins,
+1,024. All-to-all messaging can still exceed 65,536 pending deliveries per network.
+
+## 2. External integrations
+
+Implement one end-to-end pilot at a time. Entities from a connection go through
+`spawn(SpawnRequest)` in [generation.rs](../crates/core/src/simcontrol/generation.rs).
+Adapters own protocol details and stay out of model equations and the default
+build. Apply inputs at defined phases with explicit units and ENU/NED/body
+frames; bound waits and queues; define failure, disconnect, and shutdown.
+
+### First pilot: entities from a connection
+
+- [ ] Supply the peer's starting state through `SpawnRequest`, adding velocity
+  and attitude as needed.
+- [ ] Bind one ROS robot session or ArduPilot connection to one live entity after
+  a valid peer exchange. Duplicate packets, reconnects, and packets after removal
+  must not create another entity.
+- [ ] Let a YAML group be connection-bound (for example a `connection:` key) so it
+  spawns only through its connection.
 - [ ] Commit connection requests at the generation boundary in stable order,
   after scheduled spawns; the coordinator owns IDs, insertion, and events.
-- [ ] Return explicit creation success/failure. Test missing groups, conflicting
-  bindings, invalid initial state, partial construction failure, removal, and
-  cleanup. Bound pending requests and fail on required-peer timeout or
-  disconnect; automatic reconnect/resume can wait.
-- [ ] Record accepted inputs and their application ticks. Use a typed structural
-  request path, separate from potentially lossy simulated network messages.
-
-The adapter owns protocol details; generation receives ordinary Rust
-`SpawnRequest`s. Legacy `frames.bin` protobuf output stays independent of spawning.
-Adapters keep sockets and wire types outside model equations and default-build
-dependencies. Apply typed inputs at defined phases with explicit units and
-ENU/NED/body transforms. Bound waits/queues, reject stale inputs, and define
-failure, disconnect, and shutdown behavior. Live pause/resume is later work.
+- [ ] Report creation success or failure; test missing groups, conflicting
+  bindings, invalid state, removal, and cleanup. Fail on required-peer timeout.
+- [ ] Record accepted inputs and their ticks for replay, separately from
+  simulated network messages.
 
 ### ROS 1 and ROS 2
 
 Use [rosbridge](https://github.com/RobotWebTools/rosbridge_suite) in separate
-Linux/container environments; evaluate
-[roslibrust](https://github.com/RosLibRust/roslibrust) as the Rust client.
+containers; evaluate [roslibrust](https://github.com/RosLibRust/roslibrust).
 
-- [ ] Choose the first robot case: clock, odometry, selected sensor observations,
-  and one command type. Keep configuration to endpoint, namespace/topic mappings,
-  rates, and timeouts.
-- [ ] Test ROS 1 and ROS 2 deployments separately: message names, headers,
-  timestamps, frames, `/clock`, simulation-time settings, and ROS 2 QoS.
-  Rust builds must not depend on a host ROS installation.
-- [ ] Record accepted input ticks for replay. Asynchronous ROS traffic alone
-  does not provide deterministic lockstep. Use local/private bridge endpoints.
+- [ ] Choose the first robot case: clock, odometry, selected sensors, and one
+  command type.
+- [ ] Test ROS 1 and ROS 2 separately: message names, headers, timestamps,
+  frames, `/clock`, and ROS 2 QoS. No host ROS installation in Rust builds.
 
-ROS 1 requires a maintained, pinned legacy environment: Noetic reached EOL on
-2025-05-31. Do not assume `ros1_bridge` works in the Ubuntu 24.04 reference image.
-See the [EOL notice](https://www.ros.org/blog/noetic-eol/) and
-[bridge compatibility](https://index.ros.org/p/ros1_bridge/).
+ROS 1 needs a pinned legacy environment: Noetic reached end of life on
+2025-05-31 ([notice](https://www.ros.org/blog/noetic-eol/)).
 
 ### ArduPilot
 
 Use a separate SITL process and its
-[JSON simulator UDP protocol](https://github.com/ArduPilot/ardupilot/blob/master/libraries/SITL/examples/JSON/readme.md):
-binary actuator packets in, timestamped JSON physics state out. Rust owns physics.
+[JSON simulator protocol](https://github.com/ArduPilot/ardupilot/blob/master/libraries/SITL/examples/JSON/readme.md):
+actuator packets in, physics state out. Rust owns physics.
 
-- [ ] Decode lengths, magic, counters, and channels explicitly. Test initial
-  exchange, duplicate/lost packets, reset, rates/substeps, multiple vehicle
-  endpoints, timeout, and cancellation. Never advance twice for a duplicate frame.
-- [ ] Select and validate the first aircraft case using the existing
-  FixedWing6DOF or Multirotor models. Map actuators with explicit scales, limits,
-  and signs; provide attitude, velocity, body rates, and IMU specific force at
-  the required sample times. Test gravity handling and avoid applying noise twice.
-- [ ] Validate geographic origin, altitude datum, and frame conversions, then
-  demonstrate a short closed-loop SITL case. Preserve global phase boundaries
-  and keep offline physics tests independent of sockets.
+- [ ] Decode packets explicitly; test duplicates, loss, reset, timeout, and
+  multiple vehicles. Never advance twice for a duplicate frame.
+- [ ] Validate one aircraft with FixedWing6DOF or Multirotor: actuator scales and
+  signs, attitude, velocity, body rates, and IMU specific force.
+- [ ] Validate geographic origin and altitude datum, then fly a short closed-loop
+  SITL case.
 
-The C++ `arduplane.xml` defaults to JSBSimControl; it does not establish
-FixedWing6DOF/SITL compatibility. Its ArduPilot plugin uses an older native binary
-physics packet. Source caveats for other flight models are in the
-[plugin audit](PLUGIN_COVERAGE_AUDIT.md#source-quality-cautions).
+The C++ `arduplane.xml` uses JSBSim, so it does not establish FixedWing6DOF/SITL
+compatibility.
 
 ### JSBSim reference fixtures
 
-Use [standalone JSBSim](https://jsbsim-team.github.io/jsbsim/) to generate a small
-saved reference corpus. The aircraft, envelope, and fidelity target remain open.
+- [ ] Generate a small saved corpus with [standalone JSBSim](https://jsbsim-team.github.io/jsbsim/)
+  for one aircraft and a few control schedules, with a pinned version and asset
+  hashes. Ordinary Rust tests use the saved fixtures without JSBSim installed.
+- [ ] Align frames, units, inertia, and control meanings, with declared
+  tolerances and held-out cases.
 
-- [ ] Choose one aircraft and a few explicit control schedules: steady flight
-  and small throttle/elevator/aileron changes. Compare either equivalent physics
-  trajectories or declared response metrics for a simplified model.
-- [ ] Add a fixture generator under `reference/`, with pinned JSBSim version,
-  asset hashes, initial/trim state, model parameters, input schedules, and timing.
-  Ordinary Rust tests consume saved fixtures without JSBSim installed.
-- [ ] Align frames, units, inertia, gravity/wind, and control meanings. Test
-  conversions independently, use declared tolerances and held-out cases, and
-  retain analytical tests alongside the software reference.
+Saved JSBSim outputs do not establish real-aircraft fidelity.
 
-Keep SimpleAircraft's existing C++ contract separate from aerodynamic model
-validation. Saved JSBSim outputs do not establish real-aircraft fidelity.
+## 3. Core upgrades
 
-## 3. Burn experiment
+- [ ] Record the effective configuration in each run's manifest: plugin values
+  filled by defaults, overrides, registrations, and seeds.
+- [ ] Add YAML forms of the remaining curated missions (four pairs exist; see
+  [yaml_missions.rs](../crates/core/tests/yaml_missions.rs)).
+- [ ] Let the installed command find missions and assets without the source
+  checkout.
+- [ ] Add the Rust and Python test suites to CI; the current workflow publishes
+  the book only.
+- [ ] Burn experiment: pick one workload (for example batched policy inference),
+  measure the whole step against a CPU baseline, including transfers and
+  synchronization, and keep it only for an end-to-end gain. See
+  [Burn's backends](https://burn.dev/docs/burn/).
 
-- [ ] Pick one workload, such as batched policy inference or a tensor-friendly
-  sensor; establish a CPU baseline and test an optional Burn backend on this Mac.
-- [ ] Measure the whole step, including packing, device startup, transfers,
-  synchronization, readback, and memory. Require an end-to-end benefit.
-- [ ] If batching helps, gather/execute/commit inside the appropriate phase,
-  preserving entity-to-batch identity across spawn/removal and completing before
-  downstream consumers run.
-- [ ] Keep backend/tensor machinery inside the selected implementation. Record
-  backend, hardware, precision, seeds, and numerical tolerances separately from
-  exact CPU worker equality.
+## 4. More models
 
-Start with [Burn's backend documentation](https://burn.dev/docs/burn/).
+Candidates and the shared capabilities they would need are in the
+[plugin audit](PLUGIN_COVERAGE_AUDIT.md). Add a model for a research need, not
+for catalog completeness. A model with a C++ counterpart joins the comparison
+through the checklist in [reference/README.md](../reference/README.md).
 
-## 4. Verification gaps
+## 5. Terrain visualization experiment
 
-Existing coverage and reproduction commands are in [EVIDENCE.md](EVIDENCE.md).
+- [ ] Try streamed [Cesium](https://cesium.com/platform/cesiumjs/) terrain next
+  to the Rerun panels, starting with one agent and a validated origin, in a
+  [custom Rerun viewer](https://docs.rerun.io/dev/howto/visualization/extend-ui/)
+  or a web dashboard. Check coordinates, shared playback time, and screenshots.
 
-- [ ] Fix the Ubuntu/libstdc++ spawn RNG mismatch while preserving coordinator
-  ownership and draw order. Rerun the current Docker matrix and retain failures;
-  distinguish the intentional survivor-metrics difference from RNG regressions.
-- [ ] Map every built-in to direct and composed tests. Expand meaningful turning,
-  altitude, mixed-rate, spawn/removal, and scale coverage where missing.
-- [ ] Extend [Docker comparisons](../reference/README.md) for selected behavior.
-  The checker currently requires expanded XML; include packaging is separate.
-- [ ] Add direct C++ lifecycle-event comparison when selected behavior needs it;
-  frames alone do not prove event equivalence.
-- [ ] Exercise populations/churn at increasing sizes: memory, queue use,
-  throughput, and failure cleanup. Continue exact Rust frame/event/summary
-  comparisons across 1/2/8 workers and recording on/off.
-- [ ] Run an actual Slurm campaign; submission is currently mock-tested.
-
-Retain `straight_cpu_mul.xml` as the upstream typo fixture; genuine substep
-coverage comes from `verification/aircraft-substeps-spawning.xml`.
-
-## 5. Packaging and checks
-
-- [ ] Let the installed shared command find missions/assets without the source
-  checkout. Plugin defaults are already compiled in.
-- [ ] Add the verified Rust/Python test and comparison subset to CI, with known
-  C++ differences explicit. The current workflow publishes the book only.
-
-Keep the current Rerun view and replay controls. The recorded visual limitations
-and checks still needed are in [EVIDENCE.md](EVIDENCE.md#visual-checks).
-
-## 6. Spatial queries and routing performance
-
-- [ ] Benchmark collision checks, spatial sensors, and routing on spread-out and
-  clustered populations. Keep the simple implementation as the correctness baseline.
-- [ ] Try one engine-owned read-only spatial lookup with collision and one other
-  consumer. Compare a grid and a tree where query ranges differ substantially.
-- [ ] Refresh at the snapshot each consumer reads: before autonomy, after motion,
-  and after position-changing interactions as needed. Preserve candidate/event
-  ordering and RNG draws across workers.
-- [ ] Index subscribers separately by topic and, for LocalNetwork, entity.
-  Range-limited networks can also use spatial candidates. Measure complete runs
-  and compare outputs before expanding the API.
-
-C++ shares an R-tree for SphereNetwork/Boids, but SimpleCollision and
-ContactBlobCamera still scan entities. Its pre-motion rebuild is stale for
-post-motion consumers; do not inherit that timing accidentally.
-
-## 7. Optional terrain experiment
-
-Try streamed Cesium terrain alongside Rerun debug panels in one window using
-saved recordings. This is an unprototyped visualization experiment.
-
-- [ ] Start with one agent and a validated origin. Evaluate a
-  [CesiumJS](https://cesium.com/platform/cesiumjs/) webview in a
-  [custom Rerun viewer](https://docs.rerun.io/dev/howto/visualization/extend-ui/),
-  using [Wry](https://docs.rs/wry/latest/wry/struct.WebViewBuilder.html#method.build_as_child).
-- [ ] Check ENU-to-Earth-fixed positions, attitude and altitude datum, shared
-  playback time, resizing, focus/overlays, scrubbing, looping, and screenshots.
-  The webview is a separate rendering surface; capture and layout need testing.
-- [ ] If it works cleanly, test multiple agents, spawn/removal, performance, and
-  missing token/network behavior. Save screenshots and a short feasibility report.
-- [ ] If native embedding is awkward, consider a web dashboard using Rerun's
-  [playback API](https://ref.rerun.io/docs/js/0.36.2/web-viewer/classes/WebViewer.html),
-  or stop the experiment.
-
-Check [content eligibility/pricing](https://cesium.com/platform/cesium-ion/pricing/)
-when trying it; preserve attribution and verify caching/redistribution rights.
-Viewer tile loading must not determine physical terrain, collisions, sensing,
-or simulation time.
+Tile loading must never affect physics, sensing, or simulation time. Check
+Cesium's [pricing and redistribution terms](https://cesium.com/platform/cesium-ion/pricing/).

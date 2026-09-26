@@ -78,8 +78,8 @@ impl Plugin for AircraftPidController {
             speed: Pid::linear(config.speed),
             pitch: Pid::angular(config.pitch),
             roll: Pid::angular(config.roll),
-            max_pitch_rad: config.max_pitch_deg.to_radians(),
-            max_roll_rad: config.max_roll_deg.to_radians(),
+            max_pitch_rad: crate::math::deg_to_rad(config.max_pitch_deg),
+            max_roll_rad: crate::math::deg_to_rad(config.max_roll_deg),
             use_roll_control: config.use_roll_control,
         }
     }

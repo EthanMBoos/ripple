@@ -10,21 +10,7 @@ On Apple Silicon both Release executables run under amd64 emulation in the same
 container. Startup, parsing and logging differ; this is not native CPU throughput
 or a general language-speed comparison. Builds/container startup are not timed.
 
-2026-09-24 C++-mimic baseline (seconds, C++1 / Rust1 / Rust8):
-  SimpleAircraft medians: 0.771794 / 0.620961 / 2.630264 (1.24x at one worker).
-  FixedWing6DOF medians:  0.982485 / 0.722906 / 2.631521 (1.36x at one worker).
-Apple M2 Pro, Docker 10 CPUs; GCC 13.3.0, Rust 1.98.1; C++ Ubuntu-24.04 commit
-4bdf41fb06facaea358d478d9a07aa4d77fcac27. Eight workers were slower; no crossover
-point was measured. Only three samples, no CPU isolation, and one C++ outlier.
-Raw samples, grouped C++1 / Rust1 / Rust8:
-  Simple: [0.773325, 0.769947, 0.771794] / [0.620061, 0.620961, 0.622489]
-          / [2.628553, 2.678659, 2.630264]
-  6DOF:   [1.499309, 0.982485, 0.978871] / [0.831190, 0.722906, 0.722115]
-          / [2.687494, 2.628093, 2.631521]
-All four reference comparisons passed (1,001 frames / 128,128 states each).
-SimpleAircraft state errors were zero; 6DOF maximum position error was 4.34e-11 m.
-Local raw evidence: runs/benchmark-cpp-baseline001/{timings,provenance}.json.
-These numbers describe the pre-correction physics, not a future corrected model.
+The paper's retained results are in paper/data/benchmark/.
 """
 import argparse
 from dataclasses import asdict
@@ -152,12 +138,12 @@ def main():
     reference_image = capture(["docker", "image", "inspect", reference_tag,
                                "--format", "{{.Id}}"])
     run_logged(["docker", "build", "--platform", PLATFORM, "--progress", "plain",
-                "-f", ROOT / "reference/benchmark.Dockerfile", "--build-arg", f"REFERENCE_IMAGE={reference_tag}",
+                "-f", ROOT / "reference/rust.Dockerfile", "--target", "benchmark", "--build-arg", f"REFERENCE_IMAGE={reference_tag}",
                 "--iidfile", output / "image-id.txt", ROOT], output / "build.log", timeout=3600)
     image = (output / "image-id.txt").read_text().strip()
     files = [ROOT / "Cargo.toml", ROOT / "Cargo.lock"] + list((ROOT / "crates").rglob("*.rs"))
     files += list((ROOT / "crates").rglob("*.xml")) + list((ROOT / "crates").rglob("Cargo.toml"))
-    files += list((ROOT / "reference").glob("benchmark*"))
+    files += list((ROOT / "reference").glob("benchmark*")) + [ROOT / "reference/rust.Dockerfile"]
     write_json(output / "provenance.json", {
         "cpp_commit": commit, "reference_image": reference_image, "benchmark_image": image,
         "host": platform.platform(), "host_machine": platform.machine(), "platform": PLATFORM,

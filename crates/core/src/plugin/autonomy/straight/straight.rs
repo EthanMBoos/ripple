@@ -8,7 +8,9 @@ use serde::Deserialize;
 
 use crate::math::{self, Vec3};
 use crate::plugin::interaction::{BOUNDARY_TOPIC, BoundaryRegion};
-use crate::plugin::sensor::{STATE_TOPIC, StateWithCovariance};
+use crate::plugin::sensor::{
+    CONTACTS_TOPIC, ContactsWithCovariances, STATE_TOPIC, StateWithCovariance,
+};
 use crate::plugin::{
     AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
@@ -106,10 +108,18 @@ impl Autonomy for Straight {
         context
             .messages
             .subscribe::<BoundaryRegion>("GlobalNetwork", BOUNDARY_TOPIC)?;
+        // C++ Straight also subscribes to measured contacts and stores them without
+        // reading them. Subscribe and discard so message delivery matches C++.
+        context
+            .messages
+            .subscribe::<ContactsWithCovariances>("LocalNetwork", CONTACTS_TOPIC)?;
         Ok(())
     }
 
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+        context
+            .messages
+            .receive::<ContactsWithCovariances>("LocalNetwork", CONTACTS_TOPIC)?;
         for message in context
             .messages
             .receive::<BoundaryRegion>("GlobalNetwork", BOUNDARY_TOPIC)?
@@ -139,8 +149,10 @@ impl Autonomy for Straight {
         }
         let displacement_world_m = math::sub(self.goal_world_m, state.position_world_m);
         let distance_m = math::norm(displacement_world_m);
+        // C++ computes speed * diff.normalized(): normalize first, then scale.
+        // The rounding order matters over long runs.
         let velocity_world_mps =
-            displacement_world_m.map(|component_m| self.speed_mps * component_m / distance_m);
+            displacement_world_m.map(|component_m| self.speed_mps * (component_m / distance_m));
         let desired_speed_mps = math::norm(velocity_world_mps);
         let desired_heading_world_rad =
             math::angle_2pi(velocity_world_mps.y.atan2(velocity_world_mps.x));
@@ -252,6 +264,7 @@ mod tests {
             scheduled: &mut Vec::new(),
             random: &mut PluginRandom::new(1, 0, "test"),
             routed: false,
+            trace: None,
         })?;
         for (index, (autonomy, messages)) in autonomies.iter_mut().zip(&mut subscribers).enumerate()
         {

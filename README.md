@@ -17,15 +17,15 @@ robotics simulation. It is both:
 | Plugin design | Seven categories, with runtime shared-library loading. | Same seven roles; ordinary Rust structs compiled into the application. No runtime loading. |
 | Visualization | VTK viewer and plugin drawing. | Rerun map, debug panels, recordings, and looping replay. No VTK or general plugin drawing yet. |
 | Parallel execution | Legacy C++ threading implementation. | Entity-owned state and barriers between phases; selected missions match at 1/2/8 workers. |
-| Preliminary performance | Single-thread reference. | C++-mimic baseline: 1.24–1.36× faster at one worker for two 128-aircraft workloads; eight workers slower. Same emulated Linux container, not a general speed claim. [Benchmark](reference/benchmark.py). |
+| Preliminary performance | Single-thread reference. | First measurement: 1.4–1.6× faster than C++ at one worker on two missions; eight workers slower, not yet explained. Emulated Linux container, not a general speed claim. [Benchmark](reference/benchmark.py). |
 | Mission input | XML and the wider legacy template/parameter surface. | Curated XML, kept permanently for single runs. YAML missions, templates, sweeps, and `scrimmage compare` work ([YAML missions](book/src/guides/yaml-missions.md)). |
 | Communication / spawning | Typed pub/sub plus legacy protobuf/string-map spawn commands. | Typed in-process pub/sub and scheduled spawning. No legacy spawn commands; connection-triggered spawning is planned. |
 | Integrations / GPU | ROS 1, ArduPilot, JSBSim, and legacy OpenCL paths. | None implemented yet. ROS 1/2, ArduPilot UDP, and optional Burn are planned; JSBSim is verification-only. |
 | Running / outputs | Legacy run options and log-directory conventions. | `scrimmage run` / `replay`; automatic `runs/<mission>/runNNN` folders; `scrimmage sweep` and Slurm shards. Comparisons are Python tooling. |
 | Compatibility | Reference implementation. | Selected equations and mission outputs checked against C++; known RNG differences remain. |
 
-See [working missions](missions/README.md), [verification evidence](docs/EVIDENCE.md),
-and [remaining work](docs/TODO.md) for the exact scope. Existing C++ integration
+See [working missions](missions/README.md), [validation in the paper](paper/README.md),
+and the [roadmap](docs/TODO.md) for the exact scope. Existing C++ integration
 paths are listed for context, not claimed to have been verified here.
 
 The entity plugin stack connects decisions to motion and perception:
@@ -66,8 +66,8 @@ and a SphereNetwork/AuctionAssign radio exchange. Try
 `missions/networks-local-global.xml` for the aircraft/sensor/world example or
 `missions/waypoints-point-agents.xml` for the smallest navigation model.
 The [mission guide](missions/README.md) and [model selection](book/src/reference/models.md)
-describe the supported subset; [verification evidence](docs/EVIDENCE.md) explains
-what to run and what is actually established.
+describe the supported subset; the [paper's validation sections](paper/README.md)
+explain what is actually established and how to reproduce it.
 The port keeps SCRIMMAGE's useful mission and plugin design, with Rerun replacing
 VTK and deterministic CPU scheduling replacing the C++ threading path. Compiled
 Rust extensions stay; runtime plugin loading and legacy string-map/protobuf
@@ -123,7 +123,7 @@ Viewer setup and known native-viewer limitations are documented in
 The simulator currently runs unpaced. Live pause/step and time-warp controls,
 terrain, meshes, and arbitrary plugin shapes remain to be implemented.
 
-Remaining implementation work is in [docs/TODO.md](docs/TODO.md). C++ comparisons and
+Optional integrations and upgrades are in the [roadmap](docs/TODO.md). C++ comparisons and
 compatibility limits are documented in [docs/REFERENCE_NOTES.md](docs/REFERENCE_NOTES.md).
 The copied [architecture](book/src/appendix/cpp/architecture.md), [dataflow](book/src/appendix/cpp/data-flow.md),
 [plugin](book/src/appendix/cpp/plugin-development.md), and [mission](book/src/appendix/cpp/mission-config.md)
@@ -169,10 +169,12 @@ python3 reference/reference_check.py
 ```
 
 The [reference workflow](reference/README.md) builds SCRIMMAGE's upstream slim
-dependency image and checks eight missions, worker-count equality, and recording
+dependency image and checks the missions in `reference/missions.txt`, worker-count equality, and recording
 on/off equality. Historical native macOS checks passed; the Docker checks also
 expose Linux compatibility gaps, including standard-library random behavior.
-Direct C++ event-stream comparison is not implemented. To compare saved runs,
+Traces from the `benchmarking-edits` C++ branch also compare message deliveries,
+lifecycle and collision events, sensor payloads, beliefs, and plugin commands
+(see [reference/README.md](reference/README.md)). To compare saved runs,
 use a fresh report path:
 
 ```sh
@@ -180,7 +182,7 @@ python3 reference/compare.py path/to/cpp-run path/to/rust-run \
   --report runs/comparison.json
 ```
 
-Dashboard changes also require the screenshot workflow in [AGENTS.md](AGENTS.md).
+Dashboard changes also require the [screenshot workflow](book/src/development/visual-qa.md).
 Keep the Rerun viewer aligned with the SDK versions in `Cargo.lock`.
 
 ## License

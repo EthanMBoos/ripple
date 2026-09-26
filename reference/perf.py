@@ -60,19 +60,26 @@ HEADER = """<?xml version="1.0"?>
 # a workload makes its history incomparable, so add a new name instead.
 WORKLOADS = {
     "motion": ("aircraft flying straight", (64, 512), dict(
-        end=200, multiplier=1, controller_rate=0, world="", spawn="", sensors="")),
+        end=200, multiplier=1, controller_rate=0, variance=0, world="", spawn="", sensors="")),
     "substeps": ("ten controller and motion substeps per step", (64, 512), dict(
-        end=60, multiplier=10, controller_rate=0, world="", spawn="", sensors="")),
+        end=60, multiplier=10, controller_rate=0, variance=0, world="", spawn="", sensors="")),
     "sensing": ("own-state and contact sensors on every aircraft", (32, 128), dict(
-        end=60, multiplier=1, controller_rate=0, world="",
+        end=60, multiplier=1, controller_rate=0, variance=0, world="",
         spawn="", sensors="    <sensor>NoisyState</sensor>\n    <sensor>NoisyContacts</sensor>")),
+    # Churn spreads its agents so collisions happen; the others above start together.
     "churn": ("scheduled spawning with collision removal", (64, 512), dict(
-        end=200, multiplier=1, controller_rate=0,
+        end=200, multiplier=1, controller_rate=0, variance=2500,
         world='  <entity_interaction collision_range="5">SimpleCollision</entity_interaction>\n'
               # Aircraft hold 200 m, so this ground check costs time but never removes.
               '  <entity_interaction ground_collision_z="150">GroundCollision</entity_interaction>',
         spawn="    <generate_rate>20</generate_rate><generate_count>4</generate_count>\n"
               "    <generate_start_time>0</generate_start_time>", sensors="")),
+    # Aircraft spread over about a kilometre, so few collide and the population
+    # stays nearly constant: this measures the every-pair collision check itself.
+    "collision": ("pairwise collision checks among active aircraft", (256, 1024), dict(
+        end=20, multiplier=1, controller_rate=0, variance=1_000_000,
+        world='  <entity_interaction collision_range="5">SimpleCollision</entity_interaction>',
+        spawn="", sensors="")),
 }
 WORKERS = (1, 8)
 
@@ -109,10 +116,7 @@ def measure(runner, repeats, quick, scratch):
     for name, (_, sizes, fields) in WORKLOADS.items():
         for agents in sizes[:1] if quick else sizes:
             mission = scratch / f"{name}-{agents}.xml"
-            # Churn spreads its agents so collisions happen; others start together.
-            variance = 2500 if name == "churn" else 0
-            mission.write_text(HEADER.format(name=name, agents=agents, variance=variance,
-                                             **fields))
+            mission.write_text(HEADER.format(name=name, agents=agents, **fields))
             for workers in WORKERS:
                 key = f"{name}-{agents}-w{workers}"
                 times, memory = [], 0.0

@@ -77,7 +77,7 @@ python3 reference/perf.py --quick                # smallest sizes only, under a 
 ```
 
 It builds the release core-only runner (`benchmark_runner.rs`, no viewer) and
-runs four workloads (`motion`, `substeps`, `sensing`, `churn`) at two agent
+runs five workloads (`motion`, `substeps`, `sensing`, `churn`, `collision`) at two agent
 counts each and at 1 and 8 workers: a warm-up, then five timed runs. It reports
 the median stepping time with its min-max range, and peak memory. A change is
 flagged only when the new median lies outside the old range and differs by more
@@ -331,15 +331,18 @@ python3 reference/benchmark.py --output runs/new-benchmark   # --quick: smallest
 This builds the unmodified C++ branch and the Rust core-only runner for this
 machine's own architecture and runs both in one Linux container, so neither is
 emulated (on Apple Silicon, C++ is built without JSBSim, which no workload uses).
-It runs `perf.py`'s four workloads at three agent counts with C++ single-threaded,
+It runs `perf.py`'s five workloads at three agent counts with C++ single-threaded,
 C++ in its own `multi_threaded` mode at 8 threads, and Rust at 1 and 8 workers:
 one warm-up and three timed runs each. Times are whole processes minus a one-step
 run of the same mission, which removes startup and parsing; peak memory is
-recorded too. Rust output must match single-threaded C++, except in churn and
-sensing, whose random spawns and sensor noise the unmodified C++ build draws
-differently; every run must repeat its warm-up output.
+recorded too. Rust must write identical output at 1 and 8 workers, and must
+match single-threaded C++ except in churn, sensing, and collision, whose random
+spawns and sensor noise the unmodified C++ build draws differently; every run
+must repeat its warm-up output.
 
 C++'s multithreaded mode sometimes deadlocks (its worker waits on a condition
 variable without a predicate, so a wake-up can be lost; 7 of 40 runs of one
-mission hung). Such runs are killed after 120 s, counted, and retried. The
+mission hung). Such runs are killed after 120 s, counted, and retried. To save disk, a timed
+run's output is deleted once it matches the warm-up's, and each build replaces
+the previous `scrimmage-rs-benchmark` image. The
 paper's retained results are in `paper/data/benchmark/`.

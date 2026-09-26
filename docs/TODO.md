@@ -36,24 +36,50 @@ recorded in [reference notes](REFERENCE_NOTES.md#mission-compatibility).
 `python3 reference/perf.py` tracks Rust speed against a committed history (see
 [reference/README.md](../reference/README.md#performance-tracking)); record a
 baseline before a core upgrade and compare after it. The paper's C++-versus-Rust
-timing uses [benchmark.py](../reference/benchmark.py) and still needs these:
+timing ([benchmark.py](../reference/benchmark.py)) is done.
 
 - [x] Explain the eight-worker slowdown: each phase's pool handoff (~35 µs on
   bare metal, ~10x in Docker's VM) exceeds light phases' work (see the paper).
 - [x] Benchmark the four workloads across agent counts with peak memory and
   C++'s multithreaded mode, in a Linux container and on bare-metal macOS.
-- [ ] Stop building message-endpoint names every step
-  (`PluginStack::mailboxes`); about a fifth of main-thread time in `motion`,
-  where native C++ is now 1.25x faster.
-- [ ] Speed up spatial queries if profiling shows they matter:
-  - Benchmark collision checks, spatial sensors, and routing on spread-out and
-    clustered populations, keeping the simple scan as the correctness baseline.
-  - Try one engine-owned read-only spatial lookup (grid or tree), refreshed at the
-    snapshot each consumer reads, preserving event order and random draws.
-  - Index subscribers by topic and, for LocalNetwork, by entity.
-
-  C++ shares a pre-motion R-tree for SphereNetwork/Boids; don't inherit its stale
-  timing for post-motion consumers.
+- [x] Build each plugin's message address once instead of every step
+  (`PluginStack::mailboxes`): straight flight about a third faster, identical
+  output; Rust is now 1.1-1.8x faster than C++ on one core.
+- [x] Benchmark collision checking among active agents: the `collision`
+  workload in `perf.py` and `benchmark.py` spreads aircraft over about a
+  kilometre so few collide and the population stays nearly constant.
+- [ ] Add a shared spatial lookup for range queries. `SimpleCollision` checks
+  every pair of active agents each step (C++ checks every ordered pair, twice
+  the work), so its cost grows with the square of the agent count: 1.1 ms per
+  step at 1,024 agents (58% of the step), 4.5 ms at 2,048 (71%), 18 ms at 4,096
+  (79%). The simple, easy-to-follow version stays the default even though it is
+  slower; the faster path is something a mission or plugin switches on or off
+  with one setting.
+  - `SimpleCollision` keeps its every-pair scan by default: the paper's
+    like-for-like C++ timing stays valid, and the scan is the correctness check.
+    The lookup only narrows candidates; each still gets the exact distance test
+    in the current order, so events and output stay byte-identical and the C++
+    comparison still passes.
+  - The engine builds one read-only lookup (grid or tree) at each snapshot
+    plugins read, so positions are never stale. C++ builds one R-tree per step
+    before motion (used by Boids, ContactBlobCamera, SphereNetwork,
+    CaptureInBoundary, and SimpleCollision's startup check), so plugins after
+    motion see old positions; don't copy that.
+  - Plugins declare at setup that they want range queries. If none do, the
+    lookup is never built, so existing missions and timings don't change.
+  - Build time is reported as its own step, separate from each plugin's
+    queries, so per-plugin benchmarks stay readable.
+  - First consumer: an opt-in fast path in `SimpleCollision`, checked against
+    the scan (same events, same bytes), with a `collision-indexed` benchmark
+    variant reported beside the like-for-like one. Move other range-based
+    plugins (range-limited sensors, SphereNetwork) onto it as RQ1 and RQ3 need.
+  - Not chosen: a grid private to `SimpleCollision` (every other range-based
+    plugin would repeat it) or splitting the scan across cores (still grows with
+    the square of the agent count).
+  - Not needed for NoisyContacts: profiling `sensing-128` put 98% of its time in
+    generating noise, and it measures every agent (no range limit, as in C++).
+  - Message routing was about 16% of `sensing-128`; index subscribers by topic
+    (and LocalNetwork by entity) if message-heavy RQ1 experiments show it growing.
 
 Tested at scale: 5,000 agents spawning in one tick and 1,500 removed in one tick.
 World plugins may publish up to 65,536 messages per step; an entity's plugins,

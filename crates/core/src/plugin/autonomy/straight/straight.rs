@@ -234,21 +234,21 @@ mod tests {
         let [first, second] = &mut subscribers;
         let mut mailboxes = [
             Mailbox {
-                endpoint: MessageEndpoint {
+                endpoint: &MessageEndpoint {
                     entity_id: Some(1),
                     plugin: "sensor".into(),
                 },
                 messages: &mut publisher,
             },
             Mailbox {
-                endpoint: MessageEndpoint {
+                endpoint: &MessageEndpoint {
                     entity_id: Some(1),
                     plugin: "autonomy".into(),
                 },
                 messages: first,
             },
             Mailbox {
-                endpoint: MessageEndpoint {
+                endpoint: &MessageEndpoint {
                     entity_id: Some(2),
                     plugin: "autonomy".into(),
                 },

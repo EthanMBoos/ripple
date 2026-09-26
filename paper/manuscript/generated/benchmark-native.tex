@@ -11,22 +11,25 @@ C++~8 is C++'s own \texttt{multi\_threaded} mode.}
 \toprule
 Workload & Agents & C++ 1 & C++ 8 & Rust 1 & Rust 8 & Ratio & C++ MiB & Rust MiB & Hangs \\
 \midrule
-\texttt{motion} & 64 & 0.106 & 1.018 & 0.130 & 0.550 & 0.81 & 10 & 4 & 1 \\
-\texttt{motion} & 256 & 0.411 & 2.838 & 0.518 & 1.004 & 0.79 & 19 & 5 & 0 \\
-\texttt{motion} & 1024 & 1.592 & 9.950 & 1.988 & 2.191 & 0.80 & 54 & 10 & 0 \\
-\texttt{substeps} & 64 & 0.129 & 1.243 & 0.101 & 0.564 & 1.28 & 10 & 4 & 2 \\
-\texttt{substeps} & 256 & 0.527 & 3.580 & 0.390 & 0.834 & 1.35 & 19 & 5 & 0 \\
-\texttt{substeps} & 1024 & 2.044 & 12.662 & 1.543 & 1.413 & 1.32 & 54 & 10 & 0 \\
-\texttt{sensing} & 32 & 0.268 & 0.325 & 0.213 & 0.245 & -- & 10 & 4 & 0 \\
-\texttt{sensing} & 64 & 0.941 & 0.706 & 0.735 & 0.480 & -- & 14 & 5 & 0 \\
-\texttt{sensing} & 128 & 3.565 & 1.986 & 2.792 & 1.221 & -- & 28 & 8 & 0 \\
-\texttt{churn} & 64 & 0.138 & 0.941 & 0.114 & 0.519 & -- & 10 & 4 & 2 \\
-\texttt{churn} & 256 & 0.556 & 2.046 & 0.293 & 0.807 & -- & 14 & 5 & 0 \\
-\texttt{churn} & 1024 & 3.105 & 6.737 & 0.892 & 1.376 & -- & 28 & 7 & 1 \\
+\texttt{motion} & 64 & 0.103 & 0.985 & 0.094 & 0.466 & 1.10 & 10 & 4 & 0 \\
+\texttt{motion} & 256 & 0.437 & 2.722 & 0.353 & 0.783 & 1.24 & 19 & 5 & 0 \\
+\texttt{motion} & 1024 & 1.652 & 9.131 & 1.296 & 1.450 & 1.27 & 54 & 10 & 0 \\
+\texttt{substeps} & 64 & 0.133 & 1.225 & 0.089 & 0.540 & 1.49 & 10 & 4 & 0 \\
+\texttt{substeps} & 256 & 0.506 & 3.500 & 0.337 & 0.801 & 1.50 & 19 & 5 & 1 \\
+\texttt{substeps} & 1024 & 2.030 & 12.843 & 1.311 & 1.200 & 1.55 & 54 & 10 & 0 \\
+\texttt{sensing} & 32 & 0.311 & 0.304 & 0.211 & 0.227 & -- & 10 & 4 & 0 \\
+\texttt{sensing} & 64 & 0.935 & 0.699 & 0.713 & 0.446 & -- & 14 & 5 & 0 \\
+\texttt{sensing} & 128 & 3.538 & 1.986 & 2.716 & 1.140 & -- & 28 & 8 & 0 \\
+\texttt{churn} & 64 & 0.148 & 0.929 & 0.088 & 0.452 & -- & 10 & 4 & 1 \\
+\texttt{churn} & 256 & 0.525 & 1.995 & 0.260 & 0.686 & -- & 14 & 5 & 0 \\
+\texttt{churn} & 1024 & 3.167 & 6.643 & 0.799 & 1.153 & -- & 27 & 7 & 0 \\
+\texttt{collision} & 256 & 0.188 & 0.416 & 0.051 & 0.092 & -- & 19 & 5 & 0 \\
+\texttt{collision} & 1024 & 2.327 & 3.156 & 0.353 & 0.369 & -- & 54 & 10 & 0 \\
+\texttt{collision} & 2048 & 8.855 & 10.515 & 1.170 & 1.122 & -- & 99 & 16 & 0 \\
 \bottomrule
 \end{tabular}
 \par\smallskip Ratio: C++ over Rust at one thread, shown only where their
-outputs match; sensing and churn draw different random numbers, so the two
+outputs match; sensing, churn, and collision draw different random numbers, so the two
 simulators do different work. MiB: peak resident memory.
 Hangs: C++~8 runs killed after 120\,s and retried (see text).
 \end{table*}

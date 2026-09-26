@@ -185,7 +185,7 @@ impl Entity {
         &'a mut self,
         mailboxes: &mut Vec<crate::pubsub::messages::Mailbox<'a>>,
     ) {
-        self.plugins.mailboxes(self.id, mailboxes);
+        self.plugins.mailboxes(mailboxes);
     }
     pub fn color(&self) -> [u8; 3] {
         self.color

@@ -205,29 +205,33 @@ both versions and the commands.
 \subsection{Cost}
 \label{sec:performance}
 
-We ran the same four missions in both simulators on one laptop (an Apple M2
+We ran the same five missions in both simulators on one laptop (an Apple M2
 Pro): aircraft flying straight, the same with finer physics steps, aircraft
-with noisy sensors, and a stream of new aircraft that can collide. Each ran at
-several sizes, up to 1{,}024 aircraft (Appendix~\ref{app:performance}).
+with noisy sensors, a stream of new aircraft that can collide, and a large
+spread-out group checked for collisions every step. Each ran at several sizes,
+up to 2{,}048 aircraft (Appendix~\ref{app:performance}).
 \begin{itemize}
-\item \emph{Speed on one processor core is similar.} We compare speed only on
-the two missions where both simulators produce identical results. With finer
-physics steps, Rust is 1.25 to 1.5 times faster. On plain straight flight, C++
-is 1.25 times faster when built natively, where a known per-step overhead in
-Rust dominates, and Rust is up to 1.3 times faster in the container.
-\item \emph{Rust uses much less memory,} 2.4 to 7 times less on every mission
+\item \emph{Rust is faster on one processor core,} by 1.1 to 1.8 times. We
+compare speed only on the two missions where both simulators produce identical
+results.
+\item \emph{Rust uses much less memory,} 2.5 to 7.6 times less on every mission
 and size.
+\item \emph{Collision checking is the next limit.} Both simulators compare
+every pair of aircraft, so the cost grows with the square of the team size:
+doubling from 1{,}024 to 2{,}048 aircraft makes Rust's collision mission more
+than three times slower.
+A shared lookup of nearby aircraft is the planned fix.
 \item \emph{Extra cores help only when there is enough work.} Rust on eight
-cores ran the sensor mission 2.3 times faster than on one, but the simplest
+cores ran the sensor mission 2.4 times faster than on one, but the simplest
 missions ran slower: handing out work to the cores every step costs more than
 the work itself.
-\item \emph{C++'s multi-core mode is unreliable.} It froze in 10 of 178 runs,
+\item \emph{C++'s multi-core mode is unreliable.} It froze in 9 of 219 runs,
 gave different answers to the same run when sensors were involved, and was
 usually slower than running C++ on one core. We compare against single-core
 C++.
 \end{itemize}
-We measured both in a Linux container and directly on macOS; apart from
-straight-flight speed, the findings hold in both.
+We measured both in a Linux container and directly on macOS; the findings hold
+in both.
 
 \section{RQ1: When Does Sharing Information Improve Team Performance?}
 \label{sec:rq1}
@@ -568,35 +572,46 @@ FixedWing6DOF scenarios run without substeps. \\
 \section{Performance Details}
 \label{app:performance}
 
-Tables~\ref{tab:benchmark} and~\ref{tab:benchmark-native} time four workloads
+Tables~\ref{tab:benchmark} and~\ref{tab:benchmark-native} time five workloads
 (straight flight, ten controller and motion substeps, noisy state and contact
-sensors, and scheduled spawning with collisions) on an Apple M2 Pro, first with
+sensors, scheduled spawning with collisions, and collision checks among aircraft
+spread over about a kilometre, so few collide and the population stays nearly
+constant) on an Apple M2 Pro, first with
 both simulators in one Linux container (\texttt{reference/benchmark.py}) and
 then on bare-metal macOS, where unmodified C++ is built with Apple clang
 against the library versions Ubuntu 24.04 ships
 (\texttt{paper/data/benchmark-native/}). Rust output matches single-threaded
-C++ in the first two workloads. Sensing and churn depend on random draws that
-the unmodified C++ build makes differently, so their ratios are not speed claims.
+C++ in the first two workloads. The other three depend on random draws that the
+unmodified C++ build makes differently, so their ratios are not speed claims.
 
-Where outputs match, Rust with one thread is 1.0 to 1.5 times faster in the
-container. On bare metal it is 1.3 times faster with substeps but 1.25 times
-slower on plain straight flight, where its fixed per-step bookkeeping dominates; profiling
-attributes about a fifth of that time to building message-endpoint names each
-step. Rust uses 2.4 to 7 times less memory.
+Where outputs match, Rust with one thread is 1.3 to 1.8 times faster than C++
+in the container and 1.1 to 1.55 times faster on bare metal, and it uses 2.5 to
+7.6 times less memory. Two changes made while profiling contributed, both with
+identical output: Rust no longer rebuilds each plugin's message-address name
+every step, which had taken about a fifth of the time on straight flight, and
+it runs single-worker phases without the thread pool (below). Before them,
+native C++ was 1.25 times faster on straight flight.
+
+Collision checking compares every pair of aircraft in both simulators (C++
+compares each pair twice), so its cost grows with the square of the number of
+aircraft. From 1{,}024 to 2{,}048 aircraft, Rust's collision workload takes 3.3
+to 3.4 times longer and C++'s 3.8 to 9.3 times longer. Eight workers barely
+help, because the check runs in one sequential phase.
 
 Parallel speedup depends on each phase carrying enough work. Every phase hands
 entities to a thread pool and joins it, which profiling puts at about
 35~\textmu s on bare metal and roughly ten times that in Docker's virtual
 machine. On bare metal, eight Rust workers beat one with substeps at 1{,}024
-aircraft and with sensors at 64 and 128 aircraft (2.3 times at 128), but not
-on light workloads or with 32 sensing aircraft; in the container they rarely do. The handoff cost about 7~\textmu s
-even with one worker, so Rust now runs single-worker phases on the calling
-thread, a third faster on light workloads with identical output.
+aircraft and with sensors at 64 and 128 aircraft (2.4 times at 128), but not
+on light workloads or with 32 sensing aircraft; in the container, only with
+128 sensing aircraft. The handoff cost about 7~\textmu s even with one worker,
+so Rust now runs single-worker phases on the calling thread, a third faster on
+light workloads.
 
-C++'s own \texttt{multi\_threaded} mode is not reliable. It deadlocked in 10 of
-178 runs (each killed after 120~s and retried), its output with sensors differs
+C++'s own \texttt{multi\_threaded} mode is not reliable. It deadlocked in 9 of
+219 runs (each killed after 120~s and retried), its output with sensors differs
 between identical runs, and it is slower than single-threaded C++ except with
-sensors. Its entity worker waits on a condition variable without a predicate,
+64 or more sensing aircraft on bare metal and 128 in the container. Its entity worker waits on a condition variable without a predicate,
 so a wake-up can be lost; we did not modify it, and single-threaded C++ is the
 baseline.
 

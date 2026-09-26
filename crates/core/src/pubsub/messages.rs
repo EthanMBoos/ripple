@@ -184,7 +184,7 @@ pub enum Delivery {
     After { delay_s: f64 },
 }
 pub(crate) struct Mailbox<'a> {
-    pub endpoint: MessageEndpoint,
+    pub endpoint: &'a MessageEndpoint,
     pub messages: &'a mut Messages,
 }
 /// Records for the opt-in comparison trace (see `simcontrol/trace.rs`).
@@ -258,7 +258,7 @@ impl NetworkContext<'_, '_> {
     pub fn messages(&mut self) -> &mut Messages {
         self.mailboxes
             .iter_mut()
-            .find(|mailbox| &mailbox.endpoint == self.endpoint)
+            .find(|mailbox| mailbox.endpoint == self.endpoint)
             .expect("network plugin has a registered mailbox")
             .messages
     }
@@ -306,7 +306,7 @@ impl NetworkContext<'_, '_> {
                 let link = Transmission {
                     time: self.time,
                     sender: &sender,
-                    receiver: &mailbox.endpoint,
+                    receiver: mailbox.endpoint,
                     topic: &publication.channel.1,
                     contacts_truth: self.contacts_truth,
                 };
@@ -353,7 +353,7 @@ impl NetworkContext<'_, '_> {
             let Some(receiver) = self
                 .mailboxes
                 .iter_mut()
-                .find(|mailbox| mailbox.endpoint == message.receiver)
+                .find(|mailbox| *mailbox.endpoint == message.receiver)
             else {
                 // A removed entity cannot receive delayed messages.
                 continue;
@@ -435,28 +435,28 @@ mod tests {
             let mut network_messages = Messages::default();
             let mut mailboxes = [
                 Mailbox {
-                    endpoint: MessageEndpoint {
+                    endpoint: &MessageEndpoint {
                         entity_id: Some(1),
                         plugin: "sensor".into(),
                     },
                     messages: &mut self.sender,
                 },
                 Mailbox {
-                    endpoint: MessageEndpoint {
+                    endpoint: &MessageEndpoint {
                         entity_id: Some(1),
                         plugin: "autonomy".into(),
                     },
                     messages: &mut self.same_entity,
                 },
                 Mailbox {
-                    endpoint: MessageEndpoint {
+                    endpoint: &MessageEndpoint {
                         entity_id: Some(2),
                         plugin: "autonomy".into(),
                     },
                     messages: &mut self.other_entity,
                 },
                 Mailbox {
-                    endpoint: endpoint.clone(),
+                    endpoint: &endpoint,
                     messages: &mut network_messages,
                 },
             ];

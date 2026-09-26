@@ -29,7 +29,7 @@ class PerfTests(unittest.TestCase):
     def test_workload_missions_are_valid_xml(self):
         import xml.etree.ElementTree as ET
         for name, (_, sizes, fields) in perf.WORKLOADS.items():
-            ET.fromstring(perf.HEADER.format(name=name, agents=sizes[0], variance=0, **fields))
+            ET.fromstring(perf.HEADER.format(name=name, agents=sizes[0], **fields))
 
 
 if __name__ == "__main__":

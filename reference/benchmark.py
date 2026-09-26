@@ -9,17 +9,19 @@ Builds the unmodified C++ branch (Ubuntu-24.04) and the Rust core-only runner
 so neither is emulated. On Apple Silicon that is linux/arm64 in Docker's VM, and
 C++ is built without JSBSim, which no workload uses.
 
-Runs perf.py's workloads (motion, substeps, sensing, churn) at three agent counts
+Runs perf.py's workloads (motion, substeps, sensing, churn, collision) at three agent counts
 with C++ single-threaded, C++ with its own multi_threaded mode at 8 threads, and
 Rust at 1 and 8 workers: one warm-up, then --repetitions timed runs each. Times
 are whole processes minus the median of three one-step runs of the same mission
 (startup, parsing, and plugin loading), so they approximate stepping and logging.
-Peak memory is each simulator's maximum resident set, from GNU time.
+Peak memory is each simulator's maximum resident set, from GNU time. A timed
+run's output is deleted once it matches the warm-up's, and each build replaces
+the previous benchmark image, so repeated benchmarks don't fill the disk.
 
 Rust must write identical output (frames, summary, events) at 1 and 8 workers.
-It must also match single-threaded C++ except in churn and sensing, which
-depend on random spawn positions and sensor noise that the unmodified C++ build
-draws differently (the reference check matches them with its comparison build).
+It must also match single-threaded C++ except in churn, sensing, and collision,
+which depend on random spawn positions and sensor noise that the unmodified C++
+build draws differently (the reference check matches them with its comparison build).
 Every timed run must repeat its warm-up output; C++'s multithreaded mode is
 reported, not required, to do so.
 That mode sometimes deadlocks (SimControl::worker waits on its condition variable
@@ -33,6 +35,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import shutil
 import signal
 import statistics
 import subprocess
@@ -47,20 +50,19 @@ from reference_check import BASELINE_BRANCH, ROOT, build_reference, capture, run
     write_json
 
 COUNTS = {"motion": (64, 256, 1024), "substeps": (64, 256, 1024),
-          "sensing": (32, 64, 128), "churn": (64, 256, 1024)}
+          "sensing": (32, 64, 128), "churn": (64, 256, 1024), "collision": (256, 1024, 2048)}
 VARIANTS = ("cpp-1", "cpp-8", "rust-1", "rust-8")
 HANG_S = 120  # far longer than any run here takes
 HANG_RETRIES = 5
 RUST_FILES = ("frames.bin", "summary.csv", "events.json")
-RANDOM = {"churn", "sensing"}  # random spawns; noisy state that Straight steers by
+RANDOM = {"churn", "sensing", "collision"}  # random spawns; noisy state that Straight steers by
 
 
 def mission(name, agents, directory, variant, one_step=False):
     """The perf.py workload with C++ logging and threading set for one run."""
     _, _, fields = WORKLOADS[name]
     fields = {**fields, "end": 0.1} if one_step else fields
-    root = ET.fromstring(HEADER.format(name=name, agents=agents,
-                                       variance=2500 if name == "churn" else 0, **fields))
+    root = ET.fromstring(HEADER.format(name=name, agents=agents, **fields))
     settings = {"log_dir": directory / "logs", "create_latest_dir": "false",
                 "display_progress": "false", "output_type": "all", "no_bin_logging": "false",
                 "multi_threaded": "true" if variant == "cpp-8" else "false"}
@@ -149,7 +151,11 @@ def measure(name, agents, case, repetitions):
                 warmups[variant] = output
                 continue
             samples[variant].append(elapsed - startup[variant])
-            repeatable[variant] &= same_output(output, warmups[variant])
+            if same_output(output, warmups[variant]):
+                # Only the warm-up's output is kept; a matching repeat adds nothing.
+                shutil.rmtree(case / f"{repetition}-{variant}")
+            else:
+                repeatable[variant] = False
             print(f"{name}-{agents} {variant} {repetition}: {elapsed:.3f}s", flush=True)
     statistics_by_variant = {
         variant: {"samples_s": values, "median_s": statistics.median(values),
@@ -214,7 +220,11 @@ def main():
     run_logged(["docker", "build", "--platform", target, "--progress", "plain",
                 "-f", ROOT / "reference/rust.Dockerfile", "--target", "benchmark",
                 "--build-arg", f"REFERENCE_IMAGE={cpp['image_tag']}",
+                "--tag", f"scrimmage-rs-benchmark:{target.split('/')[1]}",
                 "--iidfile", output / "image-id.txt", ROOT], output / "build.log", timeout=3600)
+    # The new build took the tag; delete earlier benchmark images (labelled, now untagged).
+    run_logged(["docker", "image", "prune", "--force", "--filter", "label=scrimmage-rs-benchmark"],
+               output / "prune.log", timeout=600)
     image = (output / "image-id.txt").read_text().strip()
     files = [ROOT / "Cargo.toml", ROOT / "Cargo.lock"] + list((ROOT / "crates").rglob("*.rs"))
     files += list((ROOT / "crates").rglob("*.xml")) + list((ROOT / "crates").rglob("Cargo.toml"))

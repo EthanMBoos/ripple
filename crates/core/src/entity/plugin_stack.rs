@@ -159,23 +159,29 @@ impl CompiledStack {
                 .enumerate()
                 .map(|(index, plugin)| {
                     let identity = format!("{category}/{}:{index}", plugin.name);
-                    Slot::new(plugin, PluginRandom::new(seed, entity_id, &identity))
+                    let random = PluginRandom::new(seed, entity_id, &identity);
+                    Slot::new(plugin, random, endpoint(entity_id, identity))
                 })
                 .collect()
         };
         let autonomies = agent_slots("autonomy", &self.autonomies);
         let controllers = agent_slots("controller", &self.controllers);
+        let motion_identity = format!("motion/{}:0", self.motion.name);
         let motion = Slot::new(
             &self.motion,
-            PluginRandom::new(seed, entity_id, &format!("motion/{}:0", self.motion.name)),
+            PluginRandom::new(seed, entity_id, &motion_identity),
+            endpoint(entity_id, motion_identity),
         );
         // Sensor identities predate the other categories; keep them so noise is unchanged.
         let sensors = self
             .sensors
             .iter()
             .zip(&self.sensor_identities)
-            .map(|(plugin, identity)| {
-                Slot::new(plugin, PluginRandom::new(seed, entity_id, identity))
+            .enumerate()
+            .map(|(index, (plugin, identity))| {
+                let random = PluginRandom::new(seed, entity_id, identity);
+                let name = format!("sensor/{}:{index}", plugin.name);
+                Slot::new(plugin, random, endpoint(entity_id, name))
             })
             .collect();
         PluginStack {
@@ -193,8 +199,26 @@ impl CompiledStack {
     }
 }
 
+// DEVNOTE: Every plugin has a message "address": which entity it belongs to
+// plus a name like "sensor/NoisyContacts:0". Networks use it to know who sent
+// a message and who should receive it. We used to rebuild that name from
+// scratch for every plugin on every step, which meant creating thousands of
+// small strings per second that were thrown away immediately. Profiling
+// perf.py's straight-flight mission with macOS `sample` showed this took about
+// a fifth of the main thread's time. Now each plugin's address is written once,
+// when its entity is created, and each step just points to it. Results are
+// byte-identical (all 13 comparison missions, 1 and 8 workers, including
+// traces); perf.py showed straight flight about a third faster.
+fn endpoint(entity_id: i32, plugin: String) -> MessageEndpoint {
+    MessageEndpoint {
+        entity_id: Some(entity_id),
+        plugin,
+    }
+}
+
 struct Slot<T: ?Sized> {
     name: String,
+    endpoint: MessageEndpoint,
     plugin: Box<T>,
     io: PluginIo,
     rate: Rate,
@@ -202,9 +226,10 @@ struct Slot<T: ?Sized> {
     random: PluginRandom,
 }
 impl<T: ?Sized> Slot<T> {
-    fn new(compiled: &CompiledPlugin<T>, random: PluginRandom) -> Self {
+    fn new(compiled: &CompiledPlugin<T>, random: PluginRandom, endpoint: MessageEndpoint) -> Self {
         Self {
             name: compiled.name.clone(),
+            endpoint,
             plugin: (compiled.instantiate)(),
             io: PluginIo::new(&compiled.ports),
             rate: compiled.rate.clone(),
@@ -212,17 +237,9 @@ impl<T: ?Sized> Slot<T> {
             random,
         }
     }
-    fn mailbox(
-        &mut self,
-        entity_id: i32,
-        category: &str,
-        index: usize,
-    ) -> crate::pubsub::messages::Mailbox<'_> {
+    fn mailbox(&mut self) -> crate::pubsub::messages::Mailbox<'_> {
         crate::pubsub::messages::Mailbox {
-            endpoint: MessageEndpoint {
-                entity_id: Some(entity_id),
-                plugin: format!("{category}/{}:{index}", self.name),
-            },
+            endpoint: &self.endpoint,
             messages: &mut self.messages,
         }
     }
@@ -499,22 +516,13 @@ impl PluginStack {
         }
         Ok(())
     }
-    pub fn mailboxes<'a>(
-        &'a mut self,
-        entity_id: i32,
-        mailboxes: &mut Vec<crate::pubsub::messages::Mailbox<'a>>,
-    ) {
-        for (category, slots) in [
-            ("autonomy", self.autonomies.as_mut_slice()),
-            ("controller", self.controllers.as_mut_slice()),
-        ] {
-            for (index, slot) in slots.iter_mut().enumerate() {
-                mailboxes.push(slot.mailbox(entity_id, category, index));
-            }
+    pub fn mailboxes<'a>(&'a mut self, mailboxes: &mut Vec<crate::pubsub::messages::Mailbox<'a>>) {
+        for slot in self.autonomies.iter_mut().chain(&mut self.controllers) {
+            mailboxes.push(slot.mailbox());
         }
-        mailboxes.push(self.motion.mailbox(entity_id, "motion", 0));
-        for (index, sensor) in self.sensors.iter_mut().enumerate() {
-            mailboxes.push(sensor.mailbox(entity_id, "sensor", index));
+        mailboxes.push(self.motion.mailbox());
+        for sensor in &mut self.sensors {
+            mailboxes.push(sensor.mailbox());
         }
     }
     pub fn close(&mut self, time: StepTime) -> Result<()> {

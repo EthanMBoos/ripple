@@ -144,7 +144,7 @@ def benchmark_table(path, label, where):
         "\\bottomrule",
         "\\end{tabular}",
         "\\par\\smallskip Ratio: C++ over Rust at one thread, shown only where their",
-        "outputs match; sensing and churn draw different random numbers, so the two",
+        "outputs match; sensing, churn, and collision draw different random numbers, so the two",
         "simulators do different work. MiB: peak resident memory.",
         "Hangs: C++~8 runs killed after 120\\,s and retried (see text).",
         "\\end{table*}",

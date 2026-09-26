@@ -173,7 +173,7 @@ impl<T: ?Sized> WorldSlot<T> {
     }
     fn mailbox(&mut self) -> Mailbox<'_> {
         Mailbox {
-            endpoint: self.endpoint.clone(),
+            endpoint: &self.endpoint,
             messages: &mut self.messages,
         }
     }
@@ -274,11 +274,12 @@ impl WorldPlugins {
         mut trace: Option<&mut NetworkTrace>,
     ) -> Result<bool> {
         let names: Vec<_> = self.networks.iter().map(|slot| slot.name.clone()).collect();
+        let simulator_endpoint = MessageEndpoint {
+            entity_id: None,
+            plugin: "SimControl".into(),
+        };
         let mut mailboxes = vec![Mailbox {
-            endpoint: MessageEndpoint {
-                entity_id: None,
-                plugin: "SimControl".into(),
-            },
+            endpoint: &simulator_endpoint,
             messages: simulator,
         }];
         entities.sort_by_key(Entity::id);
@@ -295,7 +296,7 @@ impl WorldPlugins {
         for slot in &mut self.networks {
             slot.messages.time_s = time.time_s;
             mailboxes.push(Mailbox {
-                endpoint: slot.endpoint.clone(),
+                endpoint: &slot.endpoint,
                 messages: &mut slot.messages,
             });
             network_steps.push((

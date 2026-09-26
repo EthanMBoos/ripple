@@ -19,6 +19,8 @@ FROM build AS cli
 ENTRYPOINT ["/usr/local/bin/scrimmage"]
 
 FROM ${REFERENCE_IMAGE} AS benchmark
+# benchmark.py deletes earlier images with this label after each build.
+LABEL scrimmage-rs-benchmark=1
 COPY --from=build /usr/local/bin/scrimmage-benchmark /usr/local/bin/scrimmage-benchmark
 COPY --from=build /rust-compiler.txt /rust-compiler.txt
 # GNU time reports each simulator's own peak memory; a Python parent would inflate it.

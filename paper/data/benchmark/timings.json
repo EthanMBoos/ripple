@@ -14,51 +14,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.1633090840000051,
-            0.1575289170000076,
-            0.22730999999998858
+            0.15463479199979702,
+            0.14032466599974214,
+            0.15207570799975656
           ],
-          "median_s": 0.1633090840000051,
-          "min_s": 0.1575289170000076,
-          "max_s": 0.22730999999998858,
-          "startup_s": 0.031824249999999665,
-          "peak_mb": 13.9765625
+          "median_s": 0.15207570799975656,
+          "min_s": 0.14032466599974214,
+          "max_s": 0.15463479199979702,
+          "startup_s": 0.0337651250001727,
+          "peak_mb": 13.97265625
         },
         "cpp-8": {
           "samples_s": [
-            1.964614167999997,
-            1.8665739600000109,
-            1.9201032089999899
+            1.788262709999799,
+            1.7837745430001632,
+            1.9196273759998803
           ],
-          "median_s": 1.9201032089999899,
-          "min_s": 1.8665739600000109,
-          "max_s": 1.964614167999997,
-          "startup_s": 0.0278544580000073,
-          "peak_mb": 14.1015625
+          "median_s": 1.788262709999799,
+          "min_s": 1.7837745430001632,
+          "max_s": 1.9196273759998803,
+          "startup_s": 0.04310729100006938,
+          "peak_mb": 14.22265625
         },
         "rust-1": {
           "samples_s": [
-            0.15552954100000704,
-            0.15636316600000555,
-            0.15747258200001113
+            0.11792845900026805,
+            0.10991183400028604,
+            0.12913712600038707
           ],
-          "median_s": 0.15636316600000555,
-          "min_s": 0.15552954100000704,
-          "max_s": 0.15747258200001113,
-          "startup_s": 0.0029719589999928075,
-          "peak_mb": 3.59375
+          "median_s": 0.11792845900026805,
+          "min_s": 0.10991183400028604,
+          "max_s": 0.12913712600038707,
+          "startup_s": 0.0029236659997877723,
+          "peak_mb": 3.53125
         },
         "rust-8": {
           "samples_s": [
-            3.7284832929999965,
-            3.704249794000006,
-            3.9061240430000055
+            3.372491125999659,
+            3.8019341679996614,
+            3.5730140429996027
           ],
-          "median_s": 3.7284832929999965,
-          "min_s": 3.704249794000006,
-          "max_s": 3.9061240430000055,
-          "startup_s": 0.005059125000002496,
-          "peak_mb": 3.59375
+          "median_s": 3.5730140429996027,
+          "min_s": 3.372491125999659,
+          "max_s": 3.8019341679996614,
+          "startup_s": 0.005415042000095127,
+          "peak_mb": 3.53125
         }
       },
       "repeatable": {
@@ -69,7 +69,7 @@
       },
       "hangs": {
         "cpp-1": 0,
-        "cpp-8": 0,
+        "cpp-8": 2,
         "rust-1": 0,
         "rust-8": 0
       },
@@ -117,9 +117,9 @@
           "direct_event_stream_compared": false
         }
       },
-      "passed": true,
       "rust_workers_match": true,
-      "matches_cpp": true
+      "matches_cpp": true,
+      "passed": true
     },
     {
       "workload": "motion",
@@ -128,51 +128,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.6433478760000071,
-            0.6294914170000254,
-            0.6344115010000166
+            0.6803560000003017,
+            0.6714959170003567,
+            0.6416531250006301
           ],
-          "median_s": 0.6344115010000166,
-          "min_s": 0.6294914170000254,
-          "max_s": 0.6433478760000071,
-          "startup_s": 0.04287524999998027,
-          "peak_mb": 24.3515625
+          "median_s": 0.6714959170003567,
+          "min_s": 0.6416531250006301,
+          "max_s": 0.6803560000003017,
+          "startup_s": 0.03929949999974269,
+          "peak_mb": 24.34765625
         },
         "cpp-8": {
           "samples_s": [
-            5.454161209999995,
-            5.272798043999984,
-            5.21416962699999
+            5.3308542939998915,
+            4.424145084999964,
+            4.439081794000231
           ],
-          "median_s": 5.272798043999984,
-          "min_s": 5.21416962699999,
-          "max_s": 5.454161209999995,
-          "startup_s": 0.04934129200000825,
-          "peak_mb": 24.4765625
+          "median_s": 4.439081794000231,
+          "min_s": 4.424145084999964,
+          "max_s": 5.3308542939998915,
+          "startup_s": 0.04665054199995211,
+          "peak_mb": 24.47265625
         },
         "rust-1": {
           "samples_s": [
-            0.5475887909999813,
-            0.5185206249999794,
-            0.5298354999999617
+            0.41255087499985166,
+            0.42998887499970806,
+            0.4063660839997283
           ],
-          "median_s": 0.5298354999999617,
-          "min_s": 0.5185206249999794,
-          "max_s": 0.5475887909999813,
-          "startup_s": 0.00571729200001414,
-          "peak_mb": 4.71875
+          "median_s": 0.41255087499985166,
+          "min_s": 0.4063660839997283,
+          "max_s": 0.42998887499970806,
+          "startup_s": 0.005167625000012777,
+          "peak_mb": 4.65625
         },
         "rust-8": {
           "samples_s": [
-            5.235898918000004,
-            5.184583000999993,
-            5.36163646
+            4.834785086000011,
+            4.814938585999698,
+            4.734774461000143
           ],
-          "median_s": 5.235898918000004,
-          "min_s": 5.184583000999993,
-          "max_s": 5.36163646,
-          "startup_s": 0.008306209000011222,
-          "peak_mb": 4.71875
+          "median_s": 4.814938585999698,
+          "min_s": 4.734774461000143,
+          "max_s": 4.834785086000011,
+          "startup_s": 0.0072864580001805734,
+          "peak_mb": 4.65625
         }
       },
       "repeatable": {
@@ -231,9 +231,9 @@
           "direct_event_stream_compared": false
         }
       },
-      "passed": true,
       "rust_workers_match": true,
-      "matches_cpp": true
+      "matches_cpp": true,
+      "passed": true
     },
     {
       "workload": "motion",
@@ -242,51 +242,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            2.576564168000033,
-            2.557090835000025,
-            2.596278710000007
+            2.6532942509998065,
+            2.5205596259997947,
+            2.5609882929998093
           ],
-          "median_s": 2.576564168000033,
-          "min_s": 2.557090835000025,
-          "max_s": 2.596278710000007,
-          "startup_s": 0.11239058300000693,
-          "peak_mb": 65.93359375
+          "median_s": 2.5609882929998093,
+          "min_s": 2.5205596259997947,
+          "max_s": 2.6532942509998065,
+          "startup_s": 0.10872279200020785,
+          "peak_mb": 65.9375
         },
         "cpp-8": {
           "samples_s": [
-            18.65633896800003,
-            18.507423425999974,
-            18.784866259999973
+            18.699753216999852,
+            18.327219383999818,
+            18.36667717599994
           ],
-          "median_s": 18.65633896800003,
-          "min_s": 18.507423425999974,
-          "max_s": 18.784866259999973,
-          "startup_s": 0.12732041600000343,
-          "peak_mb": 66.2265625
+          "median_s": 18.36667717599994,
+          "min_s": 18.327219383999818,
+          "max_s": 18.699753216999852,
+          "startup_s": 0.12782254100011414,
+          "peak_mb": 66.22265625
         },
         "rust-1": {
           "samples_s": [
-            1.8987195010000164,
-            1.9427410429999554,
-            1.9801309170000536
+            1.4201496669993503,
+            1.4157448759992803,
+            1.3488647919998584
           ],
-          "median_s": 1.9427410429999554,
-          "min_s": 1.8987195010000164,
-          "max_s": 1.9801309170000536,
-          "startup_s": 0.02669224999999642,
-          "peak_mb": 9.34375
+          "median_s": 1.4157448759992803,
+          "min_s": 1.3488647919998584,
+          "max_s": 1.4201496669993503,
+          "startup_s": 0.029238792000342073,
+          "peak_mb": 9.28125
         },
         "rust-8": {
           "samples_s": [
-            7.057665751999963,
-            6.165776502,
-            7.783602170000023
+            5.798793793999721,
+            5.9245073349998165,
+            6.116519543999857
           ],
-          "median_s": 7.057665751999963,
-          "min_s": 6.165776502,
-          "max_s": 7.783602170000023,
-          "startup_s": 0.03102745900000059,
-          "peak_mb": 9.46484375
+          "median_s": 5.9245073349998165,
+          "min_s": 5.798793793999721,
+          "max_s": 6.116519543999857,
+          "startup_s": 0.03186570900015795,
+          "peak_mb": 9.34375
         }
       },
       "repeatable": {
@@ -345,9 +345,9 @@
           "direct_event_stream_compared": false
         }
       },
-      "passed": true,
       "rust_workers_match": true,
-      "matches_cpp": true
+      "matches_cpp": true,
+      "passed": true
     },
     {
       "workload": "substeps",
@@ -356,924 +356,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.13602599999990161,
-            0.1360179999999218,
-            0.1472463750000088
+            0.1263344590001907,
+            0.13158083300004364,
+            0.1240029579998918
           ],
-          "median_s": 0.13602599999990161,
-          "min_s": 0.1360179999999218,
-          "max_s": 0.1472463750000088,
-          "startup_s": 0.028627042000039182,
-          "peak_mb": 13.9765625
+          "median_s": 0.1263344590001907,
+          "min_s": 0.1240029579998918,
+          "max_s": 0.13158083300004364,
+          "startup_s": 0.030319500000132393,
+          "peak_mb": 13.97265625
         },
         "cpp-8": {
           "samples_s": [
-            1.955683334000014,
-            1.980398793000063,
-            1.9662787919999118
+            1.984199376000106,
+            2.0098777100001826,
+            1.9327047499996297
           ],
-          "median_s": 1.9662787919999118,
-          "min_s": 1.955683334000014,
-          "max_s": 1.980398793000063,
-          "startup_s": 0.03175874999999451,
-          "peak_mb": 13.9765625
+          "median_s": 1.984199376000106,
+          "min_s": 1.9327047499996297,
+          "max_s": 2.0098777100001826,
+          "startup_s": 0.03254754099998536,
+          "peak_mb": 13.97265625
         },
         "rust-1": {
           "samples_s": [
-            0.10911470899998221,
-            0.11385454199989908,
-            0.10438620900004025
+            0.09956741799987867,
+            0.09524595900029453,
+            0.09553095899991604
           ],
-          "median_s": 0.10911470899998221,
-          "min_s": 0.10438620900004025,
-          "max_s": 0.11385454199989908,
-          "startup_s": 0.0028290000000197324,
-          "peak_mb": 3.59375
+          "median_s": 0.09553095899991604,
+          "min_s": 0.09524595900029453,
+          "max_s": 0.09956741799987867,
+          "startup_s": 0.002783790999728808,
+          "peak_mb": 3.53125
         },
         "rust-8": {
           "samples_s": [
-            4.9234404190000305,
-            4.925888918000055,
-            4.666278169000066
+            4.7472329610004635,
+            4.3784370450002825,
+            4.51027466900041
           ],
-          "median_s": 4.9234404190000305,
-          "min_s": 4.666278169000066,
-          "max_s": 4.925888918000055,
-          "startup_s": 0.013538499999981468,
-          "peak_mb": 3.59375
-        }
-      },
-      "repeatable": {
-        "cpp-1": true,
-        "cpp-8": true,
-        "rust-1": true,
-        "rust-8": true
-      },
-      "hangs": {
-        "cpp-1": 0,
-        "cpp-8": 0,
-        "rust-1": 0,
-        "rust-8": 0
-      },
-      "comparisons": {
-        "cpp-8": {
-          "passed": true,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 38464,
-          "max_position_error_m": 0.0,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 0,
-          "first_mismatches": [],
-          "direct_event_stream_compared": false
-        },
-        "rust-1": {
-          "passed": true,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 38464,
-          "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 0,
-          "first_mismatches": [],
-          "direct_event_stream_compared": false
-        },
-        "rust-8": {
-          "passed": true,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 38464,
-          "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 0,
-          "first_mismatches": [],
-          "direct_event_stream_compared": false
-        }
-      },
-      "passed": true,
-      "rust_workers_match": true,
-      "matches_cpp": true
-    },
-    {
-      "workload": "substeps",
-      "agents": 256,
-      "steps": 600,
-      "statistics": {
-        "cpp-1": {
-          "samples_s": [
-            0.6352281260000154,
-            0.563014793000093,
-            0.5585704180000448
-          ],
-          "median_s": 0.563014793000093,
-          "min_s": 0.5585704180000448,
-          "max_s": 0.6352281260000154,
-          "startup_s": 0.043691332999969745,
-          "peak_mb": 24.2265625
-        },
-        "cpp-8": {
-          "samples_s": [
-            5.7886081689999855,
-            5.95850816899997,
-            5.783150001999957
-          ],
-          "median_s": 5.7886081689999855,
-          "min_s": 5.783150001999957,
-          "max_s": 5.95850816899997,
-          "startup_s": 0.05407466700000896,
-          "peak_mb": 24.46484375
-        },
-        "rust-1": {
-          "samples_s": [
-            0.4248148320000382,
-            0.41427399900010187,
-            0.4256990420000193
-          ],
-          "median_s": 0.4248148320000382,
-          "min_s": 0.41427399900010187,
-          "max_s": 0.4256990420000193,
-          "startup_s": 0.006102458999976079,
-          "peak_mb": 4.71875
-        },
-        "rust-8": {
-          "samples_s": [
-            5.887243462000129,
-            5.544711420000112,
-            5.671601295000073
-          ],
-          "median_s": 5.671601295000073,
-          "min_s": 5.544711420000112,
-          "max_s": 5.887243462000129,
-          "startup_s": 0.01810820799994417,
-          "peak_mb": 4.71875
-        }
-      },
-      "repeatable": {
-        "cpp-1": true,
-        "cpp-8": true,
-        "rust-1": true,
-        "rust-8": true
-      },
-      "hangs": {
-        "cpp-1": 0,
-        "cpp-8": 0,
-        "rust-1": 0,
-        "rust-8": 0
-      },
-      "comparisons": {
-        "cpp-8": {
-          "passed": true,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 153856,
-          "max_position_error_m": 0.0,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 0,
-          "first_mismatches": [],
-          "direct_event_stream_compared": false
-        },
-        "rust-1": {
-          "passed": true,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 153856,
-          "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 0,
-          "first_mismatches": [],
-          "direct_event_stream_compared": false
-        },
-        "rust-8": {
-          "passed": true,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 153856,
-          "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 0,
-          "first_mismatches": [],
-          "direct_event_stream_compared": false
-        }
-      },
-      "passed": true,
-      "rust_workers_match": true,
-      "matches_cpp": true
-    },
-    {
-      "workload": "substeps",
-      "agents": 1024,
-      "steps": 600,
-      "statistics": {
-        "cpp-1": {
-          "samples_s": [
-            2.259143750999897,
-            2.3191007929999614,
-            2.360747667999931
-          ],
-          "median_s": 2.3191007929999614,
-          "min_s": 2.259143750999897,
-          "max_s": 2.360747667999931,
-          "startup_s": 0.11493858300002557,
-          "peak_mb": 65.6796875
-        },
-        "cpp-8": {
-          "samples_s": [
-            20.910339508999982,
-            20.50276225999994,
-            20.340020593000077
-          ],
-          "median_s": 20.50276225999994,
-          "min_s": 20.340020593000077,
-          "max_s": 20.910339508999982,
-          "startup_s": 0.14989029200000914,
-          "peak_mb": 66.1015625
-        },
-        "rust-1": {
-          "samples_s": [
-            1.58299850100002,
-            1.604756709999947,
-            1.5919908759999544
-          ],
-          "median_s": 1.5919908759999544,
-          "min_s": 1.58299850100002,
-          "max_s": 1.604756709999947,
-          "startup_s": 0.028569208000021717,
-          "peak_mb": 9.34375
-        },
-        "rust-8": {
-          "samples_s": [
-            6.903211086000056,
-            6.7403579190000755,
-            7.143783043999974
-          ],
-          "median_s": 6.903211086000056,
-          "min_s": 6.7403579190000755,
-          "max_s": 7.143783043999974,
-          "startup_s": 0.03830758399999468,
-          "peak_mb": 9.34375
-        }
-      },
-      "repeatable": {
-        "cpp-1": true,
-        "cpp-8": true,
-        "rust-1": true,
-        "rust-8": true
-      },
-      "hangs": {
-        "cpp-1": 0,
-        "cpp-8": 0,
-        "rust-1": 0,
-        "rust-8": 0
-      },
-      "comparisons": {
-        "cpp-8": {
-          "passed": true,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 615424,
-          "max_position_error_m": 0.0,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 0,
-          "first_mismatches": [],
-          "direct_event_stream_compared": false
-        },
-        "rust-1": {
-          "passed": true,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 615424,
-          "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 0,
-          "first_mismatches": [],
-          "direct_event_stream_compared": false
-        },
-        "rust-8": {
-          "passed": true,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 615424,
-          "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 0,
-          "first_mismatches": [],
-          "direct_event_stream_compared": false
-        }
-      },
-      "passed": true,
-      "rust_workers_match": true,
-      "matches_cpp": true
-    },
-    {
-      "workload": "sensing",
-      "agents": 32,
-      "steps": 600,
-      "statistics": {
-        "cpp-1": {
-          "samples_s": [
-            0.28039770899999894,
-            0.28137795899999674,
-            0.3028780409999854
-          ],
-          "median_s": 0.28137795899999674,
-          "min_s": 0.28039770899999894,
-          "max_s": 0.3028780409999854,
-          "startup_s": 0.03560812499995336,
-          "peak_mb": 13.21484375
-        },
-        "cpp-8": {
-          "samples_s": [
-            0.6606250419999924,
-            0.6509172089998856,
-            0.6944981679998818
-          ],
-          "median_s": 0.6606250419999924,
-          "min_s": 0.6509172089998856,
-          "max_s": 0.6944981679998818,
-          "startup_s": 0.038881083000092076,
-          "peak_mb": 14.08984375
-        },
-        "rust-1": {
-          "samples_s": [
-            0.265422625000042,
-            0.2648303749999741,
-            0.26494979199992486
-          ],
-          "median_s": 0.26494979199992486,
-          "min_s": 0.2648303749999741,
-          "max_s": 0.265422625000042,
-          "startup_s": 0.0035100830000374117,
-          "peak_mb": 3.84375
-        },
-        "rust-8": {
-          "samples_s": [
-            1.0492593740000302,
-            1.0390984579998985,
-            1.082235915999945
-          ],
-          "median_s": 1.0492593740000302,
-          "min_s": 1.0390984579998985,
-          "max_s": 1.082235915999945,
-          "startup_s": 0.004927959000042392,
-          "peak_mb": 4.1484375
-        }
-      },
-      "repeatable": {
-        "cpp-1": true,
-        "cpp-8": false,
-        "rust-1": true,
-        "rust-8": true
-      },
-      "hangs": {
-        "cpp-1": 0,
-        "cpp-8": 0,
-        "rust-1": 0,
-        "rust-8": 0
-      },
-      "comparisons": {
-        "cpp-8": {
-          "passed": false,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 19232,
-          "max_position_error_m": 48.65017821429508,
-          "max_velocity_error_mps": 16.466747235505096,
-          "max_orientation_error_rad": 0.8886232413218609,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 19164,
-          "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.15453518099933933 m, velocity=3.093910915009176 m/s, orientation=0.20001473471108927 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.09302366644469566 m, velocity=1.8655787839870313 m/s, orientation=0.12001275588978128 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.007481048463911258 m, velocity=0.14966254781107152 m/s, orientation=3.9401274663043046e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.15545806565154913 m, velocity=3.1178580014195596 m/s, orientation=0.20001473287123273 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.10247713266526577 m, velocity=2.0543089701168444 m/s, orientation=0.1322054924703953 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.15493583363815636 m, velocity=3.10640661234377 m/s, orientation=0.20001473235982203 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.08051857109181979 m, velocity=1.6118233182550437 m/s, orientation=0.1043305796652706 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.005601084714028608 m, velocity=0.11205282283844627 m/s, orientation=1.285896011401759e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15452337521036608 m, velocity=3.0939512922882972 m/s, orientation=0.2000147326124471 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.1548986145653571 m, velocity=3.1047085208050627 m/s, orientation=0.2000147323418111 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.15488126256607349 m, velocity=3.1016842301361334 m/s, orientation=0.20001473232131195 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.15366266168440204 m, velocity=3.068478532396343 m/s, orientation=0.20001473233823014 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.0036009895046417483 m, velocity=0.0720398027491605 m/s, orientation=3.578607341473436e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.15426687241436493 m, velocity=3.0859376638806895 m/s, orientation=0.20001473280951723 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.10638901514163072 m, velocity=2.1312321832071532 m/s, orientation=0.13661385788660182 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.15461084392672686 m, velocity=3.0962636978197557 m/s, orientation=0.20001473227952768 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.1543441471435939 m, velocity=3.088691184357791 m/s, orientation=0.20001473250370078 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.006681707128262864 m, velocity=0.13367127680259558 m/s, orientation=1.610077823154592e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 21: position=0.15455528470436808 m, velocity=3.0928380208877435 m/s, orientation=0.20001473232433623 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 22: position=0.005440373923411646 m, velocity=0.108837713715435 m/s, orientation=9.460728319266856e-06 rad, angular velocity=0.0 rad/s"
-          ],
-          "direct_event_stream_compared": false
-        },
-        "rust-1": {
-          "passed": false,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 19232,
-          "max_position_error_m": 38.78659992610489,
-          "max_velocity_error_mps": 16.703875134818247,
-          "max_orientation_error_rad": 0.8900422488442349,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 19168,
-          "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.003120571176631591 m, velocity=0.06242876639379206 m/s, orientation=7.039632616001911e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.002657324771834738 m, velocity=0.05316126362225982 m/s, orientation=1.9928940630074778e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15457442244097386 m, velocity=3.095818344755638 m/s, orientation=0.20001473257783042 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.15524984916305276 m, velocity=3.1083063157787105 m/s, orientation=0.2000147325960362 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.15426364506240786 m, velocity=3.086464341134086 m/s, orientation=0.20001473234360787 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.005158513807151253 m, velocity=0.10319894477708773 m/s, orientation=3.535645075460669e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.15528212046535417 m, velocity=3.1138770733984726 m/s, orientation=0.20001473229783526 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.08463062595862343 m, velocity=1.6963719381076534 m/s, orientation=0.10939706867897428 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.07402539593083854 m, velocity=1.4835316123818643 m/s, orientation=0.09568415643427465 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.15517333869944228 m, velocity=3.11128881264213 m/s, orientation=0.20001473284118215 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.008188583838338122 m, velocity=0.16381718512626228 m/s, orientation=5.368701799056752e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.0069358142014892335 m, velocity=0.1387548304116451 m/s, orientation=1.4777708754496308e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.1548848092245733 m, velocity=3.100897119629169 m/s, orientation=0.20001473298362052 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.005691079450515067 m, velocity=0.11385321752248229 m/s, orientation=8.704045428570445e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.15422233393543786 m, velocity=3.0850989048204522 m/s, orientation=0.20001473264847525 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.004674730554369295 m, velocity=0.09352059106816116 m/s, orientation=2.5836474098172687e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.1554142692246676 m, velocity=3.120996891272555 m/s, orientation=0.20001473501051287 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.0006200925584694771 m, velocity=0.012405302688595039 m/s, orientation=1.683416606093536e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.006556357495643446 m, velocity=0.13116358790764737 m/s, orientation=2.1506082887990244e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.15439242373314518 m, velocity=3.090010927565442 m/s, orientation=0.20001473354804616 rad, angular velocity=0.0 rad/s"
-          ],
-          "direct_event_stream_compared": false
-        },
-        "rust-8": {
-          "passed": false,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 19232,
-          "max_position_error_m": 38.78659992610489,
-          "max_velocity_error_mps": 16.703875134818247,
-          "max_orientation_error_rad": 0.8900422488442349,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 19168,
-          "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.003120571176631591 m, velocity=0.06242876639379206 m/s, orientation=7.039632616001911e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.002657324771834738 m, velocity=0.05316126362225982 m/s, orientation=1.9928940630074778e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15457442244097386 m, velocity=3.095818344755638 m/s, orientation=0.20001473257783042 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.15524984916305276 m, velocity=3.1083063157787105 m/s, orientation=0.2000147325960362 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.15426364506240786 m, velocity=3.086464341134086 m/s, orientation=0.20001473234360787 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.005158513807151253 m, velocity=0.10319894477708773 m/s, orientation=3.535645075460669e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.15528212046535417 m, velocity=3.1138770733984726 m/s, orientation=0.20001473229783526 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.08463062595862343 m, velocity=1.6963719381076534 m/s, orientation=0.10939706867897428 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.07402539593083854 m, velocity=1.4835316123818643 m/s, orientation=0.09568415643427465 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.15517333869944228 m, velocity=3.11128881264213 m/s, orientation=0.20001473284118215 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.008188583838338122 m, velocity=0.16381718512626228 m/s, orientation=5.368701799056752e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.0069358142014892335 m, velocity=0.1387548304116451 m/s, orientation=1.4777708754496308e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.1548848092245733 m, velocity=3.100897119629169 m/s, orientation=0.20001473298362052 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.005691079450515067 m, velocity=0.11385321752248229 m/s, orientation=8.704045428570445e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.15422233393543786 m, velocity=3.0850989048204522 m/s, orientation=0.20001473264847525 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.004674730554369295 m, velocity=0.09352059106816116 m/s, orientation=2.5836474098172687e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.1554142692246676 m, velocity=3.120996891272555 m/s, orientation=0.20001473501051287 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.0006200925584694771 m, velocity=0.012405302688595039 m/s, orientation=1.683416606093536e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.006556357495643446 m, velocity=0.13116358790764737 m/s, orientation=2.1506082887990244e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.15439242373314518 m, velocity=3.090010927565442 m/s, orientation=0.20001473354804616 rad, angular velocity=0.0 rad/s"
-          ],
-          "direct_event_stream_compared": false
-        }
-      },
-      "passed": true,
-      "rust_workers_match": true,
-      "matches_cpp": false
-    },
-    {
-      "workload": "sensing",
-      "agents": 64,
-      "steps": 600,
-      "statistics": {
-        "cpp-1": {
-          "samples_s": [
-            1.0485275839999986,
-            1.080731374999914,
-            1.0571837509999114
-          ],
-          "median_s": 1.0571837509999114,
-          "min_s": 1.0485275839999986,
-          "max_s": 1.080731374999914,
-          "startup_s": 0.04210675000001629,
-          "peak_mb": 17.578125
-        },
-        "cpp-8": {
-          "samples_s": [
-            1.4755798339999728,
-            1.4305672100000493,
-            1.43238708399997
-          ],
-          "median_s": 1.43238708399997,
-          "min_s": 1.4305672100000493,
-          "max_s": 1.4755798339999728,
-          "startup_s": 0.041794083000013416,
-          "peak_mb": 19.69921875
-        },
-        "rust-1": {
-          "samples_s": [
-            0.9036590010000509,
-            0.8940657090000741,
-            0.8894876260000046
-          ],
-          "median_s": 0.8940657090000741,
-          "min_s": 0.8894876260000046,
-          "max_s": 0.9036590010000509,
-          "startup_s": 0.005287457999997969,
-          "peak_mb": 4.71875
-        },
-        "rust-8": {
-          "samples_s": [
-            1.3896594600000753,
-            1.4153144590001148,
-            1.3790969589999804
-          ],
-          "median_s": 1.3896594600000753,
-          "min_s": 1.3790969589999804,
-          "max_s": 1.4153144590001148,
-          "startup_s": 0.007175957999947968,
-          "peak_mb": 6.53125
-        }
-      },
-      "repeatable": {
-        "cpp-1": true,
-        "cpp-8": false,
-        "rust-1": true,
-        "rust-8": true
-      },
-      "hangs": {
-        "cpp-1": 0,
-        "cpp-8": 0,
-        "rust-1": 0,
-        "rust-8": 0
-      },
-      "comparisons": {
-        "cpp-8": {
-          "passed": false,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 38464,
-          "max_position_error_m": 41.902548974747916,
-          "max_velocity_error_mps": 18.368301504799373,
-          "max_orientation_error_rad": 0.9888921330622158,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 38336,
-          "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.1556073540397434 m, velocity=3.116678155738125 m/s, orientation=0.20001473237354225 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.004596068353121052 m, velocity=0.09194690990640943 m/s, orientation=4.2842836098166905e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.007393445061922304 m, velocity=0.14790999062013677 m/s, orientation=6.917940256864272e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.0015674137090057733 m, velocity=0.03135698985129342 m/s, orientation=2.5065870612181083e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.005673510425730831 m, velocity=0.11350174020284035 m/s, orientation=2.1563201266723892e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.006271293106477867 m, velocity=0.12546071506754772 m/s, orientation=3.837191037042111e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.0016048744059397157 m, velocity=0.0321064072606279 m/s, orientation=3.558175764153666e-07 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.002067296705564294 m, velocity=0.04135742374200932 m/s, orientation=9.973194162838698e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.15490513814468532 m, velocity=3.1057337950231125 m/s, orientation=0.20001473242089868 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.005841568576837939 m, velocity=0.11686383714794961 m/s, orientation=2.1173616094433335e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15408498068827964 m, velocity=3.080922924912662 m/s, orientation=0.2000147322922817 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15504791656647077 m, velocity=3.1098328537999187 m/s, orientation=0.2000147324921987 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.0038296621348138235 m, velocity=0.07661452622438092 m/s, orientation=4.424807641047461e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.10278634218190474 m, velocity=2.060164781138626 m/s, orientation=0.13206083592184004 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.0031375556458173646 m, velocity=0.0627685524873389 m/s, orientation=2.5716221688739437e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.15483229461969258 m, velocity=3.1035469569064467 m/s, orientation=0.20001473228580907 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.007592972984662164 m, velocity=0.15190165797626978 m/s, orientation=7.718683156328146e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.00910441868456329 m, velocity=0.18257290866421122 m/s, orientation=0.011096024488530318 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.0003885363214684472 m, velocity=0.007772886040818507 m/s, orientation=3.1583403580586227e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.15415043537140025 m, velocity=3.082385885313937 m/s, orientation=0.2000147323983624 rad, angular velocity=0.0 rad/s"
-          ],
-          "direct_event_stream_compared": false
-        },
-        "rust-1": {
-          "passed": false,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 38464,
-          "max_position_error_m": 47.00408682750938,
-          "max_velocity_error_mps": 16.70816436276065,
-          "max_orientation_error_rad": 0.866862102793719,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 38336,
-          "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.010656083973697536 m, velocity=0.21318090100516238 m/s, orientation=1.8409859227986854e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.0017335096700025168 m, velocity=0.03467982743872225 m/s, orientation=7.111746817284327e-07 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.007786310026880621 m, velocity=0.1557694734333514 m/s, orientation=1.225269241055182e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.006907654526684471 m, velocity=0.1381914806022397 m/s, orientation=1.831563604526309e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.15437921648743344 m, velocity=3.0897505235430125 m/s, orientation=0.20001473306848308 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.00340294579241019 m, velocity=0.06807782782836094 m/s, orientation=1.229847092450082e-07 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.010264840597679691 m, velocity=0.2053538592749217 m/s, orientation=1.1162006854722232e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.07013144275344174 m, velocity=1.4060049546565858 m/s, orientation=0.09061766577022264 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.0015148931360100793 m, velocity=0.0303062834386316 m/s, orientation=1.4508403327270481e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.1551660947597622 m, velocity=3.1104539415648014 m/s, orientation=0.20001473229338557 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15362509576328767 m, velocity=3.066452822802454 m/s, orientation=0.2000147326916466 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15462404718349054 m, velocity=3.0965596859705475 m/s, orientation=0.2000147335014293 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.15415820980766884 m, velocity=3.082401091830561 m/s, orientation=0.2000147333679167 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.05322941145697917 m, velocity=1.0680310071246688 m/s, orientation=0.06795389697811699 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.003829310020342642 m, velocity=0.076607482213394 m/s, orientation=9.746898073962466e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.15498089856138386 m, velocity=3.1078146140240457 m/s, orientation=0.20001473227866864 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.011070097661301622 m, velocity=0.22146347574923989 m/s, orientation=9.603788118173227e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.008684680499804474 m, velocity=0.1740318504000255 m/s, orientation=0.011096018704637388 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.000669276676905033 m, velocity=0.01338925313902045 m/s, orientation=2.0419426027472457e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.0013845757127247703 m, velocity=0.027699210653736168 m/s, orientation=1.361506219039802e-05 rad, angular velocity=0.0 rad/s"
-          ],
-          "direct_event_stream_compared": false
-        },
-        "rust-8": {
-          "passed": false,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 38464,
-          "max_position_error_m": 47.00408682750938,
-          "max_velocity_error_mps": 16.70816436276065,
-          "max_orientation_error_rad": 0.866862102793719,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 38336,
-          "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.010656083973697536 m, velocity=0.21318090100516238 m/s, orientation=1.8409859227986854e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.0017335096700025168 m, velocity=0.03467982743872225 m/s, orientation=7.111746817284327e-07 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.007786310026880621 m, velocity=0.1557694734333514 m/s, orientation=1.225269241055182e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.006907654526684471 m, velocity=0.1381914806022397 m/s, orientation=1.831563604526309e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.15437921648743344 m, velocity=3.0897505235430125 m/s, orientation=0.20001473306848308 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.00340294579241019 m, velocity=0.06807782782836094 m/s, orientation=1.229847092450082e-07 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.010264840597679691 m, velocity=0.2053538592749217 m/s, orientation=1.1162006854722232e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.07013144275344174 m, velocity=1.4060049546565858 m/s, orientation=0.09061766577022264 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.0015148931360100793 m, velocity=0.0303062834386316 m/s, orientation=1.4508403327270481e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.1551660947597622 m, velocity=3.1104539415648014 m/s, orientation=0.20001473229338557 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15362509576328767 m, velocity=3.066452822802454 m/s, orientation=0.2000147326916466 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15462404718349054 m, velocity=3.0965596859705475 m/s, orientation=0.2000147335014293 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.15415820980766884 m, velocity=3.082401091830561 m/s, orientation=0.2000147333679167 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.05322941145697917 m, velocity=1.0680310071246688 m/s, orientation=0.06795389697811699 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.003829310020342642 m, velocity=0.076607482213394 m/s, orientation=9.746898073962466e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.15498089856138386 m, velocity=3.1078146140240457 m/s, orientation=0.20001473227866864 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.011070097661301622 m, velocity=0.22146347574923989 m/s, orientation=9.603788118173227e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.008684680499804474 m, velocity=0.1740318504000255 m/s, orientation=0.011096018704637388 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.000669276676905033 m, velocity=0.01338925313902045 m/s, orientation=2.0419426027472457e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.0013845757127247703 m, velocity=0.027699210653736168 m/s, orientation=1.361506219039802e-05 rad, angular velocity=0.0 rad/s"
-          ],
-          "direct_event_stream_compared": false
-        }
-      },
-      "passed": true,
-      "rust_workers_match": true,
-      "matches_cpp": false
-    },
-    {
-      "workload": "sensing",
-      "agents": 128,
-      "steps": 600,
-      "statistics": {
-        "cpp-1": {
-          "samples_s": [
-            5.0586993780000284,
-            4.948972587000071,
-            5.031613336999953
-          ],
-          "median_s": 5.031613336999953,
-          "min_s": 4.948972587000071,
-          "max_s": 5.0586993780000284,
-          "startup_s": 0.06557108300000891,
-          "peak_mb": 31.71484375
-        },
-        "cpp-8": {
-          "samples_s": [
-            4.332236418999969,
-            4.178780334999942,
-            4.366201460999832
-          ],
-          "median_s": 4.332236418999969,
-          "min_s": 4.178780334999942,
-          "max_s": 4.366201460999832,
-          "startup_s": 0.06063775000006899,
-          "peak_mb": 41.30078125
-        },
-        "rust-1": {
-          "samples_s": [
-            3.452723168000034,
-            3.4437418769999795,
-            3.495010918000048
-          ],
-          "median_s": 3.452723168000034,
-          "min_s": 3.4437418769999795,
-          "max_s": 3.495010918000048,
-          "startup_s": 0.010459999999966385,
-          "peak_mb": 7.49609375
-        },
-        "rust-8": {
-          "samples_s": [
-            2.566539793000061,
-            2.5677182929999844,
-            2.5033196680000174
-          ],
-          "median_s": 2.566539793000061,
-          "min_s": 2.5033196680000174,
-          "max_s": 2.5677182929999844,
-          "startup_s": 0.008778957999993509,
-          "peak_mb": 10.03515625
-        }
-      },
-      "repeatable": {
-        "cpp-1": true,
-        "cpp-8": false,
-        "rust-1": true,
-        "rust-8": true
-      },
-      "hangs": {
-        "cpp-1": 0,
-        "cpp-8": 0,
-        "rust-1": 0,
-        "rust-8": 0
-      },
-      "comparisons": {
-        "cpp-8": {
-          "passed": false,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 76928,
-          "max_position_error_m": 43.013369644135466,
-          "max_velocity_error_mps": 16.4897619420718,
-          "max_orientation_error_rad": 0.8616483548016779,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 76672,
-          "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.15545380726175165 m, velocity=3.1127810768149025 m/s, orientation=0.2000147344439933 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.011915679858223636 m, velocity=0.23837981893657284 m/s, orientation=1.258540740973451e-07 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15467197105804198 m, velocity=3.0966572406174255 m/s, orientation=0.20001473310432605 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.15422449116300457 m, velocity=3.085204791063448 m/s, orientation=0.2000147325639363 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.1538453868107069 m, velocity=3.070702880479371 m/s, orientation=0.20001473228541689 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.008712977021544926 m, velocity=0.17430796312067715 m/s, orientation=5.510949816905106e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.1544951997437562 m, velocity=3.092070024831649 m/s, orientation=0.20001473256371127 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.13281031373367835 m, velocity=2.662915569065392 m/s, orientation=0.1714580674849593 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.005619067413469814 m, velocity=0.11241257764067195 m/s, orientation=2.408376014832069e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.1557042057898272 m, velocity=3.119244103837043 m/s, orientation=0.20001473256729752 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15424874134009584 m, velocity=3.0826775120747834 m/s, orientation=0.20001473284172697 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.0004144881911091579 m, velocity=0.008292074366655851 m/s, orientation=1.577355638131324e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.15453243057324795 m, velocity=3.0921325604127414 m/s, orientation=0.20001473229559333 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.15369258539755565 m, velocity=3.0691928240484514 m/s, orientation=0.20001473258235564 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.009760491513485242 m, velocity=0.19526407523386408 m/s, orientation=2.4518867272544045e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.0014213808081649446 m, velocity=0.02843551566557172 m/s, orientation=4.113633544965955e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.15418566173894493 m, velocity=3.0837770034041387 m/s, orientation=0.20001473232730535 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.006293372325738137 m, velocity=0.12590242231588164 m/s, orientation=1.0038550141283256e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.15533187353906813 m, velocity=3.11364416278502 m/s, orientation=0.20001473303046746 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.15435982223890862 m, velocity=3.0893836410376108 m/s, orientation=0.20001473246024817 rad, angular velocity=0.0 rad/s"
-          ],
-          "direct_event_stream_compared": false
-        },
-        "rust-1": {
-          "passed": false,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 76928,
-          "max_position_error_m": 39.35475106064492,
-          "max_velocity_error_mps": 15.76404186945291,
-          "max_orientation_error_rad": 0.9101779764959375,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 76672,
-          "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.15531267912549016 m, velocity=3.1148918154118235 m/s, orientation=0.20001473228379282 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.001690226654103165 m, velocity=0.03381392850108942 m/s, orientation=1.6701413079761702e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15434759072916127 m, velocity=3.0881995208524193 m/s, orientation=0.2000147324169199 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.006702878669962224 m, velocity=0.13409482518675708 m/s, orientation=1.3801975212239613e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=2.8879599423861326e-05 m, velocity=0.000577803186560014 m/s, orientation=1.1353698391765958e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.0024510805171021263 m, velocity=0.0490352324665065 m/s, orientation=6.065929543792416e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.0062652404540598375 m, velocity=0.12533962836361529 m/s, orientation=2.113985645248424e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.048228100411804836 m, velocity=0.9673600147796929 m/s, orientation=0.06206100378035297 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.002833100096756295 m, velocity=0.05667774706663521 m/s, orientation=4.507682952979788e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.0026728054148643017 m, velocity=0.05347096258501778 m/s, orientation=4.333896136897696e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.00038195594241772747 m, velocity=0.007641245828617734 m/s, orientation=1.2042942455094126e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15468020155472464 m, velocity=3.098056078769099 m/s, orientation=0.20001473290909197 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=7.230200013434594e-05 m, velocity=0.0014464625427570875 m/s, orientation=1.1456413315801443e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.004117219363698559 m, velocity=0.08236726971289413 m/s, orientation=1.7459452459782403e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.0046621751533020275 m, velocity=0.09326941351190521 m/s, orientation=1.0255021412673095e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.009898770990557528 m, velocity=0.19803043255018757 m/s, orientation=1.416549373897496e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.15510208511773865 m, velocity=3.1073708153733635 m/s, orientation=0.20001473228361788 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.15431405038409005 m, velocity=3.088015390240505 m/s, orientation=0.20001473241177434 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.15470174432260358 m, velocity=3.0978574740878226 m/s, orientation=0.20001473294650554 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.0014212655191549414 m, velocity=0.028433209312114745 m/s, orientation=4.939522656606646e-06 rad, angular velocity=0.0 rad/s"
-          ],
-          "direct_event_stream_compared": false
-        },
-        "rust-8": {
-          "passed": false,
-          "reference_frames": 601,
-          "candidate_frames": 601,
-          "compared_entity_states": 76928,
-          "max_position_error_m": 39.35475106064492,
-          "max_velocity_error_mps": 15.76404186945291,
-          "max_orientation_error_rad": 0.9101779764959375,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 76672,
-          "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.15531267912549016 m, velocity=3.1148918154118235 m/s, orientation=0.20001473228379282 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.001690226654103165 m, velocity=0.03381392850108942 m/s, orientation=1.6701413079761702e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15434759072916127 m, velocity=3.0881995208524193 m/s, orientation=0.2000147324169199 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.006702878669962224 m, velocity=0.13409482518675708 m/s, orientation=1.3801975212239613e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=2.8879599423861326e-05 m, velocity=0.000577803186560014 m/s, orientation=1.1353698391765958e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.0024510805171021263 m, velocity=0.0490352324665065 m/s, orientation=6.065929543792416e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.0062652404540598375 m, velocity=0.12533962836361529 m/s, orientation=2.113985645248424e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.048228100411804836 m, velocity=0.9673600147796929 m/s, orientation=0.06206100378035297 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.002833100096756295 m, velocity=0.05667774706663521 m/s, orientation=4.507682952979788e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.0026728054148643017 m, velocity=0.05347096258501778 m/s, orientation=4.333896136897696e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.00038195594241772747 m, velocity=0.007641245828617734 m/s, orientation=1.2042942455094126e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15468020155472464 m, velocity=3.098056078769099 m/s, orientation=0.20001473290909197 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=7.230200013434594e-05 m, velocity=0.0014464625427570875 m/s, orientation=1.1456413315801443e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.004117219363698559 m, velocity=0.08236726971289413 m/s, orientation=1.7459452459782403e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.0046621751533020275 m, velocity=0.09326941351190521 m/s, orientation=1.0255021412673095e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.009898770990557528 m, velocity=0.19803043255018757 m/s, orientation=1.416549373897496e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.15510208511773865 m, velocity=3.1073708153733635 m/s, orientation=0.20001473228361788 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.15431405038409005 m, velocity=3.088015390240505 m/s, orientation=0.20001473241177434 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.15470174432260358 m, velocity=3.0978574740878226 m/s, orientation=0.20001473294650554 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.0014212655191549414 m, velocity=0.028433209312114745 m/s, orientation=4.939522656606646e-06 rad, angular velocity=0.0 rad/s"
-          ],
-          "direct_event_stream_compared": false
-        }
-      },
-      "passed": true,
-      "rust_workers_match": true,
-      "matches_cpp": false
-    },
-    {
-      "workload": "churn",
-      "agents": 64,
-      "steps": 2000,
-      "statistics": {
-        "cpp-1": {
-          "samples_s": [
-            0.19300487500015606,
-            0.18641554099997393,
-            0.18187529100021038
-          ],
-          "median_s": 0.18641554099997393,
-          "min_s": 0.18187529100021038,
-          "max_s": 0.19300487500015606,
-          "startup_s": 0.02831320899997536,
-          "peak_mb": 13.5859375
-        },
-        "cpp-8": {
-          "samples_s": [
-            1.8009755430000496,
-            1.7381286250001722,
-            1.819485959000076
-          ],
-          "median_s": 1.8009755430000496,
-          "min_s": 1.7381286250001722,
-          "max_s": 1.819485959000076,
-          "startup_s": 0.033157916999925874,
-          "peak_mb": 13.7109375
-        },
-        "rust-1": {
-          "samples_s": [
-            0.12258500000007189,
-            0.13000004199989235,
-            0.13122925099992244
-          ],
-          "median_s": 0.13000004199989235,
-          "min_s": 0.12258500000007189,
-          "max_s": 0.13122925099992244,
-          "startup_s": 0.003869000000122469,
-          "peak_mb": 3.59375
-        },
-        "rust-8": {
-          "samples_s": [
-            3.3882148340001095,
-            3.4432729170000584,
-            3.41939183400018
-          ],
-          "median_s": 3.41939183400018,
-          "min_s": 3.3882148340001095,
-          "max_s": 3.4432729170000584,
-          "startup_s": 0.004381416999876819,
-          "peak_mb": 3.59375
+          "median_s": 4.51027466900041,
+          "min_s": 4.3784370450002825,
+          "max_s": 4.7472329610004635,
+          "startup_s": 0.013082790999760618,
+          "peak_mb": 3.53125
         }
       },
       "repeatable": {
@@ -1285,6 +412,879 @@
       "hangs": {
         "cpp-1": 0,
         "cpp-8": 1,
+        "rust-1": 0,
+        "rust-8": 0
+      },
+      "comparisons": {
+        "cpp-8": {
+          "passed": true,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 38464,
+          "max_position_error_m": 0.0,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-1": {
+          "passed": true,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 38464,
+          "max_position_error_m": 2.2737367544323206e-13,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": true,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 38464,
+          "max_position_error_m": 2.2737367544323206e-13,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        }
+      },
+      "rust_workers_match": true,
+      "matches_cpp": true,
+      "passed": true
+    },
+    {
+      "workload": "substeps",
+      "agents": 256,
+      "steps": 600,
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            0.5709385420000217,
+            0.6218875850004224,
+            0.5367459170001894
+          ],
+          "median_s": 0.5709385420000217,
+          "min_s": 0.5367459170001894,
+          "max_s": 0.6218875850004224,
+          "startup_s": 0.042683040999691,
+          "peak_mb": 24.09765625
+        },
+        "cpp-8": {
+          "samples_s": [
+            5.815251295000053,
+            5.889916503000222,
+            5.665775919000225
+          ],
+          "median_s": 5.815251295000053,
+          "min_s": 5.665775919000225,
+          "max_s": 5.889916503000222,
+          "startup_s": 0.05204237499992814,
+          "peak_mb": 24.234375
+        },
+        "rust-1": {
+          "samples_s": [
+            0.3814965010001288,
+            0.389029792000656,
+            0.38580075000027136
+          ],
+          "median_s": 0.38580075000027136,
+          "min_s": 0.3814965010001288,
+          "max_s": 0.389029792000656,
+          "startup_s": 0.006034582999745908,
+          "peak_mb": 4.71875
+        },
+        "rust-8": {
+          "samples_s": [
+            5.692525836999721,
+            4.672451793999699,
+            5.174715627999831
+          ],
+          "median_s": 5.174715627999831,
+          "min_s": 4.672451793999699,
+          "max_s": 5.692525836999721,
+          "startup_s": 0.01667233300031512,
+          "peak_mb": 4.6484375
+        }
+      },
+      "repeatable": {
+        "cpp-1": true,
+        "cpp-8": true,
+        "rust-1": true,
+        "rust-8": true
+      },
+      "hangs": {
+        "cpp-1": 0,
+        "cpp-8": 1,
+        "rust-1": 0,
+        "rust-8": 0
+      },
+      "comparisons": {
+        "cpp-8": {
+          "passed": true,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 153856,
+          "max_position_error_m": 0.0,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-1": {
+          "passed": true,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 153856,
+          "max_position_error_m": 2.2737367544323206e-13,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": true,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 153856,
+          "max_position_error_m": 2.2737367544323206e-13,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        }
+      },
+      "rust_workers_match": true,
+      "matches_cpp": true,
+      "passed": true
+    },
+    {
+      "workload": "substeps",
+      "agents": 1024,
+      "steps": 600,
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            2.2461224599996967,
+            2.2757674189997488,
+            2.245542002000093
+          ],
+          "median_s": 2.2461224599996967,
+          "min_s": 2.245542002000093,
+          "max_s": 2.2757674189997488,
+          "startup_s": 0.11706054100022811,
+          "peak_mb": 65.72265625
+        },
+        "cpp-8": {
+          "samples_s": [
+            17.126834341000176,
+            20.414692382999874,
+            21.357574468000166
+          ],
+          "median_s": 20.414692382999874,
+          "min_s": 17.126834341000176,
+          "max_s": 21.357574468000166,
+          "startup_s": 0.148111833999792,
+          "peak_mb": 66.09765625
+        },
+        "rust-1": {
+          "samples_s": [
+            1.4696970850004618,
+            1.467745835000187,
+            1.4434871260000364
+          ],
+          "median_s": 1.467745835000187,
+          "min_s": 1.4434871260000364,
+          "max_s": 1.4696970850004618,
+          "startup_s": 0.03084358299975065,
+          "peak_mb": 9.28125
+        },
+        "rust-8": {
+          "samples_s": [
+            4.788814877000277,
+            5.769469044999823,
+            6.018221170000288
+          ],
+          "median_s": 5.769469044999823,
+          "min_s": 4.788814877000277,
+          "max_s": 6.018221170000288,
+          "startup_s": 0.042530332999831444,
+          "peak_mb": 9.40234375
+        }
+      },
+      "repeatable": {
+        "cpp-1": true,
+        "cpp-8": true,
+        "rust-1": true,
+        "rust-8": true
+      },
+      "hangs": {
+        "cpp-1": 0,
+        "cpp-8": 0,
+        "rust-1": 0,
+        "rust-8": 0
+      },
+      "comparisons": {
+        "cpp-8": {
+          "passed": true,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 615424,
+          "max_position_error_m": 0.0,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-1": {
+          "passed": true,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 615424,
+          "max_position_error_m": 2.2737367544323206e-13,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": true,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 615424,
+          "max_position_error_m": 2.2737367544323206e-13,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        }
+      },
+      "rust_workers_match": true,
+      "matches_cpp": true,
+      "passed": true
+    },
+    {
+      "workload": "sensing",
+      "agents": 32,
+      "steps": 600,
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            0.27239195900074265,
+            0.2863834180006961,
+            0.2835963340003218
+          ],
+          "median_s": 0.2835963340003218,
+          "min_s": 0.27239195900074265,
+          "max_s": 0.2863834180006961,
+          "startup_s": 0.03140758299969093,
+          "peak_mb": 13.2109375
+        },
+        "cpp-8": {
+          "samples_s": [
+            0.6757886260002124,
+            0.6580122919999667,
+            0.6642995830002292
+          ],
+          "median_s": 0.6642995830002292,
+          "min_s": 0.6580122919999667,
+          "max_s": 0.6757886260002124,
+          "startup_s": 0.03338687499990556,
+          "peak_mb": 14.0859375
+        },
+        "rust-1": {
+          "samples_s": [
+            0.24986129199987772,
+            0.27912679199971535,
+            0.26094899999998233
+          ],
+          "median_s": 0.26094899999998233,
+          "min_s": 0.24986129199987772,
+          "max_s": 0.27912679199971535,
+          "startup_s": 0.0035035000000789296,
+          "peak_mb": 3.78125
+        },
+        "rust-8": {
+          "samples_s": [
+            0.9876981669999623,
+            1.0327662919999057,
+            1.0752218339998763
+          ],
+          "median_s": 1.0327662919999057,
+          "min_s": 0.9876981669999623,
+          "max_s": 1.0752218339998763,
+          "startup_s": 0.004954375000124855,
+          "peak_mb": 3.78125
+        }
+      },
+      "repeatable": {
+        "cpp-1": true,
+        "cpp-8": false,
+        "rust-1": true,
+        "rust-8": true
+      },
+      "hangs": {
+        "cpp-1": 0,
+        "cpp-8": 0,
+        "rust-1": 0,
+        "rust-8": 0
+      },
+      "comparisons": {
+        "cpp-8": {
+          "passed": false,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 19232,
+          "max_position_error_m": 37.41833308705919,
+          "max_velocity_error_mps": 16.34646025265253,
+          "max_orientation_error_rad": 0.8923030409923637,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 19168,
+          "first_mismatches": [
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.005334876507504367 m, velocity=0.10672717891814629 m/s, orientation=3.1002934400524946e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.15463220144908393 m, velocity=3.0975296101865446 m/s, orientation=0.20001473321916616 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.1544927999965003 m, velocity=3.0933534762709707 m/s, orientation=0.20001473262879424 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.011471341319131212 m, velocity=0.22949057882421395 m/s, orientation=9.77380736931952e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.1542378454942533 m, velocity=3.0856514090660485 m/s, orientation=0.20001473269834022 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.15465226384371916 m, velocity=3.0973417139695263 m/s, orientation=0.20001473366697325 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.011330726216811988 m, velocity=0.22667749545730617 m/s, orientation=1.5746842798737715e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.0008134901227964401 m, velocity=0.01627432768095308 m/s, orientation=1.6988310338410254e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.08059396841772634 m, velocity=1.6144129839500332 m/s, orientation=0.10433057860222689 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.15435944651092134 m, velocity=3.0893769028543634 m/s, orientation=0.20001473517303098 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15412151566914295 m, velocity=3.082022668447892 m/s, orientation=0.2000147336848784 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15503727812786738 m, velocity=3.109580224099946 m/s, orientation=0.2000147325504831 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.155657068716831 m, velocity=3.1274091931506405 m/s, orientation=0.20001473267935743 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.004670598519046323 m, velocity=0.09343792764173176 m/s, orientation=1.0260113616670773e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.044288851830077275 m, velocity=0.8860427326342254 m/s, orientation=0.05696472506569527 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.005334815023564447 m, velocity=0.10672594925537379 m/s, orientation=1.3456106472990116e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.002258335556417709 m, velocity=0.04517926440328233 m/s, orientation=2.182866772439993e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.15438560259158435 m, velocity=3.0900463964691256 m/s, orientation=0.20001473310724652 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.1546242416534537 m, velocity=3.0962781670801904 m/s, orientation=0.2000147322893754 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.1539851607068857 m, velocity=3.077936211878002 m/s, orientation=0.20001473245161908 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        },
+        "rust-1": {
+          "passed": false,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 19232,
+          "max_position_error_m": 38.78659992610489,
+          "max_velocity_error_mps": 16.703875134818247,
+          "max_orientation_error_rad": 0.8900422488442349,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 19168,
+          "first_mismatches": [
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.003120571176631591 m, velocity=0.06242876639379206 m/s, orientation=7.039632616001911e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.002657324771834738 m, velocity=0.05316126362225982 m/s, orientation=1.9928940630074778e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15457442244097386 m, velocity=3.095818344755638 m/s, orientation=0.20001473257783042 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.15524984916305276 m, velocity=3.1083063157787105 m/s, orientation=0.2000147325960362 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.15426364506240786 m, velocity=3.086464341134086 m/s, orientation=0.20001473234360787 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.005158513807151253 m, velocity=0.10319894477708773 m/s, orientation=3.535645075460669e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.15528212046535417 m, velocity=3.1138770733984726 m/s, orientation=0.20001473229783526 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.08463062595862343 m, velocity=1.6963719381076534 m/s, orientation=0.10939706867897428 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.07402539593083854 m, velocity=1.4835316123818643 m/s, orientation=0.09568415643427465 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.15517333869944228 m, velocity=3.11128881264213 m/s, orientation=0.20001473284118215 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.008188583838338122 m, velocity=0.16381718512626228 m/s, orientation=5.368701799056752e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.0069358142014892335 m, velocity=0.1387548304116451 m/s, orientation=1.4777708754496308e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.1548848092245733 m, velocity=3.100897119629169 m/s, orientation=0.20001473298362052 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.005691079450515067 m, velocity=0.11385321752248229 m/s, orientation=8.704045428570445e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.15422233393543786 m, velocity=3.0850989048204522 m/s, orientation=0.20001473264847525 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.004674730554369295 m, velocity=0.09352059106816116 m/s, orientation=2.5836474098172687e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.1554142692246676 m, velocity=3.120996891272555 m/s, orientation=0.20001473501051287 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.0006200925584694771 m, velocity=0.012405302688595039 m/s, orientation=1.683416606093536e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.006556357495643446 m, velocity=0.13116358790764737 m/s, orientation=2.1506082887990244e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.15439242373314518 m, velocity=3.090010927565442 m/s, orientation=0.20001473354804616 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": false,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 19232,
+          "max_position_error_m": 38.78659992610489,
+          "max_velocity_error_mps": 16.703875134818247,
+          "max_orientation_error_rad": 0.8900422488442349,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 19168,
+          "first_mismatches": [
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.003120571176631591 m, velocity=0.06242876639379206 m/s, orientation=7.039632616001911e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.002657324771834738 m, velocity=0.05316126362225982 m/s, orientation=1.9928940630074778e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15457442244097386 m, velocity=3.095818344755638 m/s, orientation=0.20001473257783042 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.15524984916305276 m, velocity=3.1083063157787105 m/s, orientation=0.2000147325960362 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.15426364506240786 m, velocity=3.086464341134086 m/s, orientation=0.20001473234360787 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.005158513807151253 m, velocity=0.10319894477708773 m/s, orientation=3.535645075460669e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.15528212046535417 m, velocity=3.1138770733984726 m/s, orientation=0.20001473229783526 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.08463062595862343 m, velocity=1.6963719381076534 m/s, orientation=0.10939706867897428 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.07402539593083854 m, velocity=1.4835316123818643 m/s, orientation=0.09568415643427465 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.15517333869944228 m, velocity=3.11128881264213 m/s, orientation=0.20001473284118215 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.008188583838338122 m, velocity=0.16381718512626228 m/s, orientation=5.368701799056752e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.0069358142014892335 m, velocity=0.1387548304116451 m/s, orientation=1.4777708754496308e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.1548848092245733 m, velocity=3.100897119629169 m/s, orientation=0.20001473298362052 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.005691079450515067 m, velocity=0.11385321752248229 m/s, orientation=8.704045428570445e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.15422233393543786 m, velocity=3.0850989048204522 m/s, orientation=0.20001473264847525 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.004674730554369295 m, velocity=0.09352059106816116 m/s, orientation=2.5836474098172687e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.1554142692246676 m, velocity=3.120996891272555 m/s, orientation=0.20001473501051287 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.0006200925584694771 m, velocity=0.012405302688595039 m/s, orientation=1.683416606093536e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.006556357495643446 m, velocity=0.13116358790764737 m/s, orientation=2.1506082887990244e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.15439242373314518 m, velocity=3.090010927565442 m/s, orientation=0.20001473354804616 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        }
+      },
+      "rust_workers_match": true,
+      "matches_cpp": false,
+      "passed": true
+    },
+    {
+      "workload": "sensing",
+      "agents": 64,
+      "steps": 600,
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            1.0875957500002187,
+            1.0531521249999969,
+            1.0620987510001214
+          ],
+          "median_s": 1.0620987510001214,
+          "min_s": 1.0531521249999969,
+          "max_s": 1.0875957500002187,
+          "startup_s": 0.04145974999983082,
+          "peak_mb": 17.578125
+        },
+        "cpp-8": {
+          "samples_s": [
+            1.3385521260001951,
+            1.4506140429998595,
+            1.4312743339996814
+          ],
+          "median_s": 1.4312743339996814,
+          "min_s": 1.3385521260001951,
+          "max_s": 1.4506140429998595,
+          "startup_s": 0.04281333300014012,
+          "peak_mb": 20.5703125
+        },
+        "rust-1": {
+          "samples_s": [
+            0.8807969989998128,
+            0.8839109579998876,
+            0.874671041000056
+          ],
+          "median_s": 0.8807969989998128,
+          "min_s": 0.874671041000056,
+          "max_s": 0.8839109579998876,
+          "startup_s": 0.004756584000006114,
+          "peak_mb": 4.65625
+        },
+        "rust-8": {
+          "samples_s": [
+            1.3561846669999795,
+            1.379561167999782,
+            1.3852120839997042
+          ],
+          "median_s": 1.379561167999782,
+          "min_s": 1.3561846669999795,
+          "max_s": 1.3852120839997042,
+          "startup_s": 0.006222250000064378,
+          "peak_mb": 5.59375
+        }
+      },
+      "repeatable": {
+        "cpp-1": true,
+        "cpp-8": false,
+        "rust-1": true,
+        "rust-8": true
+      },
+      "hangs": {
+        "cpp-1": 0,
+        "cpp-8": 0,
+        "rust-1": 0,
+        "rust-8": 0
+      },
+      "comparisons": {
+        "cpp-8": {
+          "passed": false,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 38464,
+          "max_position_error_m": 46.6079096207102,
+          "max_velocity_error_mps": 15.758338550275825,
+          "max_orientation_error_rad": 0.8186583623361077,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 38336,
+          "first_mismatches": [
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.009943138307214256 m, velocity=0.19891802546145965 m/s, orientation=2.5039143944523696e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.00487915550769596 m, velocity=0.09761022632662428 m/s, orientation=6.868952314922061e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15517096917795653 m, velocity=3.107081988675545 m/s, orientation=0.20001473243040105 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.0984112951405717 m, velocity=1.967093362128976 m/s, orientation=0.12743828635108212 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.0032235351022262236 m, velocity=0.06448861697335691 m/s, orientation=2.751157889100007e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.1540321541819692 m, velocity=3.079560344686386 m/s, orientation=0.2000147336566107 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.0042849453696094456 m, velocity=0.08572272112818773 m/s, orientation=2.3993877982201297e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.15446208465921837 m, velocity=3.090728519226147 m/s, orientation=0.20001473228703304 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.007392857411611788 m, velocity=0.14789823476257327 m/s, orientation=1.7162098336245155e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.0013050651512915125 m, velocity=0.02610855610850401 m/s, orientation=3.991145004769806e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.0036885222478233465 m, velocity=0.07378766442710301 m/s, orientation=0.004785026445924719 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.001823659849733518 m, velocity=0.0364833351466885 m/s, orientation=2.1984600488827087e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.15454560175432525 m, velocity=3.09486601910605 m/s, orientation=0.20001473235098108 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.0530348053220759 m, velocity=1.0645678935666363 m/s, orientation=0.06795389737512814 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.15462992015320476 m, velocity=3.0974586059000657 m/s, orientation=0.20001473227859953 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.1545814336863293 m, velocity=3.0955016651964415 m/s, orientation=0.20001473266176423 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.15494312827273218 m, velocity=3.103691024638542 m/s, orientation=0.20001473246390747 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.14577556226161975 m, velocity=2.9170625228604656 m/s, orientation=0.18891871541238306 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.007863097185622487 m, velocity=0.1573056431774216 m/s, orientation=5.799509757616303e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.15462435852636036 m, velocity=3.0970223275086886 m/s, orientation=0.20001473263647643 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        },
+        "rust-1": {
+          "passed": false,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 38464,
+          "max_position_error_m": 47.00408682750938,
+          "max_velocity_error_mps": 16.70816436276065,
+          "max_orientation_error_rad": 0.866862102793719,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 38336,
+          "first_mismatches": [
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.010656083973697536 m, velocity=0.21318090100516238 m/s, orientation=1.8409859227986854e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.0017335096700025168 m, velocity=0.03467982743872225 m/s, orientation=7.111746817284327e-07 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.007786310026880621 m, velocity=0.1557694734333514 m/s, orientation=1.225269241055182e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.006907654526684471 m, velocity=0.1381914806022397 m/s, orientation=1.831563604526309e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.15437921648743344 m, velocity=3.0897505235430125 m/s, orientation=0.20001473306848308 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.00340294579241019 m, velocity=0.06807782782836094 m/s, orientation=1.229847092450082e-07 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.010264840597679691 m, velocity=0.2053538592749217 m/s, orientation=1.1162006854722232e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.07013144275344174 m, velocity=1.4060049546565858 m/s, orientation=0.09061766577022264 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.0015148931360100793 m, velocity=0.0303062834386316 m/s, orientation=1.4508403327270481e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.1551660947597622 m, velocity=3.1104539415648014 m/s, orientation=0.20001473229338557 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15362509576328767 m, velocity=3.066452822802454 m/s, orientation=0.2000147326916466 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15462404718349054 m, velocity=3.0965596859705475 m/s, orientation=0.2000147335014293 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.15415820980766884 m, velocity=3.082401091830561 m/s, orientation=0.2000147333679167 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.05322941145697917 m, velocity=1.0680310071246688 m/s, orientation=0.06795389697811699 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.003829310020342642 m, velocity=0.076607482213394 m/s, orientation=9.746898073962466e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.15498089856138386 m, velocity=3.1078146140240457 m/s, orientation=0.20001473227866864 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.011070097661301622 m, velocity=0.22146347574923989 m/s, orientation=9.603788118173227e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.008684680499804474 m, velocity=0.1740318504000255 m/s, orientation=0.011096018704637388 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.000669276676905033 m, velocity=0.01338925313902045 m/s, orientation=2.0419426027472457e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.0013845757127247703 m, velocity=0.027699210653736168 m/s, orientation=1.361506219039802e-05 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": false,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 38464,
+          "max_position_error_m": 47.00408682750938,
+          "max_velocity_error_mps": 16.70816436276065,
+          "max_orientation_error_rad": 0.866862102793719,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 38336,
+          "first_mismatches": [
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.010656083973697536 m, velocity=0.21318090100516238 m/s, orientation=1.8409859227986854e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.0017335096700025168 m, velocity=0.03467982743872225 m/s, orientation=7.111746817284327e-07 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.007786310026880621 m, velocity=0.1557694734333514 m/s, orientation=1.225269241055182e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.006907654526684471 m, velocity=0.1381914806022397 m/s, orientation=1.831563604526309e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.15437921648743344 m, velocity=3.0897505235430125 m/s, orientation=0.20001473306848308 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.00340294579241019 m, velocity=0.06807782782836094 m/s, orientation=1.229847092450082e-07 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.010264840597679691 m, velocity=0.2053538592749217 m/s, orientation=1.1162006854722232e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.07013144275344174 m, velocity=1.4060049546565858 m/s, orientation=0.09061766577022264 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.0015148931360100793 m, velocity=0.0303062834386316 m/s, orientation=1.4508403327270481e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.1551660947597622 m, velocity=3.1104539415648014 m/s, orientation=0.20001473229338557 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15362509576328767 m, velocity=3.066452822802454 m/s, orientation=0.2000147326916466 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15462404718349054 m, velocity=3.0965596859705475 m/s, orientation=0.2000147335014293 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.15415820980766884 m, velocity=3.082401091830561 m/s, orientation=0.2000147333679167 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.05322941145697917 m, velocity=1.0680310071246688 m/s, orientation=0.06795389697811699 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.003829310020342642 m, velocity=0.076607482213394 m/s, orientation=9.746898073962466e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.15498089856138386 m, velocity=3.1078146140240457 m/s, orientation=0.20001473227866864 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.011070097661301622 m, velocity=0.22146347574923989 m/s, orientation=9.603788118173227e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.008684680499804474 m, velocity=0.1740318504000255 m/s, orientation=0.011096018704637388 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.000669276676905033 m, velocity=0.01338925313902045 m/s, orientation=2.0419426027472457e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.0013845757127247703 m, velocity=0.027699210653736168 m/s, orientation=1.361506219039802e-05 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        }
+      },
+      "rust_workers_match": true,
+      "matches_cpp": false,
+      "passed": true
+    },
+    {
+      "workload": "sensing",
+      "agents": 128,
+      "steps": 600,
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            5.197768128000007,
+            5.226576711000234,
+            5.143887835999976
+          ],
+          "median_s": 5.197768128000007,
+          "min_s": 5.143887835999976,
+          "max_s": 5.226576711000234,
+          "startup_s": 0.061686125000051106,
+          "peak_mb": 31.58203125
+        },
+        "cpp-8": {
+          "samples_s": [
+            4.211850334999781,
+            4.199692876999961,
+            4.2101649179999185
+          ],
+          "median_s": 4.2101649179999185,
+          "min_s": 4.199692876999961,
+          "max_s": 4.211850334999781,
+          "startup_s": 0.06031737500006784,
+          "peak_mb": 36.2734375
+        },
+        "rust-1": {
+          "samples_s": [
+            3.438222460000361,
+            3.3796849180002937,
+            3.3719518349998907
+          ],
+          "median_s": 3.3796849180002937,
+          "min_s": 3.3719518349998907,
+          "max_s": 3.438222460000361,
+          "startup_s": 0.010567999999693711,
+          "peak_mb": 7.421875
+        },
+        "rust-8": {
+          "samples_s": [
+            2.3682527089999894,
+            2.4000380430002224,
+            2.3756010010001773
+          ],
+          "median_s": 2.3756010010001773,
+          "min_s": 2.3682527089999894,
+          "max_s": 2.4000380430002224,
+          "startup_s": 0.008725207999759732,
+          "peak_mb": 9.90234375
+        }
+      },
+      "repeatable": {
+        "cpp-1": true,
+        "cpp-8": false,
+        "rust-1": true,
+        "rust-8": true
+      },
+      "hangs": {
+        "cpp-1": 0,
+        "cpp-8": 0,
+        "rust-1": 0,
+        "rust-8": 0
+      },
+      "comparisons": {
+        "cpp-8": {
+          "passed": false,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 76928,
+          "max_position_error_m": 49.515700140400824,
+          "max_velocity_error_mps": 17.2834598866663,
+          "max_orientation_error_rad": 0.9270869509831807,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 76672,
+          "first_mismatches": [
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.011424520840995281 m, velocity=0.22855390897869934 m/s, orientation=4.237928033533003e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.0019381831896421284 m, velocity=0.03877443835065672 m/s, orientation=2.246951018157582e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15379608819374058 m, velocity=3.072319991801947 m/s, orientation=0.2000147340402429 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.006833445108345756 m, velocity=0.136706879406943 m/s, orientation=9.211319395365714e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.1542429093033998 m, velocity=3.0858638864140167 m/s, orientation=0.20001473536033215 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.0053692849051941265 m, velocity=0.10741553836335208 m/s, orientation=1.155802952443551e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.0060114926267842254 m, velocity=0.12034055049025381 m/s, orientation=0.004531170251449987 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.1327488819728781 m, velocity=2.660225780786893 m/s, orientation=0.1714580666950699 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.1544962458820405 m, velocity=3.0933528283543024 m/s, orientation=0.20001473379292037 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.1556607606796553 m, velocity=3.1190202747882045 m/s, orientation=0.2000147335432712 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15392065779175712 m, velocity=3.074369194260292 m/s, orientation=0.2000147326647492 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15477829227960754 m, velocity=3.1016593743378578 m/s, orientation=0.20001473236243564 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.0034616492690431955 m, velocity=0.06925222469356059 m/s, orientation=1.8047936441432957e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.005766520076594588 m, velocity=0.11536244915507295 m/s, orientation=1.2547228466842592e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.0035810374815830387 m, velocity=0.07164065163131685 m/s, orientation=9.288186210606404e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.1539777028959109 m, velocity=3.0777587238538247 m/s, orientation=0.20001473258281874 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.15474575930184045 m, velocity=3.0984680705460783 m/s, orientation=0.2000147334755187 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.0012281283765413875 m, velocity=0.02456939361789182 m/s, orientation=8.829778924987246e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.006205778978907547 m, velocity=0.12415006846527528 m/s, orientation=6.318861150535064e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.15459016747632065 m, velocity=3.0960613366378604 m/s, orientation=0.20001473410454024 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        },
+        "rust-1": {
+          "passed": false,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 76928,
+          "max_position_error_m": 39.35475106064492,
+          "max_velocity_error_mps": 15.76404186945291,
+          "max_orientation_error_rad": 0.9101779764959375,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 76672,
+          "first_mismatches": [
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.15531267912549016 m, velocity=3.1148918154118235 m/s, orientation=0.20001473228379282 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.001690226654103165 m, velocity=0.03381392850108942 m/s, orientation=1.6701413079761702e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15434759072916127 m, velocity=3.0881995208524193 m/s, orientation=0.2000147324169199 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.006702878669962224 m, velocity=0.13409482518675708 m/s, orientation=1.3801975212239613e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=2.8879599423861326e-05 m, velocity=0.000577803186560014 m/s, orientation=1.1353698391765958e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.0024510805171021263 m, velocity=0.0490352324665065 m/s, orientation=6.065929543792416e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.0062652404540598375 m, velocity=0.12533962836361529 m/s, orientation=2.113985645248424e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.048228100411804836 m, velocity=0.9673600147796929 m/s, orientation=0.06206100378035297 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.002833100096756295 m, velocity=0.05667774706663521 m/s, orientation=4.507682952979788e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.0026728054148643017 m, velocity=0.05347096258501778 m/s, orientation=4.333896136897696e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.00038195594241772747 m, velocity=0.007641245828617734 m/s, orientation=1.2042942455094126e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15468020155472464 m, velocity=3.098056078769099 m/s, orientation=0.20001473290909197 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=7.230200013434594e-05 m, velocity=0.0014464625427570875 m/s, orientation=1.1456413315801443e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.004117219363698559 m, velocity=0.08236726971289413 m/s, orientation=1.7459452459782403e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.0046621751533020275 m, velocity=0.09326941351190521 m/s, orientation=1.0255021412673095e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.009898770990557528 m, velocity=0.19803043255018757 m/s, orientation=1.416549373897496e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.15510208511773865 m, velocity=3.1073708153733635 m/s, orientation=0.20001473228361788 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.15431405038409005 m, velocity=3.088015390240505 m/s, orientation=0.20001473241177434 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.15470174432260358 m, velocity=3.0978574740878226 m/s, orientation=0.20001473294650554 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.0014212655191549414 m, velocity=0.028433209312114745 m/s, orientation=4.939522656606646e-06 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": false,
+          "reference_frames": 601,
+          "candidate_frames": 601,
+          "compared_entity_states": 76928,
+          "max_position_error_m": 39.35475106064492,
+          "max_velocity_error_mps": 15.76404186945291,
+          "max_orientation_error_rad": 0.9101779764959375,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 76672,
+          "first_mismatches": [
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.15531267912549016 m, velocity=3.1148918154118235 m/s, orientation=0.20001473228379282 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.001690226654103165 m, velocity=0.03381392850108942 m/s, orientation=1.6701413079761702e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15434759072916127 m, velocity=3.0881995208524193 m/s, orientation=0.2000147324169199 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.006702878669962224 m, velocity=0.13409482518675708 m/s, orientation=1.3801975212239613e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=2.8879599423861326e-05 m, velocity=0.000577803186560014 m/s, orientation=1.1353698391765958e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.0024510805171021263 m, velocity=0.0490352324665065 m/s, orientation=6.065929543792416e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.0062652404540598375 m, velocity=0.12533962836361529 m/s, orientation=2.113985645248424e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.048228100411804836 m, velocity=0.9673600147796929 m/s, orientation=0.06206100378035297 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.002833100096756295 m, velocity=0.05667774706663521 m/s, orientation=4.507682952979788e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.0026728054148643017 m, velocity=0.05347096258501778 m/s, orientation=4.333896136897696e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.00038195594241772747 m, velocity=0.007641245828617734 m/s, orientation=1.2042942455094126e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15468020155472464 m, velocity=3.098056078769099 m/s, orientation=0.20001473290909197 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=7.230200013434594e-05 m, velocity=0.0014464625427570875 m/s, orientation=1.1456413315801443e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.004117219363698559 m, velocity=0.08236726971289413 m/s, orientation=1.7459452459782403e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.0046621751533020275 m, velocity=0.09326941351190521 m/s, orientation=1.0255021412673095e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.009898770990557528 m, velocity=0.19803043255018757 m/s, orientation=1.416549373897496e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.15510208511773865 m, velocity=3.1073708153733635 m/s, orientation=0.20001473228361788 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.15431405038409005 m, velocity=3.088015390240505 m/s, orientation=0.20001473241177434 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.15470174432260358 m, velocity=3.0978574740878226 m/s, orientation=0.20001473294650554 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.0014212655191549414 m, velocity=0.028433209312114745 m/s, orientation=4.939522656606646e-06 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        }
+      },
+      "rust_workers_match": true,
+      "matches_cpp": false,
+      "passed": true
+    },
+    {
+      "workload": "churn",
+      "agents": 64,
+      "steps": 2000,
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            0.19423708399972384,
+            0.19899800099983622,
+            0.19284320899987506
+          ],
+          "median_s": 0.19423708399972384,
+          "min_s": 0.19284320899987506,
+          "max_s": 0.19899800099983622,
+          "startup_s": 0.025293166000210476,
+          "peak_mb": 13.58203125
+        },
+        "cpp-8": {
+          "samples_s": [
+            1.8103266679995613,
+            1.8325307509994673,
+            1.7776085009995768
+          ],
+          "median_s": 1.8103266679995613,
+          "min_s": 1.7776085009995768,
+          "max_s": 1.8325307509994673,
+          "startup_s": 0.026284958000360348,
+          "peak_mb": 13.70703125
+        },
+        "rust-1": {
+          "samples_s": [
+            0.10282383399999162,
+            0.10885387499956778,
+            0.11288749999948777
+          ],
+          "median_s": 0.10885387499956778,
+          "min_s": 0.10282383399999162,
+          "max_s": 0.11288749999948777,
+          "startup_s": 0.002598625000246102,
+          "peak_mb": 3.46875
+        },
+        "rust-8": {
+          "samples_s": [
+            3.327703625999675,
+            3.4694167510001535,
+            3.337773291999838
+          ],
+          "median_s": 3.337773291999838,
+          "min_s": 3.327703625999675,
+          "max_s": 3.4694167510001535,
+          "startup_s": 0.003358459000082803,
+          "peak_mb": 3.46875
+        }
+      },
+      "repeatable": {
+        "cpp-1": true,
+        "cpp-8": true,
+        "rust-1": true,
+        "rust-8": true
+      },
+      "hangs": {
+        "cpp-1": 0,
+        "cpp-8": 0,
         "rust-1": 0,
         "rust-8": 0
       },
@@ -1374,9 +1374,9 @@
           "direct_event_stream_compared": false
         }
       },
-      "passed": true,
       "rust_workers_match": true,
-      "matches_cpp": false
+      "matches_cpp": false,
+      "passed": true
     },
     {
       "workload": "churn",
@@ -1385,51 +1385,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.617366082999979,
-            0.603162999999995,
-            0.6193105419999938
+            0.6191718339996442,
+            0.6023488749997341,
+            0.6235719169999356
           ],
-          "median_s": 0.617366082999979,
-          "min_s": 0.603162999999995,
-          "max_s": 0.6193105419999938,
-          "startup_s": 0.02788791700004367,
-          "peak_mb": 18.7109375
+          "median_s": 0.6191718339996442,
+          "min_s": 0.6023488749997341,
+          "max_s": 0.6235719169999356,
+          "startup_s": 0.02601775000039197,
+          "peak_mb": 18.70703125
         },
         "cpp-8": {
           "samples_s": [
-            3.443528208999851,
-            3.3766113349997795,
-            3.4821193759999005
+            3.379124958999455,
+            3.3679268770001727,
+            3.3211092929996084
           ],
-          "median_s": 3.443528208999851,
-          "min_s": 3.3766113349997795,
-          "max_s": 3.4821193759999005,
-          "startup_s": 0.053053042000101414,
-          "peak_mb": 18.7109375
+          "median_s": 3.3679268770001727,
+          "min_s": 3.3211092929996084,
+          "max_s": 3.379124958999455,
+          "startup_s": 0.027444917000138958,
+          "peak_mb": 18.70703125
         },
         "rust-1": {
           "samples_s": [
-            0.32203620899986163,
-            0.31565862599973116,
-            0.326354333999916
+            0.25626741599990055,
+            0.26088058300047123,
+            0.24624550099997577
           ],
-          "median_s": 0.32203620899986163,
-          "min_s": 0.31565862599973116,
-          "max_s": 0.326354333999916,
-          "startup_s": 0.0025532910001402342,
-          "peak_mb": 4.21875
+          "median_s": 0.25626741599990055,
+          "min_s": 0.24624550099997577,
+          "max_s": 0.26088058300047123,
+          "startup_s": 0.002269208000143408,
+          "peak_mb": 4.15625
         },
         "rust-8": {
           "samples_s": [
-            4.5023418759997185,
-            4.066694458999791,
-            4.422734958999854
+            4.174891127000592,
+            4.041690377000123,
+            3.8863405840002088
           ],
-          "median_s": 4.422734958999854,
-          "min_s": 4.066694458999791,
-          "max_s": 4.5023418759997185,
-          "startup_s": 0.0035190840001178003,
-          "peak_mb": 4.34375
+          "median_s": 4.041690377000123,
+          "min_s": 3.8863405840002088,
+          "max_s": 4.174891127000592,
+          "startup_s": 0.00342679200002749,
+          "peak_mb": 4.21875
         }
       },
       "repeatable": {
@@ -1440,7 +1440,7 @@
       },
       "hangs": {
         "cpp-1": 0,
-        "cpp-8": 2,
+        "cpp-8": 1,
         "rust-1": 0,
         "rust-8": 0
       },
@@ -1530,9 +1530,9 @@
           "direct_event_stream_compared": false
         }
       },
-      "passed": true,
       "rust_workers_match": true,
-      "matches_cpp": false
+      "matches_cpp": false,
+      "passed": true
     },
     {
       "workload": "churn",
@@ -1541,51 +1541,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            4.1203696269999455,
-            4.1360431269999935,
-            4.17983150200007
+            4.1813357940009155,
+            4.158107002001088,
+            4.073800461000246
           ],
-          "median_s": 4.1360431269999935,
-          "min_s": 4.1203696269999455,
-          "max_s": 4.17983150200007,
-          "startup_s": 0.027069624999967346,
-          "peak_mb": 34.8203125
+          "median_s": 4.158107002001088,
+          "min_s": 4.073800461000246,
+          "max_s": 4.1813357940009155,
+          "startup_s": 0.028867624999293184,
+          "peak_mb": 34.94140625
         },
         "cpp-8": {
           "samples_s": [
-            9.781852171999844,
-            11.007560629999944,
-            11.019430629999988
+            11.103525047000403,
+            10.89313238000068,
+            10.90197492200059
           ],
-          "median_s": 11.007560629999944,
-          "min_s": 9.781852171999844,
-          "max_s": 11.019430629999988,
-          "startup_s": 0.030901208000159386,
-          "peak_mb": 35.1953125
+          "median_s": 10.90197492200059,
+          "min_s": 10.89313238000068,
+          "max_s": 11.103525047000403,
+          "startup_s": 0.044963999999708903,
+          "peak_mb": 35.19140625
         },
         "rust-1": {
           "samples_s": [
-            0.9595500010002525,
-            0.9597158760000184,
-            0.9185019170001851
+            0.7219783750006172,
+            0.7393937500000902,
+            0.7305832910005847
           ],
-          "median_s": 0.9595500010002525,
-          "min_s": 0.9185019170001851,
-          "max_s": 0.9597158760000184,
-          "startup_s": 0.0026510829998187546,
-          "peak_mb": 6.15625
+          "median_s": 0.7305832910005847,
+          "min_s": 0.7219783750006172,
+          "max_s": 0.7393937500000902,
+          "startup_s": 0.003116916999715613,
+          "peak_mb": 6.03125
         },
         "rust-8": {
           "samples_s": [
-            4.883349294000027,
-            5.32408916899999,
-            5.56007700300006
+            5.0307512520003,
+            4.457731626999703,
+            5.038403376999668
           ],
-          "median_s": 5.32408916899999,
-          "min_s": 4.883349294000027,
-          "max_s": 5.56007700300006,
-          "startup_s": 0.003665582999929029,
-          "peak_mb": 6.09375
+          "median_s": 5.0307512520003,
+          "min_s": 4.457731626999703,
+          "max_s": 5.038403376999668,
+          "startup_s": 0.003440874999796506,
+          "peak_mb": 5.90625
         }
       },
       "repeatable": {
@@ -1596,7 +1596,7 @@
       },
       "hangs": {
         "cpp-1": 0,
-        "cpp-8": 1,
+        "cpp-8": 2,
         "rust-1": 0,
         "rust-8": 0
       },
@@ -1686,11 +1686,478 @@
           "direct_event_stream_compared": false
         }
       },
-      "passed": true,
       "rust_workers_match": true,
-      "matches_cpp": false
+      "matches_cpp": false,
+      "passed": true
+    },
+    {
+      "workload": "collision",
+      "agents": 256,
+      "steps": 200,
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            0.20926204199986387,
+            0.18183787499947357,
+            0.19011574999967706
+          ],
+          "median_s": 0.19011574999967706,
+          "min_s": 0.18183787499947357,
+          "max_s": 0.20926204199986387,
+          "startup_s": 0.04975991700030136,
+          "peak_mb": 24.0
+        },
+        "cpp-8": {
+          "samples_s": [
+            0.6582376669994119,
+            0.8052171669996824,
+            0.6615192499994009
+          ],
+          "median_s": 0.6615192499994009,
+          "min_s": 0.6582376669994119,
+          "max_s": 0.8052171669996824,
+          "startup_s": 0.06219691700061958,
+          "peak_mb": 24.140625
+        },
+        "rust-1": {
+          "samples_s": [
+            0.05064416699951835,
+            0.07521537499997066,
+            0.05248583399952622
+          ],
+          "median_s": 0.05248583399952622,
+          "min_s": 0.05064416699951835,
+          "max_s": 0.07521537499997066,
+          "startup_s": 0.005699625000488595,
+          "peak_mb": 4.65234375
+        },
+        "rust-8": {
+          "samples_s": [
+            0.48222116700162587,
+            0.49915683300059754,
+            0.4739300010005536
+          ],
+          "median_s": 0.48222116700162587,
+          "min_s": 0.4739300010005536,
+          "max_s": 0.49915683300059754,
+          "startup_s": 0.00799945799917623,
+          "peak_mb": 4.64453125
+        }
+      },
+      "repeatable": {
+        "cpp-1": true,
+        "cpp-8": true,
+        "rust-1": true,
+        "rust-8": true
+      },
+      "hangs": {
+        "cpp-1": 0,
+        "cpp-8": 0,
+        "rust-1": 0,
+        "rust-8": 0
+      },
+      "comparisons": {
+        "cpp-8": {
+          "passed": true,
+          "reference_frames": 201,
+          "candidate_frames": 201,
+          "compared_entity_states": 51056,
+          "max_position_error_m": 0.0,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-1": {
+          "passed": false,
+          "reference_frames": 201,
+          "candidate_frames": 201,
+          "compared_entity_states": 51056,
+          "max_position_error_m": 4531.399975606153,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 51260,
+          "first_mismatches": [
+            "frame 0, t=0.1 s, entity 1: position=1637.650938011002 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 2: position=2247.557449104174 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 3: position=2113.975199419858 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 4: position=481.7136258177363 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 5: position=2063.744583727538 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 6: position=2930.5465007395364 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 7: position=1478.1556476243713 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 8: position=2070.7042197601168 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 9: position=2804.354486919258 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 10: position=2383.447548035227 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 11: position=1438.2867141937136 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 12: position=1518.2952495174584 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 13: position=2073.3938035998935 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 14: position=2592.0032170620107 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 15: position=66.93317563912629 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 16: position=2863.464665078434 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 17: position=2210.5342685259106 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 18: position=2736.0827063722927 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 19: position=1351.620038913974 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 20: position=1699.9580381004414 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": false,
+          "reference_frames": 201,
+          "candidate_frames": 201,
+          "compared_entity_states": 51056,
+          "max_position_error_m": 4531.399975606153,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 51260,
+          "first_mismatches": [
+            "frame 0, t=0.1 s, entity 1: position=1637.650938011002 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 2: position=2247.557449104174 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 3: position=2113.975199419858 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 4: position=481.7136258177363 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 5: position=2063.744583727538 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 6: position=2930.5465007395364 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 7: position=1478.1556476243713 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 8: position=2070.7042197601168 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 9: position=2804.354486919258 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 10: position=2383.447548035227 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 11: position=1438.2867141937136 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 12: position=1518.2952495174584 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 13: position=2073.3938035998935 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 14: position=2592.0032170620107 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 15: position=66.93317563912629 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 16: position=2863.464665078434 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 17: position=2210.5342685259106 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 18: position=2736.0827063722927 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 19: position=1351.620038913974 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 20: position=1699.9580381004414 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        }
+      },
+      "rust_workers_match": true,
+      "matches_cpp": false,
+      "passed": true
+    },
+    {
+      "workload": "collision",
+      "agents": 1024,
+      "steps": 200,
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            2.6667422099999385,
+            2.6341015440002593,
+            2.633450293998976
+          ],
+          "median_s": 2.6341015440002593,
+          "min_s": 2.633450293998976,
+          "max_s": 2.6667422099999385,
+          "startup_s": 0.15723283300030744,
+          "peak_mb": 64.390625
+        },
+        "cpp-8": {
+          "samples_s": [
+            4.629736752999634,
+            4.6746242109993545,
+            4.728345751998859
+          ],
+          "median_s": 4.6746242109993545,
+          "min_s": 4.629736752999634,
+          "max_s": 4.728345751998859,
+          "startup_s": 0.16550333300074271,
+          "peak_mb": 64.765625
+        },
+        "rust-1": {
+          "samples_s": [
+            0.36547158299981675,
+            0.3757785830002831,
+            0.36939395899935334
+          ],
+          "median_s": 0.36939395899935334,
+          "min_s": 0.36547158299981675,
+          "max_s": 0.3757785830002831,
+          "startup_s": 0.0333817500004443,
+          "peak_mb": 9.40625
+        },
+        "rust-8": {
+          "samples_s": [
+            0.7719294170001376,
+            0.7450477920001504,
+            0.7548660419997759
+          ],
+          "median_s": 0.7548660419997759,
+          "min_s": 0.7450477920001504,
+          "max_s": 0.7719294170001376,
+          "startup_s": 0.03535775000000285,
+          "peak_mb": 9.46875
+        }
+      },
+      "repeatable": {
+        "cpp-1": true,
+        "cpp-8": true,
+        "rust-1": true,
+        "rust-8": true
+      },
+      "hangs": {
+        "cpp-1": 0,
+        "cpp-8": 0,
+        "rust-1": 0,
+        "rust-8": 0
+      },
+      "comparisons": {
+        "cpp-8": {
+          "passed": true,
+          "reference_frames": 201,
+          "candidate_frames": 201,
+          "compared_entity_states": 203424,
+          "max_position_error_m": 0.0,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-1": {
+          "passed": false,
+          "reference_frames": 201,
+          "candidate_frames": 201,
+          "compared_entity_states": 203024,
+          "max_position_error_m": 4791.376592480037,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 203242,
+          "first_mismatches": [
+            "frame 0, t=0.1 s, entity 1: position=1637.650938011002 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 2: position=2247.557449104174 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 3: position=2113.975199419858 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 4: position=481.7136258177363 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 5: position=2063.744583727538 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 6: position=2930.5465007395364 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 7: position=1478.1556476243713 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 8: position=2070.7042197601168 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 9: position=2804.354486919258 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 10: position=2383.447548035227 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 11: position=1438.2867141937136 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 12: position=1518.2952495174584 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 13: position=2073.3938035998935 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 14: position=2592.0032170620107 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 15: position=66.93317563912629 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 16: position=2863.464665078434 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 17: position=2210.5342685259106 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 18: position=2736.0827063722927 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 19: position=1351.620038913974 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 20: position=1699.9580381004414 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": false,
+          "reference_frames": 201,
+          "candidate_frames": 201,
+          "compared_entity_states": 203024,
+          "max_position_error_m": 4791.376592480037,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 203242,
+          "first_mismatches": [
+            "frame 0, t=0.1 s, entity 1: position=1637.650938011002 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 2: position=2247.557449104174 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 3: position=2113.975199419858 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 4: position=481.7136258177363 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 5: position=2063.744583727538 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 6: position=2930.5465007395364 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 7: position=1478.1556476243713 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 8: position=2070.7042197601168 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 9: position=2804.354486919258 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 10: position=2383.447548035227 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 11: position=1438.2867141937136 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 12: position=1518.2952495174584 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 13: position=2073.3938035998935 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 14: position=2592.0032170620107 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 15: position=66.93317563912629 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 16: position=2863.464665078434 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 17: position=2210.5342685259106 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 18: position=2736.0827063722927 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 19: position=1351.620038913974 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 20: position=1699.9580381004414 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        }
+      },
+      "rust_workers_match": true,
+      "matches_cpp": false,
+      "passed": true
+    },
+    {
+      "workload": "collision",
+      "agents": 2048,
+      "steps": 200,
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            24.921046387000388,
+            24.544184096001118,
+            23.994427137000457
+          ],
+          "median_s": 24.544184096001118,
+          "min_s": 23.994427137000457,
+          "max_s": 24.921046387000388,
+          "startup_s": 0.49898791599935066,
+          "peak_mb": 118.04296875
+        },
+        "cpp-8": {
+          "samples_s": [
+            28.95875430399974,
+            27.361827136999636,
+            27.612181344999954
+          ],
+          "median_s": 27.612181344999954,
+          "min_s": 27.361827136999636,
+          "max_s": 28.95875430399974,
+          "startup_s": 0.533045334000235,
+          "peak_mb": 118.04296875
+        },
+        "rust-1": {
+          "samples_s": [
+            1.2435053340004742,
+            1.6438574169997082,
+            1.2662485420005396
+          ],
+          "median_s": 1.2662485420005396,
+          "min_s": 1.2435053340004742,
+          "max_s": 1.6438574169997082,
+          "startup_s": 0.10998933399969246,
+          "peak_mb": 15.46875
+        },
+        "rust-8": {
+          "samples_s": [
+            1.4248140850004347,
+            1.613192292000349,
+            1.411019667999426
+          ],
+          "median_s": 1.4248140850004347,
+          "min_s": 1.411019667999426,
+          "max_s": 1.613192292000349,
+          "startup_s": 0.12006845799987786,
+          "peak_mb": 15.65625
+        }
+      },
+      "repeatable": {
+        "cpp-1": true,
+        "cpp-8": true,
+        "rust-1": true,
+        "rust-8": true
+      },
+      "hangs": {
+        "cpp-1": 0,
+        "cpp-8": 0,
+        "rust-1": 0,
+        "rust-8": 0
+      },
+      "comparisons": {
+        "cpp-8": {
+          "passed": true,
+          "reference_frames": 201,
+          "candidate_frames": 201,
+          "compared_entity_states": 405648,
+          "max_position_error_m": 0.0,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-1": {
+          "passed": false,
+          "reference_frames": 201,
+          "candidate_frames": 201,
+          "compared_entity_states": 402848,
+          "max_position_error_m": 5164.792538290934,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 403096,
+          "first_mismatches": [
+            "frame 0, t=0.1 s, entity 1: position=1637.650938011002 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 2: position=2247.557449104174 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 3: position=2113.975199419858 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 4: position=481.7136258177363 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 5: position=2063.744583727538 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 6: position=2930.5465007395364 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 7: position=1478.1556476243713 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 8: position=2070.7042197601168 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 9: position=2804.354486919258 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 10: position=2383.447548035227 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 11: position=1438.2867141937136 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 12: position=1518.2952495174584 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 13: position=2073.3938035998935 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 14: position=2592.0032170620107 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 15: position=66.93317563912629 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 16: position=2863.464665078434 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 17: position=2210.5342685259106 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 18: position=2736.0827063722927 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 19: position=1351.620038913974 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 20: position=1699.9580381004414 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": false,
+          "reference_frames": 201,
+          "candidate_frames": 201,
+          "compared_entity_states": 402848,
+          "max_position_error_m": 5164.792538290934,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 403096,
+          "first_mismatches": [
+            "frame 0, t=0.1 s, entity 1: position=1637.650938011002 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 2: position=2247.557449104174 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 3: position=2113.975199419858 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 4: position=481.7136258177363 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 5: position=2063.744583727538 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 6: position=2930.5465007395364 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 7: position=1478.1556476243713 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 8: position=2070.7042197601168 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 9: position=2804.354486919258 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 10: position=2383.447548035227 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 11: position=1438.2867141937136 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 12: position=1518.2952495174584 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 13: position=2073.3938035998935 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 14: position=2592.0032170620107 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 15: position=66.93317563912629 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 16: position=2863.464665078434 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 17: position=2210.5342685259106 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 18: position=2736.0827063722927 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 19: position=1351.620038913974 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s",
+            "frame 0, t=0.1 s, entity 20: position=1699.9580381004414 m, velocity=0.0 m/s, orientation=0.0 rad, angular velocity=0.0 rad/s"
+          ],
+          "direct_event_stream_compared": false
+        }
+      },
+      "rust_workers_match": true,
+      "matches_cpp": false,
+      "passed": true
     }
   ],
-  "passed": true,
-  "notes": "rust_workers_match and matches_cpp added after the run from its retained outputs."
+  "passed": true
 }

@@ -1,4 +1,4 @@
-# RQ2 workflow example
+# Workflow example (the paper's "Building an Experiment" check)
 
 The same FollowNearest speed sweep built in C++ SCRIMMAGE and in SCRIMMAGE-RS
 (paper section "One Experiment in Both" and its appendix).

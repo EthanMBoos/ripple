@@ -91,7 +91,7 @@ changes. Do not edit a workload in place: that makes its history incomparable, s
 add a new workload name instead.
 
 `benchmark.py` is different: it times C++ against Rust in the reference Docker
-image for the paper (see [Preliminary benchmark](#preliminary-benchmark)).
+image for the paper (see [C++ versus Rust benchmark](#c-versus-rust-benchmark)).
 
 ## Two C++ builds
 
@@ -322,20 +322,24 @@ Test the checker itself without Docker:
 python3 -m unittest discover -s reference -p 'test_*.py'
 ```
 
-## Preliminary benchmark
-
-After building the reference image with the checker above:
+## C++ versus Rust benchmark
 
 ```sh
-python3 reference/benchmark.py --output runs/new-benchmark
+python3 reference/benchmark.py --output runs/new-benchmark   # --quick: smallest sizes only
 ```
 
-This builds a Release core-only Rust harness and runs both implementations in
-one `linux/amd64` container, with C++ always single-threaded and Rust at 1/8 workers.
-Defaults: 128 entities, 1,000 steps, one warmup and three measured runs each.
-`--entities`, `--steps`, and `--repetitions` override those sizes. The script
-checks reference output and repeatability; a mismatch is a failure, not a timing
-result to advertise. No Rerun is built into the harness. Timing includes process
-startup, parsing, simulation, and logging, but excludes builds/container startup.
-Each run saves raw samples and environment details in its output directory; the
+This builds the unmodified C++ branch and the Rust core-only runner for this
+machine's own architecture and runs both in one Linux container, so neither is
+emulated (on Apple Silicon, C++ is built without JSBSim, which no workload uses).
+It runs `perf.py`'s four workloads at three agent counts with C++ single-threaded,
+C++ in its own `multi_threaded` mode at 8 threads, and Rust at 1 and 8 workers:
+one warm-up and three timed runs each. Times are whole processes minus a one-step
+run of the same mission, which removes startup and parsing; peak memory is
+recorded too. Rust output must match single-threaded C++, except in churn and
+sensing, whose random spawns and sensor noise the unmodified C++ build draws
+differently; every run must repeat its warm-up output.
+
+C++'s multithreaded mode sometimes deadlocks (its worker waits on a condition
+variable without a predicate, so a wake-up can be lost; 7 of 40 runs of one
+mission hung). Such runs are killed after 120 s, counted, and retried. The
 paper's retained results are in `paper/data/benchmark/`.

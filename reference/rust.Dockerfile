@@ -1,4 +1,4 @@
-# Rust on Linux/amd64, in two targets:
+# Rust on Linux (amd64, or arm64 for benchmark.py on Apple Silicon), in two targets:
 #   cli        the scrimmage command (platform_check.py)
 #   benchmark  the core-only runner inside the C++ reference image (benchmark.py)
 ARG REFERENCE_IMAGE=scrimmage-rs-reference:latest
@@ -21,4 +21,6 @@ ENTRYPOINT ["/usr/local/bin/scrimmage"]
 FROM ${REFERENCE_IMAGE} AS benchmark
 COPY --from=build /usr/local/bin/scrimmage-benchmark /usr/local/bin/scrimmage-benchmark
 COPY --from=build /rust-compiler.txt /rust-compiler.txt
+# GNU time reports each simulator's own peak memory; a Python parent would inflate it.
+RUN apt-get update && apt-get install -y --no-install-recommends time && rm -rf /var/lib/apt/lists/*
 ENTRYPOINT ["python3", "/rust/reference/benchmark.py", "--inside"]

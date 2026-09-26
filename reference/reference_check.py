@@ -154,30 +154,47 @@ def same_outputs(left, right):
     return {name: sha256(left / name) == sha256(right / name) for name in OUTPUT_FILES}
 
 
-def build_reference(args, output, branch):
-    """Build one committed branch; outputs go in build-<branch>/ under the check."""
+def edit(text, old, new):
+    if old not in text:
+        raise RuntimeError(f"expected {old!r} in a Dockerfile; update build_reference")
+    return text.replace(old, new)
+
+
+def build_reference(args, output, branch, target_platform=PLATFORM):
+    """Build one committed branch; outputs go in build-<branch>/ under the check.
+
+    Another platform (benchmark.py on Apple Silicon) builds without JSBSim, whose
+    installer is amd64-only; no compared or benchmarked mission uses it.
+    """
     commit = capture(["git", "-C", str(args.source), "rev-parse", f"refs/heads/{branch}^{{commit}}"])
+    native = target_platform != PLATFORM
     logs = output / f"build-{branch}"
     context = logs / "context"
     context.mkdir(parents=True)
     dependency_file = context / "Dependencies.Dockerfile"
-    dependency_file.write_bytes(subprocess.check_output([
+    dependency_text = subprocess.check_output([
         "git", "-C", str(args.source), "show", f"{commit}:{DEPENDENCY_DOCKERFILE}",
-    ]))
+    ], text=True)
+    build_text = (ROOT / "reference/Dockerfile").read_text()
+    if native:
+        dependency_text = edit(dependency_text, " && ./setup/install-jsbsim.sh", "")
+        build_text = edit(build_text, "-DENABLE_JSBSIM=1", "-DENABLE_JSBSIM=0")
+    dependency_file.write_text(dependency_text)
     # Archive only committed branch files; the sibling checkout is never modified.
     with (context / "source.tar").open("wb") as archive:
         subprocess.run([
             "git", "-C", str(args.source), "archive", "--format=tar", "--prefix=source/", commit,
         ], stdout=archive, check=True)
-    shutil.copyfile(ROOT / "reference/Dockerfile", context / "Dockerfile")
+    (context / "Dockerfile").write_text(build_text)
     # Only the constant-command drivers are ours; the models remain upstream code.
     shutil.copytree(ROOT / "reference/fixtures", context / "fixtures")
     fixture_hashes = {path.name: sha256(path) for path in sorted((context / "fixtures").iterdir())}
-    dependency_tag = f"scrimmage-rs-reference-deps:{sha256(dependency_file)[:12]}"
-    image_tag = f"scrimmage-rs-reference:{commit[:12]}"
+    suffix = "-" + target_platform.split("/")[1] if native else ""
+    dependency_tag = f"scrimmage-rs-reference-deps:{sha256(dependency_file)[:12]}{suffix}"
+    image_tag = f"scrimmage-rs-reference:{commit[:12]}{suffix}"
     dependency_id = logs / "dependencies-image-id.txt"
     image_id = logs / "reference-image-id.txt"
-    common = ["docker", "build", "--platform", PLATFORM, "--progress", "plain"]
+    common = ["docker", "build", "--platform", target_platform, "--progress", "plain"]
     run_logged(common + [
         "--file", dependency_file, "--tag", dependency_tag,
         "--iidfile", dependency_id, context,
@@ -191,7 +208,7 @@ def build_reference(args, output, branch):
     image = image_id.read_text().strip()
     inspect = json.loads(capture(["docker", "image", "inspect", image]))[0]
     run_logged([
-        "docker", "run", "--rm", "--network", "none", "--platform", PLATFORM,
+        "docker", "run", "--rm", "--network", "none", "--platform", target_platform,
         "--entrypoint", "/bin/sh", image, "-c",
         "g++ --version && uname -m && cat /etc/os-release && dpkg-query -W",
     ], logs / "cpp-environment.log", timeout=args.timeout)
@@ -202,7 +219,7 @@ def build_reference(args, output, branch):
         "dependency_dockerfile_sha256": sha256(dependency_file),
         "dependency_image": dependency_id.read_text().strip(),
         "build_dockerfile_sha256": sha256(context / "Dockerfile"),
-        "image": image, "platform": PLATFORM,
+        "image": image, "image_tag": image_tag, "platform": target_platform,
         "fixture_sha256": fixture_hashes,
         "image_architecture": inspect["Architecture"],
     }

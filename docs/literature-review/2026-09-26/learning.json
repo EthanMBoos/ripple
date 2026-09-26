@@ -1,0 +1,2003 @@
+[
+  {
+    "query": "Multi-Agent Actor-Critic for Mixed Cooperative-Competitive Environments",
+    "url": "https://api.openalex.org/works?search=Multi-Agent+Actor-Critic+for+Mixed+Cooperative-Competitive+Environments&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:02.173851+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W2623431351",
+        "title": "Multi-Agent Actor-Critic for Mixed Cooperative-Competitive Environments",
+        "publication_year": 2017,
+        "cited_by_count": 1010,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 107
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 129
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 160
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 116
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 189
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 135
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 114
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 46
+          },
+          {
+            "year": 2017,
+            "cited_by_count": 14
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.1706.02275"
+      },
+      {
+        "id": "https://openalex.org/W2617547828",
+        "title": "Counterfactual Multi-Agent Policy Gradients",
+        "publication_year": 2018,
+        "cited_by_count": 1755,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 181
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 320
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 295
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 301
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 240
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 175
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 111
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 87
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 35
+          },
+          {
+            "year": 2017,
+            "cited_by_count": 10
+          }
+        ],
+        "doi": "https://doi.org/10.1609/aaai.v32i1.11794"
+      },
+      {
+        "id": "https://openalex.org/W3156295478",
+        "title": "Multi-agent deep reinforcement learning: a survey",
+        "publication_year": 2021,
+        "cited_by_count": 937,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 215
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 273
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 225
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 149
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 60
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 15
+          }
+        ],
+        "doi": "https://doi.org/10.1007/s10462-021-09996-w"
+      }
+    ]
+  },
+  {
+    "query": "QMIX Monotonic Value Function Factorisation for Deep Multi-Agent Reinforcement Learning",
+    "url": "https://api.openalex.org/works?search=QMIX+Monotonic+Value+Function+Factorisation+for+Deep+Multi-Agent+Reinforcement+Learning&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:02.589656+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W2794643322",
+        "title": "QMIX: Monotonic Value Function Factorisation for Deep Multi-Agent Reinforcement Learning",
+        "publication_year": 2018,
+        "cited_by_count": 347,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 11
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 50
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 66
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 63
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 69
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 50
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 35
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 3
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.1803.11485"
+      },
+      {
+        "id": "https://openalex.org/W4295598622",
+        "title": "QMIX: Monotonic Value Function Factorisation for Deep Multi-Agent\\n Reinforcement Learning",
+        "publication_year": 2018,
+        "cited_by_count": 480,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 4
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 20
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 45
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 130
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 116
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 104
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 39
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 19
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 3
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.1803.11485"
+      },
+      {
+        "id": "https://openalex.org/W2963762747",
+        "title": "Monotonic Value Function Factorisation for Deep Multi-Agent Reinforcement Learning",
+        "publication_year": 2020,
+        "cited_by_count": 429,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 119
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 163
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 110
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 11
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 16
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 10
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.2003.08839"
+      }
+    ]
+  },
+  {
+    "query": "Counterfactual Multi-Agent Policy Gradients",
+    "url": "https://api.openalex.org/works?search=Counterfactual+Multi-Agent+Policy+Gradients&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:02.985296+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W2617547828",
+        "title": "Counterfactual Multi-Agent Policy Gradients",
+        "publication_year": 2018,
+        "cited_by_count": 1755,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 181
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 320
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 295
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 301
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 240
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 175
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 111
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 87
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 35
+          },
+          {
+            "year": 2017,
+            "cited_by_count": 10
+          }
+        ],
+        "doi": "https://doi.org/10.1609/aaai.v32i1.11794"
+      },
+      {
+        "id": "https://openalex.org/W2962938168",
+        "title": "Counterfactual Multi-Agent Policy Gradients",
+        "publication_year": 2017,
+        "cited_by_count": 459,
+        "counts_by_year": [
+          {
+            "year": 2023,
+            "cited_by_count": 3
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 8
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 169
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 161
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 93
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 25
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.1705.08926"
+      },
+      {
+        "id": "https://openalex.org/W2616247523",
+        "title": "Grad-CAM: Visual Explanations from Deep Networks via Gradient-Based Localization",
+        "publication_year": 2019,
+        "cited_by_count": 6080,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 1105
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 1594
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 1069
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 903
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 729
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 501
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 156
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 13
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 8
+          },
+          {
+            "year": 2017,
+            "cited_by_count": 1
+          },
+          {
+            "year": 2016,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.1007/s11263-019-01228-7"
+      }
+    ]
+  },
+  {
+    "query": "Actor-Attention-Critic for Multi-Agent Reinforcement Learning",
+    "url": "https://api.openalex.org/works?search=Actor-Attention-Critic+for+Multi-Agent+Reinforcement+Learning&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:03.359429+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W2894976951",
+        "title": "Actor-Attention-Critic for Multi-Agent Reinforcement Learning",
+        "publication_year": 2018,
+        "cited_by_count": 289,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 18
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 31
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 67
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 70
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 60
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 37
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 5
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.1810.02912"
+      },
+      {
+        "id": "https://openalex.org/W2107726111",
+        "title": "Reinforcement Learning: A Survey",
+        "publication_year": 1996,
+        "cited_by_count": 8968,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 319
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 683
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 613
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 594
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 498
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 562
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 595
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 438
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 369
+          },
+          {
+            "year": 2017,
+            "cited_by_count": 272
+          },
+          {
+            "year": 2016,
+            "cited_by_count": 204
+          },
+          {
+            "year": 2015,
+            "cited_by_count": 221
+          },
+          {
+            "year": 2014,
+            "cited_by_count": 235
+          },
+          {
+            "year": 2013,
+            "cited_by_count": 272
+          },
+          {
+            "year": 2012,
+            "cited_by_count": 222
+          }
+        ],
+        "doi": "https://doi.org/10.1613/jair.301"
+      },
+      {
+        "id": "https://openalex.org/W3156295478",
+        "title": "Multi-agent deep reinforcement learning: a survey",
+        "publication_year": 2021,
+        "cited_by_count": 937,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 215
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 273
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 225
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 149
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 60
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 15
+          }
+        ],
+        "doi": "https://doi.org/10.1007/s10462-021-09996-w"
+      }
+    ]
+  },
+  {
+    "query": "TarMAC Targeted Multi-Agent Communication",
+    "url": "https://api.openalex.org/works?search=TarMAC+Targeted+Multi-Agent+Communication&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:03.769423+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W2898591683",
+        "title": "TarMAC: Targeted Multi-Agent Communication",
+        "publication_year": 2018,
+        "cited_by_count": 26,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 3
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 1
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 3
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 2
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 3
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 10
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 4
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.1810.11187"
+      },
+      {
+        "id": "https://openalex.org/W3156295478",
+        "title": "Multi-agent deep reinforcement learning: a survey",
+        "publication_year": 2021,
+        "cited_by_count": 937,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 215
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 273
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 225
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 149
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 60
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 15
+          }
+        ],
+        "doi": "https://doi.org/10.1007/s10462-021-09996-w"
+      },
+      {
+        "id": "https://openalex.org/W4390638728",
+        "title": "A survey of multi-agent deep reinforcement learning with communication",
+        "publication_year": 2024,
+        "cited_by_count": 152,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 69
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 66
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 16
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.1007/s10458-023-09633-6"
+      }
+    ]
+  },
+  {
+    "query": "Graph Neural Networks for Decentralized Multi-Robot Path Planning",
+    "url": "https://api.openalex.org/works?search=Graph+Neural+Networks+for+Decentralized+Multi-Robot+Path+Planning&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:04.194383+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W3130631955",
+        "title": "Graph Neural Networks for Decentralized Multi-Robot Path Planning",
+        "publication_year": 2020,
+        "cited_by_count": 276,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 15
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 65
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 73
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 51
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 36
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 24
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 11
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.1109/iros45743.2020.9341668"
+      },
+      {
+        "id": "https://openalex.org/W2996186856",
+        "title": "Graph Neural Networks for Decentralized Multi-Robot Path Planning",
+        "publication_year": 2019,
+        "cited_by_count": 23,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 1
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 5
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 4
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 2
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 4
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 7
+          }
+        ],
+        "doi": "https://doi.org/10.17863/cam.55132"
+      },
+      {
+        "id": "https://openalex.org/W2942307437",
+        "title": "A review: On path planning strategies for navigation of mobile robot",
+        "publication_year": 2019,
+        "cited_by_count": 915,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 62
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 113
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 174
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 197
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 179
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 109
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 77
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 4
+          }
+        ],
+        "doi": "https://doi.org/10.1016/j.dt.2019.04.011"
+      }
+    ]
+  },
+  {
+    "query": "The Surprising Effectiveness of PPO in Cooperative Multi-Agent Games",
+    "url": "https://api.openalex.org/works?search=The+Surprising+Effectiveness+of+PPO+in+Cooperative+Multi-Agent+Games&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:04.630510+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W4286748781",
+        "title": "The Surprising Effectiveness of PPO in Cooperative, Multi-Agent Games",
+        "publication_year": 2021,
+        "cited_by_count": 600,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 17
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 183
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 200
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 162
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 38
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.2103.01955"
+      },
+      {
+        "id": "https://openalex.org/W7133226216",
+        "title": "The Surprising Effectiveness of PPO in Cooperative Multi-Agent Games",
+        "publication_year": 2022,
+        "cited_by_count": 373,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 357
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 16
+          }
+        ],
+        "doi": "https://doi.org/10.52202/068431-1787"
+      },
+      {
+        "id": "https://openalex.org/W3134226813",
+        "title": "The Surprising Effectiveness of MAPPO in Cooperative, Multi-Agent Games",
+        "publication_year": 2021,
+        "cited_by_count": 108,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 5
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 22
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 32
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 22
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 25
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 2
+          }
+        ],
+        "doi": null
+      }
+    ]
+  },
+  {
+    "query": "Multi-Agent Reinforcement Learning is a Sequence Modeling Problem",
+    "url": "https://api.openalex.org/works?search=Multi-Agent+Reinforcement+Learning+is+a+Sequence+Modeling+Problem&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:05.465722+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W4281622133",
+        "title": "Multi-Agent Reinforcement Learning is a Sequence Modeling Problem",
+        "publication_year": 2022,
+        "cited_by_count": 79,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 2
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 32
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 31
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 13
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.2205.14953"
+      },
+      {
+        "id": "https://openalex.org/W2107726111",
+        "title": "Reinforcement Learning: A Survey",
+        "publication_year": 1996,
+        "cited_by_count": 8968,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 319
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 683
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 613
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 594
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 498
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 562
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 595
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 438
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 369
+          },
+          {
+            "year": 2017,
+            "cited_by_count": 272
+          },
+          {
+            "year": 2016,
+            "cited_by_count": 204
+          },
+          {
+            "year": 2015,
+            "cited_by_count": 221
+          },
+          {
+            "year": 2014,
+            "cited_by_count": 235
+          },
+          {
+            "year": 2013,
+            "cited_by_count": 272
+          },
+          {
+            "year": 2012,
+            "cited_by_count": 222
+          }
+        ],
+        "doi": "https://doi.org/10.1613/jair.301"
+      },
+      {
+        "id": "https://openalex.org/W7133238541",
+        "title": "Multi-Agent Reinforcement Learning is a Sequence Modeling Problem",
+        "publication_year": 2022,
+        "cited_by_count": 44,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 42
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 2
+          }
+        ],
+        "doi": "https://doi.org/10.52202/068431-1201"
+      }
+    ]
+  },
+  {
+    "query": "Heterogeneous-Agent Reinforcement Learning",
+    "url": "https://api.openalex.org/works?search=Heterogeneous-Agent+Reinforcement+Learning&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:05.891760+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W2736601468",
+        "title": "Diagnosing Non-Intermittent Anomalies in Reinforcement Learning Policy Executions (Short Paper)",
+        "publication_year": 2017,
+        "cited_by_count": 11317,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 184
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 899
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 1847
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 2294
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 1531
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 1863
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 1492
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 878
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 291
+          },
+          {
+            "year": 2017,
+            "cited_by_count": 34
+          },
+          {
+            "year": 2016,
+            "cited_by_count": 1
+          },
+          {
+            "year": 2012,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.4230/oasics.dx.2024.16"
+      },
+      {
+        "id": "https://openalex.org/W4366731969",
+        "title": "Heterogeneous-Agent Reinforcement Learning",
+        "publication_year": 2023,
+        "cited_by_count": 22,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 12
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 9
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.2304.09870"
+      },
+      {
+        "id": "https://openalex.org/W2099618002",
+        "title": "A Comprehensive Survey of Multiagent Reinforcement Learning",
+        "publication_year": 2008,
+        "cited_by_count": 2281,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 145
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 186
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 162
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 175
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 187
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 245
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 235
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 204
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 124
+          },
+          {
+            "year": 2017,
+            "cited_by_count": 107
+          },
+          {
+            "year": 2016,
+            "cited_by_count": 75
+          },
+          {
+            "year": 2015,
+            "cited_by_count": 65
+          },
+          {
+            "year": 2014,
+            "cited_by_count": 89
+          },
+          {
+            "year": 2013,
+            "cited_by_count": 82
+          },
+          {
+            "year": 2012,
+            "cited_by_count": 70
+          }
+        ],
+        "doi": "https://doi.org/10.1109/tsmcc.2007.913919"
+      }
+    ]
+  },
+  {
+    "query": "GCBF A Graph Control Barrier Function Framework for Distributed Safe Multi-Agent Control",
+    "url": "https://api.openalex.org/works?search=GCBF+A+Graph+Control+Barrier+Function+Framework+for+Distributed+Safe+Multi-Agent+Control&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:06.355259+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W4391335029",
+        "title": "GCBF+: A Neural Graph Control Barrier Function Framework for Distributed Safe Multiagent Control",
+        "publication_year": 2025,
+        "cited_by_count": 42,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 25
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 14
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 3
+          }
+        ],
+        "doi": "https://doi.org/10.1109/tro.2025.3530348"
+      },
+      {
+        "id": "https://openalex.org/W4388964525",
+        "title": "Neural Graph Control Barrier Functions Guided Distributed Collision-avoidance Multi-agent Control",
+        "publication_year": 2023,
+        "cited_by_count": 4,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 1
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 3
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.2311.13014"
+      },
+      {
+        "id": "https://openalex.org/W4409617015",
+        "title": "Deadlock-free, safe, and decentralized multi-robot navigation in social mini-games via discrete-time control barrier functions",
+        "publication_year": 2025,
+        "cited_by_count": 14,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 9
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 5
+          }
+        ],
+        "doi": "https://doi.org/10.1007/s10514-025-10194-8"
+      }
+    ]
+  },
+  {
+    "query": "RoCo Dialectic Multi-Robot Collaboration with Large Language Models",
+    "url": "https://api.openalex.org/works?search=RoCo+Dialectic+Multi-Robot+Collaboration+with+Large+Language+Models&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:06.764872+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W4401416363",
+        "title": "RoCo: Dialectic Multi-Robot Collaboration with Large Language Models",
+        "publication_year": 2024,
+        "cited_by_count": 156,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 56
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 73
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 26
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.1109/icra57147.2024.10610855"
+      },
+      {
+        "id": "https://openalex.org/W4383994281",
+        "title": "RoCo: Dialectic Multi-Robot Collaboration with Large Language Models",
+        "publication_year": 2023,
+        "cited_by_count": 11,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 5
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 6
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.2307.04738"
+      },
+      {
+        "id": "https://openalex.org/W4393065402",
+        "title": "A survey on large language model based autonomous agents",
+        "publication_year": 2024,
+        "cited_by_count": 1634,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 838
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 596
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 199
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.1007/s11704-024-40231-1"
+      }
+    ]
+  },
+  {
+    "query": "Scalable Multi-Robot Collaboration with Large Language Models Centralized or Decentralized Systems",
+    "url": "https://api.openalex.org/works?search=Scalable+Multi-Robot+Collaboration+with+Large+Language+Models+Centralized+or+Decentralized+Systems&per-page=3&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:33:07.193245+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W4401415431",
+        "title": "Scalable Multi-Robot Collaboration with Large Language Models: Centralized or Decentralized Systems?",
+        "publication_year": 2024,
+        "cited_by_count": 84,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 27
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 47
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 10
+          }
+        ],
+        "doi": "https://doi.org/10.1109/icra57147.2024.10610676"
+      },
+      {
+        "id": "https://openalex.org/W4387210286",
+        "title": "Scalable Multi-Robot Collaboration with Large Language Models: Centralized or Decentralized Systems?",
+        "publication_year": 2023,
+        "cited_by_count": 7,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 3
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 4
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.2309.15943"
+      },
+      {
+        "id": "https://openalex.org/W2140929789",
+        "title": "A Survey and Analysis of Multi-Robot Coordination",
+        "publication_year": 2013,
+        "cited_by_count": 660,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 22
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 50
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 56
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 62
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 68
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 82
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 72
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 79
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 71
+          },
+          {
+            "year": 2017,
+            "cited_by_count": 32
+          },
+          {
+            "year": 2016,
+            "cited_by_count": 41
+          },
+          {
+            "year": 2015,
+            "cited_by_count": 22
+          },
+          {
+            "year": 2014,
+            "cited_by_count": 3
+          }
+        ],
+        "doi": "https://doi.org/10.5772/57313"
+      }
+    ]
+  },
+  {
+    "query": "Crowd-Robot Interaction Crowd-Aware Robot Navigation with Attention-Based Deep Reinforcement Learning",
+    "url": "https://api.openalex.org/works?filter=title.search%3ACrowd-Robot+Interaction+Crowd-Aware+Robot+Navigation+with+Attention-Based+Deep+Reinforcement+Learning&per-page=5&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:35:42.076356+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W2890001928",
+        "title": "Crowd-Robot Interaction: Crowd-Aware Robot Navigation With Attention-Based Deep Reinforcement Learning",
+        "publication_year": 2019,
+        "cited_by_count": 618,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 51
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 100
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 112
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 114
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 86
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 94
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 49
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 12
+          }
+        ],
+        "doi": "https://doi.org/10.1109/icra.2019.8794134"
+      },
+      {
+        "id": "https://openalex.org/W2951264441",
+        "title": "Crowd-Robot Interaction: Crowd-aware Robot Navigation with Attention-based Deep Reinforcement Learning",
+        "publication_year": 2018,
+        "cited_by_count": 12,
+        "counts_by_year": [
+          {
+            "year": 2023,
+            "cited_by_count": 3
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 1
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 4
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 4
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.1809.08835"
+      }
+    ]
+  },
+  {
+    "query": "SMACv2 An Improved Benchmark for Cooperative Multi-Agent Reinforcement Learning",
+    "url": "https://api.openalex.org/works?filter=title.search%3ASMACv2+An+Improved+Benchmark+for+Cooperative+Multi-Agent+Reinforcement+Learning&per-page=5&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:35:42.444562+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W7133246398",
+        "title": "SMACv2: An Improved Benchmark for Cooperative Multi-Agent Reinforcement Learning",
+        "publication_year": 2023,
+        "cited_by_count": 28,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 27
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.52202/075280-1634"
+      },
+      {
+        "id": "https://openalex.org/W4311723471",
+        "title": "SMACv2: An Improved Benchmark for Cooperative Multi-Agent Reinforcement Learning",
+        "publication_year": 2022,
+        "cited_by_count": 27,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 2
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 13
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 9
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 3
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.2212.07489"
+      },
+      {
+        "id": "https://openalex.org/W7111231663",
+        "title": "SMACv2:An Improved Benchmark for Cooperative Multi-Agent Reinforcement Learning",
+        "publication_year": 2024,
+        "cited_by_count": 1,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.5555/3666122.3667756"
+      }
+    ]
+  },
+  {
+    "query": "Value-Decomposition Networks For Cooperative Multi-Agent Learning",
+    "url": "https://api.openalex.org/works?filter=title.search%3AValue-Decomposition+Networks+For+Cooperative+Multi-Agent+Learning&per-page=5&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:35:42.787587+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W2807741983",
+        "title": "Value-Decomposition Networks For Cooperative Multi-Agent Learning Based On Team Reward",
+        "publication_year": 2018,
+        "cited_by_count": 620,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 149
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 49
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 42
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 77
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 65
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 124
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 77
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 32
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 5
+          }
+        ],
+        "doi": "https://doi.org/10.65109/jsrc7365"
+      },
+      {
+        "id": "https://openalex.org/W4391020479",
+        "title": "Privacy-Engineered Value Decomposition Networks for Cooperative Multi-Agent Reinforcement Learning",
+        "publication_year": 2023,
+        "cited_by_count": 2,
+        "counts_by_year": [
+          {
+            "year": 2024,
+            "cited_by_count": 1
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.1109/cdc49753.2023.10384184"
+      },
+      {
+        "id": "https://openalex.org/W4388684118",
+        "title": "Privacy-Engineered Value Decomposition Networks for Cooperative Multi-Agent Reinforcement Learning",
+        "publication_year": 2023,
+        "cited_by_count": 0,
+        "counts_by_year": [],
+        "doi": "https://doi.org/10.48550/arxiv.2311.06255"
+      }
+    ]
+  },
+  {
+    "query": "Mean Field Multi-Agent Reinforcement Learning",
+    "url": "https://api.openalex.org/works?filter=title.search%3AMean+Field+Multi-Agent+Reinforcement+Learning&per-page=5&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:35:43.128997+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W2785315072",
+        "title": "Mean Field Multi-Agent Reinforcement Learning",
+        "publication_year": 2018,
+        "cited_by_count": 245,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 10
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 9
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 42
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 49
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 60
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 51
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 21
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 3
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.1802.05438"
+      },
+      {
+        "id": "https://openalex.org/W2914154006",
+        "title": "Efficient Ridesharing Order Dispatching with Mean Field Multi-Agent Reinforcement Learning",
+        "publication_year": 2019,
+        "cited_by_count": 246,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 14
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 20
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 39
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 37
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 41
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 54
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 31
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 10
+          }
+        ],
+        "doi": "https://doi.org/10.1145/3308558.3313433"
+      },
+      {
+        "id": "https://openalex.org/W4313048769",
+        "title": "Mean-Field Multi-Agent Reinforcement Learning for Peer-to-Peer Multi-Energy Trading",
+        "publication_year": 2022,
+        "cited_by_count": 83,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 23
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 22
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 27
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 8
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 3
+          }
+        ],
+        "doi": "https://doi.org/10.1109/tpwrs.2022.3217922"
+      },
+      {
+        "id": "https://openalex.org/W4394579595",
+        "title": "Adaptive mean field multi-agent reinforcement learning",
+        "publication_year": 2024,
+        "cited_by_count": 15,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 5
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 7
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 3
+          }
+        ],
+        "doi": "https://doi.org/10.1016/j.ins.2024.120560"
+      },
+      {
+        "id": "https://openalex.org/W4402742948",
+        "title": "Joint Resource Allocation for UAV-Assisted V2X Communication With Mean Field Multi-Agent Reinforcement Learning",
+        "publication_year": 2024,
+        "cited_by_count": 25,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 10
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 15
+          }
+        ],
+        "doi": "https://doi.org/10.1109/tvt.2024.3466116"
+      }
+    ]
+  },
+  {
+    "query": "Learning Attentional Communication for Multi-Agent Cooperation",
+    "url": "https://api.openalex.org/works?filter=title.search%3ALearning+Attentional+Communication+for+Multi-Agent+Cooperation&per-page=5&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:35:43.479551+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W2803155336",
+        "title": "Learning Attentional Communication for Multi-Agent Cooperation",
+        "publication_year": 2018,
+        "cited_by_count": 241,
+        "counts_by_year": [
+          {
+            "year": 2025,
+            "cited_by_count": 13
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 39
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 66
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 36
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 42
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 29
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 16
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.1805.07733"
+      },
+      {
+        "id": "https://openalex.org/W2894218360",
+        "title": "ACM: Learning Dynamic Multi-agent Cooperation via Attentional Communication Model",
+        "publication_year": 2018,
+        "cited_by_count": 2,
+        "counts_by_year": [
+          {
+            "year": 2020,
+            "cited_by_count": 2
+          }
+        ],
+        "doi": "https://doi.org/10.1007/978-3-030-01421-6_22"
+      }
+    ]
+  },
+  {
+    "query": "Emergent Tool Use From Multi-Agent Autocurricula",
+    "url": "https://api.openalex.org/works?filter=title.search%3AEmergent+Tool+Use+From+Multi-Agent+Autocurricula&per-page=5&select=id%2Ctitle%2Cpublication_year%2Ccited_by_count%2Ccounts_by_year%2Cdoi",
+    "fetched_utc": "2026-09-26T09:35:43.807895+00:00",
+    "results": [
+      {
+        "id": "https://openalex.org/W2973525135",
+        "title": "Emergent Tool Use From Multi-Agent Autocurricula",
+        "publication_year": 2019,
+        "cited_by_count": 332,
+        "counts_by_year": [
+          {
+            "year": 2026,
+            "cited_by_count": 2
+          },
+          {
+            "year": 2025,
+            "cited_by_count": 10
+          },
+          {
+            "year": 2024,
+            "cited_by_count": 38
+          },
+          {
+            "year": 2023,
+            "cited_by_count": 48
+          },
+          {
+            "year": 2022,
+            "cited_by_count": 51
+          },
+          {
+            "year": 2021,
+            "cited_by_count": 100
+          },
+          {
+            "year": 2020,
+            "cited_by_count": 76
+          },
+          {
+            "year": 2019,
+            "cited_by_count": 6
+          },
+          {
+            "year": 2018,
+            "cited_by_count": 1
+          }
+        ],
+        "doi": "https://doi.org/10.48550/arxiv.1909.07528"
+      }
+    ]
+  },
+  {
+    "query": "openai/maddpg",
+    "url": "https://api.github.com/repos/openai/maddpg",
+    "fetched_utc": "2026-09-26T09:35:44.213726+00:00",
+    "github": {
+      "full_name": "openai/maddpg",
+      "html_url": "https://github.com/openai/maddpg",
+      "stargazers_count": 1981,
+      "forks_count": 534,
+      "pushed_at": "2024-04-01T21:04:21Z",
+      "created_at": "2018-02-01T18:59:57Z",
+      "archived": true
+    }
+  },
+  {
+    "query": "oxwhirl/pymarl",
+    "url": "https://api.github.com/repos/oxwhirl/pymarl",
+    "fetched_utc": "2026-09-26T09:35:44.609423+00:00",
+    "github": {
+      "full_name": "oxwhirl/pymarl",
+      "html_url": "https://github.com/oxwhirl/pymarl",
+      "stargazers_count": 2222,
+      "forks_count": 412,
+      "pushed_at": "2022-12-08T02:58:39Z",
+      "created_at": "2018-10-25T13:48:43Z",
+      "archived": false
+    }
+  },
+  {
+    "query": "marlbenchmark/on-policy",
+    "url": "https://api.github.com/repos/marlbenchmark/on-policy",
+    "fetched_utc": "2026-09-26T09:35:45.003812+00:00",
+    "github": {
+      "full_name": "marlbenchmark/on-policy",
+      "html_url": "https://github.com/marlbenchmark/on-policy",
+      "stargazers_count": 2107,
+      "forks_count": 385,
+      "pushed_at": "2024-07-18T10:00:36Z",
+      "created_at": "2021-02-23T07:59:10Z",
+      "archived": false
+    }
+  },
+  {
+    "query": "PKU-MARL/Multi-Agent-Transformer",
+    "url": "https://api.github.com/repos/PKU-MARL/Multi-Agent-Transformer",
+    "fetched_utc": "2026-09-26T09:35:45.481666+00:00",
+    "github": {
+      "full_name": "PKU-MARL/Multi-Agent-Transformer",
+      "html_url": "https://github.com/PKU-MARL/Multi-Agent-Transformer",
+      "stargazers_count": 517,
+      "forks_count": 92,
+      "pushed_at": "2023-12-28T06:59:53Z",
+      "created_at": "2022-07-05T09:46:48Z",
+      "archived": false
+    }
+  },
+  {
+    "query": "MandiZhao/robot-collab",
+    "url": "https://api.github.com/repos/MandiZhao/robot-collab",
+    "fetched_utc": "2026-09-26T09:35:45.883588+00:00",
+    "github": {
+      "full_name": "MandiZhao/robot-collab",
+      "html_url": "https://github.com/MandiZhao/robot-collab",
+      "stargazers_count": 263,
+      "forks_count": 44,
+      "pushed_at": "2023-10-04T04:57:30Z",
+      "created_at": "2023-07-01T16:13:44Z",
+      "archived": false
+    }
+  },
+  {
+    "query": "MIT-REALM/gcbfplus",
+    "url": "https://api.github.com/repos/MIT-REALM/gcbfplus",
+    "fetched_utc": "2026-09-26T09:35:46.287608+00:00",
+    "github": {
+      "full_name": "MIT-REALM/gcbfplus",
+      "html_url": "https://github.com/MIT-REALM/gcbfplus",
+      "stargazers_count": 136,
+      "forks_count": 38,
+      "pushed_at": "2025-06-03T18:39:09Z",
+      "created_at": "2024-01-14T18:12:43Z",
+      "archived": false
+    }
+  },
+  {
+    "query": "proroklab/gnn_pathplanning",
+    "url": "https://api.github.com/repos/proroklab/gnn_pathplanning",
+    "fetched_utc": "2026-09-26T09:35:46.701569+00:00",
+    "github": {
+      "full_name": "proroklab/gnn_pathplanning",
+      "html_url": "https://github.com/proroklab/gnn_pathplanning",
+      "stargazers_count": 255,
+      "forks_count": 36,
+      "pushed_at": "2021-06-29T14:27:38Z",
+      "created_at": "2020-03-10T10:49:28Z",
+      "archived": false
+    }
+  },
+  {
+    "query": "vita-epfl/CrowdNav",
+    "url": "https://api.github.com/repos/vita-epfl/CrowdNav",
+    "fetched_utc": "2026-09-26T09:35:47.100669+00:00",
+    "github": {
+      "full_name": "vita-epfl/CrowdNav",
+      "html_url": "https://github.com/vita-epfl/CrowdNav",
+      "stargazers_count": 738,
+      "forks_count": 184,
+      "pushed_at": "2022-08-26T14:04:26Z",
+      "created_at": "2018-07-04T13:57:07Z",
+      "archived": false
+    }
+  },
+  {
+    "query": "shariqiqbal2810/MAAC",
+    "url": "https://api.github.com/repos/shariqiqbal2810/MAAC",
+    "fetched_utc": "2026-09-26T09:35:47.500559+00:00",
+    "github": {
+      "full_name": "shariqiqbal2810/MAAC",
+      "html_url": "https://github.com/shariqiqbal2810/MAAC",
+      "stargazers_count": 811,
+      "forks_count": 180,
+      "pushed_at": "2022-05-29T16:14:16Z",
+      "created_at": "2018-10-16T23:56:35Z",
+      "archived": false
+    }
+  },
+  {
+    "query": "facebookresearch/tarmac",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "query": "PKU-MARL/HARL",
+    "url": "https://api.github.com/repos/PKU-MARL/HARL",
+    "fetched_utc": "2026-09-26T09:35:48.227747+00:00",
+    "github": {
+      "full_name": "PKU-MARL/HARL",
+      "html_url": "https://github.com/PKU-MARL/HARL",
+      "stargazers_count": 955,
+      "forks_count": 138,
+      "pushed_at": "2025-04-27T13:19:44Z",
+      "created_at": "2023-04-17T07:27:34Z",
+      "archived": false
+    }
+  }
+]

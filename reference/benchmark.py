@@ -1,15 +1,30 @@
 #!/usr/bin/env python3
-"""Same-container Release benchmark. Run reference_check.py first to build C++.
+"""Time C++ against Rust in one Linux container for the paper.
 
-Measures whole headless processes including startup and logging, NOT pure physics.
-C++ is always single-threaded. Rust uses a core-only harness (no Rerun/CLI parsing).
+    python3 reference/benchmark.py --output runs/new-benchmark
+    python3 reference/benchmark.py --output runs/quick-benchmark --quick
 
-Run from the repository root: python3 reference/benchmark.py --output runs/new-benchmark
-Defaults: 128 aircraft, 1,000 steps, one warmup and three measured runs per variant.
-On Apple Silicon both Release executables run under amd64 emulation in the same
-container. Startup, parsing and logging differ; this is not native CPU throughput
-or a general language-speed comparison. Builds/container startup are not timed.
+Builds the unmodified C++ branch (Ubuntu-24.04) and the Rust core-only runner
+(reference/benchmark_runner.rs, no viewer) for this machine's own architecture,
+so neither is emulated. On Apple Silicon that is linux/arm64 in Docker's VM, and
+C++ is built without JSBSim, which no workload uses.
 
+Runs perf.py's workloads (motion, substeps, sensing, churn) at three agent counts
+with C++ single-threaded, C++ with its own multi_threaded mode at 8 threads, and
+Rust at 1 and 8 workers: one warm-up, then --repetitions timed runs each. Times
+are whole processes minus the median of three one-step runs of the same mission
+(startup, parsing, and plugin loading), so they approximate stepping and logging.
+Peak memory is each simulator's maximum resident set, from GNU time.
+
+Rust must write identical output (frames, summary, events) at 1 and 8 workers.
+It must also match single-threaded C++ except in churn and sensing, which
+depend on random spawn positions and sensor noise that the unmodified C++ build
+draws differently (the reference check matches them with its comparison build).
+Every timed run must repeat its warm-up output; C++'s multithreaded mode is
+reported, not required, to do so.
+That mode sometimes deadlocks (SimControl::worker waits on its condition variable
+without a predicate, so a wake-up can be lost): a C++ 8-thread run still going
+after HANG_S is killed, counted, and retried. A hang in any other variant fails.
 The paper's retained results are in paper/data/benchmark/.
 """
 import argparse
@@ -18,114 +33,173 @@ import json
 import os
 from pathlib import Path
 import platform
-import re
+import signal
 import statistics
 import subprocess
-import sys
+import threading
 import time
+from types import SimpleNamespace
 import xml.etree.ElementTree as ET
 
 from compare import compare_runs
-from reference_check import ROOT, PLATFORM, capture, positive_int, run_logged, sha256, write_json
+from perf import HEADER, WORKLOADS
+from reference_check import BASELINE_BRANCH, ROOT, build_reference, capture, run_logged, sha256, \
+    write_json
+
+COUNTS = {"motion": (64, 256, 1024), "substeps": (64, 256, 1024),
+          "sensing": (32, 64, 128), "churn": (64, 256, 1024)}
+VARIANTS = ("cpp-1", "cpp-8", "rust-1", "rust-8")
+HANG_S = 120  # far longer than any run here takes
+HANG_RETRIES = 5
+RUST_FILES = ("frames.bin", "summary.csv", "events.json")
+RANDOM = {"churn", "sensing"}  # random spawns; noisy state that Straight steers by
 
 
-def set_text(root, name, value):
-    node = root.find(name)
-    if node is None:
-        node = ET.SubElement(root, name)
-    node.text = str(value)
+def mission(name, agents, directory, variant, one_step=False):
+    """The perf.py workload with C++ logging and threading set for one run."""
+    _, _, fields = WORKLOADS[name]
+    fields = {**fields, "end": 0.1} if one_step else fields
+    root = ET.fromstring(HEADER.format(name=name, agents=agents,
+                                       variance=2500 if name == "churn" else 0, **fields))
+    settings = {"log_dir": directory / "logs", "create_latest_dir": "false",
+                "display_progress": "false", "output_type": "all", "no_bin_logging": "false",
+                "multi_threaded": "true" if variant == "cpp-8" else "false"}
+    for key, value in settings.items():
+        ET.SubElement(root, key).text = str(value)
+    if variant == "cpp-8":
+        root.find("multi_threaded").set("num_threads", "8")
+    path = directory / "mission.xml"
+    ET.ElementTree(root).write(path, encoding="utf-8", xml_declaration=True)
+    return path
 
 
-def mission_for_benchmark(source, entities, steps):
-    text = re.sub(r"\$\{\w+=(.*?)\}", r"\1", source.read_text())
-    if "${" in text:
-        raise ValueError("benchmark requires mission variables with defaults")
-    root = ET.fromstring(text)
-    run = root.find("run")
-    run.attrib.update(start="0", end=str(steps * float(run.get("dt"))),
-                      enable_gui="false", network_gui="false", start_paused="false", time_warp="0")
-    set_text(root, "multi_threaded", "false")
-    set_text(root, "display_progress", "false")
-    set_text(root, "create_latest_dir", "false")
-    set_text(root, "end_condition", "time")
-    blocks = [node for node in root.findall("entity") if int(node.findtext("count", "1")) > 0]
-    if entities < len(blocks):
-        raise ValueError("entity count must cover every active source block")
-    for index, node in enumerate(blocks):
-        set_text(node, "count", entities // len(blocks) + (index < entities % len(blocks)))
-    return root
+def run(variant, mission_path, directory):
+    """(wall seconds, peak resident MB) for one whole process, or None if it hung."""
+    if variant.startswith("cpp"):
+        command = ["/opt/build/bin/scrimmage", mission_path]
+        environment = os.environ.copy()
+    else:
+        command = ["/usr/local/bin/scrimmage-benchmark", mission_path, ROOT,
+                   directory / "rust", variant.split("-")[1]]
+        environment = {**os.environ, "SCRIMMAGE_PLUGIN_PATH": ""}  # Rust uses its bundled defaults.
+    peak = directory / "peak-kb.txt"
+    command = ["/usr/bin/time", "-f", "%M", "-o", peak] + command
+    with (directory / "console.log").open("w") as console:
+        started = time.perf_counter()
+        process = subprocess.Popen([str(part) for part in command], stdout=console,
+                                   stderr=subprocess.STDOUT, env=environment,
+                                   start_new_session=True)
+        watchdog = threading.Timer(HANG_S, os.killpg, (process.pid, signal.SIGKILL))
+        watchdog.start()
+        status = process.wait()
+        elapsed = time.perf_counter() - started
+        watchdog.cancel()
+    if elapsed >= HANG_S:
+        return None
+    if status != 0:
+        raise RuntimeError(f"{variant} failed in {directory}; see console.log")
+    return elapsed, int(peak.read_text().split()[-1]) / 1024
+
+
+def run_retrying(variant, name, agents, directory, hangs, one_step=False):
+    """Run once; retry only C++'s multithreaded mode when it deadlocks."""
+    for attempt in range(HANG_RETRIES + 1):
+        attempt_directory = directory / f"attempt-{attempt}"
+        attempt_directory.mkdir(parents=True)
+        result = run(variant, mission(name, agents, attempt_directory, variant, one_step),
+                     attempt_directory)
+        if result is not None:
+            return result, attempt_directory
+        hangs[variant] += 1
+        if variant != "cpp-8":
+            break
+    raise RuntimeError(f"{variant} hung in {directory}")
+
+
+def output_folder(directory):
+    frames = list(directory.rglob("frames.bin"))
+    if len(frames) != 1:
+        raise RuntimeError(f"expected one frames.bin in {directory}")
+    return frames[0].parent
+
+
+def same_output(left, right, names=("frames.bin", "summary.csv")):
+    return all(sha256(left / name) == sha256(right / name) for name in names)
+
+
+def measure(name, agents, case, repetitions):
+    samples = {variant: [] for variant in VARIANTS}
+    memory = {variant: 0.0 for variant in VARIANTS}
+    startup = {}
+    warmups, repeatable = {}, {variant: True for variant in VARIANTS}
+    hangs = {variant: 0 for variant in VARIANTS}
+    for variant in VARIANTS:
+        times = [run_retrying(variant, name, agents, case / f"startup-{index}-{variant}", hangs,
+                              one_step=True)[0][0] for index in range(3)]
+        startup[variant] = statistics.median(times)
+    for repetition in range(repetitions + 1):
+        # One untimed warm-up each; rotate the order to reduce ordering bias.
+        shift = repetition % len(VARIANTS)
+        for variant in VARIANTS[shift:] + VARIANTS[:shift]:
+            (elapsed, peak_mb), directory = run_retrying(
+                variant, name, agents, case / f"{repetition}-{variant}", hangs)
+            output = output_folder(directory)
+            memory[variant] = max(memory[variant], peak_mb)
+            if repetition == 0:
+                warmups[variant] = output
+                continue
+            samples[variant].append(elapsed - startup[variant])
+            repeatable[variant] &= same_output(output, warmups[variant])
+            print(f"{name}-{agents} {variant} {repetition}: {elapsed:.3f}s", flush=True)
+    statistics_by_variant = {
+        variant: {"samples_s": values, "median_s": statistics.median(values),
+                  "min_s": min(values), "max_s": max(values),
+                  "startup_s": startup[variant], "peak_mb": memory[variant]}
+        for variant, values in samples.items()}
+    comparisons = {variant: asdict(compare_runs(warmups["cpp-1"], warmups[variant]))
+                   for variant in VARIANTS[1:]}
+    rust_workers_match = same_output(warmups["rust-1"], warmups["rust-8"], RUST_FILES)
+    return {"workload": name, "agents": agents, "steps": round(WORKLOADS[name][2]["end"] / 0.1),
+            "statistics": statistics_by_variant, "repeatable": repeatable, "hangs": hangs,
+            "comparisons": comparisons, "rust_workers_match": rust_workers_match,
+            "matches_cpp": name not in RANDOM,
+            "passed": case_passed(name, repeatable, comparisons, rust_workers_match)}
+
+
+def case_passed(name, repeatable, comparisons, rust_workers_match):
+    """Rust must be deterministic across worker counts; it must match C++ where both
+    draw the same random numbers. C++'s multithreaded mode is reported only."""
+    required = [repeatable["cpp-1"], repeatable["rust-1"], repeatable["rust-8"], rust_workers_match]
+    if name not in RANDOM:
+        required += [comparisons["rust-1"]["passed"], comparisons["rust-8"]["passed"]]
+    return all(required)
 
 
 def inside(args):
     output = Path("/run")
-    environment = os.environ.copy()
-    environment["SCRIMMAGE_PLUGIN_PATH"] = ""  # Rust uses its own bundled defaults.
-    result = {"platform": platform.platform(), "rust_compiler": Path("/rust-compiler.txt").read_text(),
-              "cpp_compiler": capture(["g++", "--version"]), "cases": [], "passed": False,
-              "timing": "process startup, mission parsing, simulation and output; container startup excluded",
-              "entities": args.entities, "steps": args.steps, "repetitions": args.repetitions}
-    write_json(output / "timings.json", result)
-    for source in [ROOT / "missions/test_missions/straight_cpu.xml", ROOT / "missions/fixed-wing-6dof.xml"]:
-        case = output / source.stem
-        case.mkdir()
-        mission = mission_for_benchmark(source, args.entities, args.steps)
-        timings = {"cpp-1": [], "rust-1": [], "rust-8": []}
-        warmups = {}
-        variants = list(timings)
-        for repetition in range(args.repetitions + 1):
-            # One untimed warmup each. Rotate measured order to reduce ordering bias.
-            order = variants[repetition % 3:] + variants[:repetition % 3]
-            for variant in order:
-                directory = case / f"{repetition}-{variant}"
-                directory.mkdir()
-                set_text(mission, "log_dir", str(directory / "logs"))
-                mission_path = directory / "mission.xml"
-                ET.ElementTree(mission).write(mission_path, encoding="utf-8", xml_declaration=True)
-                if variant == "cpp-1":
-                    command = ["/opt/build/bin/scrimmage", str(mission_path)]
-                    env = os.environ.copy()
-                else:
-                    command = ["/usr/local/bin/scrimmage-benchmark", str(mission_path),
-                               str(ROOT), str(directory / "rust"), variant.split("-")[1]]
-                    env = environment
-                with (directory / "console.log").open("w") as console:
-                    started = time.perf_counter()
-                    subprocess.run(command, stdout=console, stderr=subprocess.STDOUT,
-                                   env=env, check=True, timeout=600)
-                    elapsed = time.perf_counter() - started
-                frames = list(directory.rglob("frames.bin"))
-                if len(frames) != 1:
-                    raise RuntimeError(f"expected one frames.bin in {directory}")
-                if repetition == 0:
-                    warmups[variant] = frames[0].parent
-                else:
-                    timings[variant].append(elapsed)
-                    # Repeated output must be deterministic, not a faster aborted run.
-                    for name in ("frames.bin", "summary.csv"):
-                        if sha256(frames[0].parent / name) != sha256(warmups[variant] / name):
-                            raise RuntimeError(f"non-repeatable {variant} {name}")
-                print(f"{source.stem} {variant} repetition={repetition}: {elapsed:.6f}s", flush=True)
-        comparisons = {variant: asdict(compare_runs(warmups["cpp-1"], warmups[variant]))
-                       for variant in ("rust-1", "rust-8")}
-        stats = {variant: {"samples_s": samples, "median_s": statistics.median(samples),
-                           "min_s": min(samples), "max_s": max(samples)}
-                 for variant, samples in timings.items()}
-        for variant in ("rust-1", "rust-8"):
-            stats[variant]["cpp_over_rust"] = stats["cpp-1"]["median_s"] / stats[variant]["median_s"]
-        result["cases"].append({"mission": source.name, "statistics": stats, "comparisons": comparisons})
-        write_json(output / "timings.json", result)
-    result["passed"] = all(c["passed"] for case in result["cases"] for c in case["comparisons"].values())
+    result = {"platform": platform.platform(), "machine": platform.machine(),
+              "cpu_count": os.cpu_count(), "rust_compiler": Path("/rust-compiler.txt").read_text(),
+              "cpp_compiler": capture(["g++", "--version"]), "repetitions": args.repetitions,
+              "timing": "whole process minus the median one-step run; container startup excluded",
+              "cases": [], "passed": False}
+    for name, counts in COUNTS.items():
+        for agents in counts[:1] if args.quick else counts:
+            case = output / f"{name}-{agents}"
+            case.mkdir()
+            result["cases"].append(measure(name, agents, case, args.repetitions))
+            write_json(output / "timings.json", result)
+    result["passed"] = all(case["passed"] for case in result["cases"])
     write_json(output / "timings.json", result)
     return 0 if result["passed"] else 1
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--inside", action="store_true", help=argparse.SUPPRESS)
-    parser.add_argument("--entities", type=positive_int, default=128)
-    parser.add_argument("--steps", type=positive_int, default=1000)
-    parser.add_argument("--repetitions", type=positive_int, default=3)
+    parser.add_argument("--repetitions", type=int, default=3)
+    parser.add_argument("--quick", action="store_true", help="smallest agent count only")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--source", type=Path, default=ROOT.parent / "scrimmage")
     args = parser.parse_args()
     if args.inside:
         return inside(args)
@@ -133,31 +207,33 @@ def main():
         parser.error("--output must name a new directory")
     output = args.output.resolve()
     output.mkdir(parents=True)  # Never overwrite an earlier benchmark.
-    commit = capture(["git", "-C", str(ROOT.parent / "scrimmage"), "rev-parse", "Ubuntu-24.04"])
-    reference_tag = f"scrimmage-rs-reference:{commit[:12]}"
-    reference_image = capture(["docker", "image", "inspect", reference_tag,
-                               "--format", "{{.Id}}"])
-    run_logged(["docker", "build", "--platform", PLATFORM, "--progress", "plain",
-                "-f", ROOT / "reference/rust.Dockerfile", "--target", "benchmark", "--build-arg", f"REFERENCE_IMAGE={reference_tag}",
+    target = "linux/arm64" if platform.machine() in ("arm64", "aarch64") else "linux/amd64"
+    build = SimpleNamespace(source=args.source.resolve(), jobs=os.cpu_count(),
+                            build_timeout=3600, timeout=600)
+    cpp = build_reference(build, output, BASELINE_BRANCH, target)
+    run_logged(["docker", "build", "--platform", target, "--progress", "plain",
+                "-f", ROOT / "reference/rust.Dockerfile", "--target", "benchmark",
+                "--build-arg", f"REFERENCE_IMAGE={cpp['image_tag']}",
                 "--iidfile", output / "image-id.txt", ROOT], output / "build.log", timeout=3600)
     image = (output / "image-id.txt").read_text().strip()
     files = [ROOT / "Cargo.toml", ROOT / "Cargo.lock"] + list((ROOT / "crates").rglob("*.rs"))
     files += list((ROOT / "crates").rglob("*.xml")) + list((ROOT / "crates").rglob("Cargo.toml"))
-    files += list((ROOT / "reference").glob("benchmark*")) + [ROOT / "reference/rust.Dockerfile"]
+    files += list((ROOT / "reference").glob("benchmark*")) + [ROOT / "reference/rust.Dockerfile",
+                                                              ROOT / "reference/perf.py"]
     write_json(output / "provenance.json", {
-        "cpp_commit": commit, "reference_image": reference_image, "benchmark_image": image,
-        "host": platform.platform(), "host_machine": platform.machine(), "platform": PLATFORM,
+        "cpp": cpp, "benchmark_image": image, "platform": target,
+        "host": platform.platform(), "host_machine": platform.machine(),
         "docker_resources": capture(["docker", "info", "--format", "{{.NCPU}} CPUs; {{.MemTotal}} bytes RAM"]),
         "rust_head": capture(["git", "rev-parse", "HEAD"]),
         "rust_worktree": capture(["git", "status", "--short"]),
         "source_hashes": {str(p.relative_to(ROOT)): sha256(p) for p in sorted(files) if p.is_file()},
     })
-    return run_logged(["docker", "run", "--rm", "--network", "none", "--platform", PLATFORM,
-                       "--env", "PYTHONDONTWRITEBYTECODE=1",
-                       "--mount", f"type=bind,source={ROOT},target=/rust,readonly",
-                       "--mount", f"type=bind,source={output},target=/run", image,
-                       "--entities", args.entities, "--steps", args.steps, "--repetitions", args.repetitions],
-                      output / "benchmark.log", timeout=3600, allow_failure=True)
+    command = ["docker", "run", "--rm", "--network", "none", "--platform", target,
+               "--env", "PYTHONDONTWRITEBYTECODE=1",
+               "--mount", f"type=bind,source={ROOT},target=/rust,readonly",
+               "--mount", f"type=bind,source={output},target=/run", image,
+               "--repetitions", args.repetitions] + (["--quick"] if args.quick else [])
+    return run_logged(command, output / "benchmark.log", timeout=4 * 3600, allow_failure=True)
 
 
 if __name__ == "__main__":

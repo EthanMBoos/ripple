@@ -38,13 +38,13 @@ recorded in [reference notes](REFERENCE_NOTES.md#mission-compatibility).
 baseline before a core upgrade and compare after it. The paper's C++-versus-Rust
 timing uses [benchmark.py](../reference/benchmark.py) and still needs these:
 
-- [ ] Explain why eight workers are slower than one at 128 aircraft (2.33 s versus
-  0.47 s under emulation) before reporting worker scaling.
-- [ ] Benchmark the paper's workloads (simple motion, controller substeps,
-  sensing/communication, spawn/removal) across agent counts, with peak memory
-  and C++'s own multithreaded mode.
-- [ ] Time on native x86 Linux, for example the Slurm cluster, not emulation.
-  This is also the first real Slurm campaign; submission is only mock-tested.
+- [x] Explain the eight-worker slowdown: each phase's pool handoff (~35 µs on
+  bare metal, ~10x in Docker's VM) exceeds light phases' work (see the paper).
+- [x] Benchmark the four workloads across agent counts with peak memory and
+  C++'s multithreaded mode, in a Linux container and on bare-metal macOS.
+- [ ] Stop building message-endpoint names every step
+  (`PluginStack::mailboxes`); about a fifth of main-thread time in `motion`,
+  where native C++ is now 1.25x faster.
 - [ ] Speed up spatial queries if profiling shows they matter:
   - Benchmark collision checks, spatial sensors, and routing on spread-out and
     clustered populations, keeping the simple scan as the correctness baseline.

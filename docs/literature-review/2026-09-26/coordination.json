@@ -1,0 +1,2265 @@
+{
+  "snapshot_date_utc": "2026-09-26",
+  "capture_window_utc": [
+    "2026-09-26T09:31:27.167277+00:00",
+    "2026-09-26T09:33:16.316386+00:00"
+  ],
+  "provider": "OpenAlex works search API and GitHub repository API",
+  "limitations": "Present-day index, not archived historical rankings. Search results include deliberately retained irrelevant neighbors and duplicate versions; do not sum or rank unfiltered. Publication year sometimes differs from actual conference year. GitHub stars measure attention, not usage.",
+  "queries": [
+    {
+      "raw_file": "/tmp/coord-oa-0.json",
+      "query": {
+        "oql": "works where full text has (PRIMAL Pathfinding via Reinforcement \"and\" Imitation Multi Agent Learning)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "PRIMAL Pathfinding via Reinforcement and Imitation Multi Agent Learning",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:PRIMAL Pathfinding via Reinforcement and Imitation Multi Agent Learning&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W2892258706",
+          "doi": "https://doi.org/10.1109/lra.2019.2903261",
+          "title": "PRIMAL: Pathfinding via Reinforcement and Imitation Multi-Agent Learning",
+          "publication_year": 2019,
+          "cited_by_count": 426,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 47
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 101
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 86
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 63
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 53
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 41
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 25
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 10
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2892258706"
+        },
+        {
+          "id": "https://openalex.org/W3092786062",
+          "doi": "https://doi.org/10.1109/lra.2021.3062803",
+          "title": "PRIMAL$_2$: Pathfinding Via Reinforcement and Imitation Multi-Agent Learning - Lifelong",
+          "publication_year": 2021,
+          "cited_by_count": 179,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 31
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 52
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 38
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 31
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 23
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 4
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3092786062"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:27.167277+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-1.json",
+      "query": {
+        "oql": "works where full text has (Lifelong Multi-Agent Path Finding in Large-Scale Warehouses)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Lifelong Multi-Agent Path Finding in Large-Scale Warehouses",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Lifelong Multi-Agent Path Finding in Large-Scale Warehouses&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W3037164939",
+          "doi": "https://doi.org/10.1609/aaai.v35i13.17344",
+          "title": "Lifelong Multi-Agent Path Finding in Large-Scale Warehouses",
+          "publication_year": 2021,
+          "cited_by_count": 250,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 34
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 55
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 73
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 38
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 33
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 15
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 2
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3037164939"
+        },
+        {
+          "id": "https://openalex.org/W3025088990",
+          "doi": "https://doi.org/10.48550/arxiv.2005.07371",
+          "title": "Lifelong Multi-Agent Path Finding in Large-Scale Warehouses",
+          "publication_year": 2020,
+          "cited_by_count": 55,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 10
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 12
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 14
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 9
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 8
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3025088990"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:27.334597+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-2.json",
+      "query": {
+        "oql": "works where full text has (EECBS A Bounded-Suboptimal Search for Multi-Agent Path Finding)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "EECBS A Bounded-Suboptimal Search for Multi-Agent Path Finding",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:EECBS A Bounded-Suboptimal Search for Multi-Agent Path Finding&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W3175724379",
+          "doi": "https://doi.org/10.1609/aaai.v35i14.17466",
+          "title": "EECBS: A Bounded-Suboptimal Search for Multi-Agent Path Finding",
+          "publication_year": 2021,
+          "cited_by_count": 212,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 39
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 56
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 57
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 38
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 19
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 3
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3175724379"
+        },
+        {
+          "id": "https://openalex.org/W3091239670",
+          "doi": "https://doi.org/10.48550/arxiv.2010.01367",
+          "title": "EECBS: A Bounded-Suboptimal Search for Multi-Agent Path Finding",
+          "publication_year": 2020,
+          "cited_by_count": 28,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 5
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 10
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3091239670"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:27.308574+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-3.json",
+      "query": {
+        "oql": "works where full text has (Multi-Agent Path Finding via Large Neighborhood Search)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Multi-Agent Path Finding via Large Neighborhood Search",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Multi-Agent Path Finding via Large Neighborhood Search&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W4283795314",
+          "doi": "https://doi.org/10.1609/aaai.v36i9.21266",
+          "title": "MAPF-LNS2: Fast Repairing for Multi-Agent Path Finding via Large Neighborhood Search",
+          "publication_year": 2022,
+          "cited_by_count": 103,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 24
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 29
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 32
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 17
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4283795314"
+        },
+        {
+          "id": "https://openalex.org/W3176604482",
+          "doi": "https://doi.org/10.24963/ijcai.2021/568",
+          "title": "Anytime Multi-Agent Path Finding via Large Neighborhood Search",
+          "publication_year": 2021,
+          "cited_by_count": 72,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 15
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 17
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 19
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 12
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 8
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3176604482"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:27.459246+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-4.json",
+      "query": {
+        "oql": "works where full text has (MAPF-LNS2 Fast Repairing for Multi-Agent Path Finding via Large Neighborhood Search)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "MAPF-LNS2 Fast Repairing for Multi-Agent Path Finding via Large Neighborhood Search",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:MAPF-LNS2 Fast Repairing for Multi-Agent Path Finding via Large Neighborhood Search&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W4283795314",
+          "doi": "https://doi.org/10.1609/aaai.v36i9.21266",
+          "title": "MAPF-LNS2: Fast Repairing for Multi-Agent Path Finding via Large Neighborhood Search",
+          "publication_year": 2022,
+          "cited_by_count": 103,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 24
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 29
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 32
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 17
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4283795314"
+        },
+        {
+          "id": "https://openalex.org/W4382202651",
+          "doi": "https://doi.org/10.1609/aaai.v37i10.26377",
+          "title": "LaCAM: Search-Based Algorithm for Quick Multi-Agent Pathfinding",
+          "publication_year": 2023,
+          "cited_by_count": 74,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 23
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 28
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 20
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 3
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4382202651"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:27.265625+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-5.json",
+      "query": {
+        "oql": "works where full text has (LaCAM Search-Based Algorithm for Quick Multi-Agent Pathfinding)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "LaCAM Search-Based Algorithm for Quick Multi-Agent Pathfinding",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:LaCAM Search-Based Algorithm for Quick Multi-Agent Pathfinding&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W4382202651",
+          "doi": "https://doi.org/10.1609/aaai.v37i10.26377",
+          "title": "LaCAM: Search-Based Algorithm for Quick Multi-Agent Pathfinding",
+          "publication_year": 2023,
+          "cited_by_count": 74,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 23
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 28
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 20
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 3
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4382202651"
+        },
+        {
+          "id": "https://openalex.org/W4310269644",
+          "doi": "https://doi.org/10.48550/arxiv.2211.13432",
+          "title": "LaCAM: Search-Based Algorithm for Quick Multi-Agent Pathfinding",
+          "publication_year": 2022,
+          "cited_by_count": 4,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 2
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4310269644"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:27.192161+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-6.json",
+      "query": {
+        "oql": "works where full text has (Learning Selective Communication for Multi-Agent Path Finding)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Learning Selective Communication for Multi-Agent Path Finding",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Learning Selective Communication for Multi-Agent Path Finding&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W3201099806",
+          "doi": "https://doi.org/10.1109/lra.2021.3139145",
+          "title": "Learning Selective Communication for Multi-Agent Path Finding",
+          "publication_year": 2021,
+          "cited_by_count": 81,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 13
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 33
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 22
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 10
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 3
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3201099806"
+        },
+        {
+          "id": "https://openalex.org/W2107726111",
+          "doi": "https://doi.org/10.1613/jair.301",
+          "title": "Reinforcement Learning: A Survey",
+          "publication_year": 1996,
+          "cited_by_count": 8968,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 319
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 683
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 613
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 594
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 498
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 562
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 595
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 438
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 369
+            },
+            {
+              "year": 2017,
+              "cited_by_count": 272
+            },
+            {
+              "year": 2016,
+              "cited_by_count": 204
+            },
+            {
+              "year": 2015,
+              "cited_by_count": 221
+            },
+            {
+              "year": 2014,
+              "cited_by_count": 235
+            },
+            {
+              "year": 2013,
+              "cited_by_count": 272
+            },
+            {
+              "year": 2012,
+              "cited_by_count": 222
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2107726111"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:27.416588+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-7.json",
+      "query": {
+        "oql": "works where full text has (Graph Neural Networks for Decentralized Multi-Robot Path Planning)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Graph Neural Networks for Decentralized Multi-Robot Path Planning",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Graph Neural Networks for Decentralized Multi-Robot Path Planning&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W3130631955",
+          "doi": "https://doi.org/10.1109/iros45743.2020.9341668",
+          "title": "Graph Neural Networks for Decentralized Multi-Robot Path Planning",
+          "publication_year": 2020,
+          "cited_by_count": 276,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 15
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 65
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 73
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 51
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 36
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 24
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 11
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3130631955"
+        },
+        {
+          "id": "https://openalex.org/W2996186856",
+          "doi": "https://doi.org/10.17863/cam.55132",
+          "title": "Graph Neural Networks for Decentralized Multi-Robot Path Planning",
+          "publication_year": 2019,
+          "cited_by_count": 23,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 5
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 7
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2996186856"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:27.440609+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-8.json",
+      "query": {
+        "oql": "works where full text has (Message-Aware Graph Attention Networks for Large-Scale Multi-Robot Path Planning)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Message-Aware Graph Attention Networks for Large-Scale Multi-Robot Path Planning",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Message-Aware Graph Attention Networks for Large-Scale Multi-Robot Path Planning&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W3166401044",
+          "doi": "https://doi.org/10.1109/lra.2021.3077863",
+          "title": "Message-Aware Graph Attention Networks for Large-Scale Multi-Robot Path Planning",
+          "publication_year": 2021,
+          "cited_by_count": 194,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 19
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 66
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 38
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 38
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 22
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 10
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3166401044"
+        },
+        {
+          "id": "https://openalex.org/W3108089177",
+          "doi": "https://doi.org/10.48550/arxiv.2011.13219",
+          "title": "Message-Aware Graph Attention Networks for Large-Scale Multi-Robot Path Planning",
+          "publication_year": 2020,
+          "cited_by_count": 13,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 3
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 3
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3108089177"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:27.466536+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-9.json",
+      "query": {
+        "oql": "works where full text has (Swarm of micro flying robots in the wild)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Swarm of micro flying robots in the wild",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Swarm of micro flying robots in the wild&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W4229007520",
+          "doi": "https://doi.org/10.1126/scirobotics.abm5954",
+          "title": "Swarm of micro flying robots in the wild",
+          "publication_year": 2022,
+          "cited_by_count": 610,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 121
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 208
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 143
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 113
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 25
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4229007520"
+        },
+        {
+          "id": "https://openalex.org/W4224300633",
+          "doi": "https://doi.org/10.1007/s11831-021-09694-4",
+          "title": "Particle Swarm Optimization Algorithm and Its Applications: A Systematic Review",
+          "publication_year": 2022,
+          "cited_by_count": 1871,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 376
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 724
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 538
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 213
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 20
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4224300633"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:52.646130+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-10.json",
+      "query": {
+        "oql": "works where full text has (EGO-Swarm A Fully Autonomous \"and\" Decentralized Quadrotor Swarm System in Cluttered Environments)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "EGO-Swarm A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:EGO-Swarm A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W3207644545",
+          "doi": "https://doi.org/10.1109/icra48506.2021.9561902",
+          "title": "EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments",
+          "publication_year": 2021,
+          "cited_by_count": 211,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 38
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 63
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 45
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 40
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 19
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 6
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3207644545"
+        },
+        {
+          "id": "https://openalex.org/W3105911381",
+          "doi": "https://doi.org/10.48550/arxiv.2011.04183",
+          "title": "EGO-Swarm: A Fully Autonomous and Decentralized Quadrotor Swarm System in Cluttered Environments",
+          "publication_year": 2020,
+          "cited_by_count": 12,
+          "counts_by_year": [
+            {
+              "year": 2024,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 3
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 3
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 5
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3105911381"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:27.368582+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-11.json",
+      "query": {
+        "oql": "works where full text has (FUEL Fast UAV Exploration Using Incremental Frontier Structure \"and\" Hierarchical Planning)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "FUEL Fast UAV Exploration Using Incremental Frontier Structure and Hierarchical Planning",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:FUEL Fast UAV Exploration Using Incremental Frontier Structure and Hierarchical Planning&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W3125164440",
+          "doi": "https://doi.org/10.1109/lra.2021.3051563",
+          "title": "FUEL: Fast UAV Exploration Using Incremental Frontier Structure and Hierarchical Planning",
+          "publication_year": 2021,
+          "cited_by_count": 346,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 64
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 118
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 77
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 55
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 23
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 9
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3125164440"
+        },
+        {
+          "id": "https://openalex.org/W3094285507",
+          "doi": "https://doi.org/10.48550/arxiv.2010.11561",
+          "title": "FUEL: Fast UAV Exploration using Incremental Frontier Structure and Hierarchical Planning",
+          "publication_year": 2020,
+          "cited_by_count": 5,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3094285507"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:52.943961+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-12.json",
+      "query": {
+        "oql": "works where full text has (SCRIMP Scalable Communication for Reinforcement \"and\" Imitation-Learning-Based Multi-Agent Pathfinding)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "SCRIMP Scalable Communication for Reinforcement and Imitation-Learning-Based Multi-Agent Pathfinding",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:SCRIMP Scalable Communication for Reinforcement and Imitation-Learning-Based Multi-Agent Pathfinding&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W4389689571",
+          "doi": "https://doi.org/10.1109/iros55552.2023.10342305",
+          "title": "SCRIMP: Scalable Communication for Reinforcement- and Imitation-Learning-Based Multi-Agent Pathfinding",
+          "publication_year": 2023,
+          "cited_by_count": 57,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 8
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 32
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 15
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 2
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4389689571"
+        },
+        {
+          "id": "https://openalex.org/W4323066302",
+          "doi": "https://doi.org/10.48550/arxiv.2303.00605",
+          "title": "SCRIMP: Scalable Communication for Reinforcement- and Imitation-Learning-Based Multi-Agent Pathfinding",
+          "publication_year": 2023,
+          "cited_by_count": 4,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 2
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4323066302"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:53.196507+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-13.json",
+      "query": {
+        "oql": "works where full text has (Learn to Follow Decentralized Lifelong Multi-Agent Pathfinding via Planning \"and\" Learning)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Learn to Follow Decentralized Lifelong Multi-Agent Pathfinding via Planning and Learning",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Learn to Follow Decentralized Lifelong Multi-Agent Pathfinding via Planning and Learning&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W4393160223",
+          "doi": "https://doi.org/10.1609/aaai.v38i16.29704",
+          "title": "Learn to Follow: Decentralized Lifelong Multi-Agent Pathfinding via Planning and Learning",
+          "publication_year": 2024,
+          "cited_by_count": 36,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 12
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 20
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 4
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4393160223"
+        },
+        {
+          "id": "https://openalex.org/W4387322816",
+          "doi": "https://doi.org/10.48550/arxiv.2310.01207",
+          "title": "Learn to Follow: Decentralized Lifelong Multi-agent Pathfinding via Planning and Learning",
+          "publication_year": 2023,
+          "cited_by_count": 2,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 2
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4387322816"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:53.376474+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-14.json",
+      "query": {
+        "oql": "works where full text has (Priority Inheritance with Backtracking for Iterative Multi-agent Path Finding)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Priority Inheritance with Backtracking for Iterative Multi-agent Path Finding",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Priority Inheritance with Backtracking for Iterative Multi-agent Path Finding&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W2914864020",
+          "doi": "https://doi.org/10.1016/j.artint.2022.103752",
+          "title": "Priority inheritance with backtracking for iterative multi-agent path finding",
+          "publication_year": 2022,
+          "cited_by_count": 143,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 46
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 53
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 24
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 12
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 3
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2914864020"
+        },
+        {
+          "id": "https://openalex.org/W2966625830",
+          "doi": "https://doi.org/10.24963/ijcai.2019/76",
+          "title": "Priority Inheritance with Backtracking for Iterative Multi-agent Path Finding",
+          "publication_year": 2019,
+          "cited_by_count": 55,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 11
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 18
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 3
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2966625830"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:53.663487+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-15.json",
+      "query": {
+        "oql": "works where full text has (Learning Decentralized Controllers for Robot Swarms with Graph Neural Networks)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Learning Decentralized Controllers for Robot Swarms with Graph Neural Networks",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Learning Decentralized Controllers for Robot Swarms with Graph Neural Networks&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W2924199702",
+          "doi": "https://doi.org/10.48550/arxiv.1903.10527",
+          "title": "Learning Decentralized Controllers for Robot Swarms with Graph Neural Networks",
+          "publication_year": 2019,
+          "cited_by_count": 67,
+          "counts_by_year": [
+            {
+              "year": 2024,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 3
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 22
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 22
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 12
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 4
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2924199702"
+        },
+        {
+          "id": "https://openalex.org/W3095521706",
+          "doi": "https://doi.org/10.1109/msp.2020.3016143",
+          "title": "Graphs, Convolutions, and Neural Networks: From Graph Filters to Graph Neural Networks",
+          "publication_year": 2020,
+          "cited_by_count": 177,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 12
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 40
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 43
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 27
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 32
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 20
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 3
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W3095521706"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:53.873469+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-16.json",
+      "query": {
+        "oql": "works where full text has (MAPF-GPT Imitation Learning for Multi-Agent Pathfinding at Scale)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "MAPF-GPT Imitation Learning for Multi-Agent Pathfinding at Scale",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:MAPF-GPT Imitation Learning for Multi-Agent Pathfinding at Scale&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W4409347993",
+          "doi": "https://doi.org/10.1609/aaai.v39i22.34477",
+          "title": "MAPF-GPT: Imitation Learning for Multi-Agent Pathfinding at Scale",
+          "publication_year": 2025,
+          "cited_by_count": 11,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 7
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 4
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4409347993"
+        },
+        {
+          "id": "https://openalex.org/W4403788839",
+          "doi": "https://doi.org/10.48550/arxiv.2409.00134",
+          "title": "MAPF-GPT: Imitation Learning for Multi-Agent Pathfinding at Scale",
+          "publication_year": 2024,
+          "cited_by_count": 1,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4403788839"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:54.145721+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-17.json",
+      "query": {
+        "oql": "works where full text has (RACER Rapid Collaborative Exploration with a Decentralized Multi-UAV System)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "RACER Rapid Collaborative Exploration with a Decentralized Multi-UAV System",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:RACER Rapid Collaborative Exploration with a Decentralized Multi-UAV System&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W4319302559",
+          "doi": "https://doi.org/10.1109/tro.2023.3236945",
+          "title": "RACER: Rapid Collaborative Exploration With a Decentralized Multi-UAV System",
+          "publication_year": 2023,
+          "cited_by_count": 244,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 67
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 104
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 62
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 11
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4319302559"
+        },
+        {
+          "id": "https://openalex.org/W4296545377",
+          "doi": "https://doi.org/10.48550/arxiv.2209.08533",
+          "title": "RACER: Rapid Collaborative Exploration with a Decentralized Multi-UAV System",
+          "publication_year": 2022,
+          "cited_by_count": 3,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 2
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4296545377"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:31:27.352535+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-18.json",
+      "query": {
+        "oql": "works where full text has (Deploying Ten Thousand Robots Scalable Imitation Learning Lifelong)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Deploying Ten Thousand Robots Scalable Imitation Learning Lifelong",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Deploying Ten Thousand Robots Scalable Imitation Learning Lifelong&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W4413925254",
+          "doi": "https://doi.org/10.1109/icra55743.2025.11127445",
+          "title": "Deploying Ten Thousand Robots: Scalable Imitation Learning for Lifelong Multi-Agent Path Finding",
+          "publication_year": 2025,
+          "cited_by_count": 12,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 10
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 2
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4413925254"
+        },
+        {
+          "id": "https://openalex.org/W4404340789",
+          "doi": "https://doi.org/10.48550/arxiv.2410.21415",
+          "title": "Deploying Ten Thousand Robots: Scalable Imitation Learning for Lifelong Multi-Agent Path Finding",
+          "publication_year": 2024,
+          "cited_by_count": 1,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4404340789"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:32:19.052671+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-19.json",
+      "query": {
+        "oql": "works where full text has (Multi-Agent Pathfinding Definitions Variants Benchmarks)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Multi-Agent Pathfinding Definitions Variants Benchmarks",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Multi-Agent Pathfinding Definitions Variants Benchmarks&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W2949992533",
+          "doi": "https://doi.org/10.1609/socs.v10i1.18510",
+          "title": "Multi-Agent Pathfinding: Definitions, Variants, and Benchmarks",
+          "publication_year": 2021,
+          "cited_by_count": 608,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 60
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 137
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 132
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 97
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 77
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 72
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 29
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 4
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2949992533"
+        },
+        {
+          "id": "https://openalex.org/W1973396716",
+          "doi": "https://doi.org/10.1016/j.artint.2012.11.006",
+          "title": "The increasing cost tree search for optimal multi-agent pathfinding",
+          "publication_year": 2012,
+          "cited_by_count": 329,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 18
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 26
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 31
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 35
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 32
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 63
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 27
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 29
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 19
+            },
+            {
+              "year": 2017,
+              "cited_by_count": 16
+            },
+            {
+              "year": 2016,
+              "cited_by_count": 13
+            },
+            {
+              "year": 2015,
+              "cited_by_count": 10
+            },
+            {
+              "year": 2014,
+              "cited_by_count": 9
+            },
+            {
+              "year": 2013,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W1973396716"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:32:19.430465+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-20.json",
+      "query": {
+        "oql": "works where full text has (Do We Run Large-scale Multi-Robot Systems on the Edge More Evidence Two-Phase)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Do We Run Large-scale Multi-Robot Systems on the Edge More Evidence Two-Phase",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Do We Run Large-scale Multi-Robot Systems on the Edge More Evidence Two-Phase&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W4401414322",
+          "doi": "https://doi.org/10.1109/icra57147.2024.10610771",
+          "title": "Do We Run Large-scale Multi-Robot Systems on the Edge? More Evidence for Two-Phase Performance in System Size Scaling",
+          "publication_year": 2024,
+          "cited_by_count": 10,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 3
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 3
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4401414322"
+        },
+        {
+          "id": "https://openalex.org/W2157954477",
+          "doi": "https://doi.org/10.1109/access.2014.2332453",
+          "title": "Toward Scalable Systems for Big Data Analytics: A Technology Tutorial",
+          "publication_year": 2014,
+          "cited_by_count": 1105,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 15
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 48
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 47
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 52
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 68
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 100
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 135
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 125
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 144
+            },
+            {
+              "year": 2017,
+              "cited_by_count": 133
+            },
+            {
+              "year": 2016,
+              "cited_by_count": 131
+            },
+            {
+              "year": 2015,
+              "cited_by_count": 97
+            },
+            {
+              "year": 2014,
+              "cited_by_count": 9
+            },
+            {
+              "year": 2012,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2157954477"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:32:53.812785+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-21.json",
+      "query": {
+        "oql": "works where full text has (Graph Neural Networks for Multi-Robot Active Information Acquisition)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Graph Neural Networks for Multi-Robot Active Information Acquisition",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Graph Neural Networks for Multi-Robot Active Information Acquisition&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W4383108317",
+          "doi": "https://doi.org/10.1109/icra48891.2023.10160723",
+          "title": "Graph Neural Networks for Multi-Robot Active Information Acquisition",
+          "publication_year": 2023,
+          "cited_by_count": 40,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 5
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 18
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 15
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 2
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4383108317"
+        },
+        {
+          "id": "https://openalex.org/W2979750740",
+          "doi": "https://doi.org/10.1145/3326362",
+          "title": "Dynamic Graph CNN for Learning on Point Clouds",
+          "publication_year": 2019,
+          "cited_by_count": 7077,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 721
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 1205
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 1278
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 1180
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 907
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 914
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 649
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 196
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 26
+            },
+            {
+              "year": 2012,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2979750740"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:32:54.290448+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-22.json",
+      "query": {
+        "oql": "works where full text has (Pairwise Consistent Measurement Set Maximization Robust Multi robot Map Merging)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Pairwise Consistent Measurement Set Maximization Robust Multi robot Map Merging",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Pairwise Consistent Measurement Set Maximization Robust Multi robot Map Merging&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W2891820683",
+          "doi": "https://doi.org/10.1109/icra.2018.8460217",
+          "title": "Pairwise Consistent Measurement Set Maximization for Robust Multi-Robot Map Merging",
+          "publication_year": 2018,
+          "cited_by_count": 210,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 19
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 34
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 34
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 30
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 24
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 33
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 22
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 13
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2891820683"
+        },
+        {
+          "id": "https://openalex.org/W4226481925",
+          "doi": "https://doi.org/10.1109/tro.2021.3137751",
+          "title": "Kimera-Multi: Robust, Distributed, Dense Metric-Semantic SLAM for Multi-Robot Systems",
+          "publication_year": 2022,
+          "cited_by_count": 278,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 59
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 89
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 70
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 43
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 17
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W4226481925"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:32:54.669297+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-23.json",
+      "query": {
+        "oql": "works where full text has (Distributed Multi-Robot Formation Splitting Merging Dynamic Environments)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Distributed Multi-Robot Formation Splitting Merging Dynamic Environments",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Distributed Multi-Robot Formation Splitting Merging Dynamic Environments&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W2969092468",
+          "doi": "https://doi.org/10.1109/icra.2019.8793765",
+          "title": "Distributed Multi-Robot Formation Splitting and Merging in Dynamic Environments",
+          "publication_year": 2019,
+          "cited_by_count": 41,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 3
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 8
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 5
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 11
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 4
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2969092468"
+        },
+        {
+          "id": "https://openalex.org/W2883383381",
+          "doi": "https://doi.org/10.1007/s10514-018-9783-9",
+          "title": "Distributed multi-robot formation control in dynamic environments",
+          "publication_year": 2018,
+          "cited_by_count": 149,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 11
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 21
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 16
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 22
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 18
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 30
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 19
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 11
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2883383381"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:32:54.890412+00:00"
+    },
+    {
+      "raw_file": "/tmp/coord-oa-24.json",
+      "query": {
+        "oql": "works where full text has (Optimized flocking of autonomous drones in confined environments)",
+        "oqo": {
+          "get_rows": "works",
+          "filter_rows": [
+            {
+              "column_id": "fulltext.search",
+              "value": "Optimized flocking of autonomous drones in confined environments",
+              "operator": "has"
+            }
+          ]
+        },
+        "url": "/works?filter=fulltext.search:Optimized flocking of autonomous drones in confined environments&per_page=2"
+      },
+      "results": [
+        {
+          "id": "https://openalex.org/W2884236119",
+          "doi": "https://doi.org/10.1126/scirobotics.aat3536",
+          "title": "Optimized flocking of autonomous drones in confined environments",
+          "publication_year": 2018,
+          "cited_by_count": 588,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 53
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 100
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 91
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 94
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 79
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 74
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 64
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 31
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 2
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2884236119"
+        },
+        {
+          "id": "https://openalex.org/W2883909258",
+          "doi": "https://doi.org/10.5061/dryad.mq85r61",
+          "title": "Data from: Optimized flocking of autonomous drones in confined environments",
+          "publication_year": 2018,
+          "cited_by_count": 4,
+          "counts_by_year": [
+            {
+              "year": 2021,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 1
+            }
+          ],
+          "api_url": "https://api.openalex.org/works/W2883909258"
+        }
+      ],
+      "fetched_utc": "2026-09-26T09:33:16.316386+00:00"
+    }
+  ],
+  "github": [
+    {
+      "full_name": "gsartoretti/PRIMAL",
+      "html_url": "https://github.com/gsartoretti/PRIMAL",
+      "url": "https://api.github.com/repos/gsartoretti/PRIMAL",
+      "fork": false,
+      "stargazers_count": 446,
+      "forks_count": 78,
+      "created_at": "2018-09-01T18:25:31Z",
+      "pushed_at": "2024-04-09T18:45:32Z",
+      "updated_at": "2026-09-15T15:06:30Z",
+      "fetched_utc": "2026-09-26T09:32:38.855218+00:00"
+    },
+    {
+      "full_name": "ZJU-FAST-Lab/ego-planner-swarm",
+      "html_url": "https://github.com/ZJU-FAST-Lab/ego-planner-swarm",
+      "url": "https://api.github.com/repos/ZJU-FAST-Lab/ego-planner-swarm",
+      "fork": false,
+      "stargazers_count": 2190,
+      "forks_count": 387,
+      "created_at": "2020-10-14T05:06:22Z",
+      "pushed_at": "2025-03-08T14:16:40Z",
+      "updated_at": "2026-09-26T02:59:50Z",
+      "fetched_utc": "2026-09-26T09:32:39.107511+00:00"
+    },
+    {
+      "full_name": "Robotics-STAR-Lab/RACER",
+      "html_url": "https://github.com/Robotics-STAR-Lab/RACER",
+      "url": "https://api.github.com/repos/Robotics-STAR-Lab/RACER",
+      "fork": false,
+      "stargazers_count": 797,
+      "forks_count": 101,
+      "created_at": "2023-02-24T08:32:42Z",
+      "pushed_at": "2024-11-19T06:07:39Z",
+      "updated_at": "2026-09-25T03:43:16Z",
+      "fetched_utc": "2026-09-26T09:32:39.355294+00:00"
+    },
+    {
+      "full_name": "CognitiveAISystems/MAPF-GPT",
+      "html_url": "https://github.com/CognitiveAISystems/MAPF-GPT",
+      "url": "https://api.github.com/repos/CognitiveAISystems/MAPF-GPT",
+      "fork": false,
+      "stargazers_count": 135,
+      "forks_count": 24,
+      "created_at": "2024-09-24T12:42:21Z",
+      "pushed_at": "2026-04-23T12:13:42Z",
+      "updated_at": "2026-09-17T12:22:53Z",
+      "fetched_utc": "2026-09-26T09:32:39.586898+00:00"
+    },
+    {
+      "full_name": "chencbh/LMAPF",
+      "html_url": "https://github.com/chencbh/LMAPF",
+      "url": "https://api.github.com/repos/chencbh/LMAPF",
+      "fork": true,
+      "stargazers_count": 0,
+      "forks_count": 0,
+      "created_at": "2026-02-07T09:26:56Z",
+      "pushed_at": "2025-09-19T01:20:52Z",
+      "updated_at": "2026-02-07T09:26:56Z",
+      "fetched_utc": "2026-09-26T09:32:39.874308+00:00"
+    },
+    {
+      "full_name": "Kei18/lacam",
+      "html_url": "https://github.com/Kei18/lacam",
+      "url": "https://api.github.com/repos/Kei18/lacam",
+      "fork": false,
+      "stargazers_count": 82,
+      "forks_count": 31,
+      "created_at": "2022-06-26T16:20:48Z",
+      "pushed_at": "2025-08-22T15:17:40Z",
+      "updated_at": "2026-09-02T04:52:52Z",
+      "fetched_utc": "2026-09-26T09:32:40.076467+00:00"
+    },
+    {
+      "full_name": "Jiaoyang-Li/RHCR",
+      "html_url": "https://github.com/Jiaoyang-Li/RHCR",
+      "url": "https://api.github.com/repos/Jiaoyang-Li/RHCR",
+      "fork": false,
+      "stargazers_count": 216,
+      "forks_count": 60,
+      "created_at": "2020-05-15T06:39:27Z",
+      "pushed_at": "2024-12-17T15:30:32Z",
+      "updated_at": "2026-09-10T10:53:02Z",
+      "fetched_utc": "2026-09-26T09:32:40.285351+00:00"
+    },
+    {
+      "full_name": "Kei18/pibt2",
+      "html_url": "https://github.com/Kei18/pibt2",
+      "url": "https://api.github.com/repos/Kei18/pibt2",
+      "fork": false,
+      "stargazers_count": 116,
+      "forks_count": 43,
+      "created_at": "2021-08-02T12:15:01Z",
+      "pushed_at": "2025-04-14T18:24:45Z",
+      "updated_at": "2026-08-26T09:32:52Z",
+      "fetched_utc": "2026-09-26T09:32:40.523400+00:00"
+    },
+    {
+      "full_name": "DiligentPanda/Scalable-Imitation-Learning-for-LMAPF",
+      "html_url": "https://github.com/DiligentPanda/Scalable-Imitation-Learning-for-LMAPF",
+      "url": "https://api.github.com/repos/DiligentPanda/Scalable-Imitation-Learning-for-LMAPF",
+      "fork": false,
+      "stargazers_count": 74,
+      "forks_count": 17,
+      "created_at": "2025-05-18T19:24:16Z",
+      "pushed_at": "2026-03-27T01:06:00Z",
+      "updated_at": "2026-08-27T13:33:10Z",
+      "fetched_utc": "2026-09-26T09:33:16.522203+00:00"
+    }
+  ]
+}

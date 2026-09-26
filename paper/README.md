@@ -27,6 +27,7 @@ Local paths in them are replaced by `<workspace>` and similar placeholders.
 | `data/noise/` | The noise mission's check and `noise_statistics.py` report. |
 | `data/platform/` | `platform_check.py` report: Rust on Linux/amd64 versus the native build. |
 | `data/benchmark/` | `benchmark.py` timings and provenance. |
+| `data/benchmark-native/` | Bare-metal macOS timings, with the C++ build script and runner. |
 | `data/refactor-equivalence/` | Byte-equality records for behavior-preserving changes. |
 | `data/visual-qa/` | Viewer review reports. Screenshots stay in ignored `runs/`. |
 | `rq2/` | The FollowNearest workflow example in C++ and Rust; see its README. |

@@ -196,7 +196,7 @@ impl Default for EntityGroupConfig {
             label: String::new(),
             team: -1,
             color: [255, 255, 255],
-            visual_model: "sphere".into(),
+            visual_model: "aircraft".into(),
             health: 1,
             id: None,
             count: 1,

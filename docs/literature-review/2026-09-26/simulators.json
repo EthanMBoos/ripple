@@ -1,0 +1,3586 @@
+{
+  "github": [
+    {
+      "url": "https://api.github.com/repos/isaac-sim/IsaacLab",
+      "fetched_at": "2026-09-26T09:33:28.181812+00:00",
+      "full_name": "isaac-sim/IsaacLab",
+      "stargazers_count": 8225,
+      "forks_count": 3916,
+      "subscribers_count": 62,
+      "created_at": "2022-11-16T23:55:13Z",
+      "pushed_at": "2026-09-26T08:13:53Z",
+      "updated_at": "2026-09-26T08:15:58Z",
+      "html_url": "https://github.com/isaac-sim/IsaacLab",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/isaac-sim/IsaacGymEnvs",
+      "fetched_at": "2026-09-26T09:33:28.183309+00:00",
+      "full_name": "isaac-sim/IsaacGymEnvs",
+      "stargazers_count": 2954,
+      "forks_count": 515,
+      "subscribers_count": 39,
+      "created_at": "2021-08-27T02:36:51Z",
+      "pushed_at": "2024-10-26T15:43:53Z",
+      "updated_at": "2026-09-17T08:28:06Z",
+      "html_url": "https://github.com/isaac-sim/IsaacGymEnvs",
+      "archived": true
+    },
+    {
+      "url": "https://api.github.com/repos/google/brax",
+      "fetched_at": "2026-09-26T09:33:28.194955+00:00",
+      "full_name": "google/brax",
+      "stargazers_count": 3241,
+      "forks_count": 354,
+      "subscribers_count": 31,
+      "created_at": "2021-06-02T21:45:19Z",
+      "pushed_at": "2026-09-15T09:02:32Z",
+      "updated_at": "2026-09-24T13:43:27Z",
+      "html_url": "https://github.com/google/brax",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/proroklab/VectorizedMultiAgentSimulator",
+      "fetched_at": "2026-09-26T09:33:28.201297+00:00",
+      "full_name": "proroklab/VectorizedMultiAgentSimulator",
+      "stargazers_count": 614,
+      "forks_count": 114,
+      "subscribers_count": 7,
+      "created_at": "2022-05-12T15:03:34Z",
+      "pushed_at": "2026-05-19T22:19:49Z",
+      "updated_at": "2026-09-24T11:28:42Z",
+      "html_url": "https://github.com/proroklab/VectorizedMultiAgentSimulator",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/Farama-Foundation/PettingZoo",
+      "fetched_at": "2026-09-26T09:33:28.222321+00:00",
+      "full_name": "Farama-Foundation/PettingZoo",
+      "stargazers_count": 3523,
+      "forks_count": 527,
+      "subscribers_count": 15,
+      "created_at": "2020-01-20T03:41:08Z",
+      "pushed_at": "2026-09-19T20:42:16Z",
+      "updated_at": "2026-09-23T03:00:29Z",
+      "html_url": "https://github.com/Farama-Foundation/PettingZoo",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/oxwhirl/smac",
+      "fetched_at": "2026-09-26T09:33:28.181657+00:00",
+      "full_name": "oxwhirl/smac",
+      "stargazers_count": 1368,
+      "forks_count": 243,
+      "subscribers_count": 20,
+      "created_at": "2019-01-08T17:12:37Z",
+      "pushed_at": "2024-02-18T19:49:08Z",
+      "updated_at": "2026-09-23T04:48:50Z",
+      "html_url": "https://github.com/oxwhirl/smac",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/oxwhirl/smacv2",
+      "fetched_at": "2026-09-26T09:33:28.385390+00:00",
+      "full_name": "oxwhirl/smacv2",
+      "stargazers_count": 331,
+      "forks_count": 54,
+      "subscribers_count": 5,
+      "created_at": "2022-06-14T18:04:16Z",
+      "pushed_at": "2024-02-15T10:47:56Z",
+      "updated_at": "2026-09-19T10:13:52Z",
+      "html_url": "https://github.com/oxwhirl/smacv2",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/facebookresearch/BenchMARL",
+      "fetched_at": "2026-09-26T09:33:28.392282+00:00",
+      "full_name": "facebookresearch/BenchMARL",
+      "stargazers_count": 666,
+      "forks_count": 138,
+      "subscribers_count": 12,
+      "created_at": "2023-08-22T11:19:20Z",
+      "pushed_at": "2026-02-07T16:00:29Z",
+      "updated_at": "2026-09-24T11:28:43Z",
+      "html_url": "https://github.com/facebookresearch/BenchMARL",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/FLAIROx/JaxMARL",
+      "fetched_at": "2026-09-26T09:33:28.535130+00:00",
+      "full_name": "bold-lab-ai/JaxMARL",
+      "stargazers_count": 854,
+      "forks_count": 160,
+      "subscribers_count": 14,
+      "created_at": "2023-03-27T15:03:14Z",
+      "pushed_at": "2026-09-10T09:18:10Z",
+      "updated_at": "2026-09-24T09:34:26Z",
+      "html_url": "https://github.com/bold-lab-ai/JaxMARL",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/utiasDSL/gym-pybullet-drones",
+      "fetched_at": "2026-09-26T09:33:28.530131+00:00",
+      "full_name": "learnsyslab/gym-pybullet-drones",
+      "stargazers_count": 2146,
+      "forks_count": 570,
+      "subscribers_count": 16,
+      "created_at": "2020-08-10T07:38:09Z",
+      "pushed_at": "2026-09-06T22:44:20Z",
+      "updated_at": "2026-09-25T13:51:59Z",
+      "html_url": "https://github.com/learnsyslab/gym-pybullet-drones",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/btx0424/OmniDrones",
+      "fetched_at": "2026-09-26T09:33:28.385282+00:00",
+      "full_name": "btx0424/OmniDrones",
+      "stargazers_count": 583,
+      "forks_count": 90,
+      "subscribers_count": 6,
+      "created_at": "2023-02-09T19:34:51Z",
+      "pushed_at": "2026-01-20T18:06:18Z",
+      "updated_at": "2026-09-18T13:00:45Z",
+      "html_url": "https://github.com/btx0424/OmniDrones",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/Genesis-Embodied-AI/Genesis",
+      "fetched_at": "2026-09-26T09:33:28.590130+00:00",
+      "full_name": "Genesis-Embodied-AI/genesis-world",
+      "stargazers_count": 29989,
+      "forks_count": 2868,
+      "subscribers_count": 225,
+      "created_at": "2023-10-31T03:33:11Z",
+      "pushed_at": "2026-09-25T21:01:06Z",
+      "updated_at": "2026-09-26T08:07:15Z",
+      "html_url": "https://github.com/Genesis-Embodied-AI/genesis-world",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/haosulab/ManiSkill",
+      "fetched_at": "2026-09-26T09:33:28.756226+00:00",
+      "full_name": "mani-skill/ManiSkill",
+      "stargazers_count": 3357,
+      "forks_count": 546,
+      "subscribers_count": 20,
+      "created_at": "2022-08-02T04:56:58Z",
+      "pushed_at": "2026-08-04T16:38:18Z",
+      "updated_at": "2026-09-26T04:17:01Z",
+      "html_url": "https://github.com/mani-skill/ManiSkill",
+      "archived": false
+    },
+    {
+      "url": "https://api.github.com/repos/google-deepmind/mujoco_playground",
+      "fetched_at": "2026-09-26T09:33:28.616266+00:00",
+      "full_name": "google-deepmind/mujoco_playground",
+      "stargazers_count": 2232,
+      "forks_count": 363,
+      "subscribers_count": 18,
+      "created_at": "2024-12-03T22:39:09Z",
+      "pushed_at": "2026-09-19T02:20:32Z",
+      "updated_at": "2026-09-24T19:23:25Z",
+      "html_url": "https://github.com/google-deepmind/mujoco_playground",
+      "archived": false
+    }
+  ],
+  "openalex": [
+    {
+      "query": "Isaac Gym: High Performance GPU-Based Physics Simulation For Robot Learning",
+      "url": "https://api.openalex.org/works?search=Isaac%20Gym%3A%20High%20Performance%20GPU-Based%20Physics%20Simulation%20For%20Robot%20Learning&per-page=3",
+      "fetched_at": "2026-09-26T09:33:47.627150+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W3213974477",
+          "doi": "https://doi.org/10.48550/arxiv.2108.10470",
+          "title": "Isaac Gym: High Performance GPU-Based Physics Simulation For Robot\\n Learning",
+          "publication_year": 2021,
+          "publication_date": "2021-08-23",
+          "cited_by_count": 323,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 30
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 107
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 123
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 49
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 7
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2108.10470",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2108.10470",
+            "pdf_url": "https://arxiv.org/pdf/2108.10470",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": "",
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W3193576605",
+          "doi": "https://doi.org/10.48550/arxiv.2108.10470",
+          "title": "Isaac Gym: High Performance GPU-Based Physics Simulation For Robot Learning",
+          "publication_year": 2021,
+          "publication_date": "2021-08-24",
+          "cited_by_count": 57,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 16
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 17
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 15
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 7
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2108.10470",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2108.10470",
+            "pdf_url": "https://arxiv.org/pdf/2108.10470",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "listed_in": [],
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W3150631816",
+          "doi": "https://doi.org/10.1109/access.2021.3068769",
+          "title": "A Review of Physics Simulators for Robotic Applications",
+          "publication_year": 2021,
+          "publication_date": "2021-01-01",
+          "cited_by_count": 275,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 30
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 71
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 71
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 51
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 43
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 9
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.1109/access.2021.3068769",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.1109/access.2021.3068769",
+            "pdf_url": "https://ieeexplore.ieee.org/ielx7/6287639/9312710/09386154.pdf",
+            "source": {
+              "id": "https://openalex.org/S2485537415",
+              "display_name": "IEEE Access",
+              "issn_l": "2169-3536",
+              "issn": [
+                "2169-3536"
+              ],
+              "is_oa": true,
+              "is_in_doaj": true,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "doaj",
+                "jufo-1",
+                "ki-jl-1",
+                "norway-1"
+              ],
+              "host_organization": "https://openalex.org/P4310319808",
+              "host_organization_name": "Institute of Electrical and Electronics Engineers",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310319808"
+              ],
+              "host_organization_lineage_names": [
+                "Institute of Electrical and Electronics Engineers"
+              ],
+              "type": "journal"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "IEEE Access",
+            "raw_type": "journal-article"
+          }
+        }
+      ]
+    },
+    {
+      "query": "Brax A Differentiable Physics Engine for Large Scale Rigid Body Simulation",
+      "url": "https://api.openalex.org/works?search=Brax%20A%20Differentiable%20Physics%20Engine%20for%20Large%20Scale%20Rigid%20Body%20Simulation&per-page=3",
+      "fetched_at": "2026-09-26T09:33:47.582180+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W3172279798",
+          "doi": "https://doi.org/10.48550/arxiv.2106.13281",
+          "title": "Brax -- A Differentiable Physics Engine for Large Scale Rigid Body Simulation",
+          "publication_year": 2021,
+          "publication_date": "2021-06-24",
+          "cited_by_count": 21,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 7
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 5
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 4
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2106.13281",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2106.13281",
+            "pdf_url": "https://arxiv.org/pdf/2106.13281",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4287113927",
+          "doi": "https://doi.org/10.48550/arxiv.2106.13281",
+          "title": "Brax -- A Differentiable Physics Engine for Large Scale Rigid Body\\n Simulation",
+          "publication_year": 2021,
+          "publication_date": "2021-06-24",
+          "cited_by_count": 63,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 9
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 14
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 22
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 15
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 2
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2106.13281",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2106.13281",
+            "pdf_url": "https://arxiv.org/pdf/2106.13281",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": "",
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4283731125",
+          "doi": "https://doi.org/10.48550/arxiv.2203.00806",
+          "title": "Dojo: A Differentiable Physics Engine for Robotics",
+          "publication_year": 2022,
+          "publication_date": "2022-03-02",
+          "cited_by_count": 10,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2203.00806",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2203.00806",
+            "pdf_url": "https://arxiv.org/pdf/2203.00806",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        }
+      ]
+    },
+    {
+      "query": "PettingZoo Gym for Multi-Agent Reinforcement Learning",
+      "url": "https://api.openalex.org/works?search=PettingZoo%20Gym%20for%20Multi-Agent%20Reinforcement%20Learning&per-page=3",
+      "fetched_at": "2026-09-26T09:33:47.575827+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W3090386093",
+          "doi": "https://doi.org/10.48550/arxiv.2009.14471",
+          "title": "PettingZoo: Gym for Multi-Agent Reinforcement Learning",
+          "publication_year": 2020,
+          "publication_date": "2020-09-30",
+          "cited_by_count": 147,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 24
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 40
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 32
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 31
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 13
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 5
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2009.14471",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2009.14471",
+            "pdf_url": "https://arxiv.org/pdf/2009.14471",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "listed_in": [],
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4379622577",
+          "doi": "https://doi.org/10.1109/tpami.2023.3283537",
+          "title": "MO-MIX: Multi-Objective Multi-Agent Cooperative Decision-Making With Deep Reinforcement Learning",
+          "publication_year": 2023,
+          "publication_date": "2023-06-07",
+          "cited_by_count": 69,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 25
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 31
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 11
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 2
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.1109/tpami.2023.3283537",
+            "is_oa": false,
+            "landing_page_url": "https://doi.org/10.1109/tpami.2023.3283537",
+            "pdf_url": null,
+            "source": {
+              "id": "https://openalex.org/S199944782",
+              "display_name": "IEEE Transactions on Pattern Analysis and Machine Intelligence",
+              "issn_l": "0162-8828",
+              "issn": [
+                "0162-8828",
+                "1939-3539",
+                "2160-9292"
+              ],
+              "is_oa": false,
+              "is_in_doaj": false,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "doyens",
+                "jufo-3",
+                "medline",
+                "norway-2"
+              ],
+              "host_organization": "https://openalex.org/P4310320439",
+              "host_organization_name": "IEEE Computer Society",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310320439",
+                "https://openalex.org/P4310319808"
+              ],
+              "host_organization_lineage_names": [
+                "IEEE Computer Society",
+                "Institute of Electrical and Electronics Engineers"
+              ],
+              "type": "journal"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "IEEE Transactions on Pattern Analysis and Machine Intelligence",
+            "raw_type": "journal-article"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4364352458",
+          "doi": "https://doi.org/10.1140/epje/s10189-023-00285-8",
+          "title": "Deep reinforcement learning for turbulent drag reduction in channel flows",
+          "publication_year": 2023,
+          "publication_date": "2023-04-01",
+          "cited_by_count": 116,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 28
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 35
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 34
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 19
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.1140/epje/s10189-023-00285-8",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.1140/epje/s10189-023-00285-8",
+            "pdf_url": "https://link.springer.com/content/pdf/10.1140/epje/s10189-023-00285-8.pdf",
+            "source": {
+              "id": "https://openalex.org/S34211650",
+              "display_name": "The European Physical Journal E",
+              "issn_l": "1292-8941",
+              "issn": [
+                "1292-8941",
+                "1292-895X",
+                "2429-5299"
+              ],
+              "is_oa": false,
+              "is_in_doaj": false,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "jufo-1",
+                "medline",
+                "norway-1"
+              ],
+              "host_organization": "https://openalex.org/P4310319900",
+              "host_organization_name": "Springer Science+Business Media",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310319900",
+                "https://openalex.org/P4310319965"
+              ],
+              "host_organization_lineage_names": [
+                "Springer Science+Business Media",
+                "Springer Nature"
+              ],
+              "type": "journal"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "The European Physical Journal E",
+            "raw_type": "journal-article"
+          }
+        }
+      ]
+    },
+    {
+      "query": "The StarCraft Multi-Agent Challenge",
+      "url": "https://api.openalex.org/works?search=The%20StarCraft%20Multi-Agent%20Challenge&per-page=3",
+      "fetched_at": "2026-09-26T09:33:47.494162+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W2913662073",
+          "doi": "https://doi.org/10.65109/lvzz5205",
+          "title": "The StarCraft Multi-Agent Challenge",
+          "publication_year": 2019,
+          "publication_date": "2019-05-08",
+          "cited_by_count": 120,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 77
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 17
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 7
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 17
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.65109/lvzz5205",
+            "is_oa": false,
+            "landing_page_url": "https://doi.org/10.65109/lvzz5205",
+            "pdf_url": null,
+            "source": null,
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "International Joint Conference on Autonomous Agents and Multiagent Systems",
+            "raw_type": "proceedings-article"
+          }
+        },
+        {
+          "id": "https://openalex.org/W3099689767",
+          "doi": "https://doi.org/10.48550/arxiv.2011.09533",
+          "title": "Is Independent Learning All You Need in the StarCraft Multi-Agent Challenge?",
+          "publication_year": 2020,
+          "publication_date": "2020-11-18",
+          "cited_by_count": 184,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 35
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 73
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 45
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 17
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 10
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2011.09533",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2011.09533",
+            "pdf_url": "https://arxiv.org/pdf/2011.09533",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "listed_in": [],
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W2982316857",
+          "doi": "https://doi.org/10.1038/s41586-019-1724-z",
+          "title": "Grandmaster level in StarCraft II using multi-agent reinforcement learning",
+          "publication_year": 2019,
+          "publication_date": "2019-10-30",
+          "cited_by_count": 3523,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 218
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 480
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 569
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 575
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 566
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 662
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 412
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 37
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2014,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.1038/s41586-019-1724-z",
+            "is_oa": false,
+            "landing_page_url": "https://doi.org/10.1038/s41586-019-1724-z",
+            "pdf_url": null,
+            "source": {
+              "id": "https://openalex.org/S137773608",
+              "display_name": "Nature",
+              "issn_l": "0028-0836",
+              "issn": [
+                "0028-0836",
+                "1476-4687"
+              ],
+              "is_oa": false,
+              "is_in_doaj": false,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "doyens",
+                "erih-plus",
+                "jufo-3",
+                "ki-jl-3",
+                "medline",
+                "norway-2"
+              ],
+              "host_organization": "https://openalex.org/P4310319908",
+              "host_organization_name": "Nature Portfolio",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310319908",
+                "https://openalex.org/P4310319965"
+              ],
+              "host_organization_lineage_names": [
+                "Nature Portfolio",
+                "Springer Nature"
+              ],
+              "type": "journal"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Nature",
+            "raw_type": "journal-article"
+          }
+        }
+      ]
+    },
+    {
+      "query": "SMACv2 An Improved Benchmark for Cooperative Multi-Agent Reinforcement Learning",
+      "url": "https://api.openalex.org/works?search=SMACv2%20An%20Improved%20Benchmark%20for%20Cooperative%20Multi-Agent%20Reinforcement%20Learning&per-page=3",
+      "fetched_at": "2026-09-26T09:33:47.694219+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W7133246398",
+          "doi": "https://doi.org/10.52202/075280-1634",
+          "title": "SMACv2: An Improved Benchmark for Cooperative Multi-Agent Reinforcement Learning",
+          "publication_year": 2023,
+          "publication_date": "2023-01-01",
+          "cited_by_count": 28,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 27
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.52202/075280-1634",
+            "is_oa": false,
+            "landing_page_url": "https://doi.org/10.52202/075280-1634",
+            "pdf_url": null,
+            "source": null,
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Advances in Neural Information Processing Systems 36",
+            "raw_type": "proceedings-article"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4311723471",
+          "doi": "https://doi.org/10.48550/arxiv.2212.07489",
+          "title": "SMACv2: An Improved Benchmark for Cooperative Multi-Agent Reinforcement Learning",
+          "publication_year": 2022,
+          "publication_date": "2022-12-14",
+          "cited_by_count": 27,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 13
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 9
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 3
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2212.07489",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2212.07489",
+            "pdf_url": "https://arxiv.org/pdf/2212.07489",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W7111231663",
+          "doi": "https://doi.org/10.5555/3666122.3667756",
+          "title": "SMACv2:An Improved Benchmark for Cooperative Multi-Agent Reinforcement Learning",
+          "publication_year": 2024,
+          "publication_date": "2024-07-01",
+          "cited_by_count": 1,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:pure.atira.dk:openaire/5c13c294-826a-4b8b-899f-424b460af5c0",
+            "is_oa": true,
+            "landing_page_url": "https://research.manchester.ac.uk/en/publications/5c13c294-826a-4b8b-899f-424b460af5c0",
+            "pdf_url": null,
+            "source": {
+              "id": "https://openalex.org/S4306400662",
+              "display_name": "Research Explorer (The University of Manchester)",
+              "issn_l": null,
+              "issn": null,
+              "is_oa": false,
+              "is_in_doaj": false,
+              "is_core": false,
+              "listed_in": [],
+              "host_organization": "https://openalex.org/I28407311",
+              "host_organization_name": "University of Manchester",
+              "host_organization_lineage": [
+                "https://openalex.org/I28407311"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": "other-oa",
+            "license_id": "https://openalex.org/licenses/other-oa",
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": null,
+            "raw_type": "info:eu-repo/semantics/conferenceObject"
+          }
+        }
+      ]
+    },
+    {
+      "query": "VMAS A Vectorized Multi-Agent Simulator for Collective Robot Learning",
+      "url": "https://api.openalex.org/works?search=VMAS%20A%20Vectorized%20Multi-Agent%20Simulator%20for%20Collective%20Robot%20Learning&per-page=3",
+      "fetched_at": "2026-09-26T09:33:47.811469+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W4391405925",
+          "doi": "https://doi.org/10.1007/978-3-031-51497-5_4",
+          "title": "VMAS: A Vectorized Multi-agent Simulator for Collective Robot Learning",
+          "publication_year": 2024,
+          "publication_date": "2024-01-01",
+          "cited_by_count": 19,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 7
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 7
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.1007/978-3-031-51497-5_4",
+            "is_oa": false,
+            "landing_page_url": "https://doi.org/10.1007/978-3-031-51497-5_4",
+            "pdf_url": null,
+            "source": {
+              "id": "https://openalex.org/S4210172544",
+              "display_name": "Springer proceedings in advanced robotics",
+              "issn_l": "2511-1256",
+              "issn": [
+                "2511-1256",
+                "2511-1264"
+              ],
+              "is_oa": false,
+              "is_in_doaj": false,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "jufo-1",
+                "norway-1"
+              ],
+              "host_organization": "https://openalex.org/P4310319972",
+              "host_organization_name": "Springer International Publishing",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310319972",
+                "https://openalex.org/P4310319965"
+              ],
+              "host_organization_lineage_names": [
+                "Springer International Publishing",
+                "Springer Nature"
+              ],
+              "type": "book series"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Springer Proceedings in Advanced Robotics",
+            "raw_type": "book-chapter"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4285019837",
+          "doi": "https://doi.org/10.48550/arxiv.2207.03530",
+          "title": "VMAS: A Vectorized Multi-Agent Simulator for Collective Robot Learning",
+          "publication_year": 2022,
+          "publication_date": "2022-07-07",
+          "cited_by_count": 3,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2207.03530",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2207.03530",
+            "pdf_url": "https://arxiv.org/pdf/2207.03530",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4362519817",
+          "doi": "https://doi.org/10.3390/s23073625",
+          "title": "Multi-Agent Deep Reinforcement Learning for Multi-Robot Applications: A Survey",
+          "publication_year": 2023,
+          "publication_date": "2023-03-30",
+          "cited_by_count": 198,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 58
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 82
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 36
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 22
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.3390/s23073625",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.3390/s23073625",
+            "pdf_url": "https://www.mdpi.com/1424-8220/23/7/3625/pdf?version=1680188318",
+            "source": {
+              "id": "https://openalex.org/S101949793",
+              "display_name": "Sensors",
+              "issn_l": "1424-8220",
+              "issn": [
+                "1424-8220"
+              ],
+              "is_oa": true,
+              "is_in_doaj": true,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "doaj",
+                "jufo-1",
+                "medline",
+                "norway-1"
+              ],
+              "host_organization": "https://openalex.org/P4310310987",
+              "host_organization_name": "Multidisciplinary Digital Publishing Institute",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310310987"
+              ],
+              "host_organization_lineage_names": [
+                "Multidisciplinary Digital Publishing Institute"
+              ],
+              "type": "journal"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Sensors",
+            "raw_type": "journal-article"
+          }
+        }
+      ]
+    },
+    {
+      "query": "BenchMARL Benchmarking Multi-Agent Reinforcement Learning",
+      "url": "https://api.openalex.org/works?search=BenchMARL%20Benchmarking%20Multi-Agent%20Reinforcement%20Learning&per-page=3",
+      "fetched_at": "2026-09-26T09:33:47.788102+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W4389363807",
+          "doi": "https://doi.org/10.48550/arxiv.2312.01472",
+          "title": "BenchMARL: Benchmarking Multi-Agent Reinforcement Learning",
+          "publication_year": 2023,
+          "publication_date": "2023-12-03",
+          "cited_by_count": 5,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2312.01472",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2312.01472",
+            "pdf_url": "https://arxiv.org/pdf/2312.01472",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4403570761",
+          "doi": "https://doi.org/10.48550/arxiv.2410.10460",
+          "title": "Compositional Shielding and Reinforcement Learning for Multi-Agent Systems",
+          "publication_year": 2024,
+          "publication_date": "2024-10-14",
+          "cited_by_count": 3,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 3
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:pure.atira.dk:openaire/07779518-b88e-4d83-ab0f-46a7678a75a9",
+            "is_oa": true,
+            "landing_page_url": "https://vbn.aau.dk/da/publications/07779518-b88e-4d83-ab0f-46a7678a75a9",
+            "pdf_url": null,
+            "source": {
+              "id": "https://openalex.org/S4306401731",
+              "display_name": "VBN Forskningsportal (Aalborg Universitet)",
+              "issn_l": null,
+              "issn": null,
+              "is_oa": false,
+              "is_in_doaj": false,
+              "is_core": false,
+              "host_organization": "https://openalex.org/I891191580",
+              "host_organization_name": "Aalborg University",
+              "host_organization_lineage": [
+                "https://openalex.org/I891191580"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": "other-oa",
+            "license_id": "https://openalex.org/licenses/other-oa",
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Brorholt, A H, Larsen, K G & Schilling, C 2025, 'Compositional Shielding and Reinforcement Learning for Multi-Agent Systems', AI in Science Summit 2025, Copenhagen, Denmark, 03/11/2025 - 04/11/2025. < https://cdn.prod.website-files.com/68a7113a28bc36a9033775bf/69036136ae4d22f908fa0223_19.pdf >",
+            "raw_type": "info:eu-repo/semantics/conferenceObject"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4400348411",
+          "doi": "https://doi.org/10.32473/flairs.37.1.135574",
+          "title": "Attention-Driven Multi-Agent Reinforcement Learning: Enhancing Decisions with Expertise-Informed Tasks",
+          "publication_year": 2024,
+          "publication_date": "2024-05-13",
+          "cited_by_count": 3,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 3
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.32473/flairs.37.1.135574",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.32473/flairs.37.1.135574",
+            "pdf_url": "https://journals.flvc.org/FLAIRS/article/download/135574/140055",
+            "source": {
+              "id": "https://openalex.org/S4210205383",
+              "display_name": "Proceedings of the ... International Florida Artificial Intelligence Research Society Conference",
+              "issn_l": "2334-0754",
+              "issn": [
+                "2334-0754",
+                "2334-0762"
+              ],
+              "is_oa": true,
+              "is_in_doaj": true,
+              "is_core": false,
+              "listed_in": [
+                "doaj",
+                "norway-1"
+              ],
+              "host_organization": "https://openalex.org/P4310320363",
+              "host_organization_name": "George A. Smathers Libraries",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310320363"
+              ],
+              "host_organization_lineage_names": [
+                "George A. Smathers Libraries"
+              ],
+              "type": "conference"
+            },
+            "license": "cc-by-nc",
+            "license_id": "https://openalex.org/licenses/cc-by-nc",
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "The International FLAIRS Conference Proceedings",
+            "raw_type": "journal-article"
+          }
+        }
+      ]
+    },
+    {
+      "query": "JaxMARL Multi-Agent RL Environments and Algorithms in JAX",
+      "url": "https://api.openalex.org/works?search=JaxMARL%20Multi-Agent%20RL%20Environments%20and%20Algorithms%20in%20JAX&per-page=3",
+      "fetched_at": "2026-09-26T09:33:47.870227+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W4415797718",
+          "doi": "https://doi.org/10.52202/079017-1612",
+          "title": "JaxMARL: Multi-Agent RL Environments and Algorithms in JAX",
+          "publication_year": 2024,
+          "publication_date": "2024-01-01",
+          "cited_by_count": 7,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.52202/079017-1612",
+            "is_oa": false,
+            "landing_page_url": "https://doi.org/10.52202/079017-1612",
+            "pdf_url": null,
+            "source": null,
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Advances in Neural Information Processing Systems 37",
+            "raw_type": "proceedings-article"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4388788987",
+          "doi": "https://doi.org/10.48550/arxiv.2311.10090",
+          "title": "JaxMARL: Multi-Agent RL Environments and Algorithms in JAX",
+          "publication_year": 2023,
+          "publication_date": "2023-11-16",
+          "cited_by_count": 2,
+          "counts_by_year": [
+            {
+              "year": 2024,
+              "cited_by_count": 2
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2311.10090",
+            "is_oa": true,
+            "landing_page_url": "https://arxiv.org/abs/2311.10090",
+            "pdf_url": "https://arxiv.org/pdf/2311.10090",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "listed_in": [],
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4411154614",
+          "doi": "https://doi.org/10.3390/machines13060503",
+          "title": "Recent Advances in Multi-Agent Reinforcement Learning for Intelligent Automation and Control of Water Environment Systems",
+          "publication_year": 2025,
+          "publication_date": "2025-06-09",
+          "cited_by_count": 28,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 19
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 9
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.3390/machines13060503",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.3390/machines13060503",
+            "pdf_url": "https://www.mdpi.com/2075-1702/13/6/503/pdf?version=1749519682",
+            "source": {
+              "id": "https://openalex.org/S4210219839",
+              "display_name": "Machines",
+              "issn_l": "2075-1702",
+              "issn": [
+                "2075-1702"
+              ],
+              "is_oa": true,
+              "is_in_doaj": true,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "doaj",
+                "norway-1"
+              ],
+              "host_organization": "https://openalex.org/P4310310987",
+              "host_organization_name": "Multidisciplinary Digital Publishing Institute",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310310987"
+              ],
+              "host_organization_lineage_names": [
+                "Multidisciplinary Digital Publishing Institute"
+              ],
+              "type": "journal"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Machines",
+            "raw_type": "journal-article"
+          }
+        }
+      ]
+    },
+    {
+      "query": "Learning to Fly a Gym Environment with PyBullet Physics for Reinforcement Learning of Multi-agent Quadcopter Control",
+      "url": "https://api.openalex.org/works?search=Learning%20to%20Fly%20a%20Gym%20Environment%20with%20PyBullet%20Physics%20for%20Reinforcement%20Learning%20of%20Multi-agent%20Quadcopter%20Control&per-page=3",
+      "fetched_at": "2026-09-26T09:33:48.038230+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W3134537774",
+          "doi": "https://doi.org/10.1109/iros51168.2021.9635857",
+          "title": "Learning to Fly\u2014a Gym Environment with PyBullet Physics for Reinforcement Learning of Multi-agent Quadcopter Control",
+          "publication_year": 2021,
+          "publication_date": "2021-09-27",
+          "cited_by_count": 186,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 28
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 55
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 61
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 26
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 14
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 2
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.1109/iros51168.2021.9635857",
+            "is_oa": false,
+            "landing_page_url": "https://doi.org/10.1109/iros51168.2021.9635857",
+            "pdf_url": null,
+            "source": {
+              "id": "https://openalex.org/S4363607734",
+              "display_name": "2021 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)",
+              "issn_l": null,
+              "issn": null,
+              "is_oa": false,
+              "is_in_doaj": false,
+              "is_core": false,
+              "listed_in": [],
+              "host_organization": null,
+              "host_organization_name": null,
+              "host_organization_lineage": [],
+              "host_organization_lineage_names": [],
+              "type": "conference"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "2021 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)",
+            "raw_type": "proceedings-article"
+          }
+        },
+        {
+          "id": "https://openalex.org/W3195968524",
+          "doi": "https://doi.org/10.1146/annurev-control-042920-020211",
+          "title": "Safe Learning in Robotics: From Learning-Based Control to Safe Reinforcement Learning",
+          "publication_year": 2022,
+          "publication_date": "2022-01-26",
+          "cited_by_count": 765,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 174
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 185
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 199
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 148
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 48
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 11
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.1146/annurev-control-042920-020211",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.1146/annurev-control-042920-020211",
+            "pdf_url": "https://www.annualreviews.org/doi/pdf/10.1146/annurev-control-042920-020211",
+            "source": {
+              "id": "https://openalex.org/S4210191328",
+              "display_name": "Annual Review of Control Robotics and Autonomous Systems",
+              "issn_l": "2573-5144",
+              "issn": [
+                "2573-5144"
+              ],
+              "is_oa": false,
+              "is_in_doaj": false,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "jufo-1",
+                "norway-1"
+              ],
+              "host_organization": "https://openalex.org/P4310320373",
+              "host_organization_name": "Annual Reviews",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310320373"
+              ],
+              "host_organization_lineage_names": [
+                "Annual Reviews"
+              ],
+              "type": "journal"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Annual Review of Control, Robotics, and Autonomous Systems",
+            "raw_type": "journal-article"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4412196054",
+          "doi": "https://doi.org/10.3390/drones9070484",
+          "title": "A Survey on UAV Control with Multi-Agent Reinforcement Learning",
+          "publication_year": 2025,
+          "publication_date": "2025-07-09",
+          "cited_by_count": 61,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 53
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 8
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.3390/drones9070484",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.3390/drones9070484",
+            "pdf_url": "https://www.mdpi.com/2504-446X/9/7/484/pdf?version=1752063671",
+            "source": {
+              "id": "https://openalex.org/S4210193350",
+              "display_name": "Drones",
+              "issn_l": "2504-446X",
+              "issn": [
+                "2504-446X"
+              ],
+              "is_oa": true,
+              "is_in_doaj": true,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "doaj",
+                "norway-1"
+              ],
+              "host_organization": "https://openalex.org/P4310310987",
+              "host_organization_name": "Multidisciplinary Digital Publishing Institute",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310310987"
+              ],
+              "host_organization_lineage_names": [
+                "Multidisciplinary Digital Publishing Institute"
+              ],
+              "type": "journal"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Drones",
+            "raw_type": "journal-article"
+          }
+        }
+      ]
+    },
+    {
+      "query": "OmniDrones An Efficient and Flexible Platform for Reinforcement Learning in Drone Control",
+      "url": "https://api.openalex.org/works?search=OmniDrones%20An%20Efficient%20and%20Flexible%20Platform%20for%20Reinforcement%20Learning%20in%20Drone%20Control&per-page=3",
+      "fetched_at": "2026-09-26T09:33:48.009735+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W4391019623",
+          "doi": "https://doi.org/10.1109/lra.2024.3356168",
+          "title": "OmniDrones: An Efficient and Flexible Platform for Reinforcement Learning in Drone Control",
+          "publication_year": 2024,
+          "publication_date": "2024-01-19",
+          "cited_by_count": 51,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 19
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 27
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 5
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.1109/lra.2024.3356168",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.1109/lra.2024.3356168",
+            "pdf_url": null,
+            "source": {
+              "id": "https://openalex.org/S4210169774",
+              "display_name": "IEEE Robotics and Automation Letters",
+              "issn_l": "2377-3766",
+              "issn": [
+                "2377-3766",
+                "2377-3774"
+              ],
+              "is_oa": false,
+              "is_in_doaj": false,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "jufo-2",
+                "ki-jl-1",
+                "norway-1"
+              ],
+              "host_organization": "https://openalex.org/P4310319808",
+              "host_organization_name": "Institute of Electrical and Electronics Engineers",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310319808"
+              ],
+              "host_organization_lineage_names": [
+                "Institute of Electrical and Electronics Engineers"
+              ],
+              "type": "journal"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "IEEE Robotics and Automation Letters",
+            "raw_type": "journal-article"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4387031575",
+          "doi": "https://doi.org/10.48550/arxiv.2309.12825",
+          "title": "OmniDrones: An Efficient and Flexible Platform for Reinforcement Learning in Drone Control",
+          "publication_year": 2023,
+          "publication_date": "2023-09-22",
+          "cited_by_count": 1,
+          "counts_by_year": [
+            {
+              "year": 2024,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2309.12825",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2309.12825",
+            "pdf_url": "https://arxiv.org/pdf/2309.12825",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "listed_in": [],
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4401255931",
+          "doi": "https://doi.org/10.1021/acs.jcim.4c00895",
+          "title": "ACEGEN: Reinforcement Learning of Generative Chemical Agents for Drug Discovery",
+          "publication_year": 2024,
+          "publication_date": "2024-08-02",
+          "cited_by_count": 32,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 16
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 13
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 3
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.1021/acs.jcim.4c00895",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.1021/acs.jcim.4c00895",
+            "pdf_url": "https://pubs.acs.org/doi/pdf/10.1021/acs.jcim.4c00895",
+            "source": {
+              "id": "https://openalex.org/S167262187",
+              "display_name": "Journal of Chemical Information and Modeling",
+              "issn_l": "1549-9596",
+              "issn": [
+                "1549-9596",
+                "1549-960X"
+              ],
+              "is_oa": false,
+              "is_in_doaj": false,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "jufo-1",
+                "ki-jl-1",
+                "medline",
+                "norway-2"
+              ],
+              "host_organization": "https://openalex.org/P4310320006",
+              "host_organization_name": "American Chemical Society",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310320006"
+              ],
+              "host_organization_lineage_names": [
+                "American Chemical Society"
+              ],
+              "type": "journal"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Journal of Chemical Information and Modeling",
+            "raw_type": "journal-article"
+          }
+        }
+      ]
+    },
+    {
+      "query": "Isaac Lab A GPU-Accelerated Simulation Framework for Multi-Modal Robot Learning",
+      "url": "https://api.openalex.org/works?search=Isaac%20Lab%20A%20GPU-Accelerated%20Simulation%20Framework%20for%20Multi-Modal%20Robot%20Learning&per-page=3",
+      "fetched_at": "2026-09-26T09:33:48.106748+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W7104607800",
+          "doi": "https://doi.org/10.48550/arxiv.2511.04831",
+          "title": "Isaac Lab: A GPU-Accelerated Simulation Framework for Multi-Modal Robot Learning",
+          "publication_year": 2025,
+          "publication_date": "2025-11-06",
+          "cited_by_count": 3,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 3
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2511.04831",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2511.04831",
+            "pdf_url": "https://arxiv.org/pdf/2511.04831",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "listed_in": [],
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W2805051407",
+          "doi": "https://doi.org/10.3390/mti2030057",
+          "title": "Review of Deep Learning Methods in Robotic Grasp Detection",
+          "publication_year": 2018,
+          "publication_date": "2018-09-07",
+          "cited_by_count": 184,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 5
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 13
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 24
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 25
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 33
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 42
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 26
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 14
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2012,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.3390/mti2030057",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.3390/mti2030057",
+            "pdf_url": null,
+            "source": {
+              "id": "https://openalex.org/S4210226272",
+              "display_name": "Multimodal Technologies and Interaction",
+              "issn_l": "2414-4088",
+              "issn": [
+                "2414-4088"
+              ],
+              "is_oa": true,
+              "is_in_doaj": true,
+              "is_core": true,
+              "listed_in": [
+                "cwts-core",
+                "doaj",
+                "jufo-1",
+                "norway-1"
+              ],
+              "host_organization": "https://openalex.org/P4310310987",
+              "host_organization_name": "Multidisciplinary Digital Publishing Institute",
+              "host_organization_lineage": [
+                "https://openalex.org/P4310310987"
+              ],
+              "host_organization_lineage_names": [
+                "Multidisciplinary Digital Publishing Institute"
+              ],
+              "type": "journal"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Multimodal Technologies and Interaction",
+            "raw_type": "journal-article"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4385430685",
+          "doi": "https://doi.org/10.15607/rss.2023.xix.089",
+          "title": "LEAP Hand: Low-Cost, Efficient, and Anthropomorphic Hand for Robot Learning",
+          "publication_year": 2023,
+          "publication_date": "2023-07-10",
+          "cited_by_count": 100,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 27
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 59
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 13
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.15607/rss.2023.xix.089",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.15607/rss.2023.xix.089",
+            "pdf_url": "https://doi.org/10.15607/rss.2023.xix.089",
+            "source": null,
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Robotics: Science and Systems XIX",
+            "raw_type": "proceedings-article"
+          }
+        }
+      ]
+    },
+    {
+      "query": "MuJoCo Playground",
+      "url": "https://api.openalex.org/works?search=MuJoCo%20Playground&per-page=3",
+      "fetched_at": "2026-09-26T09:33:48.075346+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W4414079055",
+          "doi": "https://doi.org/10.15607/rss.2025.xxi.020",
+          "title": "Demonstrating MuJoCo Playground",
+          "publication_year": 2025,
+          "publication_date": "2025-06-21",
+          "cited_by_count": 9,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 5
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 4
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.15607/rss.2025.xxi.020",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.15607/rss.2025.xxi.020",
+            "pdf_url": "https://doi.org/10.15607/rss.2025.xxi.020",
+            "source": null,
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Robotics: Science and Systems XXI",
+            "raw_type": "proceedings-article"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4407571085",
+          "doi": "https://doi.org/10.48550/arxiv.2502.08844",
+          "title": "MuJoCo Playground",
+          "publication_year": 2025,
+          "publication_date": "2025-02-12",
+          "cited_by_count": 1,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2502.08844",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2502.08844",
+            "pdf_url": "https://arxiv.org/pdf/2502.08844",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "listed_in": [],
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W3176142333",
+          "doi": null,
+          "title": "MDP Playground: A Design and Debug Testbed for Reinforcement Learning",
+          "publication_year": 2021,
+          "publication_date": "2021-06-07",
+          "cited_by_count": 2,
+          "counts_by_year": [
+            {
+              "year": 2023,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "mag:3176142333",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/pdf/1909.07750.pdf",
+            "pdf_url": null,
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "listed_in": [],
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": null,
+            "license_id": null,
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": "arXiv (Cornell University)",
+            "raw_type": null
+          }
+        }
+      ]
+    },
+    {
+      "query": "ManiSkill3 GPU Parallelized Robotics Simulation and Rendering for Generalizable Embodied AI",
+      "url": "https://api.openalex.org/works?search=ManiSkill3%20GPU%20Parallelized%20Robotics%20Simulation%20and%20Rendering%20for%20Generalizable%20Embodied%20AI&per-page=3",
+      "fetched_at": "2026-09-26T09:33:48.256410+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W4414050916",
+          "doi": "https://doi.org/10.15607/rss.2025.xxi.021",
+          "title": "Demonstrating GPU Parallelized Robot Simulation and Rendering for Generalizable Embodied AI with ManiSkill3",
+          "publication_year": 2025,
+          "publication_date": "2025-06-21",
+          "cited_by_count": 35,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 28
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 7
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.15607/rss.2025.xxi.021",
+            "is_oa": true,
+            "landing_page_url": "https://doi.org/10.15607/rss.2025.xxi.021",
+            "pdf_url": "https://doi.org/10.15607/rss.2025.xxi.021",
+            "source": null,
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Robotics: Science and Systems XXI",
+            "raw_type": "proceedings-article"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4403819516",
+          "doi": "https://doi.org/10.48550/arxiv.2410.00425",
+          "title": "ManiSkill3: GPU Parallelized Robotics Simulation and Rendering for Generalizable Embodied AI",
+          "publication_year": 2024,
+          "publication_date": "2024-10-01",
+          "cited_by_count": 3,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 3
+            }
+          ],
+          "primary_location": {
+            "id": "pmh:oai:arXiv.org:2410.00425",
+            "is_oa": true,
+            "landing_page_url": "http://arxiv.org/abs/2410.00425",
+            "pdf_url": "https://arxiv.org/pdf/2410.00425",
+            "source": {
+              "id": "https://openalex.org/S4306400194",
+              "display_name": "arXiv (Cornell University)",
+              "issn_l": "2331-8422",
+              "issn": [
+                "2331-8422"
+              ],
+              "is_oa": true,
+              "is_in_doaj": false,
+              "is_core": false,
+              "listed_in": [],
+              "host_organization": "https://openalex.org/I205783295",
+              "host_organization_name": "Cornell University",
+              "host_organization_lineage": [
+                "https://openalex.org/I205783295"
+              ],
+              "host_organization_lineage_names": [],
+              "type": "repository"
+            },
+            "license": "cc-by",
+            "license_id": "https://openalex.org/licenses/cc-by",
+            "version": "submittedVersion",
+            "is_accepted": false,
+            "is_published": false,
+            "raw_source_name": null,
+            "raw_type": "text"
+          }
+        },
+        {
+          "id": "https://openalex.org/W4417090775",
+          "doi": "https://doi.org/10.52202/085713-3162",
+          "title": "Taccel: Scaling Up Vision-based Tactile Robotics via High-performance GPU Simulation",
+          "publication_year": 2025,
+          "publication_date": "2025-01-01",
+          "cited_by_count": 1,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            }
+          ],
+          "primary_location": {
+            "id": "doi:10.52202/085713-3162",
+            "is_oa": false,
+            "landing_page_url": "https://doi.org/10.52202/085713-3162",
+            "pdf_url": null,
+            "source": null,
+            "license": null,
+            "license_id": null,
+            "version": "publishedVersion",
+            "is_accepted": true,
+            "is_published": true,
+            "raw_source_name": "Advances in Neural Information Processing Systems 38",
+            "raw_type": "proceedings-article"
+          }
+        }
+      ]
+    }
+  ],
+  "semantic_scholar": [
+    {
+      "arxiv": "2108.10470",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2106.13281",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2009.14471",
+      "url": "https://api.semanticscholar.org/graph/v1/paper/arXiv:2009.14471?fields=title,citationCount,influentialCitationCount,year,externalIds,url",
+      "fetched_at": "2026-09-26T09:35:41.559149+00:00",
+      "result": {
+        "paperId": "3a70562df004e08d91b125e6d15255e31e445efa",
+        "externalIds": {
+          "ArXiv": "2009.14471",
+          "CorpusId": 222066674
+        },
+        "url": "https://www.semanticscholar.org/paper/3a70562df004e08d91b125e6d15255e31e445efa",
+        "title": "PettingZoo: Gym for Multi-Agent Reinforcement Learning",
+        "year": 2020,
+        "citationCount": 468,
+        "influentialCitationCount": 42
+      }
+    },
+    {
+      "arxiv": "1902.04043",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2212.07489",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2207.03530",
+      "url": "https://api.semanticscholar.org/graph/v1/paper/arXiv:2207.03530?fields=title,citationCount,influentialCitationCount,year,externalIds,url",
+      "fetched_at": "2026-09-26T09:35:41.826845+00:00",
+      "result": {
+        "paperId": "cc9dd80da2d7e4b55033d93d509bd8f98fb4c450",
+        "externalIds": {
+          "DBLP": "journals/corr/abs-2207-03530",
+          "ArXiv": "2207.03530",
+          "DOI": "10.48550/arXiv.2207.03530",
+          "CorpusId": 250408241
+        },
+        "url": "https://www.semanticscholar.org/paper/cc9dd80da2d7e4b55033d93d509bd8f98fb4c450",
+        "title": "VMAS: A Vectorized Multi-Agent Simulator for Collective Robot Learning",
+        "year": 2022,
+        "citationCount": 95,
+        "influentialCitationCount": 12
+      }
+    },
+    {
+      "arxiv": "2312.01472",
+      "url": "https://api.semanticscholar.org/graph/v1/paper/arXiv:2312.01472?fields=title,citationCount,influentialCitationCount,year,externalIds,url",
+      "fetched_at": "2026-09-26T09:35:41.909048+00:00",
+      "result": {
+        "paperId": "e52b101c0bee3490dbd60ed5c13f8f5287dd0321",
+        "externalIds": {
+          "ArXiv": "2312.01472",
+          "DBLP": "journals/jmlr/BettiniPM24",
+          "DOI": "10.48550/arXiv.2312.01472",
+          "CorpusId": 265609667
+        },
+        "url": "https://www.semanticscholar.org/paper/e52b101c0bee3490dbd60ed5c13f8f5287dd0321",
+        "title": "BenchMARL: Benchmarking Multi-Agent Reinforcement Learning",
+        "year": 2023,
+        "citationCount": 66,
+        "influentialCitationCount": 3
+      }
+    },
+    {
+      "arxiv": "2311.10090",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2103.02142",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2309.12825",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2511.04831",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2502.08844",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2410.00425",
+      "error": "HTTP Error 429: "
+    }
+  ],
+  "semantic_scholar_retry": [
+    {
+      "arxiv": "2108.10470",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2106.13281",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "1902.04043",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2212.07489",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2311.10090",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2103.02142",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2309.12825",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2511.04831",
+      "error": "HTTP Error 429: "
+    },
+    {
+      "arxiv": "2502.08844",
+      "url": "https://api.semanticscholar.org/graph/v1/paper/arXiv:2502.08844?fields=title,citationCount,influentialCitationCount,year,externalIds,url",
+      "fetched_at": "2026-09-26T09:36:13.757887+00:00",
+      "result": {
+        "paperId": "73c83fc2e4bd2e80e8644aeeeb39cf85c6bf43cb",
+        "externalIds": {
+          "ArXiv": "2502.08844",
+          "DBLP": "journals/corr/abs-2502-08844",
+          "DOI": "10.48550/arXiv.2502.08844",
+          "CorpusId": 276317252
+        },
+        "url": "https://www.semanticscholar.org/paper/73c83fc2e4bd2e80e8644aeeeb39cf85c6bf43cb",
+        "title": "MuJoCo Playground",
+        "year": 2025,
+        "citationCount": 121,
+        "influentialCitationCount": 11
+      }
+    },
+    {
+      "arxiv": "2410.00425",
+      "error": "HTTP Error 429: "
+    }
+  ],
+  "openalex_title_search": [
+    {
+      "query": "Isaac Gym",
+      "url": "https://api.openalex.org/works?filter=title.search:Isaac%20Gym&per-page=100&sort=cited_by_count:desc",
+      "fetched_at": "2026-09-26T09:36:59.462941+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W3213974477",
+          "doi": "https://doi.org/10.48550/arxiv.2108.10470",
+          "title": "Isaac Gym: High Performance GPU-Based Physics Simulation For Robot\\n Learning",
+          "publication_year": 2021,
+          "cited_by_count": 323,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 30
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 107
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 123
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 49
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 7
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 1
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W3193576605",
+          "doi": "https://doi.org/10.48550/arxiv.2108.10470",
+          "title": "Isaac Gym: High Performance GPU-Based Physics Simulation For Robot Learning",
+          "publication_year": 2021,
+          "cited_by_count": 57,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 16
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 17
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 15
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 7
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W4405927045",
+          "doi": "https://doi.org/10.1007/978-3-031-76424-0_61",
+          "title": "Sim-to-Real Gap in RL: Use Case with TIAGo and Isaac Sim/Gym",
+          "publication_year": 2024,
+          "cited_by_count": 7,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 3
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W4378713510",
+          "doi": "https://doi.org/10.48550/arxiv.2305.16510",
+          "title": "Aerial Gym -- Isaac Gym Simulator for Aerial Robots",
+          "publication_year": 2023,
+          "cited_by_count": 7,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 2
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W4392781695",
+          "doi": "https://doi.org/10.48550/arxiv.2403.07091",
+          "title": "Sim-to-Real gap in RL: Use Case with TIAGo and Isaac Sim/Gym",
+          "publication_year": 2024,
+          "cited_by_count": 1,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W7125695087",
+          "doi": "https://doi.org/10.5281/zenodo.15800091",
+          "title": "robo-gym V2.1: An Open Source Toolkit for Distributed Deep Reinforcement Learning on Real and Simulated Robots - Now with Modular Environment Classes and Support for Training in Isaac Lab",
+          "publication_year": 2025,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W7125703444",
+          "doi": "https://doi.org/10.5281/zenodo.15800092",
+          "title": "robo-gym V2.1: An Open Source Toolkit for Distributed Deep Reinforcement Learning on Real and Simulated Robots - Now with Modular Environment Classes and Support for Training in Isaac Lab",
+          "publication_year": 2025,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        }
+      ]
+    },
+    {
+      "query": "PettingZoo",
+      "url": "https://api.openalex.org/works?filter=title.search:PettingZoo&per-page=100&sort=cited_by_count:desc",
+      "fetched_at": "2026-09-26T09:36:59.499948+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W3090386093",
+          "doi": "https://doi.org/10.48550/arxiv.2009.14471",
+          "title": "PettingZoo: Gym for Multi-Agent Reinforcement Learning",
+          "publication_year": 2020,
+          "cited_by_count": 147,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 24
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 40
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 32
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 31
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 13
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 5
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 1
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W4393435412",
+          "doi": "https://doi.org/10.54097/zsfnjk16",
+          "title": "Pagerank Algorithms and Multi-Particle Environments Using Pettingzoo: Network Simulation and Validation",
+          "publication_year": 2024,
+          "cited_by_count": 1,
+          "counts_by_year": [
+            {
+              "year": 2024,
+              "cited_by_count": 1
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W7213999827",
+          "doi": "https://doi.org/10.5281/zenodo.22888220",
+          "title": "gama-platform/gama-pettingzoo: v1.0.1",
+          "publication_year": 2026,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W7214028155",
+          "doi": "https://doi.org/10.5281/zenodo.22888219",
+          "title": "gama-platform/gama-pettingzoo: v1.0.1",
+          "publication_year": 2026,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W7111991050",
+          "doi": null,
+          "title": "Dari kedai haiwan ke taman impian: kisah Adam Pettingzoo",
+          "publication_year": 2025,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W4403170203",
+          "doi": "https://doi.org/10.24251/hicss.2023.935",
+          "title": "DRAMA at the PettingZoo: Dynamically Restricted Action Spaces for Multi-Agent Reinforcement Learning Frameworks",
+          "publication_year": 2024,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W4407075103",
+          "doi": "https://doi.org/10.24251/hicss.2024.935",
+          "title": "DRAMA at the PettingZoo: Dynamically Restricted Action Spaces for Multi-Agent Reinforcement Learning Frameworks",
+          "publication_year": 2024,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W3211994108",
+          "doi": null,
+          "title": "PettingZoo: Gym for Multi-Agent Reinforcement Learning",
+          "publication_year": 2021,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        }
+      ]
+    },
+    {
+      "query": "StarCraft Multi-Agent Challenge",
+      "url": "https://api.openalex.org/works?filter=title.search:StarCraft%20Multi-Agent%20Challenge&per-page=100&sort=cited_by_count:desc",
+      "fetched_at": "2026-09-26T09:36:59.495798+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W3099689767",
+          "doi": "https://doi.org/10.48550/arxiv.2011.09533",
+          "title": "Is Independent Learning All You Need in the StarCraft Multi-Agent Challenge?",
+          "publication_year": 2020,
+          "cited_by_count": 184,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 35
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 73
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 45
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 17
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 10
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W2913662073",
+          "doi": "https://doi.org/10.65109/lvzz5205",
+          "title": "The StarCraft Multi-Agent Challenge",
+          "publication_year": 2019,
+          "cited_by_count": 120,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 77
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 17
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 7
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 17
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 1
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W4365420336",
+          "doi": "https://doi.org/10.1109/access.2023.3266652",
+          "title": "The StarCraft Multi-Agent Exploration Challenges: Learning Multi-Stage Tasks and Environmental Factors Without Precise Reward Functions",
+          "publication_year": 2023,
+          "cited_by_count": 4,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 2
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W7163507356",
+          "doi": "https://doi.org/10.48550/arxiv.2606.04202",
+          "title": "SMAC-Talk: A Natural Language Extension of the StarCraft Multi-Agent Challenge for Large Language Models",
+          "publication_year": 2026,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W4415090019",
+          "doi": "https://doi.org/10.65109/elyz1330",
+          "title": "HLSMAC: A New StarCraft Multi-Agent Challenge for High-Level Strategic Decision-Making",
+          "publication_year": 2026,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W4414070265",
+          "doi": "https://doi.org/10.1051/itmconf/20257801013",
+          "title": "Multi-Agent Reinforcement Learning in Starcraft: Algorithmic Advances and Collaborative Intelligence Challenges",
+          "publication_year": 2025,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W4284692283",
+          "doi": "https://doi.org/10.48550/arxiv.2207.02007",
+          "title": "The StarCraft Multi-Agent Challenges+ : Learning of Multi-Stage Tasks and Environmental Factors without Precise Reward Functions",
+          "publication_year": 2022,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        }
+      ]
+    },
+    {
+      "query": "Brax",
+      "url": "https://api.openalex.org/works?filter=title.search:Brax&per-page=100&sort=cited_by_count:desc",
+      "fetched_at": "2026-09-26T09:36:59.557821+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W4287113927",
+          "doi": "https://doi.org/10.48550/arxiv.2106.13281",
+          "title": "Brax -- A Differentiable Physics Engine for Large Scale Rigid Body\\n Simulation",
+          "publication_year": 2021,
+          "cited_by_count": 63,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 9
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 14
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 22
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 15
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 2
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W4291021452",
+          "doi": "https://doi.org/10.1038/s41597-022-01608-8",
+          "title": "BRAX, Brazilian labeled chest x-ray dataset",
+          "publication_year": 2022,
+          "cited_by_count": 46,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 9
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 20
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 10
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 1
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W1985437408",
+          "doi": "https://doi.org/10.1371/journal.pone.0094541",
+          "title": "BraX-Ray: An X-Ray of the Brazilian Computer Science Graduate Programs",
+          "publication_year": 2014,
+          "cited_by_count": 36,
+          "counts_by_year": [
+            {
+              "year": 2024,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 3
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2020,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2019,
+              "cited_by_count": 3
+            },
+            {
+              "year": 2018,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2017,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2016,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2015,
+              "cited_by_count": 6
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W3172279798",
+          "doi": "https://doi.org/10.48550/arxiv.2106.13281",
+          "title": "Brax -- A Differentiable Physics Engine for Large Scale Rigid Body Simulation",
+          "publication_year": 2021,
+          "cited_by_count": 21,
+          "counts_by_year": [
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            },
+            {
+              "year": 2024,
+              "cited_by_count": 7
+            },
+            {
+              "year": 2023,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2022,
+              "cited_by_count": 5
+            },
+            {
+              "year": 2021,
+              "cited_by_count": 4
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W4402827482",
+          "doi": "https://doi.org/10.1007/978-3-031-70722-3_28",
+          "title": "Learning Velocity-Based Humanoid Locomotion: Massively Parallel Learning with Brax and MJX",
+          "publication_year": 2024,
+          "cited_by_count": 4,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 2
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 2
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W4414229548",
+          "doi": "https://doi.org/10.1109/access.2025.3610282",
+          "title": "Assessing the Effectiveness of Transfer Learning in Chest X-Ray Analysis With the BRAX Dataset",
+          "publication_year": 2025,
+          "cited_by_count": 1,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W2425873145",
+          "doi": null,
+          "title": "A clinical evaluation of sleep braxism : using BruxCheker and BiteStrip",
+          "publication_year": 2007,
+          "cited_by_count": 1,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W7204166914",
+          "doi": "https://doi.org/10.5281/zenodo.22091401",
+          "title": "Two-stage breast reconstruction comparison between prepectoral tissue expander wrapped 2 within acellular dermal matrix versus subpectoral placement: the prospective observational EX BRAX study.",
+          "publication_year": 2026,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W7204180290",
+          "doi": "https://doi.org/10.5281/zenodo.22091402",
+          "title": "Two-stage breast reconstruction comparison between prepectoral tissue expander wrapped 2 within acellular dermal matrix versus subpectoral placement: the prospective observational EX BRAX study.",
+          "publication_year": 2026,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W7149885164",
+          "doi": null,
+          "title": "Brax, Colayrac-Saint-Cirq, Le Passage \u2013 Barreau de Camelat",
+          "publication_year": 2026,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W7127236206",
+          "doi": null,
+          "title": "Multi-objective reinforcment learning in Brax",
+          "publication_year": 2025,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W4400480746",
+          "doi": "https://doi.org/10.48550/arxiv.2407.05148",
+          "title": "Learning Velocity-based Humanoid Locomotion: Massively Parallel Learning with Brax and MJX",
+          "publication_year": 2024,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W3144692295",
+          "doi": null,
+          "title": "Location des salles municipales de Brax",
+          "publication_year": 2021,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W3145521259",
+          "doi": null,
+          "title": "Permanences Espace Info Energie \u00e0 BRAX",
+          "publication_year": 2020,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W3140690011",
+          "doi": null,
+          "title": "Historique de Brax",
+          "publication_year": 2020,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2922306919",
+          "doi": null,
+          "title": "2P2R Antenne de Brax - Atelier V\u00e9lo",
+          "publication_year": 2020,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W3089107352",
+          "doi": null,
+          "title": "Lettre ouverte des Maires de Brax et de Pibrac",
+          "publication_year": 2020,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2980731075",
+          "doi": null,
+          "title": "Stage \"Sports partag\u00e9s BRAX\"",
+          "publication_year": 2019,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2946627449",
+          "doi": null,
+          "title": "Contes en balade \u00e0 Brax",
+          "publication_year": 2019,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2944789850",
+          "doi": null,
+          "title": "Mission \u00e9ducative de prospection des \u00e9l\u00e8ves du Lyc\u00e9e Fran\u00e7oise \u00e0 Brax",
+          "publication_year": 2019,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2772954013",
+          "doi": null,
+          "title": "Carnaval des Ecoles de Brax - Vendredi 29 mars 2019",
+          "publication_year": 2019,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2554822506",
+          "doi": null,
+          "title": "R\u00e9union publique municipale \u00e0 Brax le mardi 19 mars",
+          "publication_year": 2019,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2908806777",
+          "doi": null,
+          "title": "Nouveaux arrivants \u00e0 Brax",
+          "publication_year": 2019,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2896747750",
+          "doi": null,
+          "title": "Festival Brax qui Mousse",
+          "publication_year": 2018,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W3151512996",
+          "doi": null,
+          "title": "24\u00e8me Boucle Brax Bouconne - Dimanche 16",
+          "publication_year": 2018,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2889254807",
+          "doi": null,
+          "title": "Permanence Espace Info Energie \u00e0 BRAX",
+          "publication_year": 2018,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W1660627727",
+          "doi": null,
+          "title": "Les commer\u00e7ants et artisans de Brax",
+          "publication_year": 2018,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2788799364",
+          "doi": null,
+          "title": "Foyer Rural de Brax - Spectacle de danse",
+          "publication_year": 2018,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W322181949",
+          "doi": null,
+          "title": "Location des salles municipales de Brax",
+          "publication_year": 2018,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2774564929",
+          "doi": null,
+          "title": "Histoire de la sculpture de Sainte Germaine de Brax",
+          "publication_year": 2017,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2768063984",
+          "doi": null,
+          "title": "C\u00e9r\u00e9monie au Monument aux Morts de Brax le Samedi 18 Novembre 2017",
+          "publication_year": 2017,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W3151508902",
+          "doi": null,
+          "title": "Concert Choeur Bel Canto - Dimanche 14 Mai - 17h - Eglise de Brax",
+          "publication_year": 2017,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2555307195",
+          "doi": null,
+          "title": "Sentiers Culturels de Brax",
+          "publication_year": 2017,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2595020801",
+          "doi": null,
+          "title": "Erratum Brax Info N\u00b0 15 - Horaires pour les bruits de voisinage",
+          "publication_year": 2017,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2955955513",
+          "doi": null,
+          "title": "Recordando al Prof. Dr. Antonio Braxs (1923-2013)",
+          "publication_year": 2017,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2363041374",
+          "doi": null,
+          "title": "R\u00e9union publique municipale \u00e0 Brax : Venez nombreux",
+          "publication_year": 2016,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2300127444",
+          "doi": null,
+          "title": "Carnaval des Ecoles de Brax",
+          "publication_year": 2016,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2543423167",
+          "doi": null,
+          "title": "\u4e13\u4e1a\u5e97\u4e13\u4e1a\u6539 \u5954\u9a70C260\u5fb7\u56fdBRAX Matrix 3 ways\u6539\u88c5\u6848\u4f8b",
+          "publication_year": 2016,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W4293424689",
+          "doi": null,
+          "title": "Sainte-Colombe-en-Bruilhois, Brax : Martinon, Bordeneuve, Lassort",
+          "publication_year": 2016,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W126332441",
+          "doi": null,
+          "title": "Dark Energy and Modified Gravity Philippe Brax",
+          "publication_year": 2014,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W841992428",
+          "doi": null,
+          "title": "\u8d85\u7ea7\u529f\u653e Brax\uff08\u5e03\u83b1\u514b\u65af\uff09MX4\u529f\u653e\u6d4b\u8bd5",
+          "publication_year": 2013,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2507776887",
+          "doi": null,
+          "title": "\u8222\u8228\u65d7\u8230\u2014\u2014BRAX Matrix X4\u56db\u58f0\u9053\u529f\u653e\u6d4b\u8bc4",
+          "publication_year": 2010,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2504246591",
+          "doi": null,
+          "title": "\u9ad8\u6863\u5587\u53ed\u7684\u98ce\u8303 Brax MATRIX \u4e09\u5206\u9891\u6d4b\u8bd5",
+          "publication_year": 2008,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2519588404",
+          "doi": null,
+          "title": "Annotatie bij H.v.J. 11 juli 2002 - D'Hoop, 25 juli 2002 - BRAX, en 17 september 2002 - Baumbast",
+          "publication_year": 2003,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2775184234",
+          "doi": null,
+          "title": "Annotatie, arrest HvJ van 25 juli 2002, zaak C-459/99, BRAX",
+          "publication_year": 2003,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W2776946707",
+          "doi": null,
+          "title": "Noot bij: HvJ EG 25 juli 2002, RV 2002, 2002, 92 (BRAX)",
+          "publication_year": 2002,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W4229796445",
+          "doi": "https://doi.org/10.1086/ahr/87.5.1491",
+          "title": "Ralph S. Brax. The First Student Movement: Student Activism in the United States during the 1930s. (National University Publications Series in Political Science.) Port Washington, N.Y.: Kennikat Press. 1981. Pp. 121. $17.50",
+          "publication_year": 1982,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        }
+      ]
+    },
+    {
+      "query": "BenchMARL",
+      "url": "https://api.openalex.org/works?filter=title.search:BenchMARL&per-page=100&sort=cited_by_count:desc",
+      "fetched_at": "2026-09-26T09:36:59.620560+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W4389363807",
+          "doi": "https://doi.org/10.48550/arxiv.2312.01472",
+          "title": "BenchMARL: Benchmarking Multi-Agent Reinforcement Learning",
+          "publication_year": 2023,
+          "cited_by_count": 5,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 4
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "JaxMARL",
+      "url": "https://api.openalex.org/works?filter=title.search:JaxMARL&per-page=100&sort=cited_by_count:desc",
+      "fetched_at": "2026-09-26T09:36:59.700509+00:00",
+      "results": [
+        {
+          "id": "https://openalex.org/W4415797718",
+          "doi": "https://doi.org/10.52202/079017-1612",
+          "title": "JaxMARL: Multi-Agent RL Environments and Algorithms in JAX",
+          "publication_year": 2024,
+          "cited_by_count": 7,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 6
+            },
+            {
+              "year": 2025,
+              "cited_by_count": 1
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W4416232578",
+          "doi": "https://doi.org/10.1145/3768292.3770416",
+          "title": "JaxMARL-HFT: GPU-Accelerated Large-Scale Multi-Agent Reinforcement Learning for High-Frequency Trading",
+          "publication_year": 2025,
+          "cited_by_count": 2,
+          "counts_by_year": [
+            {
+              "year": 2026,
+              "cited_by_count": 1
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W4388788987",
+          "doi": "https://doi.org/10.48550/arxiv.2311.10090",
+          "title": "JaxMARL: Multi-Agent RL Environments and Algorithms in JAX",
+          "publication_year": 2023,
+          "cited_by_count": 2,
+          "counts_by_year": [
+            {
+              "year": 2024,
+              "cited_by_count": 2
+            }
+          ]
+        },
+        {
+          "id": "https://openalex.org/W7159910707",
+          "doi": null,
+          "title": "Energy-gated learning in cooperative multi-agent reinforcement learning: clipped-energy regimes and an engineered hard-zero crossover in JaxMARL simple spread",
+          "publication_year": 2026,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W7104033318",
+          "doi": "https://doi.org/10.48550/arxiv.2511.02136",
+          "title": "JaxMARL-HFT: GPU-Accelerated Large-Scale Multi-Agent Reinforcement Learning for High-Frequency Trading",
+          "publication_year": 2025,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        },
+        {
+          "id": "https://openalex.org/W7104182752",
+          "doi": null,
+          "title": "JaxMARL-HFT: GPU-Accelerated Large-Scale Multi-Agent Reinforcement Learning for High-Frequency Trading",
+          "publication_year": 2025,
+          "cited_by_count": 0,
+          "counts_by_year": []
+        }
+      ]
+    }
+  ]
+}

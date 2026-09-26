@@ -102,7 +102,7 @@ YAML form.
 | --- | --- | --- |
 | `team` | -1 | `team_id` |
 | `color` | `[255, 255, 255]` | `color` |
-| `visual_model` | `sphere` | `visual_model` |
+| `visual_model` | `aircraft` | `visual_model` |
 | `health` | 1 | `health` |
 | `id` | assigned | `id` |
 | `count` | 1 | `count`: entities in total |

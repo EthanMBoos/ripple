@@ -50,6 +50,11 @@ User and developer guidance goes in `book/src/` (listed in `SUMMARY.md`);
   Use plain structs, named physical fields, and direct equations.
 - Refactors: no behavior changes mixed in; readability-only changes need
   identical outputs before and after.
+- A non-obvious core change that exists because of a measurement or trial
+  (profiling, timing) gets a `DEVNOTE:` comment saying what was measured, how,
+  the result, and why the code is shaped this way, so the trial can be rerun.
+  Call it out when reporting the change. Skip this for plain bug fixes and
+  trivial changes.
 
 ## Execution invariants
 

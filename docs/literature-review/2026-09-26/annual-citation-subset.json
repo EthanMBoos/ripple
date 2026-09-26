@@ -1,0 +1,328 @@
+[
+  {
+    "id": "https://openalex.org/W2617547828",
+    "title": "Counterfactual Multi-Agent Policy Gradients",
+    "publication_year": 2018,
+    "cited_by_count": 1755,
+    "counts_by_year": [
+      {
+        "year": 2026,
+        "cited_by_count": 181
+      },
+      {
+        "year": 2025,
+        "cited_by_count": 320
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 295
+      },
+      {
+        "year": 2023,
+        "cited_by_count": 301
+      },
+      {
+        "year": 2022,
+        "cited_by_count": 240
+      },
+      {
+        "year": 2021,
+        "cited_by_count": 175
+      },
+      {
+        "year": 2020,
+        "cited_by_count": 111
+      },
+      {
+        "year": 2019,
+        "cited_by_count": 87
+      },
+      {
+        "year": 2018,
+        "cited_by_count": 35
+      },
+      {
+        "year": 2017,
+        "cited_by_count": 10
+      }
+    ],
+    "doi": "https://doi.org/10.1609/aaai.v32i1.11794"
+  },
+  {
+    "id": "https://openalex.org/W2884236119",
+    "doi": "https://doi.org/10.1126/scirobotics.aat3536",
+    "title": "Optimized flocking of autonomous drones in confined environments",
+    "publication_year": 2018,
+    "cited_by_count": 588,
+    "counts_by_year": [
+      {
+        "year": 2026,
+        "cited_by_count": 53
+      },
+      {
+        "year": 2025,
+        "cited_by_count": 100
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 91
+      },
+      {
+        "year": 2023,
+        "cited_by_count": 94
+      },
+      {
+        "year": 2022,
+        "cited_by_count": 79
+      },
+      {
+        "year": 2021,
+        "cited_by_count": 74
+      },
+      {
+        "year": 2020,
+        "cited_by_count": 64
+      },
+      {
+        "year": 2019,
+        "cited_by_count": 31
+      },
+      {
+        "year": 2018,
+        "cited_by_count": 2
+      }
+    ],
+    "api_url": "https://api.openalex.org/works/W2884236119"
+  },
+  {
+    "id": "https://openalex.org/W2892258706",
+    "doi": "https://doi.org/10.1109/lra.2019.2903261",
+    "title": "PRIMAL: Pathfinding via Reinforcement and Imitation Multi-Agent Learning",
+    "publication_year": 2019,
+    "cited_by_count": 426,
+    "counts_by_year": [
+      {
+        "year": 2026,
+        "cited_by_count": 47
+      },
+      {
+        "year": 2025,
+        "cited_by_count": 101
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 86
+      },
+      {
+        "year": 2023,
+        "cited_by_count": 63
+      },
+      {
+        "year": 2022,
+        "cited_by_count": 53
+      },
+      {
+        "year": 2021,
+        "cited_by_count": 41
+      },
+      {
+        "year": 2020,
+        "cited_by_count": 25
+      },
+      {
+        "year": 2019,
+        "cited_by_count": 10
+      }
+    ],
+    "api_url": "https://api.openalex.org/works/W2892258706"
+  },
+  {
+    "id": "https://openalex.org/W3130631955",
+    "title": "Graph Neural Networks for Decentralized Multi-Robot Path Planning",
+    "publication_year": 2020,
+    "cited_by_count": 276,
+    "counts_by_year": [
+      {
+        "year": 2026,
+        "cited_by_count": 15
+      },
+      {
+        "year": 2025,
+        "cited_by_count": 65
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 73
+      },
+      {
+        "year": 2023,
+        "cited_by_count": 51
+      },
+      {
+        "year": 2022,
+        "cited_by_count": 36
+      },
+      {
+        "year": 2021,
+        "cited_by_count": 24
+      },
+      {
+        "year": 2020,
+        "cited_by_count": 11
+      },
+      {
+        "year": 2019,
+        "cited_by_count": 1
+      }
+    ],
+    "doi": "https://doi.org/10.1109/iros45743.2020.9341668"
+  },
+  {
+    "id": "https://openalex.org/W3037164939",
+    "doi": "https://doi.org/10.1609/aaai.v35i13.17344",
+    "title": "Lifelong Multi-Agent Path Finding in Large-Scale Warehouses",
+    "publication_year": 2021,
+    "cited_by_count": 250,
+    "counts_by_year": [
+      {
+        "year": 2026,
+        "cited_by_count": 34
+      },
+      {
+        "year": 2025,
+        "cited_by_count": 55
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 73
+      },
+      {
+        "year": 2023,
+        "cited_by_count": 38
+      },
+      {
+        "year": 2022,
+        "cited_by_count": 33
+      },
+      {
+        "year": 2021,
+        "cited_by_count": 15
+      },
+      {
+        "year": 2020,
+        "cited_by_count": 2
+      }
+    ],
+    "api_url": "https://api.openalex.org/works/W3037164939"
+  },
+  {
+    "id": "https://openalex.org/W4229007520",
+    "doi": "https://doi.org/10.1126/scirobotics.abm5954",
+    "title": "Swarm of micro flying robots in the wild",
+    "publication_year": 2022,
+    "cited_by_count": 610,
+    "counts_by_year": [
+      {
+        "year": 2026,
+        "cited_by_count": 121
+      },
+      {
+        "year": 2025,
+        "cited_by_count": 208
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 143
+      },
+      {
+        "year": 2023,
+        "cited_by_count": 113
+      },
+      {
+        "year": 2022,
+        "cited_by_count": 25
+      }
+    ],
+    "api_url": "https://api.openalex.org/works/W4229007520"
+  },
+  {
+    "id": "https://openalex.org/W4226481925",
+    "doi": "https://doi.org/10.1109/tro.2021.3137751",
+    "title": "Kimera-Multi: Robust, Distributed, Dense Metric-Semantic SLAM for Multi-Robot Systems",
+    "publication_year": 2022,
+    "cited_by_count": 278,
+    "counts_by_year": [
+      {
+        "year": 2026,
+        "cited_by_count": 59
+      },
+      {
+        "year": 2025,
+        "cited_by_count": 89
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 70
+      },
+      {
+        "year": 2023,
+        "cited_by_count": 43
+      },
+      {
+        "year": 2022,
+        "cited_by_count": 17
+      }
+    ]
+  },
+  {
+    "id": "https://openalex.org/W4319302559",
+    "doi": "https://doi.org/10.1109/tro.2023.3236945",
+    "title": "RACER: Rapid Collaborative Exploration With a Decentralized Multi-UAV System",
+    "publication_year": 2023,
+    "cited_by_count": 244,
+    "counts_by_year": [
+      {
+        "year": 2026,
+        "cited_by_count": 67
+      },
+      {
+        "year": 2025,
+        "cited_by_count": 104
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 62
+      },
+      {
+        "year": 2023,
+        "cited_by_count": 11
+      }
+    ],
+    "api_url": "https://api.openalex.org/works/W4319302559"
+  },
+  {
+    "id": "https://openalex.org/W4401416363",
+    "doi": "https://doi.org/10.1109/icra57147.2024.10610855",
+    "title": "RoCo: Dialectic Multi-Robot Collaboration with Large Language Models",
+    "publication_year": 2024,
+    "cited_by_count": 156,
+    "counts_by_year": [
+      {
+        "year": 2026,
+        "cited_by_count": 56
+      },
+      {
+        "year": 2025,
+        "cited_by_count": 73
+      },
+      {
+        "year": 2024,
+        "cited_by_count": 26
+      },
+      {
+        "year": 2023,
+        "cited_by_count": 1
+      }
+    ]
+  }
+]

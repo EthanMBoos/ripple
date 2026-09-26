@@ -285,7 +285,7 @@ fn entity(
         visual_model: params
             .get("visual_model")
             .cloned()
-            .unwrap_or_else(|| "sphere".into()),
+            .unwrap_or_else(|| "aircraft".into()),
         health: params
             .get("health")
             .map_or(Ok(1), |value| value.parse())

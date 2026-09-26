@@ -1,0 +1,1071 @@
+{
+  "openalex": [
+    {
+      "key": "partnr",
+      "query": "PARTNR: A Benchmark for Planning and Reasoning in Embodied Multi-agent Tasks",
+      "url": "https://api.openalex.org/works?search=PARTNR%3A%20A%20Benchmark%20for%20Planning%20and%20Reasoning%20in%20Embodied%20Multi-agent%20Tasks&per-page=5&select=id,doi,title,publication_year,cited_by_count,counts_by_year",
+      "captured_utc_from_file_mtime": "2026-09-26T09:34:40.070760+00:00",
+      "response": {
+        "meta": {
+          "count": 67,
+          "db_response_time_ms": 167,
+          "page": 1,
+          "per_page": 5,
+          "groups_count": null,
+          "x_query": {
+            "oql": "works where full text has (PARTNR: A Benchmark for Planning \"and\" Reasoning in Embodied Multi-agent Tasks)",
+            "oqo": {
+              "get_rows": "works",
+              "filter_rows": [
+                {
+                  "column_id": "fulltext.search",
+                  "value": "PARTNR: A Benchmark for Planning and Reasoning in Embodied Multi-agent Tasks",
+                  "operator": "has"
+                }
+              ]
+            },
+            "url": "/works?filter=fulltext.search:PARTNR: A Benchmark for Planning and Reasoning in Embodied Multi-agent Tasks&per_page=5"
+          },
+          "cost_usd": 0.001
+        },
+        "results": [
+          {
+            "id": "https://openalex.org/W4404344627",
+            "doi": "https://doi.org/10.48550/arxiv.2411.00081",
+            "title": "PARTNR: A Benchmark for Planning and Reasoning in Embodied Multi-agent Tasks",
+            "publication_year": 2024,
+            "cited_by_count": 0,
+            "counts_by_year": []
+          },
+          {
+            "id": "https://openalex.org/W4416098348",
+            "doi": "https://doi.org/10.1007/s11432-025-4820-4",
+            "title": "Multi-agent embodied AI: advances and future directions",
+            "publication_year": 2026,
+            "cited_by_count": 21,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 21
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4412944859",
+            "doi": "https://doi.org/10.18653/v1/2025.acl-long.958",
+            "title": "PlanGenLLMs: A Modern Survey of LLM Planning Capabilities",
+            "publication_year": 2025,
+            "cited_by_count": 31,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 28
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 3
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4414359357",
+            "doi": "https://doi.org/10.24963/ijcai.2025/1175",
+            "title": "A Survey on the Feedback Mechanism of LLM-based AI Agents",
+            "publication_year": 2025,
+            "cited_by_count": 8,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 6
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 2
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4415035887",
+            "doi": "https://doi.org/10.3390/robotics15030055",
+            "title": "Embodied AI with Foundation Models for Mobile Service Robots: A Systematic Review",
+            "publication_year": 2026,
+            "cited_by_count": 16,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 16
+              }
+            ]
+          }
+        ],
+        "group_by": []
+      }
+    },
+    {
+      "key": "dial",
+      "query": "Full-Order Sampling-Based MPC for Torque-Level Locomotion Control via Diffusion-Style Annealing",
+      "url": "https://api.openalex.org/works?search=Full-Order%20Sampling-Based%20MPC%20for%20Torque-Level%20Locomotion%20Control%20via%20Diffusion-Style%20Annealing&per-page=5&select=id,doi,title,publication_year,cited_by_count,counts_by_year",
+      "captured_utc_from_file_mtime": "2026-09-26T09:34:40.260044+00:00",
+      "response": {
+        "meta": {
+          "count": 57,
+          "db_response_time_ms": 390,
+          "page": 1,
+          "per_page": 5,
+          "groups_count": null,
+          "x_query": {
+            "oql": "works where full text has (Full-Order Sampling-Based MPC for Torque-Level Locomotion Control via Diffusion-Style Annealing)",
+            "oqo": {
+              "get_rows": "works",
+              "filter_rows": [
+                {
+                  "column_id": "fulltext.search",
+                  "value": "Full-Order Sampling-Based MPC for Torque-Level Locomotion Control via Diffusion-Style Annealing",
+                  "operator": "has"
+                }
+              ]
+            },
+            "url": "/works?filter=fulltext.search:Full-Order Sampling-Based MPC for Torque-Level Locomotion Control via Diffusion-Style Annealing&per_page=5"
+          },
+          "cost_usd": 0.001
+        },
+        "results": [
+          {
+            "id": "https://openalex.org/W4413917178",
+            "doi": "https://doi.org/10.1109/icra55743.2025.11127320",
+            "title": "Full-Order Sampling-Based MPC for Torque-Level Locomotion Control via Diffusion-Style Annealing",
+            "publication_year": 2025,
+            "cited_by_count": 22,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 15
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 7
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4403786499",
+            "doi": "https://doi.org/10.48550/arxiv.2409.15610",
+            "title": "Full-Order Sampling-Based MPC for Torque-Level Locomotion Control via Diffusion-Style Annealing",
+            "publication_year": 2024,
+            "cited_by_count": 1,
+            "counts_by_year": [
+              {
+                "year": 2025,
+                "cited_by_count": 1
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4381252744",
+            "doi": "https://doi.org/10.1109/tro.2025.3644945",
+            "title": "Actor\u2013Critic Model Predictive Control: Differentiable Optimization Meets Reinforcement Learning for Agile Flight",
+            "publication_year": 2025,
+            "cited_by_count": 22,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 21
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 1
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4414538276",
+            "doi": "https://doi.org/10.1109/lra.2025.3615030",
+            "title": "Approximating Global Contact-Implicit MPC via Sampling and Local Complementarity",
+            "publication_year": 2025,
+            "cited_by_count": 1,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 1
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W7128420857",
+            "doi": "https://doi.org/10.1109/lra.2026.3662654",
+            "title": "Warm-Starting Collision-Free Model Predictive Control With Object-Centric Diffusion",
+            "publication_year": 2026,
+            "cited_by_count": 1,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 1
+              }
+            ]
+          }
+        ],
+        "group_by": []
+      }
+    },
+    {
+      "key": "kimera",
+      "query": "Kimera-Multi: Robust, Distributed, Dense Metric-Semantic SLAM for Multi-Robot Systems",
+      "url": "https://api.openalex.org/works?search=Kimera-Multi%3A%20Robust%2C%20Distributed%2C%20Dense%20Metric-Semantic%20SLAM%20for%20Multi-Robot%20Systems&per-page=5&select=id,doi,title,publication_year,cited_by_count,counts_by_year",
+      "captured_utc_from_file_mtime": "2026-09-26T09:34:40.095060+00:00",
+      "response": {
+        "meta": {
+          "count": 302,
+          "db_response_time_ms": 197,
+          "page": 1,
+          "per_page": 5,
+          "groups_count": null,
+          "x_query": {
+            "oql": "works where full text has (Kimera-Multi: Robust Distributed Dense Metric-Semantic SLAM for Multi-Robot Systems)",
+            "oqo": {
+              "get_rows": "works",
+              "filter_rows": [
+                {
+                  "column_id": "fulltext.search",
+                  "value": "Kimera-Multi: Robust Distributed Dense Metric-Semantic SLAM for Multi-Robot Systems",
+                  "operator": "has"
+                }
+              ]
+            },
+            "url": "/works?filter=fulltext.search:Kimera-Multi: Robust Distributed Dense Metric-Semantic SLAM for Multi-Robot Systems&per_page=5"
+          },
+          "cost_usd": 0.001
+        },
+        "results": [
+          {
+            "id": "https://openalex.org/W4226481925",
+            "doi": "https://doi.org/10.1109/tro.2021.3137751",
+            "title": "Kimera-Multi: Robust, Distributed, Dense Metric-Semantic SLAM for Multi-Robot Systems",
+            "publication_year": 2022,
+            "cited_by_count": 278,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 59
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 89
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 70
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 43
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 17
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W3174235034",
+            "doi": "https://doi.org/10.48550/arxiv.2106.14386",
+            "title": "Kimera-Multi: Robust, Distributed, Dense Metric-Semantic SLAM for Multi-Robot Systems",
+            "publication_year": 2021,
+            "cited_by_count": 5,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 1
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 1
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 1
+              },
+              {
+                "year": 2021,
+                "cited_by_count": 2
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W3206707024",
+            "doi": "https://doi.org/10.1109/icra48506.2021.9561090",
+            "title": "Kimera-Multi: a System for Distributed Multi-Robot Metric-Semantic Simultaneous Localization and Mapping",
+            "publication_year": 2020,
+            "cited_by_count": 78,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 4
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 15
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 18
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 25
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 13
+              },
+              {
+                "year": 2021,
+                "cited_by_count": 3
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4392931743",
+            "doi": "https://doi.org/10.1109/tase.2024.3376427",
+            "title": "Edge-Assisted Multi-Robot Visual-Inertial SLAM With Efficient Communication",
+            "publication_year": 2024,
+            "cited_by_count": 59,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 13
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 35
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 11
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W3103192159",
+            "doi": "https://doi.org/10.1109/icra48506.2021.9561090",
+            "title": "Kimera-Multi: a System for Distributed Multi-Robot Metric-Semantic Simultaneous Localization and Mapping",
+            "publication_year": 2021,
+            "cited_by_count": 7,
+            "counts_by_year": [
+              {
+                "year": 2023,
+                "cited_by_count": 3
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 2
+              },
+              {
+                "year": 2021,
+                "cited_by_count": 2
+              }
+            ]
+          }
+        ],
+        "group_by": []
+      }
+    },
+    {
+      "key": "swarmslam",
+      "query": "Swarm-SLAM: Sparse Decentralized Collaborative Simultaneous Localization and Mapping Framework for Multi-Robot Systems",
+      "url": "https://api.openalex.org/works?search=Swarm-SLAM%3A%20Sparse%20Decentralized%20Collaborative%20Simultaneous%20Localization%20and%20Mapping%20Framework%20for%20Multi-Robot%20Systems&per-page=5&select=id,doi,title,publication_year,cited_by_count,counts_by_year",
+      "captured_utc_from_file_mtime": "2026-09-26T09:34:40.174827+00:00",
+      "response": {
+        "meta": {
+          "count": 487,
+          "db_response_time_ms": 320,
+          "page": 1,
+          "per_page": 5,
+          "groups_count": null,
+          "x_query": {
+            "oql": "works where full text has (Swarm-SLAM: Sparse Decentralized Collaborative Simultaneous Localization \"and\" Mapping Framework for Multi-Robot Systems)",
+            "oqo": {
+              "get_rows": "works",
+              "filter_rows": [
+                {
+                  "column_id": "fulltext.search",
+                  "value": "Swarm-SLAM: Sparse Decentralized Collaborative Simultaneous Localization and Mapping Framework for Multi-Robot Systems",
+                  "operator": "has"
+                }
+              ]
+            },
+            "url": "/works?filter=fulltext.search:Swarm-SLAM: Sparse Decentralized Collaborative Simultaneous Localization and Mapping Framework for Multi-Robot Systems&per_page=5"
+          },
+          "cost_usd": 0.001
+        },
+        "results": [
+          {
+            "id": "https://openalex.org/W4388755261",
+            "doi": "https://doi.org/10.1109/lra.2023.3333742",
+            "title": "Swarm-SLAM: Sparse Decentralized Collaborative Simultaneous Localization and Mapping Framework for Multi-Robot Systems",
+            "publication_year": 2023,
+            "cited_by_count": 174,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 54
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 71
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 33
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 16
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4317438921",
+            "doi": "https://doi.org/10.48550/arxiv.2301.06230",
+            "title": "Swarm-SLAM : Sparse Decentralized Collaborative Simultaneous Localization and Mapping Framework for Multi-Robot Systems",
+            "publication_year": 2023,
+            "cited_by_count": 5,
+            "counts_by_year": [
+              {
+                "year": 2025,
+                "cited_by_count": 1
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 3
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 1
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W3096656822",
+            "doi": "https://doi.org/10.1109/access.2020.3030190",
+            "title": "Collaborative Multi-Robot Search and Rescue: Planning, Coordination, Perception, and Active Vision",
+            "publication_year": 2020,
+            "cited_by_count": 526,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 73
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 153
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 105
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 92
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 64
+              },
+              {
+                "year": 2021,
+                "cited_by_count": 39
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W3014630000",
+            "doi": "https://doi.org/10.3389/frobt.2020.00036",
+            "title": "Swarm Robotic Behaviors and Current Applications",
+            "publication_year": 2020,
+            "cited_by_count": 461,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 50
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 80
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 98
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 89
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 79
+              },
+              {
+                "year": 2021,
+                "cited_by_count": 51
+              },
+              {
+                "year": 2020,
+                "cited_by_count": 13
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W3194332337",
+            "doi": "https://doi.org/10.55417/fr.2022032",
+            "title": "Towards Collaborative Simultaneous Localization and Mapping: A Survey of the Current Research Landscape",
+            "publication_year": 2022,
+            "cited_by_count": 91,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 16
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 27
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 20
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 19
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 8
+              },
+              {
+                "year": 2021,
+                "cited_by_count": 1
+              }
+            ]
+          }
+        ],
+        "group_by": []
+      }
+    },
+    {
+      "key": "safe",
+      "query": "Safe Learning in Robotics: From Learning-Based Control to Safe Reinforcement Learning",
+      "url": "https://api.openalex.org/works?search=Safe%20Learning%20in%20Robotics%3A%20From%20Learning-Based%20Control%20to%20Safe%20Reinforcement%20Learning&per-page=5&select=id,doi,title,publication_year,cited_by_count,counts_by_year",
+      "captured_utc_from_file_mtime": "2026-09-26T09:34:40.191675+00:00",
+      "response": {
+        "meta": {
+          "count": 61493,
+          "db_response_time_ms": 298,
+          "page": 1,
+          "per_page": 5,
+          "groups_count": null,
+          "x_query": {
+            "oql": "works where full text has (Safe Learning in Robotics: From Learning-Based Control to Safe Reinforcement Learning)",
+            "oqo": {
+              "get_rows": "works",
+              "filter_rows": [
+                {
+                  "column_id": "fulltext.search",
+                  "value": "Safe Learning in Robotics: From Learning-Based Control to Safe Reinforcement Learning",
+                  "operator": "has"
+                }
+              ]
+            },
+            "url": "/works?filter=fulltext.search:Safe Learning in Robotics: From Learning-Based Control to Safe Reinforcement Learning&per_page=5"
+          },
+          "cost_usd": 0.001
+        },
+        "results": [
+          {
+            "id": "https://openalex.org/W3195968524",
+            "doi": "https://doi.org/10.1146/annurev-control-042920-020211",
+            "title": "Safe Learning in Robotics: From Learning-Based Control to Safe Reinforcement Learning",
+            "publication_year": 2022,
+            "cited_by_count": 765,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 174
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 185
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 199
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 148
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 48
+              },
+              {
+                "year": 2021,
+                "cited_by_count": 11
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W2107726111",
+            "doi": "https://doi.org/10.1613/jair.301",
+            "title": "Reinforcement Learning: A Survey",
+            "publication_year": 1996,
+            "cited_by_count": 8968,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 319
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 683
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 613
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 594
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 498
+              },
+              {
+                "year": 2021,
+                "cited_by_count": 562
+              },
+              {
+                "year": 2020,
+                "cited_by_count": 595
+              },
+              {
+                "year": 2019,
+                "cited_by_count": 438
+              },
+              {
+                "year": 2018,
+                "cited_by_count": 369
+              },
+              {
+                "year": 2017,
+                "cited_by_count": 272
+              },
+              {
+                "year": 2016,
+                "cited_by_count": 204
+              },
+              {
+                "year": 2015,
+                "cited_by_count": 221
+              },
+              {
+                "year": 2014,
+                "cited_by_count": 235
+              },
+              {
+                "year": 2013,
+                "cited_by_count": 272
+              },
+              {
+                "year": 2012,
+                "cited_by_count": 222
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W2736601468",
+            "doi": "https://doi.org/10.4230/oasics.dx.2024.16",
+            "title": "Diagnosing Non-Intermittent Anomalies in Reinforcement Learning Policy Executions (Short Paper)",
+            "publication_year": 2017,
+            "cited_by_count": 11317,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 184
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 899
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 1847
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 2294
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 1531
+              },
+              {
+                "year": 2021,
+                "cited_by_count": 1863
+              },
+              {
+                "year": 2020,
+                "cited_by_count": 1492
+              },
+              {
+                "year": 2019,
+                "cited_by_count": 878
+              },
+              {
+                "year": 2018,
+                "cited_by_count": 291
+              },
+              {
+                "year": 2017,
+                "cited_by_count": 34
+              },
+              {
+                "year": 2016,
+                "cited_by_count": 1
+              },
+              {
+                "year": 2012,
+                "cited_by_count": 1
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W2954996726",
+            "doi": "https://doi.org/10.1186/s40537-019-0197-0",
+            "title": "A survey on Image Data Augmentation for Deep Learning",
+            "publication_year": 2019,
+            "cited_by_count": 13169,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 1643
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 2491
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 2368
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 2385
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 2036
+              },
+              {
+                "year": 2021,
+                "cited_by_count": 1554
+              },
+              {
+                "year": 2020,
+                "cited_by_count": 663
+              },
+              {
+                "year": 2019,
+                "cited_by_count": 27
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W2099618002",
+            "doi": "https://doi.org/10.1109/tsmcc.2007.913919",
+            "title": "A Comprehensive Survey of Multiagent Reinforcement Learning",
+            "publication_year": 2008,
+            "cited_by_count": 2281,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 145
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 186
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 162
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 175
+              },
+              {
+                "year": 2022,
+                "cited_by_count": 187
+              },
+              {
+                "year": 2021,
+                "cited_by_count": 245
+              },
+              {
+                "year": 2020,
+                "cited_by_count": 235
+              },
+              {
+                "year": 2019,
+                "cited_by_count": 204
+              },
+              {
+                "year": 2018,
+                "cited_by_count": 124
+              },
+              {
+                "year": 2017,
+                "cited_by_count": 107
+              },
+              {
+                "year": 2016,
+                "cited_by_count": 75
+              },
+              {
+                "year": 2015,
+                "cited_by_count": 65
+              },
+              {
+                "year": 2014,
+                "cited_by_count": 89
+              },
+              {
+                "year": 2013,
+                "cited_by_count": 82
+              },
+              {
+                "year": 2012,
+                "cited_by_count": 70
+              }
+            ]
+          }
+        ],
+        "group_by": []
+      }
+    },
+    {
+      "key": "roco",
+      "query": "RoCo: Dialectic Multi-Robot Collaboration with Large Language Models",
+      "url": "https://api.openalex.org/works?search=RoCo%3A%20Dialectic%20Multi-Robot%20Collaboration%20with%20Large%20Language%20Models&per-page=5&select=id,doi,title,publication_year,cited_by_count,counts_by_year",
+      "captured_utc_from_file_mtime": "2026-09-26T09:34:40.073706+00:00",
+      "response": {
+        "meta": {
+          "count": 263,
+          "db_response_time_ms": 150,
+          "page": 1,
+          "per_page": 5,
+          "groups_count": null,
+          "x_query": {
+            "oql": "works where full text has (RoCo: Dialectic Multi-Robot Collaboration with Large Language Models)",
+            "oqo": {
+              "get_rows": "works",
+              "filter_rows": [
+                {
+                  "column_id": "fulltext.search",
+                  "value": "RoCo: Dialectic Multi-Robot Collaboration with Large Language Models",
+                  "operator": "has"
+                }
+              ]
+            },
+            "url": "/works?filter=fulltext.search:RoCo: Dialectic Multi-Robot Collaboration with Large Language Models&per_page=5"
+          },
+          "cost_usd": 0.001
+        },
+        "results": [
+          {
+            "id": "https://openalex.org/W4401416363",
+            "doi": "https://doi.org/10.1109/icra57147.2024.10610855",
+            "title": "RoCo: Dialectic Multi-Robot Collaboration with Large Language Models",
+            "publication_year": 2024,
+            "cited_by_count": 156,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 56
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 73
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 26
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 1
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4383994281",
+            "doi": "https://doi.org/10.48550/arxiv.2307.04738",
+            "title": "RoCo: Dialectic Multi-Robot Collaboration with Large Language Models",
+            "publication_year": 2023,
+            "cited_by_count": 11,
+            "counts_by_year": [
+              {
+                "year": 2025,
+                "cited_by_count": 5
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 6
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4393065402",
+            "doi": "https://doi.org/10.1007/s11704-024-40231-1",
+            "title": "A survey on large language model based autonomous agents",
+            "publication_year": 2024,
+            "cited_by_count": 1634,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 838
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 596
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 199
+              },
+              {
+                "year": 2023,
+                "cited_by_count": 1
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4401023556",
+            "doi": "https://doi.org/10.24963/ijcai.2024/890",
+            "title": "Large Language Model Based Multi-agents: A Survey of Progress and Challenges",
+            "publication_year": 2024,
+            "cited_by_count": 265,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 77
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 140
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 48
+              }
+            ]
+          },
+          {
+            "id": "https://openalex.org/W4401553778",
+            "doi": "https://doi.org/10.1007/s11370-024-00550-5",
+            "title": "A survey on integration of large language models with intelligent robots",
+            "publication_year": 2024,
+            "cited_by_count": 125,
+            "counts_by_year": [
+              {
+                "year": 2026,
+                "cited_by_count": 65
+              },
+              {
+                "year": 2025,
+                "cited_by_count": 55
+              },
+              {
+                "year": 2024,
+                "cited_by_count": 5
+              }
+            ]
+          }
+        ],
+        "group_by": []
+      }
+    }
+  ],
+  "github": [
+    {
+      "full_name": "LeCAR-Lab/dial-mpc",
+      "html_url": "https://github.com/LeCAR-Lab/dial-mpc",
+      "stargazers_count": 1006,
+      "forks_count": 106,
+      "subscribers_count": 19,
+      "created_at": "2024-09-15T21:07:20Z",
+      "pushed_at": "2025-05-28T15:37:26Z",
+      "archived": false,
+      "url": "https://api.github.com/repos/LeCAR-Lab/dial-mpc",
+      "captured_utc_from_file_mtime": "2026-09-26T09:35:00.507684+00:00"
+    },
+    {
+      "full_name": "MIT-SPARK/Kimera-Multi",
+      "html_url": "https://github.com/MIT-SPARK/Kimera-Multi",
+      "stargazers_count": 416,
+      "forks_count": 53,
+      "subscribers_count": 11,
+      "created_at": "2023-02-26T14:50:13Z",
+      "pushed_at": "2025-01-28T17:38:12Z",
+      "archived": false,
+      "url": "https://api.github.com/repos/MIT-SPARK/Kimera-Multi",
+      "captured_utc_from_file_mtime": "2026-09-26T09:35:00.482846+00:00"
+    },
+    {
+      "full_name": "facebookresearch/partnr-planner",
+      "html_url": "https://github.com/facebookresearch/partnr-planner",
+      "stargazers_count": 391,
+      "forks_count": 53,
+      "subscribers_count": 15,
+      "created_at": "2024-10-28T19:56:52Z",
+      "pushed_at": "2026-04-08T07:36:41Z",
+      "archived": false,
+      "url": "https://api.github.com/repos/facebookresearch/partnr-planner",
+      "captured_utc_from_file_mtime": "2026-09-26T09:35:00.553465+00:00"
+    },
+    {
+      "full_name": "MandiZhao/robot-collab",
+      "html_url": "https://github.com/MandiZhao/robot-collab",
+      "stargazers_count": 263,
+      "forks_count": 44,
+      "subscribers_count": 6,
+      "created_at": "2023-07-01T16:13:44Z",
+      "pushed_at": "2023-10-04T04:57:30Z",
+      "archived": false,
+      "url": "https://api.github.com/repos/MandiZhao/robot-collab",
+      "captured_utc_from_file_mtime": "2026-09-26T09:35:00.549524+00:00"
+    },
+    {
+      "full_name": "MISTLab/Swarm-SLAM",
+      "html_url": "https://github.com/MISTLab/Swarm-SLAM",
+      "stargazers_count": 705,
+      "forks_count": 81,
+      "subscribers_count": 12,
+      "created_at": "2023-01-11T23:20:19Z",
+      "pushed_at": "2025-04-10T14:35:03Z",
+      "archived": false,
+      "url": "https://api.github.com/repos/MISTLab/Swarm-SLAM",
+      "captured_utc_from_file_mtime": "2026-09-26T09:35:00.484946+00:00"
+    }
+  ],
+  "historical_slide": {
+    "url": "https://samvelyan.com/slides/imol_2024.pdf",
+    "page": 58,
+    "observed_2026_09_26": true,
+    "displayed_counts": {
+      "Monotonic Value Function Factorisation for Deep Multi-Agent Reinforcement Learning": 2686,
+      "The StarCraft Multi-Agent Challenge": 1148
+    },
+    "notes": "Visually inspected upper real-author Google Scholar screenshot in 2024 slide deck. Lower screenshot is deliberately fictional and excluded. Exact capture date of embedded screenshot unknown; not a current metric."
+  }
+}

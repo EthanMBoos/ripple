@@ -280,7 +280,7 @@ entities:
         let mission = load(MISSION, &[])?;
         let entity = &mission.entities[0];
         assert_eq!(entity.team, 1);
-        assert_eq!(entity.visual_model, "sphere");
+        assert_eq!(entity.visual_model, "aircraft");
         assert_eq!(entity.position_variance_m2, crate::math::Vec3::zeros());
         // A label naming another plugin becomes the sensor's identity.
         assert_eq!(entity.sensors[0].name, "NoisyState");

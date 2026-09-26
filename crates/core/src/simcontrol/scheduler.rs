@@ -27,18 +27,24 @@ impl Scheduler {
         items: &mut [T],
         update: impl Fn(&mut T) -> Result<()> + Sync,
     ) -> Result<()> {
-        let results = self.workers.install(|| {
-            items
-                .par_iter_mut()
-                .enumerate()
-                .map(
-                    |(index, item)| match catch_unwind(AssertUnwindSafe(|| update(item))) {
-                        Ok(result) => result,
-                        Err(_) => Err(anyhow::anyhow!("task {index} panicked")),
-                    },
-                )
-                .collect::<Vec<_>>()
-        });
+        let run = |(index, item): (usize, &mut T)| {
+            catch_unwind(AssertUnwindSafe(|| update(item)))
+                .unwrap_or_else(|_| Err(anyhow::anyhow!("task {index} panicked")))
+        };
+        // DEVNOTE: one worker runs on the calling thread instead of the pool.
+        // Profiling perf.py's motion workload (64 aircraft, 20,000 steps) with macOS
+        // `sample` showed the main thread mostly waiting on rayon's latch: each phase
+        // is handed to a pool thread, which is woken, and then joined, costing ~7 µs
+        // even with one thread (~35 µs with eight). That exceeds the work in light
+        // phases. Running inline took that run from 2.04 s to 1.28 s with identical
+        // output. The same per-phase cost is why 8 workers only pay off when phases
+        // carry real work (e.g. many sensors); more workers still use the pool.
+        let results: Vec<_> = if self.workers.current_num_threads() == 1 {
+            items.iter_mut().enumerate().map(run).collect()
+        } else {
+            self.workers
+                .install(|| items.par_iter_mut().enumerate().map(run).collect())
+        };
 
         for result in results {
             result?;

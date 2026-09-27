@@ -156,6 +156,10 @@ impl Messages {
             })
             .collect()
     }
+    /// No subscriptions and nothing to send: networks have nothing to do here.
+    pub(crate) fn is_idle(&self) -> bool {
+        self.subscriptions.is_empty() && self.outbox.is_empty()
+    }
     pub(crate) fn validate_networks(&self, names: &[&str]) -> Result<()> {
         for (network, _) in self
             .subscriptions

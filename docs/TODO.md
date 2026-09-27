@@ -47,7 +47,10 @@ than C++ on one core where outputs match. Details are in the paper.
 - [ ] **Range queries on the snapshot.** `SimpleCollision` checks every pair of
   agents each step (C++ checks each pair twice), so its cost grows with the
   square of the agent count: 1.1 ms per step at 1,024 agents (58% of the step),
-  4.5 ms at 2,048 (71%), 18 ms at 4,096 (79%). Plan:
+  4.5 ms at 2,048 (71%), 18 ms at 4,096 (79%). The loop also reads positions
+  straight from the entity array, so its speed depends on the entity's memory
+  layout: the estimation stage doubled `Entity`'s size and collision-1024 got
+  20% faster with identical output. A compact position list fixes both. Plan:
   - Give the truth snapshot that sensors, interactions, networks, and metrics
     already receive two questions: `within(position, range)` and `nearest(k)`.
     Plugins ask the question; they never manage an index.
@@ -68,10 +71,9 @@ than C++ on one core where outputs match. Details are in the paper.
   - Plugins keep their names: a name says what a plugin computes, not how it
     finds candidates. Write a new plugin only when behavior changes (swept or
     shaped collisions, approximate checks, deliberate differences from C++).
-  - Truth queries serve plugins that simulate the world. Decisions should ask
-    the same questions of the agent's own belief contacts (a short per-agent
-    list, so a plain scan). That
-    belongs with the estimation plan ([ESTIMATION.md](ESTIMATION.md)).
+  - Truth queries serve plugins that simulate the world. Decisions ask the
+    same questions of the agent's own belief contacts (`context.contacts`, a
+    short per-agent list, so a plain scan).
 - [ ] **Faster message delivery, if needed.** Routing was about 16% of
   `sensing-128`. Indexing subscribers by topic (and LocalNetwork by entity) is
   inside the engine, so no plugin changes; do it if message-heavy RQ1
@@ -81,7 +83,56 @@ Tested at scale: 5,000 agents spawning in one tick and 1,500 removed in one tick
 World plugins may publish up to 65,536 messages per step; an entity's plugins,
 1,024. All-to-all messaging can still exceed 65,536 pending deliveries per network.
 
-## 2. External integrations
+## 2. Estimation
+
+Done: sensors produce readings, one localization and one tracking estimator per
+entity own belief (`PassThrough` of a perfect measurement by default), and
+autonomy and controllers see belief only. Outputs of existing missions are
+unchanged; the design and its rules are in the book's
+[Belief vs truth](../book/src/concepts/belief-vs-truth.md) and
+[architecture](../book/src/architecture/information-flow.md) pages. Two
+clean-up commits are planned inline (`grep -rn "TODO(estimation)" crates
+reference`): remove the sensors' LocalNetwork messages, and make NoisyState
+measure honestly.
+
+- [ ] **First experiment: prediction error without measurement noise**, in
+  `crates/starter` (its models need not become stock plugins). A straight-line
+  robot with a known start holds a constant speed command:
+
+  | Setting | Value |
+  | --- | --- |
+  | Requested speed | 10 m/s |
+  | Actual response (motion model) | 0.8 x requested: 8 m/s |
+  | Assumed response (estimator) | compare gains 0.8 and 1.0 |
+  | Position fixes | exact at start, then every 5 s |
+  | Measurement noise | none at first |
+
+  The localizer predicts from `context.commands` and its assumed gain, and
+  replaces its position on each fix. Expected: with gain 1.0 the prediction is
+  10 m ahead just before the fix at 5 s, then the error builds again; with 0.8
+  it stays at numerical tolerance. Define fix times exactly, so the small error
+  on the tick before a fix isn't mistaken for the pre-correction prediction.
+- [ ] **Evaluation output for it.** Record truth, the prediction before
+  correction, and belief after correction at the same times (recording only
+  corrected belief at fix times would hide the effect), plus the measurements
+  themselves. Compute error at a common time, mark stale or unavailable
+  estimates, and keep the final error of removed entities. Add only what the
+  experiment needs. Until this exists, truth is in the frames and belief in
+  `trace.jsonl`, and measurements aren't recorded.
+- [ ] Then noisy fixes, then a position-seeking controller acting on belief, to
+  show the whole loop. Put the results in the paper.
+- [ ] **Rerun the C++ benchmark suite** (container and native) before refreshing
+  the paper's speed tables, which predate the estimation stage. A new
+  experiment's cost is measured on its own: C++'s `SimpleINS` is not an
+  equivalent workload.
+- Later, each for a concrete experiment: IMU and GPS sensors, real filters,
+  delayed readings (tracking an older relative reading needs the observer's pose
+  from when it was taken), reusable sensor profiles, and richer tracking
+  (association, filtering). Before an IMU uses aircraft outputs, give the motion
+  models acceleration and consistent velocity and rate outputs, and define
+  frames, gravity, units, and initialization; that is a separate physics change.
+
+## 3. External integrations
 
 Implement one end-to-end pilot at a time. Entities from a connection go through
 `spawn(SpawnRequest)` in [generation.rs](../crates/core/src/simcontrol/generation.rs).
@@ -144,7 +195,7 @@ compatibility.
 
 Saved JSBSim outputs do not establish real-aircraft fidelity.
 
-## 3. Core upgrades
+## 4. Core upgrades
 
 - [ ] Record the effective configuration in each run's manifest: plugin values
   filled by defaults, overrides, registrations, and seeds.
@@ -159,14 +210,14 @@ Saved JSBSim outputs do not establish real-aircraft fidelity.
   synchronization, and keep it only for an end-to-end gain. See
   [Burn's backends](https://burn.dev/docs/burn/).
 
-## 4. More models
+## 5. More models
 
 Candidates and the shared capabilities they would need are in the
 [plugin audit](PLUGIN_COVERAGE_AUDIT.md). Add a model for a research need, not
 for catalog completeness. A model with a C++ counterpart joins the comparison
 through the checklist in [reference/README.md](../reference/README.md).
 
-## 5. Terrain visualization experiment
+## 6. Terrain visualization experiment
 
 - [ ] Try streamed [Cesium](https://cesium.com/platform/cesiumjs/) terrain next
   to the Rerun panels, starting with one agent and a validated origin, in a

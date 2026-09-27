@@ -28,12 +28,9 @@ impl Plugin for PositionSensor {
 impl Sensor for PositionSensor {
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
         let measured_x_world_m = context.truth.position_world_m.x + self.bias_m;
-        context.publish_local(
-            "position",
-            PositionReading {
-                x_world_m: measured_x_world_m,
-            },
-        )?;
+        context.publish_reading(PositionReading {
+            x_world_m: measured_x_world_m,
+        })?;
         Ok(Update::Applied)
     }
 }

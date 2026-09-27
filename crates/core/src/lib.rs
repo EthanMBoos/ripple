@@ -5,6 +5,7 @@ mod common;
 mod controller;
 mod entity;
 mod entity_interaction;
+mod estimator;
 mod math;
 mod metrics;
 mod motion;

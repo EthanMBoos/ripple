@@ -51,13 +51,17 @@ after the mission or sweep file.
 1. Write it in its own file under `crates/starter/src/`, importing the plugin
    API from `scrimmage_core::plugin`. [Plugin API reference](../reference/plugin-api.md) and
    the book describe the API; the stock plugins under `crates/core/src/plugin/`
-   are working examples of all seven categories.
+   are working examples of every category.
 2. Add `mod my_plugin;` to `crates/starter/src/lib.rs` and register it in
    `register()` under the name missions will use:
 
    ```rust
    registry.register_sensor::<MySensor>("MySensor")?;
    ```
+
+   Estimators register with `register_localization` or `register_tracking`
+   and are chosen per entity with the `localization` or `tracking` slot (see
+   [Belief vs truth](../concepts/belief-vs-truth.md)).
 
 3. Use that name in a mission.
 

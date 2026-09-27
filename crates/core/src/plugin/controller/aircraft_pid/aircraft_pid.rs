@@ -155,7 +155,7 @@ impl Controller for AircraftPidController {
 mod tests {
     use super::AircraftPidController;
     use crate::plugin::{
-        AgentContext, Controller, EntityInfo, Messages, Observations, Plugin, PluginIo,
+        AgentContext, Controller, EntityInfo, KnownContacts, Messages, Plugin, PluginIo,
         PluginParams, PluginRandom, StepTime,
     };
     use crate::{KinematicState, Params};
@@ -178,7 +178,6 @@ mod tests {
             .into(),
         )?;
         let state = KinematicState::default();
-        let observations = Observations::default();
         let mut messages = Messages::default();
         for (index, expected_throttle) in [0.52, 0.04, 0.06, 0.08, 0.10].into_iter().enumerate() {
             controller.step(
@@ -193,8 +192,7 @@ mod tests {
                         dt_s: 0.02,
                     },
                     state: &state,
-                    observations: &observations,
-                    contacts_truth: &[],
+                    contacts: KnownContacts::new(&[], 1),
                     messages: &mut messages,
                     random: &mut PluginRandom::new(1, 1, "test"),
                 },

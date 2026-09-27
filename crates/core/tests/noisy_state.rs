@@ -57,7 +57,7 @@ fn slower_sensor_holds_owned_belief_while_truth_keeps_moving() -> Result<()> {
 }
 
 #[test]
-fn no_sensor_keeps_ideal_feedback() -> Result<()> {
+fn no_sensor_gives_perfect_belief() -> Result<()> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mission = Mission::load(
         &root.join("missions/straight-no-gui.xml"),
@@ -72,7 +72,11 @@ fn no_sensor_keeps_ideal_feedback() -> Result<()> {
     for _ in 0..3 {
         simulation.step()?;
         for entity in simulation.entities() {
-            assert!(std::ptr::eq(entity.belief(), entity.truth()));
+            // The perfect measurement, copied by the default PassThrough estimator.
+            assert_eq!(
+                format!("{:?}", entity.belief()),
+                format!("{:?}", entity.truth())
+            );
         }
     }
     Ok(())

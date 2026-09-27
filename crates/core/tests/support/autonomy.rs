@@ -1,5 +1,4 @@
-//! Drive until the position sensor reports that the goal has been reached.
-use super::sensor::PositionReading;
+//! Drive until belief says the goal has been reached.
 use anyhow::Result;
 use scrimmage_core::plugin::*;
 use serde::Deserialize;
@@ -34,9 +33,7 @@ impl Plugin for DriveToGoal {
 }
 impl Autonomy for DriveToGoal {
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
-        let position = context.observations.get::<PositionReading>("position")?;
-        let reached_goal =
-            position.is_some_and(|reading| reading.value.x_world_m >= self.goal_world_m);
+        let reached_goal = context.state.position_world_m.x >= self.goal_world_m;
         io.write("speed", if reached_goal { 0.0 } else { 2.0 })?;
         Ok(Update::Applied)
     }

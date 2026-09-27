@@ -1,4 +1,4 @@
-//! Head toward the nearest active entity on another team, matching its altitude.
+//! Head toward the nearest known contact on another team, matching its altitude.
 //! Autonomy phase: read contacts, write desired heading, altitude, and speed.
 //! This is the plugin from the book's "Your first autonomy plugin" tutorial.
 
@@ -58,17 +58,17 @@ impl Plugin for FollowNearest {
 
 impl Autonomy for FollowNearest {
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
-        // Input: our own state and every other entity's true state.
+        // Input: our own estimated state and the contacts we know about.
         let own_position_world_m = context.state.position_world_m;
 
-        // Calculation: find the closest active opponent.
+        // Calculation: find the closest opponent.
         let mut nearest = None;
         let mut nearest_distance_m = f64::INFINITY;
-        for contact in context.contacts_truth {
-            if !contact.active || contact.team_id == context.entity.team_id {
+        for contact in context.contacts.iter() {
+            if contact.team_id == context.entity.team_id {
                 continue;
             }
-            let distance_m = (contact.truth.position_world_m - own_position_world_m).norm();
+            let distance_m = (contact.state.position_world_m - own_position_world_m).norm();
             if distance_m < nearest_distance_m {
                 nearest_distance_m = distance_m;
                 nearest = Some(contact);
@@ -78,10 +78,10 @@ impl Autonomy for FollowNearest {
         // Output: head toward it, or hold the current heading and altitude if none remain.
         let (heading_world_rad, altitude_world_m) = match nearest {
             Some(target) => {
-                let offset_world_m = target.truth.position_world_m - own_position_world_m;
+                let offset_world_m = target.state.position_world_m - own_position_world_m;
                 (
                     offset_world_m.y.atan2(offset_world_m.x),
-                    target.truth.position_world_m.z,
+                    target.state.position_world_m.z,
                 )
             }
             None => (

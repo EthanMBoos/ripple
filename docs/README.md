@@ -6,7 +6,6 @@ This folder holds plans and investigations. Verification results live in the
 
 - [Roadmap](TODO.md)
 - [Scenario API design and tradeoffs](RUST_API.md)
-- [Estimation, sensor error, and drift](ESTIMATION.md)
 - [C++ model findings](PLUGIN_COVERAGE_AUDIT.md)
 - [C++ reference findings and porting notes](REFERENCE_NOTES.md)
 - [Multi-agent robotics literature review: influence and adoption since 2018](MULTI_AGENT_ROBOTICS_LITERATURE_REVIEW.md)

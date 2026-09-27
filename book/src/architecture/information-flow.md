@@ -4,38 +4,7 @@ How information moves from the world to a decision. The
 [Belief vs truth](../concepts/belief-vs-truth.md) concept page explains why
 the two are kept apart; this page shows the wiring.
 
-## Inside one entity today
-
-```text
-┌────────────────────────────────────────────────────────────────────────┐
-│                               Entity                                   │
-│                                                                        │
-│  ┌──────────┐  commands   ┌────────────┐  motion   ┌─────────────┐     │
-│  │ Autonomy │────────────▶│ Controller │──────────▶│ MotionModel │     │
-│  └────▲─────┘  (ports)    └─────▲──────┘  inputs   └──────┬──────┘     │
-│       │                         │                         │            │
-│       │ belief                  │ belief                  ▼            │
-│       │ (or truth if none)      │                  ┌─────────────┐     │
-│  ┌────┴─────────────────────────┴──┐               │    truth    │     │
-│  │ belief (optional)               │               └──────┬──────┘     │
-│  └────▲────────────────────────────┘                      │            │
-│       │ set_belief                                        │            │
-│  ┌────┴─────┐◀──────────────── reads truth ───────────────┘            │
-│  │  Sensor  │───▶ readings, messages (e.g. NoisyState on LocalNetwork) │
-│  └──────────┘                                                          │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
-- The motion model is the only thing that advances truth; interactions can
-  change it (collisions, boundaries).
-- Autonomy and controllers read `context.state`. That is the belief if a
-  sensor set one, and truth otherwise.
-- A sensor may call `set_belief`. If several do, the last in mission order
-  wins.
-- Decision contexts also carry `contacts_truth`, the true state of every other
-  entity.
-
-## Inside one entity with the planned estimators
+## Inside one entity
 
 ```text
   truth (advanced by the motion model, changed by interactions)
@@ -92,21 +61,26 @@ The ownership rule:
 | Choose actions | Autonomy and controllers, from belief only |
 | Compare belief with truth | Evaluation and output code |
 
-What changes:
+The rules:
 
-- Sensors only measure; `set_belief` and `clear_belief` go away.
-- Autonomy and controllers see belief only, including during initialization,
-  and lose `contacts_truth`. Belief holds the entity's own state and the
-  contacts it has measured, with their sample times.
+- The motion model is the only thing that advances truth; interactions can
+  change it (collisions, boundaries).
+- Sensors only measure. Their readings go to their own entity's estimators.
+- Autonomy and controllers see belief only, including during initialization:
+  `context.state` (own state) and `context.contacts` (the contacts it has
+  measured, with their sample times).
 - There is no fallback to truth and no privileged "truth" estimator. Simple
   missions get perfect readings through pass-through localization and
   tracking. These readings are taken after interactions, so belief matches
   truth at the next decision for every entity present then. Ordinary trackers
   get no such help: a contact that disappears stays in belief until the
   tracker's own logic drops it.
-- Estimators never receive truth. They get the readings they name, messages,
-  the commands the entity issued (localization), the entity's estimated pose
-  (tracking), and time.
+- Estimators never receive truth. They get the readings their inputs select,
+  messages, the commands the motion model read (localization), the entity's
+  estimated pose (tracking), and time.
+- Each input's sensor is named in the mission (`inputs`), or chosen when there
+  is only one candidate. Several candidates is an error, not "the last one
+  wins".
 
 ## Three sources of error, each set once
 

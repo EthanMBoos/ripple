@@ -110,6 +110,12 @@ impl PluginIo {
                 .collect(),
         }
     }
+    pub(crate) fn input_names(&self) -> impl Iterator<Item = &String> {
+        self.inputs.keys()
+    }
+    pub(crate) fn input_values(&self) -> impl Iterator<Item = f64> + '_ {
+        self.inputs.values().copied()
+    }
     /// Whether this plugin declares `name` as an input port.
     pub(crate) fn reads(&self, name: &str) -> bool {
         self.inputs.contains_key(name)

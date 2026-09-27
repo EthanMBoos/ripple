@@ -107,9 +107,9 @@ Year & Development and experimental requirement \\
 
 This section describes SCRIMMAGE-RS and summarizes three checks: that it
 behaves like SCRIMMAGE, that an experiment is easier to build in it, and what
-it costs to run. These checks describe the runtime before the proposed
-estimation stage (Section~\ref{sec:estimation}). The details are in the
-appendices.
+it costs to run. The behavior checks were repeated after adding the
+estimation stage (Section~\ref{sec:estimation}); the cost measurements predate
+it. The details are in the appendices.
 
 \subsection{SCRIMMAGE-RS}
 
@@ -238,31 +238,31 @@ in both.
 \section{Separating Measurement from Belief}
 \label{sec:estimation}
 
-The first extension we propose changes how a robot comes to know its own state
-and its surroundings. In SCRIMMAGE, and in SCRIMMAGE-RS today, a sensor can
-write the robot's belief directly, any sensor can overwrite it, and a planner
-may read belief, subscribe to a sensor's message itself, or fall back to truth
-when no estimate exists. Every experiment that involves imperfect information
-has to wire these pieces by hand. We propose an explicit estimation stage:
-sensors produce measurements, estimators own belief, and autonomy and
-controllers read only that belief. Table~\ref{tab:estimation} shows what this
-changes for a developer.
+The first extension changes how a robot comes to know its own state and its
+surroundings. In SCRIMMAGE a sensor can write the robot's belief directly, any
+sensor can overwrite it, and a planner may read belief, subscribe to a sensor's
+message itself, or fall back to truth when no estimate exists. Every
+experiment that involves imperfect information has to wire these pieces by
+hand. SCRIMMAGE-RS now has an explicit estimation stage: sensors produce
+measurements, estimators own belief, and autonomy and controllers read only
+that belief. Table~\ref{tab:estimation} shows what this changes for a
+developer.
 
 \begin{table*}[t]
 \centering
 \small
-\caption{Common tasks before and after the proposed estimation stage.}
+\caption{Common tasks before and after the estimation stage.}
 \label{tab:estimation}
 \begin{tabularx}{\textwidth}{@{}P{0.22\textwidth}XX@{}}
 \toprule
-Task & SCRIMMAGE and SCRIMMAGE-RS today & With the estimation stage \\
+Task & SCRIMMAGE & With the estimation stage \\
 \midrule
 Choose which sensor feeds the robot's state & Implicit: any sensor can overwrite belief, and the last writer in a step wins & Named in the mission and checked before the run \\
 Give a planner its state & The planner reads belief, subscribes to a sensor's topic itself, or falls back to truth & The planner reads belief, always \\
 Swap the localization method & Edit every planner that selected its own source & Change the localizer; planners are untouched \\
 Configure error & Sensor noise, motion disturbance, and wiring are set in separate places & Each source of error is set once, at its owner \\
 Keep decisions from using hidden truth & Not enforced: decisions can read the true state of every entity & Decisions receive belief only \\
-Measure how wrong the robot was & Worked out by hand after the run & Truth, measurements, and belief are recorded separately \\
+Measure how wrong the robot was & Worked out by hand after the run & Truth and belief are recorded separately; measurement records come with the first experiment \\
 \bottomrule
 \end{tabularx}
 \end{table*}
@@ -297,9 +297,15 @@ processing delay would be a separate, explicit choice.
 The first implementation copies measurements into belief. With perfect, current
 measurements, which simple missions use by default, belief equals truth at
 each decision for every entity already observed (an entity that has just
-appeared is known from the next measurement). Existing missions and their
-comparisons with C++ should therefore be unaffected, which the implementation
-must confirm, and the added cost can be measured on its own. A predictive
+appeared is known from the next measurement). Existing missions are therefore
+unaffected: every mission, at one, two, and eight workers, reproduced the
+previous revision's output byte for byte, and all 13 C++ comparisons still
+pass (Appendix~\ref{app:refactors}). The stage runs inside the existing
+per-entity delivery step, so it adds work but no extra hand-off between
+threads: up to 8\% more stepping time on our timing workloads, most for many
+light agents, where there is little other work per tick (collision workloads
+ran faster, a side effect of the larger entity record on memory access; data in
+\texttt{paper/data/estimation-cost/}). A predictive
 localizer then occupies the same stage: it advances the previous belief using
 the commands the robot issued and its own motion model, and corrects that
 prediction with measurements. Because the physical response, the estimator's
@@ -307,14 +313,11 @@ assumed response, and measurement error are configured separately, an
 experiment can vary each on its own. For example, a robot that achieves 8~m/s
 when commanded 10~m/s, estimated by a localizer that assumes 10~m/s, is 10~m
 off after 5~s without a position fix, even with perfect sensors.
-% The timing, equality, startup, and removal rules are specified in
-% docs/ESTIMATION.md (measurement and lifecycle contract).
-% TODO(estimation): still open: measure whether estimation shares the existing
-% entity-local delivery task or needs its own barrier; run the constant-command
-% experiment (10 m/s requested, 8 m/s achieved, assumed gains 0.8 and 1.0, fixes
-% every 5 s); rerun affected C++ comparisons, XML/YAML equivalence, worker and
-% recording consistency, the RQ2 workflow example, and performance checks. The
-% baseline data above do not validate this stage.
+% The timing, equality, startup, and removal rules are in the book
+% (architecture/tick.md and information-flow.md); open items in docs/TODO.md.
+% TODO(estimation): still open: run the constant-command experiment (10 m/s
+% requested, 8 m/s achieved, assumed gains 0.8 and 1.0, fixes every 5 s), then
+% noisy fixes and the closed loop. The benchmark tables predate this stage.
 
 \section{RQ1: When Does Sharing Information Improve Team Performance?}
 \label{sec:rq1}
@@ -335,9 +338,10 @@ own-state feedback falls back to truth when no estimate exists. Sensor and
 network models alone therefore do not enforce partial observability.
 
 \paragraph{Candidate capability}
-The estimation stage of Section~\ref{sec:estimation}. With decisions reading
-only belief, and belief formed from named measurements, an experiment can
-control exactly what each robot knows and compare sharing policies fairly.
+The estimation stage of Section~\ref{sec:estimation}, now in place. With
+decisions reading only belief, and belief formed from named measurements, an
+experiment can control exactly what each robot knows and compare sharing
+policies fairly.
 
 \paragraph{Experiment}
 Compare local decisions, periodic sharing, and selective sharing on the same
@@ -425,8 +429,8 @@ insufficient: some original SMAC tasks admit useful time-only policies
 and remove the relevant feedback or communication to check that it matters.
 These controls can begin with the existing scenario and sweep tools.
 
-The estimation stage (Section~\ref{sec:estimation}), on which RQ1 builds, and
-shared computation (RQ2) are candidates for core changes. Task models (RQ3) and evaluation cases should begin as research
+The estimation stage (Section~\ref{sec:estimation}), on which RQ1 builds, is
+the first core change; shared computation (RQ2) is the other candidate. Task models (RQ3) and evaluation cases should begin as research
 plugins and experiment support. A focused paper could implement one of the core
 candidates and answer its associated question, leaving the others as
 motivated future work. Listing features or demonstrating that they run would
@@ -776,6 +780,10 @@ records are under \texttt{paper/data/refactor-equivalence/}.
 \item Scenario API unification, against \texttt{2cd820a}: 38 runs (14 XML
 missions, four YAML pairs, and the starter mission at 1 and 8 workers), 114
 files, all identical.
+\item Estimation stage, against \texttt{ab085bf}: every mission (25, including
+the starter's) at 1, 2, and 8 workers, 300 files including traces with each
+entity's belief, all identical; also the follow-nearest sweep and runs with
+recording on.
 \item Metrics team reporting and queue limits, against \texttt{613a62f}: 18
 curated XML and YAML missions at 1 and 8 workers, 108 files, all identical.
 The new two-team fixture is excluded because it did not exist at the baseline;

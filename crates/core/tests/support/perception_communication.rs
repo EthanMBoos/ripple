@@ -39,6 +39,9 @@ impl Plugin for ContactFollower {
     }
 }
 
+// TODO(estimation): read `context.contacts` (tracker belief) instead of the
+// NoisyContacts "detected" message, which is being removed. Observer below
+// subscribes to the same message and moves the same way.
 impl Autonomy for ContactFollower {
     fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
         context
@@ -67,6 +70,12 @@ struct AuctionTrace {
     starts: Vec<(f64, AuctionStart)>,
     bids: Vec<(f64, AuctionBid)>,
     results: Vec<(f64, AuctionResult)>,
+}
+
+/// What the observer has received so far, as its reading.
+struct ObserverReading {
+    contacts: Option<ContactsWithCovariances>,
+    trace: AuctionTrace,
 }
 
 /// Records what this entity received, so tests can inspect it after each step.
@@ -112,9 +121,6 @@ impl Sensor for Observer {
         {
             self.contacts = Some((*message.value).clone());
         }
-        if let Some(contacts) = &self.contacts {
-            context.publish_local("contacts_seen", contacts.clone())?;
-        }
         for message in context
             .messages
             .receive::<AuctionStart>("SphereNetwork", START_AUCTION_TOPIC)?
@@ -133,7 +139,10 @@ impl Sensor for Observer {
         {
             self.trace.results.push((message.sent_at_s, *message.value));
         }
-        context.publish_local("auction_trace", self.trace.clone())?;
+        context.publish_reading(ObserverReading {
+            contacts: self.contacts.clone(),
+            trace: self.trace.clone(),
+        })?;
         Ok(Update::Applied)
     }
 }
@@ -194,20 +203,20 @@ fn simulation(workers: usize, overrides: &Params) -> Result<Simulation> {
 
 /// The newest contact snapshot this entity has received, if any yet.
 fn contacts(simulation: &Simulation, entity_index: usize) -> Option<&ContactsWithCovariances> {
-    simulation.entities()[entity_index]
-        .observations()
-        .get::<ContactsWithCovariances>("contacts_seen")
-        .unwrap()
-        .map(|observation| &observation.value)
+    observed(simulation, entity_index).contacts.as_ref()
 }
 
-fn trace(simulation: &Simulation, entity_index: usize) -> &AuctionTrace {
+fn observed(simulation: &Simulation, entity_index: usize) -> &ObserverReading {
     &simulation.entities()[entity_index]
-        .observations()
-        .get::<AuctionTrace>("auction_trace")
+        .readings()
+        .get::<ObserverReading>("Observer:0")
         .unwrap()
         .unwrap()
         .value
+}
+
+fn trace(simulation: &Simulation, entity_index: usize) -> &AuctionTrace {
+    &observed(simulation, entity_index).trace
 }
 
 #[test]

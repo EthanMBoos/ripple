@@ -10,7 +10,7 @@ live only under `crates/core/src/plugin/<category>/`. The public authoring
 imports remain `scrimmage_core::plugin::*`; the source moves do not require
 changes to an external plugin project.
 
-## Seven extension points
+## Extension points
 
 | Type | Owned by | Built-in implementation |
 | --- | --- | --- |
@@ -18,6 +18,8 @@ changes to an external plugin project.
 | Controller | Entity | [SimpleAircraftControllerPID](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
 | MotionModel | Entity | [SimpleAircraft](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
 | Sensor | Entity | [NoisyState](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_state/noisy_state.rs); [NoisyContacts](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs); [NoisyPosition](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) (Rust-only illustration) |
+| Localization | Entity | [PassThrough](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
+| Tracking | Entity | [PassThrough](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
 | Interaction | Simulation | [SimpleCollision](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/interaction/simple_collision/simple_collision.rs) |
 | Network | Simulation | [LocalNetwork](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/network/local_network/local_network.rs), [GlobalNetwork](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/network/global_network/global_network.rs), [SphereNetwork](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/network/sphere_network/sphere_network.rs) |
 | Metrics | Simulation | [SimpleCollisionMetrics](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
@@ -43,15 +45,17 @@ the category's `step` first to understand the algorithm; `configure` explains
 how mission parameters reach it. See [Rust style](../development/rust-style.md#familiar-plugin-authoring)
 for the layout and ownership rules.
 
-These are the seven working patterns; the linked built-ins above contain the
+These are the working patterns; the linked built-ins above contain the
 actual code rather than a second set of templates to keep synchronized:
 
 | Category | What belongs in its update | Regression coverage |
 | --- | --- | --- |
-| Autonomy | Read current state/observations, calculate desired commands, write ports. | Straight configuration test; aircraft missions; seven-category contract test. |
+| Autonomy | Read belief (own state and known contacts), calculate desired commands, write ports. | Straight configuration test; aircraft missions; plugin contract test. |
 | Controller | Read desired/current state, run owned control loops, write actuator commands. | Named XML gain mapping and PID equation tests; aircraft missions. |
 | MotionModel | Read actuator commands, integrate owned model state, update mutable truth. | Level-flight equation test; aircraft and substep missions. |
-| Sensor | Read committed truth, construct a measurement, apply effects, queue output. | NoisyPosition zero-noise/bias and fixed-seed draw-order tests; sensor visibility contract. |
+| Sensor | Read committed truth, construct a measurement, apply effects, publish a reading. | NoisyPosition zero-noise/bias and fixed-seed draw-order tests; sensor visibility contract. |
+| Localization | Predict own state (optionally from commands), correct with readings, write belief. | PassThrough; estimation contract tests; plugin contract test (a custom localizer). |
+| Tracking | Update known contacts from readings and localization's pose. | PassThrough; estimation contract tests (per-entity trackers). |
 | Interaction | Inspect world entities, apply physical effects, emit events. | Straight collision/removal mission; same-tick interaction/metrics contract. |
 | Network | Decide reachability and delivery for each link through `context.route`. | Built-in delay validation; local/global routing and custom delay/loss tests. |
 | Metrics | Subscribe during initialization, consume events during step, report team totals. | Team aggregation unit test; mission summaries; independent subscriber contract. |
@@ -59,7 +63,7 @@ actual code rather than a second set of templates to keep synchronized:
 The engine supplies short-lived contexts; do not store them in the plugin.
 Store only the plugin's own persistent model state and configuration. A motion
 model is allowed to update truth, while a sensor borrows truth read-only.
-Messages and observations must follow their documented delivery paths.
+Messages and readings must follow their documented delivery paths.
 
 For C++ developers: the plugin struct holds what used to be class members;
 `impl Plugin` supplies common lifecycle operations; `impl Sensor` (or another
@@ -94,13 +98,13 @@ same traits below and registers itself in the crate's `register()`, which the
 3. Implement your category's `step`. Use optional `initialize` for initial
    state and subscriptions, and `Plugin::close` for shutdown.
 4. Register the type with `register_autonomy`, `register_controller`,
-   `register_motion`, `register_sensor`, `register_interaction`,
-   `register_network`, or `register_metrics` in `plugin_manager/builtins.rs`
-   for a bundled plugin.
+   `register_motion`, `register_sensor`, `register_localization`,
+   `register_tracking`, `register_interaction`, `register_network`, or
+   `register_metrics` in `plugin_manager/builtins.rs` for a bundled plugin.
 5. Reference that registration name in the mission.
 
-[builtins.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin_manager/builtins.rs) shows all seven
-registration categories. Missions select the registered names:
+[builtins.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin_manager/builtins.rs) shows every
+registration category. Missions select the registered names:
 
 ```xml
 <entity_interaction>SimpleCollision</entity_interaction>
@@ -131,7 +135,7 @@ crates/core/src/plugin/motion/simple_aircraft/
 ```
 
 This folds C++'s separate header, implementation, and XML defaults into one
-Rust file. All seven categories follow this layout. The small category file
+Rust file. Every category follows this layout. The small category file
 `plugin/motion.rs` loads it explicitly:
 
 ```rust,ignore
@@ -235,31 +239,106 @@ and convert when reading/writing truth, as C++ FixedWing6DOF does. Frame recordi
 copies world velocities directly; it performs no body/world rotation. A sensor
 or controller needing body rates can use `orientation_world_from_body.rotate_world_to_body(...)`.
 
-`AgentContext.state` reads the entity's owned belief, falling back to read-only
-truth when no sensor has installed an estimate. Sensors call
-`context.set_belief(state)` with an owned value or `context.clear_belief()` to
-restore ideal feedback. Both autonomy and controllers use this same state.
-Motion still writes truth; frames, physical interactions, and explicitly named
-`contacts_truth` still expose truth. This does not hide the world from every
-legacy autonomy: it removes mutable truth aliasing from the belief path.
+`AgentContext` gives autonomy and controllers the entity's belief and nothing
+else: `context.state` is its estimated own state and `context.contacts` the
+contacts it knows about (without itself). Motion writes truth; frames,
+physical interactions, sensors, networks, and metrics can read truth. Decision
+plugins cannot.
 
-Belief persists between sensor samples. Multiple sensor writers execute in XML
-order; the last update wins. This is not sensor fusion. Sensor initialization
-runs before motion, controllers, and autonomy, matching C++'s initialization
-order. During simulation, sensors still sample after all motion substeps; the
-next autonomy/controller phase sees the updated estimate.
+## Estimators
+
+Each entity has one **localization** estimator, which writes its own-state
+belief, and one **tracking** estimator, which writes its known contacts. Both
+default to `PassThrough`. They run once per tick in the estimation step, after
+networks and delivery and before metrics, localization first; autonomy and
+controllers see the result on their next update.
+
+```rust,ignore
+impl Localization for DeadReckoning {
+    // The readings this estimator reads; the mission's `inputs` picks each sensor.
+    fn inputs(_: &Config) -> Vec<Input> {
+        vec![Input::new("fix", ReadingKind::Other)]
+    }
+    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
+        // Set the first belief from startup readings or a known prior.
+        Ok(())
+    }
+    fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update> {
+        // Predict from what the motion model read on each substep...
+        for substep in 0..context.commands.substeps() {
+            let speed_mps = context.commands.get(substep, "speed")?;
+            let dt_s = context.commands.time(substep).dt_s;
+            context.state.position_world_m.x += self.assumed_gain * speed_mps * dt_s;
+        }
+        // ...then correct with a reading that arrived this tick.
+        if let Some(fix) = context.inputs.fresh::<PositionFix>("fix")? {
+            context.state.position_world_m = fix.value.position_world_m;
+        }
+        Ok(Update::Applied)
+    }
+}
+```
+
+- **Readings.** A sensor hands one reading per sample to its entity's
+  estimators with `context.publish_reading(value)`, keyed by the sensor's
+  instance name. A sensor declares what its readings contain with
+  `Sensor::reading_kind`: `State` (a `KinematicState`), `Contacts` (a
+  `ContactList`), or `Other` (the default: any type, checked when read).
+  `inputs.latest` returns the newest reading; `inputs.fresh` only one delivered
+  since the last estimation step, so a slow sensor's old reading isn't
+  mistaken for a new one.
+- **Choosing sources.** A mission's `inputs` map names the sensor for each
+  input, or `perfect` for the engine's perfect measurement (state or
+  contacts, taken after interactions, leaving out entities marked for
+  removal). An input left out takes the one sensor of its kind, or the perfect
+  measurement if there is none; several candidates, an unknown name, or a kind
+  mismatch is a load error. `Other` inputs must be named. The resolved
+  scenario in `manifest.json` records every choice.
+- **Commands.** `LocalizationContext::commands` holds what the motion model
+  actually read on each substep of the tick just finished: the final
+  controller's outputs, or the autonomy's if there is no controller.
+- **Tracking** receives localization's estimate for this tick as
+  `context.pose` and writes `context.contacts`, a `ContactList`
+  (`Arc<[Contact]>`) that is cheap to copy from a reading. Each `Contact` has
+  its identity, estimated state, and the time its reading was taken.
+- **Startup.** The whole initial population is built (sensors, then motion),
+  the startup interactions run, and one perfect measurement of that population
+  is taken. Then every entity's estimators initialize from their startup
+  readings, and only then its controllers and autonomy, which therefore see
+  belief from their first call. An entity that spawns later starts from the
+  latest perfect measurement; others learn of it at their next measurement.
+- **What estimators can't see.** Their contexts have no truth handle: only
+  readings, messages, commands, time, and (tracking) the pose.
+
+In YAML, the estimators are entity slots like `motion_model`:
+
+```yaml
+sensors:
+  gps: {plugin: NoisyState, pos_noise_0: [0, 5]}
+localization:
+  PassThrough:
+    inputs: {state: gps}
+tracking:
+  PassThrough:          # inputs left out: the one contact sensor, or perfect
+```
+
+XML cannot name estimators; its entities use `PassThrough` for both with the
+source rule above. From Rust, set `EntityGroupConfig::localization` to
+`PluginConfig::new("DeadReckoning").input("fix", "gps")`.
 
 ### NoisyState
 
 `NoisyState` ports the legacy own-state noise equations and XML parameters.
-It detaches initial belief, then samples post-motion truth, updates belief, and
-publishes `StateWithCovariance` on `LocalNetwork`. Straight prefers the newest
-delivered message; when none arrives, it uses current belief. The PID reads
-belief directly, not the network queue. Delaying/dropping LocalNetwork messages
-therefore does not delay the direct belief update.
+It is a `State` sensor: its startup reading is the initial truth without noise
+(as C++ starts its estimate), and each sample after that is the measured
+post-motion state. With it installed, localization's `PassThrough` copies those
+readings, so autonomy and controllers act on them. It also publishes
+`StateWithCovariance` on `LocalNetwork`, as C++ does. C++ Straight steers by
+that message; Rust Straight steers by belief, which holds the same
+measurement, and subscribes to the message only so deliveries match C++.
 
 Include `<network>LocalNetwork</network>` when using Straight or NoisyState.
-Straight now subscribes to local state messages even when no sensor publishes.
+Straight subscribes to local state messages even when no sensor publishes.
 Missing configured networks remain errors; they are not silently created.
 
 Legacy details retained deliberately:
@@ -282,8 +361,9 @@ of random-number generation. NoisyPosition remains a distinct Rust illustration.
 
 `NoisyContacts` measures every other active contact after motion, in entity-ID
 order, using the same `pos_noise_0..2`, `vel_noise_0..2`, and `orient_noise_0..2`
-mean/stddev parameters as NoisyState. It does not change own belief or truth and
-has no range/FOV filtering, detection probability, or persistent tracks.
+mean/stddev parameters as NoisyState. It is a `Contacts` sensor: tracking's
+`PassThrough` copies each sample into known contacts. It has no range/FOV
+filtering, detection probability, or persistent tracks.
 
 The public `plugin::sensor::ContactsWithCovariances` contains a `contacts` vector.
 Each `ContactWithCovariance` contains `entity: EntityInfo` and
@@ -292,25 +372,21 @@ is measured. Like C++, this sensor preserves target angular velocity and sets
 covariance to **5I**, regardless of configured noise. NoisyState instead uses
 zero angular velocity and identity covariance. Neither is calibrated uncertainty.
 
-Include `<network>LocalNetwork</network>`. Every sample, including an empty one,
-is published on `topic_name` (default `ContactsWithCovariances`, exported as
-`CONTACTS_TOPIC`). Subscribe in autonomy initialization and consume it next tick:
+An autonomy uses the measured contacts through belief:
 
 ```rust
-use scrimmage_core::plugin::sensor::{CONTACTS_TOPIC, ContactsWithCovariances};
-// initialize:
-context.messages.subscribe::<ContactsWithCovariances>("LocalNetwork", CONTACTS_TOPIC)?;
 // step:
-for message in context.messages.receive::<ContactsWithCovariances>("LocalNetwork", CONTACTS_TOPIC)? {
-    for contact in &message.value.contacts {
-        let measured_position_m = contact.measurement.state.position_world_m;
-        // Use this measured position in your behavior.
-    }
+for contact in context.contacts.iter() {
+    let measured_position_m = contact.state.position_world_m;
+    // Use this measured position in your behavior.
 }
 ```
 
-Like C++, the message is the only output; there is no separate local observation
-copy. A consumer that keeps the newest message sees it one tick after sampling.
+For now the sensor also publishes each sample, including an empty one, on
+`LocalNetwork` under `topic_name` (default `ContactsWithCovariances`, exported
+as `CONTACTS_TOPIC`), only so delivered messages match C++; include
+`<network>LocalNetwork</network>`. Don't build on that message: it bypasses
+tracking and is scheduled for removal.
 Removal clears a target on the next sensor sample after removal, not
 retroactively. Sensor streams use mission seed/entity/instance; C++ uses a
 shared generator and different contact iteration order.
@@ -410,9 +486,9 @@ endpoints. The source's nonnegative `comm_delay` queue semantics and stochastic
 delay are not ported by these built-ins and are rejected explicitly.
 Custom networks have the explicit delay/loss behavior above.
 
-`SensorContext::publish_local` is a separate convenience for latest-value
-entity-local observations. It bypasses simulated network policies; use the
-message API when communication behavior matters.
+`SensorContext::publish_reading` is not a message: a reading goes only to its
+own entity's estimators, bypassing network policies. Use the message API when
+communication behavior matters.
 
 ## Execution and lifecycle
 
@@ -424,6 +500,7 @@ Generate entities
 -> sensors
 -> interactions
 -> networks / delivery
+-> estimation: localization, then tracking
 -> metrics
 -> remove inactive entities
 -> output / advance time
@@ -435,8 +512,12 @@ coordinator; plugin state is never shared mutably between workers.
 
 Interactions also run once before the first tick, matching the reference.
 Networks run in name order. Metrics can consume interaction messages within the
-same tick; autonomy cannot see post-motion sensor deliveries until its next step.
+same tick; autonomy cannot see post-motion sensor readings until its next step.
+Estimation runs inside each entity's delivery task, so it adds no worker phase.
 Autonomy/controller/sensor loop rates retain outputs when updates are skipped.
+Estimators run every tick and reject `loop_rate`: a reading or command from a
+skipped tick would otherwise be lost. An estimator can do expensive work less
+often inside its own `step`.
 World-level plugins run each phase as in the C++ reference source.
 
 Return `Update::Applied` or `Update::Stop`; use `Result::Err` with an explanation

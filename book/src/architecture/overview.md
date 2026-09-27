@@ -4,10 +4,9 @@ scrimmage-rs keeps SCRIMMAGE's structure (entities that carry a stack of
 replaceable plugins, plus world-level plugins that act on every entity) and
 changes how an experiment is described, run, and checked. This section is the
 Rust counterpart of the [C++ architecture guide](../appendix/cpp/architecture.md).
-
-Parts marked **planned** describe the estimation design in
-[ESTIMATION.md](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/ESTIMATION.md).
-They are not in the code yet; everything else is.
+The main structural difference from C++ is the estimation step: sensors only
+measure, and each entity's estimators own its belief (see
+[Truth, measurements, and belief](information-flow.md)).
 
 ## The big picture
 
@@ -29,7 +28,7 @@ They are not in the code yet; everything else is.
 │  ┌─────────────────────────────────────────────────────────────┐   │
 │  │ Plugin stack (per entity)                                   │   │
 │  │  Autonomy → Controller(s) → MotionModel                     │   │
-│  │  Sensors → Localization → Tracking (planned) → belief       │   │
+│  │  Sensors → Localization → Tracking → belief                 │   │
 │  └─────────────────────────────────────────────────────────────┘   │
 │                                                                    │
 │  ┌─────────────────────────────────────────────────────────────┐   │
@@ -67,14 +66,11 @@ user models. See [User plugins and the starter crate](../guides/user-plugins.md)
 | Controller | Per entity | Turn commands into motion inputs | Belief, commands | Motion inputs |
 | MotionModel | Per entity | Advance the physics | Truth, motion inputs | Truth |
 | Sensor | Per entity | Measure the world | Truth, other entities' truth | Readings, messages |
-| Estimator (planned) | Per entity | Localization (own state), then tracking (contacts) | Readings, messages, known commands | Belief |
+| Localization | Per entity | Estimate own state | Readings, messages, the commands motion read | Own-state belief |
+| Tracking | Per entity | Estimate known contacts | Readings, messages, localization's pose | Known contacts |
 | Interaction | World | Apply effects between entities | Every entity's truth | Truth, health, events |
 | Network | World | Deliver messages | Senders, receivers, truth | Delivery decisions |
 | Metrics | World | Score the run | Events, messages | Scores |
-
-Today a sensor can also write belief, and decisions fall back to truth when no
-sensor does; the planned estimators replace both (see
-[Truth, measurements, and belief](information-flow.md)).
 
 Every plugin is an ordinary struct with a typed parameter struct
 (`#[serde(default, deny_unknown_fields)]`, so a misspelled setting is an error,
@@ -84,8 +80,8 @@ they read other entities through read-only snapshots. Interactions are the
 exception by design: they run on the coordinator with mutable access to every
 entity, because collisions and boundaries change several entities at once. The
 engine hands each plugin a context for its phase
-(`AgentContext`, `MotionContext`, `SensorContext`, `InteractionContext`,
-`NetworkContext`, `WorldContext`).
+(`AgentContext`, `MotionContext`, `SensorContext`, `LocalizationContext`,
+`TrackingContext`, `InteractionContext`, `NetworkContext`, `WorldContext`).
 
 ## Key types
 
@@ -94,7 +90,8 @@ engine hands each plugin a context for its phase
 | `ScenarioConfig` | `scenario.rs` | The typed experiment: run settings, entity groups, world plugins |
 | `Simulation` | `simcontrol.rs` | Owns entities and world plugins; `step()` runs one tick |
 | `Entity` | `entity.rs` | Identity, truth, health, and its `PluginStack` |
-| `PluginStack` | `entity/plugin_stack.rs` | The entity's plugin instances, belief, and observations |
+| `PluginStack` | `entity/plugin_stack.rs` | The entity's plugin instances, readings, and belief |
+| `Contact`, `ContactList` | `estimator.rs` | A tracked contact, and the shared list trackers write |
 | `Scheduler` | `simcontrol/scheduler.rs` | Runs an entity phase across workers and joins it |
 | `KinematicState` | `math/state.rs` | Position, velocity, orientation, angular velocity (ENU world frame) |
 | `EntitySnapshot` | `entity.rs` | A read-only copy of one entity for cross-entity reads |
@@ -131,6 +128,6 @@ while let Some(frame) = simulation.step()? {
 - [The tick](tick.md): the phase order, what runs in parallel, and when each
   plugin sees what.
 - [Truth, measurements, and belief](information-flow.md): how information moves
-  from the world to a decision, today and with the planned Estimator.
+  from the world to a decision.
 - [Messages](messages.md): publishing, networks, delivery timing.
 - [Plugin API and lifecycle](../reference/plugin-api.md): the exact contracts.

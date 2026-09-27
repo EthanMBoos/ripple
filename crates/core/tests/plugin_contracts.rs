@@ -9,7 +9,7 @@ use plugin_fixtures::*;
 use scrimmage_core::{Params, Simulation, plugin::PluginRegistry};
 
 #[test]
-fn all_seven_user_plugin_types_work_without_engine_edits() -> Result<()> {
+fn all_user_plugin_types_work_without_engine_edits() -> Result<()> {
     for workers in [1, 2, 8] {
         let simulation = simulate(workers, &Params::new())?;
         assert_eq!(simulation.entities().len(), 8);
@@ -261,6 +261,7 @@ fn network_panic_is_reported_and_other_plugins_are_closed() -> Result<()> {
     registry.register_controller::<controller::ScaleSpeed>("ScaleSpeed")?;
     registry.register_motion::<motion::EastwardMotion>("EastwardMotion")?;
     registry.register_sensor::<sensor::PositionSensor>("PositionSensor")?;
+    registry.register_localization::<estimator::EastFix>("EastFix")?;
     registry.register_interaction::<interaction::Floor>("Floor")?;
     registry.register_network::<PanicNetwork>("ExampleNetwork")?;
     registry.register_metrics::<metrics::PopulationMetrics>("PopulationMetrics")?;

@@ -6,6 +6,12 @@
 //! its frame is logged, and autonomy/controller outputs after all controller
 //! substeps. Tracing only reads simulation state, so outputs are identical
 //! with it on or off.
+//!
+//! TODO(estimation): record each sensor's reading (from `publish_reading`) in
+//! place of the LocalNetwork publications that `sensor_states` in
+//! pubsub/messages.rs picks up, so the sensor messages can be removed and the
+//! C++ check still compares measured values. reference/traces.py then pairs
+//! C++ publications with these records and ignores C++'s extra deliveries.
 
 use std::io::Write;
 

@@ -18,7 +18,7 @@ These findings come from source, rather than the synthesized guides in the
 | Same file, `run_logging` / finalization | Pre-step state is labeled `t + dt`; terminal logging repeats the final timestamp with terminal state. |
 | `src/plugins/network/LocalNetwork/LocalNetwork.cpp` | Reachability requires the same non-null parent entity, not proximity. |
 | `src/plugins/interaction/SimpleCollision/SimpleCollision.cpp` | Collision uses strict distance against `collision_range`, not summed entity/visual radii. Startup rejection is separate. |
-| `src/entity/Entity.cpp` | Truth and belief initially alias; `set_state_belief` detaches belief. Rust uses owned belief without mutable aliasing, but legacy truth contacts remain accessible. |
+| `src/entity/Entity.cpp` | Truth and belief initially alias; `set_state_belief` detaches belief. Rust keeps belief separate and has estimators own it (see the estimation difference below). |
 
 Preserve these observable timing/recording contracts during refactors. Current
 Rust lifecycle and delivery rules are in the
@@ -45,6 +45,31 @@ Rust lifecycle and delivery rules are in the
   `velocity_mps` directly. Spawn sampling and draw order are shared afterward.
 
 ## Intentional differences from C++
+
+- **Estimation owns belief.** C++ lets any plugin set belief, falls back to
+  truth when none does, and gives autonomy the true contacts. Rust has one
+  localization and one tracking estimator per entity (default `PassThrough`)
+  that turn sensor readings into belief at the end of each tick; autonomy and
+  controllers see belief only (`context.state`, `context.contacts`); sensors
+  can't write belief; several possible state or contact sensors is a load
+  error rather than "last writer wins". With no sensor, a perfect measurement
+  taken after interactions makes belief equal truth at the next decision, so
+  existing missions give identical outputs: 75 runs (25 missions at 1, 2
+  and 8 workers; 300 frame, event, summary and trace files) and the
+  follow-nearest sweep matched the previous commit. Two consequences to
+  know: decision plugins now initialize after the startup interactions (C++
+  initializes them while building each entity), and an entity that spawns is
+  unknown to others until the next tick. See the book's
+  [Belief vs truth](../book/src/concepts/belief-vs-truth.md). Estimation
+  experiments are timed on their own: C++ `SimpleINS` accumulates synthetic
+  drift inside a sensor, so it is not an equivalent workload for a
+  command-based predictor.
+- **Straight and NoisyState messages.** C++ Straight steers by the newest
+  `StateWithCovariance` message when one arrives. Rust Straight steers by
+  belief, which holds the same measurement at the same time, and subscribes to
+  the message only so deliveries match C++. NoisyState and NoisyContacts still
+  publish their LocalNetwork messages for the same reason; removing them would
+  change delivered-message counts and is left for a separate change.
 
 - **Survivor flight time:** C++ publishes `EntityPresentAtEnd` after its last
   network phase, so metrics credit survivors only until the latest removal.

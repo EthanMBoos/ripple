@@ -94,6 +94,7 @@ pub(super) fn load(
             name: name.clone(),
             instance,
             loop_rate_hz,
+            inputs: Default::default(),
             params: PluginValues::Text(params),
         })
     };
@@ -317,6 +318,10 @@ fn entity(
         controller: controllers,
         motion_model: motion,
         sensors,
+        // XML cannot name estimators or their inputs; each input takes the one
+        // sensor that fits, or the perfect measurement.
+        localization: PluginConfig::new("PassThrough"),
+        tracking: PluginConfig::new("PassThrough"),
     })
 }
 

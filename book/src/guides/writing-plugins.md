@@ -1,18 +1,20 @@
 # Writing plugins
 
-This guide covers what is common to all seven plugin types. It assumes you have
+This guide covers what is common to all plugin types. It assumes you have
 done [Your first autonomy plugin](../tutorial/first-autonomy.md). The
 [plugin API reference](../reference/plugin-api.md) covers parameters, state,
 messages, and lifecycle in detail.
 
-## The seven plugin types
+## The plugin types
 
 | Type | Trait | Runs for | Gets | Built-in to copy |
 | --- | --- | --- | --- | --- |
 | Autonomy | `Autonomy` | Each entity | Own belief, contacts, messages, a random stream; writes ports | [Straight](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs) |
 | Controller | `Controller` | Each entity | Same as autonomy; reads and writes ports | [SimpleAircraftControllerPID](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
 | Motion model | `MotionModel` | Each entity | Mutable truth; reads ports | [SimpleAircraft](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
-| Sensor | `Sensor` | Each entity | Read-only truth, contacts, a random stream; sets belief | [NoisyPosition](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) |
+| Sensor | `Sensor` | Each entity | Read-only truth, contacts, a random stream; publishes readings | [NoisyPosition](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) |
+| Localization | `Localization` | Each entity | Readings, messages, the commands motion read; writes own-state belief | [PassThrough](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
+| Tracking | `Tracking` | Each entity | Readings, messages, localization's pose; writes known contacts | [PassThrough](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
 | Interaction | `Interaction` | Whole world | All entities, mutable; emits events | [GroundCollision](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/interaction/ground_collision/ground_collision.rs) |
 | Network | `Network` | Whole world | Every message, a random stream; decides delivery | [LocalNetwork](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/network/local_network/local_network.rs) |
 | Metrics | `Metrics` | Whole world | Events and messages; reports team scores | [SimpleCollisionMetrics](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
@@ -180,8 +182,8 @@ for message in context.messages.receive::<BoundaryRegion>("GlobalNetwork", "Boun
 
 - **GlobalNetwork** reaches every plugin in the simulation. The simulator also
   publishes events such as `EntityGenerated` and `NonTeamCollision` on it.
-- **LocalNetwork** only reaches plugins on the *same* entity. Use it for a
-  vehicle's own sensor data.
+- **LocalNetwork** only reaches plugins on the *same* entity. A vehicle's own
+  sensor data goes to its estimators as readings, not as messages.
 - Messages are delivered in the network phase, after the publisher runs.
   An autonomy sees a sensor's message on its next tick.
 - The mission must list every network you use: `<network>LocalNetwork</network>`.
@@ -197,6 +199,7 @@ generate new entities
 -> sensors
 -> interactions
 -> networks deliver messages
+-> estimation (localization, then tracking) updates belief
 -> metrics
 -> remove dead entities, record the frame, advance time
 ```

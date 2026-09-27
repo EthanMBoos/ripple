@@ -1,7 +1,7 @@
 # Selected v1 models
 
 Keep a useful student research workflow, not a large compatibility catalog.
-The stock registry currently contains 22 models across all seven roles. Other
+The stock registry covers all nine roles. Other
 compiled Rust models can register through the same interfaces without editing
 the simulation loop. No runtime library loading is planned.
 
@@ -11,6 +11,7 @@ the simulation loop. No runtime library loading is planned.
 | Controller | SimpleAircraftControllerPID; SingleIntegratorControllerSimple; AircraftPIDController; Rust-only MotorSpeeds | SimpleAircraft PID roll/glide-slope modes deferred; unsupported modes are errors. MotorSpeeds supplies constant rotor commands for testing, not stabilization or navigation. |
 | Motion | SimpleAircraft; SingleIntegrator; FixedWing6DOF; Multirotor | Flight-model limitations are commented beside their equations. Multirotor retains C++ behavior; external-force contact and acceleration sensor access are not exposed. JSBSim is an offline verification candidate, not a runtime plugin. |
 | Sensor | NoisyState; NoisyContacts; NoisyPosition (Rust-only teaching example) | NoisyContacts measures every other live entity; no range/FOV, missed detections, or tracker. Cameras and richer sensors are not selected. |
+| Localization, tracking | PassThrough (copies one reading; the default for both) | Filters, dead reckoning, and trackers are research plugins; see [Belief vs truth](../concepts/belief-vs-truth.md). |
 | Interaction | SimpleCollision; GroundCollision; Boundary; Rust-native WaypointBroadcast | Physics-engine collisions, richer geometry, and games/scoring environments deferred. No integration-specific spawning here. |
 | Network | GlobalNetwork; LocalNetwork; SphereNetwork | SphereNetwork uses direct 3D distance checks and optional altitude-plane filtering; no spatial index. Legacy delay modes remain rejected; compiled networks can use explicit delay/loss. XML `name="CommsNetwork"` names an instance, as in C++. No OpenCL path. |
 | Metrics | SimpleCollisionMetrics, including ground counts | Add experiment-specific metrics as ordinary plugins. No generic statistics/service framework. |
@@ -55,4 +56,4 @@ telemetry, battery, game, and geometry extensions they motivate are not selected
 backlog. Keep their limitations documented; do not add them for completeness.
 AuctionAssign is a single random-bid messaging demonstration with stationary
 agents, not a task planner. See [plugin contracts](plugin-api.md#noisycontacts)
-for observation types, radio policies, random streams, and examples.
+for reading types, radio policies, random streams, and examples.

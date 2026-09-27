@@ -3,7 +3,7 @@
 Messages are one of several ways information moves between plugins. Within an
 entity, autonomy passes commands to controllers and controllers to the motion
 model through ports, decisions read the entity's belief, and sensors hand
-readings to their own entity (see
+readings to their own entity's estimators (see
 [Truth, measurements, and belief](information-flow.md)). Messages are the path
 for everything else: between plugins that are not wired together, between
 entities, and to and from world plugins, with a network deciding who receives
@@ -56,8 +56,8 @@ networks (loss, delay, bandwidth) are ordinary user plugins.
   recipient reads it in the same tick depends on when the recipient runs:
   autonomy and controllers run before delivery, so they read it in tick k+1;
   metrics run after, so they can count a tick's collision and other event
-  messages in the same tick; the planned estimators will also run after
-  delivery.
+  messages in the same tick; estimators also run after delivery, so they
+  read a message in the tick it is delivered.
 - A delayed delivery arrives in a later tick; it never reaches an earlier one.
 - Delivery order follows entity and plugin order, never worker timing.
 - Entities removed in a tick receive nothing afterwards, including deliveries
@@ -65,11 +65,16 @@ networks (loss, delay, bandwidth) are ordinary user plugins.
 
 ## Sensor readings inside an entity
 
-Sensors can also queue entity-local readings with `publish_local`. These are
-not network messages: they are delivered to the entity's own plugins in the
-delivery step after networks, and decision plugins read them in the next tick
-as observations. The planned Estimator reads readings by sensor name (see
+Sensors hand readings to their own entity with `publish_reading`. These are
+not network messages: no network sees them, and only the entity's estimators
+read them, by sensor name, in the estimation step after networks (see
 [Truth, measurements, and belief](information-flow.md)).
+
+`NoisyState` and `NoisyContacts` also publish their measurements on
+`LocalNetwork`, because C++ does, and `Straight` subscribes to both and
+discards them so delivered-message counts match C++. Don't build new
+behavior on those messages: a decision plugin that reads them bypasses the
+estimators.
 
 ## Limits
 

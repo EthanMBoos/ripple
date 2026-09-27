@@ -9,6 +9,7 @@ use serde::Serialize;
 use crate::{
     common::random::LegacyRng,
     entity::{Entity, EntityDefinition, EntitySnapshot},
+    estimator::{Contact, ContactList},
     plugin::{Messages, MetricReport, PluginRegistry, StepTime},
     pubsub::messages::NetworkTrace,
     scenario::{EndConditions, ResolvedScenario, ScenarioConfig},
@@ -90,6 +91,9 @@ pub struct Simulation {
     end_conditions: EndConditions,
     finished: bool,
     trace: Option<Trace>,
+    /// The latest perfect contact measurement: every entity present after the
+    /// last interactions. New entities start from it.
+    perfect_contacts: ContactList,
 }
 
 impl Simulation {
@@ -128,6 +132,7 @@ impl Simulation {
             end_conditions,
             finished: false,
             trace: None,
+            perfect_contacts: ContactList::from([]),
         };
 
         simulation.world.initialize(
@@ -141,8 +146,18 @@ impl Simulation {
         // Legacy missions can create entities one step before the start time.
         simulation.generate_entities()?;
         simulation.apply_interactions()?;
+        // Every entity's first belief comes from one snapshot of the whole
+        // initial population, before any decision plugin initializes.
+        let snapshot = simulation.snapshot();
+        simulation.perfect_contacts = perfect_contacts(&snapshot.entities, simulation.time_s);
+        simulation.start_entities()?;
         simulation.time_s = simulation.config.run.start_s;
         Ok(simulation)
+    }
+
+    /// The scenario as loaded, with every estimator input's source filled in.
+    pub fn scenario(&self) -> &ScenarioConfig {
+        &self.config
     }
 
     pub fn entities(&self) -> &[Entity] {
@@ -190,6 +205,15 @@ impl Simulation {
         result
     }
 
+    /// Starts entities created since the last call; others learn of them at their
+    /// next measurement.
+    fn start_entities(&mut self) -> Result<()> {
+        for entity in &mut self.entities {
+            entity.start(&self.perfect_contacts)?;
+        }
+        Ok(())
+    }
+
     fn snapshot(&self) -> SimulationFrame {
         let mut entities: Vec<_> = self.entities.iter().map(Entity::snapshot).collect();
         entities.sort_by_key(|entity| entity.id);
@@ -221,13 +245,14 @@ impl Simulation {
         }
 
         self.generate_entities()?;
+        self.start_entities()?;
         let frame = self.snapshot();
         let dt_s = self.config.run.dt_s;
         let time_s = self.time_s;
         if let Some(trace) = &mut self.trace {
             trace.beliefs(time_s, &self.entities)?;
         }
-        self.run_phase(|entity| entity.step_autonomy(StepTime { time_s, dt_s }, &frame.entities))?;
+        self.run_phase(|entity| entity.step_autonomy(StepTime { time_s, dt_s }))?;
 
         // Match the reference: all controller substeps precede all motion substeps.
         let motion_dt_s = dt_s / self.config.run.motion_multiplier as f64;
@@ -237,7 +262,7 @@ impl Simulation {
                 time_s: substep_time_s,
                 dt_s: motion_dt_s,
             };
-            self.run_phase(|entity| entity.step_controller(time, &frame.entities))?;
+            self.run_phase(|entity| entity.step_controller(time))?;
             substep_time_s += motion_dt_s;
         }
         if let Some(trace) = &mut self.trace {
@@ -271,7 +296,11 @@ impl Simulation {
         if let (Some(trace), Some(network_trace)) = (&mut self.trace, &network_trace) {
             trace.network(network_trace)?;
         }
-        self.run_phase(Entity::deliver_observations)?;
+        // Estimation shares the delivery task: readings are delivered and belief
+        // updated per entity, with no extra phase.
+        self.perfect_contacts = perfect_contacts(&contacts, time_s + dt_s);
+        let perfect = self.perfect_contacts.clone();
+        self.run_phase(|entity| entity.estimate(time, &perfect))?;
         self.world_stop |= self.world.metrics(time, &contacts, &self.entity_teams)?;
         // Retain a stop request even when its entity is removed in this same tick.
         self.world_stop |= self.entities.iter().any(Entity::stop_requested);
@@ -397,6 +426,18 @@ impl Simulation {
             self.termination = Some(TerminationReason::ExternalRequest);
         }
     }
+}
+
+/// The perfect contact measurement: every entity not marked for removal.
+fn perfect_contacts(snapshot: &[EntitySnapshot], sampled_at_s: f64) -> ContactList {
+    let mut contacts = Vec::with_capacity(snapshot.len());
+    contacts.extend(
+        snapshot
+            .iter()
+            .filter(|entity| entity.active)
+            .map(|entity| Contact::measured(entity, sampled_at_s)),
+    );
+    contacts.into()
 }
 
 impl Drop for Simulation {

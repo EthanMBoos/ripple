@@ -7,42 +7,52 @@ apart:
 
 - **Truth:** where the vehicle really is. The motion model computes it, and
   collisions and scoring use it.
-- **Belief:** where the vehicle *thinks* it is. Sensors produce it, and
-  autonomy and controllers act on it.
+- **Belief:** where the vehicle *thinks* it is, and what it thinks is around
+  it. Estimators produce it from sensor readings, and autonomy and controllers
+  act on it.
 
-scrimmage-rs keeps these as two separate values on every entity.
+scrimmage-rs keeps these as separate values on every entity.
 
 ## Who reads and writes what
 
 | Plugin | Reads | Writes |
 | --- | --- | --- |
 | Motion model | Truth | Truth |
-| Sensor | Truth | Belief (optional), observations, messages |
-| Autonomy, controller | Belief, as `context.state` | Commands on its ports |
+| Sensor | Truth | Readings, messages |
+| Localization estimator | Readings, messages, commands | Own-state belief |
+| Tracking estimator | Readings, messages, own-state belief | Known contacts |
+| Autonomy, controller | Belief: `context.state`, `context.contacts` | Commands on its ports |
 | Interaction | Truth of all entities | Truth, health |
 | Metrics | Events and messages | Scores |
 
-The key line is the autonomy row. `context.state` is the entity's **belief**.
-Autonomy and controller code doesn't need to know whether a noisy sensor is
-installed: it always reads `context.state`.
+The key line is the autonomy row. Autonomy and controllers see belief and
+nothing else: `context.state` is the entity's estimated own state and
+`context.contacts` the contacts it knows about. They don't need to know whether
+the belief is perfect or noisy.
 
-## Ideal feedback by default
+## Perfect belief by default
 
-If no sensor provides an estimate, belief simply *is* truth. `context.state`
-reads the true state, as if the vehicle had perfect sensors. That's the
+Every entity has two estimators: **localization** (where am I?) and
+**tracking** (what is around me?). Both default to `PassThrough`, which copies
+a reading into belief. With no sensor, the reading is the engine's *perfect*
+measurement, taken at the end of each tick after collisions. So by default
+belief equals truth at every decision, for every entity present. That's the
 right starting point when you're developing a new behavior: first make it work
 with perfect information, then add noise and see what breaks.
 
+There is no fallback to truth: perfect belief is just a perfect sensor feeding
+the same `PassThrough` a noisy sensor would.
+
 ## Adding noise with a sensor
 
-A sensor installs an estimate with `set_belief`. The built-in
+Sensors measure; they never write belief. The built-in
 [NoisyState](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_state/noisy_state.rs)
-sensor does exactly this. Each tick it:
+sensor, each tick:
 
 1. copies the true state,
 2. adds Gaussian noise to position, velocity, and attitude,
-3. calls `context.set_belief(noisy_state)`,
-4. also publishes the noisy state as a message on `LocalNetwork`.
+3. publishes the result as its reading (`context.publish_reading`),
+4. also publishes it as a message on `LocalNetwork`, as C++ does.
 
 Add it to an entity in a mission:
 
@@ -50,58 +60,86 @@ Add it to an entity in a mission:
 <sensor>NoisyState</sensor>
 ```
 
-From then on, that vehicle's autonomy and controller act on the noisy state,
-while collisions and scoring still use the truth. Try
-`missions/noisy-state.xml` to see the difference.
+Localization's `PassThrough` now copies that reading instead of the perfect
+one, so the vehicle's autonomy and controller act on the noisy state while
+collisions and scoring still use the truth. Try `missions/noisy-state.xml` to
+see the difference. `NoisyContacts` does the same for other vehicles, through
+tracking.
 
-A sensor can call `context.clear_belief()` to go back to ideal feedback.
+## Which sensor feeds belief
 
-## Timing: sensors run after motion
+Each estimator input takes readings of one kind (a full state, or contacts).
+If the mission doesn't say which sensor feeds it:
+
+- no sensor of that kind: the perfect measurement;
+- exactly one: that sensor;
+- several: an error asking you to name one.
+
+In YAML, name the sensor instance explicitly:
+
+```yaml
+sensors:
+  gps:
+    plugin: NoisyState
+    pos_noise_0: [0, 5]
+localization:
+  PassThrough:
+    inputs: {state: gps}
+```
+
+`inputs: {state: perfect}` keeps perfect localization even with a noisy sensor
+installed. The run's `manifest.json` records every input's source.
+
+## Timing: estimation ends the tick
 
 Within one tick, the order is:
 
 ```text
-autonomy -> controllers -> motion -> sensors -> interactions -> ...
+autonomy -> controllers -> motion -> sensors -> interactions -> networks
+         -> estimation (localization, then tracking) -> metrics -> ...
 ```
 
-Sensors sample the state *after* the vehicle has moved. The autonomy sees that
-new estimate on its **next** tick. This one-tick delay is realistic: software
-always acts on a measurement taken slightly in the past.
+With a 0.1 s step: autonomy decides at 0.0; the vehicle moves to 0.1; sensors
+measure the state at 0.1 and estimators turn those readings into belief for
+0.1; autonomy decides at 0.1 using it. A current reading adds no delay: the
+decision at 0.1 uses a measurement of 0.1. Delay appears only where you model
+it, such as a slow sensor, a delayed message, or an estimator that keeps an
+old reading. An entity that spawns is unknown to the others until their next
+measurement, one tick later.
 
-## One estimator per vehicle
+## Writing your own estimator
 
-The belief persists between samples. If several sensors call `set_belief`, they
-run in mission order and **the last one wins**. The simulator does not fuse them.
+To model drift, a filter, or a tracker, replace `PassThrough` with your own
+localization or tracking estimator. It predicts with its own model (for
+example, from the commands the motion model read, in `context.commands`) and
+corrects with readings. That keeps the three sources of error apart:
 
-To model a realistic navigation system, use one sensor as the estimator:
+- what the vehicle really does: the motion model;
+- what the sensor adds: the sensor;
+- what the vehicle *assumes* about its own motion: the estimator.
 
-- GPS, IMU, and compass sensors each publish their measurements as messages on
-  `LocalNetwork`.
-- A single estimator sensor (for example, a Kalman filter) subscribes to those
-  messages, combines them, and is the **only** plugin that calls `set_belief`.
+A few rules keep such experiments honest:
 
-Every autonomy and controller then acts on the fused estimate without changes.
+- An estimator gets the readings and commands a real robot would have. Never
+  hand it the actual noise values, the true response gain, or other hidden
+  physical parameters; a known calibration or starting position is an explicit
+  setting of the estimator.
+- Zero sensor noise doesn't mean exact belief: a wrong model or an old reading
+  still produces error. Don't swap a predictive estimator for `PassThrough`
+  when its noise reaches zero.
+- Don't feed estimation error back into physics as an extra disturbance. A
+  wrong belief already changes the real path, because the controller acts on
+  it; that is the effect to measure.
+- A planner that predicts futures can reuse the estimator's equations, but its
+  hypothetical states stay separate from truth.
 
-## Other vehicles are still truth
-
-`context.contacts_truth` gives every entity's **true** state, as the name says.
-It's there for simple behaviors and for porting C++ plugins that relied on it.
-
-If your research is about perceiving *other* vehicles (detection, tracking,
-noisy contacts), don't read `contacts_truth` in your autonomy. Instead:
-
-1. write a sensor that reads `contacts_truth`,
-2. applies range limits, noise, or missed detections,
-3. publishes the result as a message,
-
-and have the autonomy subscribe to that message. That keeps "what the world is"
-and "what this vehicle knows" separate, the same way belief does for its own
-state.
+See [Plugin API](../reference/plugin-api.md#estimators) for the interface.
 
 ## Summary
 
 - Truth is physics; belief is what the software thinks.
-- `context.state` is belief. It equals truth until a sensor installs an estimate.
-- Sensors run after motion; autonomy sees the estimate next tick.
-- Use one estimator sensor per vehicle; the last `set_belief` wins.
-- `contacts_truth` is exact. Put a sensor in between if perception matters.
+- Autonomy and controllers see belief only: `context.state` and `context.contacts`.
+- Sensors produce readings; one localization and one tracking estimator per
+  entity turn them into belief.
+- With no sensor, belief is perfect: `PassThrough` of a perfect measurement.
+- Several possible sensors must be named in `inputs`; nothing is picked silently.

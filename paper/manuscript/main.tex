@@ -107,7 +107,9 @@ Year & Development and experimental requirement \\
 
 This section describes SCRIMMAGE-RS and summarizes three checks: that it
 behaves like SCRIMMAGE, that an experiment is easier to build in it, and what
-it costs to run. The details are in the appendices.
+it costs to run. These checks describe the runtime before the proposed
+estimation stage (Section~\ref{sec:estimation}). The details are in the
+appendices.
 
 \subsection{SCRIMMAGE-RS}
 
@@ -233,6 +235,87 @@ C++.
 We measured both in a Linux container and directly on macOS; the findings hold
 in both.
 
+\section{Separating Measurement from Belief}
+\label{sec:estimation}
+
+The first extension we propose changes how a robot comes to know its own state
+and its surroundings. In SCRIMMAGE, and in SCRIMMAGE-RS today, a sensor can
+write the robot's belief directly, any sensor can overwrite it, and a planner
+may read belief, subscribe to a sensor's message itself, or fall back to truth
+when no estimate exists. Every experiment that involves imperfect information
+has to wire these pieces by hand. We propose an explicit estimation stage:
+sensors produce measurements, estimators own belief, and autonomy and
+controllers read only that belief. Table~\ref{tab:estimation} shows what this
+changes for a developer.
+
+\begin{table*}[t]
+\centering
+\small
+\caption{Common tasks before and after the proposed estimation stage.}
+\label{tab:estimation}
+\begin{tabularx}{\textwidth}{@{}P{0.22\textwidth}XX@{}}
+\toprule
+Task & SCRIMMAGE and SCRIMMAGE-RS today & With the estimation stage \\
+\midrule
+Choose which sensor feeds the robot's state & Implicit: any sensor can overwrite belief, and the last writer in a step wins & Named in the mission and checked before the run \\
+Give a planner its state & The planner reads belief, subscribes to a sensor's topic itself, or falls back to truth & The planner reads belief, always \\
+Swap the localization method & Edit every planner that selected its own source & Change the localizer; planners are untouched \\
+Configure error & Sensor noise, motion disturbance, and wiring are set in separate places & Each source of error is set once, at its owner \\
+Keep decisions from using hidden truth & Not enforced: decisions can read the true state of every entity & Decisions receive belief only \\
+Measure how wrong the robot was & Worked out by hand after the run & Truth, measurements, and belief are recorded separately \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\paragraph{Two estimators, one belief}
+Belief has two parts, each with one owner. \emph{Localization} answers
+``where am I?'': it turns navigation measurements (GPS, IMU) and the commands
+the robot issued into its estimated state. \emph{Tracking} answers ``what is
+around me?'': it turns contact measurements (radar, camera) into the contacts
+the robot knows about, using the pose localization just produced. Each can be
+replaced without touching the other or any planner. Sensors and evaluation
+keep access to physical truth; estimators and decisions do not.
+
+\paragraph{What changes in a tick}
+The stage runs after sensors and message delivery and before metrics,
+localization first, and keeps the existing order of every other phase. With a
+0.1~s timestep:
+\begin{enumerate}
+\item \emph{Decide at time 0.0.} Autonomy and controllers read the belief for
+time 0.0 and produce the inputs the motion model will use.
+\item \emph{Advance to 0.1.} The motion model advances physical truth; sensors
+sample the result, interactions apply their effects, and networks deliver the
+messages due.
+\item \emph{Form belief for 0.1.} Localization, then tracking, update belief
+from the completed interval and the information now available.
+\item \emph{Decide at time 0.1,} using that belief.
+\end{enumerate}
+Estimation adds computation to each tick, not simulated delay; modeling
+processing delay would be a separate, explicit choice.
+
+\paragraph{Pass-through first, prediction next}
+The first implementation copies measurements into belief. With perfect, current
+measurements, which simple missions use by default, belief equals truth at
+each decision for every entity already observed (an entity that has just
+appeared is known from the next measurement). Existing missions and their
+comparisons with C++ should therefore be unaffected, which the implementation
+must confirm, and the added cost can be measured on its own. A predictive
+localizer then occupies the same stage: it advances the previous belief using
+the commands the robot issued and its own motion model, and corrects that
+prediction with measurements. Because the physical response, the estimator's
+assumed response, and measurement error are configured separately, an
+experiment can vary each on its own. For example, a robot that achieves 8~m/s
+when commanded 10~m/s, estimated by a localizer that assumes 10~m/s, is 10~m
+off after 5~s without a position fix, even with perfect sensors.
+% The timing, equality, startup, and removal rules are specified in
+% docs/ESTIMATION.md (measurement and lifecycle contract).
+% TODO(estimation): still open: measure whether estimation shares the existing
+% entity-local delivery task or needs its own barrier; run the constant-command
+% experiment (10 m/s requested, 8 m/s achieved, assumed gains 0.8 and 1.0, fixes
+% every 5 s); rerun affected C++ comparisons, XML/YAML equivalence, worker and
+% recording consistency, the RQ2 workflow example, and performance checks. The
+% baseline data above do not validate this stage.
+
 \section{RQ1: When Does Sharing Information Improve Team Performance?}
 \label{sec:rq1}
 \label{sec:rq4}
@@ -252,9 +335,9 @@ own-state feedback falls back to truth when no estimate exists. Sensor and
 network models alone therefore do not enforce partial observability.
 
 \paragraph{Candidate capability}
-An optional observation-only decision interface, with explicit missing
-estimates and observation age. Sensors and evaluation would retain access to
-truth; existing plugins would retain their current interface.
+The estimation stage of Section~\ref{sec:estimation}. With decisions reading
+only belief, and belief formed from named measurements, an experiment can
+control exactly what each robot knows and compare sharing policies fairly.
 
 \paragraph{Experiment}
 Compare local decisions, periodic sharing, and selective sharing on the same
@@ -342,8 +425,8 @@ insufficient: some original SMAC tasks admit useful time-only policies
 and remove the relevant feedback or communication to check that it matters.
 These controls can begin with the existing scenario and sweep tools.
 
-The observation boundary (RQ1) and shared computation (RQ2) are candidates for
-core changes. Task models (RQ3) and evaluation cases should begin as research
+The estimation stage (Section~\ref{sec:estimation}), on which RQ1 builds, and
+shared computation (RQ2) are candidates for core changes. Task models (RQ3) and evaluation cases should begin as research
 plugins and experiment support. A focused paper could implement one of the core
 candidates and answer its associated question, leaving the others as
 motivated future work. Listing features or demonstrating that they run would

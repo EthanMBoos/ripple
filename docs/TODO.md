@@ -38,48 +38,44 @@ recorded in [reference notes](REFERENCE_NOTES.md#mission-compatibility).
 baseline before a core upgrade and compare after it. The paper's C++-versus-Rust
 timing ([benchmark.py](../reference/benchmark.py)) is done.
 
-- [x] Explain the eight-worker slowdown: each phase's pool handoff (~35 µs on
-  bare metal, ~10x in Docker's VM) exceeds light phases' work (see the paper).
-- [x] Benchmark the four workloads across agent counts with peak memory and
-  C++'s multithreaded mode, in a Linux container and on bare-metal macOS.
-- [x] Build each plugin's message address once instead of every step
-  (`PluginStack::mailboxes`): straight flight about a third faster, identical
-  output; Rust is now 1.1-1.8x faster than C++ on one core.
-- [x] Benchmark collision checking among active agents: the `collision`
-  workload in `perf.py` and `benchmark.py` spreads aircraft over about a
-  kilometre so few collide and the population stays nearly constant.
-- [ ] Add a shared spatial lookup for range queries. `SimpleCollision` checks
-  every pair of active agents each step (C++ checks every ordered pair, twice
-  the work), so its cost grows with the square of the agent count: 1.1 ms per
-  step at 1,024 agents (58% of the step), 4.5 ms at 2,048 (71%), 18 ms at 4,096
-  (79%). The simple, easy-to-follow version stays the default even though it is
-  slower; the faster path is something a mission or plugin switches on or off
-  with one setting.
-  - `SimpleCollision` keeps its every-pair scan by default: the paper's
-    like-for-like C++ timing stays valid, and the scan is the correctness check.
-    The lookup only narrows candidates; each still gets the exact distance test
-    in the current order, so events and output stay byte-identical and the C++
-    comparison still passes.
-  - The engine builds one read-only lookup (grid or tree) at each snapshot
-    plugins read, so positions are never stale. C++ builds one R-tree per step
-    before motion (used by Boids, ContactBlobCamera, SphereNetwork,
-    CaptureInBoundary, and SimpleCollision's startup check), so plugins after
-    motion see old positions; don't copy that.
-  - Plugins declare at setup that they want range queries. If none do, the
-    lookup is never built, so existing missions and timings don't change.
-  - Build time is reported as its own step, separate from each plugin's
-    queries, so per-plugin benchmarks stay readable.
-  - First consumer: an opt-in fast path in `SimpleCollision`, checked against
-    the scan (same events, same bytes), with a `collision-indexed` benchmark
-    variant reported beside the like-for-like one. Move other range-based
-    plugins (range-limited sensors, SphereNetwork) onto it as RQ1 and RQ3 need.
-  - Not chosen: a grid private to `SimpleCollision` (every other range-based
-    plugin would repeat it) or splitting the scan across cores (still grows with
-    the square of the agent count).
-  - Not needed for NoisyContacts: profiling `sensing-128` put 98% of its time in
-    generating noise, and it measures every agent (no range limit, as in C++).
-  - Message routing was about 16% of `sensing-128`; index subscribers by topic
-    (and LocalNetwork by entity) if message-heavy RQ1 experiments show it growing.
+Done: explained the eight-worker slowdown (each phase's hand-off to the thread
+pool costs more than light phases' work); benchmarked five workloads with memory
+and C++'s multithreaded mode, in a Linux container and on bare-metal macOS; and
+sped up single-worker phases and message addresses. Rust is now 1.1-1.8x faster
+than C++ on one core where outputs match. Details are in the paper.
+
+- [ ] **Range queries on the snapshot.** `SimpleCollision` checks every pair of
+  agents each step (C++ checks each pair twice), so its cost grows with the
+  square of the agent count: 1.1 ms per step at 1,024 agents (58% of the step),
+  4.5 ms at 2,048 (71%), 18 ms at 4,096 (79%). Plan:
+  - Give the truth snapshot that sensors, interactions, networks, and metrics
+    already receive two questions: `within(position, range)` and `nearest(k)`.
+    Plugins ask the question; they never manage an index.
+  - The simple scan is the default answer: easy to follow, the correctness
+    check, and what keeps the paper's C++ timing like-for-like. A mission
+    setting (e.g. `spatial_lookup: grid`) answers the same questions with a
+    grid. Results must not change: each candidate still gets the exact distance
+    test in the current order, so events and output stay byte-identical.
+  - The engine builds the grid on the first query of each snapshot and reuses
+    it for that phase, so positions are never stale (C++ builds one R-tree per
+    step before motion, so later plugins see old positions). Missions that never
+    query pay nothing. Build time is timed on its own, apart from each plugin.
+  - Move plugins over one at a time, each checked against its old output:
+    `SimpleCollision` first (benchmark with the `collision` workload, scan
+    against grid), then SphereNetwork and range-limited sensors as RQ1 and RQ3
+    need them. NoisyContacts doesn't need it: 98% of its time is generating
+    noise, and it measures every agent (no range limit, as in C++).
+  - Plugins keep their names: a name says what a plugin computes, not how it
+    finds candidates. Write a new plugin only when behavior changes (swept or
+    shaped collisions, approximate checks, deliberate differences from C++).
+  - Truth queries serve plugins that simulate the world. Decisions should ask
+    the same questions of the agent's own belief contacts (a short per-agent
+    list, so a plain scan). That
+    belongs with the estimation plan ([ESTIMATION.md](ESTIMATION.md)).
+- [ ] **Faster message delivery, if needed.** Routing was about 16% of
+  `sensing-128`. Indexing subscribers by topic (and LocalNetwork by entity) is
+  inside the engine, so no plugin changes; do it if message-heavy RQ1
+  experiments show routing growing.
 
 Tested at scale: 5,000 agents spawning in one tick and 1,500 removed in one tick.
 World plugins may publish up to 65,536 messages per step; an entity's plugins,

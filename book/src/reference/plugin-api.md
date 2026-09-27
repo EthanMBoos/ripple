@@ -390,8 +390,8 @@ Each message includes sender identity, publication time, and actual delivery tim
 Wrong message types and unconfigured network names are errors.
 
 Queues have fixed message-count limits in `pubsub/messages.rs`: 1,024 outgoing
-publications per plugin, 1,024 unread messages per subscriber/channel, and 65,536
-pending deliveries per network (including fan-out staged in the current phase).
+publications per entity plugin (65,536 for world plugins), 65,536 unread
+messages per subscriber/channel, and 65,536 pending deliveries per network (including fan-out staged in the current phase).
 Overflow returns an error and terminates the run with normal cleanup; it is not
 silent loss or backpressure. A failing phase is not rolled back. These are simple
 research defaults, not byte limits or legacy queue-policy compatibility. Drain

@@ -39,8 +39,9 @@ User and developer guidance goes in `book/src/` (listed in `SUMMARY.md`);
 ## Code rules
 
 - Organize around the C++ names (`simcontrol`, `entity`, `parse`, `math`,
-  `common`, `plugin_manager`, `pubsub`) and the seven plugin categories:
-  Autonomy, Controller, MotionModel, Sensor, Interaction, Network, Metrics.
+  `common`, `plugin_manager`, `pubsub`) and the plugin categories: Autonomy,
+  Controller, MotionModel, Sensor, Interaction, Network, Metrics, plus the
+  Rust-only estimators (Localization and Tracking, in `estimator.rs`).
 - Each built-in lives in `plugin/<category>/<plugin>/<plugin>.rs`. Parameters are
   a `#[derive(Deserialize)]` struct with `#[serde(default, deny_unknown_fields)]`
   whose `Default` holds the mission defaults; `configure` calls `params.parse()`.
@@ -59,13 +60,16 @@ User and developer guidance goes in `book/src/` (listed in `SUMMARY.md`);
 ## Execution invariants
 
 - Phase order: generate; autonomy; all controller substeps; all motion
-  substeps; sensors; interactions; networks; metrics; removal/output/time.
+  substeps; sensors; interactions; networks; delivery and estimation
+  (localization, then tracking); metrics; removal/output/time.
   Never interleave substeps or run a whole entity chain as one parallel task.
 - Workers own disjoint entity state; every phase joins every task. Rust output
   must be byte-identical at 1, 2, and 8 workers and with Rerun on or off.
 - Every subscriber has its own queue. Preserve legacy spawn RNG draw order;
   sensor random streams use stable entity/plugin identities.
-- Keep truth, observations, and belief distinct. Rerun is output only.
+- Keep truth, readings, and belief distinct. Autonomy and controllers see
+  belief only; estimators never see truth; sensors never write belief. Rerun
+  is output only.
 
 ## Build and check
 

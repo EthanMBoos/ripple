@@ -78,6 +78,32 @@ where
     plugin_configs(slot).map_err(D::Error::custom)
 }
 
+/// One estimator; its `inputs` map is framework data, not a plugin parameter.
+pub(crate) fn estimator_plugin<'de, D>(
+    deserializer: D,
+) -> std::result::Result<PluginConfig, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let mut slot = Mapping::deserialize(deserializer)?;
+    let mut inputs = std::collections::BTreeMap::new();
+    for (_, value) in slot.iter_mut() {
+        if let Value::Mapping(params) = value
+            && let Some(map) = params.remove("inputs")
+        {
+            inputs = serde_yaml_ng::from_value(map)
+                .map_err(|error| D::Error::custom(format!("inputs: {error}")))?;
+        }
+    }
+    let mut configs = plugin_configs(slot).map_err(D::Error::custom)?;
+    if configs.len() != 1 {
+        return Err(D::Error::custom("expected exactly one estimator plugin"));
+    }
+    let mut config = configs.remove(0);
+    config.inputs = inputs;
+    Ok(config)
+}
+
 pub(crate) fn motion_plugin<'de, D>(deserializer: D) -> std::result::Result<PluginConfig, D::Error>
 where
     D: Deserializer<'de>,
@@ -112,6 +138,7 @@ fn plugin_configs(slot: Mapping) -> Result<Vec<PluginConfig>> {
             name,
             instance,
             loop_rate_hz,
+            inputs: Default::default(),
             params: PluginValues::Yaml(params),
         });
     }
@@ -259,6 +286,9 @@ entities:
         plugin: NoisyState
         pos_noise_0: [0, 5]
       NoisyState:
+    localization:
+      PassThrough:
+        inputs: {state: coarse}
 ";
 
     fn load(text: &str, overrides: &[(&str, &str)]) -> Result<ScenarioConfig> {
@@ -286,7 +316,33 @@ entities:
         assert_eq!(entity.sensors[0].name, "NoisyState");
         assert_eq!(entity.sensors[0].instance.as_deref(), Some("coarse"));
         assert_eq!(entity.sensors[1].instance, None);
-        mission.resolve(&PluginRegistry::with_builtins())?;
+        let resolved = mission.resolve(&PluginRegistry::with_builtins())?;
+        // Loading records every estimator input's source, including defaults.
+        let entity = &resolved.config.entities[0];
+        assert_eq!(entity.localization.inputs["state"], "coarse");
+        assert_eq!(entity.tracking.inputs["contacts"], "perfect");
+        Ok(())
+    }
+
+    #[test]
+    fn estimator_inputs_are_chosen_only_when_unambiguous() -> Result<()> {
+        let without_inputs = MISSION.replace("        inputs: {state: coarse}\n", "");
+        let message = error(&without_inputs, &[]);
+        assert!(
+            message.contains("could use any of the sensors coarse, NoisyState:1"),
+            "{message}"
+        );
+        let unknown = MISSION.replace("state: coarse", "state: gps");
+        assert!(error(&unknown, &[]).contains("names sensor 'gps'"));
+        let misspelled = MISSION.replace("state: coarse", "stat: coarse");
+        assert!(error(&misspelled, &[]).contains("has no input 'stat'"));
+        // Perfect localization, while the noisy sensors feed nothing.
+        let perfect = load(&MISSION.replace("state: coarse", "state: perfect"), &[])?
+            .resolve(&PluginRegistry::with_builtins())?;
+        assert_eq!(
+            perfect.config.entities[0].localization.inputs["state"],
+            "perfect"
+        );
         Ok(())
     }
 

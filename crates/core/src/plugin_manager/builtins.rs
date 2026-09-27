@@ -1,6 +1,8 @@
 //! Registration names for the bundled concrete plugins.
 use super::PluginRegistry;
-use crate::plugin::{autonomy, controller, interaction, metrics, motion, network, sensor};
+use crate::plugin::{
+    autonomy, controller, estimator, interaction, metrics, motion, network, sensor,
+};
 use anyhow::Result;
 
 pub(crate) fn register_builtins(registry: &mut PluginRegistry) -> Result<()> {
@@ -24,6 +26,8 @@ pub(crate) fn register_builtins(registry: &mut PluginRegistry) -> Result<()> {
     registry.register_sensor::<sensor::NoisyPosition>("NoisyPosition")?;
     registry.register_sensor::<sensor::NoisyState>("NoisyState")?;
     registry.register_sensor::<sensor::NoisyContacts>("NoisyContacts")?;
+    registry.register_localization::<estimator::PassThrough>("PassThrough")?;
+    registry.register_tracking::<estimator::PassThrough>("PassThrough")?;
     registry.register_interaction::<interaction::SimpleCollision>("SimpleCollision")?;
     registry.register_interaction::<interaction::Boundary>("Boundary")?;
     registry.register_interaction::<interaction::GroundCollision>("GroundCollision")?;

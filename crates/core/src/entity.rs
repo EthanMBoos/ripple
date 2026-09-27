@@ -8,8 +8,9 @@ use serde::Serialize;
 
 use crate::{
     entity::plugin_stack::{CompiledStack, PluginStack},
+    estimator::{Contact, ContactList},
     math::{EulerAngles, KinematicState, Quaternion, Vec3},
-    plugin::{EntityInfo, Observations, PluginRegistry, StepTime},
+    plugin::{EntityInfo, PluginRegistry, Readings, StepTime},
     scenario::EntityGroupConfig,
 };
 
@@ -85,6 +86,11 @@ impl EntityDefinition {
             plugins: CompiledStack::compile(config, registry)?,
         })
     }
+
+    /// The sensor chosen for each localization and tracking input.
+    pub(crate) fn estimator_inputs(&self) -> [std::collections::BTreeMap<String, String>; 2] {
+        self.plugins.estimator_inputs()
+    }
 }
 
 pub struct Entity {
@@ -98,6 +104,8 @@ pub struct Entity {
     contact_type: EntityKind,
     born_s: f64,
     active: bool,
+    /// Estimators and decision plugins have been initialized.
+    started: bool,
     plugins: PluginStack,
 }
 
@@ -154,6 +162,7 @@ impl Entity {
             contact_type: definition.contact_type,
             born_s,
             active: true,
+            started: false,
             plugins,
         })
     }
@@ -167,9 +176,13 @@ impl Entity {
     pub fn truth(&self) -> &KinematicState {
         &self.truth
     }
-    /// The estimate used by autonomy/controllers; ideal truth until detached by a sensor.
+    /// Own-state belief, the estimate autonomy and controllers use.
     pub fn belief(&self) -> &KinematicState {
-        self.plugins.belief(&self.truth)
+        self.plugins.belief()
+    }
+    /// The contacts this entity believes in (its tracker's list, which may include itself).
+    pub fn contacts_belief(&self) -> &[Contact] {
+        self.plugins.contacts()
     }
     /// World interactions may change physical state after the motion phase.
     pub fn truth_mut(&mut self) -> &mut KinematicState {
@@ -215,26 +228,40 @@ impl Entity {
     pub(crate) fn plugin_outputs(&self) -> Vec<(&str, &str, f64)> {
         self.plugins.outputs()
     }
-    pub fn observations(&self) -> &Observations {
-        self.plugins.observations()
+    /// Delivered sensor readings, by sensor instance name. Estimators read these;
+    /// evaluation and tests may inspect them.
+    pub fn readings(&self) -> &Readings {
+        self.plugins.readings()
     }
 
-    pub(crate) fn step_autonomy(
-        &mut self,
-        time: StepTime,
-        contacts: &[EntitySnapshot],
-    ) -> Result<()> {
-        self.plugins
-            .autonomy(self.info(), time, &self.truth, contacts)
+    /// Estimators, then decision plugins, from the startup readings and the
+    /// population; does nothing once started.
+    pub(crate) fn start(&mut self, perfect_contacts: &ContactList) -> Result<()> {
+        if self.started {
+            return Ok(());
+        }
+        self.started = true;
+        let time = StepTime {
+            time_s: self.born_s,
+            dt_s: 0.0,
+        };
+        let info = self.info();
+        // As in `new`, a panicking plugin becomes an error rather than escaping
+        // `Simulation::new` (a sweep then records one failed case).
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            self.plugins
+                .start(info, time, &self.truth, perfect_contacts)
+        }))
+        .unwrap_or_else(|_| Err(anyhow::anyhow!("entity plugin initialization panicked")))
+        .with_context(|| format!("initialize entity {}", self.id))
     }
 
-    pub(crate) fn step_controller(
-        &mut self,
-        time: StepTime,
-        contacts: &[EntitySnapshot],
-    ) -> Result<()> {
-        self.plugins
-            .controllers(self.info(), time, &self.truth, contacts)
+    pub(crate) fn step_autonomy(&mut self, time: StepTime) -> Result<()> {
+        self.plugins.autonomy(self.info(), time)
+    }
+
+    pub(crate) fn step_controller(&mut self, time: StepTime) -> Result<()> {
+        self.plugins.controllers(self.info(), time)
     }
 
     pub(crate) fn step_motion(&mut self, time: StepTime) -> Result<()> {
@@ -254,8 +281,13 @@ impl Entity {
         self.plugins.close(time)
     }
 
-    pub(crate) fn deliver_observations(&mut self) -> Result<()> {
-        self.plugins.deliver()
+    pub(crate) fn estimate(
+        &mut self,
+        time: StepTime,
+        perfect_contacts: &ContactList,
+    ) -> Result<()> {
+        self.plugins
+            .estimate(self.info(), time, &self.truth, perfect_contacts)
     }
 
     pub(crate) fn stop_requested(&self) -> bool {

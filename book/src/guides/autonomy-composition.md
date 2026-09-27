@@ -20,7 +20,6 @@ smallest unit of code within that behavior.
 
 ```rust
 struct RescueAutonomy {
-    tracks: TargetTracks,
     mission: RescueMission,
     navigation: Navigator,
 }
@@ -28,10 +27,12 @@ struct RescueAutonomy {
 
 These components have different jobs and own different state:
 
-- `TargetTracks`: what the agent believes exists, based on received observations.
 - `RescueMission`: what the agent is trying to accomplish and its current phase.
 - `Navigator`: how to move toward the chosen goal, including any route progress.
 - The existing controller plugin: how to turn desired motion into control inputs.
+- The entity's tracking estimator, not the autonomy: what the agent believes
+  exists, from its sensor readings. The autonomy reads the result as
+  `context.contacts`.
 
 The autonomy entry point coordinates them:
 
@@ -41,11 +42,9 @@ fn step(
     context: &mut AgentContext<'_>,
     io: &mut PluginIo,
 ) -> Result<Update> {
-    self.tracks.update(context.observations, context.time)?;
-
     let input = MissionInput {
         state: context.state,
-        tracks: &self.tracks,
+        contacts: context.contacts,
         time: context.time,
     };
     let goal = self.mission.step(&input);
@@ -72,26 +71,27 @@ Splitting autonomy does not bypass detection probability or give it perfect trut
 ```text
 World truth
   -> sensor range / visibility / detection probability / measurement noise
-  -> delivered observations
-  -> autonomy's tracks or belief
+  -> readings
+  -> tracking estimator (tracks) and localization estimator (own state)
+  -> belief: context.contacts and context.state
   -> mission decision
   -> desired command
 ```
 
-A missed detection might produce no observation. The tracking component decides
+A missed detection might produce no reading. The tracking estimator decides
 whether to retain an older estimate, reduce confidence, or forget it. It should
-use observation timestamps and process new measurements once, not treat a retained
-observation as a fresh detection every tick. Those choices belong to the research
-model; a general tracking framework is not required.
+use reading timestamps and process new measurements once (`inputs.fresh`), not
+treat a retained reading as a fresh detection every tick. Those choices belong
+to the research model; a general tracking framework is not required.
 
 States should receive the tracks and known map information they need, not the
 entire mutable simulation. Mission-provided knowledge, such as a known home base,
 is different from hidden targets that must be detected.
 
-`AgentContext.state` reads the entity's owned belief when one is installed,
-otherwise truth. `contacts_truth` still exposes exact world state, so an autonomy
-must deliberately consume measurements when sensing matters. See
-[Belief vs truth](../concepts/belief-vs-truth.md) for the current behavior.
+An autonomy sees belief only: `context.state` and `context.contacts`. With no
+sensors, belief is perfect; swap the estimators or add sensors to make it
+imperfect, without touching the autonomy. See
+[Belief vs truth](../concepts/belief-vs-truth.md).
 
 ## A giant state-machine match is still a giant function
 
@@ -114,8 +114,8 @@ struct Decision {
 
 `Search` might own its coverage progress. `Approach` might own a selected track ID
 and an arrival tolerance. Neither needs access to all the other's internals.
-Keep shared tracks in the autonomy and borrow them; do not copy the whole belief
-into every state.
+Borrow the belief (`context.contacts`) into each state; do not copy it into
+every state.
 
 The mission dispatcher stays small:
 
@@ -152,7 +152,6 @@ A possible layout for a larger built-in:
 ```text
 plugin/autonomy/rescue_autonomy/
     rescue_autonomy.rs   # Plugin entry point, configuration/defaults, and composition
-    tracks.rs           # Observations and remembered targets
     mission.rs          # Mission state and dispatch
     search.rs           # Search behavior and progress
     approach.rs         # Approach behavior and selected target
@@ -192,7 +191,7 @@ declare that refueling or capture actually occurred.
 | --- | --- |
 | An object's actual position, existence, and physical state | World/entity state |
 | Whether an agent detects it and the reported measurement | Sensor |
-| Remembered observations and estimated object state | Agent's belief/tracking code |
+| Remembered readings and estimated object state | The entity's tracking estimator |
 | Whether to investigate, approach, avoid, or request an action | Autonomy |
 | Whether the physical/game conditions allow capture, refueling, or damage | Interaction plugin |
 

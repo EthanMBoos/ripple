@@ -1,14 +1,16 @@
-//! Sensor interface and observation delivery; concrete models live in plugin/sensor.
+//! Sensor interface and reading delivery; concrete models live in plugin/sensor.
 use crate::{
     EntitySnapshot, KinematicState,
     common::PluginRandom,
+    estimator::ContactList,
     plugin_manager::entity_plugin::{EntityInfo, Plugin, StepTime, Update},
     pubsub::Messages,
 };
-use anyhow::Result;
+use anyhow::{Result, ensure};
+use std::any::TypeId;
 
-mod observations;
-pub use observations::{Observation, Observations};
+mod readings;
+pub use readings::{Reading, ReadingKind, Readings};
 
 pub struct SensorContext<'a> {
     pub messages: &'a mut Messages,
@@ -18,77 +20,41 @@ pub struct SensorContext<'a> {
     pub truth: &'a KinematicState,
     pub contacts_truth: &'a [EntitySnapshot],
     pub random: &'a mut PluginRandom,
-    pub(crate) belief: &'a mut Option<KinematicState>,
-    pub(crate) pending: &'a mut Observations,
+    /// This sensor's instance name, which estimators use to select its readings.
+    pub(crate) name: &'a str,
+    pub(crate) kind: ReadingKind,
+    pub(crate) pending: &'a mut Readings,
 }
 impl SensorContext<'_> {
-    /// Replace the entity's estimate, without modifying physical truth.
-    /// Autonomy/controllers see it on their next update; it persists between samples.
-    /// Multiple writers run in mission order, with the last update winning.
-    pub fn set_belief(&mut self, state: KinematicState) {
-        *self.belief = Some(state);
-    }
-
-    /// Return to ideal state feedback until another sensor supplies an estimate.
-    pub fn clear_belief(&mut self) {
-        *self.belief = None;
-    }
-
-    /// Queue an entity-local observation for the network/delivery phase.
-    /// This is not a simulated GlobalNetwork transmission.
-    pub fn publish_local<T: Send + Sync + 'static>(&mut self, topic: &str, value: T) -> Result<()> {
+    /// Hand this tick's reading to the entity's estimators, which receive it in the
+    /// estimation step at the end of the tick. It replaces the previous reading.
+    /// This is not a network message. A `State` sensor's reading is a
+    /// `KinematicState` and a `Contacts` sensor's is a `ContactList`.
+    pub fn publish_reading<T: Send + Sync + 'static>(&mut self, value: T) -> Result<()> {
+        let expected = match self.kind {
+            ReadingKind::State => Some(TypeId::of::<KinematicState>()),
+            ReadingKind::Contacts => Some(TypeId::of::<ContactList>()),
+            ReadingKind::Other => None,
+        };
+        ensure!(
+            expected.is_none_or(|expected| expected == TypeId::of::<T>()),
+            "sensor '{}' declares {:?} readings but published a {}",
+            self.name,
+            self.kind,
+            std::any::type_name::<T>()
+        );
         self.pending
-            .publish(topic, self.time.time_s + self.time.dt_s, value)
+            .publish(self.name, self.time.time_s + self.time.dt_s, value)
     }
 }
 
 pub trait Sensor: Plugin {
+    /// What this sensor's readings contain; see `ReadingKind`.
+    fn reading_kind(_config: &Self::Config) -> ReadingKind {
+        ReadingKind::Other
+    }
     fn initialize(&mut self, _context: &mut SensorContext<'_>) -> Result<()> {
         Ok(())
     }
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update>;
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Observations, SensorContext};
-    use crate::plugin::{EntityInfo, Messages, PluginRandom, StepTime};
-    use crate::{KinematicState, Vec3};
-
-    #[test]
-    fn installing_and_clearing_belief_never_changes_truth() {
-        let truth = KinematicState {
-            position_world_m: Vec3::new(1.0, 2.0, 3.0),
-            ..KinematicState::default()
-        };
-        let mut estimate = truth.clone();
-        estimate.position_world_m.z = 40.0;
-        let mut belief = None;
-        let mut messages = Messages::default();
-        let mut pending = Observations::default();
-        let mut random = PluginRandom::new(123, 1, "test");
-        let mut context = SensorContext {
-            messages: &mut messages,
-            entity: EntityInfo {
-                id: 1,
-                team_id: 1,
-                sub_swarm_id: 0,
-            },
-            time: StepTime {
-                time_s: 0.0,
-                dt_s: 0.1,
-            },
-            truth: &truth,
-            contacts_truth: &[],
-            random: &mut random,
-            belief: &mut belief,
-            pending: &mut pending,
-        };
-        context.set_belief(estimate);
-        assert_eq!(context.belief.as_ref().unwrap().position_world_m.z, 40.0);
-        assert_eq!(context.truth.position_world_m.z, 3.0);
-        context.clear_belief();
-        assert!(context.belief.is_none());
-        assert_eq!(truth.position_world_m.z, 3.0);
-    }
 }

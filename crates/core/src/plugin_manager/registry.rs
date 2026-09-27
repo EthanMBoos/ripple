@@ -1,8 +1,10 @@
 use crate::entity::plugin_stack::{
-    AgentBehavior, AutonomyAdapter, ControllerAdapter, MotionBehavior, SensorBehavior,
+    AgentBehavior, AutonomyAdapter, ControllerAdapter, LocalizationAdapter, LocalizationBehavior,
+    MotionBehavior, SensorBehavior, TrackingAdapter, TrackingBehavior,
 };
 use crate::plugin::{
-    Autonomy, Controller, Interaction, Metrics, MotionModel, Network, PluginParams, Ports, Sensor,
+    Autonomy, Controller, Input, Interaction, Localization, Metrics, MotionModel, Network,
+    PluginParams, Ports, ReadingKind, Sensor, Tracking,
 };
 use crate::simcontrol::world_plugins::{InteractionBehavior, MetricsBehavior, NetworkBehavior};
 use crate::{common::Rate, scenario::PluginConfig};
@@ -13,6 +15,10 @@ pub(crate) struct CompiledPlugin<T: ?Sized> {
     pub name: String,
     pub ports: Ports,
     pub rate: Rate,
+    /// Estimators only: the readings they read.
+    pub inputs: Vec<Input>,
+    /// Sensors only: what their readings contain.
+    pub reading_kind: ReadingKind,
     pub instantiate: Box<dyn Fn() -> Box<T> + Send + Sync>,
 }
 type Compiler<T> = Box<dyn Fn(&PluginParams<'_>) -> Result<CompiledPlugin<T>> + Send + Sync>;
@@ -67,6 +73,8 @@ pub struct PluginRegistry {
     pub(crate) controllers: Catalog<dyn AgentBehavior>,
     pub(crate) motion: Catalog<dyn MotionBehavior>,
     pub(crate) sensors: Catalog<dyn SensorBehavior>,
+    pub(crate) localization: Catalog<dyn LocalizationBehavior>,
+    pub(crate) tracking: Catalog<dyn TrackingBehavior>,
     pub(crate) interactions: Catalog<dyn InteractionBehavior>,
     pub(crate) networks: Catalog<dyn NetworkBehavior>,
     pub(crate) metrics: Catalog<dyn MetricsBehavior>,
@@ -79,6 +87,8 @@ impl Default for PluginRegistry {
             controllers: Catalog::new("Controller"),
             motion: Catalog::new("Motion"),
             sensors: Catalog::new("Sensor"),
+            localization: Catalog::new("Localization"),
+            tracking: Catalog::new("Tracking"),
             interactions: Catalog::new("Interaction"),
             networks: Catalog::new("Network"),
             metrics: Catalog::new("Metrics"),
@@ -100,6 +110,8 @@ impl PluginRegistry {
                     name: String::new(),
                     ports: T::ports(&config),
                     rate: Rate::new(params.loop_rate_hz)?,
+                    inputs: Vec::new(),
+                    reading_kind: ReadingKind::Other,
                     instantiate: Box::new(move || Box::new(AutonomyAdapter(T::new(&config)))),
                 })
             }),
@@ -114,6 +126,8 @@ impl PluginRegistry {
                     name: String::new(),
                     ports: T::ports(&config),
                     rate: Rate::new(params.loop_rate_hz)?,
+                    inputs: Vec::new(),
+                    reading_kind: ReadingKind::Other,
                     instantiate: Box::new(move || Box::new(ControllerAdapter(T::new(&config)))),
                 })
             }),
@@ -128,6 +142,8 @@ impl PluginRegistry {
                     name: String::new(),
                     ports: T::ports(&config),
                     rate: Rate::new(params.loop_rate_hz)?,
+                    inputs: Vec::new(),
+                    reading_kind: ReadingKind::Other,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -142,7 +158,41 @@ impl PluginRegistry {
                     name: String::new(),
                     ports: T::ports(&config),
                     rate: Rate::new(params.loop_rate_hz)?,
+                    inputs: Vec::new(),
+                    reading_kind: T::reading_kind(&config),
                     instantiate: Box::new(move || Box::new(T::new(&config))),
+                })
+            }),
+        )
+    }
+    pub fn register_localization<T: Localization>(&mut self, name: &str) -> Result<()> {
+        self.localization.insert(
+            name,
+            Box::new(|params| {
+                let config = T::configure(params)?;
+                Ok(CompiledPlugin {
+                    name: String::new(),
+                    ports: T::ports(&config),
+                    rate: Rate::new(params.loop_rate_hz)?,
+                    inputs: <T as Localization>::inputs(&config),
+                    reading_kind: ReadingKind::Other,
+                    instantiate: Box::new(move || Box::new(LocalizationAdapter(T::new(&config)))),
+                })
+            }),
+        )
+    }
+    pub fn register_tracking<T: Tracking>(&mut self, name: &str) -> Result<()> {
+        self.tracking.insert(
+            name,
+            Box::new(|params| {
+                let config = T::configure(params)?;
+                Ok(CompiledPlugin {
+                    name: String::new(),
+                    ports: T::ports(&config),
+                    rate: Rate::new(params.loop_rate_hz)?,
+                    inputs: <T as Tracking>::inputs(&config),
+                    reading_kind: ReadingKind::Other,
+                    instantiate: Box::new(move || Box::new(TrackingAdapter(T::new(&config)))),
                 })
             }),
         )
@@ -156,6 +206,8 @@ impl PluginRegistry {
                     name: String::new(),
                     ports: T::ports(&config),
                     rate: Rate::new(params.loop_rate_hz)?,
+                    inputs: Vec::new(),
+                    reading_kind: ReadingKind::Other,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -170,6 +222,8 @@ impl PluginRegistry {
                     name: String::new(),
                     ports: T::ports(&config),
                     rate: Rate::new(params.loop_rate_hz)?,
+                    inputs: Vec::new(),
+                    reading_kind: ReadingKind::Other,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -184,6 +238,8 @@ impl PluginRegistry {
                     name: String::new(),
                     ports: T::ports(&config),
                     rate: Rate::new(params.loop_rate_hz)?,
+                    inputs: Vec::new(),
+                    reading_kind: ReadingKind::Other,
                     instantiate: Box::new(move || Box::new(T::new(&config))),
                 })
             }),
@@ -195,6 +251,8 @@ impl PluginRegistry {
             "controller" => self.controllers.compilers.contains_key(name),
             "motion_model" => self.motion.compilers.contains_key(name),
             "sensor" => self.sensors.compilers.contains_key(name),
+            "localization" => self.localization.compilers.contains_key(name),
+            "tracking" => self.tracking.compilers.contains_key(name),
             "entity_interaction" => self.interactions.compilers.contains_key(name),
             "network" => self.networks.compilers.contains_key(name),
             "metrics" => self.metrics.compilers.contains_key(name),

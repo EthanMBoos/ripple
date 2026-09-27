@@ -128,6 +128,10 @@ def index(records):
             key = (tick(record), record["id"])
             beliefs[key + (belief_counts[key],)] = record
             belief_counts[key] += 1
+        # TODO(estimation): Rust will record sensor readings instead of the
+        # LocalNetwork publications. Pair C++ publications with those records
+        # here and skip C++'s NoisyState/NoisyContacts deliveries, which Rust
+        # won't have.
         elif kind == "publication":
             key = (tick(record), normalize_endpoint(record["from"], entity_ids), record["topic"])
             if key in publications:

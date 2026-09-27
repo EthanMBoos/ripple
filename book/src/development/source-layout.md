@@ -31,7 +31,8 @@ crates/core/src/
     world_plugins.rs
   sensor.rs
   sensor/
-    observations.rs
+    readings.rs
+  estimator.rs
   plugin.rs
   plugin/
     motion.rs
@@ -86,12 +87,13 @@ These locations map responsibilities, not claims of complete C++ class parity.
 | Controller | `controller.rs` | `plugin/controller/` |
 | MotionModel | `motion.rs` | `plugin/motion/` |
 | Sensor | `sensor.rs` | `plugin/sensor/` |
+| Localization, Tracking | `estimator.rs` | `plugin/estimator/` |
 | Interaction | `entity_interaction.rs` | `plugin/interaction/` |
 | Metrics | `metrics.rs` | `plugin/metrics/` |
 | Network | `pubsub/network.rs` | `plugin/network/` |
 
-For example, `sensor.rs` defines the contract and `sensor/observations.rs`
-implements observation delivery;
+For example, `sensor.rs` defines the contract and `sensor/readings.rs`
+implements reading delivery;
 `plugin/sensor/noisy_position/noisy_position.rs` is an actual sensor model, with its
 parameters and defaults at the top of the same file. Those are different
 responsibilities, not competing implementation folders. There is no `plugins/`
@@ -101,7 +103,7 @@ tree beside `plugin/`.
 It exposes the category implementations and re-exports the framework API.
 Authors continue to use `scrimmage_core::plugin::*`; internal module moves do
 not leak into their model code. [Plugin contract tests](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/tests/plugin_contracts.rs)
-exercise all seven categories through the public API, with test-only models
+exercise the categories through the public API, with test-only models
 under `crates/core/tests/support/`. There is no separate example application.
 The same registry supports [Rust-built scenarios](../guides/rust-scenarios.md).
 
@@ -113,11 +115,12 @@ The same registry supports [Rust-built scenarios](../guides/rust-scenarios.md).
 3. `entity/plugin_stack.rs` and `simcontrol/world_plugins.rs`: create and own
    independent entity-local and world-level plugin instances.
 4. `simcontrol.rs`: generate entities; run autonomy; all controller
-   substeps; all motion substeps; sensors; interactions; networks; metrics;
-   then remove inactive entities and advance the simulation.
+   substeps; all motion substeps; sensors; interactions; networks;
+   estimation; metrics; then remove inactive entities and advance the simulation.
 5. `simcontrol/scheduler.rs`: join each entity phase before the next starts.
    `pubsub/messages.rs` commits communication at the defined delivery phase;
-   `sensor/observations.rs` delivers entity-local latest-value observations.
+   `sensor/readings.rs` holds each sensor's latest reading for the estimators
+   in `estimator.rs`, which write belief.
 6. `protocol/frame.rs` and `simcontrol/summary.rs`: provide frame and summary
    output. The CLI owns files and Rerun through `crates/cli/src/viewer/` and
    `viewer.rs`; the viewer does not own simulation time or physics.

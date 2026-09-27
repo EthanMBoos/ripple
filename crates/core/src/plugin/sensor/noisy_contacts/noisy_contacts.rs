@@ -1,8 +1,9 @@
-//! Noisy measurements of every other contact, delivered on LocalNetwork.
+//! Noisy measurements of every other contact, as a reading and on LocalNetwork.
 //!
 //! C++ counterpart: src/plugins/sensor/NoisyContacts/NoisyContacts.cpp (LGPL-3.0-or-later).
 //! Sensor phase: sample contact truth and publish one complete measured snapshot.
-//! Own belief is unchanged. Uses Rust's per-instance RNG, not C++'s shared random sequence.
+//! Tracking (by default PassThrough) turns the reading into known contacts.
+//! Uses Rust's per-instance RNG, not C++'s shared random sequence.
 
 use anyhow::{Result, ensure};
 use nalgebra::Matrix3;
@@ -12,7 +13,8 @@ use super::noisy_state::{AxisNoise, StateNoise};
 use crate::math::KinematicState;
 use crate::plugin::sensor::StateWithCovariance;
 use crate::plugin::{
-    EntityInfo, Plugin, PluginParams, PluginRandom, Sensor, SensorContext, Update,
+    Contact, ContactList, EntityInfo, Plugin, PluginParams, PluginRandom, ReadingKind, Sensor,
+    SensorContext, Update,
 };
 
 pub const CONTACTS_TOPIC: &str = "ContactsWithCovariances";
@@ -22,6 +24,7 @@ pub const CONTACTS_TOPIC: &str = "ContactsWithCovariances";
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct NoisyContactsParams {
+    // TODO(estimation): goes with the LocalNetwork publish (see `step`).
     topic_name: String,
     pos_noise_0: AxisNoise,
     pos_noise_1: AxisNoise,
@@ -110,6 +113,10 @@ impl Plugin for NoisyContacts {
 }
 
 impl Sensor for NoisyContacts {
+    fn reading_kind(_config: &NoisyContactsConfig) -> ReadingKind {
+        ReadingKind::Contacts
+    }
+
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
         // Matches C++ for now, though a real sensor would have limited range and
         // field of view: every other live entity is measured, however far away.
@@ -119,17 +126,31 @@ impl Sensor for NoisyContacts {
             .filter(|contact| contact.id != context.entity.id && contact.active)
             .collect();
         contacts.sort_by_key(|contact| contact.id);
+        let sampled_at_s = context.time.time_s + context.time.dt_s;
         let mut measured = Vec::with_capacity(contacts.len());
+        let mut reading = Vec::with_capacity(contacts.len());
         for contact in contacts {
+            let measurement = self.measure(&contact.truth, context.random)?;
+            reading.push(Contact {
+                state: measurement.state.clone(),
+                ..Contact::measured(contact, sampled_at_s)
+            });
             measured.push(ContactWithCovariance {
                 entity: EntityInfo {
                     id: contact.id,
                     team_id: contact.team_id,
                     sub_swarm_id: contact.sub_swarm_id,
                 },
-                measurement: self.measure(&contact.truth, context.random)?,
+                measurement,
             });
         }
+        context.publish_reading(ContactList::from(reading))?;
+        // C++ publishes the measurements; kept so delivered messages match it.
+        // TODO(estimation): remove this publish, `topic_name`, and CONTACTS_TOPIC,
+        // and declare the difference in REFERENCE_NOTES.md. This message is the
+        // only thing comparing NoisyContacts' measured values with C++
+        // (noisy-contacts-bias.xml), so first make the trace record the reading
+        // instead (see trace.rs).
         context.messages.publish(
             "LocalNetwork",
             &self.topic,

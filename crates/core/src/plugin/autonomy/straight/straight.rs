@@ -104,12 +104,15 @@ impl Autonomy for Straight {
         self.goal_world_m.z = context.state.position_world_m.z;
         context
             .messages
-            .subscribe::<StateWithCovariance>("LocalNetwork", STATE_TOPIC)?;
+            .subscribe::<BoundaryRegion>("GlobalNetwork", BOUNDARY_TOPIC)?;
+        // C++ Straight also subscribes to measured state and contacts. It uses the
+        // state message in place of its own state; here belief already holds that
+        // measurement. Subscribe and discard both so message delivery matches C++.
+        // TODO(estimation): remove both subscriptions (and the receives in
+        // `step`) when NoisyState and NoisyContacts stop publishing.
         context
             .messages
-            .subscribe::<BoundaryRegion>("GlobalNetwork", BOUNDARY_TOPIC)?;
-        // C++ Straight also subscribes to measured contacts and stores them without
-        // reading them. Subscribe and discard so message delivery matches C++.
+            .subscribe::<StateWithCovariance>("LocalNetwork", STATE_TOPIC)?;
         context
             .messages
             .subscribe::<ContactsWithCovariances>("LocalNetwork", CONTACTS_TOPIC)?;
@@ -119,6 +122,9 @@ impl Autonomy for Straight {
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
         context
             .messages
+            .receive::<StateWithCovariance>("LocalNetwork", STATE_TOPIC)?;
+        context
+            .messages
             .receive::<ContactsWithCovariances>("LocalNetwork", CONTACTS_TOPIC)?;
         for message in context
             .messages
@@ -126,14 +132,7 @@ impl Autonomy for Straight {
         {
             self.boundary = Some(*message.value);
         }
-        let messages = context
-            .messages
-            .receive::<StateWithCovariance>("LocalNetwork", STATE_TOPIC)?;
-        // Use the newest delivered sample, or current belief if none arrived.
-        // Do not cache an old message across steps: this matches C++ Straight's fallback.
-        let state = messages
-            .last()
-            .map_or(context.state, |message| &message.value.state);
+        let state = context.state;
         if self.boundary_control
             && let Some(boundary) = self.boundary
             && !boundary.contains(state.position_world_m)
@@ -168,133 +167,6 @@ impl Autonomy for Straight {
 mod tests {
     use super::{Plugin, PluginParams, Straight};
     use crate::Params;
-
-    #[test]
-    fn local_messages_override_belief_only_on_the_receiving_entity() -> anyhow::Result<()> {
-        use crate::plugin::{
-            AgentContext, Autonomy, EntityInfo, Messages, Observations, PluginIo, PluginRandom,
-            StepTime,
-        };
-        use crate::plugin::{
-            Network,
-            network::LocalNetwork,
-            sensor::{STATE_TOPIC, StateWithCovariance},
-        };
-        use crate::pubsub::messages::Mailbox;
-        use crate::pubsub::{MessageEndpoint, NetworkContext};
-        use crate::{KinematicState, Vec3};
-
-        let params = Params::new();
-        let config = Straight::configure(&PluginParams::text(&params))?;
-        let state = KinematicState::default();
-        let observations = Observations::default();
-        let time = StepTime {
-            time_s: 0.0,
-            dt_s: 0.1,
-        };
-        let mut autonomies = [Straight::new(&config), Straight::new(&config)];
-        let mut subscribers = [Messages::default(), Messages::default()];
-        for (index, (autonomy, messages)) in autonomies.iter_mut().zip(&mut subscribers).enumerate()
-        {
-            autonomy.speed_mps = 20.0;
-            autonomy.initialize(&mut AgentContext {
-                entity: EntityInfo {
-                    id: index as i32 + 1,
-                    team_id: 1,
-                    sub_swarm_id: 0,
-                },
-                time,
-                state: &state,
-                observations: &observations,
-                contacts_truth: &[],
-                messages,
-                random: &mut PluginRandom::new(1, 1, "test"),
-            })?;
-        }
-        let mut publisher = Messages::default();
-        for y in [100.0, 200.0] {
-            publisher.publish(
-                "LocalNetwork",
-                STATE_TOPIC,
-                StateWithCovariance {
-                    state: KinematicState {
-                        position_world_m: Vec3::new(0.0, y, 0.0),
-                        ..KinematicState::default()
-                    },
-                    covariance: nalgebra::Matrix3::identity(),
-                },
-            )?;
-        }
-        let mut network =
-            LocalNetwork::new(&LocalNetwork::configure(&PluginParams::text(&params))?);
-        let endpoint = MessageEndpoint {
-            entity_id: None,
-            plugin: "LocalNetwork".into(),
-        };
-        let [first, second] = &mut subscribers;
-        let mut mailboxes = [
-            Mailbox {
-                endpoint: &MessageEndpoint {
-                    entity_id: Some(1),
-                    plugin: "sensor".into(),
-                },
-                messages: &mut publisher,
-            },
-            Mailbox {
-                endpoint: &MessageEndpoint {
-                    entity_id: Some(1),
-                    plugin: "autonomy".into(),
-                },
-                messages: first,
-            },
-            Mailbox {
-                endpoint: &MessageEndpoint {
-                    entity_id: Some(2),
-                    plugin: "autonomy".into(),
-                },
-                messages: second,
-            },
-        ];
-        network.step(&mut NetworkContext {
-            time,
-            contacts_truth: &[],
-            name: "LocalNetwork",
-            endpoint: &endpoint,
-            mailboxes: &mut mailboxes,
-            scheduled: &mut Vec::new(),
-            random: &mut PluginRandom::new(1, 0, "test"),
-            routed: false,
-            trace: None,
-        })?;
-        for (index, (autonomy, messages)) in autonomies.iter_mut().zip(&mut subscribers).enumerate()
-        {
-            let mut context = AgentContext {
-                entity: EntityInfo {
-                    id: index as i32 + 1,
-                    team_id: 1,
-                    sub_swarm_id: 0,
-                },
-                time,
-                state: &state,
-                observations: &observations,
-                contacts_truth: &[],
-                messages,
-                random: &mut PluginRandom::new(1, 1, "test"),
-            };
-            let mut io = PluginIo::new(&Straight::ports(&config));
-            autonomy.step(&mut context, &mut io)?;
-            let expected = if index == 0 {
-                crate::math::angle_2pi((-200.0_f64).atan2(1e6))
-            } else {
-                0.0
-            };
-            assert!((io.outputs["desired_heading"] - expected).abs() < 1e-12);
-            // With no new message, fall back to belief instead of retaining the old sample.
-            autonomy.step(&mut context, &mut io)?;
-            assert_eq!(io.outputs["desired_heading"], 0.0);
-        }
-        Ok(())
-    }
 
     #[test]
     fn configured_speed_is_copied_into_independent_autonomy_instances() -> anyhow::Result<()> {

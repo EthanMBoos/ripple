@@ -118,17 +118,17 @@ impl Plugin for FollowNearest {
 
 impl Autonomy for FollowNearest {
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
-        // Input: our own state and every other entity's true state.
+        // Input: our own estimated state and the contacts we know about.
         let own_position_world_m = context.state.position_world_m;
 
-        // Calculation: find the closest active opponent.
+        // Calculation: find the closest opponent.
         let mut nearest = None;
         let mut nearest_distance_m = f64::INFINITY;
-        for contact in context.contacts_truth {
-            if !contact.active || contact.team_id == context.entity.team_id {
+        for contact in context.contacts.iter() {
+            if contact.team_id == context.entity.team_id {
                 continue;
             }
-            let distance_m = (contact.truth.position_world_m - own_position_world_m).norm();
+            let distance_m = (contact.state.position_world_m - own_position_world_m).norm();
             if distance_m < nearest_distance_m {
                 nearest_distance_m = distance_m;
                 nearest = Some(contact);
@@ -138,10 +138,10 @@ impl Autonomy for FollowNearest {
         // Output: head toward it, or hold the current heading and altitude if none remain.
         let (heading_world_rad, altitude_world_m) = match nearest {
             Some(target) => {
-                let offset_world_m = target.truth.position_world_m - own_position_world_m;
+                let offset_world_m = target.state.position_world_m - own_position_world_m;
                 (
                     offset_world_m.y.atan2(offset_world_m.x),
-                    target.truth.position_world_m.z,
+                    target.state.position_world_m.z,
                 )
             }
             None => (
@@ -189,18 +189,17 @@ instead of silently leaving the speed at 25.
 `step` runs once per tick. It follows the same three stages as every plugin in
 this project:
 
-1. **Input.** `context.state` is this vehicle's own state.
-   `context.contacts_truth` is a snapshot of *every* entity, including this one.
-2. **Calculation.** Skip entities that are inactive or on our own team. Skipping
-   our own team also skips ourselves. Keep the closest of the rest.
+1. **Input.** `context.state` is where this vehicle believes it is.
+   `context.contacts` are the other entities it knows about (not itself).
+2. **Calculation.** Skip contacts on our own team. Keep the closest of the rest.
 3. **Output.** Point at the target. `atan2(dy, dx)` is the heading from us to it:
    0 means east and π/2 means north (see [Coordinate frames](../concepts/coordinate-frames.md)).
    Match its altitude and fly at the configured speed. If no opponent is left,
    hold the current heading and altitude.
 
-`context.state` versus `contacts_truth` matters once you add noisy sensors.
-Your own state may be an *estimate*, while `contacts_truth` is exact. See
-[Belief vs truth](../concepts/belief-vs-truth.md).
+Both are *belief*. With no sensors they are perfect, measured at the end of
+the previous tick; add a noisy sensor and the same code acts on noisy
+estimates, without changes. See [Belief vs truth](../concepts/belief-vs-truth.md).
 
 `Update::Applied` means "the step succeeded". Returning `Err(...)` stops the
 simulation and names this plugin in the error. Use it for real failures, not
@@ -400,7 +399,7 @@ To watch one case, run it with that speed and open Rerun:
    18, the chaser still does not catch up within 60 s. Watch that case in Rerun.
    Why not?
 2. **Lead the target.** Pure pursuit aims at where the target *is*. Aim at where
-   it *will be* instead: add `target.truth.velocity_world_mps * t_go`, where
+   it *will be* instead: add `target.state.velocity_world_mps * t_go`, where
    `t_go` is distance divided by closing speed. Rerun the sweep: which speeds
    catch the target now? Update the test to check the time.
 3. **Keep your distance.** Add a `standoff_m` parameter. Fly toward the target

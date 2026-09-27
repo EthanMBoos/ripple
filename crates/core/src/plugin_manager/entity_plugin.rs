@@ -3,9 +3,9 @@
 use crate::{
     EntitySnapshot, KinematicState, Params,
     common::{PluginRandom, Ports},
+    estimator::KnownContacts,
     pubsub::Messages,
     scenario::{PluginConfig, PluginValues},
-    sensor::Observations,
 };
 use anyhow::Result;
 use serde::de::DeserializeOwned;
@@ -100,17 +100,17 @@ pub enum Update {
     Stop,
 }
 
-/// Autonomies and controllers receive state and delivered observations.
-/// State reads the entity's owned belief, or truth when no estimate is installed.
+/// Autonomies and controllers see the entity's belief only: its estimated own
+/// state and the contacts it knows about, as its estimators last wrote them.
 /// Neither can be mutated through this context.
-/// Truth-backed contacts are explicitly named for legacy SCRIMMAGE compatibility.
 pub struct AgentContext<'a> {
     pub messages: &'a mut Messages,
     pub entity: EntityInfo,
     pub time: StepTime,
+    /// Own-state belief, from localization.
     pub state: &'a KinematicState,
-    pub observations: &'a Observations,
-    pub contacts_truth: &'a [EntitySnapshot],
+    /// Known contacts, from tracking.
+    pub contacts: KnownContacts<'a>,
     /// This plugin instance's mission-seeded random stream.
     pub random: &'a mut PluginRandom,
 }

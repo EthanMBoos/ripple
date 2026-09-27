@@ -2,7 +2,7 @@
 
 YAML is the native mission format; XML stays supported for single runs. Both
 load into the same typed `ScenarioConfig`, so the simulation cannot tell which
-file it came from. See [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md) section 1 for the plan.
+file it came from. See [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md) for the plan.
 
 | | Status |
 | --- | --- |
@@ -118,6 +118,7 @@ YAML form.
 | `spawn.time_stddev_s` | 0 | `generate_time_variance` (C++ uses it as a standard deviation) |
 | `autonomy`, `controller`, `sensors` | empty | `<autonomy>`, `<controller>`, `<sensor>` |
 | `motion_model` | exactly one | `<motion_model>` |
+| `localization`, `tracking` | `PassThrough` | none: XML always uses `PassThrough` |
 
 Positions and velocities use the local ENU world frame. Use `velocity_mps` for
 initial velocity; XML scalar `speed` is translated by the XML reader.
@@ -141,6 +142,19 @@ each a label and name the plugin; the label also names a sensor's random stream:
         plugin: NoisyState
         pos_noise_0: [0, 0.5]
 ```
+
+With two state sensors, localization can't guess which one feeds belief, so
+the mission must name it. `inputs` maps each estimator input to a sensor label
+(or `perfect`):
+
+```yaml
+    localization:
+      PassThrough:
+        inputs: {state: gps_fine}
+```
+
+An input left out takes the entity's one sensor of that kind, or the perfect
+measurement when it has none. See [Belief vs truth](../concepts/belief-vs-truth.md).
 
 Waypoints are a list of points: `waypoints: [[10, 0, 0], [10, 10, 0]]`. The XML
 string form `"10,0,0;10,10,0"` is also accepted.
@@ -174,7 +188,7 @@ match too. It takes `--max-steps` like `run`.
 
 Plugin parameter values are checked only through those outputs, since XML holds
 them as text. A value that no recorded output reflects (such as a sensor's noise
-when nothing uses its observations) can differ without `compare` noticing.
+when nothing uses its readings) can differ without `compare` noticing.
 
 ## Sweeps
 

@@ -16,6 +16,11 @@ Results are compared with the most recent record from the same machine (or
 outside the old min-max range and differs by more than 5%. --record appends the
 run to reference/perf_history.jsonl, which is committed, so git keeps the history.
 Compare only like with like: same machine, same power settings, idle system.
+Runs one after another drift as the machine warms: timing a change by running
+the old build and then the new one overstated its cost (estimation stage,
+2026-09-27: sensing-32 on eight workers read +18%, but +1% alternating; see
+paper/data/estimation-cost/alternate.py). For a before/after verdict, alternate the two
+runners case by case and compare medians.
 Standard library only; needs Cargo.
 """
 

@@ -1,6 +1,6 @@
 //! Small authoring example: world position with configurable bias and Gaussian noise.
 //! This is a new example sensor, not a parity claim for C++ NoisyState.
-//! Sensor phase: sample post-motion truth, apply bias/noise, queue a local observation.
+//! Sensor phase: sample post-motion truth, apply bias/noise, hand the reading to the estimators.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;
@@ -16,7 +16,6 @@ use crate::{
 pub struct SensorConfig {
     bias_world_m: [f64; 3],
     stddev_m: f64,
-    topic: String,
 }
 
 impl Default for SensorConfig {
@@ -24,7 +23,6 @@ impl Default for SensorConfig {
         Self {
             bias_world_m: [0.0; 3],
             stddev_m: 0.1,
-            topic: "position".into(),
         }
     }
 }
@@ -37,7 +35,6 @@ pub struct PositionObservation {
 pub struct NoisyPosition {
     bias_world_m: Vec3,
     stddev_m: f64,
-    topic: String,
 }
 
 impl Plugin for NoisyPosition {
@@ -53,7 +50,6 @@ impl Plugin for NoisyPosition {
         Self {
             bias_world_m: Vec3::from(config.bias_world_m),
             stddev_m: config.stddev_m,
-            topic: config.topic.clone(),
         }
     }
 }
@@ -73,7 +69,7 @@ impl Sensor for NoisyPosition {
         let observation = PositionObservation {
             position_world_m: measured_position_world_m,
         };
-        context.publish_local(&self.topic, observation)?;
+        context.publish_reading(observation)?;
         Ok(Update::Applied)
     }
 }
@@ -81,7 +77,9 @@ impl Sensor for NoisyPosition {
 #[cfg(test)]
 mod tests {
     use super::{NoisyPosition, Plugin, PositionObservation, Sensor, SensorConfig, SensorContext};
-    use crate::plugin::{EntityInfo, Messages, Observations, PluginRandom, StepTime, Update};
+    use crate::plugin::{
+        EntityInfo, Messages, PluginRandom, ReadingKind, Readings, StepTime, Update,
+    };
     use crate::{KinematicState, Vec3};
 
     #[test]
@@ -98,7 +96,6 @@ mod tests {
         let config = SensorConfig {
             bias_world_m: [1.0, -2.0, 3.0],
             stddev_m,
-            topic: "position".into(),
         };
         let mut sensor = NoisyPosition::new(&config);
         let truth = KinematicState {
@@ -115,8 +112,7 @@ mod tests {
         let expected_position_world_m =
             truth.position_world_m + Vec3::from(config.bias_world_m) + expected_noise_world_m;
         let mut messages = Messages::default();
-        let mut pending = Observations::default();
-        let mut belief = None;
+        let mut pending = Readings::default();
         let update = sensor.step(&mut SensorContext {
             messages: &mut messages,
             entity: EntityInfo {
@@ -131,12 +127,13 @@ mod tests {
             truth: &truth,
             contacts_truth: &[],
             random: &mut random,
-            belief: &mut belief,
+            name: "gps",
+            kind: ReadingKind::Other,
             pending: &mut pending,
         })?;
         assert_eq!(update, Update::Applied);
         let observation = pending
-            .get::<PositionObservation>("position")?
+            .get::<PositionObservation>("gps")?
             .expect("sensor output");
         // Exact equality protects the per-axis draw order, including zero-noise draws.
         assert_eq!(

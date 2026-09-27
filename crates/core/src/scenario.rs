@@ -1,4 +1,6 @@
 //! The experiment description shared by Rust setup code and mission readers.
+use std::collections::BTreeMap;
+
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
 use serde_yaml_ng::{Mapping, Value};
@@ -82,6 +84,10 @@ pub struct PluginConfig {
     pub instance: Option<String>,
     /// Zero runs the plugin every step.
     pub loop_rate_hz: f64,
+    /// Estimators only: which sensor feeds each input, by sensor instance name
+    /// (or `perfect`). Loading fills in the inputs a mission leaves out.
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub inputs: BTreeMap<String, String>,
     pub(crate) params: PluginValues,
 }
 
@@ -91,8 +97,15 @@ impl PluginConfig {
             name: name.into(),
             instance: None,
             loop_rate_hz: 0.0,
+            inputs: BTreeMap::new(),
             params: PluginValues::Yaml(Mapping::new()),
         }
+    }
+
+    /// Feed an estimator input from a sensor instance (or `perfect`).
+    pub fn input(mut self, input: impl Into<String>, sensor: impl Into<String>) -> Self {
+        self.inputs.insert(input.into(), sensor.into());
+        self
     }
 
     /// Replace parameters with a serializable struct or map. Values must be finite.
@@ -188,6 +201,12 @@ pub struct EntityGroupConfig {
     pub motion_model: PluginConfig,
     #[serde(deserialize_with = "crate::parse::yaml_mission::plugins")]
     pub sensors: Vec<PluginConfig>,
+    /// Maintains the entity's own-state belief; `PassThrough` by default.
+    #[serde(deserialize_with = "crate::parse::yaml_mission::estimator_plugin")]
+    pub localization: PluginConfig,
+    /// Maintains the entity's known contacts; `PassThrough` by default.
+    #[serde(deserialize_with = "crate::parse::yaml_mission::estimator_plugin")]
+    pub tracking: PluginConfig,
 }
 
 impl Default for EntityGroupConfig {
@@ -214,6 +233,8 @@ impl Default for EntityGroupConfig {
             // Construction rejects a missing model rather than choosing physics implicitly.
             motion_model: PluginConfig::new(""),
             sensors: Vec::new(),
+            localization: PluginConfig::new("PassThrough"),
+            tracking: PluginConfig::new("PassThrough"),
         }
     }
 }
@@ -258,7 +279,7 @@ pub struct ScenarioConfig {
 }
 
 impl ScenarioConfig {
-    pub(crate) fn resolve(self, registry: &PluginRegistry) -> Result<ResolvedScenario> {
+    pub(crate) fn resolve(mut self, registry: &PluginRegistry) -> Result<ResolvedScenario> {
         ensure!(
             self.run.dt_s.is_finite() && self.run.dt_s > 0.0,
             "dt must be positive and finite"
@@ -276,14 +297,15 @@ impl ScenarioConfig {
 
         let mut definitions = Vec::new();
         let mut generators = Vec::new();
-        for (index, entity) in self.entities.iter().enumerate() {
+        for (index, entity) in self.entities.iter_mut().enumerate() {
             entity
                 .validate()
                 .with_context(|| format!("entity {}", entity.label))?;
-            definitions.push(
-                EntityDefinition::parse(entity, registry)
-                    .with_context(|| format!("entity {}", entity.label))?,
-            );
+            let definition = EntityDefinition::parse(entity, registry)
+                .with_context(|| format!("entity {}", entity.label))?;
+            // Record every estimator input's source, including the defaults.
+            [entity.localization.inputs, entity.tracking.inputs] = definition.estimator_inputs();
+            definitions.push(definition);
             generators.push(Generator::new(entity, index, self.run.start_s)?);
         }
         let world = CompiledWorld::compile(&self, registry)?;

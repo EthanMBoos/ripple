@@ -48,7 +48,7 @@ information flows through the stack in one direction:
 
 ```text
 autonomy  ->  controller  ->  motion model  ->  new state
-new state ->  sensors     ->  what autonomy sees next tick
+new state ->  sensors     ->  estimators  ->  belief autonomy uses next tick
 ```
 
 Plugins for the whole world, rather than one vehicle, run after that:

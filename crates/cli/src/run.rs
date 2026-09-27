@@ -137,8 +137,9 @@ pub fn run_scenario(
         !settings.name.is_empty(),
         "experiment name must not be empty"
     );
-    let scenario_record = serde_json::to_value(&scenario)?;
     let mut simulation = Simulation::new(scenario, registry, settings.workers)?;
+    // The resolved scenario, which names every estimator input's source.
+    let scenario_record = serde_json::to_value(simulation.scenario())?;
 
     let runs = settings.root.join("runs").join(&settings.name);
     let output = output::create_directory(settings.output.as_deref(), &runs)?;

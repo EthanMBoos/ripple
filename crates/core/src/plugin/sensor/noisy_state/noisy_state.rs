@@ -1,7 +1,8 @@
-//! Noisy own-state feedback and a typed LocalNetwork observation.
+//! Noisy own-state measurements, as a reading and a typed LocalNetwork message.
 //!
 //! C++ counterpart: src/plugins/sensor/NoisyState/NoisyState.cpp (LGPL-3.0-or-later).
-//! Sensor phase: sample truth, perturb position/velocity/attitude, publish and update belief.
+//! Sensor phase: sample truth, perturb position/velocity/attitude, publish the reading.
+//! Localization (by default PassThrough) turns the reading into belief.
 //! Uses Rust's per-instance RNG, not C++'s shared random sequence.
 
 use anyhow::{Result, ensure};
@@ -9,7 +10,9 @@ use nalgebra::{Matrix3, UnitQuaternion};
 use serde::Deserialize;
 
 use crate::math::{KinematicState, Quaternion, Vec3};
-use crate::plugin::{Plugin, PluginParams, PluginRandom, Sensor, SensorContext, Update};
+use crate::plugin::{
+    Plugin, PluginParams, PluginRandom, ReadingKind, Sensor, SensorContext, Update,
+};
 
 pub const STATE_TOPIC: &str = "StateWithCovariance";
 
@@ -106,15 +109,29 @@ impl Plugin for NoisyState {
 }
 
 impl Sensor for NoisyState {
+    fn reading_kind(_config: &NoisyStateConfig) -> ReadingKind {
+        ReadingKind::State
+    }
+
     fn initialize(&mut self, context: &mut SensorContext<'_>) -> Result<()> {
-        // Detach before the first motion update, as the C++ sensor does.
-        context.set_belief(context.truth.clone());
-        Ok(())
+        // The C++ sensor starts its estimate from the initial truth, before the
+        // first motion update and without noise.
+        // TODO(estimation): make this a normal noisy measurement (`self.measure`)
+        // and declare the difference in REFERENCE_NOTES.md. Kept only for C++
+        // parity; with it, every noisy mission starts with perfect belief. Do it
+        // in one "NoisyState measures honestly" commit with the angular velocity
+        // and covariance TODOs in `measure`, then update noisy-state-bias.xml's
+        // C++ comparison (its first belief records change).
+        context.publish_reading(context.truth.clone())
     }
 
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
         let observation = self.measure(context.truth, context.random)?;
-        context.set_belief(observation.state.clone());
+        context.publish_reading(observation.state.clone())?;
+        // C++ also publishes the measurement; kept so delivered messages match it.
+        // TODO(estimation): remove this publish and declare the message-count
+        // difference in REFERENCE_NOTES.md. The C++ trace check doesn't need it:
+        // the trace should record this sensor's reading instead (see trace.rs).
         context
             .messages
             .publish("LocalNetwork", STATE_TOPIC, observation)?;
@@ -131,8 +148,17 @@ impl NoisyState {
         let mut measured = self.noise.apply(truth, random)?;
         // Matches C++ for now, though we don't consider it correct: the C++ message
         // starts from a default state, so a rotating vehicle reports zero angular velocity.
+        // TODO(estimation): keep the true angular velocity (NoisyState has no
+        // angular velocity noise setting). This state is localization's input,
+        // so a filter reading it would believe the vehicle never rotates. Same
+        // "NoisyState measures honestly" commit as the startup reading in
+        // `initialize`.
         measured.angular_velocity_world_radps = Vec3::zeros();
         // Matches C++ for now: identity is a placeholder, not the configured noise variance.
+        // TODO(estimation): only the LocalNetwork message carries this, and that
+        // message is being removed (see `step`); the reading has no covariance.
+        // If estimators need the declared uncertainty, add it to the reading then,
+        // computed from the configured standard deviations, not a placeholder.
         Ok(StateWithCovariance {
             state: measured,
             covariance: Matrix3::identity(),

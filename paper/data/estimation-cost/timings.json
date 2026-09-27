@@ -3,7 +3,7 @@
  "machine": "Darwin-arm64-10cpu-96207172",
  "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)",
  "old_revision": "ab085bf",
- "new_revision": "ab085bf plus the uncommitted estimation stage",
+ "new_revision": "4e6f196",
  "method": "reference/perf.py workloads, alternating old/new runs, one warm-up pair then 5 pairs, median stepping time (setup excluded)",
  "results": {
   "motion-64-w1": {

@@ -8,6 +8,7 @@ are preserved for reference while developing the Rust port:
 - [Plugin development](cpp/plugin-development.md)
 - [Mission configuration](cpp/mission-config.md)
 
+For the Rust design, start with the [architecture section](../architecture/overview.md).
 For current Rust behavior, use the [plugin API](../reference/plugin-api.md),
 [model reference](../reference/models.md), and
 [YAML mission guide](../guides/yaml-missions.md).

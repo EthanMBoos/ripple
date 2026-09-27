@@ -11,6 +11,13 @@
 - [Coordinate frames](concepts/coordinate-frames.md)
 - [Belief vs truth](concepts/belief-vs-truth.md)
 
+# Architecture
+
+- [Overview](architecture/overview.md)
+- [The tick](architecture/tick.md)
+- [Truth, measurements, and belief](architecture/information-flow.md)
+- [Messages](architecture/messages.md)
+
 # Guides
 
 - [User plugins and the starter crate](guides/user-plugins.md)

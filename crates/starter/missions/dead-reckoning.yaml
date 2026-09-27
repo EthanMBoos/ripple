@@ -1,0 +1,54 @@
+# A point robot drives a 100 m square, believing what this project's
+# DeadReckoning estimator tells it. Its motors only reach 8 m/s although it
+# asks for 10; the estimator's speed_gain is what it assumes. A position fix
+# arrives every 5 s. A second robot with perfect localization drives the same
+# route for comparison.
+format_version: 1
+name: Dead reckoning between position fixes
+
+run:
+  end_s: 60
+  dt_s: 0.1
+  seed: 1
+
+networks:
+  LocalNetwork:           # NoisyState also publishes its reading here
+  GlobalNetwork:          # WaypointFollower listens here for route changes
+
+templates:
+  robot:
+    position_m: [0, 0, 0]
+    position_variance_m2: [0, 0, 0]
+    visual_model: sphere
+    autonomy:
+      WaypointFollower:
+        waypoints: [[100, 0, 0], [100, 100, 0], [0, 100, 0], [0, 0, 0]]
+        repeat: true
+        arrival_radius_m: 2
+        speed: 10
+    controller:
+      SingleIntegratorControllerSimple:
+    motion_model:
+      SingleIntegrator:
+        max_speed: 8      # the hidden truth: it moves at 8 m/s whatever it asks
+
+entities:
+  dead_reckoning:
+    template: robot
+    team: 1
+    color: [70, 130, 255]
+    sensors:
+      gps:
+        plugin: NoisyState
+        loop_rate: 0.2    # one fix every 5 s
+        pos_noise_0: [0, 0]
+        pos_noise_1: [0, 0]
+        pos_noise_2: [0, 0]
+    localization:
+      DeadReckoning:
+        speed_gain: 1.0   # assumes it moves as commanded: 2 m/s too fast
+
+  perfect:
+    template: robot
+    team: 2
+    color: [160, 160, 160]

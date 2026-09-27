@@ -420,4 +420,5 @@ To watch one case, run it with that speed and open Rerun:
   sweeps run it across parameter values.
 
 Next, read [Coordinate frames](../concepts/coordinate-frames.md) before
-writing anything that uses angles.
+writing anything that uses angles, then give a robot an imperfect idea of where
+it is in [Your first localization estimator](noisy-localization.md).

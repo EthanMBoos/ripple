@@ -5,6 +5,7 @@
 # Tutorial
 
 - [Your first autonomy plugin](tutorial/first-autonomy.md)
+- [Your first localization estimator](tutorial/noisy-localization.md)
 
 # Concepts
 

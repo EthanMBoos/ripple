@@ -83,56 +83,7 @@ Tested at scale: 5,000 agents spawning in one tick and 1,500 removed in one tick
 World plugins may publish up to 65,536 messages per step; an entity's plugins,
 1,024. All-to-all messaging can still exceed 65,536 pending deliveries per network.
 
-## 2. Estimation
-
-Done: sensors produce readings, one localization and one tracking estimator per
-entity own belief (`PassThrough` of a perfect measurement by default), and
-autonomy and controllers see belief only. Outputs of existing missions are
-unchanged; the design and its rules are in the book's
-[Belief vs truth](../book/src/concepts/belief-vs-truth.md) and
-[architecture](../book/src/architecture/information-flow.md) pages. Two
-clean-up commits are planned inline (`grep -rn "TODO(estimation)" crates
-reference`): remove the sensors' LocalNetwork messages, and make NoisyState
-measure honestly.
-
-- [ ] **First experiment: prediction error without measurement noise**, in
-  `crates/starter` (its models need not become stock plugins). A straight-line
-  robot with a known start holds a constant speed command:
-
-  | Setting | Value |
-  | --- | --- |
-  | Requested speed | 10 m/s |
-  | Actual response (motion model) | 0.8 x requested: 8 m/s |
-  | Assumed response (estimator) | compare gains 0.8 and 1.0 |
-  | Position fixes | exact at start, then every 5 s |
-  | Measurement noise | none at first |
-
-  The localizer predicts from `context.commands` and its assumed gain, and
-  replaces its position on each fix. Expected: with gain 1.0 the prediction is
-  10 m ahead just before the fix at 5 s, then the error builds again; with 0.8
-  it stays at numerical tolerance. Define fix times exactly, so the small error
-  on the tick before a fix isn't mistaken for the pre-correction prediction.
-- [ ] **Evaluation output for it.** Record truth, the prediction before
-  correction, and belief after correction at the same times (recording only
-  corrected belief at fix times would hide the effect), plus the measurements
-  themselves. Compute error at a common time, mark stale or unavailable
-  estimates, and keep the final error of removed entities. Add only what the
-  experiment needs. Until this exists, truth is in the frames and belief in
-  `trace.jsonl`, and measurements aren't recorded.
-- [ ] Then noisy fixes, then a position-seeking controller acting on belief, to
-  show the whole loop. Put the results in the paper.
-- [ ] **Rerun the C++ benchmark suite** (container and native) before refreshing
-  the paper's speed tables, which predate the estimation stage. A new
-  experiment's cost is measured on its own: C++'s `SimpleINS` is not an
-  equivalent workload.
-- Later, each for a concrete experiment: IMU and GPS sensors, real filters,
-  delayed readings (tracking an older relative reading needs the observer's pose
-  from when it was taken), reusable sensor profiles, and richer tracking
-  (association, filtering). Before an IMU uses aircraft outputs, give the motion
-  models acceleration and consistent velocity and rate outputs, and define
-  frames, gravity, units, and initialization; that is a separate physics change.
-
-## 3. External integrations
+## 2. External integrations
 
 Implement one end-to-end pilot at a time. Entities from a connection go through
 `spawn(SpawnRequest)` in [generation.rs](../crates/core/src/simcontrol/generation.rs).
@@ -195,7 +146,7 @@ compatibility.
 
 Saved JSBSim outputs do not establish real-aircraft fidelity.
 
-## 4. Core upgrades
+## 3. Core upgrades
 
 - [ ] Record the effective configuration in each run's manifest: plugin values
   filled by defaults, overrides, registrations, and seeds.
@@ -205,19 +156,34 @@ Saved JSBSim outputs do not establish real-aircraft fidelity.
   checkout.
 - [ ] Add the Rust and Python test suites to CI; the current workflow publishes
   the book only.
+- [ ] Two estimation clean-ups, planned inline (`grep -rn "TODO(estimation)"
+  crates reference`): remove the sensors' LocalNetwork messages, and make
+  NoisyState measure honestly.
+- Later estimation work, each for a concrete experiment: evaluation output that
+  records truth, the prediction before correction, belief after it, and the
+  readings at the same times (today tests compare `Entity::belief` with
+  `Entity::truth`, and `trace.jsonl` holds belief); IMU and GPS sensors, real
+  filters, delayed readings (tracking an older relative reading needs the
+  observer's pose from when it was taken), reusable sensor profiles, and richer
+  tracking (association, filtering). Before an IMU uses aircraft outputs, give
+  the motion models acceleration and consistent velocity and rate outputs, and
+  define frames, gravity, units, and initialization; that is a separate physics
+  change. The design and worked example are in the book's
+  [Belief vs truth](../book/src/concepts/belief-vs-truth.md) and
+  [Your first localization estimator](../book/src/tutorial/noisy-localization.md).
 - [ ] Burn experiment: pick one workload (for example batched policy inference),
   measure the whole step against a CPU baseline, including transfers and
   synchronization, and keep it only for an end-to-end gain. See
   [Burn's backends](https://burn.dev/docs/burn/).
 
-## 5. More models
+## 4. More models
 
 Candidates and the shared capabilities they would need are in the
 [plugin audit](PLUGIN_COVERAGE_AUDIT.md). Add a model for a research need, not
 for catalog completeness. A model with a C++ counterpart joins the comparison
 through the checklist in [reference/README.md](../reference/README.md).
 
-## 6. Terrain visualization experiment
+## 5. Terrain visualization experiment
 
 - [ ] Try streamed [Cesium](https://cesium.com/platform/cesiumjs/) terrain next
   to the Rerun panels, starting with one agent and a validated origin, in a

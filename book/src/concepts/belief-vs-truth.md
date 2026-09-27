@@ -133,7 +133,9 @@ A few rules keep such experiments honest:
 - A planner that predicts futures can reuse the estimator's equations, but its
   hypothetical states stay separate from truth.
 
-See [Plugin API](../reference/plugin-api.md#estimators) for the interface.
+[Your first localization estimator](../tutorial/noisy-localization.md) walks
+through one: dead reckoning from commands, corrected by fixes every 5 s. See
+[Plugin API](../reference/plugin-api.md#estimators) for the interface.
 
 ## Summary
 

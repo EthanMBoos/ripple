@@ -108,8 +108,8 @@ Year & Development and experimental requirement \\
 This section describes SCRIMMAGE-RS and summarizes three checks: that it
 behaves like SCRIMMAGE, that an experiment is easier to build in it, and what
 it costs to run. The behavior checks were repeated after adding the
-estimation stage (Section~\ref{sec:estimation}); the cost measurements predate
-it. The details are in the appendices.
+estimation stage (Section~\ref{sec:estimation}), and the cost measurements
+include it. The details are in the appendices.
 
 \subsection{SCRIMMAGE-RS}
 
@@ -213,10 +213,10 @@ with noisy sensors, a stream of new aircraft that can collide, and a large
 spread-out group checked for collisions every step. Each ran at several sizes,
 up to 2{,}048 aircraft (Appendix~\ref{app:performance}).
 \begin{itemize}
-\item \emph{Rust is faster on one processor core,} by 1.1 to 1.8 times. We
+\item \emph{Rust is faster on one processor core,} by 1.1 to 1.7 times. We
 compare speed only on the two missions where both simulators produce identical
 results.
-\item \emph{Rust uses much less memory,} 2.5 to 7.6 times less on every mission
+\item \emph{Rust uses much less memory,} 2.2 to 6.2 times less on every mission
 and size.
 \item \emph{Collision checking is the next limit.} Both simulators compare
 every pair of aircraft, so the cost grows with the square of the team size:
@@ -224,10 +224,10 @@ doubling from 1{,}024 to 2{,}048 aircraft makes Rust's collision mission more
 than three times slower.
 A shared lookup of nearby aircraft is the planned fix.
 \item \emph{Extra cores help only when there is enough work.} Rust on eight
-cores ran the sensor mission 2.4 times faster than on one, but the simplest
+cores ran the sensor mission 2.25 times faster than on one, but the simplest
 missions ran slower: handing out work to the cores every step costs more than
 the work itself.
-\item \emph{C++'s multi-core mode is unreliable.} It froze in 9 of 219 runs,
+\item \emph{C++'s multi-core mode is unreliable.} It froze in 8 of 218 runs,
 gave different answers to the same run when sensors were involved, and was
 usually slower than running C++ on one core. We compare against single-core
 C++.
@@ -262,7 +262,7 @@ Give a planner its state & The planner reads belief, subscribes to a sensor's to
 Swap the localization method & Edit every planner that selected its own source & Change the localizer; planners are untouched \\
 Configure error & Sensor noise, motion disturbance, and wiring are set in separate places & Each source of error is set once, at its owner \\
 Keep decisions from using hidden truth & Not enforced: decisions can read the true state of every entity & Decisions receive belief only \\
-Measure how wrong the robot was & Worked out by hand after the run & Truth and belief are recorded separately; measurement records come with the first experiment \\
+Measure how wrong the robot was & Worked out by hand after the run & Truth and belief are recorded separately; recording measurements is future work \\
 \bottomrule
 \end{tabularx}
 \end{table*}
@@ -310,14 +310,17 @@ localizer then occupies the same stage: it advances the previous belief using
 the commands the robot issued and its own motion model, and corrects that
 prediction with measurements. Because the physical response, the estimator's
 assumed response, and measurement error are configured separately, an
-experiment can vary each on its own. For example, a robot that achieves 8~m/s
-when commanded 10~m/s, estimated by a localizer that assumes 10~m/s, is 10~m
-off after 5~s without a position fix, even with perfect sensors.
+experiment can vary each on its own. In the worked example
+(\texttt{crates/starter}), a robot commanded at 10~m/s achieves 8~m/s and gets
+an exact position fix every 5~s. With a localizer that assumes 10~m/s, the
+position error grows by 2~m per second on straight segments, and the largest
+error sampled at the end of a step is 9.8~m (the prediction each fix replaces
+is 10~m off); with one that assumes 8~m/s, the estimated
+position matches the true one. The starter crate's tests check these numbers. Acting on the wrong belief, the robot turns early at every corner
+of its square route and strays up to 22~m from a robot with perfect
+localization.
 % The timing, equality, startup, and removal rules are in the book
 % (architecture/tick.md and information-flow.md); open items in docs/TODO.md.
-% TODO(estimation): still open: run the constant-command experiment (10 m/s
-% requested, 8 m/s achieved, assumed gains 0.8 and 1.0, fixes every 5 s), then
-% noisy fixes and the closed loop. The benchmark tables predate this stage.
 
 \section{RQ1: When Does Sharing Information Improve Team Performance?}
 \label{sec:rq1}
@@ -671,9 +674,12 @@ against the library versions Ubuntu 24.04 ships
 C++ in the first two workloads. The other three depend on random draws that the
 unmodified C++ build makes differently, so their ratios are not speed claims.
 
-Where outputs match, Rust with one thread is 1.3 to 1.8 times faster than C++
-in the container and 1.1 to 1.55 times faster on bare metal, and it uses 2.5 to
-7.6 times less memory. Two changes made while profiling contributed, both with
+Where outputs match, Rust with one thread is 1.2 to 1.7 times faster than C++
+in the container and 1.1 to 1.5 times faster on bare metal, and it uses 2.2 to
+6.2 times less memory. These timings include the estimation stage (its cost is
+measured on its own in Section~\ref{sec:estimation}), which raised Rust's peak
+memory, most with 128 sensing aircraft
+(7.4 to 12.3~MiB in the container), where each keeps its own contact list. Two changes made while profiling contributed, both with
 identical output: Rust no longer rebuilds each plugin's message-address name
 every step, which had taken about a fifth of the time on straight flight, and
 it runs single-worker phases without the thread pool (below). Before them,
@@ -681,22 +687,22 @@ native C++ was 1.25 times faster on straight flight.
 
 Collision checking compares every pair of aircraft in both simulators (C++
 compares each pair twice), so its cost grows with the square of the number of
-aircraft. From 1{,}024 to 2{,}048 aircraft, Rust's collision workload takes 3.3
-to 3.4 times longer and C++'s 3.8 to 9.3 times longer. Eight workers barely
+aircraft. From 1{,}024 to 2{,}048 aircraft, Rust's collision workload takes 3.6
+to 3.8 times longer and C++'s 3.8 to 9.3 times longer. Eight workers barely
 help, because the check runs in one sequential phase.
 
 Parallel speedup depends on each phase carrying enough work. Every phase hands
 entities to a thread pool and joins it, which profiling puts at about
 35~\textmu s on bare metal and roughly ten times that in Docker's virtual
 machine. On bare metal, eight Rust workers beat one with substeps at 1{,}024
-aircraft and with sensors at 64 and 128 aircraft (2.4 times at 128), but not
+aircraft and with sensors at 64 and 128 aircraft (2.25 times at 128), but not
 on light workloads or with 32 sensing aircraft; in the container, only with
 128 sensing aircraft. The handoff cost about 7~\textmu s even with one worker,
 so Rust now runs single-worker phases on the calling thread, a third faster on
 light workloads.
 
-C++'s own \texttt{multi\_threaded} mode is not reliable. It deadlocked in 9 of
-219 runs (each killed after 120~s and retried), its output with sensors differs
+C++'s own \texttt{multi\_threaded} mode is not reliable. It deadlocked in 8 of
+218 runs (each killed after 120~s and retried), its output with sensors differs
 between identical runs, and it is slower than single-threaded C++ except with
 64 or more sensing aircraft on bare metal and 128 in the container. Its entity worker waits on a condition variable without a predicate,
 so a wake-up can be lost; we did not modify it, and single-threaded C++ is the

@@ -73,7 +73,8 @@ by name in a mission.
 - **New here?** Start with [Your first autonomy plugin](tutorial/first-autonomy.md).
   You will write a plugin that chases the nearest opponent, then test it.
 - **Confused by angles or signs?** Read [Coordinate frames](concepts/coordinate-frames.md).
-- **Adding sensors or noise?** Read [Belief vs truth](concepts/belief-vs-truth.md).
+- **Adding sensors or noise?** Read [Belief vs truth](concepts/belief-vs-truth.md), then
+  [Your first localization estimator](tutorial/noisy-localization.md).
 - **Writing a plugin of another type?** See [Writing plugins](guides/writing-plugins.md).
 - **Configuring an experiment?** See [YAML missions, templates, and sweeps](guides/yaml-missions.md).
 - **Working on the engine?** Start with the [source map](development/source-layout.md)

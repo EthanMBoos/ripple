@@ -33,8 +33,9 @@ does. Changing a plugin means rebuilding; `cargo run -- ...` does that.
 
 ## Try the starter
 
-`crates/starter` contains `FollowNearest` (the book tutorial's plugin), a
-mission, a sweep, and a test. From the repository root:
+`crates/starter` contains the plugins from the book's two tutorials,
+`FollowNearest` (an autonomy) and `DeadReckoning` (a localization estimator),
+with their missions, a sweep, and tests. From the repository root:
 
 ```sh
 cargo run -- run crates/starter/missions/follow-nearest.yaml --headless
@@ -71,9 +72,9 @@ same category is an error at startup, so nothing is silently replaced.
 ## Add another user crate
 
 Copy `crates/starter` to `crates/my-lab` and rename the package in its
-`Cargo.toml`. Remove the copied `FollowNearest` (its file, its `mod` and
-`pub use` lines, its registration, its missions, and its test), since the
-starter already registers that name. Then make two edits so `scrimmage` includes it:
+`Cargo.toml`. Remove the copied `FollowNearest` and `DeadReckoning` (their
+files, `mod` and `pub use` lines, registrations, missions, and tests), since the
+starter already registers those names. Then make two edits so `scrimmage` includes it:
 
 1. Add it to the workspace `members` in the root `Cargo.toml`.
 2. In `crates/cli/Cargo.toml`, add `my-lab = { path = "../my-lab" }`, and in

@@ -26,7 +26,10 @@ Communication, Computation, and Team Scale}
 the experiments a multi-agent robotics testbed should support), the three
 research questions and the experiment proposed for each, and the validated
 Rust baseline that makes them testable: behavior matching C++, a simpler
-experiment workflow, and comparable cost. Add pilot results once run.}
+experiment workflow, and comparable cost. Include the two extensions with
+results: the estimation stage, and spatial queries (a step with 4,096 agents
+3.8 times faster with the grid, 1.9 times by default, identical output).
+Add pilot results once run.}
 \end{abstract}
 
 \IEEEpeerreviewmaketitle
@@ -56,7 +59,10 @@ that retains SCRIMMAGE's simulation structure. We check that it behaves like
 SCRIMMAGE, that experiments are easier to set up and repeat, and that it runs
 at comparable cost (Section~\ref{sec:baseline}).
 
-\stub{State the final contributions once supported by evidence.}
+\stub{State the final contributions once supported by evidence. Supported so
+far: the validated baseline; the estimation stage separating truth,
+measurements, and belief; and spatial queries answered by scan or grid with
+byte-identical output, which make a step with 4,096 agents 3.8 times faster (Section~\ref{sec:spatial}).}
 
 \section{SCRIMMAGE and What Has Changed}
 \label{sec:original}
@@ -218,11 +224,16 @@ compare speed only on the two missions where both simulators produce identical
 results.
 \item \emph{Rust uses much less memory,} 2.2 to 6.2 times less on every mission
 and size.
-\item \emph{Collision checking is the next limit.} Both simulators compare
-every pair of aircraft, so the cost grows with the square of the team size:
-doubling from 1{,}024 to 2{,}048 aircraft makes Rust's collision mission more
-than three times slower.
-A shared lookup of nearby aircraft is the planned fix.
+\item \emph{Collision checking was the limit for large teams, and spatial
+queries remove it.} Both simulators compared every pair of aircraft, so the
+cost grew with the square of the team size: doubling from 1{,}024 to 2{,}048
+aircraft made Rust's collision mission more than three times slower. With the
+spatial queries of Section~\ref{sec:spatial}, a step with 4{,}096 spread-out
+aircraft takes 10.2~ms by default and 5.0~ms with the optional grid, against
+19.1~ms before: 1.9 and 3.8 times faster, with identical output. The C++
+comparisons in this section were measured before that change, with the previous
+collision loop; the change affects only collision checking, and the other
+workloads are unchanged within 3\% (perf.py).
 \item \emph{Extra cores help only when there is enough work.} Rust on eight
 cores ran the sensor mission 2.25 times faster than on one, but the simplest
 missions ran slower: handing out work to the cores every step costs more than
@@ -321,6 +332,130 @@ of its square route and strays up to 22~m from a robot with perfect
 localization.
 % The timing, equality, startup, and removal rules are in the book
 % (architecture/tick.md and information-flow.md); open items in docs/TODO.md.
+
+\section{Finding Nearby Agents}
+\label{sec:spatial}
+
+Many models ask the same question: which agents are within some distance of a
+point? Collision detection asks it with a few metres, a short-range radio with
+a kilometre, a range-limited sensor with its detection range. The retained
+SimpleCollision plugin answers by comparing every pair of agents, so its cost
+grows with the square of the team size. At 1{,}024 agents it took 58\% of each
+step, at 4{,}096 agents 79\%. SCRIMMAGE-RS moves this question into the engine,
+so each plugin asks it once and the engine decides how to answer. The result
+is large and changes no output: with 4{,}096 spread-out agents, a whole step
+fell from 19.1~ms to 10.2~ms with the default method and to 5.0~ms with the
+optional grid, 3.8 times faster (Table~\ref{tab:spatial}). Larger teams become practical to simulate,
+which RQ3 needs.
+
+\paragraph{One question, two answers}
+World plugins (sensors, networks, and metrics) call
+\texttt{within(position, range)} on the true contacts. It returns every
+contact whose distance from \texttt{position} is less than \texttt{range},
+in the contacts' order. It does not filter: the caller itself, and contacts
+already removed, are included, and each plugin applies its own rules.
+Interactions, which change entities, ask the same question by entity index,
+and can also ask for every close pair, \texttt{pairs\_within(range)}, in the
+order a loop over all pairs would visit them.
+The mission chooses how the engine answers, once for the whole run:
+\begin{itemize}
+\item \emph{Scan} (the default) tests every contact. It is the reference
+answer, and it keeps the C++ timing comparison like-for-like.
+\item \emph{Grid} (\texttt{spatial\_lookup: \{method: grid, cell\_width\_m:
+$w$\}}) tests only contacts in nearby cells.
+\end{itemize}
+Plugin code is the same either way; no plugin knows which method answered.
+XML missions always use the scan.
+
+\paragraph{How the grid works}
+After all motion substeps, the engine gives each agent an integer cell,
+$(\lfloor x/w \rfloor, \lfloor y/w \rfloor, \lfloor z/w \rfloor)$, and adds
+it to a hash map from its vertical $(x, y)$ column to the agents in that
+column. Only occupied columns appear, so memory is one short entry per agent,
+independent of the size of the map. A query with
+range $r$ covers the cells overlapping a box of half-width $r$ around its
+position, padded by a relative $10^{-9}$ so that rounding cannot exclude a
+neighbour (typically nine columns when $r \le w$). The cells supply only
+\emph{candidates}.
+Every candidate then gets the scan's exact test, $\|p - q\| < r$
+computed the same way, and the survivors are returned in entity order. The
+grid can therefore only drop agents the exact test would reject, and never
+changes the answer or its order; it changes only how many agents are tested.
+If any position is not finite or too large for an integer cell, the tick uses
+the scan. A query also scans when looking up its columns would cost more than
+testing every agent; we measured one column lookup at about 30 distance tests.
+Keying by column keeps lookups few when agents are spread out horizontally,
+but a query tests every agent in its columns at any height, so many agents
+stacked above one spot would bring back the every-pair cost.
+
+\paragraph{When the grid is built}
+After motion, before sensors, which share it without locks because it is built
+before the parallel sensor phase. An interaction may move entities, so the
+engine checks the index against current positions before each interaction and
+again before networks and metrics, and rebuilds it if anything moved; the check
+is one pass over the agents. Every query therefore sees current positions, and
+the scan and the grid always answer from the same ones. SCRIMMAGE instead
+builds its R-tree when entities are generated, before motion, so a plugin that
+queries it later in the tick compares a moved agent with where the others
+were. The index holds positions only: whether an agent is still alive is read
+live by the plugin, because one collision can disable later ones.
+
+\paragraph{Collision detection as the first user}
+SimpleCollision previously visited every pair $(i, j)$ with $j > i$ in entity
+order, skipped pairs with a disabled agent, and disabled both agents of each
+pair closer than the collision range. The order matters: in a chain of three
+overlapping agents, the pair visited first decides which agent survives. The
+rewritten plugin iterates over \texttt{pairs\_within}: for each agent $i$ in
+order, the engine finds its neighbours, keeps those with $j > i$, and yields
+them in ascending order, as the plugin consumes them. That is exactly the old
+sequence with the pairs that could never collide removed, so events and
+survivors are unchanged. With the scan, the loop is the old double loop over a
+compact list of positions. Placement at spawn time, which uses an
+inclusive range and an altitude-only option, still scans, so spawn retries and
+random draws are unchanged too.
+
+\paragraph{What this preserves}
+We compared the previous revision against the new scan and the grid on 37
+missions (\texttt{paper/data/spatial-lookup/equivalence.py} and its report):
+every mission file in the repository, the timing workloads at both sizes,
+including spawning with collisions (153 collisions at 512 agents), and three
+crowded missions (512 to 2{,}048 agents, 235 to 795 collisions). Frames,
+summaries, and events were byte-identical with the scan at one, two, and eight
+workers and with grids from 0.7 to 1{,}000~m. Tests cover the three-agent chain
+with ids created out of order, an interaction that moves one agent onto another
+before SimpleCollision (the collision is found in the same step), points
+exactly at the range, on cell faces, and at negative coordinates, contacts held
+in a different order from their ids, and non-finite positions and ranges. The
+grid tests use enough agents that the grid, not its fallback, answers. In the
+timing runs below, every variant with a collision check also wrote identical
+output, up to 4{,}096 agents. The full C++ campaign, rerun after the change, is unchanged:
+all 13 missions and 100 generated scenarios pass, and all 12 planted bugs are
+caught.
+Decisions cannot use the grid: autonomy and controllers see only belief, and
+can ask the same \texttt{within} question of their own known contacts, which
+the engine answers by scanning that list.
+
+\paragraph{Cost}
+Table~\ref{tab:spatial} times perf.py's collision mission, alternating the
+previous revision's every-pair loop, the scan, and the grid
+(\texttt{paper/data/spatial-lookup/}). With 4{,}096 spread-out agents, a whole
+step took 19.1~ms before, 10.2~ms with the scan, and 5.0~ms with 5~m cells: 1.9
+and 3.8 times faster. With 2{,}048 agents the grid was 2.5 times faster, and
+with 1{,}024, 1.5 times. The scan reads positions from a compact list and
+touches entity records only for pairs in range. Subtracting a run without
+SimpleCollision estimates the check's own cost at 4{,}096 agents: about 15~ms
+per step before, 6~ms with the scan, and 0.9~ms with the grid. It is only an
+estimate, because that run removes no agents and may place spawns differently.
+Larger cells were slightly faster (4.7~ms per step with 50~m cells), because a
+lookup costs more than the few extra distance tests an occupied cell adds.
+The grid can be slightly slower than the scan. With 256 agents its queries fall
+back to the scan, and building it makes the step 9\% slower (0.23 against
+0.21~ms). In the crowded 1{,}024-agent case the step is 4\% slower, and with a
+50~m range and 5~m cells, 2\% slower; 50~m cells were 7\% faster than the scan
+there. Other workloads are unchanged within 3\% (perf.py). The C++ comparison
+in Section~\ref{sec:performance} was measured before this change.
+
+\IfFileExists{generated/spatial.tex}{\input{generated/spatial}}{}
 
 \section{RQ1: When Does Sharing Information Improve Team Performance?}
 \label{sec:rq1}
@@ -506,7 +641,12 @@ gives the details.
 
 \paragraph{Results}
 Table~\ref{tab:parity} summarizes the evidence. All curated missions and
-generated scenarios pass, and every planted bug is detected. In passing runs,
+generated scenarios pass, and every planted bug is detected. Two
+message-delivery bugs (a message one tick late, local messages crossing
+entities) changed trajectories in the previous campaign (2026-09-25) but no
+longer do; only the summary and trace checks catch them now. We have not
+isolated which later change caused this.
+In passing runs,
 trajectories agree to $3.7\times10^{-10}$~m at worst and usually to
 $10^{-14}$~m or better. No difference was detected in seven NoisyContacts
 marginal error distributions at the corrected significance threshold.
@@ -689,7 +829,9 @@ Collision checking compares every pair of aircraft in both simulators (C++
 compares each pair twice), so its cost grows with the square of the number of
 aircraft. From 1{,}024 to 2{,}048 aircraft, Rust's collision workload takes 3.6
 to 3.8 times longer and C++'s 3.8 to 9.3 times longer. Eight workers barely
-help, because the check runs in one sequential phase.
+help, because the check runs in one sequential phase. These tables use the
+previous every-pair collision loop, from before spatial queries; the scan and
+the grid are timed in Section~\ref{sec:spatial}.
 
 Parallel speedup depends on each phase carrying enough work. Every phase hands
 entities to a thread pool and joins it, which profiling puts at about

@@ -1,6 +1,7 @@
 //! World-interaction interface; concrete effects live in plugin/interaction.
 use crate::{
     Entity, Event, EventKind, Vec3,
+    common::SpatialIndex,
     plugin_manager::entity_plugin::{Plugin, StepTime, Update, WorldContext},
     pubsub::Messages,
 };
@@ -9,6 +10,9 @@ use anyhow::Result;
 pub struct InteractionContext<'a> {
     pub time: StepTime,
     pub entities: &'a mut [Entity],
+    /// Finds nearby entities by their index in `entities`, using their positions
+    /// at the start of this interaction's step.
+    pub nearby: &'a SpatialIndex,
     pub messages: &'a mut Messages,
     pub(crate) events: &'a mut Vec<Event>,
 }

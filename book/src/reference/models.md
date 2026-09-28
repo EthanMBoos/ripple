@@ -47,8 +47,7 @@ the simulation loop. No runtime library loading is planned.
   payload is not calibrated uncertainty. See the [paper's validation](https://github.com/EthanMBoos/scrimmage-rs/blob/main/paper/README.md).
 
 ROS 1/2 and ArduPilot are separate future adapter work. They are not reasons to
-add default ROS/C++ build dependencies. Burn, terrain, and
-spatial acceleration remain in [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md), outside this v1 slice.
+add default ROS/C++ build dependencies. Burn and terrain remain in [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md), outside this v1 slice.
 
 The plugin audit's selected additions are complete: NoisyContacts and
 SphereNetwork + AuctionAssign. The other proposed ports and the force, dynamics

@@ -1,8 +1,8 @@
 //! Shared plugin lifecycle, configuration, and execution contexts.
 //! Category-specific interfaces live in the corresponding framework modules.
 use crate::{
-    EntitySnapshot, KinematicState, Params,
-    common::{PluginRandom, Ports},
+    KinematicState, Params,
+    common::{PluginRandom, Ports, TruthContacts},
     estimator::KnownContacts,
     pubsub::Messages,
     scenario::{PluginConfig, PluginValues},
@@ -117,7 +117,7 @@ pub struct AgentContext<'a> {
 
 pub struct WorldContext<'a> {
     pub time: StepTime,
-    pub contacts_truth: &'a [EntitySnapshot],
+    pub contacts_truth: TruthContacts<'a>,
     /// Retains team membership after an entity has been removed.
     pub entity_teams: &'a BTreeMap<i32, i32>,
     pub messages: &'a mut Messages,

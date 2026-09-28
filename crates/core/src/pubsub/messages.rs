@@ -1,7 +1,6 @@
 //! Plugin-owned mailboxes; only the coordinator routes immutable message payloads.
 use crate::{
-    EntitySnapshot,
-    common::PluginRandom,
+    common::{PluginRandom, TruthContacts},
     plugin::{StepTime, Update},
 };
 use anyhow::{Result, ensure};
@@ -180,7 +179,7 @@ pub struct Transmission<'a> {
     pub sender: &'a MessageEndpoint,
     pub receiver: &'a MessageEndpoint,
     pub topic: &'a str,
-    pub contacts_truth: &'a [EntitySnapshot],
+    pub contacts_truth: TruthContacts<'a>,
 }
 #[derive(Clone, Copy, Debug)]
 pub enum Delivery {
@@ -247,7 +246,7 @@ pub(crate) struct ScheduledMessage {
 /// Networks decide topology, loss and delay; the engine owns queues and delivery.
 pub struct NetworkContext<'a, 'mailbox> {
     pub time: StepTime,
-    pub contacts_truth: &'a [EntitySnapshot],
+    pub contacts_truth: TruthContacts<'a>,
     pub(crate) name: &'a str,
     pub(crate) endpoint: &'a MessageEndpoint,
     pub(crate) mailboxes: &'a mut [Mailbox<'mailbox>],
@@ -466,7 +465,7 @@ mod tests {
             ];
             run(&mut NetworkContext {
                 time: StepTime { time_s, dt_s: 0.1 },
-                contacts_truth: &[],
+                contacts_truth: TruthContacts::from(&[][..]),
                 name: "test",
                 endpoint: &endpoint,
                 mailboxes: &mut mailboxes,

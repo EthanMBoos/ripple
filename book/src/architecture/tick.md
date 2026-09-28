@@ -17,7 +17,7 @@ counterpart of the simulation loop in the [C++ data-flow guide](../appendix/cpp/
  │ 2  autonomy        ═══ parallel ═══  reads its own entity's belief    │
  │ 3  controllers     ═══ parallel ═══  once per substep, all substeps   │
  │ 4  motion          ═══ parallel ═══  once per substep, all substeps   │
- │    snapshot B      post-motion copy                                   │
+ │    snapshot B      post-motion copy, and the spatial index            │
  │ 5  sensors         ═══ parallel ═══  read truth and snapshot B        │
  │ 6  interactions    coordinator       collisions, boundaries, health   │
  │    snapshot C      post-interaction copy                              │
@@ -50,6 +50,11 @@ with access to every entity.
   estimation step, so no entity sees another halfway through its update.
   Different entities can believe different things. Snapshot A is the frame
   written to output.
+- **Spatial queries see current positions.** The engine builds the index that
+  answers "who is within range?" with snapshot B, then checks it before each
+  interaction and before networks and metrics, rebuilding it if an
+  interaction moved anything
+  (see [Finding nearby agents](../reference/plugin-api.md#finding-nearby-agents)).
 - **Removal happens last.** An entity destroyed in tick k still has its
   messages delivered and counted in tick k's metrics, then it is closed.
 - **Rates skip, they don't reorder.** A plugin with a loop rate below the

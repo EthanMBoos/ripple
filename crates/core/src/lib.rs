@@ -24,6 +24,6 @@ pub use math::{EulerAngles, KinematicState, Quaternion, Vec3, rk4};
 pub use parse::{Mission, Params};
 pub use protocol::{read_frames, write_frame};
 pub use scenario::{
-    EndConditions, EntityGroupConfig, PluginConfig, RunConfig, ScenarioConfig, Spawn,
+    EndConditions, EntityGroupConfig, PluginConfig, RunConfig, ScenarioConfig, SpatialLookup, Spawn,
 };
 pub use simcontrol::{Event, EventKind, Simulation, SimulationFrame, TerminationReason};

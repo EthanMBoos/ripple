@@ -13,7 +13,8 @@ use super::xml::{Node, read_xml};
 use super::{Params, boolean, integer, number, vector};
 use crate::math::Vec3;
 use crate::scenario::{
-    EndConditions, EntityGroupConfig, PluginConfig, PluginValues, RunConfig, ScenarioConfig, Spawn,
+    EndConditions, EntityGroupConfig, PluginConfig, PluginValues, RunConfig, ScenarioConfig,
+    SpatialLookup, Spawn,
 };
 
 pub(super) fn load(
@@ -216,6 +217,8 @@ pub(super) fn load(
                 seed: seed as u32,
             },
             end_conditions,
+            // XML is frozen: its missions always scan.
+            spatial_lookup: SpatialLookup::Scan,
             entities,
             interactions,
             networks,

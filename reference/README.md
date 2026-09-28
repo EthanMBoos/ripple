@@ -77,7 +77,8 @@ python3 reference/perf.py --quick                # smallest sizes only, under a 
 ```
 
 It builds the release core-only runner (`benchmark_runner.rs`, no viewer) and
-runs five workloads (`motion`, `substeps`, `sensing`, `churn`, `collision`) at two agent
+runs six workloads (`motion`, `substeps`, `sensing`, `churn`, `collision`, and
+`collision-grid`, the same collision mission with a 5 m spatial grid) at two agent
 counts each and at 1 and 8 workers: a warm-up, then five timed runs. It reports
 the median stepping time with its min-max range, and peak memory. A change is
 flagged only when the new median lies outside the old range and differs by more

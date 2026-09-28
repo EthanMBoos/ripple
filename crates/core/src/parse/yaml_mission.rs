@@ -325,6 +325,28 @@ entities:
     }
 
     #[test]
+    fn spatial_lookup_defaults_to_scan_and_selects_a_grid() -> Result<()> {
+        use crate::scenario::SpatialLookup;
+        assert_eq!(load(MISSION, &[])?.spatial_lookup, SpatialLookup::Scan);
+        let grid = MISSION.replace(
+            "run:\n",
+            "spatial_lookup: {method: grid, cell_width_m: 5}\nrun:\n",
+        );
+        assert_eq!(
+            load(&grid, &[])?.spatial_lookup,
+            SpatialLookup::Grid { cell_width_m: 5.0 }
+        );
+        assert_eq!(
+            load(&grid, &[("spatial_lookup.cell_width_m", "2")])?.spatial_lookup,
+            SpatialLookup::Grid { cell_width_m: 2.0 }
+        );
+        let misspelled = grid.replace("cell_width_m", "cell_width");
+        assert!(load(&misspelled, &[]).is_err());
+        assert!(error(&grid.replace(": 5}", ": 0}"), &[]).contains("cell_width_m"));
+        Ok(())
+    }
+
+    #[test]
     fn estimator_inputs_are_chosen_only_when_unambiguous() -> Result<()> {
         let without_inputs = MISSION.replace("        inputs: {state: coarse}\n", "");
         let message = error(&without_inputs, &[]);

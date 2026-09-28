@@ -44,36 +44,17 @@ and C++'s multithreaded mode, in a Linux container and on bare-metal macOS; and
 sped up single-worker phases and message addresses. Rust is now 1.1-1.8x faster
 than C++ on one core where outputs match. Details are in the paper.
 
-- [ ] **Range queries on the snapshot.** `SimpleCollision` checks every pair of
-  agents each step (C++ checks each pair twice), so its cost grows with the
-  square of the agent count: 1.1 ms per step at 1,024 agents (58% of the step),
-  4.5 ms at 2,048 (71%), 18 ms at 4,096 (79%). The loop also reads positions
-  straight from the entity array, so its speed depends on the entity's memory
-  layout: the estimation stage doubled `Entity`'s size and collision-1024 got
-  20% faster with identical output. A compact position list fixes both. Plan:
-  - Give the truth snapshot that sensors, interactions, networks, and metrics
-    already receive two questions: `within(position, range)` and `nearest(k)`.
-    Plugins ask the question; they never manage an index.
-  - The simple scan is the default answer: easy to follow, the correctness
-    check, and what keeps the paper's C++ timing like-for-like. A mission
-    setting (e.g. `spatial_lookup: grid`) answers the same questions with a
-    grid. Results must not change: each candidate still gets the exact distance
-    test in the current order, so events and output stay byte-identical.
-  - The engine builds the grid on the first query of each snapshot and reuses
-    it for that phase, so positions are never stale (C++ builds one R-tree per
-    step before motion, so later plugins see old positions). Missions that never
-    query pay nothing. Build time is timed on its own, apart from each plugin.
-  - Move plugins over one at a time, each checked against its old output:
-    `SimpleCollision` first (benchmark with the `collision` workload, scan
-    against grid), then SphereNetwork and range-limited sensors as RQ1 and RQ3
-    need them. NoisyContacts doesn't need it: 98% of its time is generating
-    noise, and it measures every agent (no range limit, as in C++).
-  - Plugins keep their names: a name says what a plugin computes, not how it
-    finds candidates. Write a new plugin only when behavior changes (swept or
-    shaped collisions, approximate checks, deliberate differences from C++).
-  - Truth queries serve plugins that simulate the world. Decisions ask the
-    same questions of the agent's own belief contacts (`context.contacts`, a
-    short per-agent list, so a plain scan).
+Done: spatial queries. World plugins ask `within(position, range)` (and
+interactions `pairs_within(range)`); the mission's `spatial_lookup` answers by
+scan (default) or a sparse grid, with byte-identical output. SimpleCollision
+uses it: a step with 4,096 spread-out agents fell from 19.1 ms to 10.2 ms
+(scan) and 5.0 ms (5 m grid); other workloads are unchanged. Design and results are in
+[common/spatial.rs](../crates/core/src/common/spatial.rs), the book's
+[Finding nearby agents](../book/src/reference/plugin-api.md#finding-nearby-agents),
+and the paper. Options for later (range-limited sensors, a faster SphereNetwork,
+`nearest`, skipping the grid for small teams) are comments where each would
+apply.
+
 - [ ] **Faster message delivery, if needed.** Routing was about 16% of
   `sensing-128`. Indexing subscribers by topic (and LocalNetwork by entity) is
   inside the engine, so no plugin changes; do it if message-heavy RQ1

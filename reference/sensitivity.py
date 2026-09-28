@@ -27,9 +27,9 @@ CORE = "crates/core/src/"
 # (name, file, original text, defective text). Each original must occur exactly once.
 DEFECTS = [
     ("controller substeps receive the full step dt", CORE + "simcontrol.rs",
-     "            self.run_phase(|entity| entity.step_controller(time, &frame.entities))?;",
+     "            self.run_phase(|entity| entity.step_controller(time))?;",
      "            let time = StepTime { time_s: time.time_s, dt_s };\n"
-     "            self.run_phase(|entity| entity.step_controller(time, &frame.entities))?;"),
+     "            self.run_phase(|entity| entity.step_controller(time))?;"),
     ("frame timestamp labels the step start, not t + dt", CORE + "simcontrol.rs",
      "            time_s: self.time_s + self.config.run.dt_s,",
      "            time_s: self.time_s,"),
@@ -44,10 +44,10 @@ DEFECTS = [
      CORE + "plugin/network/sphere_network/sphere_network.rs",
      "(sender_position_m - receiver_position_m).norm() >= self.range_m",
      "(sender_position_m - receiver_position_m).norm() > self.range_m"),
-    ("SimpleCollision range becomes inclusive",
-     CORE + "plugin/interaction/simple_collision/simple_collision.rs",
-     "separation_m >= self.config.collision_range_m",
-     "separation_m > self.config.collision_range_m"),
+    # SimpleCollision's range test is the engine's spatial-query test.
+    ("SimpleCollision range becomes inclusive", CORE + "common/spatial.rs",
+     "!((position_world_m - other_world_m).norm() >= range_m)",
+     "!((position_world_m - other_world_m).norm() > range_m)"),
     ("sensor attitude errors applied in yaw-pitch-roll order",
      CORE + "plugin/sensor/noisy_state/noisy_state.rs",
      "truth_orientation * roll_error * pitch_error * yaw_error",

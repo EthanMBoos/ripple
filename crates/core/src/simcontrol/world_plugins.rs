@@ -1,4 +1,5 @@
 //! World plugin ownership and dispatch. Model logic belongs under plugin/{interaction,network,metrics}.
+use crate::common::{SpatialIndex, TruthContacts};
 use crate::{Entity, EntitySnapshot, Event, Vec3, plugin::*, scenario::ScenarioConfig};
 use crate::{
     plugin_manager::{Catalog, CompiledPlugin},
@@ -190,7 +191,7 @@ impl<T: ?Sized> WorldSlot<T> {
             &mut self.plugin,
             &mut WorldContext {
                 time,
-                contacts_truth: contacts,
+                contacts_truth: TruthContacts::from(contacts),
                 entity_teams: teams,
                 messages: &mut self.messages,
             },
@@ -246,10 +247,13 @@ impl WorldPlugins {
         &mut self,
         time: StepTime,
         entities: &mut [Entity],
+        nearby: &mut SpatialIndex,
         events: &mut Vec<Event>,
     ) -> Result<bool> {
         let mut stop = false;
         for slot in &mut self.interactions {
+            // An earlier interaction may have moved entities.
+            nearby.refresh(entities);
             // Source interactions run every tick, including the pre-start pass.
             slot.messages.time_s = time.time_s;
             let update = slot
@@ -257,6 +261,7 @@ impl WorldPlugins {
                 .step(&mut InteractionContext {
                     time,
                     entities,
+                    nearby,
                     events,
                     messages: &mut slot.messages,
                 })
@@ -268,7 +273,7 @@ impl WorldPlugins {
     pub fn networks(
         &mut self,
         time: StepTime,
-        contacts: &[EntitySnapshot],
+        contacts: TruthContacts<'_>,
         entities: &mut [Entity],
         simulator: &mut Messages,
         mut trace: Option<&mut NetworkTrace>,
@@ -334,7 +339,7 @@ impl WorldPlugins {
     pub fn metrics(
         &mut self,
         time: StepTime,
-        contacts: &[EntitySnapshot],
+        contacts: TruthContacts<'_>,
         teams: &BTreeMap<i32, i32>,
     ) -> Result<bool> {
         let mut stop = false;

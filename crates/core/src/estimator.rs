@@ -11,8 +11,8 @@ use std::{any::Any, sync::Arc};
 use anyhow::{Context, Result};
 
 use crate::{
-    EntityKind, EntitySnapshot, KinematicState,
-    common::PluginRandom,
+    EntityKind, EntitySnapshot, KinematicState, Vec3,
+    common::{PluginRandom, is_within},
     plugin_manager::entity_plugin::{EntityInfo, Plugin, StepTime, Update},
     pubsub::Messages,
     sensor::{ReadingKind, Readings},
@@ -62,6 +62,14 @@ impl<'a> KnownContacts<'a> {
     }
     pub fn get(&self, id: i32) -> Option<&'a Contact> {
         self.iter().find(|contact| contact.id == id)
+    }
+    /// Known contacts believed closer than `range_m` to `position_world_m`, in
+    /// list order. The same test as the engine's truth queries, over belief;
+    /// the list is one entity's own, so it is scanned.
+    pub fn within(&self, position_world_m: Vec3, range_m: f64) -> Vec<&'a Contact> {
+        self.iter()
+            .filter(|contact| is_within(position_world_m, contact.state.position_world_m, range_m))
+            .collect()
     }
 }
 
@@ -219,4 +227,33 @@ pub trait Tracking: Plugin {
         Ok(())
     }
     fn step(&mut self, context: &mut TrackingContext<'_>) -> Result<Update>;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn known_contacts_within_scans_belief_and_leaves_out_self() {
+        let contact = |id: i32, x_m: f64| Contact {
+            id,
+            team_id: 1,
+            sub_swarm_id: 0,
+            kind: EntityKind::Sphere,
+            state: KinematicState {
+                position_world_m: Vec3::new(x_m, 0.0, 0.0),
+                ..KinematicState::default()
+            },
+            sampled_at_s: 0.0,
+        };
+        let list = [contact(1, 0.0), contact(2, 4.0), contact(3, 5.0)];
+        let known = KnownContacts::new(&list, 1);
+        let ids: Vec<_> = known
+            .within(Vec3::zeros(), 5.0)
+            .iter()
+            .map(|c| c.id)
+            .collect();
+        // Own entry left out; 5 m away is not within 5 m.
+        assert_eq!(ids, vec![2]);
+    }
 }

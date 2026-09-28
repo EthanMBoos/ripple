@@ -69,6 +69,7 @@ Paths in the middle column are relative to `crates/core/src/`.
 | Numerical integration | [math/integration.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/math/integration.rs) | RK4 with the reference arithmetic order |
 | `common/PID`, `VariableIO`, `Random` | [common/pid.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/common/pid.rs), `common/variable_io.rs`, `common/random.rs` | Control helpers, named ports and legacy spawn randomness |
 | Plugin timing and new plugin randomness | `common/loop_rate.rs`, `common/plugin_random.rs` | Simulation-time rates and stable per-plugin streams |
+| `common/RTree` | `common/spatial.rs` | Finding nearby agents: `within` and `pairs_within`, answered by scan or grid; built once per tick after motion |
 | `plugin_manager/EntityPlugin`, `PluginManager` | [plugin_manager/entity_plugin.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin_manager/entity_plugin.rs), `plugin_manager/registry.rs`, `plugin_manager/builtins.rs` | Shared lifecycle/context types, typed factories and bundled registrations |
 | `pubsub/` | [pubsub/messages.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/pubsub/messages.rs), `pubsub/network.rs` | Publications, subscriber queues, delivery and the network interface |
 | Legacy frame/log protocol | [protocol/frame.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/protocol/frame.rs), `protocol/wire.rs` | Validated legacy protobuf frame I/O |

@@ -89,8 +89,13 @@ entities:
 | `run.motion_multiplier` | 1 | `<run motion_multiplier>` |
 | `run.viewer` | false | `<run enable_gui>` |
 | `end_conditions` | `[time]` | `<end_condition>time, all_dead</end_condition>` |
+| `spatial_lookup` | `{method: scan}` | none; XML always scans |
 | `interactions`, `networks`, `metrics` | empty | `<entity_interaction>`, `<network>`, `<metrics>` |
 | `entities` | required | `<entity>` blocks |
+
+`spatial_lookup: {method: grid, cell_width_m: 5}` answers "who is within
+range?" with a grid instead of testing every agent. Results are identical; only
+speed changes. See [Finding nearby agents](../reference/plugin-api.md#finding-nearby-agents).
 
 Worker count, pacing, and the viewer are command-line choices (`--workers`,
 `--headless`); XML's `multi_threaded`, `time_warp`, and `start_paused` have no

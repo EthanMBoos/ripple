@@ -261,6 +261,18 @@ impl Default for RunConfig {
     }
 }
 
+/// How the engine answers "which agents are within range of a point?"; see
+/// `common/spatial.rs`. Both methods give identical answers; only speed differs.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "method", rename_all = "snake_case", deny_unknown_fields)]
+pub enum SpatialLookup {
+    /// Test every agent.
+    #[default]
+    Scan,
+    /// Test only agents in grid cells near the query; `cell_width_m` sets the cell size.
+    Grid { cell_width_m: f64 },
+}
+
 /// Plain experiment data; `Simulation::new` validates it before execution.
 /// Serialization records normalized data for manifests, not mission-file syntax.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -268,6 +280,7 @@ impl Default for RunConfig {
 pub struct ScenarioConfig {
     pub run: RunConfig,
     pub end_conditions: EndConditions,
+    pub spatial_lookup: SpatialLookup,
     #[serde(deserialize_with = "crate::parse::yaml_mission::entity_groups")]
     pub entities: Vec<EntityGroupConfig>,
     #[serde(deserialize_with = "crate::parse::yaml_mission::plugins")]
@@ -294,6 +307,12 @@ impl ScenarioConfig {
             self.run.motion_multiplier > 0,
             "motion_multiplier must be positive"
         );
+        if let SpatialLookup::Grid { cell_width_m } = self.spatial_lookup {
+            ensure!(
+                cell_width_m.is_finite() && cell_width_m > 0.0,
+                "spatial_lookup cell_width_m must be positive and finite"
+            );
+        }
 
         let mut definitions = Vec::new();
         let mut generators = Vec::new();

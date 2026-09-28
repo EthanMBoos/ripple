@@ -110,6 +110,11 @@ impl SphereNetwork {
         if sender_id == receiver_id {
             return true;
         }
+        // If SphereNetwork becomes slow with many agents: these two searches scan
+        // every contact for every link. The engine's contacts are sorted by id, so
+        // a binary search (or an id-to-contact map built once per step) fixes that.
+        // This is a lookup by id, not a range query, so `within` doesn't help.
+        // Keep one random draw per reachable link, in the current order.
         let sender = link
             .contacts_truth
             .iter()
@@ -149,7 +154,9 @@ impl SphereNetwork {
 #[cfg(test)]
 mod tests {
     use super::SphereNetwork;
-    use crate::plugin::{MessageEndpoint, Plugin, PluginParams, StepTime, Transmission};
+    use crate::plugin::{
+        MessageEndpoint, Plugin, PluginParams, StepTime, Transmission, TruthContacts,
+    };
     use crate::{EntityKind, EntitySnapshot, KinematicState, Params, Vec3};
 
     fn reachable(
@@ -187,7 +194,7 @@ mod tests {
                 plugin: "subscriber".into(),
             },
             topic: "test",
-            contacts_truth: &contacts,
+            contacts_truth: TruthContacts::from(&contacts[..]),
         })
     }
 

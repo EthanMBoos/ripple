@@ -1,7 +1,7 @@
 //! Sensor interface and reading delivery; concrete models live in plugin/sensor.
 use crate::{
-    EntitySnapshot, KinematicState,
-    common::PluginRandom,
+    KinematicState,
+    common::{PluginRandom, TruthContacts},
     estimator::ContactList,
     plugin_manager::entity_plugin::{EntityInfo, Plugin, StepTime, Update},
     pubsub::Messages,
@@ -18,7 +18,8 @@ pub struct SensorContext<'a> {
     pub time: StepTime,
     /// Sensors sample committed truth after all motion substeps.
     pub truth: &'a KinematicState,
-    pub contacts_truth: &'a [EntitySnapshot],
+    /// Every entity's true state, after this tick's motion.
+    pub contacts_truth: TruthContacts<'a>,
     pub random: &'a mut PluginRandom,
     /// This sensor's instance name, which estimators use to select its readings.
     pub(crate) name: &'a str,

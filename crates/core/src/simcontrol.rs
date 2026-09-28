@@ -7,7 +7,7 @@ use anyhow::Result;
 use serde::Serialize;
 
 use crate::{
-    common::random::LegacyRng,
+    common::{SpatialIndex, TruthContacts, random::LegacyRng},
     entity::{Entity, EntityDefinition, EntitySnapshot},
     estimator::{Contact, ContactList},
     plugin::{Messages, MetricReport, PluginRegistry, StepTime},
@@ -145,7 +145,9 @@ impl Simulation {
         )?;
         // Legacy missions can create entities one step before the start time.
         simulation.generate_entities()?;
-        simulation.apply_interactions()?;
+        let mut nearby =
+            SpatialIndex::build(simulation.config.spatial_lookup, &simulation.entities);
+        simulation.apply_interactions(&mut nearby)?;
         // Every entity's first belief comes from one snapshot of the whole
         // initial population, before any decision plugin initializes.
         let snapshot = simulation.snapshot();
@@ -278,17 +280,21 @@ impl Simulation {
             substep_time_s += motion_dt_s;
         }
 
+        // The spatial index is built from post-motion positions and refreshed
+        // before each interaction and after them, so every query sees current
+        // positions (an interaction may move entities).
+        let mut nearby = SpatialIndex::build(self.config.spatial_lookup, &self.entities);
         let sensor_contacts = self.snapshot();
-        self.run_phase(|entity| {
-            entity.step_sensors(StepTime { time_s, dt_s }, &sensor_contacts.entities)
-        })?;
-        self.apply_interactions()?;
+        let sensor_truth = TruthContacts::new(&sensor_contacts.entities, &nearby);
+        self.run_phase(|entity| entity.step_sensors(StepTime { time_s, dt_s }, sensor_truth))?;
+        self.apply_interactions(&mut nearby)?;
+        nearby.refresh(&self.entities);
         let time = StepTime { time_s, dt_s };
         let contacts = self.snapshot().entities;
         let mut network_trace = self.trace.as_ref().map(|_| NetworkTrace::default());
         self.world_stop |= self.world.networks(
             time,
-            &contacts,
+            TruthContacts::new(&contacts, &nearby),
             &mut self.entities,
             &mut self.messages,
             network_trace.as_mut(),
@@ -301,7 +307,11 @@ impl Simulation {
         self.perfect_contacts = perfect_contacts(&contacts, time_s + dt_s);
         let perfect = self.perfect_contacts.clone();
         self.run_phase(|entity| entity.estimate(time, &perfect))?;
-        self.world_stop |= self.world.metrics(time, &contacts, &self.entity_teams)?;
+        self.world_stop |= self.world.metrics(
+            time,
+            TruthContacts::new(&contacts, &nearby),
+            &self.entity_teams,
+        )?;
         // Retain a stop request even when its entity is removed in this same tick.
         self.world_stop |= self.entities.iter().any(Entity::stop_requested);
         // Removal happens after networks and metrics so final-tick publications are delivered.
@@ -390,14 +400,14 @@ impl Simulation {
             .collision_exists(&self.entities, position_world_m)
     }
 
-    fn apply_interactions(&mut self) -> Result<()> {
+    fn apply_interactions(&mut self, nearby: &mut SpatialIndex) -> Result<()> {
         let time = StepTime {
             time_s: self.time_s,
             dt_s: self.config.run.dt_s,
         };
-        self.world_stop |= self
-            .world
-            .interactions(time, &mut self.entities, &mut self.events)?;
+        self.world_stop |=
+            self.world
+                .interactions(time, &mut self.entities, nearby, &mut self.events)?;
         self.messages.time_s = self.time_s;
         for entity in self
             .entities

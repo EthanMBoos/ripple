@@ -32,7 +32,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-06-13",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-07-41",
       "cpp_output_hashes": {
         "frames.bin": "21d41b94f5e836c1276794eff839ee4666a7b9b4a8dfda4509389a34ab13ba02",
         "summary.csv": "8e11d04f706509ae731986d61806ca86f1c3d33c8c8f618cb58c0600c3ca7705"
@@ -54,7 +54,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "5748d5feaee4740774c1835e1fa2c153fe0035eb5a57c902cb5acaa1c640a712",
+      "recording_sha256": "98438dd40c9961cdb4af9aca9f85984186dabfcdfba7cab787eee609db306677",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -157,7 +157,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-06-17",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-07-45",
       "cpp_output_hashes": {
         "frames.bin": "fc612c80d3cc9341a5d9a067e1df9d2154b1930127add3099dbd5ba2c5bbdbd0",
         "summary.csv": "77e5f1a49d2ba31565746f680051b65779c04c027fa5e5d97892965e5556b445"
@@ -179,7 +179,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "6f1eb5950177b3b85304947eebb772cd26e9caecc5cce98547f0494c57c323c4",
+      "recording_sha256": "5f70f2aa6a6c7ae95561af4b039327c904ed4cd0eead39fed0c5414dfa46ac12",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -282,7 +282,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-06-21",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-07-49",
       "cpp_output_hashes": {
         "frames.bin": "fc612c80d3cc9341a5d9a067e1df9d2154b1930127add3099dbd5ba2c5bbdbd0",
         "summary.csv": "77e5f1a49d2ba31565746f680051b65779c04c027fa5e5d97892965e5556b445"
@@ -304,7 +304,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "eaadb8d10830e0b153eb0d060fba05a81c8ae68d1ca0d2bb637949838617f776",
+      "recording_sha256": "0644ebdfdf5b1c5a111f4dc8f78ebaf07311f7a930fc8e1f4c8af0c53cfca408",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -407,7 +407,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-06-25",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-07-53",
       "cpp_output_hashes": {
         "frames.bin": "05fa3a250465072aa6838fd49aef696e9b091814e19714daf747275945bc46b5",
         "summary.csv": "77420389a72024405eae2bdee82e3a79f0151859aa6420654584d374377fb02c"
@@ -429,7 +429,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "50377eda981c4af201e3ac3277aceb26e611358337c9288628ead8b11900fd67",
+      "recording_sha256": "c9987f84731d1fbf74dda5b289f10d5b743c52a6d61e5b6ed143bf85f864aad5",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -532,7 +532,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-06-27",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-07-55",
       "cpp_output_hashes": {
         "frames.bin": "25e44836151b7413cc231ad61078a6e9d04926088a51e6baec57920313b48465",
         "summary.csv": "3afd78e3811543726fb8215a0f32ae39b714ee5803265129206594fe1e390ea5"
@@ -554,7 +554,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "1a86e10e6d04a018665015b6a8893f8d054c58ba24d8daa03b847894d625bd4b",
+      "recording_sha256": "19880a11baf06d86392689b0663bda65f49132ab1f64aca4f1675497841d9921",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -660,7 +660,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-06-30",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-07-58",
       "cpp_output_hashes": {
         "frames.bin": "3761dae67e200ff367ca8d05dd3ee9e33ba4216fc7acfa4c208f9446aaf221b6",
         "summary.csv": "8f8263f80ef43bfc704c5a02181152057071ae41ddf8d3ea98730823ab734dab"
@@ -682,7 +682,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "858cff40eed763b97f019ae76ffa1eb77431ac344d9a7ae9210eebcb3edd21f0",
+      "recording_sha256": "960cffccb5491ae3d838e68b71f39cd05ed503b0039cc9c1f8091cc1b1a58bdd",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -785,7 +785,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-06-33",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-08-01",
       "cpp_output_hashes": {
         "frames.bin": "30a14ee07505528d45d22d969b714d1212b869bf175e4838651df079972d37fb",
         "summary.csv": "0633843dbdcef6540db422f937af98bf2eb50c5fc972caca268a8f4382be1907"
@@ -807,7 +807,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "0b0a146a4e1a55cb7b3d82ad84b695a421aaac69877577abd882215526e5b16a",
+      "recording_sha256": "554ae9cfbfb0a0fba4e05e50e86d67ea175b34df61ed47394f4e9cbdb58471d0",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -914,7 +914,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-06-36",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-08-05",
       "cpp_output_hashes": {
         "frames.bin": "e039040601b719047d04dbab1e2d69bbe0348d849ed74ca870642e9399f7da96",
         "summary.csv": "a91d4a95798930faac01fa6d914ea02270dbc9313c1a1706e42044614130c625"
@@ -936,7 +936,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "baff89c25d735bfee23a2e43a752a85e7828722dab3ad2d8fa385ee19c476ff9",
+      "recording_sha256": "d319b9fcb9acad87c8f3d5038cfe0c6149810c16045cfd897dcf5ed3796afe8e",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1039,7 +1039,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-06-53",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-08-22",
       "cpp_output_hashes": {
         "frames.bin": "cd065010cd1c9e6d1167eff890bbdecc86a23f11146bdfcad84fcacc545cf67f",
         "summary.csv": "8041dd81622a35cd53c8dc38a60a9791a4615bb1d4a0e69a6e94c6bbf2f10d49"
@@ -1061,7 +1061,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "0c3f1e54879314799399a91f7791d35779d88bd47d596842805f81cef8577da8",
+      "recording_sha256": "46262152ed9dffcf9f834199d50407c8d00252960b7368eed0f271db032ecac0",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1164,7 +1164,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-07-08",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-08-36",
       "cpp_output_hashes": {
         "frames.bin": "6174c8ab051a99a82303d0986376cc92713e76d4eac4e52d3ddfb793f406e686",
         "summary.csv": "9904220bd06c6e59c91532bfe684e8837411e806e926c7b5fb044842b0f729f9"
@@ -1186,7 +1186,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "2d2f4209476b97f50312b44957b79efc28403dba138b11655dc44a560be910d1",
+      "recording_sha256": "081d300fbe892b0d0cd53f9608eb58c2c2e1a10effca81d4c643ed00877e8136",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1289,7 +1289,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-07-10",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-08-39",
       "cpp_output_hashes": {
         "frames.bin": "997f8fe7e45473a6499927d322d28e7ef417aebf797797c6fe8c630f4f609b9b",
         "summary.csv": "160422e322c1a89cd67e64d3c111887a7ee7bb3dceaaca93e5ed64b4a3d08fc3"
@@ -1311,7 +1311,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "62f4b902c809d620d0a3d7b9b20e27ec71d12b45bbc60ccfc4e76eef0d13a38a",
+      "recording_sha256": "0680665f174efa8370cbfeb69c9028583b0c9ff02329e7c78e551e62b778c6d5",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1414,7 +1414,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-07-13",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-08-42",
       "cpp_output_hashes": {
         "frames.bin": "470e8228b3981be80484cb4e225de529c190ce3249bb000eeb8b5e6ca5f281cf",
         "summary.csv": "a0bb182eaddb8570c3033634c7566ba78915db36082b539ccb9fe84a25f19ff3"
@@ -1436,7 +1436,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "c15659444a488b46087949b5e72c20c267ee0861b948f5fb9dcf9a5544433f00",
+      "recording_sha256": "010ffdfe23718a81944234f65acbf834e650e54152ebcbac0eb5b313c12a3a41",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1539,7 +1539,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-26_00-07-15",
+      "cpp_log_directory": "cpp/logs/2026-09-28_13-08-44",
       "cpp_output_hashes": {
         "frames.bin": "5c1335acab9e3e813c21dd7e415fb5222500b1cd2ea9f69d542aec56aae79c6a",
         "summary.csv": "19c27bfff4e0869bf2d34fa0dc356db8bd7f742fc9572d104c8ad7499c7f891a"
@@ -1561,7 +1561,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "8df2c2718dd4d44746a5c149a02b7f5771c0bab50cf1072383c6a2518aecdfe5",
+      "recording_sha256": "6077417f02a49987308417032be8cbaac907cd504c7c9013cf08dd1bf8c7bf55",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1656,9 +1656,10 @@
     "source_policy": "committed local branch snapshot; no worktree edits",
     "source_archive_sha256": "09db71eeedd4f239249d47465774c65d7ee55f680a66c2316a0b71c61e71c2b1",
     "dependency_dockerfile_sha256": "a2a8aa72201d52858c918dc698d2b87d3780455b2d6afa424a1955e2b82eacfb",
-    "dependency_image": "sha256:79fd7d9f228fd4b56d71a5fa5a8700ad0d6c4189c8b460e4f1bd55e8bff929bf",
+    "dependency_image": "sha256:93ceedc67e6077afc7c53d12c08fce058cf97d6813f908161c0adec905747ce4",
     "build_dockerfile_sha256": "9c5f832b01cda15f8bcfdfbbabcaa0d8f32fcb67ddcbd3fa29f69a98a0fbb0af",
-    "image": "sha256:739540228776ce520fb2161ccd10401fff4839aaa7c05fcbf0a32e4dc8373387",
+    "image": "sha256:b78b12a0707bd1ad4292059b9c501029e8411fdd76e4ad90ae457b8ec1c2bddb",
+    "image_tag": "scrimmage-rs-reference:4bdf41fb06fa",
     "platform": "linux/amd64",
     "fixture_sha256": {
       "ConstantVelocity.cpp": "d04b099509a5e5c9dbce4baee22058905702f997350aee3fc15cc7d12994435e",
@@ -1675,9 +1676,10 @@
     "source_policy": "committed local branch snapshot; no worktree edits",
     "source_archive_sha256": "07fac022010f99cf5a72b73e1b8976089fc96ec10af45cc3ffcae53c4c6920d8",
     "dependency_dockerfile_sha256": "a2a8aa72201d52858c918dc698d2b87d3780455b2d6afa424a1955e2b82eacfb",
-    "dependency_image": "sha256:79fd7d9f228fd4b56d71a5fa5a8700ad0d6c4189c8b460e4f1bd55e8bff929bf",
+    "dependency_image": "sha256:93ceedc67e6077afc7c53d12c08fce058cf97d6813f908161c0adec905747ce4",
     "build_dockerfile_sha256": "9c5f832b01cda15f8bcfdfbbabcaa0d8f32fcb67ddcbd3fa29f69a98a0fbb0af",
-    "image": "sha256:2cee7da1bfc42d5cf5d22c6592f6dcf54fc406d5f1b8a63b2f838377ae90b520",
+    "image": "sha256:303914260a0bdcb270058a8f28f15c9596a29c15fcbe22db14bae72d4c2974d9",
+    "image_tag": "scrimmage-rs-reference:747a28069c5e",
     "platform": "linux/amd64",
     "fixture_sha256": {
       "ConstantVelocity.cpp": "d04b099509a5e5c9dbce4baee22058905702f997350aee3fc15cc7d12994435e",
@@ -1689,7 +1691,7 @@
   },
   "rust": {
     "binary": "<workspace>/scrimmage-rs/target/debug/scrimmage",
-    "binary_sha256": "12e4d7157cd66436f175dc5eaeec189f7fa2a68eb3e6a6a4087f3e6f6c0581cf",
+    "binary_sha256": "e819ea6ebb81f429726c97308872caaec867a3eb21696b70c0cdeb6cd2146d99",
     "compiler": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)\nbinary: rustc\ncommit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea\ncommit-date: 2026-08-18\nhost: aarch64-apple-darwin\nrelease: 1.98.0\nLLVM version: 22.1.8",
     "host": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
     "source_hashes": {
@@ -1702,7 +1704,7 @@
       "crates/cli/src/replay.rs": "7ef9ec347c860ed2966ec3ab39200d089d8d51af21e27d13c44856808e95cf2d",
       "crates/cli/src/run/output/tests.rs": "6f96857399dde983b6309bf5d82efd54ab37e722bf07f1d56c2b526de0eb15a5",
       "crates/cli/src/run/output.rs": "7c15d767bd163ccdcbdd6776301bf0e000e8253884aeb2b5b988ec2891179bd6",
-      "crates/cli/src/run.rs": "f04ab1e32042b3e320274ae0055aaff148b3baa0d41dfbe1f4aa1d1952f34119",
+      "crates/cli/src/run.rs": "0eb6a1680c7b7bad3fc4afd1f355e00c9b1477961cd035dd164344e2f5a75d95",
       "crates/cli/src/sweep.rs": "7ff53bb661e558d4e2918fa227fb581484f98797595cfbd9b02528b63f96a2e9",
       "crates/cli/src/viewer/blueprint.rs": "7b7bf379c812638f567f29ab6b5d5c69b3bd169abf566087c2e2a43d23981765",
       "crates/cli/src/viewer/map.rs": "7a92701f19ddf05754b2af4c1044676bd53a2b7ce61dd14cb96807ad3cd7a259",
@@ -1717,14 +1719,16 @@
       "crates/core/src/common/pid.rs": "1bc39d10027138b0dfa37d4da96b0a54068645dc6922715d5279d8f125a20a91",
       "crates/core/src/common/plugin_random.rs": "30c27d7b364c89e7c681d8b4393e05f21e3faef43e4ea385a580fc099751c172",
       "crates/core/src/common/random.rs": "ac148402b133eb35ab6496c115151a9bd44655de6d7779baca12bb5475d00dd6",
-      "crates/core/src/common/variable_io.rs": "574beaf916554d973f6f535a923b896850155a6ea84dec598adb0f4553f81595",
+      "crates/core/src/common/spatial.rs": "c1376cef5759b6b508b9a7d6e19643ee36eaeab18fde6fe52eefe51abcc9ed7a",
+      "crates/core/src/common/variable_io.rs": "1a19be52e09a6909863f1655468b10500679a47111166521d80c422eb1b1b1aa",
       "crates/core/src/common/waypoints.rs": "0893b2a26b26d3186f7600cf86b9dc16eb12ff47ec73285ff4423c779e18408b",
-      "crates/core/src/common.rs": "8f820f3d0fc3f36d4d7c5d30df8b8c0018f1e68d622ebccb3e343dd00187ee06",
+      "crates/core/src/common.rs": "133cabb11c2314433892f08d35a918bb6d5ab192a7e42f93a71add2fd8addb6b",
       "crates/core/src/controller.rs": "0070e93e5883f515aea749f8a54f23b12a93124c3923a92bddbd8814dd35c11a",
-      "crates/core/src/entity/plugin_stack.rs": "b295917fee3f6a640c8fddb2ac19a82a2beb8aa87ca3df4c40ee3601a25f9267",
-      "crates/core/src/entity.rs": "c6b23edf1544fe1eb09966d18bfcd84d1dbd5406372b688e706e072b62b33866",
-      "crates/core/src/entity_interaction.rs": "1de8d0087f1f02694f656205689325751e5cec690a7fc54c57858a4ecae8b9bb",
-      "crates/core/src/lib.rs": "63bfca96461a7a54716f42653388cd4712f721a7b08c3f0ca32859be1dd0af27",
+      "crates/core/src/entity/plugin_stack.rs": "94487cd8ee785057c61f28dd3183966699f7778eb22ebc27a15075792f38cabf",
+      "crates/core/src/entity.rs": "27e9f390ef7539612c146fd5dc654ff8f419a7098cb85d85f74f3ade876671b1",
+      "crates/core/src/entity_interaction.rs": "f4e966a4385c3133b08e721a8a12c6c872121c9d638f62de9d27daaebc69be5c",
+      "crates/core/src/estimator.rs": "fc8f4ba969629cc7e1d93b090bd4231b8470bfe26c77754ce7a83796f687677a",
+      "crates/core/src/lib.rs": "c9e4a51ea610b0f48dd9b5fd7f0dea16a3bb3ed9ebec036bfff4d76f01d4fd82",
       "crates/core/src/math/angles.rs": "9628498ed1c135b0b28f6d241bd2d0656e430b57cfb7bcaef27203dae3d396a1",
       "crates/core/src/math/integration.rs": "0c966d36ca181e7c6cdb16bcadcd7b5b798b9d4ba0082e1e0d7ca8de1941753e",
       "crates/core/src/math/quaternion.rs": "9999467b5b279dd4980256b51e4079cc329f115422c7dd0ef908e2966213f905",
@@ -1736,22 +1740,24 @@
       "crates/core/src/parse/mission.rs": "d527d54db09423c7926a394599c5650cb62b22fd51024e3d9aaa8628b4b1f158",
       "crates/core/src/parse/params.rs": "e3c557f28b8551adcaf53224c9f7b51a2906d37e98010dea2bec5d3b971dd43b",
       "crates/core/src/parse/xml.rs": "da6e5a82ace1508df34bcaf3dca8ac0404a5f2570f730c3a2e21c8ba752c0148",
-      "crates/core/src/parse/xml_mission.rs": "879e38cb5b410ac17b953818a4b7bc3748c838cd81b1925ca79a42c618a54382",
-      "crates/core/src/parse/yaml_mission.rs": "6521ca2102a4d166438d9bf0e533450f85ebdd5d3a613faea35a5ed67d0b1b17",
+      "crates/core/src/parse/xml_mission.rs": "af2ac02c71375d346d36aade0f6c5386ba8a98dce2b0217666f589e276b06924",
+      "crates/core/src/parse/yaml_mission.rs": "54c4d773b70097f30e8bc376f49921fdfafcb8518d9c2f727ade0a5b9ee5538c",
       "crates/core/src/parse.rs": "91740d01bbeed15e5f3c4a4df93e823b6ca231dbdaa0c18be65c3f3fdfa72a31",
       "crates/core/src/plugin/autonomy/auction_assign/auction_assign.rs": "8ef45bc2790536e19ffc073a11103775721f04e5bc0b10ba0b89635ca3f15484",
       "crates/core/src/plugin/autonomy/constant_velocity/constant_velocity.rs": "7b20e27b24fa6f6463e6e98d3e06bf62836581e4d74cb369e56ce754f8b8bd96",
-      "crates/core/src/plugin/autonomy/straight/straight.rs": "2e7e3976ffaa008fc0d3132bae7b2c5e328360c346831db11180e5d3d9dacdb7",
+      "crates/core/src/plugin/autonomy/straight/straight.rs": "b63a3398c97de28da9bcd845e85afdb12f83be7c28db1d2a7e8e3a4fd41f1c10",
       "crates/core/src/plugin/autonomy/waypoint_follower/waypoint_follower.rs": "39dec41a88c3a2e9cd1946ecc6ea1997a1de741b52877a99ed087a357b6d6e4f",
       "crates/core/src/plugin/autonomy.rs": "46425730b534ddad99acf74ca266779ee397c0f6ec87019a48f3e6928d1d2f57",
-      "crates/core/src/plugin/controller/aircraft_pid/aircraft_pid.rs": "44d82e8998a34f2b3e6e4166cf4f27d1f9cdbbb7d3b565b90ec5154335b96185",
+      "crates/core/src/plugin/controller/aircraft_pid/aircraft_pid.rs": "2573e839e8da2aa453c865ffe85264c803117270c8eff9842f6a15734dd094d3",
       "crates/core/src/plugin/controller/motor_speeds/motor_speeds.rs": "7c07959ea0f55c4b371f4676910492c0cb0f63a54e74dfb0bad4bc2dcb0461ae",
       "crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs": "1304cbee4b4092eaf96a61b3b14a3c5d9e584aa730e7b133ffc45d199873664a",
       "crates/core/src/plugin/controller/single_integrator_simple/single_integrator_simple.rs": "871433f4b619f52abc7b7f1f3a66725d12bfa7e864e4212fef85e416f1469cae",
       "crates/core/src/plugin/controller.rs": "290b29a18ac474a622f217b73aa57dae5b7c1695f9304790fd3ddb1cb653d2c7",
+      "crates/core/src/plugin/estimator/pass_through/pass_through.rs": "885e2f5ff2d78a1693659795db4e0e5746a34ecfb50111a88e7aff916e7acda2",
+      "crates/core/src/plugin/estimator.rs": "963c4290402e7c857428a0ce93d409d8048c407a675a557a155d4b49f27109da",
       "crates/core/src/plugin/interaction/boundary/boundary.rs": "21bfb6b57b921f461d87b2cedc78f19b473a1ecb1dda415a3844914b35e052dd",
       "crates/core/src/plugin/interaction/ground_collision/ground_collision.rs": "4c62edc768499b28eb02359385b85bf633c875f2564f0c7f61a7d8faa68e81cf",
-      "crates/core/src/plugin/interaction/simple_collision/simple_collision.rs": "764b649cbbb27c96060660d29b49c33da5bbbf78784e1d3f67ae7a3b8732b303",
+      "crates/core/src/plugin/interaction/simple_collision/simple_collision.rs": "837dfb5b7aba5567de7b5dedc9ca055eefce9e477ef7350a99c5cac24dea6248",
       "crates/core/src/plugin/interaction/waypoint_broadcast/waypoint_broadcast.rs": "33633b04d0535cd6642179db639a49a499a8dedfecec6f3f2084aa47dcb893c1",
       "crates/core/src/plugin/interaction.rs": "c6425ac661cd734149d7d1428dcd15a9fc351b82420a1f3783c6afa2b1e239d9",
       "crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs": "54fe02ed8e67bfac86f4506c00e95545c6fc413d0867f7ef2eaa35698f6597a0",
@@ -1766,58 +1772,63 @@
       "crates/core/src/plugin/motion.rs": "90e64ac64dc8fc7bda9a6ac76a979a30c25a6be7892cc36c3c61264196e0d0a9",
       "crates/core/src/plugin/network/global_network/global_network.rs": "fcc0abf4b154cde0d22fca90d3ead50cb0efe626fe162da4f916af79cf5e5ecc",
       "crates/core/src/plugin/network/local_network/local_network.rs": "877c181f540de69c0074c4bd13c9860b70ed8e230bde9771ec542816a65c0883",
-      "crates/core/src/plugin/network/sphere_network/sphere_network.rs": "c3f065d8fc6ffdc0c71fe9ce5d6eb6767509e087e5b7410b1d95ffa088a909c3",
+      "crates/core/src/plugin/network/sphere_network/sphere_network.rs": "b5e8d8d81bf000eb56550f7eb45399f7896fd2b7885f5839a342e9f2b667cce4",
       "crates/core/src/plugin/network.rs": "e8e87a29b0ebe92f97327a011477fdcd9c848baa539fb7714f4b7d5f27a7e883",
-      "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs": "d079df3c10818b7eda3e6e5c47677333ca4f91511542cc1e8318a1e66956d9f3",
-      "crates/core/src/plugin/sensor/noisy_position/noisy_position.rs": "e402bfc587edff6c66e54293ca23ac71ac21135678f0864fcab1bbbcf13f7c8e",
-      "crates/core/src/plugin/sensor/noisy_state/noisy_state.rs": "6875f3ddc5a1751ee36a48a9525a71a599ab403ee93c2b86209b179152115745",
+      "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs": "3496f6f3182469eddb83b6b7f7e8025a9db7e6794c91b8310dd21201ba3cf5ff",
+      "crates/core/src/plugin/sensor/noisy_position/noisy_position.rs": "f1915b8c93ccf0e15e2c42b899a778ae678ccc76def7959a5e7677307a8b1112",
+      "crates/core/src/plugin/sensor/noisy_state/noisy_state.rs": "a443ca264bfa14c0b496ecf18530309c36f88d3c735965e504f7e1aa191bc3a0",
       "crates/core/src/plugin/sensor.rs": "df3624a8207d3f276ad0ebc65dd9581fc34c52aa65ceda2eeb9f5211a893577e",
-      "crates/core/src/plugin.rs": "d936afeac568618a16fc8198115e4c1d3a2dfe1500d27afcaaa69d5a313255b5",
-      "crates/core/src/plugin_manager/builtins.rs": "8a6482f5daa6b761d96fdfd94c1abc066974935454baa4a53a8e4f06dad1517f",
-      "crates/core/src/plugin_manager/entity_plugin.rs": "ee9196cdd242cf2ecb19ff75070bcc1f0df22d71256fdf5b0b8051e1b0a33459",
-      "crates/core/src/plugin_manager/registry.rs": "cb2ac407db0b9d5409ac14f9d81a356dfdfa09fda55e949fa416e3a8fb8bc78a",
+      "crates/core/src/plugin.rs": "d908e542e95518d8a38430e290b8d02353b46fe1fd0b1fef2c64aebb5cf9e107",
+      "crates/core/src/plugin_manager/builtins.rs": "d50238c45c8cb2c61ff7db80f5bdef2b3bfc8cc470c1f06502ce0d9fa5c3053e",
+      "crates/core/src/plugin_manager/entity_plugin.rs": "f5f5cdae85acfec447cc2db79d2433e97470c5759ae5e98738a17d11908ee607",
+      "crates/core/src/plugin_manager/registry.rs": "897008cb24f14753d0b720662cd6706ba4d713a7fc5b883c98f209d8b144cd92",
       "crates/core/src/plugin_manager/supported_options.rs": "063012180e1b28b1969ca50283a1d1dfd4dd902e8504045e6effef18218f650f",
       "crates/core/src/plugin_manager.rs": "52536023b89ca1dbd2ea03af253783a6fa9ad9c481f6904de62ccf0aa0ed5741",
       "crates/core/src/protocol/frame.rs": "f5d22dd737bd0422d144d194eff896b26878a07def488965c1f25b8908e40c2c",
       "crates/core/src/protocol/wire.rs": "2fa24ec1a3496d19cb7add20c03a9dcd5f96afbf6c31c454810e63cca913521b",
       "crates/core/src/protocol.rs": "f9f5a77b5d602a590974ac7f3b3e82072a71f6ab4efb55e46b36f2eaa5d07ae1",
-      "crates/core/src/pubsub/messages.rs": "055937b3b551098a2966e5bc793044f27ce8d5f3636ade37bb3c9b141599cc57",
+      "crates/core/src/pubsub/messages.rs": "bed24de12c94bb26764de8f1eebf7f36050b4db246f11c374583f464fde4bf2d",
       "crates/core/src/pubsub/network.rs": "bff93acc61471e93e13211376c2f692a9045c13f1385c815b5f2ca05f093903c",
       "crates/core/src/pubsub.rs": "dd30c5af83b6016b2b3b61a4a61fda73430e2faced019f92693b4330032844bd",
-      "crates/core/src/scenario.rs": "a9e0fd466f1c718b31e157b6abd17db45f00d444b1306def417f4aa832678ca2",
-      "crates/core/src/sensor/observations.rs": "02d9ad352d2f1ed3a0aac7be843b9c275cbb7221d79674758fe87a77deb73539",
-      "crates/core/src/sensor.rs": "092c3ee3a0f3f7e373c5ea599a5a44a7335b6383873b3f54d29f85a3e24ba1b3",
+      "crates/core/src/scenario.rs": "cebbf2ce5f9b4114579a3d103f5ba3baed3b9099a14574e1d8be5a5f2ba5dd97",
+      "crates/core/src/sensor/readings.rs": "301668467260e133fb739c9667eb50de5f03cb5a695d308410f8a611cc9e3545",
+      "crates/core/src/sensor.rs": "34fd96ea12541fa4d38c37cdbd5598290a164abad6d04b763b33a9d5ec65230f",
       "crates/core/src/simcontrol/generation.rs": "2be38549065707598f9d41d89e3b34425b5d427fcd6a7b97cf9bbf4a8aee4f96",
-      "crates/core/src/simcontrol/scheduler.rs": "07b55d162647422b0176c3b548471e407e6624553d95c8cace8343072e4e6d6f",
+      "crates/core/src/simcontrol/scheduler.rs": "c061b5973379e33e78bf07df4d5461e7547d872e7b29e4e8d0bf8f49090f3b8a",
       "crates/core/src/simcontrol/summary.rs": "ebc1ea53e57f750fc358a45ee675a45ddf1282e835fb47b5fadf99e009623d7d",
-      "crates/core/src/simcontrol/trace.rs": "ad33aaf0a3547f3824a3a5d0fb7b30ddaf6f08946c7a1304c5312a6dc7df2939",
-      "crates/core/src/simcontrol/world_plugins.rs": "2ab5d8c2f9cbe25e23f2cb5e0628b975144a6aea84941a9c5f9c5b8561514bab",
-      "crates/core/src/simcontrol.rs": "3c2c7de54866b537767751e3eb0d3aa77fc24cb056f1030a6139dccc47e69b51",
+      "crates/core/src/simcontrol/trace.rs": "e3800f787b2a69074a31b3c3ae2d31bb1c16f213ef245c7755d287cc8dc3151e",
+      "crates/core/src/simcontrol/world_plugins.rs": "bbc8a351f9f8e1bc4714fd6629f575642e9e1599606932fb5be2b267f9fd7013",
+      "crates/core/src/simcontrol.rs": "31ae557b4e483d8016b0cfaf3fef3d4eea35af4f67862a9afc26813f13a92f04",
+      "crates/core/tests/estimation.rs": "b428ed7b513c150d32267203e0524c9d69d4ee4edf7add9b8c0f2b9efb2893f1",
       "crates/core/tests/fixtures/perception_communication.xml": "f14345a2e3b739d37e13cbd0e2036bf8524a4e999b8c79850b4bed3f4aa1a477",
       "crates/core/tests/fixtures/plugin_contracts.xml": "ace7b8bed57e8db064e957fdedc567e388acc3c289510b1f3a3cd86ca0e7b939",
       "crates/core/tests/fixtures/plugin_defaults.xml": "b5de1d94ac84885ba054500f18d099a9a30d09e21da850fc081409f1c62dc3a7",
       "crates/core/tests/fixtures/plugin_overlay/SimpleAircraft.xml": "bbd8782b2e30bfc80cebba57d6c77f95effa0ee3c67589f9019df922598d5aa4",
       "crates/core/tests/math_helpers.rs": "2fb22f72cf7d3cf962f6f149b2a8bdf1b9e7b652ffb0032f10dfe9f7a777eeff",
       "crates/core/tests/navigation.rs": "2073166a0af96c8b28ca9217d7ffd79e9088a21672274b512e6bf685f6ba9096",
-      "crates/core/tests/noisy_state.rs": "b480dd02861bceba3f4c3847726270fe6d78cc41e51959e9b94e2ca11d8d4485",
-      "crates/core/tests/plugin_contracts.rs": "b252f09a0ca73d27c1b4a4e6db4bf0cc935ef798374d033c8e16740c7721d9a6",
+      "crates/core/tests/noisy_state.rs": "80796cec098887eb44b043261e637f60fc6ba930422e4e302a26618a0f6808ec",
+      "crates/core/tests/plugin_contracts.rs": "1b5e08f3bb01123f8661d11f046dd0b1c1c21f9288a7a48dd5700e51af20b122",
       "crates/core/tests/rust_scenario.rs": "937c642e8d7e8eb4ca50698b83f64226710856e6b773e2b3bb4a57c9c0e3a642",
       "crates/core/tests/simulation_regression.rs": "11445d00eab473d7aa82e0e343258e350f58cabd386dfc9e6112505dae1c5b22",
-      "crates/core/tests/support/autonomy.rs": "daa2333c89948c7e00b5566e8f9f7efd3514df4e4a0cbf175f38934801ed9566",
+      "crates/core/tests/spatial_lookup.rs": "768b48b1fae6e8312111505c434f1dace2cf932cad1a7a5ef8299edaeb2a085e",
+      "crates/core/tests/support/autonomy.rs": "6119268d94085b5aaa7db5dcceb198a3e982e03a9871098a3c6f9c1fb92ca084",
       "crates/core/tests/support/controller.rs": "b1094065000aa72c42567e3ea79f8e9dcf56da67f28170157de55b1a02f0acb9",
+      "crates/core/tests/support/estimator.rs": "c9d56007e82d33f6a0df938707cbe98e3a2a928a89739965167d450697de0019",
       "crates/core/tests/support/interaction.rs": "3a108787c4b0d77b83a9c2f8f2b4abe6b4a162f56c63e7054263d483ed9d9de2",
       "crates/core/tests/support/lifecycle.rs": "6e52b5b4d45ca00f966c805fb6f0c48ef06bca07087ca22957b4cc4e8c481daa",
       "crates/core/tests/support/metrics.rs": "2f5481b5445dd3a8d36676628466548ec2d20acd36ed2d7dd1fab08c7e860da6",
       "crates/core/tests/support/motion.rs": "b37f5c1f523da072196ea4bdcd94a3df0dc40a00ff54284712082986c2e4ff68",
       "crates/core/tests/support/network.rs": "f34764dc95f5695bb02b9a1083e052b16bc1623152f8c705df376e98efb3cbca",
-      "crates/core/tests/support/perception_communication.rs": "f53fc4807c6c680c08b0052f50353379df62fbc8b4df666028edc0ce7ba852a0",
-      "crates/core/tests/support/plugin_fixtures.rs": "19c077eb2f6a94f1fdb1c758226c04afffecb09ebd7d7feebd28a93baa6b5e9e",
-      "crates/core/tests/support/sensor.rs": "78ed870a891f59e0219af0c8df391116a8689fba6d6bd09b672f05ff6e1b0b5f",
+      "crates/core/tests/support/perception_communication.rs": "77b449dab945431e069f9768e82ed69927c78f3cd78e876d95b3d125ca90cfe9",
+      "crates/core/tests/support/plugin_fixtures.rs": "d8232c3a6edd330649b49ab244674086df083255746f8d249be2aaebcb477a13",
+      "crates/core/tests/support/sensor.rs": "20e3360c259cbe10014fc0883636cee04ddc8da5cf56d65bd8433c6ca1aeab61",
       "crates/core/tests/world_models.rs": "930163358eeac379b3a54fef6e3c0ee94723e32dc9feebf3fcf3628bf71db5ce",
       "crates/core/tests/yaml_missions.rs": "d45438ceb63a5964c61bda94f25affa57c1c5ca561842a7ef2849247a99e10b9",
       "crates/starter/Cargo.toml": "f474be4b732ae773419a3243e3c3497515bed8b9346eb7f84f72d36ee4bf524d",
-      "crates/starter/src/follow_nearest.rs": "9a460d44ae38b7c970528dac1eaf2efe2bafcc4c17cd67b8b833cda5b68971f7",
-      "crates/starter/src/lib.rs": "5d3f01502eecdc77e36fa64cbc13e52a4eb7e002069d17922179951e2d0cb252",
+      "crates/starter/src/dead_reckoning.rs": "d9e7b377726edb0b7d16a9a3d0c550a28d616e79d397aa35804423e56e7d66ad",
+      "crates/starter/src/follow_nearest.rs": "0e62561a5c9d678e2487fd4ed821bcf9cb084e963bc338ca28c343db6ab7f5dc",
+      "crates/starter/src/lib.rs": "0552947f6dde22dc5def542af5812908c6951484aa04bbfbd418d806c7d5776e",
+      "crates/starter/tests/dead_reckoning.rs": "fed6518d935c40f02a1af998c9c6e3d986a69dfafcbe2ba460cdfcdb2f6671d0",
       "crates/starter/tests/follow_nearest.rs": "83c6f8d89696fb7874859a4d6c2dc03c59ac590a5cb9e0959b665eb1d35b277c"
     }
   }

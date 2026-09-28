@@ -85,6 +85,12 @@ WORKLOADS = {
         end=20, multiplier=1, controller_rate=0, variance=1_000_000,
         world='  <entity_interaction collision_range="5">SimpleCollision</entity_interaction>',
         spawn="", sensors="")),
+    # The same mission, with spatial queries answered by a grid of 5 m cells
+    # (`grid_cell_m`, passed to the runner) instead of a scan. Output is identical.
+    "collision-grid": ("collision with a 5 m spatial grid", (256, 1024), dict(
+        end=20, multiplier=1, controller_rate=0, variance=1_000_000,
+        world='  <entity_interaction collision_range="5">SimpleCollision</entity_interaction>',
+        spawn="", sensors="", grid_cell_m=5)),
 }
 WORKERS = (1, 8)
 
@@ -102,9 +108,10 @@ def build_runner():
     raise RuntimeError("could not find the benchmark runner")
 
 
-def run_once(runner, mission, output, workers):
+def run_once(runner, mission, output, workers, grid_cell_m=None):
     """(stepping seconds, steps, peak resident memory in MB) for one run."""
-    process = subprocess.Popen([runner, mission, ROOT, output, str(workers)],
+    grid = [] if grid_cell_m is None else [str(grid_cell_m)]
+    process = subprocess.Popen([runner, mission, ROOT, output, str(workers), *grid],
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     _, status, usage = os.wait4(process.pid, 0)
     stdout, stderr = process.communicate()
@@ -127,7 +134,8 @@ def measure(runner, repeats, quick, scratch):
                 times, memory = [], 0.0
                 for repeat in range(repeats + 1):  # the first run is a warm-up
                     seconds, steps, peak_mb = run_once(
-                        runner, mission, scratch / f"{key}-{repeat}", workers)
+                        runner, mission, scratch / f"{key}-{repeat}", workers,
+                        fields.get("grid_cell_m"))
                     if repeat:
                         times.append(seconds)
                         memory = max(memory, peak_mb)

@@ -1,7 +1,7 @@
 //! Type erasure and scheduling stay inside the engine, not in plugin author code.
 use crate::estimator::{Inputs, Source};
 use crate::plugin::*;
-use crate::{EntitySnapshot, KinematicState, common::Rate, scenario::EntityGroupConfig};
+use crate::{KinematicState, common::Rate, scenario::EntityGroupConfig};
 use crate::{common::variable_io::Signals, plugin_manager::CompiledPlugin};
 use anyhow::{Context, Result, bail, ensure};
 use std::collections::BTreeMap;
@@ -569,7 +569,7 @@ impl PluginStack {
                     time,
                     truth,
                     messages: &mut sensor.messages,
-                    contacts_truth: &[],
+                    contacts_truth: TruthContacts::from(&[][..]),
                     random: &mut sensor.random,
                     name,
                     kind: *kind,
@@ -754,7 +754,7 @@ impl PluginStack {
         entity: EntityInfo,
         time: StepTime,
         truth: &KinematicState,
-        contacts_truth: &[EntitySnapshot],
+        contacts_truth: TruthContacts<'_>,
     ) -> Result<()> {
         for (sensor, (name, kind)) in self.sensors.iter_mut().zip(&self.sensor_readings) {
             sensor.messages.time_s = time.time_s;

@@ -14,12 +14,12 @@ Defect & Missions & Detected by \\
 controller substeps receive the full step dt & 2 & frames, trace \\
 frame timestamp labels the step start, not t + dt & 13 & frames, summary \\
 spawn coordinates skip the C++ six-decimal round trip & 1 & frames, trace \\
-network delivers one tick late & 13 & frames, summary, trace \\
+network delivers one tick late & 13 & summary, trace \\
 SphereNetwork range becomes inclusive & 1 & trace \\
 SimpleCollision range becomes inclusive & 1 & frames, summary, trace \\
 sensor attitude errors applied in yaw-pitch-roll order & 2 & frames, trace \\
 NoisyContacts covariance is identity, not 5I & 1 & trace \\
-LocalNetwork delivers across entities & 2 & frames, trace \\
+LocalNetwork delivers across entities & 2 & trace \\
 SingleIntegrator yaw swaps atan2 arguments & 2 & frames, trace \\
 heading PID proportional gain 1\% high & 5 & frames, trace \\
 SimpleAircraft yaw rate 0.1\% high & 5 & frames, trace \\

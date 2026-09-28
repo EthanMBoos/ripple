@@ -271,7 +271,7 @@ impl Entity {
     pub(crate) fn step_sensors(
         &mut self,
         time: StepTime,
-        contacts: &[EntitySnapshot],
+        contacts: crate::common::TruthContacts<'_>,
     ) -> Result<()> {
         self.plugins
             .sensors(self.info(), time, &self.truth, contacts)

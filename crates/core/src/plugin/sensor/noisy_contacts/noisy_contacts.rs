@@ -120,6 +120,10 @@ impl Sensor for NoisyContacts {
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
         // Matches C++ for now, though a real sensor would have limited range and
         // field of view: every other live entity is measured, however far away.
+        // A range-limited sensor should ask `context.contacts_truth.within(position,
+        // range)` instead of filtering this list, so a mission's `spatial_lookup`
+        // grid speeds it up. This plugin gains nothing from that: profiling the
+        // sensing workload put 98% of its time in generating noise.
         let mut contacts: Vec<_> = context
             .contacts_truth
             .iter()

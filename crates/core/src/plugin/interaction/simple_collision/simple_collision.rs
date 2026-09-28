@@ -2,6 +2,8 @@
 //!
 //! C++ counterpart: src/plugins/interaction/SimpleCollision/SimpleCollision.cpp.
 //! Startup checks candidate positions; the interaction phase marks collisions and emits events.
+//! The interaction phase asks the engine for pairs in range (`SpatialIndex::pairs_within`),
+//! so a mission's `spatial_lookup` grid speeds it up without changing its results.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;
@@ -80,39 +82,39 @@ impl Interaction for SimpleCollision {
             return Ok(Update::Applied);
         }
 
-        for first_index in 0..context.entities.len() {
-            for second_index in first_index + 1..context.entities.len() {
-                // Split the slice so each contact is borrowed mutably and exclusively.
-                // Pair order is observable when one collision disables later pairs.
-                let (preceding, following) = context.entities.split_at_mut(second_index);
-                let first = &mut preceding[first_index];
-                let second = &mut following[0];
-                if first.health() <= 0 || second.health() <= 0 {
-                    continue;
-                }
-
-                let same_team = first.team_id() == second.team_id();
-                let enabled = if same_team {
-                    self.config.same_team_enabled
-                } else {
-                    self.config.opposing_team_enabled
-                };
-                let separation_m =
-                    (first.truth().position_world_m - second.truth().position_world_m).norm();
-                if !enabled || separation_m >= self.config.collision_range_m {
-                    continue;
-                }
-
-                first.set_health(0);
-                second.set_health(0);
-                let ids = vec![first.id(), second.id()];
-                let kind = if same_team {
-                    EventKind::TeamCollision
-                } else {
-                    EventKind::NonTeamCollision
-                };
-                context.emit(kind, ids)?;
+        // Pairs come in the order a loop over every pair (first < second) visits
+        // them, skipping pairs out of range. The order is observable: a collision
+        // disables its agents, so the pair visited first decides who survives.
+        for (first_index, second_index) in
+            context.nearby.pairs_within(self.config.collision_range_m)
+        {
+            // Split the slice so each contact is borrowed mutably and exclusively.
+            let (preceding, following) = context.entities.split_at_mut(second_index);
+            let first = &mut preceding[first_index];
+            let second = &mut following[0];
+            if first.health() <= 0 || second.health() <= 0 {
+                continue;
             }
+
+            let same_team = first.team_id() == second.team_id();
+            let enabled = if same_team {
+                self.config.same_team_enabled
+            } else {
+                self.config.opposing_team_enabled
+            };
+            if !enabled {
+                continue;
+            }
+
+            first.set_health(0);
+            second.set_health(0);
+            let ids = vec![first.id(), second.id()];
+            let kind = if same_team {
+                EventKind::TeamCollision
+            } else {
+                EventKind::NonTeamCollision
+            };
+            context.emit(kind, ids)?;
         }
         Ok(Update::Applied)
     }

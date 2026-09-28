@@ -78,7 +78,7 @@ impl Sensor for NoisyPosition {
 mod tests {
     use super::{NoisyPosition, Plugin, PositionObservation, Sensor, SensorConfig, SensorContext};
     use crate::plugin::{
-        EntityInfo, Messages, PluginRandom, ReadingKind, Readings, StepTime, Update,
+        EntityInfo, Messages, PluginRandom, ReadingKind, Readings, StepTime, TruthContacts, Update,
     };
     use crate::{KinematicState, Vec3};
 
@@ -125,7 +125,7 @@ mod tests {
                 dt_s: 0.1,
             },
             truth: &truth,
-            contacts_truth: &[],
+            contacts_truth: TruthContacts::from(&[][..]),
             random: &mut random,
             name: "gps",
             kind: ReadingKind::Other,

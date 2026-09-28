@@ -102,12 +102,10 @@
           "trace"
         ],
         "noisy-state-bias.xml": [
-          "frames",
           "summary",
           "trace"
         ],
         "networks-local-global.xml": [
-          "frames",
           "summary",
           "trace"
         ],
@@ -149,7 +147,7 @@
     },
     {
       "name": "SimpleCollision range becomes inclusive",
-      "file": "crates/core/src/plugin/interaction/simple_collision/simple_collision.rs",
+      "file": "crates/core/src/common/spatial.rs",
       "detected": true,
       "missions": {
         "collision-boundary.xml": [
@@ -189,7 +187,6 @@
       "detected": true,
       "missions": {
         "networks-local-global.xml": [
-          "frames",
           "trace"
         ],
         "noisy-contacts-bias.xml": [

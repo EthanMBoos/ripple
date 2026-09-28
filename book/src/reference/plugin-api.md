@@ -229,7 +229,10 @@ See `SimpleAircraftControllerPID` for desired heading/altitude/speed inputs
 and throttle, roll-rate, and pitch-rate outputs.
 Autonomies/controllers receive read-only state; motion receives mutable truth.
 Interactions receive the entities after motion and sensors, and can update
-physical state or health. Structural creation/removal remains engine-owned.
+physical state or health. `context.nearby` finds entities near a point (see
+[Finding nearby agents](#finding-nearby-agents)), using positions as they are
+when the interaction starts, including moves made by earlier interactions.
+Structural creation/removal remains engine-owned.
 
 `KinematicState` stores position, linear velocity, and angular velocity in the
 local ENU world frame: `position_world_m`, `velocity_world_mps`, and
@@ -438,6 +441,75 @@ them, as C++'s shared mission-seeded generator does, but the sequences are not
 C++'s. `AgentContext::random` gives autonomies and controllers their stream,
 `SensorContext::random` gives sensors theirs, and `NetworkContext::route` passes
 the network's stream to its decision function as `|link, random|`.
+
+## Finding nearby agents
+
+Many models ask which agents are within some distance of a point: collision
+checks within a few metres, a radio within a kilometre, a sensor within its
+range. Ask the engine instead of looping over every agent yourself:
+
+```rust
+// Sensors, networks, and metrics: true contacts, in id order.
+for contact in context.contacts_truth.within(position_world_m, range_m) {
+    // contact is closer than range_m
+}
+
+// Interactions: indices into `context.entities`, ascending.
+for index in context.nearby.within(position_world_m, range_m) { /* ... */ }
+
+// Interactions: each close pair (first < second), in the order a loop over
+// every pair visits them. SimpleCollision uses this.
+for (first, second) in context.nearby.pairs_within(range_m) { /* ... */ }
+```
+
+The answer includes every agent at a distance less than `range_m` (a
+non-finite distance counts as within, as in the checks this replaced). Nothing
+is filtered out: the asking agent and agents already disabled or removed are
+included, so apply your own rules. Queries see current positions: sensors
+see them after motion; an interaction sees them as they are when it starts,
+including moves by earlier interactions; networks and metrics see them after
+all interactions.
+
+How the engine answers is a mission setting, never plugin code:
+
+```yaml
+spatial_lookup:
+  method: grid       # default: scan
+  cell_width_m: 5
+```
+
+- **Scan**, the default, tests every agent. It is the reference answer.
+- **Grid** gives each agent an integer cell, `floor(position / cell_width_m)`
+  on each axis, and keeps a map from each vertical (x, y) column to the agents
+  in it. Only occupied columns are stored, so memory grows with the number of
+  agents, not the size of the map. A query collects the agents in every cell
+  that overlaps a
+  slightly padded box around its sphere, gives each the scan's exact distance
+  test, and returns the survivors in the scan's order.
+
+The grid only decides which agents to test, so it never changes an answer or
+its order: output is byte-identical to the scan. It falls back to the scan
+when a position is not finite or too far out for a cell, or when looking up a
+query's cells would cost more than testing every agent (one lookup costs about
+30 distance tests). That keeps a poor cell width from costing much, but
+building the grid still takes time: in the paper's benchmark the grid made a
+step 9% slower with 256 agents and 2-4% slower when agents crowded together or
+the range spanned many cells. With 4,096 spread-out agents it made a step 3.8
+times faster than before (19.1 to 5.0 ms), against 1.9 times for the scan.
+Start with a cell width at or somewhat above your most common query range:
+50 m cells were slightly faster than 5 m cells for a 5 m collision range.
+The grid suits agents spread out horizontally: a query tests every agent in
+its (x, y) columns at any height, so many agents stacked over one spot are
+tested almost as if scanned.
+
+The engine builds the index after motion and before the parallel sensor
+phase, so sensors share it without locks. Before each interaction, and before
+networks and metrics, it checks the index against current positions (one pass
+over the agents) and rebuilds it if anything moved. SCRIMMAGE's C++ R-tree is
+built when entities are generated, before motion.
+
+Decisions cannot query truth. Autonomy and controllers see only
+`context.contacts`, the agent's own belief, which is short enough to scan.
 
 ## Messages
 

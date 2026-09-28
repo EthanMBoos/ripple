@@ -1,7 +1,8 @@
 //! Headless core benchmark executable, not an application API or simulator command.
 //! Both implementations write frames and summaries. No viewer dependency is timed.
 //! Prints one JSON line: steps, setup_s (load and construct), and run_s (stepping
-//! and writing frames), for reference/perf.py.
+//! and writing frames), for reference/perf.py. An optional fifth argument, a cell
+//! width in metres, answers spatial queries with a grid instead of a scan.
 
 use std::{
     env, fs,
@@ -11,16 +12,21 @@ use std::{
 };
 
 use anyhow::{Result, ensure};
-use scrimmage_core::{Mission, Params, Simulation, write_frame};
+use scrimmage_core::{Mission, Params, Simulation, SpatialLookup, write_frame};
 
 fn main() -> Result<()> {
     let args: Vec<_> = env::args().collect();
     ensure!(
-        args.len() == 5,
-        "usage: reference MISSION ROOT OUTPUT WORKERS"
+        args.len() == 5 || args.len() == 6,
+        "usage: reference MISSION ROOT OUTPUT WORKERS [GRID_CELL_WIDTH_M]"
     );
     let started = Instant::now();
-    let config = Mission::load(Path::new(&args[1]), Path::new(&args[2]), &Params::new())?;
+    let mut config = Mission::load(Path::new(&args[1]), Path::new(&args[2]), &Params::new())?;
+    if let Some(cell_width_m) = args.get(5) {
+        config.scenario.spatial_lookup = SpatialLookup::Grid {
+            cell_width_m: cell_width_m.parse()?,
+        };
+    }
     let mut simulation = Simulation::new(
         config.scenario,
         &scrimmage_core::plugin::PluginRegistry::with_builtins(),

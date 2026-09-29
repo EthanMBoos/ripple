@@ -663,6 +663,240 @@ additional robots help or create congestion. This tests a research capability
 beyond the baseline's runtime, even if no scheduler change is needed.
 Continuing tasks do not by themselves require continual learning.
 
+\section{Learned Policies and Accelerated Simulators}
+\label{sec:learning}
+
+Learned policies are now an expected baseline in multi-agent robotics, and the
+simulators used to train them have changed more since SCRIMMAGE than any other
+part of its design space. This section traces that change and then states our
+position: SCRIMMAGE-RS is a CPU multi-agent testbed for studying decisions
+under explicit sensing, estimation, communication, and vehicle constraints. It
+could also supply experience to a separate learner when a learned decision is
+itself the research question. No learning support is built yet. It, and any
+GPU computation, should be built when an experiment needs it and measured on
+that complete experiment.
+
+\subsection{How the Field Has Moved}
+\label{sec:learning-history}
+
+\paragraph{Standard interfaces}
+Gym and PettingZoo standardized how a learner steps an environment
+\cite{terry2021pettingzoo}. They are interfaces, not architectures: both
+support stepping many environments at once, and PettingZoo supports
+simultaneous actions and agents that join or leave. SCRIMMAGE's OpenAI Gym
+interface \cite{demarco2018} crossed between Python and C++ on every step,
+rebuilt the simulation on every reset, and required a compiled C++ plugin for
+each change to a reward or observation. It was removed from the maintained
+branch in 2025, and we found no benchmark or result that depended on it. We
+did not measure why it fell out of use. The simulation's own speed is an
+unlikely cause: on one core, C++ SCRIMMAGE advances the straight-flight
+mission of Section~\ref{sec:performance} at about 1.2 million agent-steps per
+second, computed from the bare-metal timings of Appendix~\ref{app:performance}.
+The overheads around each step and the cost of changing a task are plausible
+causes, but remain hypotheses.
+
+\paragraph{Many worlds on one GPU}
+Isaac Gym, VMAS, and JaxMARL moved the simulation onto the GPU, advancing
+thousands of independent worlds together
+\cite{makoviychuk2021isaacgym,bettini2022vmas,rutherford2023jaxmarl}, with
+reported speedups of several orders of magnitude over CPU implementations. The
+constraint is regular data: computation expressed as compatible array
+operations over bounded capacities. It does not require identical worlds. MJX,
+for example, batches physical parameters across worlds, while structural
+changes force recompilation \cite{mjxdocs}. VMAS and the MPE tasks in JaxMARL
+include communication actions with optional noise. Madrona organizes batched
+simulation as an entity-component-system engine whose simulators also run on
+the CPU \cite{shacklett2023madrona}, and GPUDrive uses it for data-driven
+driving with hundreds of agents per world \cite{kazemkhani2025gpudrive}.
+
+Since 2025 the trend has been toward physical fidelity. Isaac Lab adds
+photorealistic rendering and multi-frequency sensors \cite{mittal2025isaaclab},
+and its 3.0 beta adds Newton as an experimental physics backend
+\cite{isaaclab3backends}. Crazyflow simulates drone swarms in JAX
+\cite{schuck2026crazyflow}. MuJoCo-Drones-Gym offers aerodynamic effects,
+multiple drones, and camera observations on the CPU. Its GPU backend omits the
+aerodynamic effects and leaves multiple drones and vision to future work
+\cite{tayal2026mujocodrones}, which illustrates the cost of maintaining a
+second backend. In these tools communication is an action channel or part of
+the observation; queued network delivery with delay and loss is usually added
+by co-simulation with a network simulator such as ns-3
+\cite{burmeister2025defiance}.
+
+\paragraph{Fast CPU environments, GPU learners}
+A parallel line kept the simulation on the CPU and moved only learning to the
+GPU. Sample Factory fed a GPU learner from asynchronous CPU workers
+\cite{petrenko2020samplefactory}. PufferLib's environments, written in C, each
+run above a million steps per second on one core, and its authors argue that
+only physics-heavy environments are worth moving to a GPU
+\cite{suarez2025pufferlib}. They also attribute the poor adoption of otherwise
+useful environments to system dependencies and slow source builds. Whether a
+simulator of many interacting agents reaches comparable training throughput
+depends on observation construction, rewards, resets, and learning as well as
+the step, and we have not measured it.
+
+\paragraph{Separate evaluation stages}
+The most recent change concerns evaluation rather than speed. SMACv2 showed
+that success on a fixed benchmark may not require the observations it provides
+\cite{ellis2023smacv2}, and robotics projects now separate fast training from
+a more realistic stage that tests the policy. Pyquaticus trains maritime
+capture-the-flag policies in a lightweight simulator that embeds MOOS-IvP
+vehicle dynamics, then deploys them on uncrewed surface vehicles
+\cite{crowley2025pyquaticus}. A connected-vehicle benchmark evaluates policies
+in simulation, a digital twin, and hardware, and separates two causes of
+degradation: differences between control stacks and increasing environmental
+realism \cite{beerwerth2026zeroshot}. BVR Sim gives heterogeneous aircraft a
+common tactical interface, desired heading, altitude, and speed, above
+aircraft-specific controllers. A policy trained on one aircraft won 45.5\% of
+engagements on four unseen aircraft with adapted controllers and 13.2\%
+without \cite{sun2026bvrsim}. These are different aircraft within one flight
+model, so the result supports the controller-level abstraction rather than
+transfer across model fidelities.
+
+These four developments are not competing architectures. The interface, where
+computation runs, and whether evaluation is a separate stage are independent
+choices, and one system can combine all three.
+
+\subsection{What This Testbed Supports, and Why}
+\label{sec:learning-support}
+
+\paragraph{What is distinctive}
+Communication and partial observability exist elsewhere. What SCRIMMAGE-RS
+adds is an explicit pipeline from sensing, through message delivery and
+estimation, to decisions: sensors produce readings, network plugins deliver
+messages through per-subscriber queues, estimators form each agent's belief,
+and autonomy reads only belief (Section~\ref{sec:estimation}). Beneath the
+decision, vehicle-specific controllers and motion models apply their own
+limits. Output is byte-identical at any worker count, and collision checks and
+routing within an entity scale to thousands of agents in one world
+(Section~\ref{sec:scaling}); sensing every other agent and dense radio traffic
+remain expensive. Agreement with C++ verifies the port
+(Section~\ref{sec:baseline}); it does not establish that the models are
+physically realistic.
+
+\paragraph{When learning here would be justified}
+The test is whether an experiment in this testbed has a decision that a learned
+policy could usefully make, and whether reproducing the relevant vehicle or
+information behavior in another simulator would be substantial work. That is
+most likely when the information and decision structure is the research
+problem: learning when to transmit an
+update and when old information suffices; allocating tasks or replanning under
+incomplete, delayed observations; navigating or coordinating above
+vehicle-specific controllers; and comparing learned and classical teammates
+under the same mission, sensing, communication, and lifecycle rules. For such
+studies, training directly here may be simpler than maintaining a matching task
+in another simulator. Contact-rich manipulation, visual learning, and
+low-level flight control are better served by specialist tools such as Isaac
+Lab. Low-level control also fits this testbed's phase order poorly: all
+controller substeps precede all motion substeps, so raising the motion
+multiplier gives a controller no fresh feedback.
+
+\paragraph{Options}
+Table~\ref{tab:learning} lists the ways learning and GPU computation could be
+added. None is built. Each is independent of the others and would be adopted
+when a measured experiment needs it. Differentiable physics is a further independent
+choice; GPU inference would not make the Rust dynamics differentiable.
+
+\begin{table*}[t]
+\centering
+\small
+\caption{Options for learning and GPU computation in SCRIMMAGE-RS. Each is
+independent of the others.}
+\label{tab:learning}
+\begin{tabularx}{\textwidth}{@{}P{0.25\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Option & What it provides & Fit \\
+\midrule
+CPU simulation, imported CPU policy & Learned-versus-classical evaluation & Smallest useful integration \\
+CPU worlds, external GPU learner & Training on this testbed's own information, task, and vehicle rules & Default for native learning \\
+CPU simulation, batched GPU inference & Faster evaluation of large policies or many agents & When inference dominates the step \\
+GPU candidate trajectories in one planner & More planning alternatives per decision & Inside one optional plugin; not necessarily learning \\
+GPU physics or sensing kernels & Acceleration of a measured expensive phase & When the gain covers packing, transfers, and synchronization \\
+Fully GPU-resident worlds & Large rollout batches with little host--device traffic & A new backend with restricted models and its own verification \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\paragraph{Where learning would connect}
+The boundary we would keep is that SCRIMMAGE-RS supplies experience and a
+separate learner updates the policy. The learner runs missions with its current
+policy, collects what they record, updates the policy, and repeats. On-policy
+methods such as PPO need, for each decision, the observation, the sampled
+action and its probability, the reward, and whether the episode ended or was
+cut short, all from the policy that collected them. Ordinary run output
+records truth, events, and summaries, so this data would need an optional
+record. \texttt{Simulation::step} returns the state before the step, so it
+cannot serve as a learning step unchanged, and reset can start by rebuilding
+the simulation, measured before anything more elaborate. The learner's
+language and framework, where policies run during collection, and any batching
+would be chosen once a concrete task makes their requirements clear.
+
+\paragraph{Controller-level actions}
+Autonomy plugins already write desired commands for a controller to follow,
+and BVR Sim's result makes this a promising place for a learned policy. The
+motion models do not yet share one tactical interface: SingleIntegrator takes
+a world-frame velocity, the aircraft controllers take heading, speed, and
+altitude, and Multirotor has only an open-loop motor-speed driver. A common
+interface needs per-model adapters and a multirotor navigation controller.
+
+\paragraph{GPU computation}
+Three GPU extensions are separate. A planner plugin can already score
+thousands of candidate trajectories in one GPU call, with no new interface.
+Evaluating one policy for every agent in one call needs a per-phase batch
+across entities, since each autonomy call otherwise presents one observation;
+this is part of the shared computation proposed for RQ2. Batching independent
+training worlds belongs to the learner and needs neither. The determinism
+contract for any of them is repeated evaluation on a pinned backend and device,
+invariant to worker count. Assembling each batch in entity order removes one
+source of variation, batch composition, which dominates nondeterminism in LLM
+inference \cite{he2025nondeterminism}; the kernels and any sampling must also
+be deterministic. Agreement between CPU and GPU results and reproducible
+training are separate tests.
+
+\paragraph{Deciding whether to build it}
+RQ1 (Section~\ref{sec:rq1}) is the natural candidate, and it needs no learning
+code to begin. Agents reach targets that each senses only within a limited
+range; they send target reports over a network with limited range and delay,
+and an estimator adds received reports to belief. Run it first with classical
+strategies, nearest known target and the existing auction assignment, and
+sweep range, delay, and loss, measuring completion, collisions, and messages
+sent. That result stands on its own. If it reveals a decision the classical
+strategies handle poorly, such as when to transmit or which agent takes a
+target under stale information, that decision becomes the learning
+experiment: train a policy, freeze it, compare it with the classical
+strategies on identical missions, and remove the messages to confirm it uses
+them, as SMACv2 recommends. A familiar task such as cooperative navigation
+could check the plumbing along the way, but would not by itself justify the
+integration. If no such decision appears, learning remains a documented
+extension point.
+
+\paragraph{Imported policies}
+A policy trained in another simulator could be run here for
+learned-versus-classical comparisons. Its observation normalization, coordinate frames,
+action meanings, decision period, and termination rules must match the
+original task, and a fixed-size observation of every agent cannot accept a
+larger team unless it was designed around a bounded set of neighbors.
+
+\stub{Build the RQ1 plugins: a range-limited contact sensor using spatial
+queries, a target-report message, an estimator that adds received reports to
+belief, and a network with delay (SphereNetwork rejects delay settings; a
+custom network can use \texttt{Delivery::After}).}
+\stub{Run RQ1 with nearest-target and auction strategies, sweeping range, delay,
+and loss; report completion, collisions, and messages sent.}
+\stub{Decide from the RQ1 results whether a learned decision is worth
+building. Record the decision and its reason here either way.}
+\stub{Only if learning goes ahead: confirm the gap with a narrower search
+(multi-agent policies evaluated under queued communication delay or loss; see
+\texttt{docs/LEARNING\_SIMULATOR\_LANDSCAPE.md}); add the optional decision
+record; train, freeze, and compare with the classical strategies, with the
+messages-removed control; measure collection throughput, separating the step,
+observation construction, rewards, and reset.}
+\stub{Later options, each only when an experiment needs it: a common tactical
+interface across motion models (per-model adapters and a multirotor navigation
+controller); CPU inference of imported policies, checked byte-identical at 1,
+2, and 8 workers; GPU candidate trajectories inside one planner plugin, then a
+per-phase batch across entities if policy inference dominates, measured against
+the CPU including packing, transfers, and synchronization.}
+
 \section{Discussion and Limitations}
 \label{sec:discussion}
 

@@ -1,0 +1,78 @@
+Sort by top of stack, same collapsed (when >= 5):
+        __psynch_cvwait  (in libsystem_kernel.dylib)        2487
+        <deduplicated_symbol>  (in reference-0313c3b979e20bda)        309
+        _RINvMs_NtNtNtCs8FVZETqzQuY_5alloc11collections5btree6searchINtNtB7_4node7NodeRefNtNtBY_6marker3MutRNtNtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messages15MessageEndpointjNtB1i_14LeafOrInternalE11search_treeB1y_EB1F_  (in reference-0313c3b979e20bda)        253
+        _xzm_free  (in libsystem_malloc.dylib)        189
+        _platform_memcmp  (in libsystem_platform.dylib)        131
+        _malloc_zone_malloc  (in libsystem_malloc.dylib)        89
+        _xzm_xzone_malloc  (in libsystem_malloc.dylib)        86
+        _platform_memmove  (in libsystem_platform.dylib)        83
+        _RINvMs_NtNtNtCs8FVZETqzQuY_5alloc11collections5btree6searchINtNtB7_4node7NodeRefNtNtBY_6marker5ImmutRNtNtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messages15MessageEndpointjNtB1i_14LeafOrInternalE11search_treeB1B_EB1H_  (in reference-0313c3b979e20bda)        74
+        <deduplicated_symbol>  (in libsystem_malloc.dylib)        68
+        log  (in libsystem_m.dylib)        65
+        _free  (in libsystem_malloc.dylib)        59
+        ???  (in libsystem_m.dylib)  load address 0x1a00fb000 + 0x1170  [0x1a00fc170]        56
+        _RNvMs4_NtNtNtCsQ3hckHhVlk_14scrimmage_core6plugin6sensor11noisy_stateNtB5_10StateNoise5apply  (in reference-0313c3b979e20bda)        41
+        cos  (in libsystem_m.dylib)        41
+        DYLD-STUB$$memcmp  (in reference-0313c3b979e20bda)        40
+        _RNvMs0_NtNtCsQ3hckHhVlk_14scrimmage_core6common11variable_ioNtB5_8PluginIo7receive  (in reference-0313c3b979e20bda)        38
+        _platform_memset  (in libsystem_platform.dylib)        29
+        write  (in libsystem_kernel.dylib)        27
+        _RNvMs0_NtNtCsQ3hckHhVlk_14scrimmage_core6common11variable_ioNtB5_8PluginIo5write  (in reference-0313c3b979e20bda)        26
+        _RINvMsN_NtNtNtCs8FVZETqzQuY_5alloc11collections5btree4nodeINtB6_6HandleINtB6_7NodeRefNtNtB6_6marker3MutTINtNtCsf0LoT3TAtAe_4core6option6OptionlERTNtNtBc_6string6StringB2k_EEINtNtBc_3vec3VecTjNtNtB1J_3any6TypeIdEENtB1n_4LeafENtB1n_4EdgeE16insert_recursingNtNtBc_5alloc6GlobalNCNvMs4_NtNtB8_3map5entryINtB4w_11VacantEntryB1D_B2L_E12insert_entry0ECsQ3hckHhVlk_14scrimmage_core  (in reference-0313c3b979e20bda)        24
+        _RINvNtNtCs8XbIpFL81WL_5prost8encoding6varint13encode_varintINtNtCs8FVZETqzQuY_5alloc3vec3VechEECs2hraiKaUw9p_9reference  (in reference-0313c3b979e20bda)        24
+        _xzm_xzone_malloc_tiny  (in libsystem_malloc.dylib)        24
+        _RNvCs8NmtnyK3jgT_7___rustc11___rdl_alloc  (in reference-0313c3b979e20bda)        22
+        _RNvMs0_NtNtCsQ3hckHhVlk_14scrimmage_core6common11variable_ioNtB5_8PluginIo4read  (in reference-0313c3b979e20bda)        21
+        _RNvMs_NtCsQ3hckHhVlk_14scrimmage_core10simcontrolNtB4_10Simulation8snapshot  (in reference-0313c3b979e20bda)        21
+        ???  (in libsystem_m.dylib)  load address 0x1a00fb000 + 0x1168  [0x1a00fc168]        20
+        _RNvCs8NmtnyK3jgT_7___rustc35___rust_no_alloc_shim_is_unstable_v2  (in reference-0313c3b979e20bda)        19
+        DYLD-STUB$$free  (in reference-0313c3b979e20bda)        17
+        _RNvXs4_NtCs8FVZETqzQuY_5alloc6stringNtB5_6StringNtNtCsf0LoT3TAtAe_4core5clone5Clone5clone  (in reference-0313c3b979e20bda)        17
+        _RINvMsN_NtNtNtCs8FVZETqzQuY_5alloc11collections5btree4nodeINtB6_6HandleINtB6_7NodeRefNtNtB6_6marker3MutRNtNtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messages15MessageEndpointjNtB1n_4LeafENtB1n_4EdgeE16insert_recursingNtNtBc_5alloc6GlobalNCNvMs4_NtNtB8_3map5entryINtB3T_11VacantEntryB1D_jE12insert_entry0EB1K_  (in reference-0313c3b979e20bda)        16
+        _RINvNtNtCsQ3hckHhVlk_14scrimmage_core8protocol5frame11write_frameINtNtNtNtCs8nMiDB8lWwf_3std2io8buffered9bufwriter9BufWriterNtNtB1a_2fs4FileEECs2hraiKaUw9p_9reference  (in reference-0313c3b979e20bda)        16
+        _RNvXsp_NtNtCsQ3hckHhVlk_14scrimmage_core8protocol4wireNtB5_7ContactNtNtCs8XbIpFL81WL_5prost7message7Message11encoded_len  (in reference-0313c3b979e20bda)        15
+        ???  (in libsystem_m.dylib)  load address 0x1a00fb000 + 0x1150  [0x1a00fc150]        14
+        __sincos_stret  (in libsystem_m.dylib)        14
+        mach_absolute_time  (in libsystem_kernel.dylib)        14
+        DYLD-STUB$$__sincos_stret  (in reference-0313c3b979e20bda)        13
+        _RNvMs5_NtCs8FVZETqzQuY_5alloc7raw_vecNtB5_11RawVecInner11finish_growCsQ3hckHhVlk_14scrimmage_core  (in reference-0313c3b979e20bda)        13
+        _RNvXs5_NtNtCs8FVZETqzQuY_5alloc3vec5drainINtB5_5DrainNtNtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messages11PublicationENtNtNtCsf0LoT3TAtAe_4core3ops4drop4Drop4dropBV_  (in reference-0313c3b979e20bda)        13
+        _RINvMs_NtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messagesNtB5_8Messages7receiveNtNtNtNtB9_6plugin6sensor11noisy_state19StateWithCovarianceEB9_  (in reference-0313c3b979e20bda)        12
+        _RNvMs_NtCsQ3hckHhVlk_14scrimmage_core6entityNtB4_6Entity13step_autonomy  (in reference-0313c3b979e20bda)        12
+        _RNvXs0_NtNtNtCsQ3hckHhVlk_14scrimmage_core6plugin10controller19simple_aircraft_pidNtB5_27SimpleAircraftControllerPidNtNtBb_10controller10Controller4step  (in reference-0313c3b979e20bda)        12
+        ???  (in libsystem_m.dylib)  load address 0x1a00fb000 + 0x10a8  [0x1a00fc0a8]        10
+        _RNvMNtNtCsQ3hckHhVlk_14scrimmage_core6common13plugin_randomNtB2_12PluginRandom6normal  (in reference-0313c3b979e20bda)        10
+        _RNvNtCsQ3hckHhVlk_14scrimmage_core10simcontrol16perfect_contacts  (in reference-0313c3b979e20bda)        10
+        atan2  (in libsystem_m.dylib)        10
+        _RINvNtNtCsQ3hckHhVlk_14scrimmage_core4math11integration3rk4Kj7_NCNvMs1_NtNtNtB6_6plugin6motion15simple_aircraftNtB17_14SimpleAircraft9integrate0EB6_  (in reference-0313c3b979e20bda)        9
+        _RNvMs_NtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messagesNtB4_8Messages17validate_networks  (in reference-0313c3b979e20bda)        9
+        _RNvXs0_NtNtNtCsQ3hckHhVlk_14scrimmage_core6plugin6motion15simple_aircraftNtB5_14SimpleAircraftNtNtBb_6motion11MotionModel4step  (in reference-0313c3b979e20bda)        9
+        _RNvXs0_NtNtNtCsQ3hckHhVlk_14scrimmage_core6plugin8autonomy8straightNtB5_8StraightNtNtBb_8autonomy8Autonomy4step  (in reference-0313c3b979e20bda)        9
+        _RNvXsk_NtNtNtCs8FVZETqzQuY_5alloc11collections5btree3mapINtB5_4IterNtNtBb_6string6StringdENtNtNtNtCsf0LoT3TAtAe_4core4iter6traits8iterator8Iterator4nextCsQ3hckHhVlk_14scrimmage_core  (in reference-0313c3b979e20bda)        9
+        _RNvXso_NtCs8FVZETqzQuY_5alloc3vecINtB5_3VecNtNtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messages11PublicationENtNtNtCsf0LoT3TAtAe_4core3ops4drop4Drop4dropBL_  (in reference-0313c3b979e20bda)        9
+        _RNvMs_NtCsQ3hckHhVlk_14scrimmage_core6entityNtB4_6Entity15step_controller  (in reference-0313c3b979e20bda)        8
+        tan  (in libsystem_m.dylib)        8
+        xzm_malloc_zone_size  (in libsystem_malloc.dylib)        8
+        DYLD-STUB$$malloc  (in reference-0313c3b979e20bda)        7
+        _RINvXs4_NtNtCs8FVZETqzQuY_5alloc3vec9into_iterINtB6_8IntoIterNtNtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messages8EnvelopeENtNtNtNtCsf0LoT3TAtAe_4core4iter6traits8iterator8Iterator8try_foldINtNtB8_13in_place_drop11InPlaceDropINtBZ_7MessageNtNtNtNtB13_6plugin6sensor11noisy_state19StateWithCovarianceEENCINvNtNtB22_8adapters3map12map_try_foldBX_INtNtB24_6result6ResultB3A_NtCsjwJmA7gMXEO_6anyhow5ErrorEB30_INtNtNtB24_3ops12control_flow11ControlFlowIB5w_B30_zEB30_ENCINvMs_BZ_NtBZ_8Messages7receiveB3O_E0NCINvXB4V_INtB4V_12GenericShuntINtB4T_3MapBI_B7q_EIB5w_NtNtB24_7convert10InfallibleB5W_EEB1W_8try_foldB30_NCINvNtB8_16in_place_collect24write_in_place_with_dropB3A_E0B7a_E0E0B6u_EB13_  (in reference-0313c3b979e20bda)        7
+        _RNvMs_NtCsQ3hckHhVlk_14scrimmage_core6entityNtB4_6Entity8estimate  (in reference-0313c3b979e20bda)        7
+        ???  (in libsystem_m.dylib)  load address 0x1a00fb000 + 0x1144  [0x1a00fc144]        6
+        DYLD-STUB$$memcpy  (in reference-0313c3b979e20bda)        6
+        _RINvMs_NtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messagesNtB5_8Messages7receiveNtNtNtNtB9_6plugin6sensor14noisy_contacts23ContactsWithCovariancesEB9_  (in reference-0313c3b979e20bda)        6
+        _RINvNtCsf0LoT3TAtAe_4core3ptr9drop_glueINtNtNtCs8FVZETqzQuY_5alloc3vec9into_iter8IntoIterNtNtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messages8EnvelopeEEB1v_  (in reference-0313c3b979e20bda)        6
+        _RNvXs_NtNtCsQ3hckHhVlk_14scrimmage_core8protocol5frameNtNtB6_4wire5FrameINtNtCsf0LoT3TAtAe_4core7convert4FromRNtNtB8_10simcontrol15SimulationFrameE4from  (in reference-0313c3b979e20bda)        6
+        fmod  (in libsystem_m.dylib)        6
+        xzm_realloc  (in libsystem_malloc.dylib)        6
+        ???  (in libsystem_m.dylib)  load address 0x1a00fb000 + 0x1124  [0x1a00fc124]        5
+        DYLD-STUB$$_platform_bzero  (in libsystem_malloc.dylib)        5
+        _RINvMNtNtCsQ3hckHhVlk_14scrimmage_core6sensor8readingsNtB3_8Readings7publishNtNtNtB7_4math5state14KinematicStateEB7_  (in reference-0313c3b979e20bda)        5
+        _RINvMs_NtNtNtCs8FVZETqzQuY_5alloc11collections5btree6removeINtNtB7_4node6HandleINtBY_7NodeRefNtNtBY_6marker3MutTNtNtBb_6string6StringB1M_EINtNtBb_3vec3VecNtNtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messages8EnvelopeENtB1v_4LeafENtB1v_2KVE14remove_leaf_kvNCNvMs5_NtNtB7_3map5entryINtB4b_13OccupiedEntryB1L_B2c_E9remove_kv0NtNtBb_5alloc6GlobalEB2y_  (in reference-0313c3b979e20bda)        5
+        _RINvMs_NtNtNtCs8FVZETqzQuY_5alloc11collections5btree6searchINtNtB7_4node7NodeRefNtNtBY_6marker3MutTNtNtBb_6string6StringB1z_EINtNtBb_3vec3VecNtNtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messages8EnvelopeENtB1i_14LeafOrInternalE11search_treeB1y_EB2l_  (in reference-0313c3b979e20bda)        5
+        _RINvNtNtCs8XbIpFL81WL_5prost8encoding7message6encodeNtNtNtCsQ3hckHhVlk_14scrimmage_core8protocol4wire7Vector3INtNtCs8FVZETqzQuY_5alloc3vec3VechEECs2hraiKaUw9p_9reference  (in reference-0313c3b979e20bda)        5
+        _RNvMs2_NtNtNtNtCs8FVZETqzQuY_5alloc11collections5btree3map5entryINtB5_5EntryRNtNtNtCsQ3hckHhVlk_14scrimmage_core6pubsub8messages15MessageEndpointjE9or_insertB1j_  (in reference-0313c3b979e20bda)        5
+        _RNvMs_NtCsQ3hckHhVlk_14scrimmage_core6entityNtB4_6Entity9mailboxes  (in reference-0313c3b979e20bda)        5
+        _RNvMsz_NtNtNtCs8FVZETqzQuY_5alloc11collections5btree3mapINtB5_8IntoIterNtNtBb_6string6StringNtNtB7_7set_val9SetValZSTE10dying_nextCsQ3hckHhVlk_14scrimmage_core  (in reference-0313c3b979e20bda)        5
+        __bzero  (in libsystem_platform.dylib)        5
+        xzm_malloc_zone_malloc_type_malloc  (in libsystem_malloc.dylib)        5
+

@@ -149,12 +149,14 @@ impl Sensor for NoisyContacts {
             });
         }
         context.publish_reading(ContactList::from(reading))?;
-        // C++ publishes the measurements; kept so delivered messages match it.
-        // TODO(estimation): remove this publish, `topic_name`, and CONTACTS_TOPIC,
-        // and declare the difference in REFERENCE_NOTES.md. This message is the
-        // only thing comparing NoisyContacts' measured values with C++
-        // (noisy-contacts-bias.xml), so first make the trace record the reading
-        // instead (see trace.rs).
+        // Duplicate on purpose: tracking gets the reading above, and nothing uses
+        // this message (Straight subscribes and discards it). C++ sends only this
+        // message, and it is the only thing comparing NoisyContacts' measured
+        // values with C++ (noisy-contacts-bias.xml), so keep it while the port is
+        // still being trusted. TODO(estimation): once it is, make the trace record
+        // the reading instead (see trace.rs), then delete this publish,
+        // `topic_name`, CONTACTS_TOPIC, and Straight's subscription, and note the
+        // difference in REFERENCE_NOTES.md.
         context.messages.publish(
             "LocalNetwork",
             &self.topic,

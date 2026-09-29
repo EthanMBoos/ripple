@@ -107,9 +107,11 @@ impl Autonomy for Straight {
             .subscribe::<BoundaryRegion>("GlobalNetwork", BOUNDARY_TOPIC)?;
         // C++ Straight also subscribes to measured state and contacts. It uses the
         // state message in place of its own state; here belief already holds that
-        // measurement. Subscribe and discard both so message delivery matches C++.
-        // TODO(estimation): remove both subscriptions (and the receives in
-        // `step`) when NoisyState and NoisyContacts stop publishing.
+        // measurement. Subscribe and discard both so message delivery matches C++:
+        // useful while the port is still being trusted, since the C++ comparison
+        // checks every delivery. TODO(estimation): once it is, remove both
+        // subscriptions (and the receives in `step`) along with NoisyState's and
+        // NoisyContacts' duplicate publishes.
         context
             .messages
             .subscribe::<StateWithCovariance>("LocalNetwork", STATE_TOPIC)?;

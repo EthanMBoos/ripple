@@ -25,6 +25,10 @@ pub struct Message<T> {
 
 type Channel = (String, String);
 type Payload = Arc<dyn Any + Send + Sync>;
+/// Each channel's subscribers (per entity, for same-entity routing), in mailbox
+/// order: the mailbox's index and the message type it expects. The entity comes
+/// first in the key so most comparisons are of integers, not channel names.
+type Subscribers<'a> = BTreeMap<(Option<i32>, &'a Channel), Vec<(usize, TypeId)>>;
 
 // Message counts, not byte limits. Fail clearly instead of silently losing data.
 // Keep these ordinary constants until a real experiment needs per-queue tuning.
@@ -265,8 +269,26 @@ impl NetworkContext<'_, '_> {
             .expect("network plugin has a registered mailbox")
             .messages
     }
+    /// Decide each link from a publisher to a subscriber of its channel, in stable
+    /// order: publications in mailbox order, then subscribers in mailbox order.
     pub fn route(
         &mut self,
+        decide: impl FnMut(&Transmission<'_>, &mut PluginRandom) -> Result<Delivery>,
+    ) -> Result<Update> {
+        self.route_links(false, decide)
+    }
+    /// Like `route`, for a network that delivers only between plugins of the same
+    /// entity (LocalNetwork): `decide` sees only links to subscribers in the
+    /// sender's own entity, and none from world plugins, which have no entity.
+    pub fn route_within_entity(
+        &mut self,
+        decide: impl FnMut(&Transmission<'_>, &mut PluginRandom) -> Result<Delivery>,
+    ) -> Result<Update> {
+        self.route_links(true, decide)
+    }
+    fn route_links(
+        &mut self,
+        within_entity: bool,
         mut decide: impl FnMut(&Transmission<'_>, &mut PluginRandom) -> Result<Delivery>,
     ) -> Result<Update> {
         ensure!(!self.routed, "network may route once per phase");
@@ -284,6 +306,34 @@ impl NetworkContext<'_, '_> {
             }
             mailbox.messages.outbox = other_networks;
         }
+        // DEVNOTE: each channel's subscribers, in mailbox order, are found once
+        // per phase that has messages, so a message visits only its subscribers;
+        // within an entity, only its own entity's. Visiting every mailbox for
+        // every message made routing grow with the square of the team: with
+        // NoisyState on every aircraft (every Straight subscribes to it), a
+        // 4,096-agent step took 388 ms, nearly all in routing (macOS `sample`);
+        // with the index, 9.7 ms.
+        // C++ keeps per-topic subscriber lists but still checks every
+        // subscriber, so it costs the same there. Measured with
+        // paper/data/message-routing/benchmark.py. Building the index in phases
+        // without messages made steps without messages 27-49% slower, so it is
+        // skipped then.
+        let mut subscribers = Subscribers::new();
+        if !publications.is_empty() {
+            for (index, mailbox) in self.mailboxes.iter().enumerate() {
+                let entity = if within_entity {
+                    mailbox.endpoint.entity_id
+                } else {
+                    None
+                };
+                for (channel, expected_type) in &mailbox.messages.subscriptions {
+                    subscribers
+                        .entry((entity, channel))
+                        .or_default()
+                        .push((index, *expected_type));
+                }
+            }
+        }
         for (sender, publication) in publications {
             if let Some(trace) = self.trace.as_deref_mut()
                 && let Some(states) = sensor_states(&publication.value)
@@ -295,13 +345,18 @@ impl NetworkContext<'_, '_> {
                     states,
                 });
             }
-            for mailbox in self.mailboxes.iter() {
-                let Some(expected_type) = mailbox.messages.subscriptions.get(&publication.channel)
-                else {
-                    continue;
-                };
+            let group = match (within_entity, sender.entity_id) {
+                (false, _) => None,
+                (true, Some(entity_id)) => Some(entity_id),
+                (true, None) => continue,
+            };
+            let receivers = subscribers
+                .get(&(group, &publication.channel))
+                .map_or(&[][..], Vec::as_slice);
+            for &(index, expected_type) in receivers {
+                let mailbox = &self.mailboxes[index];
                 ensure!(
-                    *expected_type == publication.value.as_ref().type_id(),
+                    expected_type == publication.value.as_ref().type_id(),
                     "message type mismatch on {}/{}",
                     publication.channel.0,
                     publication.channel.1
@@ -351,16 +406,21 @@ impl NetworkContext<'_, '_> {
                 }
             }
         }
+        drop(subscribers);
+        // Receivers by endpoint, found once rather than by searching every mailbox.
+        let mut receivers = BTreeMap::new();
+        if !self.scheduled.is_empty() {
+            for (index, mailbox) in self.mailboxes.iter().enumerate() {
+                receivers.entry(mailbox.endpoint).or_insert(index);
+            }
+        }
         let mut pending = Vec::new();
         for mut message in self.scheduled.drain(..) {
-            let Some(receiver) = self
-                .mailboxes
-                .iter_mut()
-                .find(|mailbox| *mailbox.endpoint == message.receiver)
-            else {
+            let Some(&index) = receivers.get(&message.receiver) else {
                 // A removed entity cannot receive delayed messages.
                 continue;
             };
+            let receiver = &mut self.mailboxes[index];
             if message.envelope.delivered_at_s <= self.time.time_s + 1e-12 {
                 message.envelope.delivered_at_s = self.time.time_s;
                 let inbox = receiver
@@ -508,6 +568,51 @@ mod tests {
                 .same_entity
                 .receive::<i32>("test", "sample")?
                 .is_empty()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn local_network_delivers_nothing_a_world_plugin_publishes() -> Result<()> {
+        // The network's own mailbox has no entity, like every world plugin.
+        let params = Params::new();
+        let mut local = LocalNetwork::new(&LocalNetwork::configure(&PluginParams::text(&params))?);
+        let mut global =
+            GlobalNetwork::new(&GlobalNetwork::configure(&PluginParams::text(&params))?);
+        let mut mailboxes = TestMailboxes::new()?;
+        mailboxes.phase(0.0, |context| {
+            context.messages().publish("test", "sample", 7_i32)?;
+            Network::step(&mut local, context)
+        })?;
+        assert!(
+            mailboxes
+                .same_entity
+                .receive::<i32>("test", "sample")?
+                .is_empty()
+        );
+        assert!(
+            mailboxes
+                .other_entity
+                .receive::<i32>("test", "sample")?
+                .is_empty()
+        );
+        mailboxes.phase(0.1, |context| {
+            context.messages().publish("test", "sample", 7_i32)?;
+            Network::step(&mut global, context)
+        })?;
+        assert_eq!(
+            mailboxes
+                .same_entity
+                .receive::<i32>("test", "sample")?
+                .len(),
+            1
+        );
+        assert_eq!(
+            mailboxes
+                .other_entity
+                .receive::<i32>("test", "sample")?
+                .len(),
+            1
         );
         Ok(())
     }

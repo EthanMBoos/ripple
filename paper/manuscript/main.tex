@@ -27,8 +27,10 @@ the experiments a multi-agent robotics testbed should support), the three
 research questions and the experiment proposed for each, and the validated
 Rust baseline that makes them testable: behavior matching C++, a simpler
 experiment workflow, and comparable cost. Include the two extensions with
-results: the estimation stage, and spatial queries (a step with 4,096 agents
-3.8 times faster with the grid, 1.9 times by default, identical output).
+results: the estimation stage, and the removal of two scaling limits inherited
+from SCRIMMAGE: spatial queries (a step with 4,096 agents 3.8 times faster with
+the grid, 1.9 times by default, identical output) and message routing by index
+(a 4,096-agent step with per-agent messaging 40 times faster, identical output).
 Add pilot results once run.}
 \end{abstract}
 
@@ -62,7 +64,9 @@ at comparable cost (Section~\ref{sec:baseline}).
 \stub{State the final contributions once supported by evidence. Supported so
 far: the validated baseline; the estimation stage separating truth,
 measurements, and belief; and spatial queries answered by scan or grid with
-byte-identical output, which make a step with 4,096 agents 3.8 times faster (Section~\ref{sec:spatial}).}
+byte-identical output, which make a step with 4,096 agents 3.8 times faster;
+and message routing by index, which makes a 4,096-agent step with per-agent
+messaging 40 times faster (Section~\ref{sec:scaling}).}
 
 \section{SCRIMMAGE and What Has Changed}
 \label{sec:original}
@@ -234,6 +238,12 @@ aircraft takes 10.2~ms by default and 5.0~ms with the optional grid, against
 comparisons in this section were measured before that change, with the previous
 collision loop; the change affects only collision checking, and the other
 workloads are unchanged within 3\% (perf.py).
+\item \emph{Message routing is the next limit, in both simulators.} Deciding
+which messages reach which plugins takes one check per publisher--subscriber
+pair, so a sensor on every agent that every agent listens to costs $n^2$ checks
+per tick. With 4{,}096 aircraft each running an own-state sensor, a step took
+388~ms in both C++ and Rust. Routing by index (Section~\ref{sec:messages}) cuts
+that to 9.7~ms, 40 times faster, with identical output.
 \item \emph{Extra cores help only when there is enough work.} Rust on eight
 cores ran the sensor mission 2.25 times faster than on one, but the simplest
 missions ran slower: handing out work to the cores every step costs more than
@@ -333,20 +343,33 @@ localization.
 % The timing, equality, startup, and removal rules are in the book
 % (architecture/tick.md and information-flow.md); open items in docs/TODO.md.
 
-\section{Finding Nearby Agents}
+\section{Removing Inherited Scaling Limits}
+\label{sec:scaling}
+
+Two costs in SCRIMMAGE's design grow with the square of the team size: finding
+which agents are near each other, and deciding which messages reach which
+plugins. Both are hidden inside the engine, and both come to dominate a step
+as teams grow, in C++ as in the Rust port, which kept the same design. They are
+properties of the original design, not porting errors. We remove each inside
+the engine, without changing any plugin's results, so experiments with larger
+teams become practical, which RQ1 and RQ3 need.
+
+\subsection{Finding Nearby Agents}
 \label{sec:spatial}
 
 Many models ask the same question: which agents are within some distance of a
 point? Collision detection asks it with a few metres, a short-range radio with
-a kilometre, a range-limited sensor with its detection range. The retained
-SimpleCollision plugin answers by comparing every pair of agents, so its cost
-grows with the square of the team size. At 1{,}024 agents it took 58\% of each
-step, at 4{,}096 agents 79\%. SCRIMMAGE-RS moves this question into the engine,
+a kilometre, a range-limited sensor with its detection range. SCRIMMAGE's
+SimpleCollision answers by comparing every ordered pair of agents, so each pair
+twice; its R-tree is used only to place agents at spawn time. Its collision
+mission became 3.8 to 9.3 times slower from 1{,}024 to 2{,}048 aircraft
+(Appendix~\ref{app:performance}). The retained Rust plugin compared each pair
+once, and its cost still grew with the square of the team size: at 1{,}024
+agents it took 58\% of each step, at 4{,}096 agents 79\%. SCRIMMAGE-RS moves this question into the engine,
 so each plugin asks it once and the engine decides how to answer. The result
 is large and changes no output: with 4{,}096 spread-out agents, a whole step
 fell from 19.1~ms to 10.2~ms with the default method and to 5.0~ms with the
-optional grid, 3.8 times faster (Table~\ref{tab:spatial}). Larger teams become practical to simulate,
-which RQ3 needs.
+optional grid, 3.8 times faster (Table~\ref{tab:spatial}).
 
 \paragraph{One question, two answers}
 World plugins (sensors, networks, and metrics) call
@@ -456,6 +479,92 @@ there. Other workloads are unchanged within 3\% (perf.py). The C++ comparison
 in Section~\ref{sec:performance} was measured before this change.
 
 \IfFileExists{generated/spatial.tex}{\input{generated/spatial}}{}
+
+\subsection{Delivering Messages}
+\label{sec:messages}
+
+Each tick, a network decides which published messages reach which subscribers.
+SCRIMMAGE asks the network one question per link: can this publisher reach this
+subscriber, and does the message get through? C++ keeps each topic's publishers
+and subscribers in lists, so a message is checked against every subscriber to
+its topic, and LocalNetwork, which delivers only within one agent, answers each
+check by comparing the two plugins' parent entities. When every agent publishes
+on a topic that every agent subscribes to, that is $n^2$ checks per tick to
+deliver $n$ messages. The own-state sensor NoisyState does exactly this: every
+agent publishes its reading on LocalNetwork, and every agent's Straight
+autonomy subscribes to it. (In SCRIMMAGE-RS the reading reaches belief through
+the estimation stage, and Straight discards the message; NoisyState keeps
+publishing it only so that delivered messages still match C++. It is a
+convenient built-in source of all-agent traffic, which auctions, shared maps,
+and position broadcasts also produce.) The Rust port delivered the same messages to each
+subscriber in the same order (the C++ comparison checks this), but found the
+links differently: for each message it visited every plugin's mailbox, several
+per agent, and looked up that mailbox's subscriptions by channel name. It
+therefore also checked messages that nobody subscribed to, which C++ skips.
+
+\paragraph{How large the cost is}
+Table~\ref{tab:messages} times perf.py's aircraft with and without NoisyState
+in native C++ and in Rust (\texttt{paper/data/message-routing/}). The
+difference is everything the sensor adds (its noise, readings, estimation, and
+messages), and it grows with the square of the team: 0.46, 6.3, 94, and 385~ms
+per step in C++ at 128, 512, 2{,}048, and 4{,}096 agents, and 0.45, 6.1, 93,
+and 385~ms in Rust, within about 3\% of each other, against 2.9 to 3.7~ms for
+the rest of a 4{,}096-agent step. Profiles of the 2{,}048-agent case (saved
+beside the timings) put almost all of that in routing: in C++, in
+\texttt{LocalNetwork::is\_reachable} and the \texttt{EntityPlugin::parent}
+calls it makes; in Rust, in \texttt{NetworkContext::route} and its
+channel-name comparisons. The two arrive at the same cost by different routes.
+C++ checks only a topic's subscribers, but copies two reference-counted
+pointers per check; Rust checked every mailbox, but each check was cheaper.
+Spawning had the same cost, because each new agent publishes an event: a
+one-step Rust run with 2{,}048 agents took 70~ms before routing by index and
+14~ms after, and with 4{,}096 agents 249 and 26~ms.
+
+\paragraph{Routing by index}
+Each routing phase, the engine indexes the mailboxes subscribed to each channel
+published that phase, in mailbox order, with the message type each expects, so
+a message visits only its subscribers, as in C++. A network that delivers only
+within the sender's own agent says so by calling \texttt{route\_within\_entity}
+instead of \texttt{route}; LocalNetwork does. The index is then kept per agent,
+so each message sees only its own agent's subscribers, and a message from a
+world plugin, which has no agent, sees none. LocalNetwork's rule is unchanged;
+it moved from the plugin into the call it makes. The index is built only in
+phases that have messages, so a network with nothing to route costs nothing
+extra, and queued deliveries find their receivers in one map instead of
+searching every mailbox. Every link a
+network decides is decided with the same inputs and in the same order, so
+deliveries, random draws, and output are unchanged. What the index cannot
+remove are links that exist: a topic every agent publishes and subscribes to on
+a network that can reach every agent (GlobalNetwork, or SphereNetwork in
+range) still has $n^2$ links, and each must be decided.
+
+\paragraph{What this preserves}
+We ran the previous and the new revision on every mission file in the
+repository, perf.py's workloads, and 512 aircraft with NoisyState, at one, two,
+and eight workers, with the C++ comparison trace on
+(\texttt{paper/data/message-routing/equivalence.py} and its report). All 35
+missions wrote byte-identical frames, events, summaries, and traces, which
+record every delivery with its network, topic, sender, and receiver in order: up
+to 153{,}728 deliveries in one run, including SphereNetwork's missions, whose
+loss draws depend on the order in which links are decided. The planted bug that
+lets LocalNetwork deliver across agents is now a call to \texttt{route} instead
+of \texttt{route\_within\_entity}. The full C++ campaign, rerun on the final
+code, is unchanged: all 13 missions and 100 generated scenarios pass, and all 12
+planted bugs are caught, this one by the trace comparison in two missions.
+
+\paragraph{Cost}
+With routing by index, adding NoisyState costs 0.17, 0.72, 3.0, and 6.8~ms per
+step at 128 to 4{,}096 agents, against 0.45, 6.1, 93, and 385~ms before: at
+4{,}096 agents a whole step takes 9.7~ms instead of 388~ms in Rust and 388~ms in
+C++, 40 times faster (Table~\ref{tab:messages}). What remains grows roughly
+linearly; in the new profile no routing function stands out, and the largest
+entries are map lookups and memory allocation. Steps without messages are
+unchanged. On perf.py's workloads, alternating the two builds five times each,
+the sensing workload with 128 aircraft (NoisyContacts and NoisyState on every
+aircraft) was 11\% faster on one worker and 34\% faster on eight; the others
+were within 5\% either way, the run-to-run noise of those short workloads.
+
+\IfFileExists{generated/messages.tex}{\input{generated/messages}}{}
 
 \section{RQ1: When Does Sharing Information Improve Team Performance?}
 \label{sec:rq1}

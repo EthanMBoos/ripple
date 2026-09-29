@@ -55,10 +55,13 @@ and the paper. Options for later (range-limited sensors, a faster SphereNetwork,
 `nearest`, skipping the grid for small teams) are comments where each would
 apply.
 
-- [ ] **Faster message delivery, if needed.** Routing was about 16% of
-  `sensing-128`. Indexing subscribers by topic (and LocalNetwork by entity) is
-  inside the engine, so no plugin changes; do it if message-heavy RQ1
-  experiments show routing growing.
+Done: message routing by index. Each message visits only its channel's
+subscribers (and, for `route_within_entity` networks such as LocalNetwork, only
+its own entity's), with byte-identical output and traces. With NoisyState on
+every aircraft, a 4,096-agent step fell from 388 ms to 9.7 ms (C++: 388 ms);
+see [messages.rs](../crates/core/src/pubsub/messages.rs) and the paper. A topic
+every agent publishes and subscribes to on a network that reaches everyone still
+has one link per pair.
 
 Tested at scale: 5,000 agents spawning in one tick and 1,500 removed in one tick.
 World plugins may publish up to 65,536 messages per step; an entity's plugins,

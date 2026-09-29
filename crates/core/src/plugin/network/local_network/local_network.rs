@@ -53,15 +53,8 @@ impl Plugin for LocalNetwork {
 
 impl Network for LocalNetwork {
     fn step(&mut self, context: &mut NetworkContext<'_, '_>) -> Result<Update> {
-        context.route(|link, _random| {
-            let Some(sender_entity_id) = link.sender.entity_id else {
-                return Ok(Delivery::Drop);
-            };
-            if link.receiver.entity_id != Some(sender_entity_id) {
-                return Ok(Delivery::Drop);
-            }
-            Ok(Delivery::After { delay_s: 0.0 })
-        })
+        // Only links within the sender's entity; world plugins have none.
+        context.route_within_entity(|_link, _random| Ok(Delivery::After { delay_s: 0.0 }))
     }
 }
 

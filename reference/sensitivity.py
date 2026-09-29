@@ -58,10 +58,12 @@ DEFECTS = [
      "covariance: Matrix3::identity(),"),
     # "Straight ignores the NoisyState estimate" was an equivalent mutant: Rust
     # already passes the NoisyState belief as the plugin's state. Replaced by:
+    # LocalNetwork asks the router for same-entity links only; a plain route
+    # offers every subscriber, which LocalNetwork then delivers to.
     ("LocalNetwork delivers across entities",
      CORE + "plugin/network/local_network/local_network.rs",
-     "            if link.receiver.entity_id != Some(sender_entity_id) {",
-     "            if link.receiver.entity_id.is_none() && sender_entity_id >= 0 {"),
+     "context.route_within_entity(",
+     "context.route("),
     ("SingleIntegrator yaw swaps atan2 arguments",
      CORE + "plugin/motion/single_integrator/single_integrator.rs",
      "yaw_world_from_body_rad: velocity_mps.y.atan2(velocity_mps.x),",

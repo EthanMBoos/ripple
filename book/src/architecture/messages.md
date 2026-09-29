@@ -44,6 +44,14 @@ A network plugin only makes the delivery decision; the engine owns the queues,
 their order, and their limits. A network is a normal plugin, so research
 networks (loss, delay, bandwidth) are ordinary user plugins.
 
+The engine finds each message's subscribers from an index it builds in each
+phase that has messages, so a message costs only as many decisions as it has
+subscribers, and a message nobody subscribes to costs nothing. A network that delivers only within the sender's entity (LocalNetwork)
+routes with `route_within_entity`, and sees only its own entity's subscribers.
+SCRIMMAGE decides every publisher–subscriber pair, which grows with the square
+of the team when every agent publishes a topic every agent subscribes to; the
+paper measures this (Removing Inherited Scaling Limits).
+
 ## Timing
 
 ```text

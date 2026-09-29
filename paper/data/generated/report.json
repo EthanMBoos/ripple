@@ -32,7 +32,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-11-46",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-10",
       "cpp_output_hashes": {
         "frames.bin": "d8dbd607f61906cb7270ca1901825f1eb564240b9f48ff1bd53d1104ffc94b1c",
         "summary.csv": "fecdba805ddab8d750399c1e5451af3f360545d3a5b6a473dbec6c54809be6ff"
@@ -54,7 +54,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "9c783f324b668f064e1c96bc515ce615cda404ec0c0f6a5980420fce56d89f82",
+      "recording_sha256": "ecd63b2db44a887e3c3c696b03c67f38d7f3d6fb188ff863ab5615c040f4d7f6",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -157,7 +157,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-11-51",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-15",
       "cpp_output_hashes": {
         "frames.bin": "2c1876aee9268901803e4664b7cba2114c7d911609a4c4db8248df34173d2b03",
         "summary.csv": "305483458e0f18d7fa5317eeda6fd91a56ca9e6da5251c95c84e663a94a90518"
@@ -179,7 +179,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "f5dccec599cd7386383dc00476b6520d47b9ebd5eb62c6de8c541834dcb7128f",
+      "recording_sha256": "32f22a0f17d91f8c10104573667ce0c6beb0b5a7bf861ebc847b4e6f5a3113b4",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -287,7 +287,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-11-55",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-19",
       "cpp_output_hashes": {
         "frames.bin": "706109962193425f5f01975d1c8b3862ecb3d9b70ab57be6a18ae92d6d4546cb",
         "summary.csv": "6071f917044584493ae4f3d8680a255a8c4cd4d297e2736e0d339a3e61efe6b8"
@@ -309,7 +309,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "eb1b578047c0ffab7de48b0318ef06beac21d94abb8472662232a2766f4e6ec6",
+      "recording_sha256": "552b47529d6b70d9eae54c1f75bff264445a6e456f6dd5ab6bb23ab5f503fa06",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -412,7 +412,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-11-58",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-23",
       "cpp_output_hashes": {
         "frames.bin": "af4f6a3e7eb9b8bf2c7a8c38356e0b23d41bcefad0bc9d88424e2c3a5c64a0c5",
         "summary.csv": "52023a07e8650516d794971b54ded687b9ecd317d4a05cc42ccc55cbc9c82a9b"
@@ -434,7 +434,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "a723bd694c03aabcf0ab42fb479dd21ab76f9d7350afb64679c78e77fae4cc3c",
+      "recording_sha256": "84c5bfa00e28bd4ab1b982abc5da45c0d9d7eb12a4510563ae772bbf2eb0fce0",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -537,7 +537,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-02",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-26",
       "cpp_output_hashes": {
         "frames.bin": "73dca02603ae3dde6af4632d8c552e3be31785d3a8355c98219ed94f5156dada",
         "summary.csv": "be6badb8de557caa0d9380f9ffda71e64b5eb736c509460c4d875aaa23dafde6"
@@ -559,7 +559,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "c56fb28a32cabc0e155a76859cb41d96ea4c2dd4af3af324ed2170e5c842089f",
+      "recording_sha256": "d1b9985bf80b9b651763086db552c8679742b0b3a6ab71c541b39120424969af",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -668,7 +668,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-05",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-29",
       "cpp_output_hashes": {
         "frames.bin": "e45906093b9b8bf42a2bda3291dbe9b33f6fdc46d23b9f9507db59047580058a",
         "summary.csv": "815669c89b012237d9240c5dd4c086092dd1335f4223451885383538c57194f4"
@@ -690,7 +690,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "7af90331acfec3c9cd9d824285a13ebd026a71377c19aec5d2762a3582b46748",
+      "recording_sha256": "68297543cf7f51aaf5140d8fbcec6571f9e157517f8197adaea3f77268257706",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -796,7 +796,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-08",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-33",
       "cpp_output_hashes": {
         "frames.bin": "9bad6090186fe8e1279a892a98e06797b3740923a6475829eb4718517d92edfe",
         "summary.csv": "d94cf2e25085db21694fb446f77e7c77ef78a2c63f62b1e2856a87ed989770f0"
@@ -818,7 +818,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "5b282420068458ba315171db28ac27a1ac9a590d5d1dce7b5db3ae7fd1a28753",
+      "recording_sha256": "de930a926af69f69edabd291c4c7e3612b4cb8b8a691e20cc48f14cab45e28f6",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -924,7 +924,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-12",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-36",
       "cpp_output_hashes": {
         "frames.bin": "4b80f0cacfb1edc589b4e10c36bb17a7d8770614eeb98a46c927d1bc028c809f",
         "summary.csv": "491b749439246b06f0950238257657cf926f4f61f24ec6f2a1006d10b884bf16"
@@ -946,7 +946,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "7e1b9b705da2f562db5855d16253b96327023095a1af9d7d2984fb50939800c8",
+      "recording_sha256": "9ff3e16e0265aea4f748e7655017628363f5bbf065210886687da2ac04e86205",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1052,7 +1052,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-15",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-40",
       "cpp_output_hashes": {
         "frames.bin": "933078d8e88f3189b7c594ac6406a1cd6a65e87d48653c4481deb19a6fa230fe",
         "summary.csv": "2ba30dab5bb56390f2111f04623e7266cb16eee6b63c13775ec3f7154ea66f8e"
@@ -1074,7 +1074,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "a48681db95cc8e61e1a22a39e592723831bec44f6b975bd0798b34a8194d0a21",
+      "recording_sha256": "8feb2126b3da6d205670c3004ee0e9f9babe2896e0f5530595ae55c106b996c3",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1187,7 +1187,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-19",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-44",
       "cpp_output_hashes": {
         "frames.bin": "67576cd967354606c96b60edba737a3aa36bdc35043c47c5514265d53c73bc86",
         "summary.csv": "621cbcd851fb026f2ed0df719ec9c763dd8006d41b628059d4c830f88534905b"
@@ -1209,7 +1209,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "07d8ac8a27a1ccc9fbf9564a218e6e3d460892c912840b7cb9f4dcb94c890962",
+      "recording_sha256": "2371ca5e4a79bad6b5441f2e52ada16c307de1fbda2f502b6d29cf6c854db67b",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1317,7 +1317,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-23",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-47",
       "cpp_output_hashes": {
         "frames.bin": "8d9a6bd40a0f9e556582e1cdef9536b92c63596b6846d2246b6fdbf00f955786",
         "summary.csv": "95aeb9338861f5902ef24474b96a22676eefbd6541525324e199437736c46eb9"
@@ -1339,7 +1339,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "4394dbbb77c2dea776272eea18698add8930f7e3e6c164a264d28151ae24635d",
+      "recording_sha256": "ad09a21011a82991633e767956b2eebf02fe08a57eddc5a657f80fb059ffdae3",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1442,7 +1442,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-26",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-51",
       "cpp_output_hashes": {
         "frames.bin": "c6da388acd54f655c0ab6f49d10a5eb724747f334ef3a30050ea2447f3337210",
         "summary.csv": "4955661bb634c368c66081f30a67a8119e91ff46540985a7dc65ece9e1fee2ac"
@@ -1464,7 +1464,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "3cfc4b39411bdec247a02cae76344fa7ad53d3437cf1af5f35dff7758f545057",
+      "recording_sha256": "4f738baf49c418db4a73b209db4ecaf909ac55d6cfe1d7e335aadcb0e3c6e847",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1567,7 +1567,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-30",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-54",
       "cpp_output_hashes": {
         "frames.bin": "3d63ad0880aca9f0083cd988e0bf6921db1290fb8536cc4d2a5a679ff69bfd05",
         "summary.csv": "d07e2e9e7a18050fa508db0c6bcb40dcbdbf993143536bb0f2eb5372fe43c035"
@@ -1589,7 +1589,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "7249c53654df579566f17b505d08f398383371c8d7bcd32f3565b3fa4303d84c",
+      "recording_sha256": "3dff79fea890069d569f8b98443bf4e9533c80c4591b14b39cc58d7c64bf5bd4",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1692,7 +1692,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-33",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-57",
       "cpp_output_hashes": {
         "frames.bin": "db1b11c8a5e2745032a133105c64902a5b50f26eb9423e58629c740862f06c23",
         "summary.csv": "55e7fe455f7c5c16715ebd1ba8ad050ebd6a5f8290e143e37d687aa4dfb50380"
@@ -1714,7 +1714,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "38f5260817f38c473287db139e529bdb7b28ee49cbde96d84f4adedf3bfce186",
+      "recording_sha256": "8281257802a7efbc3d929022cfa04ff846151b4f763e9a03038c27c33c9fbf3c",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1817,7 +1817,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-36",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-00",
       "cpp_output_hashes": {
         "frames.bin": "4781c22c502f3e75fc5aea407b9c0ef505bb25ad04c46722c3c219298b41de55",
         "summary.csv": "ba61febaf280adfd7a997eefa6a5b2f87201eb8d4e37aad2919ac52b57ef4f28"
@@ -1839,7 +1839,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "68de65e6004f246994073e2f34fb6e990fe3840ea3a5b4a7cabac81c0dbdd4c5",
+      "recording_sha256": "3f60a20c0fbd7426d5b594522d279a87439a1aa0ff5e7a2fd6bbce35ea7d45a6",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1942,7 +1942,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-40",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-04",
       "cpp_output_hashes": {
         "frames.bin": "0fb85118a8c7a7e06cbe30b323be4746d0d262290019cfab7d303c163e9f27e2",
         "summary.csv": "d07e2e9e7a18050fa508db0c6bcb40dcbdbf993143536bb0f2eb5372fe43c035"
@@ -1964,7 +1964,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "32129295e161697fcd50f238b74f738791d7d5be67ea929f5f8ba1ed4dc46a17",
+      "recording_sha256": "2a0c32aedc9fb4f980d85d4b1f6ce6870706eafdb00c94782d7dbee18a84f78d",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -2067,7 +2067,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-43",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-07",
       "cpp_output_hashes": {
         "frames.bin": "1a9d055140e0f757820eb2d9ef735e1bce67d7a470fc8818dcb6f1f37df6d397",
         "summary.csv": "ad8831315613af7473b6c1c71b82944f12deb6a9ddd815ac4efa056445aff172"
@@ -2089,7 +2089,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "7a0867f8a58dc71539752076ff2d0e793aa2ef49ec7788266d8eb46132dbdd09",
+      "recording_sha256": "2854946a3b5438117bc59bfbf3dc94d5a14377d19189f24c18bc8f7c53ab46aa",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -2195,7 +2195,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-47",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-11",
       "cpp_output_hashes": {
         "frames.bin": "2d5f27881b3182bef0b83e74d5ef5a5db81c531f33661c0b2b4aa1ee489b3976",
         "summary.csv": "07b85dd87cb22852cd2ec64f8047d65a9c4724dc65223fca985b68aaf1b07833"
@@ -2217,7 +2217,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "db6d7411d3f07e1a70a1f17dbcc8663c450ace3d58f6789fc440062c5b683fa1",
+      "recording_sha256": "b89708c05057f360ee7a17b61b6a98410dbdc99a6b5c002c1387fc0fdb74c679",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -2323,7 +2323,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-50",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-14",
       "cpp_output_hashes": {
         "frames.bin": "06963ed532be3bc92d0db821c8eeab8679abf97f707a2d624ed94091e4a195d2",
         "summary.csv": "aa5e57b39a27359ae47ba10a35b4e18eee2fb30588e124a04c9ab2fd30b569d3"
@@ -2345,7 +2345,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "cb7d21ca91a0be6202dd5e7adf5b7ee5c0301cb17e1cef7cd29e82f0f26dddbf",
+      "recording_sha256": "680b68f75330cc271ef6bc82651936ce56c8509b68a9074678ba657f901e462c",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -2451,7 +2451,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-54",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-17",
       "cpp_output_hashes": {
         "frames.bin": "04439607d9658122de1d35e73ae51daf8b620d44b33dcd2ceffeb6b39e13e844",
         "summary.csv": "a74eef521a7287650989282d819f444cdf20cc316433fac229ff55d2d771f5b1"
@@ -2473,7 +2473,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "29f06280d9ba301614b515ba8aac923cda1bfebb9f579d0b96c33bcaf3e1a285",
+      "recording_sha256": "c96e9dab187a7c840e51cbb9382b11e5715f5205f347fb3273c8a8cbeab73f9d",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -2579,7 +2579,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-12-58",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-21",
       "cpp_output_hashes": {
         "frames.bin": "2020596a80898c8db631190b62843fbc6ba72d1f0cbf0fc838f48195c767af7a",
         "summary.csv": "ff8a8a5698bad2e288f70f0af42377fb68c84b7ad2b688039717f5c628439d37"
@@ -2601,7 +2601,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "b6ac3fe3c564a951cd33bef753ff59280300f8741a1c6ccfeecdcb922b952e41",
+      "recording_sha256": "9b92a83d89b02e0e57b3480ca7f47a561c819beb4db87d054188f10d3ad18d17",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -2704,7 +2704,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-01",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-25",
       "cpp_output_hashes": {
         "frames.bin": "dec6c6db1eba2df0deb9f3e04939162b4259b9af5f9d8a67a2ba0537c37d9ff6",
         "summary.csv": "83127fe0f859e46003ef99fe96d002c03db54a04460d16f282618f6444c945d8"
@@ -2726,7 +2726,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "b1d77400f1a54d3309e99fce1a0842d0059ee710869289cd58edea31d4cbb585",
+      "recording_sha256": "ba1f2cec1735ac4e0403d584e0c82ad14f342745390dbe1fed1b185f298a9dad",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -2834,7 +2834,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-04",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-28",
       "cpp_output_hashes": {
         "frames.bin": "24d20dd1af0a5b07e1e69af931a607ba5bc2073a1eb8b2d38619631a83d405ac",
         "summary.csv": "cc91d691df65c52b7c10d967efb9248508a7c045cc955f5029064b86b2355bbe"
@@ -2856,7 +2856,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "d542fb19e7982f87e69d232e363e2996935c336cfbcde6f7083a353a839b280c",
+      "recording_sha256": "aa3e3477179c07e8e1b41457d046f7753c2bf5b71f0c6b70f28c9cb2bcb68025",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -2959,7 +2959,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-08",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-32",
       "cpp_output_hashes": {
         "frames.bin": "44ec2e1aca52e098ae703db1874f031ef0293c634c3dfa7e2cca5826d962c8b0",
         "summary.csv": "2fc7eb9309c675e6c2675933c77e5c29931d55cebc5b33cb5dbff8999b8c9c2b"
@@ -2981,7 +2981,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "cc9bfec7f68c3b1c0b136d0ef5c4b47c8d94dd286733c2d5de7c44cace45e0c0",
+      "recording_sha256": "215459dae6b77f2585dc67e0a65ce167c487418837f364bb0561f369dbd388ac",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -3089,7 +3089,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-12",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-35",
       "cpp_output_hashes": {
         "frames.bin": "a5c65dfae3e426e054c4afc324a5c4341c1fee5c72a3585e01bca0c365fbce90",
         "summary.csv": "25d7d22aeeb3331a26cbebb3f8d0b297f3db8a248b382842fd7ad9ef6fa1c76d"
@@ -3111,7 +3111,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "c9eff76acdca5610185f0d46e9a8f6732a1caf7364b32f6380cac3763f9e2848",
+      "recording_sha256": "4b3141096282f32feaa2a7235935f918558dc4183284b6b3e1376ec07b5bad43",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -3214,7 +3214,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-16",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-39",
       "cpp_output_hashes": {
         "frames.bin": "8f1629a5525438a02dceb8a86a2bca91c4b7a0dbfcbb12fadd662c5a1daea39c",
         "summary.csv": "9023b29b05ec30b7e322fb84e60d95d5f2e6d82695cf83284cd32ef778e976e3"
@@ -3236,7 +3236,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "35ba21b167aa878f64542e93ce66bc4677ee1f4594467e3e9ee237070b305e32",
+      "recording_sha256": "d4a7cba4c362abe95645e36acd338195e503a9789eeed7a403051d205ff90e70",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -3339,7 +3339,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-19",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-43",
       "cpp_output_hashes": {
         "frames.bin": "26f90ae809401a148d1164a97a0dfcaae6c3e3a5ca97ff2d07eae2454b0df8e1",
         "summary.csv": "e8f4a805e38621cea94eb9d061090d0eb4fc4db4ae19accdb56e5100435e54e2"
@@ -3361,7 +3361,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "ab2d752f9616a61a87a3f3950fc7a850e260ad691830a728de439d5645cb3d73",
+      "recording_sha256": "208351bb7e7b197262a965895178ae5f0d76c71761f1dc8731e6bcc4966e4b84",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -3467,7 +3467,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-22",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-46",
       "cpp_output_hashes": {
         "frames.bin": "fccd606a912d793a4592b2b71c50c5e104313a8f5b2fcc19a7f62cdf9ae13a4c",
         "summary.csv": "8e919421a12918192b5ca135cc0048b5f598195f07cecd451a6571058d9cd08f"
@@ -3489,7 +3489,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "d863d2c5bd1ac43feef49cc1d95f6107c687a7abf20cc3cfe1d531d441150cfb",
+      "recording_sha256": "9fca69e55578a9a0764552643b4016f36d75859aeb2600c170953cf4001b6d92",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -3595,7 +3595,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-25",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-49",
       "cpp_output_hashes": {
         "frames.bin": "edeab10f13cf0bbf7f0725e346f94063f0ae33f4a98dd6a4a17e398e483b02b1",
         "summary.csv": "1eb592293a4445e4e839856e701695aac67040de5c9c90ed0879ebdd84f18723"
@@ -3617,7 +3617,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "3f64aeed6b4f95401bc740c2969f23509c7fd34a2cbe9d27bae2189f73e8aebc",
+      "recording_sha256": "b284d8132fe7fed8c28bb59f8c348057f0d971cf5b6a0ffc75c13a24d4295381",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -3720,7 +3720,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-28",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-51",
       "cpp_output_hashes": {
         "frames.bin": "546b6e7193dab3b33d09c0fb1b02c72c0e61c8669cfe96903bc71f85c350a6c4",
         "summary.csv": "fcdcda0845080de8d8e52a5e5ae0d8efc68018b9c152393feb21bffbc2adacc1"
@@ -3742,7 +3742,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "e96294f445c8d800b3890a6da911f754b74369c081917bd21f59ff428742e0a8",
+      "recording_sha256": "bea869a9b6c56c0a566239d4315fd7eb7ae5cc8dbc060eedb75e272d910406cd",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -3845,7 +3845,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-31",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-54",
       "cpp_output_hashes": {
         "frames.bin": "37441d93fa8e775cff797bae5c18f303bd4852b7d156b83f5d316f2d11b9ea0e",
         "summary.csv": "94ce726e02fd8bd1f5064fab580e92544d818e314966d739ede18510525e6193"
@@ -3867,7 +3867,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "4ecddb6f907cb6698f55848cefe0d29fc5f6bbf5a76078bfd74022481d4774d8",
+      "recording_sha256": "68a08cf669b8b2e80761216e110c76e93b223b744cf79e37860ec7298e5f7d43",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -3970,7 +3970,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-33",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-57",
       "cpp_output_hashes": {
         "frames.bin": "84053e48eab816905fdb2800bf5d8709cd0c9d4cf1f2c9c096c577f98821bed2",
         "summary.csv": "1c1283dc157880b056c51296a23cda59c53b148a9b587fbd2dd6f2b91591b003"
@@ -3992,7 +3992,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "39ac6b8d1e0add569edc08770e11b3a56b9ec05c8e53fff3495ca5c31f13eb54",
+      "recording_sha256": "9814bd1d275b211fde73463574cc3de6836cc3b95e63c9cedb26ebd1d40e3033",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -4095,7 +4095,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-36",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-55-59",
       "cpp_output_hashes": {
         "frames.bin": "14482e18d2e1ba90659145b65dec756e5a317bd703a3243ac0758a09cb7e9da6",
         "summary.csv": "9c924be992be8d05e8ff158f04eab6df3859f3e5c5adf364cace5cbd4fa75c1a"
@@ -4117,7 +4117,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "3504d44d68c79164eb6d43917765e33aa583e5c2fc0f7bb0da81c114b0a0df24",
+      "recording_sha256": "e2a2272610b49042312ff158a5b98db01fc495186c2125978e24a297ee7ebab8",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -4220,7 +4220,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-40",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-03",
       "cpp_output_hashes": {
         "frames.bin": "de540eddfc8f3b6f216c526615128ccd96cd97371dd7996366a46a68b806994f",
         "summary.csv": "89d4fcc38e04932caed077eb58f99eec2b229740bd659a90a1b445bea48c507d"
@@ -4242,7 +4242,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "c8654755d2c21ef07efe5d8c57b1a495cb7580d3e3d83fd536096a7e2b9370cf",
+      "recording_sha256": "f8042c101607b3e626214973bca7f29fd671fe6ef55ac43f236917828783db63",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -4351,7 +4351,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-43",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-06",
       "cpp_output_hashes": {
         "frames.bin": "c401966d2148e3d073010405d09208bc622ab6ede1579616db3625506aa217a7",
         "summary.csv": "09e8d9f7aa3965adf81f372f4ebe3dc3f04a259e98e09a758bfea627ee792bf8"
@@ -4373,7 +4373,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "9251b9e37d78fbdb0813d11354a903f17d319c15fbd143097c0de4c80c0bfc69",
+      "recording_sha256": "bd20f20fb503c079d716d7eb04460f0834262302a74fbb2f270a4e55003b2561",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -4479,7 +4479,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-46",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-09",
       "cpp_output_hashes": {
         "frames.bin": "a0c877213546dad2a250048437e6ed63bd7ca058f5afa43c3c844118863c65fb",
         "summary.csv": "0077b4c58ef34c90c95a73c97f547327f5106db2149861e299d09b0167506cc2"
@@ -4501,7 +4501,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "d7130d31caf88574273ed6911335814324b8ff3e9382b709f12341a65150356a",
+      "recording_sha256": "fd339110789c292c6a0abc3db591149b20586b8af5fde6ec019cc62602f7f925",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -4613,7 +4613,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-50",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-13",
       "cpp_output_hashes": {
         "frames.bin": "03d90baec7a2ca9badeaa58a596757f95a69d4b5fa9b4d989194b52e29b96098",
         "summary.csv": "e2a6720558b36aa24518e7e803a0ccded604e2c38dd981d5d80141c2cef0d737"
@@ -4635,7 +4635,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "ec1150791962f61eef5fe07e3e04e6ee8dd617bcbc0ed012178b6b7306419447",
+      "recording_sha256": "d4da5834fb1971f5ad341ad8a4baa4e533b2fe0a1c7523235690cba3c597809b",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -4738,7 +4738,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-53",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-16",
       "cpp_output_hashes": {
         "frames.bin": "fe003ed16d063aba88ec3923183347f10c6419a05172a8d144d0c48420b48375",
         "summary.csv": "0fee170accfbb62e2cc16dcd24e58509ec362eba63273eacd3239e2624804925"
@@ -4760,7 +4760,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "bc74781f5a72aef2a06a339cf89033c6e118f6aea0b822d48fd53847736cd6ce",
+      "recording_sha256": "7b7052819e0225e13dea140a17b376443d4984591e0d4955327ee4b99b0a1361",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -4869,7 +4869,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-13-57",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-20",
       "cpp_output_hashes": {
         "frames.bin": "71fb0a843709f8b9a3faae3de3e93b1e544128cd081dad266454072f7a9d3857",
         "summary.csv": "ae368fd5d05993e1339353dde1bad3ab78283d8d88bb88b1aaef36180f799940"
@@ -4891,7 +4891,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "9a5b13b13bf1a79628ee2b606514f9bae94d3465f9b9fc99bf662079d7ac0df0",
+      "recording_sha256": "bcd360aed262beceb8026b322eddea184a49efd13f39e515f55d0a6ae4ccc557",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -4997,7 +4997,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-00",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-23",
       "cpp_output_hashes": {
         "frames.bin": "55e48de9aa72c3504fc521d83c8da817a9408c1f7a21eaceea00c7da29bf66d2",
         "summary.csv": "a2dd985908020519a2d5e989a050e6ea10575590559e2c158cf439cdbcc17629"
@@ -5019,7 +5019,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "66da217757602828c1114e9f4f3ca7b32a729532d24fea01dee5e9e937830dc9",
+      "recording_sha256": "5425127dd2aa601df7d794dd5ead4127d09dbb460f151f04a8fbc8eb556f556b",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -5122,7 +5122,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-03",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-25",
       "cpp_output_hashes": {
         "frames.bin": "2614d393f1e6f0886cc3e05879bebfd21fbd27fb3b46718ce987d1790de1eeb8",
         "summary.csv": "c3e29a43fad56309b32c9211ad781fa66f578fdf38d5c9e8786b923ec100cb87"
@@ -5144,7 +5144,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "b635c5f884a59a00c5d1b7b78b324509ee93a31f101a25d567ae682941bbeff3",
+      "recording_sha256": "0534113a75ccf9f371d9cf952fd6f5869bc21f3b12236734711c0ad2e2afa944",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -5250,7 +5250,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-05",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-28",
       "cpp_output_hashes": {
         "frames.bin": "3fa680dda5482686ca97ed55201b6e71a356406393edda281f18dbf74c017051",
         "summary.csv": "4810b1ef4ae2998f65fd4851f86d121fb86ce3111451a0c6c52ae2f2948fec2e"
@@ -5272,7 +5272,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "7b414ad534d74f297c567705bc0d139db9a5288a09246204b528b0b5a2036852",
+      "recording_sha256": "7e5f0c8f5b5aa6c8cf6291fe9665e661c3aa74f97cba1fc7bb4be34e90da735f",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -5375,7 +5375,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-08",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-31",
       "cpp_output_hashes": {
         "frames.bin": "4fba8df6eea58b3ba4189c907f30416118bcaed253e21894b8a1a5e526f7d009",
         "summary.csv": "cd8f03f732464030d5a130ed287d474be43b9600d823a5fbf95d9d3f00400055"
@@ -5397,7 +5397,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "da8cffe2b351b5b950816945916b6654b66093744d19e0a9ff6388f77e32f7df",
+      "recording_sha256": "a3f9a54e31d228aa6bdd7344ffce78b4d97dde92adfe918870c79da26f0a05f9",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -5500,7 +5500,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-11",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-34",
       "cpp_output_hashes": {
         "frames.bin": "01bbf5da961e18d684a2b8bfa2d9b4142dcb7f7e963ff385262fc922cc43f932",
         "summary.csv": "9dfe5f8534fccfd88c50d3829c5a4c361463cb63709aee53a91deb17b951bb81"
@@ -5522,7 +5522,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "33f56b52dc40e1216ffc4e5c517a44fcb993b34d0ace7f2bb510041282beebea",
+      "recording_sha256": "da453a26bc056524b1c11c2c2b3694bc852bf3f47bb316b452b16af956a843cc",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -5625,7 +5625,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-14",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-37",
       "cpp_output_hashes": {
         "frames.bin": "17ce4f70c0e353af1b786c4a3e9aed909b10479e2a51850273dc3c7cfa1ba01b",
         "summary.csv": "0c6125a6b7b71777c8777b98b8a7a44d17d30c5e68cbe21a7b08c7049a7e62ba"
@@ -5647,7 +5647,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "6925ddec390b0ba6bc19008cebc6747d793ab4e9dfd950e5d19ff9c6e6539755",
+      "recording_sha256": "ecd6635de91a63f3f59d4fc97667ca93a751570b73ed8ce65af23960c02b7322",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -5750,7 +5750,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-18",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-40",
       "cpp_output_hashes": {
         "frames.bin": "966baf9c57d57ed12d903efc1877d1e978131e789ae78c6fe52d51b0f791749f",
         "summary.csv": "b4b79042b42fa3bec49684213fab9b0f1d8b094ea0d3a81ccf0fb74501503bab"
@@ -5772,7 +5772,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "810f07db0a166df43c997796993b77557663ffadf87df553c35481391defb989",
+      "recording_sha256": "3627dc1a88ff9a97e9514d1e9f1bd15012fd8d3f4a9fc8a2e40e46b8caae0995",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -5875,7 +5875,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-21",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-44",
       "cpp_output_hashes": {
         "frames.bin": "d9a8b1ada553eb7d4ae60501e23e5934363a2636586bb00049e5e2eee0503266",
         "summary.csv": "3a95ba623f5dc5aebea193981917683d67747bf4258c3baed4a4367360bf658d"
@@ -5897,7 +5897,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "54df5eef353cdb42bd15c34b43cbe7d37af7e5dbcc39768f305fcc33b9824f2f",
+      "recording_sha256": "b26d1abb40b99c7ec0ab550b035f7761764d43a475231f7a6f85f4eae3bf3542",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -6004,7 +6004,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-24",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-47",
       "cpp_output_hashes": {
         "frames.bin": "fb950eaec05b23d30e3cadbef2ff35db4df5f0f43508af7782927e7be0d609ed",
         "summary.csv": "c83837c547a9667277ae03c711811899f02060890291fd81bd1ebde1afd65d55"
@@ -6026,7 +6026,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "413e2ffa9d1e7818637c939fbc3edbb611bd11a7bd5ade2ff991c2fd3850b4d7",
+      "recording_sha256": "6b5058d4a94fe28a9cf67adade661dafd45393dcd89e695f9aa2241174314f9c",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -6129,7 +6129,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-28",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-51",
       "cpp_output_hashes": {
         "frames.bin": "a0dfc5506f01f3878821cf22fb64b6ddf526f318ef6cba6e2e16f18a581859e0",
         "summary.csv": "bfd69aa2a87bf8c645f335320aeda51aeb62655e6103ec4ec22b0c33368ff1dc"
@@ -6151,7 +6151,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "a08c44b7d139fb8a78c4ece1024912072d5cc8e8e7dfe1f39b0c874f645d306d",
+      "recording_sha256": "a174ea7eda03cc256536e0d3321bf03d55192d60e553490a79bdc07e28b221dd",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -6257,7 +6257,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-32",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-55",
       "cpp_output_hashes": {
         "frames.bin": "a63c773e7faaa99b0dcfc92bc1631fdbcb32c5187ec8d7fd8685b29c561f585d",
         "summary.csv": "1ae1c6077d52269f56e329cd47c5a90a2453532d6853ab82de7b6f6e1185ca5a"
@@ -6279,7 +6279,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "177ba91fcdf49c18f5ae415f3e2ffe2896f30fa8baf2b74bda3f90212d5e5ccb",
+      "recording_sha256": "310bee601270f1c8cf298c39c590c32cb4b311907e50cc755b4310945754eeb3",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -6385,7 +6385,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-35",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-56-58",
       "cpp_output_hashes": {
         "frames.bin": "94bd50ca80d0c159557d8e4f20ff8145b1656dd55477e0af9a8e7964e0ad78e7",
         "summary.csv": "de040f122727853c1ad482cf212da631f8f91172358d813949f21dd6b9f19d4a"
@@ -6407,7 +6407,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "e0983776f1f09b62957bcff95d886ee73161f98654554b1cb526cdc67c4de0ba",
+      "recording_sha256": "c621732f3ca5e7d4897330a09d96e218ddf1b308e3f5577336d771ac3359e74b",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -6510,7 +6510,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-39",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-02",
       "cpp_output_hashes": {
         "frames.bin": "f7e609a2667a32bee5b64ce01503a08adfcfb39e92f1e928da2c329a948828d7",
         "summary.csv": "9072445904e38476ecd3aeeaaa1bb789bf1030ce6eeb563b0346d75f8ac4dcdd"
@@ -6532,7 +6532,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "a8de274b55889d405f6556bf86b4225c213b3070280499d7052b9fe78e9985d9",
+      "recording_sha256": "6523a9f7e9e51155c17404bacd3daed6387c946e70ea7889f8c9949345bc82f6",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -6640,7 +6640,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-43",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-06",
       "cpp_output_hashes": {
         "frames.bin": "11c843864ffbded39595e28a2ddff412ac1e70343220cbffd65ca79ada59f632",
         "summary.csv": "4edc074450ef1d8782d1ae6ea95fd837fb8d4abb4fdb25fc781aae05e6af4ee3"
@@ -6662,7 +6662,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "a4d40d61e98314478bc868d4c0b0c2c01b5f0c504ef6713607ba1ac3e3b06a7a",
+      "recording_sha256": "9a83e99b2458f9cebd579dab7e11e3179949ec4aaa451ffa5af0d68accd8c0ee",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -6768,7 +6768,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-46",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-09",
       "cpp_output_hashes": {
         "frames.bin": "b2df93a36f5e80fbedd39e5336f30a9467f0b63869e98d0790f005532b60fc3c",
         "summary.csv": "ccdd8377d8d20966b8bf15894ff1924c027566de2e77a82f05bbb876273c1dc5"
@@ -6790,7 +6790,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "e68637cec8761edc0ae3686ef75d8e4c6187c55fca5049d7fd6570f75200a10e",
+      "recording_sha256": "eacb254abaf548af7fa904cde38f39c5b49f8a69d5995aee1872a9966b84e064",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -6893,7 +6893,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-50",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-12",
       "cpp_output_hashes": {
         "frames.bin": "1cfe2e617d470b68548521228472a714d9c3de888f4e3946d6b82ab41bcf1b92",
         "summary.csv": "786e88afac82739a6ff648ab835747e07bc0a511290c92b38bf51cdf78f325e1"
@@ -6915,7 +6915,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "0d85d0c27708b6ae18a322ef89a1e87906f7a9fa206ca602853c536d6c5d1315",
+      "recording_sha256": "d121e70205b5aad32721dac1321a0ad8605b1d65ba881f354c2f63f208f85928",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -7018,7 +7018,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-52",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-15",
       "cpp_output_hashes": {
         "frames.bin": "7c47565d613f574e6967b136a4d262d10630302c926bd1879c48e4228fd2f205",
         "summary.csv": "64ec01a4860a397cc4390eb22f2e52b2bf7efcff28e3208c5edb7dc7e04bc63d"
@@ -7040,7 +7040,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "c631a214cda4666bdefd78f68514238910c5a587ff82debe2d73c63ed509f80b",
+      "recording_sha256": "280f579a9446a335762cd670a2c0af0abd3d6999d7ac81e606e46db0ef8a68cc",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -7149,7 +7149,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-56",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-18",
       "cpp_output_hashes": {
         "frames.bin": "761f7f68660c773f7fa890aaa86742d6fa7de90065ef549190f41960bcdcac30",
         "summary.csv": "25d7d22aeeb3331a26cbebb3f8d0b297f3db8a248b382842fd7ad9ef6fa1c76d"
@@ -7171,7 +7171,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "0a3531c4e60593c5ca25808338806b69e499b23353ecaaf9e9a26cf2ae69a8e5",
+      "recording_sha256": "ff32c0dd178834fcfc3b832d4452fa1e0b924739be03cf90b4721864e82e3d5d",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -7274,7 +7274,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-14-59",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-22",
       "cpp_output_hashes": {
         "frames.bin": "4b8c34e0e31a5da6c6fa1d1d97ab1886df6c6310d58af3ad18e2a44b6d2a6941",
         "summary.csv": "43cb10b71ec2e8fc2efeeaa2fb94bbf98d3fa42a2a8ba78889990921f506a332"
@@ -7296,7 +7296,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "c6ecbbdc309660c799a21bdd949314c68b920d149aae9ac59b603202faf2e175",
+      "recording_sha256": "0b6633598b1a69772b3665c81dfa290da48021f048dfbe4885fc66bc5416f7c7",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -7405,7 +7405,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-03",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-25",
       "cpp_output_hashes": {
         "frames.bin": "23ebd50514054b2153c606b4c025c78e6d038d718a5c697efe127dba2f78350c",
         "summary.csv": "2a221af5fb7133ee9024fac2be46a18702b87200b732f61266926fa6ab770086"
@@ -7427,7 +7427,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "9c7019992c3d1a6e19684e801ccf9797f005af513d803fc973ea8bc1ba897bba",
+      "recording_sha256": "11521d18c404f3fa1d504fea222c612a5f376e29acef4e2fba6c01d701bb57d8",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -7530,7 +7530,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-06",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-28",
       "cpp_output_hashes": {
         "frames.bin": "a51994d02a09a7646b0e9d8d8404b0bd29e90f84cb8ca67c1352b46f8d19446e",
         "summary.csv": "1d5ce0d3e11174dac04686f66295f864d7de384dd1260b044813e11e1f1544e4"
@@ -7552,7 +7552,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "dce102408c869d014e80f5c81dca078bc4bf310e5221deda31afd64e638290ac",
+      "recording_sha256": "8a8b8c20f7024ca04a399e6b9484e3de68853a4ab71174c74539405aba84b751",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -7658,7 +7658,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-10",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-32",
       "cpp_output_hashes": {
         "frames.bin": "6141d474707493c434a2a2a49d91dfae5af69ce9d45c948f21efa822b8eb82b0",
         "summary.csv": "dd38854e528988670fc93b5163cedc9c9fc1b24e8a8f0c2e96ace08a5e0178f0"
@@ -7680,7 +7680,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "4775929697031b4278d326772af8bfef7107b6df0521a0291d4dbb8cf1575177",
+      "recording_sha256": "2000b5ff4447b94337ed1da63258e9a31b3f88b5eb05d10aa6c93bdc6f5f980e",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -7791,7 +7791,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-13",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-35",
       "cpp_output_hashes": {
         "frames.bin": "92ed55cd772517688474102ad7418eb9110e76c7513a3ac1379e8b7df1027c44",
         "summary.csv": "a36e9358a4d3984fbab508446a565c4887942ea196f33c9c09a9fcd79e3d55e5"
@@ -7813,7 +7813,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "5a27a493a43660296dca3609a50a8d82f390e1909a2fb7ba4479fff5cd08a9a6",
+      "recording_sha256": "521e0fc12f9c7e822c21c4126b1de90a38cd01e5f84b4af585d4ef5845a48b43",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -7916,7 +7916,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-17",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-39",
       "cpp_output_hashes": {
         "frames.bin": "2586d6e0730dc78bf5a4ceedb5d0bf79b0af65fc3adbed990ac5f0e6b75ea52e",
         "summary.csv": "31c5942757173592a018fa21123c83991ca24bb3ceda78573c4a42d8e951fb33"
@@ -7938,7 +7938,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "8767105ae29abc5a5a215ce59a1a6cf30e9e25d38517f07c164eaea0a88fcfb6",
+      "recording_sha256": "18ec4fa646fe98f40c244c3ff29f883fb8465dc96705fbbd0a04492ca1166005",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -8041,7 +8041,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-20",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-42",
       "cpp_output_hashes": {
         "frames.bin": "313bce384916ac471b48f9be51165d32b08fee6ab241cbc48e1d107e18290591",
         "summary.csv": "52c3836c48f22d7daaea70827db1d10b6ce17edd25d33b40e7f1aaf6fcfbf90d"
@@ -8063,7 +8063,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "f56bd35b609fdc42c318bc3341e5462c8e4937929cdbf74438be2ee000b204a1",
+      "recording_sha256": "e2441ac6062fe56ea77bf322620781bb948ab2e44463530f0509f60ed3910835",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -8176,7 +8176,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-23",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-45",
       "cpp_output_hashes": {
         "frames.bin": "edd32e4931f6dc85756cf8a4fb202d62ad814d4d609f4be48c5c7ae24513e5e0",
         "summary.csv": "557a04c94db14416fae39ffddbb5dd51152833363779da295659dd79a2eaf365"
@@ -8198,7 +8198,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "7f53b0662027c499007a59ad98f7b265ae0f16561ce1f2ffa90c9610b2163b88",
+      "recording_sha256": "62d3b6d70ea5057b96083559e6f6006412318ef3f56ce1be0d7a892866345b53",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -8301,7 +8301,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-26",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-48",
       "cpp_output_hashes": {
         "frames.bin": "417f0d8062573ad64728aa15d5351eb9c443ed1c1e8da59b208a8194249005fb",
         "summary.csv": "ae4e657dc7744ed728624f85d960fd9afafef836a49a154b2c783aae867ba7fe"
@@ -8323,7 +8323,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "1db0a55dce30dd4eaed23175866f5739b88df00541799db550ca60ca36495b20",
+      "recording_sha256": "aa7fdf6b9a48381ddcc1bd6dc64c81b1eed45108d57c751f4f7e05f0a385ba98",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -8429,7 +8429,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-29",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-51",
       "cpp_output_hashes": {
         "frames.bin": "71e269834e5dd364fd4e37db490b898df048cdadeb691a0c55a2e53476510864",
         "summary.csv": "13d0123607c186f34122cd3016f3bc1898ae2ce21ac162227d9f84eb9a8c10db"
@@ -8451,7 +8451,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "09b1a5fa1789de58067e522982b9e8cf133131b3a3302cdce94661d12734d650",
+      "recording_sha256": "e3279e4a22e2243488e2df78ddcfddfaae48fcdaa9d16ddd667dde33dd2c31b2",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -8559,7 +8559,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-33",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-55",
       "cpp_output_hashes": {
         "frames.bin": "3dbbe88f17e024771fe770b0628a6d7aa30507c23ba10a704efa22ac7bade2f1",
         "summary.csv": "9904220bd06c6e59c91532bfe684e8837411e806e926c7b5fb044842b0f729f9"
@@ -8581,7 +8581,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "78a1477ee7909afbb72d989b1a83b89d1072c5cc973bd465a25a069ab906528d",
+      "recording_sha256": "2a0513f882db3ab96cc7e614cf9e819401f6ccd1064a7fbc6f8320a90091ff2e",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -8684,7 +8684,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-36",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-57-58",
       "cpp_output_hashes": {
         "frames.bin": "51d5662beec99423602109d2f32308e38f37dfb18e99f3f635501504c0e5f6ad",
         "summary.csv": "4d351ff980582eb33ab7d0eee24ec5b8660713dacaf72f49887eb7f2cc6aed27"
@@ -8706,7 +8706,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "3b853202490d4e9842dc1ad0de38939daf5e1b9138e60fdcc482acdc3785f636",
+      "recording_sha256": "2819183022b8a939f94c4b2a44d56ce6f878ba6b3ac04e008d9f46c3a2f4e436",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -8815,7 +8815,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-40",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-02",
       "cpp_output_hashes": {
         "frames.bin": "00d48630bf4aacb087b795dff3d1ae2719d5aae5fc7ffb1276d196e66be97e5b",
         "summary.csv": "5ff6ab80d3019ff885935351962884332c48422c24358b9636b51af2b749c4b8"
@@ -8837,7 +8837,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "cc92267c960a84a34f699a213e6f893865fccfa98ab0eeda877d1fbb39e2a053",
+      "recording_sha256": "8f9471cf6dd8004a5581d7b8b52db775b2c605ac679ba8188ffa358a3be80271",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -8940,7 +8940,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-45",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-06",
       "cpp_output_hashes": {
         "frames.bin": "d5aab6458dfa7709f869676d72b21b4b6527c8e89052f350be013bd0922069d6",
         "summary.csv": "3eefcc92a5134ae2e829f45cd893a5718c43b23642f9b00a86c3f28dd15104ad"
@@ -8962,7 +8962,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "e146ab77b9423fbebd920c78aa2d6093455d68978bca096de9a875e635431406",
+      "recording_sha256": "c0c68cfb6b09ca0f0c172f4e221949c3f6bbbda4fc12808e8baa375766112577",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -9065,7 +9065,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-48",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-09",
       "cpp_output_hashes": {
         "frames.bin": "3cc0f14a11a0afff869f0c9e42a6021181f46e418b0fe23cd771a48d46a2c2d3",
         "summary.csv": "6962569291d9c61ba961e6f3bd381d4cc429d5a8b1ed6bfad8a631ced6c38182"
@@ -9087,7 +9087,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "03a963c942dd67a8662e072867c8945846783064c5784d3d41e51854f7d5be92",
+      "recording_sha256": "e6db4e5f7d0d27559fbee89a93c6b14a2ce570e7c05b2afe681a53217d5784ce",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -9190,7 +9190,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-51",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-13",
       "cpp_output_hashes": {
         "frames.bin": "dd30b10bbd0b1b1b4aa6630e5fd582de362594dc286167615b20b1d936f12964",
         "summary.csv": "8f19125173ded87b7f309abbd1c0b7e490c0815004731a8d20afac69d9d23b00"
@@ -9212,7 +9212,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "3079c558bfa3b145165c6377c84ecc8da9e998d1d07ae206a731b98d4d4c50d3",
+      "recording_sha256": "779943fe2ede5aad0ce0337173a5086b532b296277222ff03c22d6d6284a9178",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -9315,7 +9315,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-54",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-15",
       "cpp_output_hashes": {
         "frames.bin": "441159846ea8071020d8990fcc7095f0f69dac26e05710f8e5691e927de84336",
         "summary.csv": "594d79ec5a1340b163207db47a1ce5d2cdbf3b6e806a2ffc735cebe4b421c0f9"
@@ -9337,7 +9337,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "a9561698b051153c9a4af66d48f329f6ecb81d8e37a8ebc1c433f79e93f1123a",
+      "recording_sha256": "f013b9ded1e3d933df6100db5740701958a16415febf928ac59c933f14c1e5ad",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -9444,7 +9444,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-15-57",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-18",
       "cpp_output_hashes": {
         "frames.bin": "8b7f9eebd5584bf919d4abeec22ee8199c6584418c2829582db365275be98803",
         "summary.csv": "dbabee01480862c334e9ff227633707f92cd6bc12cc028ed641e26f739adb866"
@@ -9466,7 +9466,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "39131afb3ee20b663335aba39c475d97a818978014317686294d0d86aabb8ccd",
+      "recording_sha256": "d2a91674e178a3378ed7bae2f41bb9471dcd954b3f8f6095c5d4afaf126336f2",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -9569,7 +9569,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-00",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-22",
       "cpp_output_hashes": {
         "frames.bin": "0224ef5f8dd748ca0af31bce108d745b03b5202d86dafcb9ef074e3d405b1266",
         "summary.csv": "78db26b4e94a9a2903212559aae2080f5ed1cfd29d979494d8b2fc9d8d948a07"
@@ -9591,7 +9591,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "7bea7a767817551f9596873a8cdbcdb4dadfdbd4c1a17d4a27d20c0e14cf2fa4",
+      "recording_sha256": "b6ab3c4ee5db0df6cd5ee8a7a59ad5f2ed7d85ed93b2d124f208c66a127cec55",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -9699,7 +9699,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-04",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-25",
       "cpp_output_hashes": {
         "frames.bin": "c6c8223bc6f5210d86b511a4c316d3ec91c035079d3fe4af583230a0981281ad",
         "summary.csv": "981802b8d261ec50aae2f09281dda1b0732a862a8e434faf17e0cad8fd822151"
@@ -9721,7 +9721,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "58a65bf3c49f274fac3d23d8dcaee1483bd225442f5a42933007ab70587e91c8",
+      "recording_sha256": "ac9329afe75cef00ec600d42ed56545a3771152eb34766f7e50a890f7665b63e",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -9834,7 +9834,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-07",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-29",
       "cpp_output_hashes": {
         "frames.bin": "8f1eed51ad614aaec2d6a75d5ce2cbe4a02ac3f84fc4f9910eb5a8b7a52fa1e9",
         "summary.csv": "593c41248bd94ee84212625cc108ef105de5883890571dd3b0fc7708fc39d28c"
@@ -9856,7 +9856,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "43641599ff7654570307197551a12d8b9edadaf84f01c46a193af11675439bad",
+      "recording_sha256": "8d7489c2240831ed2cc7214389d28204a22d9aa6a4bbf49d83d24a0230225923",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -9959,7 +9959,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-11",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-32",
       "cpp_output_hashes": {
         "frames.bin": "4f40e141bfb1340f4320b5304ce989185b4c813c26745fc2e0f3ad99b7ca5b02",
         "summary.csv": "aef6d6197181a9d6d97d218f4ebfcf67bb3dd030a3c69dde92822bbe51ec2aa5"
@@ -9981,7 +9981,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "4bd3bbbf6d5156d257ff1f1a821e99ff787ea45a1761d5b2cab4c991434c735f",
+      "recording_sha256": "b171c48dd005407bf4fc69e37560b911fc0c181fd69ac754a20b4c2b21e3a40e",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -10084,7 +10084,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-14",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-35",
       "cpp_output_hashes": {
         "frames.bin": "a00e3d0d6ce43cc5fca6661648276e5bdfea28254d2dacfb8636b55a38740ac6",
         "summary.csv": "9a37a1d2bd1b8d97f5b336e6bae5cf907ca07e41f01f9be4640219f11b25e2fb"
@@ -10106,7 +10106,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "77c531b8051f705f042566f376da127ef1e630809a6b84477f1e99d085faf1f0",
+      "recording_sha256": "695793eff2a774e30f13be5661e15d593ee25dda5217a52ba4d16bf327d37c18",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -10209,7 +10209,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-17",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-38",
       "cpp_output_hashes": {
         "frames.bin": "c1d50bb872cc46133f2c293e155eeb2aece4cd4f80f16a4d5a22da23002415a9",
         "summary.csv": "0e964a1e71ab9d29254b48b7110b53e5b9bee004b677acf18699393e53b09c67"
@@ -10231,7 +10231,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "a463fe5574353701b956c51d047499eb30d5718444a162073ad518cc6ff9de79",
+      "recording_sha256": "e3ad4f3d15b5c0b3bf2ed31973e75c30cf4f1c9cc0c4d821be446a9e28ded14e",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -10334,7 +10334,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-20",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-41",
       "cpp_output_hashes": {
         "frames.bin": "dfdd5640d1c91ba60d6cb3eccf0439c1110346a8a64ab269cf5514e22b79136d",
         "summary.csv": "a18cd22d907984f9a47438b12d2a3a1663dc9fd73a4398a81245ae5470677fb5"
@@ -10356,7 +10356,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "be921c100f2d15b175bb4d3fcd165ea8d973770608c8114f08abdeada7348a4b",
+      "recording_sha256": "b015e4fb9ce45d269afd317fe44175d3c98b164e40c36c6c7a5b29b2453f0867",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -10462,7 +10462,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-24",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-45",
       "cpp_output_hashes": {
         "frames.bin": "f6d3bc6c71ad71f823d00a4a98a1a33a8409b2940fccdc52779833b988ccbe09",
         "summary.csv": "0d5fdb81b43000d59b714c34d0707e60bbdffdb19c7e7115c6ddaa18befb9fb0"
@@ -10484,7 +10484,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "9c705fef97c030dc99cce3fa576d7f08f2088b1b6eea9983181c0d4ec5a59ef4",
+      "recording_sha256": "0e401a3a9863f30839627d79d46f5629fc7b6a2fa1469fa1a5237a600813c051",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -10593,7 +10593,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-27",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-48",
       "cpp_output_hashes": {
         "frames.bin": "5628b53addcb2edce7415d509c82ee1ff3a88ecca82877d85c4927932ca150b4",
         "summary.csv": "27e16708c6f0d4aa6b41882e54463c2adff11ac76b4061e52eb38ff111d66c48"
@@ -10615,7 +10615,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "7b0494bfec528da76b5cea4f38eb871fd449e686bb46bf08873dd7e2703df253",
+      "recording_sha256": "539ccc4f0be5f9853f0cd5da0f29bdb673b16370ddc0c583565747135524ad3a",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -10724,7 +10724,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-30",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-51",
       "cpp_output_hashes": {
         "frames.bin": "6fbee6cfb1c57509e4937c04ce964488b18bcf2876d7c6f3d9adee367be59d11",
         "summary.csv": "832f9228de7fc07a0040eaee6523ff459b9890e7aef6f056b7899e0e8869cfff"
@@ -10746,7 +10746,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "aaaea3d215c8f076ccf79dbf5536ba9ba6b0f85cf09e68c005d53611d943a668",
+      "recording_sha256": "90c90c75db035695ca4248d9711042cf45640def325c0673565e66199cc38f8a",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -10852,7 +10852,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-34",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-55",
       "cpp_output_hashes": {
         "frames.bin": "d5494ae962c35df2d1ae7031e9698df86ebc564ba7f473444fff01aceb3ba9da",
         "summary.csv": "e488ffae42bf9f388b7612d18069e5100aa76acc0a53be9d855e9bc8c29cb77d"
@@ -10874,7 +10874,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "f6b41a9670d358b003a55659b506e06b61ebafadd0e34c596bb1fbe9b3f61ad1",
+      "recording_sha256": "de35fac2473ab41dd05a72386b1f04bba5cdd03dbb4888ec1b9106ddd6661091",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -10977,7 +10977,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-37",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-58-59",
       "cpp_output_hashes": {
         "frames.bin": "324e94df73f2d062f0fb85a611ae0efeb93c75fdb4cb4ce98ffbcbae92b0f43f",
         "summary.csv": "09e0cebbc33793cc68236275c7282c6d32471c71d9f04b05f87da6b9aad8f701"
@@ -10999,7 +10999,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "92637ab731bf4a409bb251be82a7526d520599aa687595810087935df82082af",
+      "recording_sha256": "726e04dbabe9f373972e8e5b7b56c44bc75857d26c5cf9d08a5eceb5522a8de0",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -11105,7 +11105,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-41",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-02",
       "cpp_output_hashes": {
         "frames.bin": "05a921326168f8786f85df11e523cf7cf915f91b5340a695fd707fe91d3a5da0",
         "summary.csv": "ddaafe0f762e048c39dc45280613218cf1c2d12417be0a1fe8b827e92f72e099"
@@ -11127,7 +11127,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "0d204587a3e1761d8ab37a44eb096d801d174a8593ccd390a77d71b0e2ae1e1b",
+      "recording_sha256": "b59705c35b30bce0bbf5d966ca7721ec9367e8f27716e4e8b140a97696a2d9a6",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -11230,7 +11230,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-44",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-05",
       "cpp_output_hashes": {
         "frames.bin": "bd35e30a1526c2bc0b4e33d01cf5f03a60b6e59c46ce02502e5080417b2626ce",
         "summary.csv": "7f4e2db36a546b8b9dd7cc6d41fbead658721560f19099d0d6f4ecf995d0bcba"
@@ -11252,7 +11252,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "558eb0871fd2a04a4179fed3d6bd3d969d8c4daa4cea8318befdae629fe46170",
+      "recording_sha256": "15e94ac9a8af8678b720730fa7e25195c890031e05b489998ce87ab77aceccd9",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -11358,7 +11358,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-49",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-10",
       "cpp_output_hashes": {
         "frames.bin": "8e15982828c8e2170b9f0f8c8de3dea4fe27db4a80013df8e6c49932e522d18f",
         "summary.csv": "6e76958d5aaabc0723613b797f71f79dafabd4239a160f85fd87698fa0280885"
@@ -11380,7 +11380,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "e0096c3846220d3b4030706a5a56b70ecbc8ba17b8867f8d186ae288a45bd925",
+      "recording_sha256": "febd33022beb5d8ddc32bda31d4b8d4574bce24d9fbfaec28a37e463c6a9a92a",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -11486,7 +11486,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-52",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-13",
       "cpp_output_hashes": {
         "frames.bin": "ba1f8394907272de76319921302db6e2c835089a3d539e1cff8891c96d158bee",
         "summary.csv": "65280f0df97725c961d887017c6ef72060316868e3dc5813674dd6c73547c347"
@@ -11508,7 +11508,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "05b52d93cb257d78c245200775de07f9b2e76caffee86d73163a1e4a2b3cb646",
+      "recording_sha256": "6a83744b16662cf91332aabbde55e655a0c5b4f69df0c95465cc535b9805415b",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -11611,7 +11611,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-54",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-15",
       "cpp_output_hashes": {
         "frames.bin": "663fdcc723622692b6bc6d133b7f18db1239e0263a8cacd2f328195c426e6e53",
         "summary.csv": "5c86cb67675087cf9bf6c8c2d40244a5e0bd7a7cb039e870c328a4e5e322053e"
@@ -11633,7 +11633,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "6a858d3ad0c18ca78a83fa25e6e3a611675b496875393afc337de89b4bd1ff9e",
+      "recording_sha256": "6b213db16cc348a4d34ebc10acedf79f8772451b4280d06b446b0d982aed4851",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -11736,7 +11736,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-16-58",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-18",
       "cpp_output_hashes": {
         "frames.bin": "740af5ba4f6bbd27b7fbfd190b76147447a3b8f66ffd821f9a77e50dec52b55a",
         "summary.csv": "48063abe5c63437f551005ce450319ebb4c27ced6f5e8bae3ce0fda64b9cc66a"
@@ -11758,7 +11758,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "db9add56ab581962b32e5c7faf7d6fc723c41e3730635974ec70ce26f39b2b63",
+      "recording_sha256": "66e1c764119fcbcadb0ec55c03e86400214716b28be043e03bcb58dfd2bf80c1",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -11864,7 +11864,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-17-02",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-22",
       "cpp_output_hashes": {
         "frames.bin": "0e05ede19cf1b98e00037c0324a13ff43db0b01880554f213a7103b02263f17f",
         "summary.csv": "5a2e250fef8bb38971c3c82fd426403a547d41456cfbfea0dad80f3580454f7a"
@@ -11886,7 +11886,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "844592b56a24badcce5f6a0d26ff1757a61d80b208e761c0100674a310b9d02a",
+      "recording_sha256": "4f4aea079f810a69d4cb3e6187301f64b53106051719963f77b1ce79b95a05d1",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -11989,7 +11989,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-17-05",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-26",
       "cpp_output_hashes": {
         "frames.bin": "1a5947564f27b236ecb956db0de46a5b871bbfc725e79ae3df594f34985552d2",
         "summary.csv": "c3a686e69dd6da8713442d7922883086ec89fb16cb0f90273d0bad81661d3037"
@@ -12011,7 +12011,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "678896bca36f080d641126622de178ccc745f78b02054c2cec300b2c35606ed2",
+      "recording_sha256": "35a3ce5671c54e13feba130a9a131eeed18b6fd48c2e5874e6c342c0b514ef8d",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -12119,7 +12119,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-17-08",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-28",
       "cpp_output_hashes": {
         "frames.bin": "b7ce67653375e8cf184f5bc7ba8cb30b7fad02a305d4d677dcd63c0a3182633d",
         "summary.csv": "b3a68bb263a7254b0a8d1498f7a1ebd1875e83d517cdfb217548122ba47637b8"
@@ -12141,7 +12141,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "02e8d6e171953a2ff14a725fca53221063a02d09c798dea77c1df398b588d9cf",
+      "recording_sha256": "8dbc3a4ce41e4473de9e9977c46a03ce90bb19dab8dbcdad1b505a063b697a20",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -12244,7 +12244,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-17-11",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-31",
       "cpp_output_hashes": {
         "frames.bin": "a8815d9142f1eb2466b69b15890e3171d28ff3123f43c71b9868664b3e6dc83f",
         "summary.csv": "92ea482a1f7028eb6846bd74fadefaac7a2c1f59865661911829c8a890863f01"
@@ -12266,7 +12266,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "bbe99ff3797d044b67de880da59328dcc8bfde77d7e22c81d72fd1f025ed7a0a",
+      "recording_sha256": "cc8b1bee5616209e9954c9d724472170058288143bd52120a31bd330936e868f",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -12372,7 +12372,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-17-14",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-34",
       "cpp_output_hashes": {
         "frames.bin": "2f1dbcfc85b53f2c1cf571a0f7aa9fefa36978919e8db74cb78b1ab6efd01553",
         "summary.csv": "2cc865cf6d3747fc9e8ce48595b9f3c3843e248203ab463cd93510fba8b5852b"
@@ -12394,7 +12394,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "fecfc1781c1ec88b1fadf40025466a90f44a492531ced6a5a96ecdeea074e8ed",
+      "recording_sha256": "b6f259b6c9703079f69180513edf607ec55bc3101a0741ed0a84d80012f9abd7",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -12497,7 +12497,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-17-17",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-37",
       "cpp_output_hashes": {
         "frames.bin": "e8dac06d56d1203ef62b46e665eba57ea6fc1f6d97baf9cdab358544b6a57c85",
         "summary.csv": "488ca3f36b0d85409e02108c4250f28652e14219ce25131486d5a88848ee5312"
@@ -12519,7 +12519,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "bbb059ce173806cd8575f9f6d7174f70a84f96ef412ac3336577483057af1cad",
+      "recording_sha256": "2562a2caa3384add6b64c40dcf9a16ee244a81835c352420b5483db06b86587a",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -12625,7 +12625,7 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_13-17-21",
+      "cpp_log_directory": "cpp/logs/2026-09-28_23-59-41",
       "cpp_output_hashes": {
         "frames.bin": "c0ca5ccfc54411ecf65d0ae3a11d62cbea120af8975b28f38c96c2caccf4ca32",
         "summary.csv": "a2e069ec9ccda50763536f4741241be013fbfefe2e794184e88a36f19f7262fd"
@@ -12647,7 +12647,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "72575b891e5fd3cbb475ed9380bfdd8a2724f53ab2ff932db2b56379ebb5d09a",
+      "recording_sha256": "121120de050d1df8ac02ef9a3391a83e8c55c9478bcd9b25d8441c89083c7e28",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -12775,7 +12775,7 @@
   },
   "rust": {
     "binary": "<workspace>/scrimmage-rs/target/debug/scrimmage",
-    "binary_sha256": "e819ea6ebb81f429726c97308872caaec867a3eb21696b70c0cdeb6cd2146d99",
+    "binary_sha256": "5762599231a6acddc906f8d09e94a674df4ebde6a935b0eff92a363677c2a26b",
     "compiler": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)\nbinary: rustc\ncommit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea\ncommit-date: 2026-08-18\nhost: aarch64-apple-darwin\nrelease: 1.98.0\nLLVM version: 22.1.8",
     "host": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
     "source_hashes": {
@@ -12803,14 +12803,14 @@
       "crates/core/src/common/pid.rs": "1bc39d10027138b0dfa37d4da96b0a54068645dc6922715d5279d8f125a20a91",
       "crates/core/src/common/plugin_random.rs": "30c27d7b364c89e7c681d8b4393e05f21e3faef43e4ea385a580fc099751c172",
       "crates/core/src/common/random.rs": "ac148402b133eb35ab6496c115151a9bd44655de6d7779baca12bb5475d00dd6",
-      "crates/core/src/common/spatial.rs": "c1376cef5759b6b508b9a7d6e19643ee36eaeab18fde6fe52eefe51abcc9ed7a",
+      "crates/core/src/common/spatial.rs": "91dc3df4abe37462271482adb4da7b83b23cda95c895258fdebcadde9594ddbd",
       "crates/core/src/common/variable_io.rs": "1a19be52e09a6909863f1655468b10500679a47111166521d80c422eb1b1b1aa",
       "crates/core/src/common/waypoints.rs": "0893b2a26b26d3186f7600cf86b9dc16eb12ff47ec73285ff4423c779e18408b",
       "crates/core/src/common.rs": "133cabb11c2314433892f08d35a918bb6d5ab192a7e42f93a71add2fd8addb6b",
       "crates/core/src/controller.rs": "0070e93e5883f515aea749f8a54f23b12a93124c3923a92bddbd8814dd35c11a",
       "crates/core/src/entity/plugin_stack.rs": "94487cd8ee785057c61f28dd3183966699f7778eb22ebc27a15075792f38cabf",
       "crates/core/src/entity.rs": "27e9f390ef7539612c146fd5dc654ff8f419a7098cb85d85f74f3ade876671b1",
-      "crates/core/src/entity_interaction.rs": "f4e966a4385c3133b08e721a8a12c6c872121c9d638f62de9d27daaebc69be5c",
+      "crates/core/src/entity_interaction.rs": "9dda8a479c75b3a2b85fa83f1b6b2633c6e6da538d9bb9f1989d9a48ae59b590",
       "crates/core/src/estimator.rs": "fc8f4ba969629cc7e1d93b090bd4231b8470bfe26c77754ce7a83796f687677a",
       "crates/core/src/lib.rs": "c9e4a51ea610b0f48dd9b5fd7f0dea16a3bb3ed9ebec036bfff4d76f01d4fd82",
       "crates/core/src/math/angles.rs": "9628498ed1c135b0b28f6d241bd2d0656e430b57cfb7bcaef27203dae3d396a1",
@@ -12829,7 +12829,7 @@
       "crates/core/src/parse.rs": "91740d01bbeed15e5f3c4a4df93e823b6ca231dbdaa0c18be65c3f3fdfa72a31",
       "crates/core/src/plugin/autonomy/auction_assign/auction_assign.rs": "8ef45bc2790536e19ffc073a11103775721f04e5bc0b10ba0b89635ca3f15484",
       "crates/core/src/plugin/autonomy/constant_velocity/constant_velocity.rs": "7b20e27b24fa6f6463e6e98d3e06bf62836581e4d74cb369e56ce754f8b8bd96",
-      "crates/core/src/plugin/autonomy/straight/straight.rs": "b63a3398c97de28da9bcd845e85afdb12f83be7c28db1d2a7e8e3a4fd41f1c10",
+      "crates/core/src/plugin/autonomy/straight/straight.rs": "92251479c15d464b15756214d39cf48746c1f360c02d4b2f59272c54eb5f98b8",
       "crates/core/src/plugin/autonomy/waypoint_follower/waypoint_follower.rs": "39dec41a88c3a2e9cd1946ecc6ea1997a1de741b52877a99ed087a357b6d6e4f",
       "crates/core/src/plugin/autonomy.rs": "46425730b534ddad99acf74ca266779ee397c0f6ec87019a48f3e6928d1d2f57",
       "crates/core/src/plugin/controller/aircraft_pid/aircraft_pid.rs": "2573e839e8da2aa453c865ffe85264c803117270c8eff9842f6a15734dd094d3",
@@ -12855,12 +12855,12 @@
       "crates/core/src/plugin/motion/single_integrator/single_integrator.rs": "b8496f00c56d47ac801111d8958d3f5d723fe57783fb63b3a194661b7e1eedc7",
       "crates/core/src/plugin/motion.rs": "90e64ac64dc8fc7bda9a6ac76a979a30c25a6be7892cc36c3c61264196e0d0a9",
       "crates/core/src/plugin/network/global_network/global_network.rs": "fcc0abf4b154cde0d22fca90d3ead50cb0efe626fe162da4f916af79cf5e5ecc",
-      "crates/core/src/plugin/network/local_network/local_network.rs": "877c181f540de69c0074c4bd13c9860b70ed8e230bde9771ec542816a65c0883",
-      "crates/core/src/plugin/network/sphere_network/sphere_network.rs": "b5e8d8d81bf000eb56550f7eb45399f7896fd2b7885f5839a342e9f2b667cce4",
+      "crates/core/src/plugin/network/local_network/local_network.rs": "a0ab7bf893f7ae4e3239d2869b919cdacd969fc8b1714294735d72027e51d19f",
+      "crates/core/src/plugin/network/sphere_network/sphere_network.rs": "0b63d444c2ecbdc59dac4e0ecf33091a862aa8bc8278d4a4e992cc53b4228a9d",
       "crates/core/src/plugin/network.rs": "e8e87a29b0ebe92f97327a011477fdcd9c848baa539fb7714f4b7d5f27a7e883",
-      "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs": "3496f6f3182469eddb83b6b7f7e8025a9db7e6794c91b8310dd21201ba3cf5ff",
+      "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs": "3ba1a190496d07a2505073e71669a00f9c95f067cf8d09b3c57360b7d277eb1e",
       "crates/core/src/plugin/sensor/noisy_position/noisy_position.rs": "f1915b8c93ccf0e15e2c42b899a778ae678ccc76def7959a5e7677307a8b1112",
-      "crates/core/src/plugin/sensor/noisy_state/noisy_state.rs": "a443ca264bfa14c0b496ecf18530309c36f88d3c735965e504f7e1aa191bc3a0",
+      "crates/core/src/plugin/sensor/noisy_state/noisy_state.rs": "16101302f7de0412d5dc9fdb5f47f9e083d5aff4820f01b054e3058221cef4d6",
       "crates/core/src/plugin/sensor.rs": "df3624a8207d3f276ad0ebc65dd9581fc34c52aa65ceda2eeb9f5211a893577e",
       "crates/core/src/plugin.rs": "d908e542e95518d8a38430e290b8d02353b46fe1fd0b1fef2c64aebb5cf9e107",
       "crates/core/src/plugin_manager/builtins.rs": "d50238c45c8cb2c61ff7db80f5bdef2b3bfc8cc470c1f06502ce0d9fa5c3053e",
@@ -12871,7 +12871,7 @@
       "crates/core/src/protocol/frame.rs": "f5d22dd737bd0422d144d194eff896b26878a07def488965c1f25b8908e40c2c",
       "crates/core/src/protocol/wire.rs": "2fa24ec1a3496d19cb7add20c03a9dcd5f96afbf6c31c454810e63cca913521b",
       "crates/core/src/protocol.rs": "f9f5a77b5d602a590974ac7f3b3e82072a71f6ab4efb55e46b36f2eaa5d07ae1",
-      "crates/core/src/pubsub/messages.rs": "bed24de12c94bb26764de8f1eebf7f36050b4db246f11c374583f464fde4bf2d",
+      "crates/core/src/pubsub/messages.rs": "f88d5facf6cb3926003fa3243982ad82f601ce49a3339fff6c57080be34dc550",
       "crates/core/src/pubsub/network.rs": "bff93acc61471e93e13211376c2f692a9045c13f1385c815b5f2ca05f093903c",
       "crates/core/src/pubsub.rs": "dd30c5af83b6016b2b3b61a4a61fda73430e2faced019f92693b4330032844bd",
       "crates/core/src/scenario.rs": "cebbf2ce5f9b4114579a3d103f5ba3baed3b9099a14574e1d8be5a5f2ba5dd97",
@@ -12881,8 +12881,8 @@
       "crates/core/src/simcontrol/scheduler.rs": "c061b5973379e33e78bf07df4d5461e7547d872e7b29e4e8d0bf8f49090f3b8a",
       "crates/core/src/simcontrol/summary.rs": "ebc1ea53e57f750fc358a45ee675a45ddf1282e835fb47b5fadf99e009623d7d",
       "crates/core/src/simcontrol/trace.rs": "e3800f787b2a69074a31b3c3ae2d31bb1c16f213ef245c7755d287cc8dc3151e",
-      "crates/core/src/simcontrol/world_plugins.rs": "bbc8a351f9f8e1bc4714fd6629f575642e9e1599606932fb5be2b267f9fd7013",
-      "crates/core/src/simcontrol.rs": "31ae557b4e483d8016b0cfaf3fef3d4eea35af4f67862a9afc26813f13a92f04",
+      "crates/core/src/simcontrol/world_plugins.rs": "dc64e2018a04546f23eef2ef5ebbab2c1ca0c883dd2efd28fc60a49d54b47e35",
+      "crates/core/src/simcontrol.rs": "fd5d7b50248cd64f08b8b83b99786f0d72a895b0aea8cb61685b0404968aee40",
       "crates/core/tests/estimation.rs": "b428ed7b513c150d32267203e0524c9d69d4ee4edf7add9b8c0f2b9efb2893f1",
       "crates/core/tests/fixtures/perception_communication.xml": "f14345a2e3b739d37e13cbd0e2036bf8524a4e999b8c79850b4bed3f4aa1a477",
       "crates/core/tests/fixtures/plugin_contracts.xml": "ace7b8bed57e8db064e957fdedc567e388acc3c289510b1f3a3cd86ca0e7b939",
@@ -12894,7 +12894,7 @@
       "crates/core/tests/plugin_contracts.rs": "1b5e08f3bb01123f8661d11f046dd0b1c1c21f9288a7a48dd5700e51af20b122",
       "crates/core/tests/rust_scenario.rs": "937c642e8d7e8eb4ca50698b83f64226710856e6b773e2b3bb4a57c9c0e3a642",
       "crates/core/tests/simulation_regression.rs": "11445d00eab473d7aa82e0e343258e350f58cabd386dfc9e6112505dae1c5b22",
-      "crates/core/tests/spatial_lookup.rs": "768b48b1fae6e8312111505c434f1dace2cf932cad1a7a5ef8299edaeb2a085e",
+      "crates/core/tests/spatial_lookup.rs": "29585fe86ec8e7e1a8cd2cbea2224387d09e8566b6ab7da1eb792755eb05890b",
       "crates/core/tests/support/autonomy.rs": "6119268d94085b5aaa7db5dcceb198a3e982e03a9871098a3c6f9c1fb92ca084",
       "crates/core/tests/support/controller.rs": "b1094065000aa72c42567e3ea79f8e9dcf56da67f28170157de55b1a02f0acb9",
       "crates/core/tests/support/estimator.rs": "c9d56007e82d33f6a0df938707cbe98e3a2a928a89739965167d450697de0019",

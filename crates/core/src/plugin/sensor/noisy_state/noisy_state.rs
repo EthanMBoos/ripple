@@ -128,10 +128,14 @@ impl Sensor for NoisyState {
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
         let observation = self.measure(context.truth, context.random)?;
         context.publish_reading(observation.state.clone())?;
-        // C++ also publishes the measurement; kept so delivered messages match it.
-        // TODO(estimation): remove this publish and declare the message-count
-        // difference in REFERENCE_NOTES.md. The C++ trace check doesn't need it:
-        // the trace should record this sensor's reading instead (see trace.rs).
+        // Duplicate on purpose: belief comes from the reading above, and nothing
+        // uses this message (Straight subscribes and discards it). C++ sends only
+        // this message, and the C++ comparison requires delivered messages to
+        // match, so keeping it keeps that check strict while the port is still
+        // being trusted. TODO(estimation): once it is, delete this publish (and
+        // Straight's subscription), make the trace record the reading instead
+        // (see trace.rs), and note the message-count difference in
+        // REFERENCE_NOTES.md.
         context
             .messages
             .publish("LocalNetwork", STATE_TOPIC, observation)?;

@@ -57,7 +57,7 @@ actual code rather than a second set of templates to keep synchronized:
 | Localization | Predict own state (optionally from commands), correct with readings, write belief. | PassThrough; estimation contract tests; plugin contract test (a custom localizer). |
 | Tracking | Update known contacts from readings and localization's pose. | PassThrough; estimation contract tests (per-entity trackers). |
 | Interaction | Inspect world entities, apply physical effects, emit events. | Straight collision/removal mission; same-tick interaction/metrics contract. |
-| Network | Decide reachability and delivery for each link through `context.route`. | Built-in delay validation; local/global routing and custom delay/loss tests. |
+| Network | Decide reachability and delivery for each link through `context.route` (or `route_within_entity`). | Built-in delay validation; local/global routing and custom delay/loss tests. |
 | Metrics | Subscribe during initialization, consume events during step, report team totals. | Team aggregation unit test; mission summaries; independent subscriber contract. |
 
 The engine supplies short-lived contexts; do not store them in the plugin.
@@ -552,6 +552,13 @@ stream, then returns `Delivery::Drop` or `Delivery::After { delay_s }`.
 Zero delay delivers during the current network phase; positive delay waits
 until a later phase, even if the publisher goes silent. A network can use its
 own mailbox through `context.messages()`.
+
+A network that can only deliver between plugins of the same entity should call
+`context.route_within_entity` instead: its decision function then sees only
+links to subscribers in the sender's own entity, and none from world plugins.
+That keeps routing linear in the team size; with `route`, a topic every agent
+publishes and every agent subscribes to costs one decision per pair. LocalNetwork
+uses it.
 
 LocalNetwork connects plugins on the same entity; GlobalNetwork connects all
 endpoints. The source's nonnegative `comm_delay` queue semantics and stochastic

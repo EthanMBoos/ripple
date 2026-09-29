@@ -22,7 +22,7 @@ import benchmark  # noqa: E402
 import perf  # noqa: E402
 from reference_check import sha256  # noqa: E402
 
-N = REPO / "runs/native-cpp"
+N = Path(os.environ.get("NATIVE_CPP", REPO / "runs/native-cpp"))  # as in build.sh
 CPP = N / "build/bin/scrimmage.app/Contents/MacOS/scrimmage"
 CPP_ENV = {**os.environ,
            "SCRIMMAGE_PLUGIN_PATH": f"{N}/build/plugin_libs:{N}/source/include/scrimmage/plugins",
@@ -58,7 +58,7 @@ def git(*arguments, cwd=REPO):
 def provenance():
     files = [REPO / "Cargo.toml", REPO / "Cargo.lock", REPO / "reference/benchmark_runner.rs"]
     files += list((REPO / "crates").rglob("*.rs")) + list((REPO / "crates").rglob("Cargo.toml"))
-    return {"cpp_commit": git("rev-parse", "Ubuntu-24.04", cwd=REPO.parent / "scrimmage"),
+    return {"cpp_commit": git("rev-parse", "benchmarking-edits", cwd=REPO.parent / "scrimmage"),
             "rust_head": git("rev-parse", "HEAD"), "rust_worktree": git("status", "--short"),
             "source_hashes": {str(p.relative_to(REPO)): sha256(p) for p in sorted(files) if p.is_file()},
             "rustc": subprocess.check_output(["rustc", "--version"], text=True).strip(),

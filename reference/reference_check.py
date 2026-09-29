@@ -2,11 +2,14 @@
 """Build the C++ Docker reference and compare the current Rust port.
 
 Builds two C++ branches from the sibling checkout: the unmodified baseline
-(Ubuntu-24.04) and the opt-in instrumentation branch (benchmarking-edits).
-Per mission, the baseline, the instrumented build, and the instrumented build with
-tracing must write byte-identical frames and summaries (non-interference). The
-comparison run adds SCRIMMAGE_LIBCXX_SPAWN_RANDOM=1 and is compared with Rust
-frames, summaries, and traces. Requires Python 3.10+, Docker, Cargo, and the
+(Ubuntu-24.04) and the comparison branch (benchmarking-edits), which adds opt-in
+instrumentation and restores interleaved controller/motion substeps.
+Per mission, the instrumented build with tracing must write the same frames and
+summaries as without it, and with motion_multiplier 1 both must match the
+baseline (non-interference). With more substeps the baseline differs by design
+and its equality is only recorded. The comparison run adds
+SCRIMMAGE_LIBCXX_SPAWN_RANDOM=1 and is compared with Rust frames, summaries, and
+traces. Requires Python 3.10+, Docker, Cargo, and the
 sibling SCRIMMAGE checkout. No host C++ toolchain is needed.
 """
 
@@ -303,6 +306,12 @@ def compare_case(cpp_logs, cpp_trace, serial, traced, mission):
             "summary_agreement": agreement, "pre_start_removed": removed}
 
 
+def motion_multiplier(mission):
+    """The mission's substeps per tick (the misspelled attribute is ignored, as in C++)."""
+    run = ET.parse(mission).getroot().find("run")
+    return int(run.get("motion_multiplier", "1")) if run is not None else 1
+
+
 def check_mission(args, mission, directory, images, rust):
     directory.mkdir()
     result = {"mission": str(mission), "passed": False}
@@ -310,16 +319,24 @@ def check_mission(args, mission, directory, images, rust):
         inputs = directory / "input"
         result["input"] = prepare_mission(mission, inputs)
         effective = inputs / "effective.xml"
-        # Non-interference: instrumentation must not change C++ outputs.
+        # Non-interference: instrumentation must not change C++ outputs. The
+        # comparison branch also interleaves substeps, which changes outputs
+        # only when there is more than one (docs/REFERENCE_NOTES.md).
         baseline = run_cpp(args, images["baseline"], directory / "cpp-baseline", effective, {})
         untraced = run_cpp(args, images["instrumented"], directory / "cpp-untraced",
                            effective, UNTRACED_ENV)
         traced = run_cpp(args, images["instrumented"], directory / "cpp-traced",
                          effective, TRACED_ENV)
+        substeps = motion_multiplier(effective)
+        reference = baseline if substeps == 1 else untraced
+        result["motion_multiplier"] = substeps
         result["cpp_non_interference"] = {
-            variant: {name: sha256(logs / name) == sha256(baseline / name)
+            variant: {name: sha256(logs / name) == sha256(reference / name)
                       for name in CPP_OUTPUT_FILES}
             for variant, logs in (("untraced", untraced), ("traced", traced))
+        }
+        result["cpp_baseline_equality"] = {
+            name: sha256(untraced / name) == sha256(baseline / name) for name in CPP_OUTPUT_FILES
         }
         cpp_logs = run_cpp(args, images["instrumented"], directory / "cpp", effective,
                            COMPARISON_ENV)

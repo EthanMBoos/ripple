@@ -194,8 +194,7 @@ for message in context.messages.receive::<BoundaryRegion>("GlobalNetwork", "Boun
 ```text
 generate new entities
 -> all autonomies
--> all controller substeps
--> all motion substeps
+-> for each substep: controllers, then motion
 -> sensors
 -> interactions
 -> networks deliver messages

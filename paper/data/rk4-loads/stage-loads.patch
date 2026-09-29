@@ -1,0 +1,213 @@
+diff --git a/crates/core/src/math.rs b/crates/core/src/math.rs
+index 578eab1..810c56e 100644
+--- a/crates/core/src/math.rs
++++ b/crates/core/src/math.rs
+@@ -28,3 +28,9 @@ pub(crate) fn sub(left: Vec3, right: Vec3) -> Vec3 {
+ 
+ #[cfg(test)]
+ mod tests;
++
++/// MEASUREMENT ONLY: evaluate motion loads at every RK4 stage when set.
++pub fn stage_loads() -> bool {
++    static STAGE_LOADS: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
++    *STAGE_LOADS.get_or_init(|| std::env::var_os("SCRIMMAGE_STAGE_LOADS").is_some())
++}
+diff --git a/crates/core/src/plugin/motion/fixed_wing_6dof/fixed_wing_6dof.rs b/crates/core/src/plugin/motion/fixed_wing_6dof/fixed_wing_6dof.rs
+index 2a3b712..ba85bdf 100644
+--- a/crates/core/src/plugin/motion/fixed_wing_6dof/fixed_wing_6dof.rs
++++ b/crates/core/src/plugin/motion/fixed_wing_6dof/fixed_wing_6dof.rs
+@@ -385,7 +385,6 @@ impl FixedWing6Dof {
+         let catapult_force_n = self.advance_launcher(time_s);
+         let config = &self.config;
+         let state = AircraftState::from_truth(truth);
+-        let rotation = UnitQuaternion::new_unchecked(state.attitude_model);
+         let control = Control {
+             throttle: control.throttle.clamp(-1.0, 1.0),
+             elevator_rad: control
+@@ -399,57 +398,66 @@ impl FixedWing6Dof {
+                 .clamp(config.rudder_limits_rad[0], config.rudder_limits_rad[1]),
+         };
+         let thrust_n = config.thrust_n(control.throttle);
+-        let wind_model_mps = rotation.inverse_transform_vector(&flip_yz(config.wind_world_mps));
+-        // Deliberate reference quirk: wind is ADDED to velocity, not subtracted.
+-        let air_velocity_model_mps = state.velocity_model_mps + wind_model_mps;
+-        let airframe = Airframe {
+-            density_kgpm3: config.density_kgpm3,
+-            span_m: config.span_m,
+-            area_m2: config.area_m2,
+-            chord_m: config.chord_m,
+-            efficiency: config.efficiency,
++        let flying = matches!(self.launch, LaunchState::Flying);
++        // MEASUREMENT ONLY: loads as a function of a (possibly stage) state.
++        let accelerations = |state: &AircraftState, stage: bool| -> (Vec3, Vec3) {
++            let rotation = if stage {
++                UnitQuaternion::new_normalize(state.attitude_model)
++            } else {
++                UnitQuaternion::new_unchecked(state.attitude_model)
++            };
++            let wind_model_mps = rotation.inverse_transform_vector(&flip_yz(config.wind_world_mps));
++            let air_velocity_model_mps = state.velocity_model_mps + wind_model_mps;
++            let airframe = Airframe {
++                density_kgpm3: config.density_kgpm3,
++                span_m: config.span_m,
++                area_m2: config.area_m2,
++                chord_m: config.chord_m,
++                efficiency: config.efficiency,
++            };
++            let mut loads = config.aerodynamics.loads(
++                &airframe,
++                air_velocity_model_mps,
++                state.rates_model_radps,
++                control,
++            );
++            let weight_model_n = rotation.inverse_transform_vector(&Vec3::new(
++                0.0,
++                0.0,
++                config.mass_kg * config.gravity_mps2,
++            ));
++            loads.force_model_n =
++                weight_model_n + Vec3::new(thrust_n, 0.0, 0.0) + loads.force_model_n;
++            if config.use_ground_model && state.position_world_m.z < 0.0 {
++                let ground_force_n = (-400.0 * config.mass_kg * state.position_world_m.z
++                    - 40.0 * state.velocity_world_mps.z)
++                    .max(0.0);
++                loads.force_model_n +=
++                    rotation.inverse_transform_vector(&Vec3::new(0.0, 0.0, -ground_force_n));
++            }
++            if !flying {
++                loads.force_model_n = Vec3::zeros();
++                loads.moment_model_nm = Vec3::zeros();
++            }
++            loads.force_model_n.x += catapult_force_n;
++            let rates = state.rates_model_radps;
++            (
++                loads.force_model_n / config.mass_kg,
++                config.inverse_inertia
++                    * (loads.moment_model_nm - rates.cross(&(config.inertia_kgm2 * rates))),
++            )
+         };
+-        let mut loads = config.aerodynamics.loads(
+-            &airframe,
+-            air_velocity_model_mps,
+-            state.rates_model_radps,
+-            control,
+-        );
+-        let weight_model_n = rotation.inverse_transform_vector(&Vec3::new(
+-            0.0,
+-            0.0,
+-            config.mass_kg * config.gravity_mps2,
+-        ));
+-        loads.force_model_n = weight_model_n + Vec3::new(thrust_n, 0.0, 0.0) + loads.force_model_n;
+-
+-        if config.use_ground_model && state.position_world_m.z < 0.0 {
+-            // Inherited ground model: damping is only 40 N*s/m, not mass-scaled.
+-            // This is not a validated landing model for the default eight-tonne aircraft.
+-            let ground_force_n = (-400.0 * config.mass_kg * state.position_world_m.z
+-                - 40.0 * state.velocity_world_mps.z)
+-                .max(0.0);
+-            loads.force_model_n +=
+-                rotation.inverse_transform_vector(&Vec3::new(0.0, 0.0, -ground_force_n));
+-        }
+-        if !matches!(self.launch, LaunchState::Flying) {
+-            loads.force_model_n = Vec3::zeros();
+-            loads.moment_model_nm = Vec3::zeros();
+-        }
+-        loads.force_model_n.x += catapult_force_n;
+-        let acceleration_model_mps2 = loads.force_model_n / config.mass_kg;
+-        let rates = state.rates_model_radps;
+-        let angular_acceleration_model_radps2 = config.inverse_inertia
+-            * (loads.moment_model_nm - rates.cross(&(config.inertia_kgm2 * rates)));
+-
+-        // C++ evaluates loads from x_ (the start of the step), not RK4 stage x.
+-        // Freeze loads here; only kinematics and attitude vary inside the stages.
++        let (frozen_linear, frozen_angular) = accelerations(&state, false);
++        let stage_loads = crate::math::stage_loads();
+         let mut coordinates = state.coordinates();
+         math::rk4(&mut coordinates, dt_s, |coordinates| {
+-            derivative(
+-                AircraftState::from_coordinates(*coordinates),
+-                acceleration_model_mps2,
+-                angular_acceleration_model_radps2,
+-            )
++            let stage = AircraftState::from_coordinates(*coordinates);
++            let (linear, angular) = if stage_loads {
++                accelerations(&stage, true)
++            } else {
++                (frozen_linear, frozen_angular)
++            };
++            derivative(stage, linear, angular)
+         });
+         ensure!(
+             coordinates.iter().all(|value| value.is_finite()),
+diff --git a/crates/core/src/plugin/motion/multirotor/multirotor.rs b/crates/core/src/plugin/motion/multirotor/multirotor.rs
+index d215076..acef097 100644
+--- a/crates/core/src/plugin/motion/multirotor/multirotor.rs
++++ b/crates/core/src/plugin/motion/multirotor/multirotor.rs
+@@ -193,8 +193,6 @@ impl Multirotor {
+             let speed_radps = speed_radps.clamp(config.omega_min_radps, config.omega_max_radps);
+             let speed_squared = speed_radps * speed_radps;
+             let mut thrust_n = config.thrust_coefficient * speed_squared;
+-            // Matches C++ for now, though it is discontinuous: thrust is zero only when the
+-            // clamped speed equals omega_min exactly, and yaw torque is still applied.
+             if (speed_radps - config.omega_min_radps).abs() < f64::EPSILON {
+                 thrust_n = 0.0;
+             }
+@@ -207,28 +205,38 @@ impl Multirotor {
+             moment_body_nm.y -= thrust_n * rotor.offset_length_m * rotor.xy_angle_rad.cos();
+             moment_body_nm.z += sign * config.torque_coefficient * speed_squared;
+         }
+-        let weight_body_n = truth
+-            .orientation_world_from_body
+-            .rotate_world_to_body(Vec3::new(0.0, 0.0, -config.mass_kg * config.gravity_mps2));
+-        let velocity_body_mps = self.state.velocity_body_mps;
+-        let drag_body_n =
+-            velocity_body_mps * (-0.5 * config.drag_coefficient * velocity_body_mps.norm());
+-        // With no external contact force, the C++ normal-force term remains zero.
+-        let acceleration_body_mps2 = (thrust_body_n + weight_body_n + drag_body_n) / config.mass_kg;
+-        let rates = self.state.rates_body_radps;
+-        let angular_acceleration_body_radps2 =
+-            config.inverse_inertia * (moment_body_nm - rates.cross(&(config.inertia_kgm2 * rates)));
+-
+-        // Matches C++ for now, though it is not full RK4: drag, gravity, thrust moments and
+-        // gyroscopic terms use start-of-step state and stay fixed across the stages.
+-        // Only the kinematics (velocity cross rates, attitude, position) use stage state.
++        // MEASUREMENT ONLY: loads as a function of a (possibly stage) state.
++        let start_orientation = truth.orientation_world_from_body;
++        let accelerations = |state: &RotorcraftState, stage: bool| -> (Vec3, Vec3) {
++            let gravity_world = Vec3::new(0.0, 0.0, -config.mass_kg * config.gravity_mps2);
++            let weight_body_n = if stage {
++                let attitude = state.attitude.normalize();
++                nalgebra::UnitQuaternion::new_unchecked(attitude)
++                    .inverse_transform_vector(&gravity_world)
++            } else {
++                start_orientation.rotate_world_to_body(gravity_world)
++            };
++            let velocity_body_mps = state.velocity_body_mps;
++            let drag_body_n =
++                velocity_body_mps * (-0.5 * config.drag_coefficient * velocity_body_mps.norm());
++            let rates = state.rates_body_radps;
++            (
++                (thrust_body_n + weight_body_n + drag_body_n) / config.mass_kg,
++                config.inverse_inertia
++                    * (moment_body_nm - rates.cross(&(config.inertia_kgm2 * rates))),
++            )
++        };
++        let (frozen_linear, frozen_angular) = accelerations(&self.state, false);
++        let stage_loads = crate::math::stage_loads();
+         let mut coordinates = self.state.coordinates();
+         math::rk4(&mut coordinates, dt_s, |coordinates| {
+-            derivative(
+-                RotorcraftState::from_coordinates(*coordinates),
+-                acceleration_body_mps2,
+-                angular_acceleration_body_radps2,
+-            )
++            let stage = RotorcraftState::from_coordinates(*coordinates);
++            let (linear, angular) = if stage_loads {
++                accelerations(&stage, true)
++            } else {
++                (frozen_linear, frozen_angular)
++            };
++            derivative(stage, linear, angular)
+         });
+         ensure!(
+             coordinates.iter().all(|value| value.is_finite()),

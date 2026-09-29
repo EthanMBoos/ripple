@@ -31,43 +31,7 @@ to the simulation must keep the C++ comparison passing.
 XML is frozen. Its inherited-motion replacement and entity-tag differences are
 recorded in [reference notes](REFERENCE_NOTES.md#mission-compatibility).
 
-## 1. Performance
-
-`python3 reference/perf.py` tracks Rust speed against a committed history (see
-[reference/README.md](../reference/README.md#performance-tracking)); record a
-baseline before a core upgrade and compare after it. The paper's C++-versus-Rust
-timing ([benchmark.py](../reference/benchmark.py)) is done.
-
-Done: explained the eight-worker slowdown (each phase's hand-off to the thread
-pool costs more than light phases' work); benchmarked five workloads with memory
-and C++'s multithreaded mode, in a Linux container and on bare-metal macOS; and
-sped up single-worker phases and message addresses. Rust is now 1.1-1.8x faster
-than C++ on one core where outputs match. Details are in the paper.
-
-Done: spatial queries. World plugins ask `within(position, range)` (and
-interactions `pairs_within(range)`); the mission's `spatial_lookup` answers by
-scan (default) or a sparse grid, with byte-identical output. SimpleCollision
-uses it: a step with 4,096 spread-out agents fell from 19.1 ms to 10.2 ms
-(scan) and 5.0 ms (5 m grid); other workloads are unchanged. Design and results are in
-[common/spatial.rs](../crates/core/src/common/spatial.rs), the book's
-[Finding nearby agents](../book/src/reference/plugin-api.md#finding-nearby-agents),
-and the paper. Options for later (range-limited sensors, a faster SphereNetwork,
-`nearest`, skipping the grid for small teams) are comments where each would
-apply.
-
-Done: message routing by index. Each message visits only its channel's
-subscribers (and, for `route_within_entity` networks such as LocalNetwork, only
-its own entity's), with byte-identical output and traces. With NoisyState on
-every aircraft, a 4,096-agent step fell from 388 ms to 9.7 ms (C++: 388 ms);
-see [messages.rs](../crates/core/src/pubsub/messages.rs) and the paper. A topic
-every agent publishes and subscribes to on a network that reaches everyone still
-has one link per pair.
-
-Tested at scale: 5,000 agents spawning in one tick and 1,500 removed in one tick.
-World plugins may publish up to 65,536 messages per step; an entity's plugins,
-1,024. All-to-all messaging can still exceed 65,536 pending deliveries per network.
-
-## 2. External integrations
+## 1. External integrations
 
 Implement one end-to-end pilot at a time. Entities from a connection go through
 `spawn(SpawnRequest)` in [generation.rs](../crates/core/src/simcontrol/generation.rs).
@@ -130,7 +94,7 @@ compatibility.
 
 Saved JSBSim outputs do not establish real-aircraft fidelity.
 
-## 3. Core upgrades
+## 2. Core upgrades
 
 - [ ] Record the effective configuration in each run's manifest: plugin values
   filled by defaults, overrides, registrations, and seeds.
@@ -160,14 +124,14 @@ Saved JSBSim outputs do not establish real-aircraft fidelity.
   synchronization, and keep it only for an end-to-end gain. See
   [Burn's backends](https://burn.dev/docs/burn/).
 
-## 4. More models
+## 3. More models
 
 Candidates and the shared capabilities they would need are in the
 [plugin audit](PLUGIN_COVERAGE_AUDIT.md). Add a model for a research need, not
 for catalog completeness. A model with a C++ counterpart joins the comparison
 through the checklist in [reference/README.md](../reference/README.md).
 
-## 5. Terrain visualization experiment
+## 4. Terrain visualization experiment
 
 - [ ] Try streamed [Cesium](https://cesium.com/platform/cesiumjs/) terrain next
   to the Rerun panels, starting with one agent and a validated origin, in a

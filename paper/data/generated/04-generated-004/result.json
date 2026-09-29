@@ -19,6 +19,7 @@
       "no_bin_logging": "false"
     }
   },
+  "motion_multiplier": 2,
   "cpp_non_interference": {
     "untraced": {
       "frames.bin": true,
@@ -29,9 +30,13 @@
       "summary.csv": true
     }
   },
-  "cpp_log_directory": "cpp/logs/2026-09-28_23-54-26",
+  "cpp_baseline_equality": {
+    "frames.bin": false,
+    "summary.csv": true
+  },
+  "cpp_log_directory": "cpp/logs/2026-09-29_13-15-08",
   "cpp_output_hashes": {
-    "frames.bin": "73dca02603ae3dde6af4632d8c552e3be31785d3a8355c98219ed94f5156dada",
+    "frames.bin": "58e25744859b04558f4c4c3a6065f6e19d033f65f61635b7d9b2182c7ee64618",
     "summary.csv": "be6badb8de557caa0d9380f9ffda71e64b5eb736c509460c4d875aaa23dafde6"
   },
   "worker_equality": {
@@ -51,7 +56,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "d1b9985bf80b9b651763086db552c8679742b0b3a6ab71c541b39120424969af",
+  "recording_sha256": "42e73bbce2fd48b50d4f20d5150d325017d93c323b0606a00fe04d861265d33e",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,
@@ -59,27 +64,27 @@
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "2762b2ca3eec6fd39c77f1cf7e019663f626dd74defc334b1042bba3c9b934d9",
+      "frames.bin": "0df7719de643c920a3482380e89b365b27919125225f5c72134dc5549ce5e6ab",
       "events.json": "82ace76826b54c89b44d63a3306dfe445ecc200c2d23fd87402ef9e0af42703d",
       "summary.csv": "191ed9453bf7f05290eb92ea12cae4c08be65f1db27cbedd7c97e56d82592819"
     },
     "rust-2": {
-      "frames.bin": "2762b2ca3eec6fd39c77f1cf7e019663f626dd74defc334b1042bba3c9b934d9",
+      "frames.bin": "0df7719de643c920a3482380e89b365b27919125225f5c72134dc5549ce5e6ab",
       "events.json": "82ace76826b54c89b44d63a3306dfe445ecc200c2d23fd87402ef9e0af42703d",
       "summary.csv": "191ed9453bf7f05290eb92ea12cae4c08be65f1db27cbedd7c97e56d82592819"
     },
     "rust-8": {
-      "frames.bin": "2762b2ca3eec6fd39c77f1cf7e019663f626dd74defc334b1042bba3c9b934d9",
+      "frames.bin": "0df7719de643c920a3482380e89b365b27919125225f5c72134dc5549ce5e6ab",
       "events.json": "82ace76826b54c89b44d63a3306dfe445ecc200c2d23fd87402ef9e0af42703d",
       "summary.csv": "191ed9453bf7f05290eb92ea12cae4c08be65f1db27cbedd7c97e56d82592819"
     },
     "rust-rerun": {
-      "frames.bin": "2762b2ca3eec6fd39c77f1cf7e019663f626dd74defc334b1042bba3c9b934d9",
+      "frames.bin": "0df7719de643c920a3482380e89b365b27919125225f5c72134dc5549ce5e6ab",
       "events.json": "82ace76826b54c89b44d63a3306dfe445ecc200c2d23fd87402ef9e0af42703d",
       "summary.csv": "191ed9453bf7f05290eb92ea12cae4c08be65f1db27cbedd7c97e56d82592819"
     },
     "rust-trace": {
-      "frames.bin": "2762b2ca3eec6fd39c77f1cf7e019663f626dd74defc334b1042bba3c9b934d9",
+      "frames.bin": "0df7719de643c920a3482380e89b365b27919125225f5c72134dc5549ce5e6ab",
       "events.json": "82ace76826b54c89b44d63a3306dfe445ecc200c2d23fd87402ef9e0af42703d",
       "summary.csv": "191ed9453bf7f05290eb92ea12cae4c08be65f1db27cbedd7c97e56d82592819"
     }
@@ -90,7 +95,7 @@
     "candidate_frames": 61,
     "compared_entity_states": 119,
     "max_position_error_m": 0.0,
-    "max_velocity_error_mps": 2.220446049250313e-16,
+    "max_velocity_error_mps": 0.0,
     "max_orientation_error_rad": 1.3877787807814457e-17,
     "max_angular_velocity_error_radps": 0.0,
     "max_timestamp_error_s": 0.0,
@@ -105,11 +110,11 @@
     "outputs": 690,
     "published_states": 55,
     "max_belief_position_error_m": 0.0,
-    "max_belief_velocity_error_mps": 4.440892098500626e-16,
+    "max_belief_velocity_error_mps": 0.0,
     "max_belief_orientation_error_rad": 1.3877787807814457e-17,
     "max_belief_angular_velocity_error_radps": 0.0,
     "max_payload_position_error_m": 0.0,
-    "max_payload_velocity_error_mps": 4.440892098500626e-16,
+    "max_payload_velocity_error_mps": 0.0,
     "max_payload_orientation_error_rad": 0.0,
     "max_payload_covariance_error": 0.0,
     "max_output_error": 3.552713678800501e-15,

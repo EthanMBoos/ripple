@@ -27,9 +27,8 @@ CORE = "crates/core/src/"
 # (name, file, original text, defective text). Each original must occur exactly once.
 DEFECTS = [
     ("controller substeps receive the full step dt", CORE + "simcontrol.rs",
-     "            self.run_phase(|entity| entity.step_controller(time))?;",
-     "            let time = StepTime { time_s: time.time_s, dt_s };\n"
-     "            self.run_phase(|entity| entity.step_controller(time))?;"),
+     "                entity.step_controller(time)\n",
+     "                entity.step_controller(StepTime { time_s: time.time_s, dt_s })\n"),
     ("frame timestamp labels the step start, not t + dt", CORE + "simcontrol.rs",
      "            time_s: self.time_s + self.config.run.dt_s,",
      "            time_s: self.time_s,"),

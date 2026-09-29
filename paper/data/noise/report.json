@@ -22,6 +22,7 @@
           "no_bin_logging": "false"
         }
       },
+      "motion_multiplier": 1,
       "cpp_non_interference": {
         "untraced": {
           "frames.bin": true,
@@ -32,7 +33,11 @@
           "summary.csv": true
         }
       },
-      "cpp_log_directory": "cpp/logs/2026-09-28_23-54-00",
+      "cpp_baseline_equality": {
+        "frames.bin": true,
+        "summary.csv": true
+      },
+      "cpp_log_directory": "cpp/logs/2026-09-29_13-14-45",
       "cpp_output_hashes": {
         "frames.bin": "9af30cd92f10049dfe00aacf67f694672ac5c469ac970c04dc81945e3d2864d5",
         "summary.csv": "538c02ca0461227a828f74c4476504e128236da5713700a89f9af209236e7829"
@@ -54,7 +59,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "b5b7c245f8159d0926039a140720f48edb8d0254f6091b0c6ecc2a7f57902c93",
+      "recording_sha256": "f75273981230fad294b8daf1dd61802b0df6c82cbe038ec731d499f37ca13eae",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -180,15 +185,15 @@
   },
   "cpp": {
     "branch": "benchmarking-edits",
-    "commit": "747a28069c5ea9579e09ef10c4299a8ba3e6f409",
+    "commit": "7129e47f5093c943a30d25c85884b4ed5e51728c",
     "source_checkout": "<workspace>/scrimmage",
     "source_policy": "committed local branch snapshot; no worktree edits",
-    "source_archive_sha256": "07fac022010f99cf5a72b73e1b8976089fc96ec10af45cc3ffcae53c4c6920d8",
+    "source_archive_sha256": "380d576249fe6b4e6c93be1dc95de24beb81f3688eaee820929cff0db6700e44",
     "dependency_dockerfile_sha256": "a2a8aa72201d52858c918dc698d2b87d3780455b2d6afa424a1955e2b82eacfb",
     "dependency_image": "sha256:93ceedc67e6077afc7c53d12c08fce058cf97d6813f908161c0adec905747ce4",
     "build_dockerfile_sha256": "9c5f832b01cda15f8bcfdfbbabcaa0d8f32fcb67ddcbd3fa29f69a98a0fbb0af",
-    "image": "sha256:303914260a0bdcb270058a8f28f15c9596a29c15fcbe22db14bae72d4c2974d9",
-    "image_tag": "scrimmage-rs-reference:747a28069c5e",
+    "image": "sha256:cbb93043f1c6c1c96308e9f46171d218dd9b4b9f7e94adc435ec2c38c066a443",
+    "image_tag": "scrimmage-rs-reference:7129e47f5093",
     "platform": "linux/amd64",
     "fixture_sha256": {
       "ConstantVelocity.cpp": "d04b099509a5e5c9dbce4baee22058905702f997350aee3fc15cc7d12994435e",
@@ -200,7 +205,7 @@
   },
   "rust": {
     "binary": "<workspace>/scrimmage-rs/target/debug/scrimmage",
-    "binary_sha256": "5762599231a6acddc906f8d09e94a674df4ebde6a935b0eff92a363677c2a26b",
+    "binary_sha256": "5f15ecb300a422617c118938f870371abc79b27844f66207b912b78b64a74b2c",
     "compiler": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)\nbinary: rustc\ncommit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea\ncommit-date: 2026-08-18\nhost: aarch64-apple-darwin\nrelease: 1.98.0\nLLVM version: 22.1.8",
     "host": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
     "source_hashes": {
@@ -228,13 +233,13 @@
       "crates/core/src/common/pid.rs": "1bc39d10027138b0dfa37d4da96b0a54068645dc6922715d5279d8f125a20a91",
       "crates/core/src/common/plugin_random.rs": "30c27d7b364c89e7c681d8b4393e05f21e3faef43e4ea385a580fc099751c172",
       "crates/core/src/common/random.rs": "ac148402b133eb35ab6496c115151a9bd44655de6d7779baca12bb5475d00dd6",
-      "crates/core/src/common/spatial.rs": "91dc3df4abe37462271482adb4da7b83b23cda95c895258fdebcadde9594ddbd",
+      "crates/core/src/common/spatial.rs": "243d9835a3ce13cef280001d637ccd9594fc28fe1decab84a2bf2fc5ee65dcf3",
       "crates/core/src/common/variable_io.rs": "1a19be52e09a6909863f1655468b10500679a47111166521d80c422eb1b1b1aa",
       "crates/core/src/common/waypoints.rs": "0893b2a26b26d3186f7600cf86b9dc16eb12ff47ec73285ff4423c779e18408b",
       "crates/core/src/common.rs": "133cabb11c2314433892f08d35a918bb6d5ab192a7e42f93a71add2fd8addb6b",
       "crates/core/src/controller.rs": "0070e93e5883f515aea749f8a54f23b12a93124c3923a92bddbd8814dd35c11a",
-      "crates/core/src/entity/plugin_stack.rs": "94487cd8ee785057c61f28dd3183966699f7778eb22ebc27a15075792f38cabf",
-      "crates/core/src/entity.rs": "27e9f390ef7539612c146fd5dc654ff8f419a7098cb85d85f74f3ade876671b1",
+      "crates/core/src/entity/plugin_stack.rs": "4e9a38e49e109a872bf1ae00a763b469929e3488b026f11aeb15d9d36030245a",
+      "crates/core/src/entity.rs": "2c19fee7953c895a47aca70406d13f5695eeb859af5f87cb8c3466cba184fad8",
       "crates/core/src/entity_interaction.rs": "9dda8a479c75b3a2b85fa83f1b6b2633c6e6da538d9bb9f1989d9a48ae59b590",
       "crates/core/src/estimator.rs": "fc8f4ba969629cc7e1d93b090bd4231b8470bfe26c77754ce7a83796f687677a",
       "crates/core/src/lib.rs": "c9e4a51ea610b0f48dd9b5fd7f0dea16a3bb3ed9ebec036bfff4d76f01d4fd82",
@@ -307,8 +312,8 @@
       "crates/core/src/simcontrol/summary.rs": "ebc1ea53e57f750fc358a45ee675a45ddf1282e835fb47b5fadf99e009623d7d",
       "crates/core/src/simcontrol/trace.rs": "e3800f787b2a69074a31b3c3ae2d31bb1c16f213ef245c7755d287cc8dc3151e",
       "crates/core/src/simcontrol/world_plugins.rs": "dc64e2018a04546f23eef2ef5ebbab2c1ca0c883dd2efd28fc60a49d54b47e35",
-      "crates/core/src/simcontrol.rs": "fd5d7b50248cd64f08b8b83b99786f0d72a895b0aea8cb61685b0404968aee40",
-      "crates/core/tests/estimation.rs": "b428ed7b513c150d32267203e0524c9d69d4ee4edf7add9b8c0f2b9efb2893f1",
+      "crates/core/src/simcontrol.rs": "137a7c053eb4b824732ee2090ae99c2408e1e19bc67cfa3656c902e320f2912e",
+      "crates/core/tests/estimation.rs": "1146e345a98080197253f2672a984d1d21b8b6fdd72fb1619502f2bd5e58bf05",
       "crates/core/tests/fixtures/perception_communication.xml": "f14345a2e3b739d37e13cbd0e2036bf8524a4e999b8c79850b4bed3f4aa1a477",
       "crates/core/tests/fixtures/plugin_contracts.xml": "ace7b8bed57e8db064e957fdedc567e388acc3c289510b1f3a3cd86ca0e7b939",
       "crates/core/tests/fixtures/plugin_defaults.xml": "b5de1d94ac84885ba054500f18d099a9a30d09e21da850fc081409f1c62dc3a7",

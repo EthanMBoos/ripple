@@ -37,6 +37,8 @@ static SEEN: Mutex<BTreeMap<String, Vec<Seen>>> = Mutex::new(BTreeMap::new());
 /// Per tick: substep count, the speed read on each substep, and each substep's dt.
 type CommandEntry = (usize, Vec<f64>, Vec<f64>);
 static COMMANDS: Mutex<BTreeMap<String, Vec<CommandEntry>>> = Mutex::new(BTreeMap::new());
+/// The own-state x position a controller saw on each call.
+static POSITIONS: Mutex<BTreeMap<String, Vec<f64>>> = Mutex::new(BTreeMap::new());
 
 fn state(state: &KinematicState) -> String {
     format!("{state:?}")
@@ -227,11 +229,44 @@ impl Autonomy for PanicOnStart {
     }
 }
 
+/// Passes `speed` through and logs the own-state x position it saw.
+struct PositionWitness {
+    log: String,
+}
+impl Plugin for PositionWitness {
+    type Config = LogConfig;
+    fn configure(params: &PluginParams<'_>) -> Result<LogConfig> {
+        params.parse()
+    }
+    fn new(config: &LogConfig) -> Self {
+        Self {
+            log: config.log.clone(),
+        }
+    }
+    fn ports(_: &LogConfig) -> Ports {
+        let speed = Port::new("speed", Unit::MetersPerSecond, Frame::World);
+        Ports::default().input(speed.clone()).output(speed)
+    }
+}
+impl Controller for PositionWitness {
+    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+        POSITIONS
+            .lock()
+            .unwrap()
+            .entry(self.log.clone())
+            .or_default()
+            .push(context.state.position_world_m.x);
+        io.write("speed", io.read("speed")?)?;
+        Ok(Update::Applied)
+    }
+}
+
 fn registry() -> Result<PluginRegistry> {
     let mut registry = PluginRegistry::with_builtins();
     registry.register_autonomy::<Witness>("Witness")?;
     registry.register_autonomy::<autonomy::DriveToGoal>("DriveToGoal")?;
     registry.register_controller::<controller::ScaleSpeed>("ScaleSpeed")?;
+    registry.register_controller::<PositionWitness>("PositionWitness")?;
     registry.register_motion::<motion::EastwardMotion>("EastwardMotion")?;
     registry.register_localization::<CommandLog>("CommandLog")?;
     registry.register_localization::<Echo>("Echo")?;
@@ -541,6 +576,58 @@ fn localization_receives_what_the_motion_model_read_on_each_substep() -> Result<
         assert_eq!(*substeps, 2);
         assert_eq!(speeds, &vec![6.0, 6.0]);
         assert_eq!(dts, &vec![0.05, 0.05]);
+    }
+    Ok(())
+}
+
+/// Controllers seen on each of four substeps per tick, at 2 m/s eastward.
+fn substep_positions(localization: Option<PluginConfig>, log: &str) -> Result<Vec<f64>> {
+    let mut entity = EntityGroupConfig {
+        label: "driver".into(),
+        team: 1,
+        autonomy: vec![
+            PluginConfig::new("DriveToGoal").with_params(json!({ "goal_world_m": 1000.0 }))?,
+        ],
+        controller: vec![PluginConfig::new("PositionWitness").with_params(json!({ "log": log }))?],
+        motion_model: PluginConfig::new("EastwardMotion"),
+        ..EntityGroupConfig::default()
+    };
+    if let Some(localization) = localization {
+        entity.localization = localization;
+    }
+    let scenario = ScenarioConfig {
+        run: RunConfig {
+            end_s: 0.2,
+            motion_multiplier: 4,
+            ..RunConfig::default()
+        },
+        entities: vec![entity],
+        ..ScenarioConfig::default()
+    };
+    run(scenario, 1)?;
+    Ok(POSITIONS.lock().unwrap().remove(log).expect("logged"))
+}
+
+#[test]
+fn controllers_see_the_previous_substep_with_a_perfect_own_state() -> Result<()> {
+    // Controller, then motion, on each substep: each call sees 2 m/s * 0.025 s more.
+    let positions = substep_positions(None, "perfect-substeps")?;
+    assert_eq!(positions.len(), 8);
+    for (index, pair) in positions.windows(2).enumerate() {
+        if index % 4 != 3 {
+            assert!((pair[1] - pair[0] - 0.05).abs() < 1e-12, "{positions:?}");
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn other_localization_updates_controllers_once_per_tick() -> Result<()> {
+    let echo = PluginConfig::new("CommandLog").with_params(json!({ "log": "unused" }))?;
+    let positions = substep_positions(Some(echo), "estimated-substeps")?;
+    COMMANDS.lock().unwrap().remove("unused");
+    for tick in positions.chunks(4) {
+        assert!(tick.iter().all(|x| *x == tick[0]), "{positions:?}");
     }
     Ok(())
 }

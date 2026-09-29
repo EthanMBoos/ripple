@@ -235,8 +235,7 @@ structure is the research problem:
 - learned-versus-classical teammates under identical rules.
 
 Contact-rich manipulation, vision, and low-level flight control belong in
-specialist tools. Low-level control also fits our phase order poorly, since
-all controller substeps precede all motion substeps.
+specialist tools.
 
 ## Options, as independent choices
 

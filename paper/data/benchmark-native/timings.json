@@ -1,12 +1,12 @@
 {
-  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
   "machine": "arm64",
   "cpu_count": 10,
   "repetitions": 3,
   "provenance": {
-    "cpp_commit": "4bdf41fb06facaea358d478d9a07aa4d77fcac27",
-    "rust_head": "acd4f46e3ca1cdc8852a7b4035bd8384c151a1eb",
-    "rust_worktree": "M book/src/SUMMARY.md\n M book/src/concepts/belief-vs-truth.md\n M book/src/guides/user-plugins.md\n M book/src/introduction.md\n M book/src/tutorial/first-autonomy.md\n M crates/starter/README.md\n M crates/starter/src/lib.rs\n M docs/TODO.md\n M paper/manuscript/main.tex\n?? book/src/tutorial/noisy-localization.md\n?? crates/starter/missions/dead-reckoning.yaml\n?? crates/starter/src/dead_reckoning.rs\n?? crates/starter/tests/dead_reckoning.rs",
+    "cpp_commit": "7129e47f5093c943a30d25c85884b4ed5e51728c",
+    "rust_head": "548b3acb2150495b9e145f2fb835ab7efb2730d7",
+    "rust_worktree": "M AGENTS.md\n M book/src/architecture/tick.md\n M book/src/development/source-layout.md\n M book/src/guides/writing-plugins.md\n M book/src/reference/plugin-api.md\n M crates/core/src/entity.rs\n M crates/core/src/entity/plugin_stack.rs\n M crates/core/src/simcontrol.rs\n M crates/core/tests/estimation.rs\n M docs/LEARNING_SIMULATOR_LANDSCAPE.md\n M docs/README.md\n M docs/REFERENCE_NOTES.md\n M docs/TODO.md\n M paper/data/benchmark-native/build.sh\n M paper/data/benchmark-native/run.py\n M paper/data/cpp-comparison/00-straight-no-gui/result.json\n M paper/data/cpp-comparison/01-straight_cpu/result.json\n M paper/data/cpp-comparison/02-straight_cpu_mul/result.json\n M paper/data/cpp-comparison/03-aircraft-substeps-spawning/result.json\n M paper/data/cpp-comparison/04-aircraft-substeps-scheduled/result.json\n M paper/data/cpp-comparison/05-noisy-state-bias/result.json\n M paper/data/cpp-comparison/06-networks-local-global/result.json\n M paper/data/cpp-comparison/07-fixed-wing-6dof/result.json\n M paper/data/cpp-comparison/08-multirotor/result.json\n M paper/data/cpp-comparison/09-single-integrator/result.json\n M paper/data/cpp-comparison/10-noisy-contacts-bias/result.json\n M paper/data/cpp-comparison/11-sphere-network-auction/result.json\n M paper/data/cpp-comparison/12-collision-boundary/result.json\n M paper/data/cpp-comparison/report.json\n M paper/data/cpp-comparison/unmodified-linux-randomized-spawning.json\n M paper/data/generated-long/00-generated-000/result.json\n M paper/data/generated-long/01-generated-001/result.json\n M paper/data/generated-long/02-generated-002/result.json\n M paper/data/generated-long/03-generated-003/result.json\n M paper/data/generated-long/04-generated-004/result.json\n M paper/data/generated-long/05-generated-005/result.json\n M paper/data/generated-long/06-generated-006/result.json\n M paper/data/generated-long/07-generated-007/result.json\n M paper/data/generated-long/08-generated-008/result.json\n M paper/data/generated-long/09-generated-009/result.json\n M paper/data/generated-long/divergence.json\n M paper/data/generated-long/report.json\n M paper/data/generated/00-generated-000/result.json\n M paper/data/generated/01-generated-001/result.json\n M paper/data/generated/02-generated-002/result.json\n M paper/data/generated/03-generated-003/result.json\n M paper/data/generated/04-generated-004/result.json\n M paper/data/generated/05-generated-005/result.json\n M paper/data/generated/06-generated-006/result.json\n M paper/data/generated/07-generated-007/result.json\n M paper/data/generated/08-generated-008/result.json\n M paper/data/generated/09-generated-009/result.json\n M paper/data/generated/10-generated-010/result.json\n M paper/data/generated/11-generated-011/result.json\n M paper/data/generated/12-generated-012/result.json\n M paper/data/generated/13-generated-013/result.json\n M paper/data/generated/14-generated-014/result.json\n M paper/data/generated/15-generated-015/result.json\n M paper/data/generated/16-generated-016/result.json\n M paper/data/generated/17-generated-017/result.json\n M paper/data/generated/18-generated-018/result.json\n M paper/data/generated/19-generated-019/result.json\n M paper/data/generated/20-generated-020/result.json\n M paper/data/generated/21-generated-021/result.json\n M paper/data/generated/22-generated-022/result.json\n M paper/data/generated/23-generated-023/result.json\n M paper/data/generated/24-generated-024/result.json\n M paper/data/generated/25-generated-025/result.json\n M paper/data/generated/26-generated-026/result.json\n M paper/data/generated/27-generated-027/result.json\n M paper/data/generated/28-generated-028/result.json\n M paper/data/generated/29-generated-029/result.json\n M paper/data/generated/30-generated-030/result.json\n M paper/data/generated/31-generated-031/result.json\n M paper/data/generated/32-generated-032/result.json\n M paper/data/generated/33-generated-033/result.json\n M paper/data/generated/34-generated-034/result.json\n M paper/data/generated/35-generated-035/result.json\n M paper/data/generated/36-generated-036/result.json\n M paper/data/generated/37-generated-037/result.json\n M paper/data/generated/38-generated-038/result.json\n M paper/data/generated/39-generated-039/result.json\n M paper/data/generated/40-generated-040/result.json\n M paper/data/generated/41-generated-041/result.json\n M paper/data/generated/42-generated-042/result.json\n M paper/data/generated/43-generated-043/result.json\n M paper/data/generated/44-generated-044/result.json\n M paper/data/generated/45-generated-045/result.json\n M paper/data/generated/46-generated-046/result.json\n M paper/data/generated/47-generated-047/result.json\n M paper/data/generated/48-generated-048/result.json\n M paper/data/generated/49-generated-049/result.json\n M paper/data/generated/50-generated-050/result.json\n M paper/data/generated/51-generated-051/result.json\n M paper/data/generated/52-generated-052/result.json\n M paper/data/generated/53-generated-053/result.json\n M paper/data/generated/54-generated-054/result.json\n M paper/data/generated/55-generated-055/result.json\n M paper/data/generated/56-generated-056/result.json\n M paper/data/generated/57-generated-057/result.json\n M paper/data/generated/58-generated-058/result.json\n M paper/data/generated/59-generated-059/result.json\n M paper/data/generated/60-generated-060/result.json\n M paper/data/generated/61-generated-061/result.json\n M paper/data/generated/62-generated-062/result.json\n M paper/data/generated/63-generated-063/result.json\n M paper/data/generated/64-generated-064/result.json\n M paper/data/generated/65-generated-065/result.json\n M paper/data/generated/66-generated-066/result.json\n M paper/data/generated/67-generated-067/result.json\n M paper/data/generated/68-generated-068/result.json\n M paper/data/generated/69-generated-069/result.json\n M paper/data/generated/70-generated-070/result.json\n M paper/data/generated/71-generated-071/result.json\n M paper/data/generated/72-generated-072/result.json\n M paper/data/generated/73-generated-073/result.json\n M paper/data/generated/74-generated-074/result.json\n M paper/data/generated/75-generated-075/result.json\n M paper/data/generated/76-generated-076/result.json\n M paper/data/generated/77-generated-077/result.json\n M paper/data/generated/78-generated-078/result.json\n M paper/data/generated/79-generated-079/result.json\n M paper/data/generated/80-generated-080/result.json\n M paper/data/generated/81-generated-081/result.json\n M paper/data/generated/82-generated-082/result.json\n M paper/data/generated/83-generated-083/result.json\n M paper/data/generated/84-generated-084/result.json\n M paper/data/generated/85-generated-085/result.json\n M paper/data/generated/86-generated-086/result.json\n M paper/data/generated/87-generated-087/result.json\n M paper/data/generated/88-generated-088/result.json\n M paper/data/generated/89-generated-089/result.json\n M paper/data/generated/90-generated-090/result.json\n M paper/data/generated/91-generated-091/result.json\n M paper/data/generated/92-generated-092/result.json\n M paper/data/generated/93-generated-093/result.json\n M paper/data/generated/94-generated-094/result.json\n M paper/data/generated/95-generated-095/result.json\n M paper/data/generated/96-generated-096/result.json\n M paper/data/generated/97-generated-097/result.json\n M paper/data/generated/98-generated-098/result.json\n M paper/data/generated/99-generated-099/result.json\n M paper/data/generated/report.json\n M paper/data/make_tables.py\n M paper/data/noise/00-noisy-contacts-noise/result.json\n M paper/data/noise/report.json\n M paper/data/platform/report.json\n M paper/manuscript/generated/cpp_agreement.tex\n M paper/manuscript/generated/long.tex\n M paper/manuscript/generated/parity.tex\n M paper/manuscript/main.tex\n M paper/references.bib\n M reference/README.md\n M reference/benchmark.py\n M reference/divergence.py\n M reference/reference_check.py\n M reference/sensitivity.py\n?? docs/FLIGHT_DYNAMICS_FIDELITY.md\n?? \"paper/data/cpp-comparison/report 2.json\"\n?? \"paper/data/cpp-comparison/unmodified-linux-randomized-spawning 2.json\"\n?? \"paper/data/generated-long/divergence 2.json\"\n?? \"paper/data/generated-long/generated-000 2.xml\"\n?? \"paper/data/generated-long/generated-001 2.xml\"\n?? \"paper/data/generated-long/generated-002 2.xml\"\n?? \"paper/data/generated-long/generated-003 2.xml\"\n?? \"paper/data/generated-long/generated-004 2.xml\"\n?? \"paper/data/generated-long/generated-005 2.xml\"\n?? \"paper/data/generated-long/generated-006 2.xml\"\n?? \"paper/data/generated-long/generated-007 2.xml\"\n?? \"paper/data/generated-long/generated-008 2.xml\"\n?? \"paper/data/generated-long/generated-009 2.xml\"\n?? \"paper/data/generated-long/report 2.json\"\n?? \"paper/data/generated/generated-000 2.xml\"\n?? \"paper/data/generated/generated-001 2.xml\"\n?? \"paper/data/generated/generated-002 2.xml\"\n?? \"paper/data/generated/generated-003 2.xml\"\n?? \"paper/data/generated/generated-004 2.xml\"\n?? \"paper/data/generated/generated-005 2.xml\"\n?? \"paper/data/generated/generated-006 2.xml\"\n?? \"paper/data/generated/generated-007 2.xml\"\n?? \"paper/data/generated/generated-008 2.xml\"\n?? \"paper/data/generated/generated-009 2.xml\"\n?? \"paper/data/generated/generated-010 2.xml\"\n?? \"paper/data/generated/generated-011 2.xml\"\n?? \"paper/data/generated/generated-012 2.xml\"\n?? \"paper/data/generated/generated-013 2.xml\"\n?? \"paper/data/generated/generated-014 2.xml\"\n?? \"paper/data/generated/generated-015 2.xml\"\n?? \"paper/data/generated/generated-016 2.xml\"\n?? \"paper/data/generated/generated-017 2.xml\"\n?? \"paper/data/generated/generated-018 2.xml\"\n?? \"paper/data/generated/generated-019 2.xml\"\n?? \"paper/data/generated/generated-020 2.xml\"\n?? \"paper/data/generated/generated-021 2.xml\"\n?? \"paper/data/generated/generated-022 2.xml\"\n?? \"paper/data/generated/generated-023 2.xml\"\n?? \"paper/data/generated/generated-024 2.xml\"\n?? \"paper/data/generated/generated-025 2.xml\"\n?? \"paper/data/generated/generated-026 2.xml\"\n?? \"paper/data/generated/generated-027 2.xml\"\n?? \"paper/data/generated/generated-028 2.xml\"\n?? \"paper/data/generated/generated-029 2.xml\"\n?? \"paper/data/generated/generated-030 2.xml\"\n?? \"paper/data/generated/generated-031 2.xml\"\n?? \"paper/data/generated/generated-032 2.xml\"\n?? \"paper/data/generated/generated-033 2.xml\"\n?? \"paper/data/generated/generated-034 2.xml\"\n?? \"paper/data/generated/generated-035 2.xml\"\n?? \"paper/data/generated/generated-036 2.xml\"\n?? \"paper/data/generated/generated-037 2.xml\"\n?? \"paper/data/generated/generated-038 2.xml\"\n?? \"paper/data/generated/generated-039 2.xml\"\n?? \"paper/data/generated/generated-040 2.xml\"\n?? \"paper/data/generated/generated-041 2.xml\"\n?? \"paper/data/generated/generated-042 2.xml\"\n?? \"paper/data/generated/generated-043 2.xml\"\n?? \"paper/data/generated/generated-044 2.xml\"\n?? \"paper/data/generated/generated-045 2.xml\"\n?? \"paper/data/generated/generated-046 2.xml\"\n?? \"paper/data/generated/generated-047 2.xml\"\n?? \"paper/data/generated/generated-048 2.xml\"\n?? \"paper/data/generated/generated-049 2.xml\"\n?? \"paper/data/generated/generated-050 2.xml\"\n?? \"paper/data/generated/generated-051 2.xml\"\n?? \"paper/data/generated/generated-052 2.xml\"\n?? \"paper/data/generated/generated-053 2.xml\"\n?? \"paper/data/generated/generated-054 2.xml\"\n?? \"paper/data/generated/generated-055 2.xml\"\n?? \"paper/data/generated/generated-056 2.xml\"\n?? \"paper/data/generated/generated-057 2.xml\"\n?? \"paper/data/generated/generated-058 2.xml\"\n?? \"paper/data/generated/generated-059 2.xml\"\n?? \"paper/data/generated/generated-060 2.xml\"\n?? \"paper/data/generated/generated-061 2.xml\"\n?? \"paper/data/generated/generated-062 2.xml\"\n?? \"paper/data/generated/generated-063 2.xml\"\n?? \"paper/data/generated/generated-064 2.xml\"\n?? \"paper/data/generated/generated-065 2.xml\"\n?? \"paper/data/generated/generated-066 2.xml\"\n?? \"paper/data/generated/generated-067 2.xml\"\n?? \"paper/data/generated/generated-068 2.xml\"\n?? \"paper/data/generated/generated-069 2.xml\"\n?? \"paper/data/generated/generated-070 2.xml\"\n?? \"paper/data/generated/generated-071 2.xml\"\n?? \"paper/data/generated/generated-072 2.xml\"\n?? \"paper/data/generated/generated-073 2.xml\"\n?? \"paper/data/generated/generated-074 2.xml\"\n?? \"paper/data/generated/generated-075 2.xml\"\n?? \"paper/data/generated/generated-076 2.xml\"\n?? \"paper/data/generated/generated-077 2.xml\"\n?? \"paper/data/generated/generated-078 2.xml\"\n?? \"paper/data/generated/generated-079 2.xml\"\n?? \"paper/data/generated/generated-080 2.xml\"\n?? \"paper/data/generated/generated-081 2.xml\"\n?? \"paper/data/generated/generated-082 2.xml\"\n?? \"paper/data/generated/generated-083 2.xml\"\n?? \"paper/data/generated/generated-084 2.xml\"\n?? \"paper/data/generated/generated-085 2.xml\"\n?? \"paper/data/generated/generated-086 2.xml\"\n?? \"paper/data/generated/generated-087 2.xml\"\n?? \"paper/data/generated/generated-088 2.xml\"\n?? \"paper/data/generated/generated-089 2.xml\"\n?? \"paper/data/generated/generated-090 2.xml\"\n?? \"paper/data/generated/generated-091 2.xml\"\n?? \"paper/data/generated/generated-092 2.xml\"\n?? \"paper/data/generated/generated-093 2.xml\"\n?? \"paper/data/generated/generated-094 2.xml\"\n?? \"paper/data/generated/generated-095 2.xml\"\n?? \"paper/data/generated/generated-096 2.xml\"\n?? \"paper/data/generated/generated-097 2.xml\"\n?? \"paper/data/generated/generated-098 2.xml\"\n?? \"paper/data/generated/generated-099 2.xml\"\n?? \"paper/data/generated/report 2.json\"\n?? \"paper/data/noise/noise-statistics 2.json\"\n?? \"paper/data/noise/report 2.json\"\n?? \"paper/data/platform/report 2.json\"\n?? paper/data/rk4-loads/\n?? \"paper/data/sensitivity/report 2.json\"\n?? paper/data/substep-order/",
     "source_hashes": {
       "Cargo.lock": "e1b94b75a288b0435a5b3d71f6808c43702427dfa7a6f4492121be65aa259f60",
       "Cargo.toml": "a787485c739f2613439e295ad49993d74c4a366d5447d7297886f7986e103cd8",
@@ -32,15 +32,16 @@
       "crates/core/src/common/pid.rs": "1bc39d10027138b0dfa37d4da96b0a54068645dc6922715d5279d8f125a20a91",
       "crates/core/src/common/plugin_random.rs": "30c27d7b364c89e7c681d8b4393e05f21e3faef43e4ea385a580fc099751c172",
       "crates/core/src/common/random.rs": "ac148402b133eb35ab6496c115151a9bd44655de6d7779baca12bb5475d00dd6",
+      "crates/core/src/common/spatial.rs": "243d9835a3ce13cef280001d637ccd9594fc28fe1decab84a2bf2fc5ee65dcf3",
       "crates/core/src/common/variable_io.rs": "1a19be52e09a6909863f1655468b10500679a47111166521d80c422eb1b1b1aa",
       "crates/core/src/common/waypoints.rs": "0893b2a26b26d3186f7600cf86b9dc16eb12ff47ec73285ff4423c779e18408b",
-      "crates/core/src/common.rs": "8f820f3d0fc3f36d4d7c5d30df8b8c0018f1e68d622ebccb3e343dd00187ee06",
+      "crates/core/src/common.rs": "133cabb11c2314433892f08d35a918bb6d5ab192a7e42f93a71add2fd8addb6b",
       "crates/core/src/controller.rs": "0070e93e5883f515aea749f8a54f23b12a93124c3923a92bddbd8814dd35c11a",
-      "crates/core/src/entity/plugin_stack.rs": "cedefa8253c20dadf7d793d29d25bc1114fd9ddf131dcd0611afeca2f8ecb0d9",
-      "crates/core/src/entity.rs": "8f8ce136c82bd9c2b1b59c3d3f29fba6f8940d9211ef0d2db9e16c74f9267a4c",
-      "crates/core/src/entity_interaction.rs": "1de8d0087f1f02694f656205689325751e5cec690a7fc54c57858a4ecae8b9bb",
-      "crates/core/src/estimator.rs": "2c9563eecffaf03773ba6d85b835979c5e5a32a2308e33fc8d3cf823c9bbd826",
-      "crates/core/src/lib.rs": "2a5e875368a5cda4d76c6c0e50a63427db06f2fa2a3d1c1b62ab0dafde1f65c6",
+      "crates/core/src/entity/plugin_stack.rs": "4e9a38e49e109a872bf1ae00a763b469929e3488b026f11aeb15d9d36030245a",
+      "crates/core/src/entity.rs": "2c19fee7953c895a47aca70406d13f5695eeb859af5f87cb8c3466cba184fad8",
+      "crates/core/src/entity_interaction.rs": "9dda8a479c75b3a2b85fa83f1b6b2633c6e6da538d9bb9f1989d9a48ae59b590",
+      "crates/core/src/estimator.rs": "fc8f4ba969629cc7e1d93b090bd4231b8470bfe26c77754ce7a83796f687677a",
+      "crates/core/src/lib.rs": "c9e4a51ea610b0f48dd9b5fd7f0dea16a3bb3ed9ebec036bfff4d76f01d4fd82",
       "crates/core/src/math/angles.rs": "9628498ed1c135b0b28f6d241bd2d0656e430b57cfb7bcaef27203dae3d396a1",
       "crates/core/src/math/integration.rs": "0c966d36ca181e7c6cdb16bcadcd7b5b798b9d4ba0082e1e0d7ca8de1941753e",
       "crates/core/src/math/quaternion.rs": "9999467b5b279dd4980256b51e4079cc329f115422c7dd0ef908e2966213f905",
@@ -52,12 +53,12 @@
       "crates/core/src/parse/mission.rs": "d527d54db09423c7926a394599c5650cb62b22fd51024e3d9aaa8628b4b1f158",
       "crates/core/src/parse/params.rs": "e3c557f28b8551adcaf53224c9f7b51a2906d37e98010dea2bec5d3b971dd43b",
       "crates/core/src/parse/xml.rs": "da6e5a82ace1508df34bcaf3dca8ac0404a5f2570f730c3a2e21c8ba752c0148",
-      "crates/core/src/parse/xml_mission.rs": "c632a7490f1c8aef95dcba48e08c174a51447917242a85a938591c0a818de50a",
-      "crates/core/src/parse/yaml_mission.rs": "e0418e72886d0f6fc7fa586aed1b95ed29082a63f0a9ae16921a2da32497857e",
+      "crates/core/src/parse/xml_mission.rs": "af2ac02c71375d346d36aade0f6c5386ba8a98dce2b0217666f589e276b06924",
+      "crates/core/src/parse/yaml_mission.rs": "54c4d773b70097f30e8bc376f49921fdfafcb8518d9c2f727ade0a5b9ee5538c",
       "crates/core/src/parse.rs": "91740d01bbeed15e5f3c4a4df93e823b6ca231dbdaa0c18be65c3f3fdfa72a31",
       "crates/core/src/plugin/autonomy/auction_assign/auction_assign.rs": "8ef45bc2790536e19ffc073a11103775721f04e5bc0b10ba0b89635ca3f15484",
       "crates/core/src/plugin/autonomy/constant_velocity/constant_velocity.rs": "7b20e27b24fa6f6463e6e98d3e06bf62836581e4d74cb369e56ce754f8b8bd96",
-      "crates/core/src/plugin/autonomy/straight/straight.rs": "b63a3398c97de28da9bcd845e85afdb12f83be7c28db1d2a7e8e3a4fd41f1c10",
+      "crates/core/src/plugin/autonomy/straight/straight.rs": "92251479c15d464b15756214d39cf48746c1f360c02d4b2f59272c54eb5f98b8",
       "crates/core/src/plugin/autonomy/waypoint_follower/waypoint_follower.rs": "39dec41a88c3a2e9cd1946ecc6ea1997a1de741b52877a99ed087a357b6d6e4f",
       "crates/core/src/plugin/autonomy.rs": "46425730b534ddad99acf74ca266779ee397c0f6ec87019a48f3e6928d1d2f57",
       "crates/core/src/plugin/controller/aircraft_pid/aircraft_pid.rs": "2573e839e8da2aa453c865ffe85264c803117270c8eff9842f6a15734dd094d3",
@@ -69,7 +70,7 @@
       "crates/core/src/plugin/estimator.rs": "963c4290402e7c857428a0ce93d409d8048c407a675a557a155d4b49f27109da",
       "crates/core/src/plugin/interaction/boundary/boundary.rs": "21bfb6b57b921f461d87b2cedc78f19b473a1ecb1dda415a3844914b35e052dd",
       "crates/core/src/plugin/interaction/ground_collision/ground_collision.rs": "4c62edc768499b28eb02359385b85bf633c875f2564f0c7f61a7d8faa68e81cf",
-      "crates/core/src/plugin/interaction/simple_collision/simple_collision.rs": "764b649cbbb27c96060660d29b49c33da5bbbf78784e1d3f67ae7a3b8732b303",
+      "crates/core/src/plugin/interaction/simple_collision/simple_collision.rs": "837dfb5b7aba5567de7b5dedc9ca055eefce9e477ef7350a99c5cac24dea6248",
       "crates/core/src/plugin/interaction/waypoint_broadcast/waypoint_broadcast.rs": "33633b04d0535cd6642179db639a49a499a8dedfecec6f3f2084aa47dcb893c1",
       "crates/core/src/plugin/interaction.rs": "c6425ac661cd734149d7d1428dcd15a9fc351b82420a1f3783c6afa2b1e239d9",
       "crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs": "54fe02ed8e67bfac86f4506c00e95545c6fc413d0867f7ef2eaa35698f6597a0",
@@ -83,41 +84,42 @@
       "crates/core/src/plugin/motion/single_integrator/single_integrator.rs": "b8496f00c56d47ac801111d8958d3f5d723fe57783fb63b3a194661b7e1eedc7",
       "crates/core/src/plugin/motion.rs": "90e64ac64dc8fc7bda9a6ac76a979a30c25a6be7892cc36c3c61264196e0d0a9",
       "crates/core/src/plugin/network/global_network/global_network.rs": "fcc0abf4b154cde0d22fca90d3ead50cb0efe626fe162da4f916af79cf5e5ecc",
-      "crates/core/src/plugin/network/local_network/local_network.rs": "877c181f540de69c0074c4bd13c9860b70ed8e230bde9771ec542816a65c0883",
-      "crates/core/src/plugin/network/sphere_network/sphere_network.rs": "c3f065d8fc6ffdc0c71fe9ce5d6eb6767509e087e5b7410b1d95ffa088a909c3",
+      "crates/core/src/plugin/network/local_network/local_network.rs": "a0ab7bf893f7ae4e3239d2869b919cdacd969fc8b1714294735d72027e51d19f",
+      "crates/core/src/plugin/network/sphere_network/sphere_network.rs": "0b63d444c2ecbdc59dac4e0ecf33091a862aa8bc8278d4a4e992cc53b4228a9d",
       "crates/core/src/plugin/network.rs": "e8e87a29b0ebe92f97327a011477fdcd9c848baa539fb7714f4b7d5f27a7e883",
-      "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs": "3496f6f3182469eddb83b6b7f7e8025a9db7e6794c91b8310dd21201ba3cf5ff",
-      "crates/core/src/plugin/sensor/noisy_position/noisy_position.rs": "1dfb50b4180b547e31da9aa7659605ab541f1ea3c320618c877243cac69b7434",
-      "crates/core/src/plugin/sensor/noisy_state/noisy_state.rs": "a443ca264bfa14c0b496ecf18530309c36f88d3c735965e504f7e1aa191bc3a0",
+      "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs": "3ba1a190496d07a2505073e71669a00f9c95f067cf8d09b3c57360b7d277eb1e",
+      "crates/core/src/plugin/sensor/noisy_position/noisy_position.rs": "f1915b8c93ccf0e15e2c42b899a778ae678ccc76def7959a5e7677307a8b1112",
+      "crates/core/src/plugin/sensor/noisy_state/noisy_state.rs": "16101302f7de0412d5dc9fdb5f47f9e083d5aff4820f01b054e3058221cef4d6",
       "crates/core/src/plugin/sensor.rs": "df3624a8207d3f276ad0ebc65dd9581fc34c52aa65ceda2eeb9f5211a893577e",
-      "crates/core/src/plugin.rs": "c056e8e8cc99c57de1ae5773dd72f8191c3420f2e9aab4762776e41ccb83ae69",
+      "crates/core/src/plugin.rs": "d908e542e95518d8a38430e290b8d02353b46fe1fd0b1fef2c64aebb5cf9e107",
       "crates/core/src/plugin_manager/builtins.rs": "d50238c45c8cb2c61ff7db80f5bdef2b3bfc8cc470c1f06502ce0d9fa5c3053e",
-      "crates/core/src/plugin_manager/entity_plugin.rs": "61d60aac9c6fededd731107899346f6c089a44812443603be39fc3a01f985575",
+      "crates/core/src/plugin_manager/entity_plugin.rs": "f5f5cdae85acfec447cc2db79d2433e97470c5759ae5e98738a17d11908ee607",
       "crates/core/src/plugin_manager/registry.rs": "897008cb24f14753d0b720662cd6706ba4d713a7fc5b883c98f209d8b144cd92",
       "crates/core/src/plugin_manager/supported_options.rs": "063012180e1b28b1969ca50283a1d1dfd4dd902e8504045e6effef18218f650f",
       "crates/core/src/plugin_manager.rs": "52536023b89ca1dbd2ea03af253783a6fa9ad9c481f6904de62ccf0aa0ed5741",
       "crates/core/src/protocol/frame.rs": "f5d22dd737bd0422d144d194eff896b26878a07def488965c1f25b8908e40c2c",
       "crates/core/src/protocol/wire.rs": "2fa24ec1a3496d19cb7add20c03a9dcd5f96afbf6c31c454810e63cca913521b",
       "crates/core/src/protocol.rs": "f9f5a77b5d602a590974ac7f3b3e82072a71f6ab4efb55e46b36f2eaa5d07ae1",
-      "crates/core/src/pubsub/messages.rs": "58d64c4fc05f19694f0280ab9c52ae43867c11ebde6a232851e44326359d88de",
+      "crates/core/src/pubsub/messages.rs": "f88d5facf6cb3926003fa3243982ad82f601ce49a3339fff6c57080be34dc550",
       "crates/core/src/pubsub/network.rs": "bff93acc61471e93e13211376c2f692a9045c13f1385c815b5f2ca05f093903c",
       "crates/core/src/pubsub.rs": "dd30c5af83b6016b2b3b61a4a61fda73430e2faced019f92693b4330032844bd",
-      "crates/core/src/scenario.rs": "43130a0c66a6881350331630445b6ab8c5f2772cac9000ecee1e3579d13067d5",
+      "crates/core/src/scenario.rs": "cebbf2ce5f9b4114579a3d103f5ba3baed3b9099a14574e1d8be5a5f2ba5dd97",
       "crates/core/src/sensor/readings.rs": "301668467260e133fb739c9667eb50de5f03cb5a695d308410f8a611cc9e3545",
-      "crates/core/src/sensor.rs": "4fd1d0a08a5ddf1a0ec9e3ba27af6e383b8a3aa4b8eca189ab0be0b1d1f880dd",
+      "crates/core/src/sensor.rs": "34fd96ea12541fa4d38c37cdbd5598290a164abad6d04b763b33a9d5ec65230f",
       "crates/core/src/simcontrol/generation.rs": "2be38549065707598f9d41d89e3b34425b5d427fcd6a7b97cf9bbf4a8aee4f96",
       "crates/core/src/simcontrol/scheduler.rs": "c061b5973379e33e78bf07df4d5461e7547d872e7b29e4e8d0bf8f49090f3b8a",
       "crates/core/src/simcontrol/summary.rs": "ebc1ea53e57f750fc358a45ee675a45ddf1282e835fb47b5fadf99e009623d7d",
       "crates/core/src/simcontrol/trace.rs": "e3800f787b2a69074a31b3c3ae2d31bb1c16f213ef245c7755d287cc8dc3151e",
-      "crates/core/src/simcontrol/world_plugins.rs": "8570a241bbacad938ef30aab0d65c8e5ed4d5d309ab12da8718a7a1a65161098",
-      "crates/core/src/simcontrol.rs": "d9d4c72295e544eb67c6acb359105518e3ddc8cfa786e2aeaf2e62539696c061",
-      "crates/core/tests/estimation.rs": "b428ed7b513c150d32267203e0524c9d69d4ee4edf7add9b8c0f2b9efb2893f1",
+      "crates/core/src/simcontrol/world_plugins.rs": "dc64e2018a04546f23eef2ef5ebbab2c1ca0c883dd2efd28fc60a49d54b47e35",
+      "crates/core/src/simcontrol.rs": "137a7c053eb4b824732ee2090ae99c2408e1e19bc67cfa3656c902e320f2912e",
+      "crates/core/tests/estimation.rs": "1146e345a98080197253f2672a984d1d21b8b6fdd72fb1619502f2bd5e58bf05",
       "crates/core/tests/math_helpers.rs": "2fb22f72cf7d3cf962f6f149b2a8bdf1b9e7b652ffb0032f10dfe9f7a777eeff",
       "crates/core/tests/navigation.rs": "2073166a0af96c8b28ca9217d7ffd79e9088a21672274b512e6bf685f6ba9096",
       "crates/core/tests/noisy_state.rs": "80796cec098887eb44b043261e637f60fc6ba930422e4e302a26618a0f6808ec",
       "crates/core/tests/plugin_contracts.rs": "1b5e08f3bb01123f8661d11f046dd0b1c1c21f9288a7a48dd5700e51af20b122",
       "crates/core/tests/rust_scenario.rs": "937c642e8d7e8eb4ca50698b83f64226710856e6b773e2b3bb4a57c9c0e3a642",
       "crates/core/tests/simulation_regression.rs": "11445d00eab473d7aa82e0e343258e350f58cabd386dfc9e6112505dae1c5b22",
+      "crates/core/tests/spatial_lookup.rs": "29585fe86ec8e7e1a8cd2cbea2224387d09e8566b6ab7da1eb792755eb05890b",
       "crates/core/tests/support/autonomy.rs": "6119268d94085b5aaa7db5dcceb198a3e982e03a9871098a3c6f9c1fb92ca084",
       "crates/core/tests/support/controller.rs": "b1094065000aa72c42567e3ea79f8e9dcf56da67f28170157de55b1a02f0acb9",
       "crates/core/tests/support/estimator.rs": "c9d56007e82d33f6a0df938707cbe98e3a2a928a89739965167d450697de0019",
@@ -137,7 +139,7 @@
       "crates/starter/src/lib.rs": "0552947f6dde22dc5def542af5812908c6951484aa04bbfbd418d806c7d5776e",
       "crates/starter/tests/dead_reckoning.rs": "fed6518d935c40f02a1af998c9c6e3d986a69dfafcbe2ba460cdfcdb2f6671d0",
       "crates/starter/tests/follow_nearest.rs": "83c6f8d89696fb7874859a4d6c2dc03c59ac590a5cb9e0959b665eb1d35b277c",
-      "reference/benchmark_runner.rs": "db492f33e32f8e91cc2ea385e98a93768f2c30f7e40e3535f69d836463a80f9c"
+      "reference/benchmark_runner.rs": "a70e48837eb465c045cb1b55cf9224c1a0ac319a697728232ec2000945fcdb96"
     },
     "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)",
     "cpp_build": "paper/data/benchmark-native/build.sh; Apple clang version 21.0.0 (clang-2100.1.1.101)"
@@ -151,51 +153,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.09926900127902627,
-            0.10282162600196898,
-            0.10756475105881691
+            0.1011908760000324,
+            0.10233258400000977,
+            0.09978945900002145
           ],
-          "median_s": 0.10282162600196898,
-          "min_s": 0.09926900127902627,
-          "max_s": 0.10756475105881691,
-          "startup_s": 0.1383632079232484,
-          "peak_mb": 9.96875
+          "median_s": 0.1011908760000324,
+          "min_s": 0.09978945900002145,
+          "max_s": 0.10233258400000977,
+          "startup_s": 0.09181104099997128,
+          "peak_mb": 9.875
         },
         "cpp-8": {
           "samples_s": [
-            0.9642799578141421,
-            0.9780411659739912,
-            0.9865483748726547
+            0.9841655000000173,
+            0.9862302090000412,
+            1.0045018339999956
           ],
-          "median_s": 0.9780411659739912,
-          "min_s": 0.9642799578141421,
-          "max_s": 0.9865483748726547,
-          "startup_s": 0.13657416705973446,
-          "peak_mb": 10.5
+          "median_s": 0.9862302090000412,
+          "min_s": 0.9841655000000173,
+          "max_s": 1.0045018339999956,
+          "startup_s": 0.09292066599999771,
+          "peak_mb": 10.375
         },
         "rust-1": {
           "samples_s": [
-            0.09004537505097687,
-            0.08994616707786918,
-            0.09728770912624896
+            0.09665204199995969,
+            0.0987829579999584,
+            0.09604254199996376
           ],
-          "median_s": 0.09004537505097687,
-          "min_s": 0.08994616707786918,
-          "max_s": 0.09728770912624896,
-          "startup_s": 0.00649199984036386,
-          "peak_mb": 3.765625
+          "median_s": 0.09665204199995969,
+          "min_s": 0.09604254199996376,
+          "max_s": 0.0987829579999584,
+          "startup_s": 0.003657833000033861,
+          "peak_mb": 3.90625
         },
         "rust-8": {
           "samples_s": [
-            0.4306752919219434,
-            0.42854179185815156,
-            0.421025917166844
+            0.46929837499999394,
+            0.4648167920000219,
+            0.47883837500000936
           ],
-          "median_s": 0.42854179185815156,
-          "min_s": 0.421025917166844,
-          "max_s": 0.4306752919219434,
-          "startup_s": 0.004758707946166396,
-          "peak_mb": 4.5625
+          "median_s": 0.46929837499999394,
+          "min_s": 0.4648167920000219,
+          "max_s": 0.47883837500000936,
+          "startup_s": 0.004287874999988617,
+          "peak_mb": 4.90625
         }
       },
       "repeatable": {
@@ -206,7 +208,7 @@
       },
       "hangs": {
         "cpp-1": 0,
-        "cpp-8": 1,
+        "cpp-8": 0,
         "rust-1": 0,
         "rust-8": 0
       },
@@ -265,51 +267,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.406487082131207,
-            0.4459386251401156,
-            0.43162541603669524
+            0.3893770839999888,
+            0.39587612500002933,
+            0.39010404100002916
           ],
-          "median_s": 0.43162541603669524,
-          "min_s": 0.406487082131207,
-          "max_s": 0.4459386251401156,
-          "startup_s": 0.1606172090396285,
-          "peak_mb": 18.921875
+          "median_s": 0.39010404100002916,
+          "min_s": 0.3893770839999888,
+          "max_s": 0.39587612500002933,
+          "startup_s": 0.11965812500000084,
+          "peak_mb": 18.890625
         },
         "cpp-8": {
           "samples_s": [
-            2.486773791955784,
-            2.872952959034592,
-            2.8494306670036167
+            2.587043165999944,
+            2.438509582999984,
+            2.563966042000004
           ],
-          "median_s": 2.8494306670036167,
-          "min_s": 2.486773791955784,
-          "max_s": 2.872952959034592,
-          "startup_s": 0.169139500008896,
-          "peak_mb": 19.265625
+          "median_s": 2.563966042000004,
+          "min_s": 2.438509582999984,
+          "max_s": 2.587043165999944,
+          "startup_s": 0.12023162500003082,
+          "peak_mb": 19.328125
         },
         "rust-1": {
           "samples_s": [
-            0.360542707843706,
-            0.35650870902463794,
-            0.37756887497380376
+            0.35915274999996427,
+            0.3626030840000567,
+            0.35834937600003514
           ],
-          "median_s": 0.360542707843706,
-          "min_s": 0.35650870902463794,
-          "max_s": 0.37756887497380376,
-          "startup_s": 0.006347374990582466,
-          "peak_mb": 5.390625
+          "median_s": 0.35915274999996427,
+          "min_s": 0.35834937600003514,
+          "max_s": 0.3626030840000567,
+          "startup_s": 0.0054704579999906855,
+          "peak_mb": 5.5
         },
         "rust-8": {
           "samples_s": [
-            0.8397713326849043,
-            0.9232197077944875,
-            0.8966282089240849
+            0.8020359579999763,
+            0.8296264579999502,
+            0.8054657499999962
           ],
-          "median_s": 0.8966282089240849,
-          "min_s": 0.8397713326849043,
-          "max_s": 0.9232197077944875,
-          "startup_s": 0.00666287518106401,
-          "peak_mb": 6.359375
+          "median_s": 0.8054657499999962,
+          "min_s": 0.8020359579999763,
+          "max_s": 0.8296264579999502,
+          "startup_s": 0.006101417000024867,
+          "peak_mb": 6.671875
         }
       },
       "repeatable": {
@@ -379,51 +381,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            1.7012937080580741,
-            1.7191784579772502,
-            1.7346939998678863
+            1.6045569999999998,
+            1.6132649170000377,
+            1.5658610839999483
           ],
-          "median_s": 1.7191784579772502,
-          "min_s": 1.7012937080580741,
-          "max_s": 1.7346939998678863,
-          "startup_s": 0.2756193340755999,
-          "peak_mb": 54.390625
+          "median_s": 1.6045569999999998,
+          "min_s": 1.5658610839999483,
+          "max_s": 1.6132649170000377,
+          "startup_s": 0.22561374999997952,
+          "peak_mb": 54.359375
         },
         "cpp-8": {
           "samples_s": [
-            9.44900816702284,
-            9.11218541697599,
-            9.172253041993827
+            8.998522583999943,
+            8.838296250999974,
+            9.186061000999985
           ],
-          "median_s": 9.172253041993827,
-          "min_s": 9.11218541697599,
-          "max_s": 9.44900816702284,
-          "startup_s": 0.2814764999784529,
-          "peak_mb": 54.96875
+          "median_s": 8.998522583999943,
+          "min_s": 8.838296250999974,
+          "max_s": 9.186061000999985,
+          "startup_s": 0.2319500410000046,
+          "peak_mb": 54.953125
         },
         "rust-1": {
           "samples_s": [
-            1.3850494171492755,
-            1.4242913331836462,
-            1.4483167910948396
+            1.3717999579999969,
+            1.3748692080000637,
+            1.4061480420000407
           ],
-          "median_s": 1.4242913331836462,
-          "min_s": 1.3850494171492755,
-          "max_s": 1.4483167910948396,
-          "startup_s": 0.025679499842226505,
-          "peak_mb": 11.703125
+          "median_s": 1.3748692080000637,
+          "min_s": 1.3717999579999969,
+          "max_s": 1.4061480420000407,
+          "startup_s": 0.012119916999949965,
+          "peak_mb": 11.96875
         },
         "rust-8": {
           "samples_s": [
-            1.650601333938539,
-            1.6149342919234186,
-            1.5512141261715442
+            1.531502875000001,
+            1.5415588329999537,
+            1.5711325830000078
           ],
-          "median_s": 1.6149342919234186,
-          "min_s": 1.5512141261715442,
-          "max_s": 1.650601333938539,
-          "startup_s": 0.026902582962065935,
-          "peak_mb": 12.640625
+          "median_s": 1.5415588329999537,
+          "min_s": 1.531502875000001,
+          "max_s": 1.5711325830000078,
+          "startup_s": 0.011900167000021611,
+          "peak_mb": 13.140625
         }
       },
       "repeatable": {
@@ -493,51 +495,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.1354425000026822,
-            0.13063645805232227,
-            0.1318702909629792
+            0.12487524999994548,
+            0.13207395799997812,
+            0.12737583299997368
           ],
-          "median_s": 0.1318702909629792,
-          "min_s": 0.13063645805232227,
-          "max_s": 0.1354425000026822,
-          "startup_s": 0.1423422920051962,
-          "peak_mb": 9.9375
+          "median_s": 0.12737583299997368,
+          "min_s": 0.12487524999994548,
+          "max_s": 0.13207395799997812,
+          "startup_s": 0.1003314170000067,
+          "peak_mb": 9.828125
         },
         "cpp-8": {
           "samples_s": [
-            1.2904836251400411,
-            1.2662603340577334,
-            1.2707670009694993
+            1.1702976249999892,
+            1.2296177079998643,
+            1.2627342909999015
           ],
-          "median_s": 1.2707670009694993,
-          "min_s": 1.2662603340577334,
-          "max_s": 1.2904836251400411,
-          "startup_s": 0.1457964580040425,
-          "peak_mb": 10.421875
+          "median_s": 1.2296177079998643,
+          "min_s": 1.1702976249999892,
+          "max_s": 1.2627342909999015,
+          "startup_s": 0.10446154200008095,
+          "peak_mb": 10.328125
         },
         "rust-1": {
           "samples_s": [
-            0.11075587500818074,
-            0.09108929196372628,
-            0.09686816693283617
+            0.09349283400001696,
+            0.09448020800004997,
+            0.09456195900008879
           ],
-          "median_s": 0.09686816693283617,
-          "min_s": 0.09108929196372628,
-          "max_s": 0.11075587500818074,
-          "startup_s": 0.0076767499558627605,
-          "peak_mb": 3.8125
+          "median_s": 0.09448020800004997,
+          "min_s": 0.09349283400001696,
+          "max_s": 0.09456195900008879,
+          "startup_s": 0.00886858299998039,
+          "peak_mb": 3.984375
         },
         "rust-8": {
           "samples_s": [
-            0.5500145419500768,
-            0.5248716250061989,
-            0.5446024578996003
+            0.515412834000017,
+            0.5165236249999907,
+            0.5226730010000438
           ],
-          "median_s": 0.5446024578996003,
-          "min_s": 0.5248716250061989,
-          "max_s": 0.5500145419500768,
-          "startup_s": 0.0081837500911206,
-          "peak_mb": 4.515625
+          "median_s": 0.5165236249999907,
+          "min_s": 0.515412834000017,
+          "max_s": 0.5226730010000438,
+          "startup_s": 0.009453832999952283,
+          "peak_mb": 4.953125
         }
       },
       "repeatable": {
@@ -573,7 +575,7 @@
           "candidate_frames": 601,
           "compared_entity_states": 38464,
           "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
+          "max_velocity_error_mps": 1.7763568394002505e-15,
           "max_orientation_error_rad": 0.0,
           "max_angular_velocity_error_radps": 0.0,
           "max_timestamp_error_s": 0.0,
@@ -587,7 +589,7 @@
           "candidate_frames": 601,
           "compared_entity_states": 38464,
           "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
+          "max_velocity_error_mps": 1.7763568394002505e-15,
           "max_orientation_error_rad": 0.0,
           "max_angular_velocity_error_radps": 0.0,
           "max_timestamp_error_s": 0.0,
@@ -607,51 +609,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.5212913749273866,
-            0.5115982908755541,
-            0.5234494989272207
+            0.5048070419999249,
+            0.5058372500000132,
+            0.5151091249999808
           ],
-          "median_s": 0.5212913749273866,
-          "min_s": 0.5115982908755541,
-          "max_s": 0.5234494989272207,
-          "startup_s": 0.17127108410932124,
-          "peak_mb": 18.96875
+          "median_s": 0.5058372500000132,
+          "min_s": 0.5048070419999249,
+          "max_s": 0.5151091249999808,
+          "startup_s": 0.12433204100000239,
+          "peak_mb": 18.828125
         },
         "cpp-8": {
           "samples_s": [
-            3.5285119579639286,
-            3.3796159161720425,
-            3.4692676241975278
+            3.2863341249998257,
+            3.54692058299986,
+            3.4379081249999217
           ],
-          "median_s": 3.4692676241975278,
-          "min_s": 3.3796159161720425,
-          "max_s": 3.5285119579639286,
-          "startup_s": 0.17751779197715223,
-          "peak_mb": 19.25
+          "median_s": 3.4379081249999217,
+          "min_s": 3.2863341249998257,
+          "max_s": 3.54692058299986,
+          "startup_s": 0.1303616250000914,
+          "peak_mb": 19.328125
         },
         "rust-1": {
           "samples_s": [
-            0.3562900838442147,
-            0.3613399169407785,
-            0.3655500407330692
+            0.35802879099992424,
+            0.3554305420000219,
+            0.3578096239999695
           ],
-          "median_s": 0.3613399169407785,
-          "min_s": 0.3562900838442147,
-          "max_s": 0.3655500407330692,
-          "startup_s": 0.009581000078469515,
-          "peak_mb": 5.671875
+          "median_s": 0.3578096239999695,
+          "min_s": 0.3554305420000219,
+          "max_s": 0.35802879099992424,
+          "startup_s": 0.010202292000030866,
+          "peak_mb": 5.765625
         },
         "rust-8": {
           "samples_s": [
-            0.8229824579320848,
-            0.7869143330026418,
-            0.835720542119816
+            0.7423185000000103,
+            0.7421214160000318,
+            0.7639650410000058
           ],
-          "median_s": 0.8229824579320848,
-          "min_s": 0.7869143330026418,
-          "max_s": 0.835720542119816,
-          "startup_s": 0.010624374961480498,
-          "peak_mb": 6.5
+          "median_s": 0.7423185000000103,
+          "min_s": 0.7421214160000318,
+          "max_s": 0.7639650410000058,
+          "startup_s": 0.011843958999975257,
+          "peak_mb": 6.921875
         }
       },
       "repeatable": {
@@ -687,7 +689,7 @@
           "candidate_frames": 601,
           "compared_entity_states": 153856,
           "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
+          "max_velocity_error_mps": 1.7763568394002505e-15,
           "max_orientation_error_rad": 0.0,
           "max_angular_velocity_error_radps": 0.0,
           "max_timestamp_error_s": 0.0,
@@ -701,7 +703,7 @@
           "candidate_frames": 601,
           "compared_entity_states": 153856,
           "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
+          "max_velocity_error_mps": 1.7763568394002505e-15,
           "max_orientation_error_rad": 0.0,
           "max_angular_velocity_error_radps": 0.0,
           "max_timestamp_error_s": 0.0,
@@ -721,51 +723,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            2.0563124581240118,
-            2.1089938329532743,
-            2.531071708071977
+            2.0059388759999592,
+            1.9707904179999787,
+            1.9901781669999536
           ],
-          "median_s": 2.1089938329532743,
-          "min_s": 2.0563124581240118,
-          "max_s": 2.531071708071977,
-          "startup_s": 0.2842082919087261,
-          "peak_mb": 54.3125
+          "median_s": 1.9901781669999536,
+          "min_s": 1.9707904179999787,
+          "max_s": 2.0059388759999592,
+          "startup_s": 0.22599566600001708,
+          "peak_mb": 54.234375
         },
         "cpp-8": {
           "samples_s": [
-            12.84651729092002,
-            13.344420666107908,
-            13.254097542027012
+            12.15987666600006,
+            12.93566408300012,
+            12.280624584000066
           ],
-          "median_s": 13.254097542027012,
-          "min_s": 12.84651729092002,
-          "max_s": 13.344420666107908,
-          "startup_s": 0.30744137498550117,
-          "peak_mb": 54.9375
+          "median_s": 12.280624584000066,
+          "min_s": 12.15987666600006,
+          "max_s": 12.93566408300012,
+          "startup_s": 0.24482799999998406,
+          "peak_mb": 55.0
         },
         "rust-1": {
           "samples_s": [
-            1.4028938331175596,
-            1.3861734990496188,
-            1.395778208039701
+            1.39963391699996,
+            1.3914727499998207,
+            1.4002737909999041
           ],
-          "median_s": 1.395778208039701,
-          "min_s": 1.3861734990496188,
-          "max_s": 1.4028938331175596,
-          "startup_s": 0.028550291899591684,
-          "peak_mb": 12.34375
+          "median_s": 1.39963391699996,
+          "min_s": 1.3914727499998207,
+          "max_s": 1.4002737909999041,
+          "startup_s": 0.01647125000010874,
+          "peak_mb": 12.765625
         },
         "rust-8": {
           "samples_s": [
-            1.302324583986774,
-            1.3104044578503817,
-            1.8358749588951468
+            1.2574436669999614,
+            1.291974959000072,
+            1.2433647920000794
           ],
-          "median_s": 1.3104044578503817,
-          "min_s": 1.302324583986774,
-          "max_s": 1.8358749588951468,
-          "startup_s": 0.030293500050902367,
-          "peak_mb": 13.34375
+          "median_s": 1.2574436669999614,
+          "min_s": 1.2433647920000794,
+          "max_s": 1.291974959000072,
+          "startup_s": 0.017864207999991777,
+          "peak_mb": 13.84375
         }
       },
       "repeatable": {
@@ -801,7 +803,7 @@
           "candidate_frames": 601,
           "compared_entity_states": 615424,
           "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
+          "max_velocity_error_mps": 1.7763568394002505e-15,
           "max_orientation_error_rad": 0.0,
           "max_angular_velocity_error_radps": 0.0,
           "max_timestamp_error_s": 0.0,
@@ -815,7 +817,7 @@
           "candidate_frames": 601,
           "compared_entity_states": 615424,
           "max_position_error_m": 2.2737367544323206e-13,
-          "max_velocity_error_mps": 0.0,
+          "max_velocity_error_mps": 1.7763568394002505e-15,
           "max_orientation_error_rad": 0.0,
           "max_angular_velocity_error_radps": 0.0,
           "max_timestamp_error_s": 0.0,
@@ -835,51 +837,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.2749926659744233,
-            0.2744135831017047,
-            0.26340608298778534
+            0.26196604199992635,
+            0.26151487499998893,
+            0.2617748339998798
           ],
-          "median_s": 0.2744135831017047,
-          "min_s": 0.26340608298778534,
-          "max_s": 0.2749926659744233,
-          "startup_s": 0.1785143339075148,
-          "peak_mb": 9.984375
+          "median_s": 0.2617748339998798,
+          "min_s": 0.26151487499998893,
+          "max_s": 0.26196604199992635,
+          "startup_s": 0.11840087500002028,
+          "peak_mb": 9.828125
         },
         "cpp-8": {
           "samples_s": [
-            0.33402749989181757,
-            0.3354396668728441,
-            0.3131904578767717
+            0.323051959000054,
+            0.325934167000014,
+            0.3179438760000721
           ],
-          "median_s": 0.33402749989181757,
-          "min_s": 0.3131904578767717,
-          "max_s": 0.3354396668728441,
-          "startup_s": 0.18101900001056492,
-          "peak_mb": 10.65625
+          "median_s": 0.323051959000054,
+          "min_s": 0.3179438760000721,
+          "max_s": 0.325934167000014,
+          "startup_s": 0.11840791599991007,
+          "peak_mb": 10.609375
         },
         "rust-1": {
           "samples_s": [
-            0.21467037498950958,
-            0.21324291685596108,
-            0.2214703750796616
+            0.20305487500002073,
+            0.19931750000000648,
+            0.20039541699998153
           ],
-          "median_s": 0.21467037498950958,
-          "min_s": 0.21324291685596108,
-          "max_s": 0.2214703750796616,
-          "startup_s": 0.007124708034098148,
-          "peak_mb": 4.578125
+          "median_s": 0.20039541699998153,
+          "min_s": 0.19931750000000648,
+          "max_s": 0.20305487500002073,
+          "startup_s": 0.008448625000028187,
+          "peak_mb": 4.765625
         },
         "rust-8": {
           "samples_s": [
-            0.23827458312734962,
-            0.22910341620445251,
-            0.23516524909064174
+            0.20663949999993747,
+            0.2226073339999175,
+            0.21603137499994318
           ],
-          "median_s": 0.23516524909064174,
-          "min_s": 0.22910341620445251,
-          "max_s": 0.23827458312734962,
-          "startup_s": 0.006872416939586401,
-          "peak_mb": 6.609375
+          "median_s": 0.21603137499994318,
+          "min_s": 0.20663949999993747,
+          "max_s": 0.2226073339999175,
+          "startup_s": 0.008633458000076644,
+          "peak_mb": 7.09375
         }
       },
       "repeatable": {
@@ -900,33 +902,33 @@
           "reference_frames": 601,
           "candidate_frames": 601,
           "compared_entity_states": 19232,
-          "max_position_error_m": 43.018320513640006,
-          "max_velocity_error_mps": 14.232586405911032,
-          "max_orientation_error_rad": 0.7623648375351129,
+          "max_position_error_m": 46.75183032190766,
+          "max_velocity_error_mps": 16.117309173986474,
+          "max_orientation_error_rad": 0.8759282527939313,
           "max_angular_velocity_error_radps": 0.0,
           "max_timestamp_error_s": 0.0,
           "mismatch_count": 19168,
           "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.06944324269631856 m, velocity=1.3891083024494049 m/s, orientation=0.0901387429571296 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.15381640059901738 m, velocity=3.0730746140444967 m/s, orientation=0.20001473241045692 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.0028047535971227238 m, velocity=0.056110659571711186 m/s, orientation=5.369816830830491e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.15494806071409262 m, velocity=3.1070051515263377 m/s, orientation=0.2000147327151679 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.1544191292377857 m, velocity=3.090969907090371 m/s, orientation=0.20001473229604214 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.15465740272554734 m, velocity=3.097802731256593 m/s, orientation=0.20001473230660427 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.15496693217165583 m, velocity=3.1075828625800566 m/s, orientation=0.2000147327318626 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.15420914603694383 m, velocity=3.0847768375545734 m/s, orientation=0.20001473305817796 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.15438705570618594 m, velocity=3.0901412163629014 m/s, orientation=0.20001473425961902 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.07659958818173541 m, velocity=1.532625095780733 m/s, orientation=0.09923937933082085 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15478717052517466 m, velocity=3.1011785662808404 m/s, orientation=0.20001473237338724 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.007883116685499965 m, velocity=0.15770614487157306 m/s, orientation=1.8186838396439775e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.006618193300926526 m, velocity=0.13240064720551564 m/s, orientation=1.4577863812881968e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.1427960880672415 m, velocity=2.861422745263502 m/s, orientation=0.1845248994418333 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.1544519313168825 m, velocity=3.091735581957447 m/s, orientation=0.20001473230513245 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.15466931599530906 m, velocity=3.098431709416165 m/s, orientation=0.20001473245478454 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.0048588252217524166 m, velocity=0.09720350764892909 m/s, orientation=7.413154402350262e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.003056413880850952 m, velocity=0.06114526420354275 m/s, orientation=1.1082934674784037e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.15326238143668125 m, velocity=3.0559119951824774 m/s, orientation=0.20001473257443972 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.03216162349929637 m, velocity=0.6440236310567803 m/s, orientation=0.033468945639242 rad, angular velocity=0.0 rad/s"
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.15381026321182129 m, velocity=3.0720448920370687 m/s, orientation=0.20001473317065968 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.0024077602525568007 m, velocity=0.04816858779311092 m/s, orientation=1.8241610947120585e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.004309025101944519 m, velocity=0.08620444958399925 m/s, orientation=2.6839775739195365e-07 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.15455491250811002 m, velocity=3.090784978367838 m/s, orientation=0.2000147324648369 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.15529071158871718 m, velocity=3.1152670005249203 m/s, orientation=0.20001473229640435 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.15422417201909652 m, velocity=3.085194658979973 m/s, orientation=0.2000147322803686 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.004347378339049999 m, velocity=0.0869717287560757 m/s, orientation=2.1638428134224662e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.0014513919451620905 m, velocity=0.02903590633948558 m/s, orientation=1.2655804778796164e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.0010835383026061409 m, velocity=0.021676790531987605 m/s, orientation=1.5976256536393908e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.07636052496049583 m, velocity=1.5266458968212235 m/s, orientation=0.09923937923098293 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.1547194213806407 m, velocity=3.0993786013762294 m/s, orientation=0.20001473477087922 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.1536056247014417 m, velocity=3.0666117984898804 m/s, orientation=0.20001473237153863 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.15412496128951736 m, velocity=3.081470563951526 m/s, orientation=0.20001473301176678 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.013629622389469876 m, velocity=0.27309982528346033 m/s, orientation=0.015489833738423426 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.003005146041686311 m, velocity=0.0601196220515764 m/s, orientation=2.3679694520320367e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.15468311198994347 m, velocity=3.098815781923125 m/s, orientation=0.20001473227928504 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.006519084325355135 m, velocity=0.1304179165277187 m/s, orientation=6.659296051426654e-07 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.15471208400525077 m, velocity=3.099637160017511 m/s, orientation=0.20001473230570502 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.15462211922659952 m, velocity=3.0932454213509875 m/s, orientation=0.200014732398954 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.009884602593682713 m, velocity=0.19774698619925393 m/s, orientation=1.7165106456861083e-05 rad, angular velocity=0.0 rad/s"
           ],
           "direct_event_stream_compared": false
         },
@@ -952,15 +954,15 @@
             "frame 2, t=0.30000000000000004 s, entity 8: position=0.08451028109123565 m, velocity=1.6922110024822932 m/s, orientation=0.10939706750778849 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 9: position=0.15454358947824778 m, velocity=3.0945393987381173 m/s, orientation=0.20001473474160505 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 10: position=0.0778770276148684 m, velocity=1.5610118515983353 m/s, orientation=0.09923938105474497 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.008479507312914658 m, velocity=0.16963727139369172 m/s, orientation=1.1274425906040066e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.008479507312914658 m, velocity=0.1696372713936917 m/s, orientation=1.1274425906040066e-06 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 12: position=0.005935866152414781 m, velocity=0.11875031192894227 m/s, orientation=7.653587912837351e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.1536988135845787 m, velocity=3.069571579309718 m/s, orientation=0.20001473331926695 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.1536988135845787 m, velocity=3.069571579309718 m/s, orientation=0.20001473331926697 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 14: position=0.012780735709232983 m, velocity=0.2562494957609301 m/s, orientation=0.015489833101249996 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 15: position=0.004465326902675265 m, velocity=0.08933135429268475 m/s, orientation=4.032036063945365e-06 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 16: position=0.15487414624596418 m, velocity=3.1040139914845617 m/s, orientation=0.20001473228217806 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.006289160757972017 m, velocity=0.125818167503484 m/s, orientation=8.239439481060761e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.006289160757972018 m, velocity=0.125818167503484 m/s, orientation=8.23943948106076e-06 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 18: position=0.15440621249915976 m, velocity=3.090742913480886 m/s, orientation=0.20001473228667624 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.01150911543705498 m, velocity=0.2302462710193068 m/s, orientation=8.816190077749203e-07 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.01150911543705498 m, velocity=0.23024627101930684 m/s, orientation=8.816190077749203e-07 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 20: position=0.15423520661661902 m, velocity=3.0818074119605963 m/s, orientation=0.20001473338222525 rad, angular velocity=0.0 rad/s"
           ],
           "direct_event_stream_compared": false
@@ -987,15 +989,15 @@
             "frame 2, t=0.30000000000000004 s, entity 8: position=0.08451028109123565 m, velocity=1.6922110024822932 m/s, orientation=0.10939706750778849 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 9: position=0.15454358947824778 m, velocity=3.0945393987381173 m/s, orientation=0.20001473474160505 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 10: position=0.0778770276148684 m, velocity=1.5610118515983353 m/s, orientation=0.09923938105474497 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.008479507312914658 m, velocity=0.16963727139369172 m/s, orientation=1.1274425906040066e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.008479507312914658 m, velocity=0.1696372713936917 m/s, orientation=1.1274425906040066e-06 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 12: position=0.005935866152414781 m, velocity=0.11875031192894227 m/s, orientation=7.653587912837351e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.1536988135845787 m, velocity=3.069571579309718 m/s, orientation=0.20001473331926695 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.1536988135845787 m, velocity=3.069571579309718 m/s, orientation=0.20001473331926697 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 14: position=0.012780735709232983 m, velocity=0.2562494957609301 m/s, orientation=0.015489833101249996 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 15: position=0.004465326902675265 m, velocity=0.08933135429268475 m/s, orientation=4.032036063945365e-06 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 16: position=0.15487414624596418 m, velocity=3.1040139914845617 m/s, orientation=0.20001473228217806 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.006289160757972017 m, velocity=0.125818167503484 m/s, orientation=8.239439481060761e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.006289160757972018 m, velocity=0.125818167503484 m/s, orientation=8.23943948106076e-06 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 18: position=0.15440621249915976 m, velocity=3.090742913480886 m/s, orientation=0.20001473228667624 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.01150911543705498 m, velocity=0.2302462710193068 m/s, orientation=8.816190077749203e-07 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.01150911543705498 m, velocity=0.23024627101930684 m/s, orientation=8.816190077749203e-07 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 20: position=0.15423520661661902 m, velocity=3.0818074119605963 m/s, orientation=0.20001473338222525 rad, angular velocity=0.0 rad/s"
           ],
           "direct_event_stream_compared": false
@@ -1012,51 +1014,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.9269785000942647,
-            0.9247203338891268,
-            0.9385414579883218
+            0.930561750000038,
+            0.9432158330000675,
+            0.9243732910000517
           ],
-          "median_s": 0.9269785000942647,
-          "min_s": 0.9247203338891268,
-          "max_s": 0.9385414579883218,
-          "startup_s": 0.19470262504182756,
-          "peak_mb": 14.1875
+          "median_s": 0.930561750000038,
+          "min_s": 0.9243732910000517,
+          "max_s": 0.9432158330000675,
+          "startup_s": 0.12623941699996521,
+          "peak_mb": 14.15625
         },
         "cpp-8": {
           "samples_s": [
-            0.6874035010114312,
-            0.6781610830221325,
-            0.6735914999153465
+            0.6982597909999413,
+            0.6889663329999394,
+            0.6866905409999617
           ],
-          "median_s": 0.6781610830221325,
-          "min_s": 0.6735914999153465,
-          "max_s": 0.6874035010114312,
-          "startup_s": 0.18059458304196596,
-          "peak_mb": 16.375
+          "median_s": 0.6889663329999394,
+          "min_s": 0.6866905409999617,
+          "max_s": 0.6982597909999413,
+          "startup_s": 0.12960387500004344,
+          "peak_mb": 16.21875
         },
         "rust-1": {
           "samples_s": [
-            0.7401841247919947,
-            0.7639703329186887,
-            0.7437117497902364
+            0.6824385419999999,
+            0.6934031250000317,
+            0.6817458330000363
           ],
-          "median_s": 0.7437117497902364,
-          "min_s": 0.7401841247919947,
-          "max_s": 0.7639703329186887,
-          "startup_s": 0.008224875200539827,
-          "peak_mb": 6.40625
+          "median_s": 0.6824385419999999,
+          "min_s": 0.6817458330000363,
+          "max_s": 0.6934031250000317,
+          "startup_s": 0.00966587499999605,
+          "peak_mb": 6.65625
         },
         "rust-8": {
           "samples_s": [
-            0.46604145783931017,
-            0.46643529180437326,
-            0.4677482917904854
+            0.392097334000141,
+            0.4176932510001734,
+            0.39171620900015114
           ],
-          "median_s": 0.46643529180437326,
-          "min_s": 0.46604145783931017,
-          "max_s": 0.4677482917904854,
-          "startup_s": 0.0077503330539911985,
-          "peak_mb": 10.1875
+          "median_s": 0.392097334000141,
+          "min_s": 0.39171620900015114,
+          "max_s": 0.4176932510001734,
+          "startup_s": 0.008937540999909288,
+          "peak_mb": 10.875
         }
       },
       "repeatable": {
@@ -1077,33 +1079,33 @@
           "reference_frames": 601,
           "candidate_frames": 601,
           "compared_entity_states": 38464,
-          "max_position_error_m": 36.4460764211224,
-          "max_velocity_error_mps": 15.5662925465668,
-          "max_orientation_error_rad": 0.8424640119099636,
+          "max_position_error_m": 34.478746913283416,
+          "max_velocity_error_mps": 16.291602604717948,
+          "max_orientation_error_rad": 0.8739132751256973,
           "max_angular_velocity_error_radps": 0.0,
           "max_timestamp_error_s": 0.0,
           "mismatch_count": 38336,
           "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.1544211709154799 m, velocity=3.0910374081632748 m/s, orientation=0.20001473233764125 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.1558596517433881 m, velocity=3.113251885534052 m/s, orientation=0.20001473243957565 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.010437775092721825 m, velocity=0.2088135108998927 m/s, orientation=2.6506344203044474e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.15505628543627945 m, velocity=3.1093584883062344 m/s, orientation=0.20001473240522796 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.003373599606651364 m, velocity=0.06749074102076666 m/s, orientation=1.2675251519284675e-07 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.004112979552596959 m, velocity=0.08228245000179434 m/s, orientation=1.8482480664814415e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.15356560787450907 m, velocity=3.064771582078628 m/s, orientation=0.20001473227951083 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.15454259158118747 m, velocity=3.089660714545279 m/s, orientation=0.20001473228230915 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.00849806652372252 m, velocity=0.170478534616392 m/s, orientation=0.010912918078459467 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.0035761784714709913 m, velocity=0.07154344571532646 m/s, orientation=2.1682742953854806e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15459737582604105 m, velocity=3.0902577111931135 m/s, orientation=0.2000147327782833 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.0010615536632849682 m, velocity=0.021236985691041498 m/s, orientation=3.3890028596784895e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.1548521236062027 m, velocity=3.1009862253983536 m/s, orientation=0.20001473252527283 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.11775912750729213 m, velocity=2.3537775544029103 m/s, orientation=0.15244833653276485 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.028495706358968365 m, velocity=0.5708045764761782 m/s, orientation=0.033339602248260033 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.1559512527156108 m, velocity=3.1298974341511245 m/s, orientation=0.20001473228733488 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.027406452098238825 m, velocity=0.5498386579481697 m/s, orientation=0.03516593362176548 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.009611918448267486 m, velocity=0.19229178891767185 m/s, orientation=3.3769758195911024e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.15488098325946695 m, velocity=3.105010235374177 m/s, orientation=0.20001473228347222 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.0052676926761552785 m, velocity=0.10538312954234959 m/s, orientation=1.740109211916076e-05 rad, angular velocity=0.0 rad/s"
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.15433488064958079 m, velocity=3.0880245180228276 m/s, orientation=0.2000147332206248 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.01832891535649969 m, velocity=0.3666801707669355 m/s, orientation=1.2954095454653477e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.15397354673385427 m, velocity=3.0759224299803765 m/s, orientation=0.20001473264339606 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.008094010787208268 m, velocity=0.16192519874424313 m/s, orientation=1.3891529747200362e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.00846863776899893 m, velocity=0.1694198205683725 m/s, orientation=1.864980077651204e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.11938453362577563 m, velocity=2.38670247251189 m/s, orientation=0.1541474594257313 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.01144311209287691 m, velocity=0.22892583753488702 m/s, orientation=1.4417693953655125e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.002930669646423837 m, velocity=0.05862968029559226 m/s, orientation=4.351530525412296e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.009812442564910703 m, velocity=0.19684094113482908 m/s, orientation=0.010912923580725925 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.004671660379432107 m, velocity=0.09345917139425845 m/s, orientation=1.8829560232660856e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.012617308470305755 m, velocity=0.25241629115719316 m/s, orientation=2.6995941418746945e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15491094704015995 m, velocity=3.1057008199327103 m/s, orientation=0.20001473315446053 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.1547572768501159 m, velocity=3.098601278431546 m/s, orientation=0.20001473247401305 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.002698552509372697 m, velocity=0.05398604873395116 m/s, orientation=1.699212936063373e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.02813923041576328 m, velocity=0.5635982241193623 m/s, orientation=0.03333960848403077 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.14426577809567886 m, velocity=2.8877029494619393 m/s, orientation=0.18689863361817816 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.154804444955289 m, velocity=3.1024956714482186 m/s, orientation=0.20001473256577357 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.003913556471381671 m, velocity=0.07829288032046204 m/s, orientation=1.9503782691188563e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.0008403422904955605 m, velocity=0.016811518389641615 m/s, orientation=1.2853905183359575e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.15430289687908688 m, velocity=3.0874223148160933 m/s, orientation=0.20001473247806292 rad, angular velocity=0.0 rad/s"
           ],
           "direct_event_stream_compared": false
         },
@@ -1112,7 +1114,7 @@
           "reference_frames": 601,
           "candidate_frames": 601,
           "compared_entity_states": 38464,
-          "max_position_error_m": 43.062532401873035,
+          "max_position_error_m": 43.06253240187304,
           "max_velocity_error_mps": 16.199604553782493,
           "max_orientation_error_rad": 0.9164040739533876,
           "max_angular_velocity_error_radps": 0.0,
@@ -1120,15 +1122,15 @@
           "mismatch_count": 38336,
           "first_mismatches": [
             "frame 2, t=0.30000000000000004 s, entity 1: position=0.0015045880386402833 m, velocity=0.030100123090271793 m/s, orientation=8.147077550044875e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.016184458039183315 m, velocity=0.3237791065414672 m/s, orientation=1.2847369770900747e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.00992433312185734 m, velocity=0.1985418184488443 m/s, orientation=3.228462630553458e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.155017484753911 m, velocity=3.1027193632103316 m/s, orientation=0.20001473238716472 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.0019530474034479529 m, velocity=0.039071803785627184 m/s, orientation=1.6497758302682292e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.016184458039183315 m, velocity=0.3237791065414672 m/s, orientation=1.2847369770900749e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.00992433312185734 m, velocity=0.1985418184488443 m/s, orientation=3.2284626305534586e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.15501748475391103 m, velocity=3.1027193632103316 m/s, orientation=0.20001473238716475 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.0019530474034479529 m, velocity=0.039071803785627184 m/s, orientation=1.649775830268229e-05 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 6: position=0.15333899609946244 m, velocity=3.0582813044729438 m/s, orientation=0.2000147330004171 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 7: position=0.15531463359970887 m, velocity=3.1120196023703715 m/s, orientation=0.20001473244827161 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.08469505321473418 m, velocity=1.6980520249391147 m/s, orientation=0.10939706808329006 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.08469505321473418 m, velocity=1.6980520249391147 m/s, orientation=0.10939706808329007 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 9: position=0.14628455930683046 m, velocity=2.9313571830568406 m/s, orientation=0.18910181785531233 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.1551755178294571 m, velocity=3.111465525646998 m/s, orientation=0.20001473262080582 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.1551755178294571 m, velocity=3.111465525646998 m/s, orientation=0.20001473262080585 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 11: position=0.15457795928686224 m, velocity=3.0905258966405675 m/s, orientation=0.2000147342577464 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 12: position=0.003680259935905916 m, velocity=0.07362565343373505 m/s, orientation=2.2036129696069924e-05 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 13: position=0.15379956190168662 m, velocity=3.072535443703727 m/s, orientation=0.20001473394736968 rad, angular velocity=0.0 rad/s",
@@ -1137,8 +1139,8 @@
             "frame 2, t=0.30000000000000004 s, entity 16: position=0.006573801791456618 m, velocity=0.13151256999814745 m/s, orientation=5.578925769540506e-06 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 17: position=0.15515178763775925 m, velocity=3.111852542706762 m/s, orientation=0.20001473419556212 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 18: position=0.008878816475814883 m, velocity=0.17762567383955605 m/s, orientation=3.418593831165903e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.0012236944154774645 m, velocity=0.024480689334821063 m/s, orientation=5.588755536110604e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.1545238476379984 m, velocity=3.0942845027989336 m/s, orientation=0.20001473229678704 rad, angular velocity=0.0 rad/s"
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.0012236944154774645 m, velocity=0.024480689334821063 m/s, orientation=5.588755536110605e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.1545238476379984 m, velocity=3.0942845027989336 m/s, orientation=0.200014732296787 rad, angular velocity=0.0 rad/s"
           ],
           "direct_event_stream_compared": false
         },
@@ -1147,7 +1149,7 @@
           "reference_frames": 601,
           "candidate_frames": 601,
           "compared_entity_states": 38464,
-          "max_position_error_m": 43.062532401873035,
+          "max_position_error_m": 43.06253240187304,
           "max_velocity_error_mps": 16.199604553782493,
           "max_orientation_error_rad": 0.9164040739533876,
           "max_angular_velocity_error_radps": 0.0,
@@ -1155,15 +1157,15 @@
           "mismatch_count": 38336,
           "first_mismatches": [
             "frame 2, t=0.30000000000000004 s, entity 1: position=0.0015045880386402833 m, velocity=0.030100123090271793 m/s, orientation=8.147077550044875e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.016184458039183315 m, velocity=0.3237791065414672 m/s, orientation=1.2847369770900747e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.00992433312185734 m, velocity=0.1985418184488443 m/s, orientation=3.228462630553458e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.155017484753911 m, velocity=3.1027193632103316 m/s, orientation=0.20001473238716472 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.0019530474034479529 m, velocity=0.039071803785627184 m/s, orientation=1.6497758302682292e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.016184458039183315 m, velocity=0.3237791065414672 m/s, orientation=1.2847369770900749e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.00992433312185734 m, velocity=0.1985418184488443 m/s, orientation=3.2284626305534586e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.15501748475391103 m, velocity=3.1027193632103316 m/s, orientation=0.20001473238716475 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.0019530474034479529 m, velocity=0.039071803785627184 m/s, orientation=1.649775830268229e-05 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 6: position=0.15333899609946244 m, velocity=3.0582813044729438 m/s, orientation=0.2000147330004171 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 7: position=0.15531463359970887 m, velocity=3.1120196023703715 m/s, orientation=0.20001473244827161 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.08469505321473418 m, velocity=1.6980520249391147 m/s, orientation=0.10939706808329006 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.08469505321473418 m, velocity=1.6980520249391147 m/s, orientation=0.10939706808329007 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 9: position=0.14628455930683046 m, velocity=2.9313571830568406 m/s, orientation=0.18910181785531233 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.1551755178294571 m, velocity=3.111465525646998 m/s, orientation=0.20001473262080582 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.1551755178294571 m, velocity=3.111465525646998 m/s, orientation=0.20001473262080585 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 11: position=0.15457795928686224 m, velocity=3.0905258966405675 m/s, orientation=0.2000147342577464 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 12: position=0.003680259935905916 m, velocity=0.07362565343373505 m/s, orientation=2.2036129696069924e-05 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 13: position=0.15379956190168662 m, velocity=3.072535443703727 m/s, orientation=0.20001473394736968 rad, angular velocity=0.0 rad/s",
@@ -1172,8 +1174,8 @@
             "frame 2, t=0.30000000000000004 s, entity 16: position=0.006573801791456618 m, velocity=0.13151256999814745 m/s, orientation=5.578925769540506e-06 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 17: position=0.15515178763775925 m, velocity=3.111852542706762 m/s, orientation=0.20001473419556212 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 18: position=0.008878816475814883 m, velocity=0.17762567383955605 m/s, orientation=3.418593831165903e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.0012236944154774645 m, velocity=0.024480689334821063 m/s, orientation=5.588755536110604e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.1545238476379984 m, velocity=3.0942845027989336 m/s, orientation=0.20001473229678704 rad, angular velocity=0.0 rad/s"
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.0012236944154774645 m, velocity=0.024480689334821063 m/s, orientation=5.588755536110605e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.1545238476379984 m, velocity=3.0942845027989336 m/s, orientation=0.200014732296787 rad, angular velocity=0.0 rad/s"
           ],
           "direct_event_stream_compared": false
         }
@@ -1189,51 +1191,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            3.585160832852125,
-            3.592904832912609,
-            3.6906595409382135
+            3.497885293000081,
+            3.4876572089999627,
+            3.4927929180000774
           ],
-          "median_s": 3.592904832912609,
-          "min_s": 3.585160832852125,
-          "max_s": 3.6906595409382135,
-          "startup_s": 0.20980383409187198,
-          "peak_mb": 28.046875
+          "median_s": 3.4927929180000774,
+          "min_s": 3.4876572089999627,
+          "max_s": 3.497885293000081,
+          "startup_s": 0.148831040999994,
+          "peak_mb": 27.984375
         },
         "cpp-8": {
           "samples_s": [
-            1.9653136669658124,
-            1.9021892498712987,
-            2.45562170795165
+            1.9894183320000138,
+            1.965587916000004,
+            1.9917756659998531
           ],
-          "median_s": 1.9653136669658124,
-          "min_s": 1.9021892498712987,
-          "max_s": 2.45562170795165,
-          "startup_s": 0.2084104169625789,
-          "peak_mb": 31.296875
+          "median_s": 1.9894183320000138,
+          "min_s": 1.965587916000004,
+          "max_s": 1.9917756659998531,
+          "startup_s": 0.14792420900005254,
+          "peak_mb": 30.8125
         },
         "rust-1": {
           "samples_s": [
-            2.862261958885938,
-            2.872022334020585,
-            3.8327282920945436
+            2.4949830840000686,
+            2.511098584000024,
+            2.4943544579998616
           ],
-          "median_s": 2.872022334020585,
-          "min_s": 2.862261958885938,
-          "max_s": 3.8327282920945436,
-          "startup_s": 0.014995082980021834,
-          "peak_mb": 12.8125
+          "median_s": 2.4949830840000686,
+          "min_s": 2.4943544579998616,
+          "max_s": 2.511098584000024,
+          "startup_s": 0.016737207999995007,
+          "peak_mb": 13.125
         },
         "rust-8": {
           "samples_s": [
-            1.2788553750142455,
-            1.2834531248081475,
-            1.2772267078980803
+            0.7840568340001255,
+            0.7787619580000182,
+            0.8052611250001291
           ],
-          "median_s": 1.2788553750142455,
-          "min_s": 1.2772267078980803,
-          "max_s": 1.2834531248081475,
-          "startup_s": 0.010159750003367662,
-          "peak_mb": 21.78125
+          "median_s": 0.7840568340001255,
+          "min_s": 0.7787619580000182,
+          "max_s": 0.8052611250001291,
+          "startup_s": 0.010660749999942709,
+          "peak_mb": 21.8125
         }
       },
       "repeatable": {
@@ -1254,33 +1256,33 @@
           "reference_frames": 601,
           "candidate_frames": 601,
           "compared_entity_states": 76928,
-          "max_position_error_m": 46.16319024852956,
-          "max_velocity_error_mps": 18.357984646073902,
-          "max_orientation_error_rad": 0.9693215834605255,
+          "max_position_error_m": 41.51684877109318,
+          "max_velocity_error_mps": 15.668172253410866,
+          "max_orientation_error_rad": 0.8466489139622846,
           "max_angular_velocity_error_radps": 0.0,
           "max_timestamp_error_s": 0.0,
           "mismatch_count": 76672,
           "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.15448569245568658 m, velocity=3.0929236204846804 m/s, orientation=0.2000147342692306 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.008526395880735968 m, velocity=0.17057530338438712 m/s, orientation=6.1080900478434e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.008740193296208879 m, velocity=0.17485243991961322 m/s, orientation=8.172174466207632e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 4: position=0.001691126103786968 m, velocity=0.0338319206242267 m/s, orientation=2.938455755057925e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 5: position=0.15500516902121514 m, velocity=3.107279006651204 m/s, orientation=0.20001473339044828 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 6: position=0.1017653127468666 m, velocity=2.034708441393726 m/s, orientation=0.1321556198555452 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 7: position=0.003989858497686233 m, velocity=0.07981934620112564 m/s, orientation=2.9113063000498573e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 8: position=0.012677547889308078 m, velocity=0.25362141399228216 m/s, orientation=1.8776161422840363e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 9: position=0.003865488886598316 m, velocity=0.07733126034053321 m/s, orientation=3.2112888041818018e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.1542882848325837 m, velocity=3.087244974843711 m/s, orientation=0.20001473285559782 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 11: position=0.0021273729017271064 m, velocity=0.0425592810137992 m/s, orientation=2.631282631081834e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 12: position=0.1545820722386965 m, velocity=3.0953060200677287 m/s, orientation=0.20001473252624283 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 13: position=0.006629743619453338 m, velocity=0.13263171743744065 m/s, orientation=4.5692658730378545e-06 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 14: position=0.15455387616975255 m, velocity=3.094939256178605 m/s, orientation=0.20001473229960978 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 15: position=0.05335286726611854 m, velocity=1.0703198788910775 m/s, orientation=0.06888198931829372 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 16: position=0.005042733520373792 m, velocity=0.10088269609331357 m/s, orientation=1.5457843525153984e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 17: position=0.1555579280426282 m, velocity=3.124729018157039 m/s, orientation=0.20001473237302783 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 18: position=0.001901440353706456 m, velocity=0.03810471690912185 m/s, orientation=0.0024534461123901182 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.06275549445431819 m, velocity=1.2573348291566853 m/s, orientation=0.0808443476413058 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.13950253735158544 m, velocity=2.790147443034363 m/s, orientation=0.18097421218967968 rad, angular velocity=0.0 rad/s"
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.1544205695831505 m, velocity=3.091091550424124 m/s, orientation=0.20001473486072427 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.15584009125131287 m, velocity=3.1273262231474357 m/s, orientation=0.20001473334748213 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.0023326145249014454 m, velocity=0.046665254191970755 m/s, orientation=4.756538599577435e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 4: position=0.15493953789874318 m, velocity=3.1067443670479777 m/s, orientation=0.2000147323394419 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 5: position=0.008328267629115526 m, velocity=0.16661163745762567 m/s, orientation=1.3646231021426862e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 6: position=0.004707070688855129 m, velocity=0.09416757379692835 m/s, orientation=1.1534224409810843e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 7: position=0.0017555686989881884 m, velocity=0.035121131291598155 m/s, orientation=1.007532592948271e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 8: position=0.004496658611735483 m, velocity=0.08995816393782775 m/s, orientation=2.2810858127529315e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 9: position=0.005292389850979307 m, velocity=0.10587720970140459 m/s, orientation=5.07843811459112e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.008011375954086132 m, velocity=0.1602720427655303 m/s, orientation=1.2044699230688662e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 11: position=0.15396363932134843 m, velocity=3.077507939823855 m/s, orientation=0.2000147335959854 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 12: position=0.15423076300230357 m, velocity=3.085508336608678 m/s, orientation=0.20001473230498845 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 13: position=0.154051756784853 m, velocity=3.0776458389018 m/s, orientation=0.20001473243283058 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 14: position=0.1549381670305989 m, velocity=3.105222544412034 m/s, orientation=0.20001473237378883 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 15: position=0.15452016895449736 m, velocity=3.09309498154031 m/s, orientation=0.20001473287563684 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 16: position=0.006123442621075998 m, velocity=0.12250288412117141 m/s, orientation=1.61849733431418e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 17: position=0.15497426955872634 m, velocity=3.107069618195024 m/s, orientation=0.20001473244908183 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 18: position=0.001918153133115006 m, velocity=0.0383737229513131 m/s, orientation=3.859964832413212e-06 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.0626928886454596 m, velocity=1.2581692148940389 m/s, orientation=0.08084434720004409 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.13990411856820573 m, velocity=2.8005649223067737 m/s, orientation=0.18097421206541786 rad, angular velocity=0.0 rad/s"
           ],
           "direct_event_stream_compared": false
         },
@@ -1291,21 +1293,21 @@
           "compared_entity_states": 76928,
           "max_position_error_m": 48.49262288349682,
           "max_velocity_error_mps": 16.73753482722721,
-          "max_orientation_error_rad": 0.8954173830717934,
+          "max_orientation_error_rad": 0.8954173830717935,
           "max_angular_velocity_error_radps": 0.0,
           "max_timestamp_error_s": 0.0,
           "mismatch_count": 76672,
           "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.0006176389194334271 m, velocity=0.012356225359793515 m/s, orientation=2.7609770196886502e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.1542416268086654 m, velocity=3.0858413097256365 m/s, orientation=0.20001473253997493 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.0014609224978804933 m, velocity=0.029226573588492212 m/s, orientation=2.3633280858646502e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.0006176389194334271 m, velocity=0.012356225359793515 m/s, orientation=2.76097701968865e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.1542416268086654 m, velocity=3.0858413097256365 m/s, orientation=0.2000147325399749 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.0014609224978804933 m, velocity=0.029226573588492212 m/s, orientation=2.36332808586465e-05 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 4: position=0.15465745049587107 m, velocity=3.093936843821095 m/s, orientation=0.2000147323004603 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 5: position=0.15497402559257087 m, velocity=3.1054921757165412 m/s, orientation=0.2000147322818685 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 6: position=0.15386648123132238 m, velocity=3.0740848775922687 m/s, orientation=0.20001473229782044 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 7: position=0.0036040985202566178 m, velocity=0.07210200090621494 m/s, orientation=1.3626769579750793e-05 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 8: position=0.08478761765721943 m, velocity=1.700359100877099 m/s, orientation=0.10939706751569517 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 9: position=0.15439997059664223 m, velocity=3.088398933604918 m/s, orientation=0.2000147328706096 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.15516941881789612 m, velocity=3.110916108532824 m/s, orientation=0.20001473236506043 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.15516941881789612 m, velocity=3.110916108532824 m/s, orientation=0.2000147323650604 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 11: position=0.15366639146551758 m, velocity=3.0675465515197144 m/s, orientation=0.20001473231366954 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 12: position=0.0003039306490583214 m, velocity=0.006080304087963969 m/s, orientation=7.2282754017568205e-06 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 13: position=0.0036638328133519944 m, velocity=0.07329701892251002 m/s, orientation=1.5925654826637166e-05 rad, angular velocity=0.0 rad/s",
@@ -1314,8 +1316,8 @@
             "frame 2, t=0.30000000000000004 s, entity 16: position=0.010691311153298381 m, velocity=0.21388564067300442 m/s, orientation=1.6874117092838275e-05 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 17: position=0.15534037807937412 m, velocity=3.1186958075467803 m/s, orientation=0.2000147326232107 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 18: position=0.15438139030740444 m, velocity=3.090018900643219 m/s, orientation=0.2000147324733328 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.06267350735698342 m, velocity=1.2576776500052929 m/s, orientation=0.08084434729399079 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.015647599839550646 m, velocity=0.31332201733663445 m/s, orientation=0.019040520279209758 rad, angular velocity=0.0 rad/s"
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.06267350735698342 m, velocity=1.2576776500052929 m/s, orientation=0.08084434729399077 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.015647599839550646 m, velocity=0.31332201733663445 m/s, orientation=0.019040520279209754 rad, angular velocity=0.0 rad/s"
           ],
           "direct_event_stream_compared": false
         },
@@ -1326,21 +1328,21 @@
           "compared_entity_states": 76928,
           "max_position_error_m": 48.49262288349682,
           "max_velocity_error_mps": 16.73753482722721,
-          "max_orientation_error_rad": 0.8954173830717934,
+          "max_orientation_error_rad": 0.8954173830717935,
           "max_angular_velocity_error_radps": 0.0,
           "max_timestamp_error_s": 0.0,
           "mismatch_count": 76672,
           "first_mismatches": [
-            "frame 2, t=0.30000000000000004 s, entity 1: position=0.0006176389194334271 m, velocity=0.012356225359793515 m/s, orientation=2.7609770196886502e-05 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 2: position=0.1542416268086654 m, velocity=3.0858413097256365 m/s, orientation=0.20001473253997493 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 3: position=0.0014609224978804933 m, velocity=0.029226573588492212 m/s, orientation=2.3633280858646502e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 1: position=0.0006176389194334271 m, velocity=0.012356225359793515 m/s, orientation=2.76097701968865e-05 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 2: position=0.1542416268086654 m, velocity=3.0858413097256365 m/s, orientation=0.2000147325399749 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 3: position=0.0014609224978804933 m, velocity=0.029226573588492212 m/s, orientation=2.36332808586465e-05 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 4: position=0.15465745049587107 m, velocity=3.093936843821095 m/s, orientation=0.2000147323004603 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 5: position=0.15497402559257087 m, velocity=3.1054921757165412 m/s, orientation=0.2000147322818685 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 6: position=0.15386648123132238 m, velocity=3.0740848775922687 m/s, orientation=0.20001473229782044 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 7: position=0.0036040985202566178 m, velocity=0.07210200090621494 m/s, orientation=1.3626769579750793e-05 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 8: position=0.08478761765721943 m, velocity=1.700359100877099 m/s, orientation=0.10939706751569517 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 9: position=0.15439997059664223 m, velocity=3.088398933604918 m/s, orientation=0.2000147328706096 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 10: position=0.15516941881789612 m, velocity=3.110916108532824 m/s, orientation=0.20001473236506043 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 10: position=0.15516941881789612 m, velocity=3.110916108532824 m/s, orientation=0.2000147323650604 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 11: position=0.15366639146551758 m, velocity=3.0675465515197144 m/s, orientation=0.20001473231366954 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 12: position=0.0003039306490583214 m, velocity=0.006080304087963969 m/s, orientation=7.2282754017568205e-06 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 13: position=0.0036638328133519944 m, velocity=0.07329701892251002 m/s, orientation=1.5925654826637166e-05 rad, angular velocity=0.0 rad/s",
@@ -1349,8 +1351,8 @@
             "frame 2, t=0.30000000000000004 s, entity 16: position=0.010691311153298381 m, velocity=0.21388564067300442 m/s, orientation=1.6874117092838275e-05 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 17: position=0.15534037807937412 m, velocity=3.1186958075467803 m/s, orientation=0.2000147326232107 rad, angular velocity=0.0 rad/s",
             "frame 2, t=0.30000000000000004 s, entity 18: position=0.15438139030740444 m, velocity=3.090018900643219 m/s, orientation=0.2000147324733328 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 19: position=0.06267350735698342 m, velocity=1.2576776500052929 m/s, orientation=0.08084434729399079 rad, angular velocity=0.0 rad/s",
-            "frame 2, t=0.30000000000000004 s, entity 20: position=0.015647599839550646 m, velocity=0.31332201733663445 m/s, orientation=0.019040520279209758 rad, angular velocity=0.0 rad/s"
+            "frame 2, t=0.30000000000000004 s, entity 19: position=0.06267350735698342 m, velocity=1.2576776500052929 m/s, orientation=0.08084434729399077 rad, angular velocity=0.0 rad/s",
+            "frame 2, t=0.30000000000000004 s, entity 20: position=0.015647599839550646 m, velocity=0.31332201733663445 m/s, orientation=0.019040520279209754 rad, angular velocity=0.0 rad/s"
           ],
           "direct_event_stream_compared": false
         }
@@ -1366,51 +1368,291 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.11105883400887251,
-            0.1070295840036124,
-            0.109053750988096
+            0.13516699999991033,
+            0.12809120899987647,
+            0.1538852510000197
           ],
-          "median_s": 0.109053750988096,
-          "min_s": 0.1070295840036124,
-          "max_s": 0.11105883400887251,
-          "startup_s": 0.1847550410311669,
-          "peak_mb": 9.609375
+          "median_s": 0.13516699999991033,
+          "min_s": 0.12809120899987647,
+          "max_s": 0.1538852510000197,
+          "startup_s": 0.11362308299999313,
+          "peak_mb": 9.546875
         },
         "cpp-8": {
           "samples_s": [
-            0.8770677491556853,
-            0.9221606671344489,
-            0.9377208752557635
+            0.9124221669999315,
+            0.925629041999855,
+            0.9063562090000232
           ],
-          "median_s": 0.9221606671344489,
-          "min_s": 0.8770677491556853,
-          "max_s": 0.9377208752557635,
-          "startup_s": 0.1647779168561101,
-          "peak_mb": 10.15625
+          "median_s": 0.9124221669999315,
+          "min_s": 0.9063562090000232,
+          "max_s": 0.925629041999855,
+          "startup_s": 0.11226762499995857,
+          "peak_mb": 10.046875
         },
         "rust-1": {
           "samples_s": [
-            0.08078812481835485,
-            0.07896920898929238,
-            0.07936270791105926
+            0.09169229200006157,
+            0.09053037500007122,
+            0.08599866700001257
           ],
-          "median_s": 0.07936270791105926,
-          "min_s": 0.07896920898929238,
-          "max_s": 0.08078812481835485,
-          "startup_s": 0.0072713750414550304,
-          "peak_mb": 4.125
+          "median_s": 0.09053037500007122,
+          "min_s": 0.08599866700001257,
+          "max_s": 0.09169229200006157,
+          "startup_s": 0.008131374999948093,
+          "peak_mb": 4.390625
         },
         "rust-8": {
           "samples_s": [
-            0.4662387908902019,
-            0.47688874904997647,
-            0.45481970719993114
+            0.46102762400005304,
+            0.45450541600007455,
+            0.46878745800017896
           ],
-          "median_s": 0.4662387908902019,
-          "min_s": 0.45481970719993114,
-          "max_s": 0.47688874904997647,
-          "startup_s": 0.006477833958342671,
-          "peak_mb": 4.90625
+          "median_s": 0.46102762400005304,
+          "min_s": 0.45450541600007455,
+          "max_s": 0.46878745800017896,
+          "startup_s": 0.007922042000018337,
+          "peak_mb": 5.4375
+        }
+      },
+      "repeatable": {
+        "cpp-1": true,
+        "cpp-8": true,
+        "rust-1": true,
+        "rust-8": true
+      },
+      "hangs": {
+        "cpp-1": 0,
+        "cpp-8": 0,
+        "rust-1": 0,
+        "rust-8": 0
+      },
+      "comparisons": {
+        "cpp-8": {
+          "passed": true,
+          "reference_frames": 2001,
+          "candidate_frames": 2001,
+          "compared_entity_states": 99984,
+          "max_position_error_m": 0.0,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-1": {
+          "passed": false,
+          "reference_frames": 2001,
+          "candidate_frames": 2001,
+          "compared_entity_states": 99984,
+          "max_position_error_m": 4.547473508864641e-13,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 2,
+          "first_mismatches": [
+            "summary team 1, flight_time: reference 552.9, candidate 9987.0",
+            "summary team 1, flight_time_norm: reference 53.679612, candidate 49.95998"
+          ],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": false,
+          "reference_frames": 2001,
+          "candidate_frames": 2001,
+          "compared_entity_states": 99984,
+          "max_position_error_m": 4.547473508864641e-13,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 2,
+          "first_mismatches": [
+            "summary team 1, flight_time: reference 552.9, candidate 9987.0",
+            "summary team 1, flight_time_norm: reference 53.679612, candidate 49.95998"
+          ],
+          "direct_event_stream_compared": false
+        }
+      },
+      "rust_workers_match": true,
+      "matches_cpp": false,
+      "passed": true
+    },
+    {
+      "workload": "churn",
+      "agents": 256,
+      "steps": 2000,
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            0.48943179200000486,
+            0.4757465840002624,
+            0.48231287600015094
+          ],
+          "median_s": 0.48231287600015094,
+          "min_s": 0.4757465840002624,
+          "max_s": 0.48943179200000486,
+          "startup_s": 0.1133226659999309,
+          "peak_mb": 14.21875
+        },
+        "cpp-8": {
+          "samples_s": [
+            2.006473873999994,
+            2.0214819160000843,
+            2.0252977489999466
+          ],
+          "median_s": 2.0214819160000843,
+          "min_s": 2.006473873999994,
+          "max_s": 2.0252977489999466,
+          "startup_s": 0.10845070899995335,
+          "peak_mb": 14.765625
+        },
+        "rust-1": {
+          "samples_s": [
+            0.19667883299985078,
+            0.19949354199980007,
+            0.20249529199986682
+          ],
+          "median_s": 0.19949354199980007,
+          "min_s": 0.19667883299985078,
+          "max_s": 0.20249529199986682,
+          "startup_s": 0.007929833000162034,
+          "peak_mb": 5.765625
+        },
+        "rust-8": {
+          "samples_s": [
+            0.6933428750000985,
+            0.6786338329998216,
+            0.6652180419998786
+          ],
+          "median_s": 0.6786338329998216,
+          "min_s": 0.6652180419998786,
+          "max_s": 0.6933428750000985,
+          "startup_s": 0.00800262500001736,
+          "peak_mb": 6.828125
+        }
+      },
+      "repeatable": {
+        "cpp-1": true,
+        "cpp-8": true,
+        "rust-1": true,
+        "rust-8": true
+      },
+      "hangs": {
+        "cpp-1": 0,
+        "cpp-8": 4,
+        "rust-1": 0,
+        "rust-8": 0
+      },
+      "comparisons": {
+        "cpp-8": {
+          "passed": true,
+          "reference_frames": 2001,
+          "candidate_frames": 2001,
+          "compared_entity_states": 247424,
+          "max_position_error_m": 0.0,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 0,
+          "first_mismatches": [],
+          "direct_event_stream_compared": false
+        },
+        "rust-1": {
+          "passed": false,
+          "reference_frames": 2001,
+          "candidate_frames": 2001,
+          "compared_entity_states": 247424,
+          "max_position_error_m": 4.547473508864641e-13,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 2,
+          "first_mismatches": [
+            "summary team 1, flight_time: reference 3617.2, candidate 24704.4",
+            "summary team 1, flight_time_norm: reference 156.588745, candidate 123.583792"
+          ],
+          "direct_event_stream_compared": false
+        },
+        "rust-8": {
+          "passed": false,
+          "reference_frames": 2001,
+          "candidate_frames": 2001,
+          "compared_entity_states": 247424,
+          "max_position_error_m": 4.547473508864641e-13,
+          "max_velocity_error_mps": 0.0,
+          "max_orientation_error_rad": 0.0,
+          "max_angular_velocity_error_radps": 0.0,
+          "max_timestamp_error_s": 0.0,
+          "mismatch_count": 2,
+          "first_mismatches": [
+            "summary team 1, flight_time: reference 3617.2, candidate 24704.4",
+            "summary team 1, flight_time_norm: reference 156.588745, candidate 123.583792"
+          ],
+          "direct_event_stream_compared": false
+        }
+      },
+      "rust_workers_match": true,
+      "matches_cpp": false,
+      "passed": true
+    },
+    {
+      "workload": "churn",
+      "agents": 1024,
+      "steps": 2000,
+      "statistics": {
+        "cpp-1": {
+          "samples_s": [
+            3.0790236240000013,
+            3.1105436240000017,
+            3.1256099160000304
+          ],
+          "median_s": 3.1105436240000017,
+          "min_s": 3.0790236240000013,
+          "max_s": 3.1256099160000304,
+          "startup_s": 0.11546420900003795,
+          "peak_mb": 27.453125
+        },
+        "cpp-8": {
+          "samples_s": [
+            6.405700042000035,
+            6.449785291999888,
+            6.476358834000166
+          ],
+          "median_s": 6.449785291999888,
+          "min_s": 6.405700042000035,
+          "max_s": 6.476358834000166,
+          "startup_s": 0.11120387500000106,
+          "peak_mb": 28.015625
+        },
+        "rust-1": {
+          "samples_s": [
+            0.5995609169997351,
+            0.6158100000000104,
+            0.5906866249999894
+          ],
+          "median_s": 0.5995609169997351,
+          "min_s": 0.5906866249999894,
+          "max_s": 0.6158100000000104,
+          "startup_s": 0.008254791000126716,
+          "peak_mb": 8.90625
+        },
+        "rust-8": {
+          "samples_s": [
+            1.0818319580000662,
+            1.1142503750002106,
+            1.1081376249999266
+          ],
+          "median_s": 1.1081376249999266,
+          "min_s": 1.0818319580000662,
+          "max_s": 1.1142503750002106,
+          "startup_s": 0.00822879199995441,
+          "peak_mb": 9.84375
         }
       },
       "repeatable": {
@@ -1430,246 +1672,6 @@
           "passed": true,
           "reference_frames": 2001,
           "candidate_frames": 2001,
-          "compared_entity_states": 99984,
-          "max_position_error_m": 0.0,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 0,
-          "first_mismatches": [],
-          "direct_event_stream_compared": false
-        },
-        "rust-1": {
-          "passed": false,
-          "reference_frames": 2001,
-          "candidate_frames": 2001,
-          "compared_entity_states": 99984,
-          "max_position_error_m": 4.547473508864641e-13,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 2,
-          "first_mismatches": [
-            "summary team 1, flight_time: reference 552.9, candidate 9987.0",
-            "summary team 1, flight_time_norm: reference 53.679612, candidate 49.95998"
-          ],
-          "direct_event_stream_compared": false
-        },
-        "rust-8": {
-          "passed": false,
-          "reference_frames": 2001,
-          "candidate_frames": 2001,
-          "compared_entity_states": 99984,
-          "max_position_error_m": 4.547473508864641e-13,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 2,
-          "first_mismatches": [
-            "summary team 1, flight_time: reference 552.9, candidate 9987.0",
-            "summary team 1, flight_time_norm: reference 53.679612, candidate 49.95998"
-          ],
-          "direct_event_stream_compared": false
-        }
-      },
-      "rust_workers_match": true,
-      "matches_cpp": false,
-      "passed": true
-    },
-    {
-      "workload": "churn",
-      "agents": 256,
-      "steps": 2000,
-      "statistics": {
-        "cpp-1": {
-          "samples_s": [
-            0.5577539999503642,
-            0.5501511667389423,
-            0.7956223329529166
-          ],
-          "median_s": 0.5577539999503642,
-          "min_s": 0.5501511667389423,
-          "max_s": 0.7956223329529166,
-          "startup_s": 0.1618773750960827,
-          "peak_mb": 14.296875
-        },
-        "cpp-8": {
-          "samples_s": [
-            2.3076992088463157,
-            2.459573707776144,
-            2.85200179181993
-          ],
-          "median_s": 2.459573707776144,
-          "min_s": 2.3076992088463157,
-          "max_s": 2.85200179181993,
-          "startup_s": 0.16310570808127522,
-          "peak_mb": 14.65625
-        },
-        "rust-1": {
-          "samples_s": [
-            0.28919650008901954,
-            0.2227324170526117,
-            0.31304133404046297
-          ],
-          "median_s": 0.28919650008901954,
-          "min_s": 0.2227324170526117,
-          "max_s": 0.31304133404046297,
-          "startup_s": 0.006741874851286411,
-          "peak_mb": 5.5625
-        },
-        "rust-8": {
-          "samples_s": [
-            0.7972022918984294,
-            0.7161905840039253,
-            1.1618474589195102
-          ],
-          "median_s": 0.7972022918984294,
-          "min_s": 0.7161905840039253,
-          "max_s": 1.1618474589195102,
-          "startup_s": 0.006458166055381298,
-          "peak_mb": 6.171875
-        }
-      },
-      "repeatable": {
-        "cpp-1": true,
-        "cpp-8": true,
-        "rust-1": true,
-        "rust-8": true
-      },
-      "hangs": {
-        "cpp-1": 0,
-        "cpp-8": 0,
-        "rust-1": 0,
-        "rust-8": 0
-      },
-      "comparisons": {
-        "cpp-8": {
-          "passed": true,
-          "reference_frames": 2001,
-          "candidate_frames": 2001,
-          "compared_entity_states": 247424,
-          "max_position_error_m": 0.0,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 0,
-          "first_mismatches": [],
-          "direct_event_stream_compared": false
-        },
-        "rust-1": {
-          "passed": false,
-          "reference_frames": 2001,
-          "candidate_frames": 2001,
-          "compared_entity_states": 247424,
-          "max_position_error_m": 4.547473508864641e-13,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 2,
-          "first_mismatches": [
-            "summary team 1, flight_time: reference 3617.2, candidate 24704.4",
-            "summary team 1, flight_time_norm: reference 156.588745, candidate 123.583792"
-          ],
-          "direct_event_stream_compared": false
-        },
-        "rust-8": {
-          "passed": false,
-          "reference_frames": 2001,
-          "candidate_frames": 2001,
-          "compared_entity_states": 247424,
-          "max_position_error_m": 4.547473508864641e-13,
-          "max_velocity_error_mps": 0.0,
-          "max_orientation_error_rad": 0.0,
-          "max_angular_velocity_error_radps": 0.0,
-          "max_timestamp_error_s": 0.0,
-          "mismatch_count": 2,
-          "first_mismatches": [
-            "summary team 1, flight_time: reference 3617.2, candidate 24704.4",
-            "summary team 1, flight_time_norm: reference 156.588745, candidate 123.583792"
-          ],
-          "direct_event_stream_compared": false
-        }
-      },
-      "rust_workers_match": true,
-      "matches_cpp": false,
-      "passed": true
-    },
-    {
-      "workload": "churn",
-      "agents": 1024,
-      "steps": 2000,
-      "statistics": {
-        "cpp-1": {
-          "samples_s": [
-            3.0454741260036826,
-            2.998362542130053,
-            3.0466144590172917
-          ],
-          "median_s": 3.0454741260036826,
-          "min_s": 2.998362542130053,
-          "max_s": 3.0466144590172917,
-          "startup_s": 0.22746729105710983,
-          "peak_mb": 27.53125
-        },
-        "cpp-8": {
-          "samples_s": [
-            7.138570083072409,
-            6.209237041184679,
-            6.499329499201849
-          ],
-          "median_s": 6.499329499201849,
-          "min_s": 6.209237041184679,
-          "max_s": 7.138570083072409,
-          "startup_s": 0.2084200419485569,
-          "peak_mb": 28.1875
-        },
-        "rust-1": {
-          "samples_s": [
-            0.6328834171872586,
-            0.6010670841205865,
-            0.6081765000708401
-          ],
-          "median_s": 0.6081765000708401,
-          "min_s": 0.6010670841205865,
-          "max_s": 0.6328834171872586,
-          "startup_s": 0.009386499878019094,
-          "peak_mb": 8.765625
-        },
-        "rust-8": {
-          "samples_s": [
-            1.126161833293736,
-            1.1091109581757337,
-            1.1415280420333147
-          ],
-          "median_s": 1.126161833293736,
-          "min_s": 1.1091109581757337,
-          "max_s": 1.1415280420333147,
-          "startup_s": 0.007648541824892163,
-          "peak_mb": 9.328125
-        }
-      },
-      "repeatable": {
-        "cpp-1": true,
-        "cpp-8": true,
-        "rust-1": true,
-        "rust-8": true
-      },
-      "hangs": {
-        "cpp-1": 0,
-        "cpp-8": 0,
-        "rust-1": 0,
-        "rust-8": 0
-      },
-      "comparisons": {
-        "cpp-8": {
-          "passed": true,
-          "reference_frames": 2001,
-          "candidate_frames": 2001,
           "compared_entity_states": 676540,
           "max_position_error_m": 0.0,
           "max_velocity_error_mps": 0.0,
@@ -1726,51 +1728,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            0.18790916679427028,
-            0.19153687497600913,
-            0.18410670896992087
+            0.17564395900012642,
+            0.17850270899998577,
+            0.1765451670000857
           ],
-          "median_s": 0.18790916679427028,
-          "min_s": 0.18410670896992087,
-          "max_s": 0.19153687497600913,
-          "startup_s": 0.17631408316083252,
-          "peak_mb": 18.921875
+          "median_s": 0.1765451670000857,
+          "min_s": 0.17564395900012642,
+          "max_s": 0.17850270899998577,
+          "startup_s": 0.14252029099998254,
+          "peak_mb": 19.0
         },
         "cpp-8": {
           "samples_s": [
-            0.40807454218156636,
-            0.3743749998975545,
-            0.37577033299021423
+            0.40150674999995317,
+            0.39936316699981944,
+            0.398006832999954
           ],
-          "median_s": 0.37577033299021423,
-          "min_s": 0.3743749998975545,
-          "max_s": 0.40807454218156636,
-          "startup_s": 0.18582229199819267,
-          "peak_mb": 19.3125
+          "median_s": 0.39936316699981944,
+          "min_s": 0.398006832999954,
+          "max_s": 0.40150674999995317,
+          "startup_s": 0.14103737499999625,
+          "peak_mb": 19.375
         },
         "rust-1": {
           "samples_s": [
-            0.04738595802336931,
-            0.045133001171052456,
-            0.045492042088881135
+            0.04580591700005243,
+            0.046565000999862605,
+            0.047282084000016766
           ],
-          "median_s": 0.045492042088881135,
-          "min_s": 0.045133001171052456,
-          "max_s": 0.04738595802336931,
-          "startup_s": 0.01082295784726739,
-          "peak_mb": 5.46875
+          "median_s": 0.046565000999862605,
+          "min_s": 0.04580591700005243,
+          "max_s": 0.047282084000016766,
+          "startup_s": 0.011413166000011188,
+          "peak_mb": 5.71875
         },
         "rust-8": {
           "samples_s": [
-            0.09444566583260894,
-            0.09226883272640407,
-            0.0974665826652199
+            0.09439120899992304,
+            0.0962847089999741,
+            0.09894075000011071
           ],
-          "median_s": 0.09444566583260894,
-          "min_s": 0.09226883272640407,
-          "max_s": 0.0974665826652199,
-          "startup_s": 0.01104779215529561,
-          "peak_mb": 6.265625
+          "median_s": 0.0962847089999741,
+          "min_s": 0.09439120899992304,
+          "max_s": 0.09894075000011071,
+          "startup_s": 0.011849665999989156,
+          "peak_mb": 6.703125
         }
       },
       "repeatable": {
@@ -1840,51 +1842,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            2.3167119168210775,
-            2.314606208819896,
-            2.3584467920009047
+            2.442314832999955,
+            2.4317199170000094,
+            2.425719832999903
           ],
-          "median_s": 2.3167119168210775,
-          "min_s": 2.314606208819896,
-          "max_s": 2.3584467920009047,
-          "startup_s": 0.297398166032508,
-          "peak_mb": 53.59375
+          "median_s": 2.4317199170000094,
+          "min_s": 2.425719832999903,
+          "max_s": 2.442314832999955,
+          "startup_s": 0.25594950000004246,
+          "peak_mb": 53.484375
         },
         "cpp-8": {
           "samples_s": [
-            3.0658230409026146,
-            3.0329106671269983,
-            3.006110917078331
+            3.180077540999946,
+            3.1853658330001053,
+            3.078036956999995
           ],
-          "median_s": 3.0329106671269983,
-          "min_s": 3.006110917078331,
-          "max_s": 3.0658230409026146,
-          "startup_s": 0.31006649998016655,
-          "peak_mb": 54.078125
+          "median_s": 3.180077540999946,
+          "min_s": 3.078036956999995,
+          "max_s": 3.1853658330001053,
+          "startup_s": 0.2597184589999415,
+          "peak_mb": 54.21875
         },
         "rust-1": {
           "samples_s": [
-            0.27089362498372793,
-            0.270440791035071,
-            0.2708239168860018
+            0.22133708400019714,
+            0.22750995899991722,
+            0.21802675000003546
           ],
-          "median_s": 0.2708239168860018,
-          "min_s": 0.270440791035071,
-          "max_s": 0.27089362498372793,
-          "startup_s": 0.031063416972756386,
-          "peak_mb": 11.75
+          "median_s": 0.22133708400019714,
+          "min_s": 0.21802675000003546,
+          "max_s": 0.22750995899991722,
+          "startup_s": 0.020246499999984735,
+          "peak_mb": 12.21875
         },
         "rust-8": {
           "samples_s": [
-            0.2888230418320745,
-            0.285549207823351,
-            0.3007607499603182
+            0.24267070799987778,
+            0.23238583299985294,
+            0.23738862499999414
           ],
-          "median_s": 0.2888230418320745,
-          "min_s": 0.285549207823351,
-          "max_s": 0.3007607499603182,
-          "startup_s": 0.031942125177010894,
-          "peak_mb": 12.359375
+          "median_s": 0.23738862499999414,
+          "min_s": 0.23238583299985294,
+          "max_s": 0.24267070799987778,
+          "startup_s": 0.01861204200008615,
+          "peak_mb": 13.0625
         }
       },
       "repeatable": {
@@ -1960,51 +1962,51 @@
       "statistics": {
         "cpp-1": {
           "samples_s": [
-            8.806599624920636,
-            8.805629499955103,
-            8.871564459055662
+            9.577638959000069,
+            8.943695793000188,
+            9.304375542000116
           ],
-          "median_s": 8.806599624920636,
-          "min_s": 8.805629499955103,
-          "max_s": 8.871564459055662,
-          "startup_s": 0.5120437499135733,
-          "peak_mb": 99.203125
+          "median_s": 9.304375542000116,
+          "min_s": 8.943695793000188,
+          "max_s": 9.577638959000069,
+          "startup_s": 0.47216229099990414,
+          "peak_mb": 99.28125
         },
         "cpp-8": {
           "samples_s": [
-            10.38024629210122,
-            10.224416959099472,
-            10.321866209153086
+            10.280304041000363,
+            11.067192333000094,
+            10.287609875000271
           ],
-          "median_s": 10.321866209153086,
-          "min_s": 10.224416959099472,
-          "max_s": 10.38024629210122,
-          "startup_s": 0.5290731659624726,
-          "peak_mb": 99.953125
+          "median_s": 10.287609875000271,
+          "min_s": 10.280304041000363,
+          "max_s": 11.067192333000094,
+          "startup_s": 0.4707831669998086,
+          "peak_mb": 99.984375
         },
         "rust-1": {
           "samples_s": [
-            0.9718052910175174,
-            0.9741846239194274,
-            0.97614008304663
+            0.5918614999998226,
+            0.5873813749999499,
+            0.5911993749998601
           ],
-          "median_s": 0.9741846239194274,
-          "min_s": 0.9718052910175174,
-          "max_s": 0.97614008304663,
-          "startup_s": 0.09323033411055803,
-          "peak_mb": 19.84375
+          "median_s": 0.5911993749998601,
+          "min_s": 0.5873813749999499,
+          "max_s": 0.5918614999998226,
+          "startup_s": 0.03093337500013149,
+          "peak_mb": 20.625
         },
         "rust-8": {
           "samples_s": [
-            0.9302432080730796,
-            0.9311606662813574,
-            0.9240626669488847
+            0.5526062920000641,
+            0.5596081249998406,
+            0.5660569579999901
           ],
-          "median_s": 0.9302432080730796,
-          "min_s": 0.9240626669488847,
-          "max_s": 0.9311606662813574,
-          "startup_s": 0.09660479193553329,
-          "peak_mb": 20.234375
+          "median_s": 0.5596081249998406,
+          "min_s": 0.5526062920000641,
+          "max_s": 0.5660569579999901,
+          "startup_s": 0.030498000000079628,
+          "peak_mb": 21.109375
         }
       },
       "repeatable": {

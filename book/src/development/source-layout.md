@@ -115,8 +115,8 @@ The same registry supports [Rust-built scenarios](../guides/rust-scenarios.md).
 2. `plugin_manager/registry.rs`: compile registered types from mission parameters.
 3. `entity/plugin_stack.rs` and `simcontrol/world_plugins.rs`: create and own
    independent entity-local and world-level plugin instances.
-4. `simcontrol.rs`: generate entities; run autonomy; all controller
-   substeps; all motion substeps; sensors; interactions; networks;
+4. `simcontrol.rs`: generate entities; run autonomy; for each substep,
+   controllers then motion; sensors; interactions; networks;
    estimation; metrics; then remove inactive entities and advance the simulation.
 5. `simcontrol/scheduler.rs`: join each entity phase before the next starts.
    `pubsub/messages.rs` commits communication at the defined delivery phase;

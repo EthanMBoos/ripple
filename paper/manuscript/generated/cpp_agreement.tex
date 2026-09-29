@@ -6,9 +6,11 @@ Maximum absolute errors over all compared entity states: position in m,
 velocity in m/s, attitude as the rotation angle between orientations in rad.
 Trace columns count compared message deliveries, published sensor states,
 and plugin output values; every delivery matched in sender, receiver, tick,
-and order. In every case the unmodified, instrumented, and traced C++ builds
-wrote byte-identical frames and summaries, and Rust outputs were byte-identical
-at 1, 2, and 8 workers, with recording, and with tracing.}
+and order. In every case the C++ comparison build wrote byte-identical frames
+and summaries with and without tracing, and matched the unmodified build
+except where substeps differ by design (Section~\ref{sec:substeps}); Rust
+outputs were byte-identical at 1, 2, and 8 workers, with recording, and with
+tracing.}
 \label{tab:agreement}
 \scriptsize
 \setlength{\tabcolsep}{2.5pt}
@@ -21,8 +23,8 @@ Mission & Exercises & States & Position & Velocity & Attitude & Deliv. & Payload
 \texttt{straight-no-gui} & SimpleAircraft, PID, collision, removal & 976 & 0 & 0 & 0 & 5 & 0 & 5856 & 0 & match \\
 \texttt{straight\_cpu} & SimpleAircraft, PID, long horizon & 2001 & 0 & 0 & 0 & 1 & 0 & 12000 & 0 & match \\
 \texttt{straight\_cpu\_mul} & as above; upstream multiplier typo & 2001 & 0 & 0 & 0 & 1 & 0 & 12000 & 0 & match \\
-\texttt{aircraft-substeps-spawning} & substeps, rates, randomized spawning & 90 & $1.4\times10^{-14}$ & $1.0\times10^{-14}$ & $6.9\times10^{-16}$ & 4 & 0 & 516 & $7.1\times10^{-15}$ & match \\
-\texttt{aircraft-substeps-scheduled} & substeps, rates, two spawn schedules & 170 & $1.0\times10^{-14}$ & $1.6\times10^{-14}$ & $7.9\times10^{-16}$ & 7 & 0 & 978 & $7.1\times10^{-15}$ & match\textsuperscript{a} \\
+\texttt{aircraft-substeps-spawning} & substeps, rates, randomized spawning & 90 & $2.2\times10^{-14}$ & $1.9\times10^{-14}$ & $7.8\times10^{-15}$ & 4 & 0 & 516 & $9.1\times10^{-14}$ & match \\
+\texttt{aircraft-substeps-scheduled} & substeps, rates, two spawn schedules & 170 & $4.8\times10^{-14}$ & $2.6\times10^{-14}$ & $7.8\times10^{-15}$ & 7 & 0 & 978 & $1.8\times10^{-13}$ & match\textsuperscript{a} \\
 \texttt{noisy-state-bias} & NoisyState bias, belief feedback & 31 & 0 & $3.6\times10^{-15}$ & 0 & 31 & 30 & 180 & $3.6\times10^{-15}$ & match \\
 \texttt{networks-local-global} & Boundary, GroundCollision, networks & 607 & $5.9\times10^{-14}$ & $4.5\times10^{-14}$ & $5.1\times10^{-15}$ & 613 & 605 & 3630 & $5.4\times10^{-14}$ & match\textsuperscript{a} \\
 \texttt{fixed-wing-6dof} & FixedWing6DOF, AircraftPID, wind & 2002 & $1.4\times10^{-10}$ & $9.0\times10^{-11}$ & $1.5\times10^{-12}$ & 2 & 0 & 14000 & $4.1\times10^{-12}$ & match \\

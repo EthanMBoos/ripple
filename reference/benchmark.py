@@ -4,7 +4,9 @@
     python3 reference/benchmark.py --output runs/new-benchmark
     python3 reference/benchmark.py --output runs/quick-benchmark --quick
 
-Builds the unmodified C++ branch (Ubuntu-24.04) and the Rust core-only runner
+Builds the C++ comparison branch (benchmarking-edits: the reference with
+controllers and motion interleaved per substep, as Rust runs them; its tracing
+is off unless requested) and the Rust core-only runner
 (reference/benchmark_runner.rs, no viewer) for this machine's own architecture,
 so neither is emulated. On Apple Silicon that is linux/arm64 in Docker's VM, and
 C++ is built without JSBSim, which no workload uses.
@@ -20,8 +22,8 @@ the previous benchmark image, so repeated benchmarks don't fill the disk.
 
 Rust must write identical output (frames, summary, events) at 1 and 8 workers.
 It must also match single-threaded C++ except in churn, sensing, and collision,
-which depend on random spawn positions and sensor noise that the unmodified C++
-build draws differently (the reference check matches them with its comparison build).
+which depend on random spawn positions and sensor noise that the C++ build
+draws differently without SCRIMMAGE_LIBCXX_SPAWN_RANDOM (the reference check matches them with its comparison build).
 Every timed run must repeat its warm-up output; C++'s multithreaded mode is
 reported, not required, to do so.
 That mode sometimes deadlocks (SimControl::worker waits on its condition variable
@@ -46,8 +48,8 @@ import xml.etree.ElementTree as ET
 
 from compare import compare_runs
 from perf import HEADER, WORKLOADS
-from reference_check import BASELINE_BRANCH, ROOT, build_reference, capture, run_logged, sha256, \
-    write_json
+from reference_check import INSTRUMENTED_BRANCH, ROOT, build_reference, capture, run_logged, \
+    sha256, write_json
 
 COUNTS = {"motion": (64, 256, 1024), "substeps": (64, 256, 1024),
           "sensing": (32, 64, 128), "churn": (64, 256, 1024), "collision": (256, 1024, 2048)}
@@ -216,7 +218,7 @@ def main():
     target = "linux/arm64" if platform.machine() in ("arm64", "aarch64") else "linux/amd64"
     build = SimpleNamespace(source=args.source.resolve(), jobs=os.cpu_count(),
                             build_timeout=3600, timeout=600)
-    cpp = build_reference(build, output, BASELINE_BRANCH, target)
+    cpp = build_reference(build, output, INSTRUMENTED_BRANCH, target)
     run_logged(["docker", "build", "--platform", target, "--progress", "plain",
                 "-f", ROOT / "reference/rust.Dockerfile", "--target", "benchmark",
                 "--build-arg", f"REFERENCE_IMAGE={cpp['image_tag']}",

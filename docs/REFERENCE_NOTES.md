@@ -13,7 +13,7 @@ These findings come from source, rather than the synthesized guides in the
 
 | Source in the C++ checkout | Finding |
 | --- | --- |
-| `src/simcontrol/SimControl.cpp`, `run_single_step` / `run_entities` | Generate and log pre-step contacts; autonomy; all controller substeps; all motion substeps; sensors; interactions; networks; metrics; removal/output/time. Controller and motion substeps are not interleaved. |
+| `src/simcontrol/SimControl.cpp`, `run_single_step` / `run_entities` | Generate and log pre-step contacts; autonomy; all controller substeps; all motion substeps; sensors; interactions; networks; metrics; removal/output/time. Controller and motion substeps are not interleaved on this branch; they were until 2025-12, and `benchmarking-edits` restores that (see [Substep order](#substep-order-a-c-regression-fixed-on-the-comparison-branch)). |
 | Same file, network/metrics phases | Metrics can consume interaction messages in the same tick. Delivery is not universally delayed to the next tick. |
 | Same file, `run_logging` / finalization | Pre-step state is labeled `t + dt`; terminal logging repeats the final timestamp with terminal state. |
 | `src/plugins/network/LocalNetwork/LocalNetwork.cpp` | Reachability requires the same non-null parent entity, not proximity. |
@@ -114,6 +114,85 @@ strictly after its deadline. See [plugin behavior](../book/src/reference/plugin-
   outputs the next plugin reads, in both implementations.
 - C++ logs the final tick twice: before its step and as the terminal frame in
   `finalize()`. Both traces record both.
+
+## Substep order: a C++ regression, fixed on the comparison branch
+
+From 2017 until `c0a9f42b2` ("added gpu support", 2025-12-16), `SimControl` ran
+each substep as controllers, then motion. That commit ran all controller
+substeps before any motion, so with `motion_multiplier` > 1 controllers get no
+fresh state within a tick and a PID's derivative term is zero after the first
+call. `benchmarking-edits` commit `7129e47f5` restores the interleaved order and
+disables GPU acceleration in CMake (which also disables the GPU network
+plugin). Rust interleaves too, refreshing `PassThrough`-of-perfect own-state
+belief between substeps; other estimators, sensors, contacts, interactions, and
+networks keep the outer tick, so more substeps do not mean fresher observations
+or finer collision checks. `m` = 1 missions are unaffected. The benchmarks
+(`reference/benchmark.py`, `paper/data/benchmark-native/`) now build the
+comparison branch, and the paper's timings come from them. The history, the comparison with other simulators, and the
+verification are in the paper (`sec:substeps`); `reference_check.py` requires
+unmodified and fixed C++ to match only when `m` = 1.
+
+## Ported models keep C++ numerics; new models do not
+
+Ported plugins reproduce the C++ implementation, including its numerical
+shortcuts, so comparisons stay exact. New plugins, such as a JSBSim-backed
+model or new fixed-wing and boat models, should be written to be correct, not
+to match these.
+
+**Frozen RK4 loads (FixedWing6DOF, Multirotor).** C++ `model(x, ...)` computes
+forces and moments from `x_` (start of step), not the stage state `x`; only
+kinematics and attitude use `x`. The loads are therefore first order per step.
+These ported models keep this approximation for C++ compatibility, and the
+substep-order fix does not remove it. The implementation is also rough: the
+frozen loads are recomputed at every stage, and the gyroscopic term uses `x_`
+while the kinematics use `x`. [`paper/data/rk4-loads`](../paper/data/rk4-loads/README.md)
+measures it against loads recomputed at each stage. With constant controls,
+the frozen error halves exactly with each halving of the step (first order),
+while stage-evaluated loads reach the reference's resolution within one or two
+halvings: 6.1 cm against 5e-10 m for Multirotor over 4 s at 0.01 s, and 17 m
+against 1.5e-5 m for a FixedWing6DOF glider over 60 s at 0.05 s. In a gently
+controlled 30 s flight, the largest difference between frozen and
+stage-evaluated loads is 2.0 m at 0.01 s and 99 m at 0.05 s, and the frozen
+version flips the aircraft at 0.1 s. A
+suitable step size depends on the model, controller, and scenario; check
+convergence by halving the step rather than relying on one fixed value.
+
+Computing forces once per step is not wrong in itself. JSBSim does it at
+120 Hz, with rectangular Euler for rotation and Adams-Bashforth methods, which
+reuse past derivatives, for translation by default. What is careless here is the
+mismatch: the models pay for four RK4 stages but get first-order accuracy in
+the forces, recompute identical forces at each stage, mix start-of-step and
+stage state, and never say so.
+
+**Integrators for new motion models.** For smooth-flight models such as the
+planned fixed-wing and boat, start with RK4 that recomputes forces and moments
+from each stage's state, and verify convergence. Choose another integrator
+when the dynamics warrant it: stiff or strongly damped terms and
+discontinuities (contact, saturation) change the trade-off, and methods that
+evaluate forces once per step can be the better choice there. Document the
+choice, and do not freeze forces through RK4 stages. Whichever method you choose, check
+convergence by running a representative scenario at `dt`, `dt/2`, and `dt/4`,
+and confirm the trajectory stops changing at the step you intend to use.
+
+**Evidence still needed for these claims.** Each claim above needs its own
+side-by-side check, and the results belong in `paper/data/`:
+- *Integration accuracy*: the same model run with frozen and with
+  stage-evaluated forces at several step sizes, against a fine-step reference.
+  Done in `paper/data/rk4-loads`: frozen loads converge at first order, and
+  stage-evaluated loads reach the reference's resolution within one or two
+  halvings. That shows a far smaller error, not a measured fourth-order rate.
+- *What JSBSim does*: cite the pinned `FGPropagate.cpp` source (default
+  integrators, forces once per frame), not a summary of it.
+- *That a new model is correct*: a side-by-side with standalone JSBSim on one
+  aircraft with aligned mass, inertia, aerodynamic coefficients, frames, and
+  control meanings. Use a pinned JSBSim version and assets, identical control
+  schedules including held-out cases, and declared tolerances. The fixtures in
+  the [roadmap](TODO.md#jsbsim-reference-fixtures) are this check; NASA's
+  flight-simulation check cases are a second, independent reference.
+
+JSBSim is an independent implementation, not ground truth. Agreement with it
+shows that the equations and integration are implemented consistently for that
+aircraft. It does not show that either model matches a real aircraft.
 
 ## Spawn RNG mismatch (accepted)
 

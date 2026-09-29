@@ -574,8 +574,7 @@ communication behavior matters.
 ```text
 Generate entities
 -> all autonomies
--> all controller substeps
--> all motion substeps
+-> for each substep: controllers, then motion
 -> sensors
 -> interactions
 -> networks / delivery

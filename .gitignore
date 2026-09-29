@@ -1,5 +1,6 @@
 /target/
-/runs/
+/runs
+/runs.nosync/
 /sweeps/
 /.DS_Store
 __pycache__/

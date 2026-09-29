@@ -268,6 +268,11 @@ impl Entity {
         self.plugins.motion(self.info(), time, &mut self.truth)
     }
 
+    /// Between motion substeps; see `PluginStack::follow_perfect_state`.
+    pub(crate) fn follow_perfect_state(&mut self) {
+        self.plugins.follow_perfect_state(&self.truth);
+    }
+
     pub(crate) fn step_sensors(
         &mut self,
         time: StepTime,

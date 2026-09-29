@@ -256,28 +256,28 @@ impl Simulation {
         }
         self.run_phase(|entity| entity.step_autonomy(StepTime { time_s, dt_s }))?;
 
-        // Match the reference: all controller substeps precede all motion substeps.
+        // Each substep runs controllers, then motion, so a controller sees the
+        // state the previous substep wrote (see docs/REFERENCE_NOTES.md,
+        // "Substep order"). Autonomy above and everything below run once per tick.
         let motion_dt_s = dt_s / self.config.run.motion_multiplier as f64;
         let mut substep_time_s = time_s;
-        for _ in 0..self.config.run.motion_multiplier {
+        for substep in 0..self.config.run.motion_multiplier {
             let time = StepTime {
                 time_s: substep_time_s,
                 dt_s: motion_dt_s,
             };
-            self.run_phase(|entity| entity.step_controller(time))?;
-            substep_time_s += motion_dt_s;
-        }
-        if let Some(trace) = &mut self.trace {
-            trace.outputs(time_s, &self.entities)?;
-        }
-        substep_time_s = time_s;
-        for _ in 0..self.config.run.motion_multiplier {
-            let time = StepTime {
-                time_s: substep_time_s,
-                dt_s: motion_dt_s,
-            };
+            self.run_phase(|entity| {
+                if substep > 0 {
+                    entity.follow_perfect_state();
+                }
+                entity.step_controller(time)
+            })?;
             self.run_phase(|entity| entity.step_motion(time))?;
             substep_time_s += motion_dt_s;
+        }
+        // Motion leaves controller outputs unchanged: this is the last substep's.
+        if let Some(trace) = &mut self.trace {
+            trace.outputs(time_s, &self.entities)?;
         }
 
         // The spatial index is built from post-motion positions and refreshed

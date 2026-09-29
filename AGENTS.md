@@ -14,8 +14,10 @@ loading, legacy protobuf/string-map spawning, OpenCL, VTK, production JSBSim).
 Keep optional adapters (ROS, ArduPilot, Burn) out of the default build.
 
 - C++ source: sibling `../scrimmage`, branch `Ubuntu-24.04`. Do not modify it.
-  The only allowed C++ changes are on the opt-in `benchmarking-edits` branch
-  (tracing, test drivers, selectable RNG), which must leave outputs byte-identical.
+  The only allowed C++ changes are on the `benchmarking-edits` comparison
+  branch: opt-in instrumentation (tracing, test drivers, selectable RNG) that
+  leaves outputs byte-identical, and fixes for documented C++ regressions (the
+  substep order, `docs/REFERENCE_NOTES.md`).
 - User research plugins live in workspace user crates such as `crates/starter`,
   registered in `crates/cli/src/main.rs`; keep the starter building and tested.
 - XML and YAML missions share one typed `ScenarioConfig`; XML is frozen, only
@@ -59,10 +61,10 @@ User and developer guidance goes in `book/src/` (listed in `SUMMARY.md`);
 
 ## Execution invariants
 
-- Phase order: generate; autonomy; all controller substeps; all motion
-  substeps; sensors; interactions; networks; delivery and estimation
-  (localization, then tracking); metrics; removal/output/time.
-  Never interleave substeps or run a whole entity chain as one parallel task.
+- Phase order: generate; autonomy; each substep runs controllers, then
+  motion; sensors; interactions; networks; delivery and estimation
+  (localization, then tracking); metrics; removal/output/time. Each of these is
+  its own phase: never run a whole entity chain as one parallel task.
 - Workers own disjoint entity state; every phase joins every task. Rust output
   must be byte-identical at 1, 2, and 8 workers and with Rerun on or off.
 - Every subscriber has its own queue. Preserve legacy spawn RNG draw order;

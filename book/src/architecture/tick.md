@@ -15,8 +15,8 @@ counterpart of the simulation loop in the [C++ data-flow guide](../appendix/cpp/
  │ 1  generate        new entities spawn (schedules, rates, counts)      │
  │    snapshot A      read-only copy of every entity (frame for tick k)  │
  │ 2  autonomy        ═══ parallel ═══  reads its own entity's belief    │
- │ 3  controllers     ═══ parallel ═══  once per substep, all substeps   │
- │ 4  motion          ═══ parallel ═══  once per substep, all substeps   │
+ │ 3  controllers     ═══ parallel ═══  ┐ repeated for each substep:     │
+ │ 4  motion          ═══ parallel ═══  ┘ controllers, then motion       │
  │    snapshot B      post-motion copy, and the spatial index            │
  │ 5  sensors         ═══ parallel ═══  read truth and snapshot B        │
  │ 6  interactions    coordinator       collisions, boundaries, health   │
@@ -36,18 +36,23 @@ with access to every entity.
 
 ## Rules the order enforces
 
-- **All controller substeps, then all motion substeps.** With
-  `motion_multiplier = 10`, every entity runs its controller ten times, then
-  every entity runs its motion model ten times. Substeps are never
-  interleaved, and a whole entity chain never runs as one parallel task. This
-  matches C++ and keeps results independent of worker count.
+- **Each substep runs controllers, then motion.** With
+  `motion_multiplier = 10`, every entity runs its controller, then every entity
+  runs its motion model, ten times, so a controller sees the state the previous
+  substep wrote. When own-state belief is `PassThrough` of the perfect
+  measurement, it follows truth between substeps; a sensor-driven belief
+  updates once per tick. Each is its own parallel phase, never a whole entity
+  chain as one task, which keeps results independent of worker count. This is
+  SCRIMMAGE's order from 2017 to 2025, which its GPU support later broke; see
+  the reference notes' "Substep order".
 - **Sensors see the world after motion.** A sensor's reading in tick k
   describes the state at the end of tick k; the estimators turn it into belief
   at the end of tick k, and autonomy uses that belief at the start of tick k+1,
   which is the same moment in simulated time.
 - **Decisions see belief, not other entities.** Autonomy and controllers read
   only their own entity's belief, written by its estimators in the previous
-  estimation step, so no entity sees another halfway through its update.
+  estimation step (or, for a perfect own-state measurement, refreshed between
+  substeps), so no entity sees another halfway through its update.
   Different entities can believe different things. Snapshot A is the frame
   written to output.
 - **Spatial queries see current positions.** The engine builds the index that

@@ -19,6 +19,7 @@
       "no_bin_logging": "false"
     }
   },
+  "motion_multiplier": 1,
   "cpp_non_interference": {
     "untraced": {
       "frames.bin": true,
@@ -29,7 +30,11 @@
       "summary.csv": true
     }
   },
-  "cpp_log_directory": "cpp/logs/2026-09-28_23-56-34",
+  "cpp_baseline_equality": {
+    "frames.bin": true,
+    "summary.csv": true
+  },
+  "cpp_log_directory": "cpp/logs/2026-09-29_13-17-15",
   "cpp_output_hashes": {
     "frames.bin": "01bbf5da961e18d684a2b8bfa2d9b4142dcb7f7e963ff385262fc922cc43f932",
     "summary.csv": "9dfe5f8534fccfd88c50d3829c5a4c361463cb63709aee53a91deb17b951bb81"
@@ -51,7 +56,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "da453a26bc056524b1c11c2c2b3694bc852bf3f47bb316b452b16af956a843cc",
+  "recording_sha256": "76ef89d59c35953e6d04f9f2841d5853499f0b85ab1f33b61320ee6837a384cb",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

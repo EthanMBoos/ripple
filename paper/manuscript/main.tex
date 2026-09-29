@@ -156,16 +156,60 @@ about $10^{-14}$~m, which is floating-point rounding.
 it, we introduced 12 small, realistic errors into a copy of the Rust code, such
 as a controller gain 1\% too high or a message arriving one step late. The
 comparison flagged every one.
-\item \emph{Long runs mostly hold.} Eight of ten runs of up to 1{,}000~s
-match throughout. In the other two, an aircraft oscillating in its control
-loop drifts apart after 26~s and 69~s, ending less than 0.2~mm apart; one is
-consistent with rounding sensitivity, the other is unresolved.
+\item \emph{Long runs mostly hold.} Nine of ten runs of up to 1{,}000~s
+match throughout. The remaining run ends about 0.2~mm apart; perturbation
+experiments suggest numerical sensitivity.
 \item \emph{Every other difference is a C++ bug that Rust fixes or a
 deliberate choice,} such as C++ scoring late-spawning teams as NaN; all are
 listed in Table~\ref{tab:differences}.
 \end{itemize}
 This holds for the models and configurations we tested
 (Appendix~\ref{app:coverage}), not the whole C++ plugin catalog.
+
+\subsection{A Regression in the Reference}
+\label{sec:substeps}
+
+Matching a reference also means inheriting its mistakes. Reading the C++
+history turned up one that output comparison could not, because both
+simulators did the same thing.
+
+\paragraph{The original design}
+A mission can split each tick into shorter substeps, so that vehicle physics
+runs at a finer time step than decisions and sensing. From its first public
+commit in 2017 until December 2025, SCRIMMAGE ran each substep as the
+controllers followed by the motion model. This is a cascade: a slow outer loop
+(autonomy) sets goals, and a fast inner loop (controller and physics) tracks
+them, with the controller seeing the state the previous substep wrote. JSBSim
+likewise runs its flight-control system before each frame's dynamics
+\cite{berndt2004jsbsim}, and Isaac Lab runs actuator models on every physics
+step while holding a slower policy's action \cite{mittal2025isaaclab}.
+
+\paragraph{What changed and why it matters}
+The commit adding GPU support ran every controller substep before any motion,
+so that one GPU call could advance all substeps together; it gives no reason
+for the new order. With more than one substep, every controller call in a tick
+then sees the same state and the same goal, and the motion model flies only the
+last call's command. The controller gets no feedback within the tick, and a PID
+controller's derivative term, the change in error divided by the time step, is
+zero on every call whose setpoint and measurement are unchanged, so it loses its
+damping. With one substep
+the two orders are identical, which is why most missions were unaffected and
+why comparison against the current C++ could not reveal it.
+
+\paragraph{The fix}
+The C++ comparison branch restores the interleaved order, and SCRIMMAGE-RS
+follows it: controllers and motion alternate at each substep, while autonomy,
+sensing, communication, and interactions keep the outer tick. SCRIMMAGE-RS
+controllers read belief, so when own-state belief comes from the perfect
+measurement it is refreshed after each motion substep, as the C++ controllers
+read truth unless a sensor provides belief. Sensor-based estimates keep their
+own timing, so more substeps do not mean fresher observations, or finer
+collision checks. Every mission and workload with one substep produced
+byte-identical output before and after the change. The two substep missions
+agree with the fixed C++ to $5\times10^{-14}$~m, and one long run with two
+substeps now agrees with C++ throughout. Appendix~\ref{app:substeps} gives the
+commits, the verification, and the cost. The fix changes only the schedule; the
+numerical approximations inside the retained motion models remain.
 
 \subsection{Building an Experiment}
 \label{sec:workflow}
@@ -223,10 +267,10 @@ with noisy sensors, a stream of new aircraft that can collide, and a large
 spread-out group checked for collisions every step. Each ran at several sizes,
 up to 2{,}048 aircraft (Appendix~\ref{app:performance}).
 \begin{itemize}
-\item \emph{Rust is faster on one processor core,} by 1.1 to 1.7 times. We
+\item \emph{Rust is faster on one processor core,} by 1.05 to 1.7 times. We
 compare speed only on the two missions where both simulators produce identical
 results.
-\item \emph{Rust uses much less memory,} 2.2 to 6.2 times less on every mission
+\item \emph{Rust uses much less memory,} 2.0 to 6.0 times less on every mission
 and size.
 \item \emph{Collision checking was the limit for large teams, and spatial
 queries remove it.} Both simulators compared every pair of aircraft, so the
@@ -234,10 +278,7 @@ cost grew with the square of the team size: doubling from 1{,}024 to 2{,}048
 aircraft made Rust's collision mission more than three times slower. With the
 spatial queries of Section~\ref{sec:spatial}, a step with 4{,}096 spread-out
 aircraft takes 10.2~ms by default and 5.0~ms with the optional grid, against
-19.1~ms before: 1.9 and 3.8 times faster, with identical output. The C++
-comparisons in this section were measured before that change, with the previous
-collision loop; the change affects only collision checking, and the other
-workloads are unchanged within 3\% (perf.py).
+19.1~ms before: 1.9 and 3.8 times faster, with identical output.
 \item \emph{Message routing is the next limit, in both simulators.} Deciding
 which messages reach which plugins takes one check per publisher--subscriber
 pair, so a sensor on every agent that every agent listens to costs $n^2$ checks
@@ -245,10 +286,10 @@ per tick. With 4{,}096 aircraft each running an own-state sensor, a step took
 388~ms in both C++ and Rust. Routing by index (Section~\ref{sec:messages}) cuts
 that to 9.7~ms, 40 times faster, with identical output.
 \item \emph{Extra cores help only when there is enough work.} Rust on eight
-cores ran the sensor mission 2.25 times faster than on one, but the simplest
+cores ran the sensor mission 3.2 times faster than on one, but the simplest
 missions ran slower: handing out work to the cores every step costs more than
 the work itself.
-\item \emph{C++'s multi-core mode is unreliable.} It froze in 8 of 218 runs,
+\item \emph{C++'s multi-core mode is unreliable.} It froze in 14 of 224 runs,
 gave different answers to the same run when sensors were involved, and was
 usually slower than running C++ on one core. We compare against single-core
 C++.
@@ -786,9 +827,7 @@ under the same mission, sensing, communication, and lifecycle rules. For such
 studies, training directly here may be simpler than maintaining a matching task
 in another simulator. Contact-rich manipulation, visual learning, and
 low-level flight control are better served by specialist tools such as Isaac
-Lab. Low-level control also fits this testbed's phase order poorly: all
-controller substeps precede all motion substeps, so raising the motion
-multiplier gives a controller no fresh feedback.
+Lab.
 
 \paragraph{Options}
 Table~\ref{tab:learning} lists the ways learning and GPU computation could be
@@ -919,9 +958,8 @@ not establish their research value.
 
 \subsection{Limits of the Baseline}
 
-The comparison found defects on both sides. Tracing and generated scenarios
-exposed C++ defects that trajectories alone would have hidden, and Rust defects
-that we fixed, down to the order of floating-point operations. The limits of
+The C++ defects that Rust corrects are listed in Table~\ref{tab:differences},
+and the regression Rust inherited in Section~\ref{sec:substeps}. The limits of
 the parity claim are:
 \begin{itemize}
 \item \emph{Scope.} Parity covers the tested configurations of the retained
@@ -932,9 +970,7 @@ are compared by content; other messages, such as auction bids, by delivery only.
 distributions in one NoisyContacts fixture, not for temporal or cross-axis
 dependence, and NoisyState noise is not tested by distribution.
 \item \emph{Rounding.} Results agree to rounding, not bit for bit: C++ and Rust
-call different math libraries and group some operations differently. Two long
-runs diverge late; one is consistent with numerical sensitivity, and the other's
-cause is unresolved.
+call different math libraries and group some operations differently.
 \end{itemize}
 
 \section{Conclusion}
@@ -994,14 +1030,9 @@ trajectories agree to $3.7\times10^{-10}$~m at worst and usually to
 $10^{-14}$~m or better. No difference was detected in seven NoisyContacts
 marginal error distributions at the corrected significance threshold.
 
-Eight of the ten long runs pass. In the other two, an aircraft oscillates in
-its control loop, and C++ and Rust exceed the tolerance after 25.7~s and
-69.3~s, ending $1.9\times10^{-4}$~m and $7.1\times10^{-5}$~m apart. In the
-second, changing one input of Rust by one unit in the last place makes Rust
-diverge from itself at about the same time (69.7~s), which is consistent with
-numerical sensitivity. In the first, the same control does not reproduce the
-divergence, so its cause is unresolved; the trace shows the first difference
-in the last digit of a heading computation (Appendix~\ref{app:results}).
+Nine of the ten long runs pass. The remaining run ends about 0.2~mm apart;
+perturbation experiments suggest numerical sensitivity
+(Appendix~\ref{app:results}).
 
 In the tested configurations of the retained models,
 SCRIMMAGE-RS agrees with SCRIMMAGE in trajectories, the compared sensor and
@@ -1011,13 +1042,13 @@ The exceptions are listed in Table~\ref{tab:differences}.
 
 These results come from the SCRIMMAGE-RS code committed with them (the
 retained reports record a hash of every Rust source file) and C++ commits
-\texttt{4bdf41fb0} (\texttt{Ubuntu-24.04}) and \texttt{747a28069}
+\texttt{4bdf41fb0} (\texttt{Ubuntu-24.04}) and \texttt{7129e47f5}
 (\texttt{benchmarking-edits}).
 
 \input{generated/parity}
 
 \paragraph{What differs}
-Apart from the unresolved long-run divergence above, every remaining difference
+Apart from the long-run divergence above, every remaining difference
 is a C++ defect that Rust corrects or a deliberate choice
 (Table~\ref{tab:differences}). Examples are C++ scoring teams that spawn
 late as NaN, and entities destroyed before the first step still running for a
@@ -1072,7 +1103,22 @@ fixed-bias, zero-noise fixtures and, separately, by distribution.
 Ten generated scenarios run for 1{,}000~s (fixed-wing: 100~s at 0.01~s steps).
 A run agrees if every check passes over its whole length. For a run that
 diverges, a control changes Rust's initial roll, commanded speeds, and turning
-radii by one unit in the last place and measures when Rust diverges from itself.
+radii by one unit in the last place, scales each controller loop's proportional
+gain by $1+10^{-12}$, and measures when Rust diverges from itself. One-ulp
+parameter changes alone perturb the state far less than the rounding difference
+between C++ and Rust, and do not reach a controller loop directly.
+
+In \texttt{generated-000}, one aircraft settles into a sustained pitch
+oscillation at about 20~s. Its altitude loop never levels off, and its commanded
+pitch rate alternates between about $+1$ and $-3.7$~rad/s every half second.
+Any difference in that loop then grows about tenfold per second until it levels
+off near 0.1~mm. C++ and Rust exceed the tolerance after 28.8~s and end
+$2.0\times10^{-4}$~m apart, and the control does the same after 26.8~s,
+ending $2.1\times10^{-4}$~m away (Table~\ref{tab:long}). This suggests
+numerical sensitivity; it does not rule out a small difference between the
+two implementations. Before the substep
+order was restored, \texttt{generated-009} also diverged, after 69~s; it now
+agrees throughout.
 
 \paragraph{Summaries and one exclusion}
 A differing summary passes only if entity and collision counts match exactly,
@@ -1142,6 +1188,47 @@ FixedWing6DOF scenarios run without substeps. \\
 \end{tabularx}
 \end{table*}
 
+\section{The Substep Correction}
+\label{app:substeps}
+
+In \texttt{SimControl::run\_entities}, SCRIMMAGE interleaved controller and
+motion substeps from its first public commit (August 2017) until commit
+\texttt{c0a9f42b2} (``added gpu support'', December 2025):
+\begin{verbatim}
+autonomy                      once per tick
+for each substep:
+    controllers               read the state motion just wrote
+    motion model
+sensors, interactions, ...    once per tick
+\end{verbatim}
+That commit closed the controller loop before a new GPU motion call, which
+advances all substeps at once, and passed each controller call the full tick
+length; a later commit restored the substep length but kept the split. A
+comment written afterward still describes the interleaved design. GPU motion
+models need OpenCL and appear in two demonstration missions.
+
+The derivative term vanishes when a controller call sees the same setpoint and
+the same measurement as the previous one: in the split order, autonomy runs
+once per tick and nothing moves between controller calls. A nested controller
+can still shift an inner setpoint between calls (an outer loop's integral keeps
+growing), so the inner derivative is small rather than exactly zero.
+
+The comparison branch (\texttt{7129e47f5}) restores the interleaved loop and
+disables GPU acceleration in CMake, which also disables its GPU network plugin;
+the GPU sources remain but are not built. \texttt{reference\_check.py} requires
+the unmodified and fixed C++ to write identical output only when a mission has
+one substep. Before and after the Rust change, 31 of 35 missions and workloads
+wrote byte-identical frames, events, summaries, and traces at 1, 2, and 8
+workers; the four that changed are the substep workloads
+(\texttt{paper/data/substep-order/}). Against the fixed C++, the two substep
+missions agree to $4.8\times10^{-14}$ and $2.2\times10^{-14}$~m with matching
+traces, and the unmodified C++ differs from the fixed build on both.
+
+Timed against the previous revision, alternating run by run (a warm-up pair
+and five timed pairs), no workload changed consistently on one worker. On eight
+workers, the substep workloads were slower in every pair, by 1--4\% with 64
+aircraft and 4--10\% with 512; the other workloads changed in both directions.
+
 \section{Performance Details}
 \label{app:performance}
 
@@ -1151,15 +1238,18 @@ sensors, scheduled spawning with collisions, and collision checks among aircraft
 spread over about a kilometre, so few collide and the population stays nearly
 constant) on an Apple M2 Pro, first with
 both simulators in one Linux container (\texttt{reference/benchmark.py}) and
-then on bare-metal macOS, where unmodified C++ is built with Apple clang
+then on bare-metal macOS, where C++ is built with Apple clang
 against the library versions Ubuntu 24.04 ships
 (\texttt{paper/data/benchmark-native/}). Rust output matches single-threaded
 C++ in the first two workloads. The other three depend on random draws that the
-unmodified C++ build makes differently, so their ratios are not speed claims.
+C++ build makes differently without the comparison spawn stream, so their ratios
+are not speed claims.
+C++ is the comparison branch of Appendix~\ref{app:substeps}, so both simulators
+run substeps in the same order.
 
 Where outputs match, Rust with one thread is 1.2 to 1.7 times faster than C++
-in the container and 1.1 to 1.5 times faster on bare metal, and it uses 2.2 to
-6.2 times less memory. These timings include the estimation stage (its cost is
+in the container and 1.05 to 1.4 times faster on bare metal, and it uses 2.0 to
+6.0 times less memory. These timings include the estimation stage (its cost is
 measured on its own in Section~\ref{sec:estimation}), which raised Rust's peak
 memory, most with 128 sensing aircraft
 (7.4 to 12.3~MiB in the container), where each keeps its own contact list. Two changes made while profiling contributed, both with
@@ -1168,26 +1258,25 @@ every step, which had taken about a fifth of the time on straight flight, and
 it runs single-worker phases without the thread pool (below). Before them,
 native C++ was 1.25 times faster on straight flight.
 
-Collision checking compares every pair of aircraft in both simulators (C++
-compares each pair twice), so its cost grows with the square of the number of
-aircraft. From 1{,}024 to 2{,}048 aircraft, Rust's collision workload takes 3.6
-to 3.8 times longer and C++'s 3.8 to 9.3 times longer. Eight workers barely
-help, because the check runs in one sequential phase. These tables use the
-previous every-pair collision loop, from before spatial queries; the scan and
-the grid are timed in Section~\ref{sec:spatial}.
+C++ collision checking compares every pair of aircraft, twice, so its cost
+grows with the square of the number of aircraft; Rust uses the spatial queries
+of Section~\ref{sec:spatial}, by default the scan. From 1{,}024 to 2{,}048
+aircraft, Rust's collision workload takes 2.7 to 2.8 times longer and C++'s
+3.8 to 9.1 times longer. Eight workers barely help, because the check runs in
+one sequential phase.
 
 Parallel speedup depends on each phase carrying enough work. Every phase hands
 entities to a thread pool and joins it, which profiling puts at about
 35~\textmu s on bare metal and roughly ten times that in Docker's virtual
 machine. On bare metal, eight Rust workers beat one with substeps at 1{,}024
-aircraft and with sensors at 64 and 128 aircraft (2.25 times at 128), but not
-on light workloads or with 32 sensing aircraft; in the container, only with
-128 sensing aircraft. The handoff cost about 7~\textmu s even with one worker,
+aircraft, with sensors at 64 and 128 aircraft (3.2 times at 128), and with
+collisions at 2{,}048 aircraft, but not on light workloads or with 32 sensing
+aircraft; in the container, only with 128 sensing aircraft. The handoff cost about 7~\textmu s even with one worker,
 so Rust now runs single-worker phases on the calling thread, a third faster on
 light workloads.
 
-C++'s own \texttt{multi\_threaded} mode is not reliable. It deadlocked in 8 of
-218 runs (each killed after 120~s and retried), its output with sensors differs
+C++'s own \texttt{multi\_threaded} mode is not reliable. It deadlocked in 14 of
+224 runs, counting startup runs (each killed after 120~s and retried), its output with sensors differs
 between identical runs, and it is slower than single-threaded C++ except with
 64 or more sensing aircraft on bare metal and 128 in the container. Its entity worker waits on a condition variable without a predicate,
 so a wake-up can be lost; we did not modify it, and single-threaded C++ is the

@@ -1,0 +1,259 @@
+{
+ "date": "2026-09-29T07:20:22",
+ "machine": "Darwin-arm64-10cpu-96207172",
+ "old_revision": "548b3ac",
+ "new_revision": "interleaved substeps",
+ "files_compared": [
+  "frames.bin",
+  "events.json",
+  "summary.csv",
+  "trace.jsonl"
+ ],
+ "workers": [
+  1,
+  2,
+  8
+ ],
+ "missions": 35,
+ "missions_differing": 4,
+ "results": [
+  {
+   "mission": "missions/auction-sphere.xml",
+   "trace_deliveries": 9,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/fixed-wing-6dof.xml",
+   "trace_deliveries": 2,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/multirotor.xml",
+   "trace_deliveries": 4,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/multirotor.yaml",
+   "trace_deliveries": 4,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/networks-local-global.xml",
+   "trace_deliveries": 613,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/noisy-contacts.xml",
+   "trace_deliveries": 2,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/noisy-state.xml",
+   "trace_deliveries": 402,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/straight-no-gui.xml",
+   "trace_deliveries": 5,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/straight-no-gui.yaml",
+   "trace_deliveries": 5,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/test_missions/straight_cpu.xml",
+   "trace_deliveries": 1,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/test_missions/straight_cpu_mul.xml",
+   "trace_deliveries": 1,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/test_missions/straight_cpu_threaded.xml",
+   "trace_deliveries": 1,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/aircraft-substeps-scheduled.xml",
+   "trace_deliveries": 7,
+   "identical": false,
+   "differences": [
+    "w1:frames.bin",
+    "w1:trace.jsonl",
+    "w2:frames.bin",
+    "w2:trace.jsonl",
+    "w8:frames.bin",
+    "w8:trace.jsonl"
+   ]
+  },
+  {
+   "mission": "missions/verification/aircraft-substeps-spawning.xml",
+   "trace_deliveries": 4,
+   "identical": false,
+   "differences": [
+    "w1:frames.bin",
+    "w1:trace.jsonl",
+    "w2:frames.bin",
+    "w2:trace.jsonl",
+    "w8:frames.bin",
+    "w8:trace.jsonl"
+   ]
+  },
+  {
+   "mission": "missions/verification/collision-boundary.xml",
+   "trace_deliveries": 14,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/noisy-contacts-bias.xml",
+   "trace_deliveries": 93,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/noisy-contacts-noise.xml",
+   "trace_deliveries": 1204,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/noisy-state-bias.xml",
+   "trace_deliveries": 31,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/noisy-state-bias.yaml",
+   "trace_deliveries": 31,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/single-integrator.xml",
+   "trace_deliveries": 4,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/sphere-network-auction.xml",
+   "trace_deliveries": 22,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/waypoints-aircraft.xml",
+   "trace_deliveries": 6,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/waypoints-point-agents.xml",
+   "trace_deliveries": 6,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/waypoints-point-agents.yaml",
+   "trace_deliveries": 6,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf motion-64",
+   "trace_deliveries": 64,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf motion-512",
+   "trace_deliveries": 512,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf substeps-64",
+   "trace_deliveries": 64,
+   "identical": false,
+   "differences": [
+    "w1:frames.bin",
+    "w1:trace.jsonl",
+    "w2:frames.bin",
+    "w2:trace.jsonl",
+    "w8:frames.bin",
+    "w8:trace.jsonl"
+   ]
+  },
+  {
+   "mission": "perf substeps-512",
+   "trace_deliveries": 512,
+   "identical": false,
+   "differences": [
+    "w1:frames.bin",
+    "w1:trace.jsonl",
+    "w2:frames.bin",
+    "w2:trace.jsonl",
+    "w8:frames.bin",
+    "w8:trace.jsonl"
+   ]
+  },
+  {
+   "mission": "perf sensing-32",
+   "trace_deliveries": 38432,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf sensing-128",
+   "trace_deliveries": 153728,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf churn-64",
+   "trace_deliveries": 85,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf churn-512",
+   "trace_deliveries": 971,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf collision-256",
+   "trace_deliveries": 256,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf collision-1024",
+   "trace_deliveries": 1027,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "NoisyState on 512 aircraft",
+   "trace_deliveries": 51712,
+   "identical": true,
+   "differences": []
+  }
+ ]
+}

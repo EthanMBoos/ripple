@@ -388,6 +388,11 @@ impl CompiledStack {
             endpoint(entity_id, tracking_identity),
         );
         let command_names = motion.io.input_names().cloned().collect();
+        let belief_is_perfect_state = self.localization.name == "PassThrough"
+            && matches!(
+                self.localization_sources.as_slice(),
+                [(_, Source::Perfect(ReadingKind::State))]
+            );
         PluginStack {
             autonomies,
             controllers,
@@ -403,6 +408,7 @@ impl CompiledStack {
             pending: Readings::default(),
             belief: KinematicState::default(),
             contacts: ContactList::from([]),
+            belief_is_perfect_state,
             command_names,
             command_values: Vec::new(),
             command_times: Vec::new(),
@@ -538,6 +544,10 @@ pub(crate) struct PluginStack {
     belief: KinematicState,
     /// Known contacts, written only by tracking.
     contacts: ContactList,
+    /// PassThrough localization of the perfect state measurement: belief is
+    /// truth, so controllers can see it after every motion substep, as C++
+    /// controllers read truth through belief when no sensor detaches it.
+    belief_is_perfect_state: bool,
     /// What the motion model read on each substep this tick, for localization.
     command_names: Vec<String>,
     command_values: Vec<f64>,
@@ -778,6 +788,14 @@ impl PluginStack {
             handle_update(update, &mut self.stop_requested);
         }
         Ok(())
+    }
+    /// Between motion substeps: a perfect own-state measurement makes belief
+    /// follow truth, so the next substep's controllers see the state just
+    /// written. Any other localization updates belief once per tick.
+    pub fn follow_perfect_state(&mut self, truth: &KinematicState) {
+        if self.belief_is_perfect_state {
+            self.belief = truth.clone();
+        }
     }
     /// The estimation step: deliver this tick's readings, then localization, then
     /// tracking. `truth` and `perfect_contacts` are the post-interaction state,

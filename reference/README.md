@@ -99,16 +99,22 @@ image for the paper (see [C++ versus Rust benchmark](#c-versus-rust-benchmark)).
 The checker builds two committed branches of `../scrimmage`:
 
 - `Ubuntu-24.04`, the unmodified reference.
-- `benchmarking-edits`, created from it, which adds only opt-in
+- `benchmarking-edits`, the comparison branch created from it. It adds opt-in
   comparison support: `SCRIMMAGE_TRACE=<file>` writes a per-tick trace, and
   `SCRIMMAGE_LIBCXX_SPAWN_RANDOM=1` draws entity generation from a dedicated
-  `std::minstd_rand` stream with libc++'s normal-variate ordering. With neither
-  variable set, the branch behaves exactly like the reference.
+  `std::minstd_rand` stream with libc++'s normal-variate ordering. It also fixes
+  one C++ regression: each substep runs controllers, then motion, as SCRIMMAGE
+  did until GPU support split them (GPU motion models are disabled; see
+  [reference notes](../docs/REFERENCE_NOTES.md#substep-order-a-c-regression-fixed-on-the-comparison-branch)).
+  With neither variable set and `motion_multiplier` 1, the branch behaves
+  exactly like the reference.
 
-Each mission runs C++ four times. The unmodified build, the instrumented build,
-and the instrumented build with tracing must write byte-identical `frames.bin`
-and `summary.csv` (`cpp_non_interference` in `result.json`); a difference fails
-the case. The fourth run, with tracing and the libc++-compatible spawn stream, is
+Each mission runs C++ four times. The instrumented build with and without
+tracing must write byte-identical `frames.bin` and `summary.csv`, and with
+`motion_multiplier` 1 both must also match the unmodified build
+(`cpp_non_interference` in `result.json`); a difference fails the case. With
+more substeps the unmodified build differs by design, and
+`cpp_baseline_equality` records it. The fourth run, with tracing and the libc++-compatible spawn stream, is
 the one compared with Rust. Rust runs once more with `--trace`, which must leave
 its frames, events, and summary byte-identical (`trace_equality`).
 
@@ -124,7 +130,7 @@ such as sensor noise, stay on the original engine.
 | `delivery` | A message reaches a subscriber | Per tick, receiver, network, and topic: senders and event entity IDs, in order |
 | `publication` | A plugin publishes a sensor payload | Contact IDs in order; state within frame tolerances; covariance within 1e-9 |
 | `belief` | Each entity when its frame is logged | Within frame tolerances |
-| `output` | Each autonomy/controller port after all controller substeps | Within 1e-8 absolute |
+| `output` | Each autonomy/controller port after the last substep | Within 1e-8 absolute |
 
 Endpoints are `[entity ID or null, plugin]` using C++ names (sensors carry their
 order index, as in `NoisyState0`). Non-finite numbers are written as the strings
@@ -298,7 +304,10 @@ Recorded outcomes, with retained reports under `paper/data/`, are in the
   long runs (fixed-wing capped at 100 s).
 - `divergence.py CHECK --output DIR` explains long-run divergence: it compares
   when C++ and Rust exceed the tolerance with when Rust diverges from itself
-  after one-ulp changes to initial roll, commanded speed, and turning radius.
+  after one-ulp changes to initial roll, commanded speed, and turning radius,
+  and after scaling each controller loop's proportional gain by 1 + 1e-12 (one-ulp
+  parameter changes alone can miss a flight that is sensitive only in a
+  controller loop).
 - `platform_check.py --output DIR` builds Rust for Linux/amd64
   (`rust.Dockerfile`, target `cli`) and compares every curated mission's outputs and
   traces byte for byte with the native build, at 1 and 8 workers.
@@ -329,7 +338,9 @@ python3 -m unittest discover -s reference -p 'test_*.py'
 python3 reference/benchmark.py --output runs/new-benchmark   # --quick: smallest sizes only
 ```
 
-This builds the unmodified C++ branch and the Rust core-only runner for this
+This builds the C++ comparison branch (`benchmarking-edits`, whose substeps
+interleave controllers and motion as Rust does; tracing stays off) and the Rust
+core-only runner for this
 machine's own architecture and runs both in one Linux container, so neither is
 emulated (on Apple Silicon, C++ is built without JSBSim, which no workload uses).
 It runs `perf.py`'s five workloads at three agent counts with C++ single-threaded,
@@ -338,7 +349,7 @@ one warm-up and three timed runs each. Times are whole processes minus a one-ste
 run of the same mission, which removes startup and parsing; peak memory is
 recorded too. Rust must write identical output at 1 and 8 workers, and must
 match single-threaded C++ except in churn, sensing, and collision, whose random
-spawns and sensor noise the unmodified C++ build draws differently; every run
+spawns and sensor noise C++ draws differently without the comparison spawn stream; every run
 must repeat its warm-up output.
 
 C++'s multithreaded mode sometimes deadlocks (its worker waits on a condition

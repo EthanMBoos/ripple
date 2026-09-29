@@ -6,11 +6,16 @@
 For each case of a completed reference check, nudges each entity group's initial
 roll, each autonomy's commanded speed (Straight) or velocity (ConstantVelocity),
 and each motion model's turning radius by one unit in the last place (changes
-that spawn rounding cannot absorb), runs Rust on the nudged mission, and compares two growth curves: C++ versus Rust, and Rust versus the
-nudged Rust. If a scenario amplifies rounding differences, both curves cross the
-comparison tolerance at about the same time: the divergence is a property of
-the dynamics, and any one-ulp difference (such as a math library's) produces it.
-Standard library only.
+that spawn rounding cannot absorb). It also scales each PID controller loop's
+proportional gain by 1 + 1e-12. One-ulp parameter changes perturb the state far
+less than the ~1e-13 m by which C++ and Rust already differ from rounding, and
+none reaches a controller loop directly; a flight that is sensitive only in its
+altitude or heading loop would otherwise go unnoticed. The script runs Rust on
+the nudged mission and compares two growth curves: C++ versus Rust, and Rust
+versus the nudged Rust. If a scenario amplifies rounding differences, both
+curves cross the comparison tolerance at about the same time: the divergence is
+a property of the dynamics, and a rounding difference such as a math library's
+produces it. Standard library only.
 """
 
 import argparse
@@ -24,6 +29,23 @@ from compare import POSITION_TOLERANCE_M, distance
 from frames import read_frames
 
 ROOT = Path(__file__).resolve().parents[1]
+GAIN_NUDGE = 1e-12
+# Default [P, I, D, integral band] per loop, from each Rust controller's Default
+# (crates/core/src/plugin/controller/); a mission's own gains replace them.
+PID_DEFAULTS = {
+    "SimpleAircraftControllerPID": {
+        "heading_pid": [1.0, 0.01, 2.0, 9.0],
+        "alt_pid": [1.0, 0.0, 0.8, 1.0],
+        "vel_pid": [1.0, 0.1, 0.0, 1.0],
+    },
+    "AircraftPIDController": {
+        "heading_pid": [1.0, 0.2, 1.0, 45.0],
+        "altitude_pid": [0.1, 0.0001, 0.01, 10.0],
+        "speed_pid": [1.0, 0.1, 0.03, 10.0],
+        "pitch_pid": [5.0, 0.01, 0.01, 9.0],
+        "roll_pid": [0.3, 0.1, 0.001, 9.0],
+    },
+}
 
 
 def nudged(mission, output):
@@ -34,6 +56,13 @@ def nudged(mission, output):
         if "turning_radius" in motion.attrib:
             radius = float(motion.get("turning_radius"))
             motion.set("turning_radius", repr(math.nextafter(radius, math.inf)))
+    for controller in tree.getroot().iter("controller"):
+        for loop, default in PID_DEFAULTS.get((controller.text or "").strip(), {}).items():
+            text = controller.get(loop)
+            gains = ([float(value) for value in text.replace(",", " ").strip("[] ").split()]
+                     if text else list(default))
+            gains[0] *= 1 + GAIN_NUDGE
+            controller.set(loop, ",".join(repr(value) for value in gains))
     for autonomy in tree.getroot().iter("autonomy"):
         if "speed" in autonomy.attrib:
             autonomy.set("speed", repr(math.nextafter(float(autonomy.get("speed")), math.inf)))

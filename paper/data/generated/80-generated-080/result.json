@@ -19,6 +19,7 @@
       "no_bin_logging": "false"
     }
   },
+  "motion_multiplier": 5,
   "cpp_non_interference": {
     "untraced": {
       "frames.bin": true,
@@ -29,9 +30,13 @@
       "summary.csv": true
     }
   },
-  "cpp_log_directory": "cpp/logs/2026-09-28_23-58-38",
+  "cpp_baseline_equality": {
+    "frames.bin": false,
+    "summary.csv": true
+  },
+  "cpp_log_directory": "cpp/logs/2026-09-29_13-19-22",
   "cpp_output_hashes": {
-    "frames.bin": "c1d50bb872cc46133f2c293e155eeb2aece4cd4f80f16a4d5a22da23002415a9",
+    "frames.bin": "3d413ea1f78eb12a0cbca2e1dac5323a30268e4c742232ac4a063518bcc547de",
     "summary.csv": "0e964a1e71ab9d29254b48b7110b53e5b9bee004b677acf18699393e53b09c67"
   },
   "worker_equality": {
@@ -51,7 +56,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "e3ad4f3d15b5c0b3bf2ed31973e75c30cf4f1c9cc0c4d821be446a9e28ded14e",
+  "recording_sha256": "e98a4bffbbf575388e991175f504b76ec606511a328a5ee10d368aae951367b7",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,
@@ -59,27 +64,27 @@
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "b196506b261ed5ea20fcc2e6825336fb3e2c569894ec1b9b00a5054e3f163c2b",
+      "frames.bin": "9ef63a17a9688ec8ae5bd91603ab411839a71c3af21f4ed09aee3ec4272a551a",
       "events.json": "7e4be532aa7ec51d16bac17aa87af45b31f4d80eff52d220211ae92d4cd91f79",
       "summary.csv": "0e964a1e71ab9d29254b48b7110b53e5b9bee004b677acf18699393e53b09c67"
     },
     "rust-2": {
-      "frames.bin": "b196506b261ed5ea20fcc2e6825336fb3e2c569894ec1b9b00a5054e3f163c2b",
+      "frames.bin": "9ef63a17a9688ec8ae5bd91603ab411839a71c3af21f4ed09aee3ec4272a551a",
       "events.json": "7e4be532aa7ec51d16bac17aa87af45b31f4d80eff52d220211ae92d4cd91f79",
       "summary.csv": "0e964a1e71ab9d29254b48b7110b53e5b9bee004b677acf18699393e53b09c67"
     },
     "rust-8": {
-      "frames.bin": "b196506b261ed5ea20fcc2e6825336fb3e2c569894ec1b9b00a5054e3f163c2b",
+      "frames.bin": "9ef63a17a9688ec8ae5bd91603ab411839a71c3af21f4ed09aee3ec4272a551a",
       "events.json": "7e4be532aa7ec51d16bac17aa87af45b31f4d80eff52d220211ae92d4cd91f79",
       "summary.csv": "0e964a1e71ab9d29254b48b7110b53e5b9bee004b677acf18699393e53b09c67"
     },
     "rust-rerun": {
-      "frames.bin": "b196506b261ed5ea20fcc2e6825336fb3e2c569894ec1b9b00a5054e3f163c2b",
+      "frames.bin": "9ef63a17a9688ec8ae5bd91603ab411839a71c3af21f4ed09aee3ec4272a551a",
       "events.json": "7e4be532aa7ec51d16bac17aa87af45b31f4d80eff52d220211ae92d4cd91f79",
       "summary.csv": "0e964a1e71ab9d29254b48b7110b53e5b9bee004b677acf18699393e53b09c67"
     },
     "rust-trace": {
-      "frames.bin": "b196506b261ed5ea20fcc2e6825336fb3e2c569894ec1b9b00a5054e3f163c2b",
+      "frames.bin": "9ef63a17a9688ec8ae5bd91603ab411839a71c3af21f4ed09aee3ec4272a551a",
       "events.json": "7e4be532aa7ec51d16bac17aa87af45b31f4d80eff52d220211ae92d4cd91f79",
       "summary.csv": "0e964a1e71ab9d29254b48b7110b53e5b9bee004b677acf18699393e53b09c67"
     }
@@ -89,9 +94,9 @@
     "reference_frames": 51,
     "candidate_frames": 51,
     "compared_entity_states": 204,
-    "max_position_error_m": 0.0,
-    "max_velocity_error_mps": 4.213000162292041e-15,
-    "max_orientation_error_rad": 1.481843805249143e-16,
+    "max_position_error_m": 8.987733679556355e-14,
+    "max_velocity_error_mps": 2.1612981402754392e-14,
+    "max_orientation_error_rad": 6.931846059057346e-15,
     "max_angular_velocity_error_radps": 0.0,
     "max_timestamp_error_s": 0.0,
     "mismatch_count": 0,
@@ -104,16 +109,16 @@
     "beliefs": 204,
     "outputs": 1200,
     "published_states": 0,
-    "max_belief_position_error_m": 0.0,
-    "max_belief_velocity_error_mps": 4.213000162292041e-15,
-    "max_belief_orientation_error_rad": 1.481843805249143e-16,
+    "max_belief_position_error_m": 8.987733679556355e-14,
+    "max_belief_velocity_error_mps": 2.1612981402754392e-14,
+    "max_belief_orientation_error_rad": 6.931846059057346e-15,
     "max_belief_angular_velocity_error_radps": 0.0,
     "max_payload_position_error_m": 0.0,
     "max_payload_velocity_error_mps": 0.0,
     "max_payload_orientation_error_rad": 0.0,
     "max_payload_covariance_error": 0.0,
-    "max_output_error": 7.105427357601002e-15,
-    "max_output_error_port": "SimpleAircraftControllerPID.throttle",
+    "max_output_error": 9.060070402244769e-14,
+    "max_output_error_port": "SimpleAircraftControllerPID.roll_rate",
     "excluded_pre_start_records": 0,
     "delivery_mismatches": 0,
     "mismatch_count": 0,

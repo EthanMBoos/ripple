@@ -1,142 +1,41 @@
 # Roadmap
 
-## Initial release
+SCRIMMAGE-RS is at its initial release: in the tested configurations of the
+retained models, it agrees with C++ SCRIMMAGE to floating-point rounding, subject
+to documented differences. The [paper](../paper/README.md) shows how, and
+`python3 reference/campaign.py` reruns every check. Intentional differences are
+in [reference notes](REFERENCE_NOTES.md); usage is in the
+[book](../book/src/SUMMARY.md).
 
-SCRIMMAGE-RS is at its initial release. In the tested configurations of the
-retained models, its closed simulation loop agrees with C++ SCRIMMAGE in
-trajectories, selected sensor and command values, and message-delivery timing,
-to floating-point rounding and subject to documented differences. The
-[paper](../paper/README.md) shows how and states the limits, and
-`python3 reference/campaign.py` reruns every check (see
-[reference/README.md](../reference/README.md)).
-Intentional differences from C++ are in [reference notes](REFERENCE_NOTES.md);
-current usage is in the [book](../book/src/SUMMARY.md).
-
-Everything below is optional: external integrations and core upgrades beyond
-the release. Build each around a concrete experiment. The starter crate and the
-shared run/sweep/Slurm workflow stay the normal development path, and any change
-to the simulation must keep the C++ comparison passing.
+Nothing below is required. Keep the C++ comparison passing after any
+simulation change.
 
 ## Scope decisions
 
 | Area | Decision |
 | --- | --- |
-| Mission input | Keep XML single runs and existing overlays; YAML is native and gets templates/sweeps. |
-| Runtime integrations | Optional ROS 1 and ROS 2 via a separate bridge; ArduPilot via UDP. |
-| JSBSim | Offline flight-model verification fixtures. |
-| GPU work | Evaluate Burn for one useful workload. |
-| Viewer | Keep Rerun and its current recording playback. Terrain is an optional experiment. |
-| C++ machinery excluded | Runtime plugin-library discovery/loading, legacy protobuf/string-map spawning, OpenCL, VTK, and production JSBSim integration. |
+| Mission input | XML is frozen for single runs; YAML gets templates and sweeps. |
+| External integrations | None planned: no ROS, ArduPilot, or JSBSim. |
+| GPU work | None planned; revisit Burn only if RQ1 supports learning. |
+| Viewer | Keep Rerun. Terrain is an optional experiment. |
+| C++ machinery excluded | Runtime plugin loading, legacy protobuf/string-map spawning, OpenCL, VTK. |
 
-XML is frozen. Its inherited-motion replacement and entity-tag differences are
-recorded in [reference notes](REFERENCE_NOTES.md#mission-compatibility).
+## Terrain experiment
 
-## 1. External integrations
+C++ terrain was a display-only VTK mesh plus an unused random height-map
+plugin. Try a GeoTIFF workflow instead:
 
-Implement one end-to-end pilot at a time. Entities from a connection go through
-`spawn(SpawnRequest)` in [generation.rs](../crates/core/src/simcontrol/generation.rs).
-Adapters own protocol details and stay out of model equations and the default
-build. Apply inputs at defined phases with explicit units and ENU/NED/body
-frames; bound waits and queues; define failure, disconnect, and shutdown.
+- [ ] Offline script: download a bounding box (OpenTopography API, or a USGS
+  3DEP tile), then `gdalwarp` it to a projection centered on the mission origin,
+  so each cell is already meters east/north. GDAL stays out of the Rust build.
+- [ ] Rust: load the grid read-only, with an interpolated `height_at(east, north)`
+  that returns `None` off the grid, and log it once to Rerun as a static
+  `Mesh3D`. Rerun's map view can't show custom tiles or elevation.
+- [ ] First area: McMillan Airfield (C++ `mcmillan`), 10 × 10 km at 10 m,
+  3DEP bare ground.
 
-### First pilot: entities from a connection
-
-- [ ] Supply the peer's starting state through `SpawnRequest`, adding velocity
-  and attitude as needed.
-- [ ] Bind one ROS robot session or ArduPilot connection to one live entity after
-  a valid peer exchange. Duplicate packets, reconnects, and packets after removal
-  must not create another entity.
-- [ ] Let a YAML group be connection-bound (for example a `connection:` key) so it
-  spawns only through its connection.
-- [ ] Commit connection requests at the generation boundary in stable order,
-  after scheduled spawns; the coordinator owns IDs, insertion, and events.
-- [ ] Report creation success or failure; test missing groups, conflicting
-  bindings, invalid state, removal, and cleanup. Fail on required-peer timeout.
-- [ ] Record accepted inputs and their ticks for replay, separately from
-  simulated network messages.
-
-### ROS 1 and ROS 2
-
-Use [rosbridge](https://github.com/RobotWebTools/rosbridge_suite) in separate
-containers; evaluate [roslibrust](https://github.com/RosLibRust/roslibrust).
-
-- [ ] Choose the first robot case: clock, odometry, selected sensors, and one
-  command type.
-- [ ] Test ROS 1 and ROS 2 separately: message names, headers, timestamps,
-  frames, `/clock`, and ROS 2 QoS. No host ROS installation in Rust builds.
-
-ROS 1 needs a pinned legacy environment: Noetic reached end of life on
-2025-05-31 ([notice](https://www.ros.org/blog/noetic-eol/)).
-
-### ArduPilot
-
-Use a separate SITL process and its
-[JSON simulator protocol](https://github.com/ArduPilot/ardupilot/blob/master/libraries/SITL/examples/JSON/readme.md):
-actuator packets in, physics state out. Rust owns physics.
-
-- [ ] Decode packets explicitly; test duplicates, loss, reset, timeout, and
-  multiple vehicles. Never advance twice for a duplicate frame.
-- [ ] Validate one aircraft with FixedWing6DOF or Multirotor: actuator scales and
-  signs, attitude, velocity, body rates, and IMU specific force.
-- [ ] Validate geographic origin and altitude datum, then fly a short closed-loop
-  SITL case.
-
-The C++ `arduplane.xml` uses JSBSim, so it does not establish FixedWing6DOF/SITL
-compatibility.
-
-### JSBSim reference fixtures
-
-- [ ] Generate a small saved corpus with [standalone JSBSim](https://jsbsim-team.github.io/jsbsim/)
-  for one aircraft and a few control schedules, with a pinned version and asset
-  hashes. Ordinary Rust tests use the saved fixtures without JSBSim installed.
-- [ ] Align frames, units, inertia, and control meanings, with declared
-  tolerances and held-out cases.
-
-Saved JSBSim outputs do not establish real-aircraft fidelity.
-
-## 2. Core upgrades
-
-- [ ] Record the effective configuration in each run's manifest: plugin values
-  filled by defaults, overrides, registrations, and seeds.
-- [ ] Add YAML forms of the remaining curated missions (four pairs exist; see
-  [yaml_missions.rs](../crates/core/tests/yaml_missions.rs)).
-- [ ] Let the installed command find missions and assets without the source
-  checkout.
-- [ ] Add the Rust and Python test suites to CI; the current workflow publishes
-  the book only.
-- [ ] Two estimation clean-ups, planned inline (`grep -rn "TODO(estimation)"
-  crates reference`): remove the sensors' LocalNetwork messages, and make
-  NoisyState measure honestly.
-- Later estimation work, each for a concrete experiment: evaluation output that
-  records truth, the prediction before correction, belief after it, and the
-  readings at the same times (today tests compare `Entity::belief` with
-  `Entity::truth`, and `trace.jsonl` holds belief); IMU and GPS sensors, real
-  filters, delayed readings (tracking an older relative reading needs the
-  observer's pose from when it was taken), reusable sensor profiles, and richer
-  tracking (association, filtering). Before an IMU uses aircraft outputs, give
-  the motion models acceleration and consistent velocity and rate outputs, and
-  define frames, gravity, units, and initialization; that is a separate physics
-  change. The design and worked example are in the book's
-  [Belief vs truth](../book/src/concepts/belief-vs-truth.md) and
-  [Your first localization estimator](../book/src/tutorial/noisy-localization.md).
-- [ ] Burn experiment: pick one workload (for example batched policy inference),
-  measure the whole step against a CPU baseline, including transfers and
-  synchronization, and keep it only for an end-to-end gain. See
-  [Burn's backends](https://burn.dev/docs/burn/).
-
-## 3. More models
-
-Candidates and the shared capabilities they would need are in the
-[plugin audit](PLUGIN_COVERAGE_AUDIT.md). Add a model for a research need, not
-for catalog completeness. A model with a C++ counterpart joins the comparison
-through the checklist in [reference/README.md](../reference/README.md).
-
-## 4. Terrain visualization experiment
-
-- [ ] Try streamed [Cesium](https://cesium.com/platform/cesiumjs/) terrain next
-  to the Rerun panels, starting with one agent and a validated origin, in a
-  [custom Rerun viewer](https://docs.rerun.io/dev/howto/visualization/extend-ui/)
-  or a web dashboard. Check coordinates, shared playback time, and screenshots.
-
-Tile loading must never affect physics, sensing, or simulation time. Check
-Cesium's [pricing and redistribution terms](https://cesium.com/platform/cesium-ion/pricing/).
+Open decisions: whether terrain affects the simulation or is display only;
+what z = 0 means (C++ uses `altitude_origin`; existing missions treat it as the
+ground); the file format Rust reads (raw grid plus header, or GeoTIFF via the
+`tiff` crate); and a YAML-only `terrain:` key, since XML is frozen. Mapterhorn
+PMTiles are an alternative source that moves reprojection into Rust.

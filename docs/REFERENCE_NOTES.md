@@ -135,8 +135,8 @@ unmodified and fixed C++ to match only when `m` = 1.
 ## Ported models keep C++ numerics; new models do not
 
 Ported plugins reproduce the C++ implementation, including its numerical
-shortcuts, so comparisons stay exact. New plugins, such as a JSBSim-backed
-model or new fixed-wing and boat models, should be written to be correct, not
+shortcuts, so comparisons stay exact. New plugins, such as new fixed-wing and
+boat models, should be written to be correct, not
 to match these.
 
 **Frozen RK4 loads (FixedWing6DOF, Multirotor).** C++ `model(x, ...)` computes
@@ -183,16 +183,11 @@ side-by-side check, and the results belong in `paper/data/`:
   halvings. That shows a far smaller error, not a measured fourth-order rate.
 - *What JSBSim does*: cite the pinned `FGPropagate.cpp` source (default
   integrators, forces once per frame), not a summary of it.
-- *That a new model is correct*: a side-by-side with standalone JSBSim on one
-  aircraft with aligned mass, inertia, aerodynamic coefficients, frames, and
-  control meanings. Use a pinned JSBSim version and assets, identical control
-  schedules including held-out cases, and declared tolerances. The fixtures in
-  the [roadmap](TODO.md#jsbsim-reference-fixtures) are this check; NASA's
-  flight-simulation check cases are a second, independent reference.
-
-JSBSim is an independent implementation, not ground truth. Agreement with it
-shows that the equations and integration are implemented consistently for that
-aircraft. It does not show that either model matches a real aircraft.
+- *That a new model is correct*: a second, independent evaluator of the same
+  equations (for example, a JSBSim aircraft file that mirrors them) at fixed
+  states and over short runs, with declared tolerances. None is planned.
+  Agreement would show the equations are implemented consistently, not that
+  the model matches a real aircraft.
 
 ## Spawn RNG mismatch (accepted)
 

@@ -3,11 +3,12 @@
 
 Builds two C++ branches from the sibling checkout: the unmodified baseline
 (Ubuntu-24.04) and the comparison branch (benchmarking-edits), which adds opt-in
-instrumentation and restores interleaved controller/motion substeps.
+instrumentation, restores interleaved controller/motion substeps, and fixes
+AircraftPIDController (its timestep and default altitude gain).
 Per mission, the instrumented build with tracing must write the same frames and
-summaries as without it, and with motion_multiplier 1 both must match the
-baseline (non-interference). With more substeps the baseline differs by design
-and its equality is only recorded. The comparison run adds
+summaries as without it, and with motion_multiplier 1 and no
+AircraftPIDController both must match the baseline (non-interference).
+Otherwise the baseline differs by design and its equality is only recorded. The comparison run adds
 SCRIMMAGE_LIBCXX_SPAWN_RANDOM=1 and is compared with Rust frames, summaries, and
 traces. Requires Python 3.10+, Docker, Cargo, and the
 sibling SCRIMMAGE checkout. No host C++ toolchain is needed.
@@ -312,6 +313,12 @@ def motion_multiplier(mission):
     return int(run.get("motion_multiplier", "1")) if run is not None else 1
 
 
+def uses_fixed_controller(mission):
+    """Whether the mission flies AircraftPIDController, which the comparison branch fixes."""
+    return any(element.text and element.text.strip() == "AircraftPIDController"
+               for element in ET.parse(mission).getroot().iter("controller"))
+
+
 def check_mission(args, mission, directory, images, rust):
     directory.mkdir()
     result = {"mission": str(mission), "passed": False}
@@ -321,14 +328,15 @@ def check_mission(args, mission, directory, images, rust):
         effective = inputs / "effective.xml"
         # Non-interference: instrumentation must not change C++ outputs. The
         # comparison branch also interleaves substeps, which changes outputs
-        # only when there is more than one (docs/REFERENCE_NOTES.md).
+        # only when there is more than one, and fixes AircraftPIDController
+        # (docs/REFERENCE_NOTES.md).
         baseline = run_cpp(args, images["baseline"], directory / "cpp-baseline", effective, {})
         untraced = run_cpp(args, images["instrumented"], directory / "cpp-untraced",
                            effective, UNTRACED_ENV)
         traced = run_cpp(args, images["instrumented"], directory / "cpp-traced",
                          effective, TRACED_ENV)
         substeps = motion_multiplier(effective)
-        reference = baseline if substeps == 1 else untraced
+        reference = baseline if substeps == 1 and not uses_fixed_controller(effective) else untraced
         result["motion_multiplier"] = substeps
         result["cpp_non_interference"] = {
             variant: {name: sha256(logs / name) == sha256(reference / name)

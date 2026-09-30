@@ -59,18 +59,18 @@
     {
       "mission": "generated-007.xml",
       "end_s": 100.00000000001425,
-      "cpp_vs_rust_exceeds_tolerance_at_s": null,
-      "rust_vs_nudged_rust_exceeds_tolerance_at_s": 57.79999999999707,
-      "cpp_vs_rust_final_m": 3.6591017833219327e-10,
-      "rust_vs_nudged_rust_final_m": 7.10094935631178e-09
+      "cpp_vs_rust_exceeds_tolerance_at_s": 30.940000000002037,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": 14.569999999999734,
+      "cpp_vs_rust_final_m": 3.713622716148856e-08,
+      "rust_vs_nudged_rust_final_m": 2.0433421686656824e-06
     },
     {
       "mission": "generated-008.xml",
       "end_s": 100.00000000001425,
       "cpp_vs_rust_exceeds_tolerance_at_s": null,
       "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
-      "cpp_vs_rust_final_m": 6.931467010416631e-11,
-      "rust_vs_nudged_rust_final_m": 4.4416066764716543e-10
+      "cpp_vs_rust_final_m": 6.807857939274742e-11,
+      "rust_vs_nudged_rust_final_m": 2.86448330683375e-10
     },
     {
       "mission": "generated-009.xml",

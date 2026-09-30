@@ -40,7 +40,7 @@ PID_DEFAULTS = {
     },
     "AircraftPIDController": {
         "heading_pid": [1.0, 0.2, 1.0, 45.0],
-        "altitude_pid": [0.1, 0.0001, 0.01, 10.0],
+        "altitude_pid": [0.1, 0.0001, 0.002, 10.0],
         "speed_pid": [1.0, 0.1, 0.03, 10.0],
         "pitch_pid": [5.0, 0.01, 0.01, 9.0],
         "roll_pid": [0.3, 0.1, 0.001, 9.0],

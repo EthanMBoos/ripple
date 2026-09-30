@@ -29,6 +29,15 @@ the simulation loop. No runtime library loading is planned.
   Startup rejection is separately configurable and, like C++, has no team filter.
 - TerrainCollision removes agents that reach the mission's terrain, checking the
   path moved each step; see [Terrain](../guides/terrain.md).
+- AircraftPIDController's default altitude derivative gain is 0.002, not
+  upstream's 0.01, which made the default FixedWing6DOF oscillate after a pitch
+  or roll upset (hundreds of metres in a 45 s test). At 220 m/s, 0.01 makes
+  each altitude correction larger than the motion it reacts to, so the swings
+  grow; at 0.002 they die out. The derivative only damps, so the target
+  altitude and how it is held are unchanged. Its PIDs use the substep as their
+  timestep. The comparison C++ branch makes both changes; see
+  [reference notes](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/REFERENCE_NOTES.md)
+  and the [measurement](https://github.com/EthanMBoos/scrimmage-rs/blob/main/paper/data/aircraft-pid-upset/README.md).
 - WaypointBroadcast sends an initial route and optionally one timed replacement.
   WaypointFollower owns a list and current index. No services, route planner, or
   generic state-machine framework. Initial/updated broadcasts are not latched

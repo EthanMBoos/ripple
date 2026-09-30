@@ -32,7 +32,9 @@ scrimmage replay runs/straight-no-gui/run000
 Each run gets a new folder (`runs/<mission>/run000`, `run001`, ...) holding
 frames, events, a summary, a manifest, and a Rerun recording. Replay needs the
 `rerun` viewer matching the SDK version in `Cargo.lock` on your PATH. Use
-`--viewer` to watch live or `--no-rerun` to skip recording.
+`--viewer` to watch live or `--no-rerun` to skip recording. Add `--draw-trails`
+to `run --viewer` or `replay` to draw each agent's recent path; trails are never
+saved in the recording.
 
 Other missions to try:
 
@@ -50,7 +52,7 @@ Other missions to try:
   what is supported.
 - [The paper](paper/README.md): how the port is checked against C++ and what
   that establishes. [Reference notes](docs/REFERENCE_NOTES.md) list intentional
-  differences; the [roadmap](docs/TODO.md) lists scope decisions.
+  differences; the [roadmap](docs/TODO.md) lists what's next.
 
 ## Development
 

@@ -62,8 +62,9 @@ or timing need at least five checkpoints, including before and after the event.
 ## What the default dashboard should show
 
 - A dominant full-mission map with every team and late-spawned agent in view,
-  with readable markers, headings, and labels.
-- A labeled optional 3D view and complete-run paths.
+  with readable markers and headings; agent IDs appear on hover.
+- A labeled optional 3D view. Trails are not recorded; `--draw-trails` on
+  `run --viewer` or `replay` adds each agent's last 22 s of flight.
 - Compact grouped debug panels (status, speeds, altitudes), not one per agent.
 - Simulation-time playback at 1x, looping the whole run.
 - Inspection and source panels collapsed by default.

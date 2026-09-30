@@ -19,6 +19,7 @@ inputs, not a copy of every upstream demo. A `.yaml` file beside an XML file is 
 | `auction-sphere.xml` | Stationary agents run a one-shot random-bid auction; the third is out of range. Try `range:=300`, `prob_transmit:=0.65`, or `seed:=42`. Results are typed messages, not stock summary/event fields. |
 | `noisy-state.xml` | Independent own-state noise and belief feedback. Not sample-for-sample C++ RNG parity. |
 | `waypoints-aircraft.xml` | Two aircraft follow a looping route; a shared GlobalNetwork replacement at 12 s changes both goals. Set `update_at:=100` to suppress that update. |
+| `terrain-mcmillan.yaml` | Six aircraft fly waypoint routes over real terrain at McMillan Airfield (USGS 3DEP and NAIP imagery, in `terrain/`): three loop, climb, and descend safely; three fly into hills within the first minute. See the book's [Terrain](../book/src/guides/terrain.md) chapter. |
 | `waypoints-point-agents.xml` | Two SingleIntegrator agents receive a replacement at 3 s and stop at the final point. Set `update_at:=100` to retain the original route. |
 | `test_missions/straight_cpu.xml` | Longer deterministic aircraft reference run. |
 | `test_missions/straight_cpu_mul.xml` | Preserves upstream's `motion_multipler` typo; this does **not** enable substeps. |

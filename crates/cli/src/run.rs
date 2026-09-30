@@ -26,6 +26,10 @@ pub(crate) struct RunOptions {
     /// Open Rerun and stream live, also keeping recording.rrd.
     #[arg(long, conflicts_with_all = ["headless", "no_rerun"])]
     viewer: bool,
+    /// Draw each agent's recent path in the live viewer (not saved; see
+    /// `scrimmage replay --draw-trails`).
+    #[arg(long)]
+    draw_trails: bool,
     /// Suppress the viewer even if enable_gui is true in the mission.
     #[arg(long)]
     headless: bool,
@@ -73,6 +77,7 @@ pub(crate) fn run(
             workers: options.workers.unwrap_or(mission.workers),
             viewer: !options.headless && !options.no_rerun && (options.viewer || mission.viewer),
             recording: !options.no_rerun,
+            draw_trails: options.draw_trails,
             max_steps: options.max_steps,
             trace: options.trace,
             source: Some(mission.source),
@@ -97,6 +102,9 @@ pub struct RunSettings {
     pub viewer: bool,
     /// Save `recording.rrd` in addition to frames, events, and summary.
     pub recording: bool,
+    /// Draw each agent's recent path in the viewer. Requires `viewer`; trails
+    /// are never saved.
+    pub draw_trails: bool,
     pub max_steps: usize,
     /// Write `trace.jsonl` for C++ comparison; outputs are unchanged.
     pub trace: bool,
@@ -113,6 +121,7 @@ impl Default for RunSettings {
             workers: 1,
             viewer: false,
             recording: true,
+            draw_trails: false,
             max_steps: 1_000_000,
             trace: false,
             source: None,
@@ -134,6 +143,10 @@ pub fn run_scenario(
         "viewer requires recording"
     );
     ensure!(
+        !settings.draw_trails || settings.viewer,
+        "--draw-trails needs the viewer (--viewer)"
+    );
+    ensure!(
         !settings.name.is_empty(),
         "experiment name must not be empty"
     );
@@ -143,8 +156,25 @@ pub fn run_scenario(
 
     let runs = settings.root.join("runs").join(&settings.name);
     let output = output::create_directory(settings.output.as_deref(), &runs)?;
+    // Unique per run; the manifest records it for `scrimmage replay --draw-trails`.
+    let recording_id = format!(
+        "{}-{}",
+        settings.name,
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_nanos()
+    );
     let mut viewer = if settings.recording {
-        Some(Viewer::new(&output.join("recording.rrd"), settings.viewer)?)
+        let mut viewer = Viewer::new(
+            &output.join("recording.rrd"),
+            settings.viewer,
+            &recording_id,
+            settings.draw_trails,
+        )?;
+        if let Some(terrain) = simulation.terrain() {
+            viewer.log_terrain(terrain)?;
+        }
+        Some(viewer)
     } else {
         None
     };
@@ -185,6 +215,7 @@ pub fn run_scenario(
         "reference_branch": "Ubuntu-24.04",
         "execution": "unpaced",
         "rerun_recording": settings.recording,
+        "rerun_recording_id": settings.recording.then_some(&recording_id),
         "viewer": settings.viewer,
         "worker_count": settings.workers,
         "source": settings.source,

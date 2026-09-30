@@ -1,0 +1,104 @@
+# Six aircraft fly waypoint routes through the hills south-west of McMillan
+# Airfield (Camp Roberts, California). Some loop, climb, and descend safely;
+# others fly into the terrain. z = 0 is 300 m above sea level. See the book's
+# Terrain chapter and scripts/terrain/prepare.py for how the terrain was made.
+format_version: 1
+name: Terrain flights at McMillan Airfield
+
+run:
+  end_s: 150
+  dt_s: 0.1
+  seed: 7
+
+terrain: terrain/mcmillan.terrain.yaml
+
+interactions:
+  TerrainCollision:
+    clearance_m: 5
+networks:
+  GlobalNetwork:
+  LocalNetwork:
+
+templates:
+  aircraft:
+    team: 1
+    visual_model: zephyr-blue
+    controller:
+      SimpleAircraftControllerPID:
+    motion_model:
+      SimpleAircraft:
+
+entities:
+  # Runs east and back along the valley, 70 m up.
+  valley_runner:
+    template: aircraft
+    position_m: [-4300, -3500, 70]
+    heading_deg: 0
+    autonomy:
+      WaypointFollower:
+        waypoints: [[-600, -3500, 70], [-4300, -3500, 70]]
+        speed: 25
+        arrival_radius_m: 60
+        repeat: true
+
+  # Heads for the ridge top at 120 m, below it.
+  ridge_crash:
+    template: aircraft
+    position_m: [-1200, -2600, 120]
+    heading_deg: 164
+    autonomy:
+      WaypointFollower:
+        waypoints: [[-3600, -1900, 120]]
+        speed: 25
+        arrival_radius_m: 60
+
+  # Circles the ridge top, climbing and descending between 260 and 320 m.
+  peak_orbit:
+    template: aircraft
+    team: 2
+    visual_model: zephyr-red
+    position_m: [-2600, -2700, 290]
+    heading_deg: 90
+    autonomy:
+      WaypointFollower:
+        waypoints: [[-2600, -2000, 260], [-3300, -1300, 320], [-4000, -2000, 260], [-3300, -2700, 320]]
+        speed: 28
+        arrival_radius_m: 60
+        repeat: true
+
+  # Dives south toward the high hills at the map's edge.
+  south_dive:
+    template: aircraft
+    position_m: [-2000, -3700, 250]
+    heading_deg: 270
+    autonomy:
+      WaypointFollower:
+        waypoints: [[-1800, -4800, 160]]
+        speed: 25
+        arrival_radius_m: 60
+
+  # Climbs out of the valley over the ridge, then loops to the north.
+  climber:
+    template: aircraft
+    team: 2
+    visual_model: zephyr-red
+    position_m: [-4000, -3600, 80]
+    heading_deg: 90
+    autonomy:
+      WaypointFollower:
+        waypoints: [[-3700, -800, 240], [-3000, 300, 220], [-1200, 300, 220]]
+        speed: 25
+        arrival_radius_m: 60
+        repeat: true
+
+  # Spirals down around a low hill until it clips it.
+  spiral_down:
+    template: aircraft
+    position_m: [-500, -2600, 150]
+    heading_deg: 270
+    autonomy:
+      WaypointFollower:
+        waypoints: [[-500, -3000, 150], [-1000, -2500, 110], [-1500, -3000, 40], [-1000, -3500, 45]]
+        speed: 22
+        arrival_radius_m: 60
+        repeat: true

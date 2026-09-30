@@ -2,7 +2,7 @@
 //! Category-specific interfaces live in the corresponding framework modules.
 use crate::{
     KinematicState, Params,
-    common::{PluginRandom, Ports, TruthContacts},
+    common::{PluginRandom, Ports, Terrain, TruthContacts},
     estimator::KnownContacts,
     pubsub::Messages,
     scenario::{PluginConfig, PluginValues},
@@ -121,4 +121,7 @@ pub struct WorldContext<'a> {
     /// Retains team membership after an entity has been removed.
     pub entity_teams: &'a BTreeMap<i32, i32>,
     pub messages: &'a mut Messages,
+    /// The mission's ground heights, if it names terrain. `Terrain` is cheap to
+    /// clone, so a plugin can keep it from `initialize`.
+    pub terrain: Option<&'a Terrain>,
 }

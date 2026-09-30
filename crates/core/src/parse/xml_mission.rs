@@ -219,6 +219,8 @@ pub(super) fn load(
             end_conditions,
             // XML is frozen: its missions always scan.
             spatial_lookup: SpatialLookup::Scan,
+            // Only YAML missions name terrain; C++'s `<terrain>` was display-only.
+            terrain: None,
             entities,
             interactions,
             networks,

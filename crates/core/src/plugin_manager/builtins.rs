@@ -31,6 +31,7 @@ pub(crate) fn register_builtins(registry: &mut PluginRegistry) -> Result<()> {
     registry.register_interaction::<interaction::SimpleCollision>("SimpleCollision")?;
     registry.register_interaction::<interaction::Boundary>("Boundary")?;
     registry.register_interaction::<interaction::GroundCollision>("GroundCollision")?;
+    registry.register_interaction::<interaction::TerrainCollision>("TerrainCollision")?;
     registry.register_network::<network::LocalNetwork>("LocalNetwork")?;
     registry.register_network::<network::GlobalNetwork>("GlobalNetwork")?;
     registry.register_network::<network::SphereNetwork>("SphereNetwork")?;

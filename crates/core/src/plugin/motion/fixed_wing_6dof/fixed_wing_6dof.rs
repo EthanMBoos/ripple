@@ -357,6 +357,18 @@ impl Plugin for FixedWing6Dof {
 }
 
 impl MotionModel for FixedWing6Dof {
+    fn initialize(&mut self, context: &mut MotionContext<'_>) -> Result<()> {
+        // The inherited ground model puts flat ground at z = 0, which terrain
+        // replaces; with both, an aircraft over a valley below z = 0 would be
+        // pushed up in mid-air.
+        ensure!(
+            context.terrain.is_none() || !self.config.use_ground_model,
+            "FixedWing6DOF: set use_ground_model to false when terrain is configured; \
+             add TerrainCollision to remove aircraft that hit terrain"
+        );
+        Ok(())
+    }
+
     fn step(&mut self, context: &mut MotionContext<'_>, io: &mut PluginIo) -> Result<Update> {
         let control = Control {
             throttle: io.read("throttle")?,
@@ -425,6 +437,11 @@ impl FixedWing6Dof {
         if config.use_ground_model && state.position_world_m.z < 0.0 {
             // Inherited ground model: damping is only 40 N*s/m, not mass-scaled.
             // This is not a validated landing model for the default eight-tonne aircraft.
+            // TODO(terrain): replace with ground reactions at landing-gear contact
+            // points (spring, damper, friction, and their moments), using the
+            // terrain's height and slope from `MotionContext::terrain`. That
+            // breaks C++ parity for ground contact and needs its own checks:
+            // resting, a drop, a slope, friction, and timestep convergence.
             let ground_force_n = (-400.0 * config.mass_kg * state.position_world_m.z
                 - 40.0 * state.velocity_world_mps.z)
                 .max(0.0);

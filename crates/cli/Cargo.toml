@@ -23,6 +23,8 @@ clap.workspace = true
 serde_json.workspace = true
 serde.workspace = true
 serde_yaml_ng.workspace = true
+# Reads a terrain's aerial image for the viewer; already a dependency of rerun.
+png = "0.18"
 rerun = { version = "=0.36.2", default-features = false, features = ["sdk"] }
 
 [dev-dependencies]

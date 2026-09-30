@@ -135,6 +135,7 @@ impl Simulation {
             request.heading_world_deg,
             self.time_s,
             self.config.run.seed,
+            self.terrain.as_ref(),
         )?;
         self.entity_teams.insert(id, entity.team_id);
         let event = Event {

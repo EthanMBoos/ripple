@@ -150,6 +150,7 @@ mod tests {
                     },
                     truth: &mut truth,
                     messages: &mut Messages::default(),
+                    terrain: None,
                 },
                 &mut io,
             )?;

@@ -33,7 +33,8 @@ def sha256(path):
 
 def missions(extra):
     found = sorted(path for path in (ROOT / "missions").rglob("*")
-                   if path.suffix in (".xml", ".yaml") and not path.name.endswith(".sweep.yaml"))
+                   if path.suffix in (".xml", ".yaml")
+                   and not path.name.endswith((".sweep.yaml", ".terrain.yaml")))
     if extra:
         found += sorted(extra.glob("*.xml"))
     return found

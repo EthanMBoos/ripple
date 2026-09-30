@@ -23,6 +23,7 @@
 
 - [User plugins and the starter crate](guides/user-plugins.md)
 - [YAML missions, templates, and sweeps](guides/yaml-missions.md)
+- [Terrain](guides/terrain.md)
 - [Building a scenario in Rust](guides/rust-scenarios.md)
 - [Writing plugins](guides/writing-plugins.md)
 - [Organizing larger autonomies](guides/autonomy-composition.md)

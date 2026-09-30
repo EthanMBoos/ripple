@@ -1,5 +1,5 @@
 //! The experiment description shared by Rust setup code and mission readers.
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, path::PathBuf};
 
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
@@ -281,6 +281,9 @@ pub struct ScenarioConfig {
     pub run: RunConfig,
     pub end_conditions: EndConditions,
     pub spatial_lookup: SpatialLookup,
+    /// A terrain header (see `common/terrain.rs`); world plugins read its ground
+    /// heights. A relative path in a YAML mission is relative to the mission file.
+    pub terrain: Option<PathBuf>,
     #[serde(deserialize_with = "crate::parse::yaml_mission::entity_groups")]
     pub entities: Vec<EntityGroupConfig>,
     #[serde(deserialize_with = "crate::parse::yaml_mission::plugins")]

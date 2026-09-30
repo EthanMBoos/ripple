@@ -41,29 +41,49 @@ impl Bounds {
         let span_m = (east_max_m - east_min_m)
             .max(north_max_m - north_min_m)
             .max(40.0);
-        let rough_step_m = span_m / 6.0;
-        let decade_m = 10.0_f32.powf(rough_step_m.log10().floor());
-        let grid_step_m = [1.0, 2.0, 5.0, 10.0]
-            .into_iter()
-            .find(|factor| factor * decade_m >= rough_step_m)
-            .unwrap_or(10.0)
-            * decade_m;
         Self {
             east_center_m: (east_min_m + east_max_m) * 0.5,
             north_center_m: (north_min_m + north_max_m) * 0.5,
             // Keep edge agents, headings and labels inside the fit at every replay time.
             half_span_m: span_m * 0.65 + 12.0,
-            grid_step_m,
+            grid_step_m: grid_step_m(span_m),
             altitude_min_m,
+        }
+    }
+
+    /// Exactly the terrain's square: [west, east, south, north] in metres.
+    fn around_terrain([west_m, east_m, south_m, north_m]: [f32; 4]) -> Self {
+        let span_m = (east_m - west_m).max(north_m - south_m);
+        Self {
+            east_center_m: (west_m + east_m) * 0.5,
+            north_center_m: (south_m + north_m) * 0.5,
+            half_span_m: span_m * 0.5,
+            grid_step_m: grid_step_m(span_m),
+            altitude_min_m: 0.0,
         }
     }
 }
 
+/// A round grid spacing giving about six lines across `span_m`.
+fn grid_step_m(span_m: f32) -> f32 {
+    let rough_step_m = span_m / 6.0;
+    let decade_m = 10.0_f32.powf(rough_step_m.log10().floor());
+    [1.0, 2.0, 5.0, 10.0]
+        .into_iter()
+        .find(|factor| factor * decade_m >= rough_step_m)
+        .unwrap_or(10.0)
+        * decade_m
+}
+
+/// With terrain ([west, east, south, north]), the grid covers exactly the
+/// terrain, and the 3D reference plane is skipped: it would cut through hills.
 pub(super) fn log_grid(
     recording: &RecordingStream,
     positions: impl Iterator<Item = [f32; 3]>,
+    terrain_extent_m: Option<[f32; 4]>,
 ) -> Result<()> {
-    let bounds = Bounds::from_positions(positions);
+    let bounds =
+        terrain_extent_m.map_or_else(|| Bounds::from_positions(positions), Bounds::around_terrain);
     let east_min_m = bounds.east_center_m - bounds.half_span_m;
     let east_max_m = bounds.east_center_m + bounds.half_span_m;
     let north_min_m = bounds.north_center_m - bounds.half_span_m;
@@ -100,12 +120,14 @@ pub(super) fn log_grid(
                 .collect()
         })
         .collect();
-    recording.log_static(
-        "world/reference_grid",
-        &rerun::LineStrips3D::new(world_grid)
-            .with_colors([[55, 65, 75]])
-            .with_radii([rerun::Radius::new_ui_points(0.5)]),
-    )?;
+    if terrain_extent_m.is_none() {
+        recording.log_static(
+            "world/reference_grid",
+            &rerun::LineStrips3D::new(world_grid)
+                .with_colors([[55, 65, 75]])
+                .with_radii([rerun::Radius::new_ui_points(0.5)]),
+        )?;
+    }
     recording.log_static(
         "map/grid",
         &rerun::LineStrips2D::new(grid)

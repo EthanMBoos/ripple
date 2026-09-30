@@ -86,9 +86,34 @@ Rust lifecycle and delivery rules are in the
   supplied SI matrix. Rust accepts either `inertia_matrix_slug_ft_sq` or
   `inertia_matrix`, rejects both together, and uses the slug default if neither
   is supplied.
-- **AircraftPIDController with substeps:** C++ uses the full step as the
-  controller timestep during substeps; Rust uses the substep. The compared
-  FixedWing6DOF scenarios run without substeps.
+- **AircraftPIDController, fixed on the comparison branch:** unmodified C++
+  ignores the timestep it is given and uses the full mission tick
+  (`time_->dt()`), so with N substeps its integral terms act N times stronger
+  and its derivative terms N times weaker: the controller's tuning changes with
+  `motion_multiplier`. Rust and `benchmarking-edits` (commit `5777aeea1`) use
+  the given substep, with which N substeps behave exactly like running the
+  controller N times faster. That holds only for a controller without a
+  `loop_rate`: in both engines a rate-limited controller still receives the
+  substep, not the time since it last ran, so its tuning still changes with
+  `motion_multiplier` (see `agent_step` in `entity/plugin_stack.rs`).
+
+  Both also lower the default altitude derivative gain from 0.01 to 0.002.
+  This is a tuning choice, not a fix: upstream's gain is too strong for the
+  default 220 m/s A-4 (unmodified C++ can look better with substeps only by
+  accident). The altitude loop turns climb rate into desired pitch, and at
+  that speed its derivative path asks for about 2.2 rad of pitch change per
+  rad of actual pitch change, so a pitch upset grows into an altitude and
+  heading oscillation. One FixedWing6DOF, 45 s of `Straight` flight at 1000 m
+  after a 5 degree roll and 3 degree pitch upset, 0.01 s ticks
+  (`paper/data/aircraft-pid-upset/`): with no substeps (C++ and Rust
+  identical) the altitude wandered 285 m and the heading 42 degrees; with 5
+  substeps, Rust's timing gave 66 m, and C++'s, whose derivative is 5 times
+  weaker, peaked at 1.4 m. With no substeps and the altitude D lowered to
+  0.002 (or 0), altitude peaked at 1.4 m (1.5 m) and stayed within 0.6 m
+  (0.8 m) after the first 5 s; lowering the pitch loop's D instead did not
+  help. Measured with the Rust port on this one scenario; missions that fly
+  AircraftPIDController differ from unmodified C++, so the checker only
+  records their baseline equality.
 - **Stochastic sensors/communication:** Rust uses per-plugin, mission-seeded
   streams rather than C++'s shared generator. Measured contacts use sorted typed
   vectors. SphereNetwork queries current post-motion positions rather than the
@@ -130,7 +155,8 @@ or finer collision checks. `m` = 1 missions are unaffected. The benchmarks
 (`reference/benchmark.py`, `paper/data/benchmark-native/`) now build the
 comparison branch, and the paper's timings come from them. The history, the comparison with other simulators, and the
 verification are in the paper (`sec:substeps`); `reference_check.py` requires
-unmodified and fixed C++ to match only when `m` = 1.
+unmodified and fixed C++ to match only when `m` = 1 and no entity uses
+AircraftPIDController.
 
 ## Ported models keep C++ numerics; new models do not
 

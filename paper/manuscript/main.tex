@@ -1026,12 +1026,12 @@ entities) changed trajectories in the previous campaign (2026-09-25) but no
 longer do; only the summary and trace checks catch them now. We have not
 isolated which later change caused this.
 In passing runs,
-trajectories agree to $3.7\times10^{-10}$~m at worst and usually to
+trajectories agree to $1.8\times10^{-10}$~m at worst and usually to
 $10^{-14}$~m or better. No difference was detected in seven NoisyContacts
 marginal error distributions at the corrected significance threshold.
 
-Nine of the ten long runs pass. The remaining run ends about 0.2~mm apart;
-perturbation experiments suggest numerical sensitivity
+Eight of the ten long runs pass. The other two end about 0.2~mm and
+$4\times10^{-8}$~m apart; perturbation experiments suggest numerical sensitivity
 (Appendix~\ref{app:results}).
 
 In the tested configurations of the retained models,
@@ -1063,8 +1063,13 @@ C++ scoring rule and the Rust summary under Rust's documented rule.
 A checker builds each C++ branch from a \texttt{git archive} inside the
 unmodified upstream dependency image (\texttt{linux/amd64}, GCC~13.3), headless
 and single-threaded. \texttt{Ubuntu-24.04} is the unmodified reference;
-\texttt{benchmarking-edits} adds only opt-in comparison support. No
-model equation is patched. Two command drivers exist in both implementations:
+\texttt{benchmarking-edits} adds opt-in comparison support and the substep
+correction (Appendix~\ref{app:substeps}). No model equation is patched. A later
+commit (\texttt{5777aeea1}) also makes AircraftPIDController use its given
+timestep and lowers its default altitude derivative gain, matching Rust; the
+campaign reported here includes it. The timestep change is a fix; the lower gain is
+a tuning choice, checked on one aircraft after one upset
+(\texttt{paper/data/aircraft-pid-upset}). Two command drivers exist in both implementations:
 \texttt{MotorSpeeds}, because the upstream multirotor controller no longer
 matches the multirotor model, and \texttt{ConstantVelocity}, because no retained
 upstream autonomy commands a velocity. Rust runs at 1, 2, and 8 workers, with
@@ -1084,8 +1089,8 @@ Frames must contain the same entities at every tick. States, beliefs, and
 sensor readings must agree within $10^{-8}$~m, $10^{-8}$~m/s, $10^{-9}$~rad, and
 $10^{-9}$~rad/s; outputs within $10^{-8}$; covariances within $10^{-9}$;
 summaries within $10^{-6}$. Deliveries must match exactly, in order. The
-position limit is 27 times the largest difference measured in a passing run
-($3.7\times10^{-10}$~m).
+position limit was set at 27 times the largest difference then measured in a
+passing run ($3.7\times10^{-10}$~m); the largest now is $1.8\times10^{-10}$~m.
 They replace the original 0.01~m and $10^{-3}$, which let a planted
 sub-micrometre bug through.
 
@@ -1116,7 +1121,15 @@ off near 0.1~mm. C++ and Rust exceed the tolerance after 28.8~s and end
 $2.0\times10^{-4}$~m apart, and the control does the same after 26.8~s,
 ending $2.1\times10^{-4}$~m away (Table~\ref{tab:long}). This suggests
 numerical sensitivity; it does not rule out a small difference between the
-two implementations. Before the substep
+two implementations.
+
+\texttt{generated-007} flies four FixedWing6DOF aircraft with
+AircraftPIDController. It agreed throughout until both implementations lowered
+that controller's altitude derivative gain, which changed the flight. C++ and
+Rust now exceed the tolerance after 30.9~s and end $3.7\times10^{-8}$~m apart;
+the control diverges earlier, after 14.6~s, and ends $2.0\times10^{-6}$~m away
+(Table~\ref{tab:long}). Again this suggests numerical sensitivity rather than a
+porting error, with the same caveat. Before the substep
 order was restored, \texttt{generated-009} also diverged, after 69~s; it now
 agrees throughout.
 
@@ -1183,7 +1196,8 @@ Fixtures use the default. \\
 AircraftPIDController with substeps &
 C++ uses the full step as the controller timestep during substeps; Rust uses
 the substep. &
-FixedWing6DOF scenarios run without substeps. \\
+FixedWing6DOF scenarios run without substeps; \texttt{5777aeea1} fixes the
+comparison branch. \\
 \bottomrule
 \end{tabularx}
 \end{table*}

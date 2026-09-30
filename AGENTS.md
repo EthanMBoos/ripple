@@ -16,8 +16,8 @@ Keep optional adapters (ArduPilot, Burn) out of the default build.
 - C++ source: sibling `../scrimmage`, branch `Ubuntu-24.04`. Do not modify it.
   The only allowed C++ changes are on the `benchmarking-edits` comparison
   branch: opt-in instrumentation (tracing, test drivers, selectable RNG) that
-  leaves outputs byte-identical, and fixes for documented C++ regressions (the
-  substep order, `docs/REFERENCE_NOTES.md`).
+  leaves outputs byte-identical, and fixes for documented C++ defects (the
+  substep order and AircraftPIDController, `docs/REFERENCE_NOTES.md`).
 - User research plugins live in workspace user crates such as `crates/starter`,
   registered in `crates/cli/src/main.rs`; keep the starter building and tested.
 - XML and YAML missions share one typed `ScenarioConfig`; XML is frozen, only

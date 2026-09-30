@@ -1,5 +1,5 @@
 {
-  "check": "<runs>/matrix",
+  "check": "<workspace>/scrimmage-rs/runs/campaign-000/matrix",
   "defects": [
     {
       "name": "controller substeps receive the full step dt",

@@ -9,8 +9,8 @@ families (SimpleAircraft, SingleIntegrator, FixedWing6DOF), start states, update
 rates, spawn schedules and positional variance, sensor biases (zero noise), and
 interactions (SimpleCollision, GroundCollision, Boundary). Every choice is
 comparable: spawn draws use the checker's libc++-compatible stream, sensor noise
-is zero, and FixedWing6DOF runs without substeps, where Rust intentionally fixes
-AircraftPIDController's C++ timestep bug. Standard library only; the same seed
+is zero, and FixedWing6DOF runs without substeps, where unmodified C++'s
+AircraftPIDController uses the wrong timestep (the comparison branch fixes it). Standard library only; the same seed
 always writes the same files.
 """
 

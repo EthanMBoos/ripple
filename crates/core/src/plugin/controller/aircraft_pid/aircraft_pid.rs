@@ -37,7 +37,9 @@ impl Default for AircraftPidConfig {
     fn default() -> Self {
         Self {
             heading: PidGains::from([1.0, 0.2, 1.0, 45.0]),
-            altitude: PidGains::from([0.1, 0.0001, 0.01, 10.0]),
+            // Upstream's altitude D gain (0.01) makes the default aircraft
+            // oscillate after an upset; see docs/REFERENCE_NOTES.md.
+            altitude: PidGains::from([0.1, 0.0001, 0.002, 10.0]),
             speed: PidGains::from([1.0, 0.1, 0.03, 10.0]),
             pitch: PidGains::from([5.0, 0.01, 0.01, 9.0]),
             roll: PidGains::from([0.3, 0.1, 0.001, 9.0]),
@@ -109,9 +111,10 @@ impl Controller for AircraftPidController {
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
         let state = context.state;
         let attitude = state.orientation_world_from_body;
-        // Intentional C++ difference: use the supplied substep interval, not
-        // time_->dt() (the full mission tick). Otherwise substeps overcount
-        // integral time and undercount the derivative response.
+        // Use the supplied substep interval. Unmodified C++ uses time_->dt()
+        // (the full mission tick), so substeps overcount integral time,
+        // undercount the derivative response, and change the tuning with
+        // motion_multiplier; the comparison branch fixes it the same way.
         let dt_s = context.time.dt_s;
         let desired_pitch_rad =
             -self

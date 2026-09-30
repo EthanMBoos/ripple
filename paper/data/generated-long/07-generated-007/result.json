@@ -1,6 +1,6 @@
 {
   "mission": "<runs>/long-missions/generated-007.xml",
-  "passed": true,
+  "passed": false,
   "input": {
     "input_sha256": "c8df1bba304ce14a186d413cf2c8474c326e27a08818e291c54c6e765ba43c25",
     "effective_sha256": "63ed5cbec6917c0266678a04e26ca6d4a9fc1bbbccff9dc4226641e2e23190d6",
@@ -31,12 +31,12 @@
     }
   },
   "cpp_baseline_equality": {
-    "frames.bin": true,
+    "frames.bin": false,
     "summary.csv": true
   },
-  "cpp_log_directory": "cpp/logs/2026-09-29_13-26-24",
+  "cpp_log_directory": "cpp/logs/2026-09-30_18-45-31",
   "cpp_output_hashes": {
-    "frames.bin": "3cb567344c201cc977ed35b4aa2771b5b77851ba87e589060c9d59404760731f",
+    "frames.bin": "2b8c7243c8e81662ed8abf38f51301e4d108e79fdec62342b2b0ab6d0938a965",
     "summary.csv": "3bae886dc2656253cf9d266ca7870eef1966a3b6179101abf2ddb15ad4ace1ca"
   },
   "worker_equality": {
@@ -56,7 +56,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "e3de0d67ed98be669eb5db0fbca4b382b25f72903189bf880678f970dc468f35",
+  "recording_sha256": "0094b43cf1898b8f8b79808a08839ba99d5a1536a7f3c0478326424e95d0a2bc",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,
@@ -64,65 +64,107 @@
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "a815c66d1e188c960cc4acc383e2423faf71603e2646949abab1e963ce11bc65",
+      "frames.bin": "674a31adf21f419f93c6641de090d312f1fe608f4f5a8eda80d26c2affd1d9a1",
       "events.json": "225a91fb3164f50aaed29fd9fe99e00f9aec951a76336a4c01c9bf5338575abb",
       "summary.csv": "c7bc43810a21e389aed689d5e5d544abba3a4d2f5893182a5180cb4a3d069243"
     },
     "rust-2": {
-      "frames.bin": "a815c66d1e188c960cc4acc383e2423faf71603e2646949abab1e963ce11bc65",
+      "frames.bin": "674a31adf21f419f93c6641de090d312f1fe608f4f5a8eda80d26c2affd1d9a1",
       "events.json": "225a91fb3164f50aaed29fd9fe99e00f9aec951a76336a4c01c9bf5338575abb",
       "summary.csv": "c7bc43810a21e389aed689d5e5d544abba3a4d2f5893182a5180cb4a3d069243"
     },
     "rust-8": {
-      "frames.bin": "a815c66d1e188c960cc4acc383e2423faf71603e2646949abab1e963ce11bc65",
+      "frames.bin": "674a31adf21f419f93c6641de090d312f1fe608f4f5a8eda80d26c2affd1d9a1",
       "events.json": "225a91fb3164f50aaed29fd9fe99e00f9aec951a76336a4c01c9bf5338575abb",
       "summary.csv": "c7bc43810a21e389aed689d5e5d544abba3a4d2f5893182a5180cb4a3d069243"
     },
     "rust-rerun": {
-      "frames.bin": "a815c66d1e188c960cc4acc383e2423faf71603e2646949abab1e963ce11bc65",
+      "frames.bin": "674a31adf21f419f93c6641de090d312f1fe608f4f5a8eda80d26c2affd1d9a1",
       "events.json": "225a91fb3164f50aaed29fd9fe99e00f9aec951a76336a4c01c9bf5338575abb",
       "summary.csv": "c7bc43810a21e389aed689d5e5d544abba3a4d2f5893182a5180cb4a3d069243"
     },
     "rust-trace": {
-      "frames.bin": "a815c66d1e188c960cc4acc383e2423faf71603e2646949abab1e963ce11bc65",
+      "frames.bin": "674a31adf21f419f93c6641de090d312f1fe608f4f5a8eda80d26c2affd1d9a1",
       "events.json": "225a91fb3164f50aaed29fd9fe99e00f9aec951a76336a4c01c9bf5338575abb",
       "summary.csv": "c7bc43810a21e389aed689d5e5d544abba3a4d2f5893182a5180cb4a3d069243"
     }
   },
   "comparison": {
-    "passed": true,
+    "passed": false,
     "reference_frames": 10001,
     "candidate_frames": 10001,
     "compared_entity_states": 89548,
-    "max_position_error_m": 3.673695226488511e-10,
-    "max_velocity_error_mps": 2.82272033556194e-10,
-    "max_orientation_error_rad": 1.4533194287863202e-11,
-    "max_angular_velocity_error_radps": 2.729360882988457e-11,
+    "max_position_error_m": 5.7683350034741136e-08,
+    "max_velocity_error_mps": 3.3860054268930774e-08,
+    "max_orientation_error_rad": 1.5984485025725341e-09,
+    "max_angular_velocity_error_radps": 3.0556195838506796e-09,
     "max_timestamp_error_s": 0.0,
-    "mismatch_count": 0,
-    "first_mismatches": [],
+    "mismatch_count": 6908,
+    "first_mismatches": [
+      "frame 3093, t=30.940000000002037 s, entity 3: position=1.000758645171782e-08 m, velocity=2.6138990587068795e-09 m/s, orientation=7.626033651277146e-11 rad, angular velocity=1.061292448561711e-10 rad/s",
+      "frame 3094, t=30.95000000000204 s, entity 3: position=1.002705028496139e-08 m, velocity=2.6126072175324067e-09 m/s, orientation=7.541095095462726e-11 rad, angular velocity=1.0912406548409341e-10 rad/s",
+      "frame 3095, t=30.96000000000204 s, entity 3: position=1.0046966197918492e-08 m, velocity=2.611273059224151e-09 m/s, orientation=7.45299980483999e-11 rad, angular velocity=1.1214985814410977e-10 rad/s",
+      "frame 3096, t=30.97000000000204 s, entity 3: position=1.0066436510462282e-08 m, velocity=2.60990391343182e-09 m/s, orientation=7.361838916506544e-11 rad, angular velocity=1.1519282574532953e-10 rad/s",
+      "frame 3097, t=30.980000000002043 s, entity 3: position=1.0086114172931798e-08 m, velocity=2.6084848859710197e-09 m/s, orientation=7.267707202920858e-11 rad, angular velocity=1.1824695134408455e-10 rad/s",
+      "frame 3098, t=30.990000000002045 s, entity 3: position=1.0105652820167838e-08 m, velocity=2.6070161350529803e-09 m/s, orientation=7.170692844756661e-11 rad, angular velocity=1.213022081473951e-10 rad/s",
+      "frame 3099, t=31.000000000002046 s, entity 3: position=1.0125168532503886e-08 m, velocity=2.6054717807549965e-09 m/s, orientation=7.070906100166999e-11 rad, angular velocity=1.2435080799377375e-10 rad/s",
+      "frame 3100, t=31.010000000002048 s, entity 3: position=1.0144598871492784e-08 m, velocity=2.6038631979443924e-09 m/s, orientation=6.968461964411376e-11 rad, angular velocity=1.273850690591065e-10 rad/s",
+      "frame 3101, t=31.02000000000205 s, entity 3: position=1.0163805680845156e-08 m, velocity=2.602175260065452e-09 m/s, orientation=6.863473136764408e-11 rad, angular velocity=1.303972942009376e-10 rad/s",
+      "frame 3102, t=31.03000000000205 s, entity 3: position=1.0183241580072652e-08 m, velocity=2.600404395009895e-09 m/s, orientation=6.756090312115608e-11 rad, angular velocity=1.3338181623406502e-10 rad/s",
+      "frame 3103, t=31.040000000002053 s, entity 3: position=1.0202275784351463e-08 m, velocity=2.598534545404123e-09 m/s, orientation=6.646426394534415e-11 rad, angular velocity=1.3633275725078916e-10 rad/s",
+      "frame 3104, t=31.050000000002054 s, entity 3: position=1.0221830642808332e-08 m, velocity=2.5965677023180673e-09 m/s, orientation=6.534641927978532e-11 rad, angular velocity=1.392450463130984e-10 rad/s",
+      "frame 3105, t=31.060000000002056 s, entity 3: position=1.024141415106661e-08 m, velocity=2.5944892745334503e-09 m/s, orientation=6.420887988913536e-11 rad, angular velocity=1.4211297439757657e-10 rad/s",
+      "frame 3106, t=31.070000000002057 s, entity 3: position=1.0260687833499471e-08 m, velocity=2.5922951788874804e-09 m/s, orientation=6.30533406088794e-11 rad, angular velocity=1.4493202363731244e-10 rad/s",
+      "frame 3107, t=31.08000000000206 s, entity 3: position=1.0279876700745894e-08 m, velocity=2.5899773978858978e-09 m/s, orientation=6.188137003463332e-11 rad, angular velocity=1.476980447742991e-10 rad/s",
+      "frame 3108, t=31.09000000000206 s, entity 3: position=1.029896326603708e-08 m, velocity=2.5875382153306575e-09 m/s, orientation=6.069507367635807e-11 rad, angular velocity=1.5040530525569704e-10 rad/s",
+      "frame 3109, t=31.100000000002062 s, entity 3: position=1.0318266909653587e-08 m, velocity=2.584975169977813e-09 m/s, orientation=5.949642872664628e-11 rad, angular velocity=1.5305143695212167e-10 rad/s",
+      "frame 3110, t=31.110000000002064 s, entity 3: position=1.033742914126531e-08 m, velocity=2.582275727943306e-09 m/s, orientation=5.828749157949084e-11 rad, angular velocity=1.5563107063838296e-10 rad/s",
+      "frame 3111, t=31.120000000002065 s, entity 3: position=1.0356431192373218e-08 m, velocity=2.5794344439371894e-09 m/s, orientation=5.707078124078568e-11 rad, angular velocity=1.5814234943335394e-10 rad/s",
+      "frame 3112, t=31.130000000002067 s, entity 3: position=1.0375539769067676e-08 m, velocity=2.5764507101858834e-09 m/s, orientation=5.5848591034397686e-11 rad, angular velocity=1.6058013258077188e-10 rad/s"
+    ],
     "direct_event_stream_compared": false
   },
   "trace_comparison": {
-    "passed": true,
+    "passed": false,
     "deliveries": 9,
     "beliefs": 89548,
     "outputs": 626773,
     "published_states": 0,
-    "max_belief_position_error_m": 3.673695226488511e-10,
-    "max_belief_velocity_error_mps": 2.82272033556194e-10,
-    "max_belief_orientation_error_rad": 1.4533194287863202e-11,
-    "max_belief_angular_velocity_error_radps": 2.729360882988457e-11,
+    "max_belief_position_error_m": 5.7683350034741136e-08,
+    "max_belief_velocity_error_mps": 3.3860054268930774e-08,
+    "max_belief_orientation_error_rad": 1.5984485025725341e-09,
+    "max_belief_angular_velocity_error_radps": 3.0556195838506796e-09,
     "max_payload_position_error_m": 0.0,
     "max_payload_velocity_error_mps": 0.0,
     "max_payload_orientation_error_rad": 0.0,
     "max_payload_covariance_error": 0.0,
-    "max_output_error": 9.060840966412798e-11,
+    "max_output_error": 1.0809813121015477e-08,
     "max_output_error_port": "AircraftPIDController.elevator",
     "excluded_pre_start_records": 0,
     "delivery_mismatches": 0,
-    "mismatch_count": 0,
-    "first_mismatches": []
+    "mismatch_count": 6936,
+    "first_mismatches": [
+      "belief (30.93, 3, 0) differs: (1.000758645171782e-08, 2.6138990587068795e-09, 7.626033651277146e-11, 1.061292448561711e-10)",
+      "belief (30.94, 3, 0) differs: (1.002705028496139e-08, 2.6126072175324067e-09, 7.541095095462726e-11, 1.0912406548409341e-10)",
+      "belief (30.95, 3, 0) differs: (1.0046966197918492e-08, 2.611273059224151e-09, 7.45299980483999e-11, 1.1214985814410977e-10)",
+      "belief (30.96, 3, 0) differs: (1.0066436510462282e-08, 2.60990391343182e-09, 7.361838916506544e-11, 1.1519282574532953e-10)",
+      "belief (30.97, 3, 0) differs: (1.0086114172931798e-08, 2.6084848859710197e-09, 7.267707202920858e-11, 1.1824695134408455e-10)",
+      "belief (30.98, 3, 0) differs: (1.0105652820167838e-08, 2.6070161350529803e-09, 7.170692844756661e-11, 1.213022081473951e-10)",
+      "belief (30.99, 3, 0) differs: (1.0125168532503886e-08, 2.6054717807549965e-09, 7.070906100166999e-11, 1.2435080799377375e-10)",
+      "belief (31.0, 3, 0) differs: (1.0144598871492784e-08, 2.6038631979443924e-09, 6.968461964411376e-11, 1.273850690591065e-10)",
+      "belief (31.01, 3, 0) differs: (1.0163805680845156e-08, 2.602175260065452e-09, 6.863473136764408e-11, 1.303972942009376e-10)",
+      "belief (31.02, 3, 0) differs: (1.0183241580072652e-08, 2.600404395009895e-09, 6.756090312115608e-11, 1.3338181623406502e-10)",
+      "belief (31.03, 3, 0) differs: (1.0202275784351463e-08, 2.598534545404123e-09, 6.646426394534415e-11, 1.3633275725078916e-10)",
+      "belief (31.04, 3, 0) differs: (1.0221830642808332e-08, 2.5965677023180673e-09, 6.534641927978532e-11, 1.392450463130984e-10)",
+      "belief (31.05, 3, 0) differs: (1.024141415106661e-08, 2.5944892745334503e-09, 6.420887988913536e-11, 1.4211297439757657e-10)",
+      "belief (31.06, 3, 0) differs: (1.0260687833499471e-08, 2.5922951788874804e-09, 6.30533406088794e-11, 1.4493202363731244e-10)",
+      "belief (31.07, 3, 0) differs: (1.0279876700745894e-08, 2.5899773978858978e-09, 6.188137003463332e-11, 1.476980447742991e-10)",
+      "belief (31.08, 3, 0) differs: (1.029896326603708e-08, 2.5875382153306575e-09, 6.069507367635807e-11, 1.5040530525569704e-10)",
+      "belief (31.09, 3, 0) differs: (1.0318266909653587e-08, 2.584975169977813e-09, 5.949642872664628e-11, 1.5305143695212167e-10)",
+      "belief (31.1, 3, 0) differs: (1.033742914126531e-08, 2.582275727943306e-09, 5.828749157949084e-11, 1.5563107063838296e-10)",
+      "belief (31.11, 3, 0) differs: (1.0356431192373218e-08, 2.5794344439371894e-09, 5.707078124078568e-11, 1.5814234943335394e-10)",
+      "belief (31.12, 3, 0) differs: (1.0375539769067676e-08, 2.5764507101858834e-09, 5.5848591034397686e-11, 1.6058013258077188e-10)"
+    ]
   },
   "summary_differences": [
     "summary team 1, score: reference nan, candidate 0.0",

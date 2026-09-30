@@ -7,6 +7,7 @@ use anyhow::{Context, Result};
 use serde::Serialize;
 
 use crate::{
+    common::Terrain,
     entity::plugin_stack::{CompiledStack, PluginStack},
     estimator::{Contact, ContactList},
     math::{EulerAngles, KinematicState, Quaternion, Vec3},
@@ -110,6 +111,8 @@ pub struct Entity {
 }
 
 impl Entity {
+    // Each argument is a separate part of the new entity's starting setup.
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         id: i32,
         sub_swarm_id: i32,
@@ -118,6 +121,7 @@ impl Entity {
         heading_world_deg: f64,
         born_s: f64,
         seed: u32,
+        terrain: Option<&Terrain>,
     ) -> Result<Self> {
         let mut attitude = definition.initial_attitude;
         attitude.yaw_world_from_body_rad = crate::math::deg_to_rad(heading_world_deg);
@@ -142,6 +146,7 @@ impl Entity {
                 },
                 time,
                 &mut truth,
+                terrain,
             )
         }))
         .unwrap_or_else(|_| Err(anyhow::anyhow!("entity plugin initialization panicked")));
@@ -264,8 +269,9 @@ impl Entity {
         self.plugins.controllers(self.info(), time)
     }
 
-    pub(crate) fn step_motion(&mut self, time: StepTime) -> Result<()> {
-        self.plugins.motion(self.info(), time, &mut self.truth)
+    pub(crate) fn step_motion(&mut self, time: StepTime, terrain: Option<&Terrain>) -> Result<()> {
+        self.plugins
+            .motion(self.info(), time, &mut self.truth, terrain)
     }
 
     /// Between motion substeps; see `PluginStack::follow_perfect_state`.

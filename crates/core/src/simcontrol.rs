@@ -7,7 +7,7 @@ use anyhow::Result;
 use serde::Serialize;
 
 use crate::{
-    common::{SpatialIndex, TruthContacts, random::LegacyRng},
+    common::{SpatialIndex, Terrain, TruthContacts, random::LegacyRng},
     entity::{Entity, EntityDefinition, EntitySnapshot},
     estimator::{Contact, ContactList},
     plugin::{Messages, MetricReport, PluginRegistry, StepTime},
@@ -94,6 +94,7 @@ pub struct Simulation {
     /// The latest perfect contact measurement: every entity present after the
     /// last interactions. New entities start from it.
     perfect_contacts: ContactList,
+    terrain: Option<Terrain>,
 }
 
 impl Simulation {
@@ -111,6 +112,7 @@ impl Simulation {
             end_conditions,
         } = scenario;
         let scheduler = Scheduler::new(worker_count)?;
+        let terrain = config.terrain.as_deref().map(Terrain::load).transpose()?;
 
         let world = world.instantiate(config.run.seed);
         let mut simulation = Self {
@@ -133,6 +135,7 @@ impl Simulation {
             finished: false,
             trace: None,
             perfect_contacts: ContactList::from([]),
+            terrain,
         };
 
         simulation.world.initialize(
@@ -142,6 +145,7 @@ impl Simulation {
             },
             &[],
             &simulation.entity_teams,
+            simulation.terrain.as_ref(),
         )?;
         // Legacy missions can create entities one step before the start time.
         simulation.generate_entities()?;
@@ -160,6 +164,11 @@ impl Simulation {
     /// The scenario as loaded, with every estimator input's source filled in.
     pub fn scenario(&self) -> &ScenarioConfig {
         &self.config
+    }
+
+    /// The mission's terrain, if it names one.
+    pub fn terrain(&self) -> Option<&Terrain> {
+        self.terrain.as_ref()
     }
 
     pub fn entities(&self) -> &[Entity] {
@@ -261,6 +270,7 @@ impl Simulation {
         // "Substep order"). Autonomy above and everything below run once per tick.
         let motion_dt_s = dt_s / self.config.run.motion_multiplier as f64;
         let mut substep_time_s = time_s;
+        let terrain = self.terrain.clone();
         for substep in 0..self.config.run.motion_multiplier {
             let time = StepTime {
                 time_s: substep_time_s,
@@ -272,7 +282,7 @@ impl Simulation {
                 }
                 entity.step_controller(time)
             })?;
-            self.run_phase(|entity| entity.step_motion(time))?;
+            self.run_phase(|entity| entity.step_motion(time, terrain.as_ref()))?;
             substep_time_s += motion_dt_s;
         }
         // Motion leaves controller outputs unchanged: this is the last substep's.
@@ -311,6 +321,7 @@ impl Simulation {
             time,
             TruthContacts::new(&contacts, &nearby),
             &self.entity_teams,
+            self.terrain.as_ref(),
         )?;
         // Retain a stop request even when its entity is removed in this same tick.
         self.world_stop |= self.entities.iter().any(Entity::stop_requested);

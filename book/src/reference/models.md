@@ -12,7 +12,7 @@ the simulation loop. No runtime library loading is planned.
 | Motion | SimpleAircraft; SingleIntegrator; FixedWing6DOF; Multirotor | Flight-model limitations are commented beside their equations. Multirotor retains C++ behavior; external-force contact and acceleration sensor access are not exposed. JSBSim is an offline verification candidate, not a runtime plugin. |
 | Sensor | NoisyState; NoisyContacts; NoisyPosition (Rust-only teaching example) | NoisyContacts measures every other live entity; no range/FOV, missed detections, or tracker. Cameras and richer sensors are not selected. |
 | Localization, tracking | PassThrough (copies one reading; the default for both) | Filters, dead reckoning, and trackers are research plugins; see [Belief vs truth](../concepts/belief-vs-truth.md). |
-| Interaction | SimpleCollision; GroundCollision; Boundary; Rust-native WaypointBroadcast | Physics-engine collisions, richer geometry, and games/scoring environments deferred. No integration-specific spawning here. |
+| Interaction | SimpleCollision; GroundCollision; Boundary; Rust-native WaypointBroadcast and TerrainCollision | Physics-engine collisions, richer geometry, and games/scoring environments deferred. No integration-specific spawning here. |
 | Network | GlobalNetwork; LocalNetwork; SphereNetwork | SphereNetwork uses direct 3D distance checks and optional altitude-plane filtering; no spatial index. Legacy delay modes remain rejected; compiled networks can use explicit delay/loss. XML `name="CommsNetwork"` names an instance, as in C++. No OpenCL path. |
 | Metrics | SimpleCollisionMetrics, including ground counts | Add experiment-specific metrics as ordinary plugins. No generic statistics/service framework. |
 
@@ -27,6 +27,8 @@ the simulation loop. No runtime library loading is planned.
 - GroundCollision uses a flat `ground_collision_z` in local meters, optional
   team filtering, and removal. Force response and geodetic altitude are errors.
   Startup rejection is separately configurable and, like C++, has no team filter.
+- TerrainCollision removes agents that reach the mission's terrain, checking the
+  path moved each step; see [Terrain](../guides/terrain.md).
 - WaypointBroadcast sends an initial route and optionally one timed replacement.
   WaypointFollower owns a list and current index. No services, route planner, or
   generic state-machine framework. Initial/updated broadcasts are not latched
@@ -46,7 +48,7 @@ the simulation loop. No runtime library loading is planned.
   independent sensor RNG streams differ from C++; its inherited covariance
   payload is not calibrated uncertainty. See the [paper's validation](https://github.com/EthanMBoos/scrimmage-rs/blob/main/paper/README.md).
 
-ROS, ArduPilot, and JSBSim integrations are not planned. Burn and terrain remain in [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md), outside this v1 slice.
+ROS and JSBSim integrations are not planned; ArduPlane SITL is on the [roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md). Terrain is covered in [Terrain](../guides/terrain.md).
 
 The plugin audit's selected additions are complete: NoisyContacts and
 SphereNetwork + AuctionAssign. The other proposed ports and the force, dynamics

@@ -1,5 +1,5 @@
 //! World plugin ownership and dispatch. Model logic belongs under plugin/{interaction,network,metrics}.
-use crate::common::{SpatialIndex, TruthContacts};
+use crate::common::{SpatialIndex, Terrain, TruthContacts};
 use crate::{Entity, EntitySnapshot, Event, Vec3, plugin::*, scenario::ScenarioConfig};
 use crate::{
     plugin_manager::{Catalog, CompiledPlugin},
@@ -184,6 +184,7 @@ impl<T: ?Sized> WorldSlot<T> {
         time: StepTime,
         contacts: &[EntitySnapshot],
         teams: &BTreeMap<i32, i32>,
+        terrain: Option<&Terrain>,
         initialize: impl FnOnce(&mut T, &mut WorldContext<'_>) -> Result<()>,
     ) -> Result<()> {
         self.messages.time_s = time.time_s;
@@ -194,6 +195,7 @@ impl<T: ?Sized> WorldSlot<T> {
                 contacts_truth: TruthContacts::from(contacts),
                 entity_teams: teams,
                 messages: &mut self.messages,
+                terrain,
             },
         )
         .with_context(|| format!("initialize world plugin '{}'", self.name))
@@ -226,15 +228,22 @@ impl WorldPlugins {
         time: StepTime,
         contacts: &[EntitySnapshot],
         teams: &BTreeMap<i32, i32>,
+        terrain: Option<&Terrain>,
     ) -> Result<()> {
         for slot in &mut self.networks {
-            slot.initialize(time, contacts, teams, NetworkBehavior::initialize)?;
+            slot.initialize(time, contacts, teams, terrain, NetworkBehavior::initialize)?;
         }
         for slot in &mut self.interactions {
-            slot.initialize(time, contacts, teams, InteractionBehavior::initialize)?;
+            slot.initialize(
+                time,
+                contacts,
+                teams,
+                terrain,
+                InteractionBehavior::initialize,
+            )?;
         }
         for slot in &mut self.metrics {
-            slot.initialize(time, contacts, teams, MetricsBehavior::initialize)?;
+            slot.initialize(time, contacts, teams, terrain, MetricsBehavior::initialize)?;
         }
         Ok(())
     }
@@ -341,6 +350,7 @@ impl WorldPlugins {
         time: StepTime,
         contacts: TruthContacts<'_>,
         teams: &BTreeMap<i32, i32>,
+        terrain: Option<&Terrain>,
     ) -> Result<bool> {
         let mut stop = false;
         for slot in &mut self.metrics {
@@ -352,6 +362,7 @@ impl WorldPlugins {
                     contacts_truth: contacts,
                     entity_teams: teams,
                     messages: &mut slot.messages,
+                    terrain,
                 })
                 .with_context(|| format!("metrics '{}'", slot.name))?;
             stop |= update == Update::Stop;

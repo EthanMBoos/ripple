@@ -1,30 +1,36 @@
 //! Rerun observes the run; playback and debug panels never change simulation state.
 use anyhow::{Result, ensure};
 use rerun::{RecordingStream, RecordingStreamBuilder};
-use scrimmage_core::SimulationFrame;
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    path::Path,
-    time::Duration,
-};
+use scrimmage_core::{SimulationFrame, Terrain};
+use std::{collections::BTreeSet, path::Path, time::Duration};
 
 mod blueprint;
 mod map;
+mod terrain;
+mod trails;
 
-struct Track {
-    positions_world_m: Vec<[f32; 3]>,
-    color: [u8; 3],
-}
+use trails::Trails;
+pub(crate) use trails::draw as draw_trails;
 
 pub(crate) struct Viewer {
     recording: RecordingStream,
     previous_ids: BTreeSet<i32>,
-    tracks: BTreeMap<i32, Track>,
+    /// The lowest and highest east, north, and up of any agent so far, for
+    /// fitting the map.
+    position_range_m: Option<[[f32; 3]; 2]>,
     first_time_s: Option<f64>,
     last_time_ns: Option<i64>,
+    /// [west, east, south, north] of the drawn terrain.
+    terrain_extent_m: Option<[f32; 4]>,
+    /// With `--draw-trails`, a second stream into the same recording that goes
+    /// only to the live viewer, so trails are shown but never saved.
+    live_trails: Option<(RecordingStream, Trails)>,
 }
 impl Viewer {
-    pub fn new(path: &Path, launch: bool) -> Result<Self> {
+    /// `recording_id` lets `scrimmage replay --draw-trails` add trails to the
+    /// same recording later. `draw_trails` shows them in the launched viewer.
+    pub fn new(path: &Path, launch: bool, recording_id: &str, draw_trails: bool) -> Result<Self> {
+        ensure!(!draw_trails || launch, "--draw-trails needs the viewer");
         ensure!(
             !path.exists(),
             "Rerun output already exists: {}",
@@ -32,16 +38,27 @@ impl Viewer {
         );
         let mut sinks: Vec<Box<dyn rerun::sink::LogSink>> =
             vec![Box::new(rerun::sink::FileSink::new(path)?)];
+        let mut live_trails = None;
         if launch {
             let viewer = rerun::spawn(&rerun::SpawnOptions {
                 new: true,
                 hide_welcome_screen: true,
                 ..Default::default()
             })?;
-            let uri = format!("rerun+http://127.0.0.1:{}/proxy", viewer.port).parse()?;
-            sinks.push(Box::new(rerun::sink::GrpcSink::new(uri)));
+            let uri: rerun::external::re_uri::ProxyUri =
+                format!("rerun+http://127.0.0.1:{}/proxy", viewer.port).parse()?;
+            sinks.push(Box::new(rerun::sink::GrpcSink::new(uri.clone())));
+            if draw_trails {
+                let stream = RecordingStreamBuilder::new("scrimmage-rs")
+                    .recording_id(recording_id)
+                    .set_sinks(vec![
+                        Box::new(rerun::sink::GrpcSink::new(uri)) as Box<dyn rerun::sink::LogSink>
+                    ])?;
+                live_trails = Some((stream, Trails::default()));
+            }
         }
         let recording = RecordingStreamBuilder::new("scrimmage-rs")
+            .recording_id(recording_id)
             .enabled(true)
             .set_sinks(sinks)?;
         recording.log_static("world", &rerun::ViewCoordinates::RIGHT_HAND_Z_UP())?;
@@ -49,10 +66,20 @@ impl Viewer {
         Ok(Self {
             recording,
             previous_ids: BTreeSet::new(),
-            tracks: BTreeMap::new(),
+            position_range_m: None,
             first_time_s: None,
             last_time_ns: None,
+            terrain_extent_m: None,
+            live_trails,
         })
+    }
+
+    /// Draw the mission's terrain once, before the first frame.
+    pub fn log_terrain(&mut self, terrain: &Terrain) -> Result<()> {
+        let [west_m, north_m, _] = terrain.sample(0, 0);
+        let [east_m, south_m, _] = terrain.sample(terrain.rows() - 1, terrain.columns() - 1);
+        self.terrain_extent_m = Some([west_m, east_m, south_m, north_m].map(|value| value as f32));
+        terrain::log(&self.recording, terrain)
     }
 
     pub fn log_frame(&mut self, index: usize, frame: &SimulationFrame) -> Result<()> {
@@ -63,6 +90,11 @@ impl Viewer {
             .set_time_sequence("frame", i64::try_from(index)?);
         self.recording
             .set_duration_secs("time", time_ns as f64 * 1e-9);
+        if let Some((stream, trails)) = &mut self.live_trails {
+            stream.set_time_sequence("frame", i64::try_from(index)?);
+            stream.set_duration_secs("time", time_ns as f64 * 1e-9);
+            trails.log_frame(stream, frame)?;
+        }
 
         let current_ids: BTreeSet<_> = frame.entities.iter().map(|entity| entity.id).collect();
         for id in self.previous_ids.difference(&current_ids) {
@@ -79,14 +111,11 @@ impl Viewer {
             let color = team_color(entity.team_id);
             let label = format!("{} · team {}", entity.id, entity.team_id);
             let point = [position.x as f32, position.y as f32, position.z as f32];
-            self.tracks
-                .entry(entity.id)
-                .or_insert_with(|| Track {
-                    positions_world_m: Vec::new(),
-                    color,
-                })
-                .positions_world_m
-                .push(point);
+            let [low, high] = self.position_range_m.get_or_insert([point, point]);
+            for axis in 0..3 {
+                low[axis] = low[axis].min(point[axis]);
+                high[axis] = high[axis].max(point[axis]);
+            }
 
             self.recording.log(
                 path.as_str(),
@@ -105,7 +134,8 @@ impl Viewer {
                 &rerun::Points3D::new([[0.0, 0.0, 0.0]])
                     .with_colors([color])
                     .with_radii([rerun::Radius::new_ui_points(6.0)])
-                    .with_labels([label.clone()]),
+                    .with_labels([entity.id.to_string()])
+                    .with_show_labels(false),
             )?;
             self.recording.log(
                 format!("{path}/heading"),
@@ -120,7 +150,8 @@ impl Viewer {
                 &rerun::Points2D::new([position_map_m])
                     .with_colors([color])
                     .with_radii([rerun::Radius::new_ui_points(6.0)])
-                    .with_labels([label.clone()]),
+                    .with_labels([entity.id.to_string()])
+                    .with_show_labels(false),
             )?;
             self.recording.log(
                 format!("{map_path}/heading"),
@@ -159,40 +190,21 @@ impl Viewer {
     pub fn finish(self) -> Result<()> {
         map::log_grid(
             &self.recording,
-            self.tracks
-                .values()
-                .flat_map(|track| track.positions_world_m.iter().copied()),
+            self.position_range_m.into_iter().flatten(),
+            self.terrain_extent_m,
         )?;
-        // Full-run paths keep the map fitted to every agent across the whole replay,
-        // including late spawns and entities removed before the terminal frame.
-        for (id, track) in &self.tracks {
-            let color = [track.color[0], track.color[1], track.color[2], 100];
-            let map_points: Vec<_> = track
-                .positions_world_m
-                .iter()
-                .map(|point| map::project(*point))
-                .collect();
-            self.recording.log_static(
-                format!("map/tracks/{id}"),
-                &rerun::LineStrips2D::new([map_points])
-                    .with_colors([color])
-                    .with_radii([rerun::Radius::new_ui_points(1.0)]),
-            )?;
-            self.recording.log_static(
-                format!("world/tracks/{id}"),
-                &rerun::LineStrips3D::new([track.positions_world_m.clone()])
-                    .with_colors([color])
-                    .with_radii([rerun::Radius::new_ui_points(1.0)]),
-            )?;
-        }
-        // Activate a fresh layout after all data arrives so initial framing includes the full run.
+        // Activate a fresh layout after all data arrives so initial framing
+        // includes the grid, which covers every agent's whole run.
         blueprint::send(&self.recording)?;
+        if let Some((stream, _)) = &self.live_trails {
+            stream.flush_with_timeout(Duration::from_secs(10))?;
+        }
         self.recording.flush_with_timeout(Duration::from_secs(10))?;
         Ok(())
     }
 }
 
-fn team_color(team_id: i32) -> [u8; 3] {
+pub(super) fn team_color(team_id: i32) -> [u8; 3] {
     match team_id.rem_euclid(3) {
         1 => [77, 140, 255],
         2 => [255, 90, 77],
@@ -200,7 +212,7 @@ fn team_color(team_id: i32) -> [u8; 3] {
     }
 }
 
-fn playback_time_ns(elapsed_s: f64, previous_ns: Option<i64>) -> i64 {
+pub(super) fn playback_time_ns(elapsed_s: f64, previous_ns: Option<i64>) -> i64 {
     let time_ns = (elapsed_s.max(0.0) * 1e9).round() as i64;
     // Legacy output repeats the final timestamp. Preserve both visual samples without
     // changing frame files or pretending sequence indices are seconds.
@@ -216,7 +228,7 @@ fn status_text(index: usize, frame: &SimulationFrame, replay_time_ns: i64) -> St
         frame.entities.len(),
         teams.len()
     );
-    text.push_str("Local ENU map: East → / North ↑, meters.\n\nMarkers = current agents; arrows = heading. Faint tracks = complete run (including future).\n\n");
+    text.push_str("Local ENU map: East → / North ↑, meters.\n\nMarkers = current agents; arrows = heading.\n\n");
     text.push_str("| ID | Team | Speed m/s | Alt. m |\n|---:|---:|---:|---:|\n");
     for entity in frame.entities.iter().take(12) {
         text.push_str(&format!(

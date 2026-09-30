@@ -28,6 +28,31 @@ fn recording_must_be_a_file_not_a_nested_directory() {
     assert!(String::from_utf8_lossy(&output.stderr).contains("recording is not a file"));
 }
 
+#[test]
+fn draw_trails_needs_the_run_files_from_a_current_recording() {
+    let temp = tempfile::tempdir().unwrap();
+    fs::write(temp.path().join("recording.rrd"), b"fixture recording").unwrap();
+    let replay = || {
+        Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+            .current_dir(temp.path())
+            .args(["replay", ".", "--draw-trails"])
+            .output()
+            .unwrap()
+    };
+    let output = replay();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("needs the run's manifest.json"));
+
+    fs::write(
+        temp.path().join("manifest.json"),
+        br#"{"rerun_recording": true}"#,
+    )
+    .unwrap();
+    let output = replay();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("no rerun_recording_id"));
+}
+
 #[cfg(unix)]
 mod viewer_process {
     use std::{fs, os::unix::fs::PermissionsExt, path::Path, process::Command};

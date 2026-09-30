@@ -1,7 +1,11 @@
 //! Type erasure and scheduling stay inside the engine, not in plugin author code.
 use crate::estimator::{Inputs, Source};
 use crate::plugin::*;
-use crate::{KinematicState, common::Rate, scenario::EntityGroupConfig};
+use crate::{
+    KinematicState,
+    common::{Rate, Terrain},
+    scenario::EntityGroupConfig,
+};
 use crate::{common::variable_io::Signals, plugin_manager::CompiledPlugin};
 use anyhow::{Context, Result, bail, ensure};
 use std::collections::BTreeMap;
@@ -568,6 +572,7 @@ impl PluginStack {
         entity: EntityInfo,
         time: StepTime,
         truth: &mut KinematicState,
+        terrain: Option<&Terrain>,
     ) -> Result<()> {
         // A sensor's startup reading sees the initial truth before motion normalizes it.
         for (sensor, (name, kind)) in self.sensors.iter_mut().zip(&self.sensor_readings) {
@@ -595,6 +600,7 @@ impl PluginStack {
                 time,
                 truth,
                 messages: &mut self.motion.messages,
+                terrain,
             })
             .with_context(|| format!("initialize '{}'", self.motion.name))?;
         Ok(())
@@ -733,6 +739,7 @@ impl PluginStack {
         entity: EntityInfo,
         time: StepTime,
         truth: &mut KinematicState,
+        terrain: Option<&Terrain>,
     ) -> Result<()> {
         let upstream = self
             .controllers
@@ -752,6 +759,7 @@ impl PluginStack {
                     time,
                     truth,
                     messages: &mut self.motion.messages,
+                    terrain,
                 },
                 &mut self.motion.io,
             )

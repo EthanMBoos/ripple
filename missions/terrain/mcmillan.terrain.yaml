@@ -1,0 +1,20 @@
+# Written by scripts/terrain/prepare.py; see crates/core/src/common/terrain.rs.
+# Elevation files, in layering order:
+#   https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/historical/n36w121/USGS_13_n36w121_20190919.tif
+#   https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/historical/n36w121/USGS_13_n36w121_20250826.tif
+#   https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/1m/Projects/CA_AZ_FEMA_R9_Lidar_2017_D18/TIFF/USGS_1M_10_x69y395_CA_AZ_FEMA_R9_Lidar_2017_D18.tif
+#   https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/1m/Projects/CA_AZ_FEMA_R9_Lidar_2017_D18/TIFF/USGS_1M_10_x69y396_CA_AZ_FEMA_R9_Lidar_2017_D18.tif
+#   https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/1m/Projects/CA_AZ_FEMA_R9_Lidar_2017_D18/TIFF/USGS_1M_10_x69y397_CA_AZ_FEMA_R9_Lidar_2017_D18.tif
+#   https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/1m/Projects/CA_AZ_FEMA_R9_Lidar_2017_D18/TIFF/USGS_1M_10_x70y396_CA_AZ_FEMA_R9_Lidar_2017_D18.tif
+#   https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/1m/Projects/CA_AZ_FEMA_R9_Lidar_2017_D18/TIFF/USGS_1M_10_x70y397_CA_AZ_FEMA_R9_Lidar_2017_D18.tif
+format_version: 1
+source: "usgs-10m + usgs-1m; imagery naip (GDAL 3.12.4)"
+origin: {latitude_deg: 35.721025, longitude_deg: -120.767925, altitude_m: 300}
+west_m: -5000
+north_m: 5000
+cell_m: 10
+columns: 1001
+rows: 1001
+heights: mcmillan.f32
+imagery: mcmillan.png
+no_data: -9999

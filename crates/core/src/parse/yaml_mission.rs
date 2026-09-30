@@ -9,7 +9,7 @@ use std::{
 };
 
 use super::{Mission, Params};
-use crate::scenario::{EntityGroupConfig, PluginConfig, PluginValues};
+use crate::scenario::{EntityGroupConfig, PluginConfig, PluginValues, ScenarioConfig};
 
 pub(super) fn load(path: &Path, overrides: &Params) -> Result<Mission> {
     let text = fs::read_to_string(path).with_context(|| format!("read {}", path.display()))?;
@@ -43,8 +43,12 @@ fn parse(text: &str, source: PathBuf, overrides: &Params) -> Result<Mission> {
             .unwrap_or(false),
         _ => false,
     };
+    let mut scenario: ScenarioConfig = serde_yaml_ng::from_value(tree)?;
+    if let (Some(terrain), Some(directory)) = (&mut scenario.terrain, source.parent()) {
+        *terrain = directory.join(&*terrain);
+    }
     Ok(Mission {
-        scenario: serde_yaml_ng::from_value(tree)?,
+        scenario,
         workers: 1,
         viewer,
         source,

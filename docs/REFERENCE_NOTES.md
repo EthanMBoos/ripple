@@ -189,6 +189,19 @@ side-by-side check, and the results belong in `paper/data/`:
   Agreement would show the equations are implemented consistently, not that
   the model matches a real aircraft.
 
+## Terrain (Rust-only)
+
+C++ terrain did not affect the simulation. The mission `<terrain>` tag loaded a
+VTK mesh and texture (`data/gui/terrain/<name>/`) that only the viewer drew,
+plus BulletCollision when `enable_terrain` was set (off by default, commented
+out in `straight.xml`). The TerrainGenerator interaction published a random
+height map that the AltitudeAboveTerrain sensor read, but no stock mission used
+either. Rust ignores the XML `<terrain>` tag (XML is frozen); YAML missions name
+a terrain header instead (`common/terrain.rs`, book chapter "Terrain"), which
+world plugins read and TerrainCollision uses. Like C++'s `altitude_origin`,
+local `z = 0` is the terrain's origin altitude. There is nothing in C++ to
+compare it with.
+
 ## Spawn RNG mismatch (accepted)
 
 The native macOS baseline matched; the Ubuntu Docker fixture diverges at

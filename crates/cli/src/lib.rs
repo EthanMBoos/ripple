@@ -40,6 +40,9 @@ enum Command {
     Replay {
         /// Run directory containing recording.rrd, or the recording file itself.
         path: PathBuf,
+        /// Also draw each agent's recent path, rebuilt from the run's frames.bin.
+        #[arg(long)]
+        draw_trails: bool,
     },
 }
 
@@ -59,7 +62,7 @@ pub fn main(registry: PluginRegistry, project_root: impl AsRef<Path>) -> Result<
         Command::Run(options) => run::run(options, &registry, project_root)?,
         Command::Compare(options) => compare::compare(options, &registry, project_root)?,
         Command::Sweep(options) => sweep::sweep(options, &registry, project_root)?,
-        Command::Replay { path } => replay::replay(&path)?,
+        Command::Replay { path, draw_trails } => replay::replay(&path, draw_trails)?,
     }
     Ok(())
 }

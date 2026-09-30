@@ -630,7 +630,7 @@ not copied as an unconditional framework backlog.
 
 Compiled downstream Rust plugins remain supported. Runtime shared-library
 discovery/loading and legacy protobuf/string-map spawning are explicitly excluded.
-Burn is considered only if RQ1 supports learning. ROS, ArduPilot, and JSBSim
-integrations are not planned. XML/template coverage is partial.
+Burn is considered only if RQ1 supports learning. ROS and JSBSim integrations
+are not planned; ArduPlane SITL is on the roadmap. XML/template coverage is partial.
 YAML missions, templates, and sweeps work; typed runtime spawn requests
 are not implemented.

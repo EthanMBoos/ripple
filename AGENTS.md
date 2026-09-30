@@ -10,8 +10,8 @@ document unsupported cases rather than adding complexity for hypothetical needs.
 A Rust port of SCRIMMAGE's simulation and plugin design. Intentional differences
 from C++ are in `docs/REFERENCE_NOTES.md`; the roadmap and scope decisions are in
 `docs/TODO.md`. Do not reintroduce machinery the roadmap excludes (runtime plugin
-loading, legacy protobuf/string-map spawning, OpenCL, VTK, production JSBSim).
-Keep optional adapters (ROS, ArduPilot, Burn) out of the default build.
+loading, legacy protobuf/string-map spawning, OpenCL, VTK, ROS, ArduPilot,
+JSBSim). Keep an optional Burn adapter out of the default build.
 
 - C++ source: sibling `../scrimmage`, branch `Ubuntu-24.04`. Do not modify it.
   The only allowed C++ changes are on the `benchmarking-edits` comparison

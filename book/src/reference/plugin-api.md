@@ -630,8 +630,7 @@ not copied as an unconditional framework backlog.
 
 Compiled downstream Rust plugins remain supported. Runtime shared-library
 discovery/loading and legacy protobuf/string-map spawning are explicitly excluded.
-Burn and optional ROS 1/2 and ArduPilot adapters are future work, not current
-capabilities. JSBSim is planned only as offline flight-model reference tooling,
-not a production plugin or FFI integration. XML/template coverage is partial.
+Burn is considered only if RQ1 supports learning. ROS, ArduPilot, and JSBSim
+integrations are not planned. XML/template coverage is partial.
 YAML missions, templates, and sweeps work; typed runtime spawn requests
 are not implemented.

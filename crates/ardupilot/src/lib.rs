@@ -5,7 +5,7 @@
 //! publishes it on LocalNetwork. `ArduPilotBridge` (an autonomy) sends that
 //! sample to its SITL as the reply to the servo frame it applied last tick,
 //! waits for the next frame, and writes the four FixedWing6DOF inputs.
-//! The design and the reasons for it are in docs/ARDUPILOT_SITL.md.
+//! User guide: book/src/guides/ardupilot.md.
 //!
 //! The `scrimmage` command registers these plugins only when built with
 //! `--features ardupilot`.

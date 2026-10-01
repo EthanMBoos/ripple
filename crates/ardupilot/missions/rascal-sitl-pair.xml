@@ -2,16 +2,23 @@
 <!-- Two Rascals, each flown by its own ArduPlane SITL, in lockstep: the
      multi-vehicle case. Same as rascal-sitl.xml otherwise. Needs the scrimmage
      command built with the ardupilot feature, and two SITLs started with model
-     JSON:<host>, rate 400, and sim-port-out ${port_a} and ${port_b}.
+     JSON:<host>, rate 400, and sim-port-out equal to each bridge port.
      Aircraft: missions/fixed-wing-6dof-rascal.xml's C++ Rascal parameters, but
      with C++'s original radian surface limits (elevator +-0.30, aileron and
      rudder +-0.35, from before commit 2cab6d119), matching ArduPilotBridge's
      default PWM maps. No controller: the bridge writes the motion inputs.
      dt 0.0025 s (400 Hz) is a whole multiple of ArduPlane's 50 Hz loop.
-     It starts flying immediately: start high, since the aircraft glides until
-     ArduPlane is armed. For a timed or catapult start, set FixedWing6DOF's
-     use_launcher (see docs/ARDUPILOT_SITL.md). Not yet: airspeed in the reply
-     (so keep wind at zero), terrain. -->
+     Air start from rest: FixedWing6DOF's launcher zeroes every force until
+     ${release=40} s, so the aircraft hangs still in the air while ArduPlane
+     boots, aligns, and arms; then it is catapulted to ${launch_speed=20} m/s
+     at ${launch_accel=20} m/s^2 and flies freely. It must be still at boot:
+     ArduPlane zeroes its airspeed sensor then, so a hold moving at 20 m/s left
+     it reading 20 m/s low. A free start crashes, since ArduPlane cannot arm
+     while maneuvering and steers the surfaces even disarmed. See
+     book/src/guides/ardupilot.md. Tests set launcher false and start_speed 20.
+     Wind: set wind_east and wind_north (m/s); FixedWing6DOF adds wind to
+     velocity, so wind_east=5 on an eastbound aircraft is a headwind.
+     Not yet: terrain. -->
 <runscript name="Rascal SITL pair">
   <run start="0" end="${end=60}" dt="${dt=0.0025}" enable_gui="false" start_paused="false" time_warp="0" />
   <seed>1</seed><end_condition>time</end_condition><output_type>all</output_type>
@@ -20,13 +27,15 @@
 
   <entity>
     <count>1</count><team_id>1</team_id>
-    <x>0</x><y>0</y><z>200</z>
-    <vx>20</vx><vy>0</vy><vz>0</vz><heading>0</heading>
+    <x>0</x><y>0</y><z>${altitude=200}</z>
+    <vx>${start_speed=0}</vx><vy>0</vy><vz>0</vz><heading>0</heading>
     <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
     <autonomy port="${port_a=9002}" frame_timeout="${frame_timeout=10}"
               first_frame_timeout="${first_frame_timeout=60}">ArduPilotBridge</autonomy>
-    <sensor>SitlState</sensor>
-    <motion_model gravity_magnitude="9.81" air_density="1.2250"
+    <sensor wind_E="${wind_east=0}" wind_N="${wind_north=0}">SitlState</sensor>
+    <motion_model use_launcher="${launcher=true}" launch_time="${release=40}" launch_speed="${launch_speed=20}"
+        launch_accel="${launch_accel=20}" wind_E="${wind_east=0}" wind_N="${wind_north=0}"
+        gravity_magnitude="9.81" air_density="1.2250"
         inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]"
         thrust_min="0.0" thrust_max="25.0"
         delta_elevator_min="-0.30" delta_elevator_max="0.30"
@@ -43,13 +52,15 @@
   </entity>
   <entity>
     <count>1</count><team_id>2</team_id>
-    <x>0</x><y>300</y><z>200</z>
-    <vx>20</vx><vy>0</vy><vz>0</vz><heading>0</heading>
+    <x>0</x><y>300</y><z>${altitude=200}</z>
+    <vx>${start_speed=0}</vx><vy>0</vy><vz>0</vz><heading>0</heading>
     <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
     <autonomy port="${port_b=9012}" frame_timeout="${frame_timeout=10}"
               first_frame_timeout="${first_frame_timeout=60}">ArduPilotBridge</autonomy>
-    <sensor>SitlState</sensor>
-    <motion_model gravity_magnitude="9.81" air_density="1.2250"
+    <sensor wind_E="${wind_east=0}" wind_N="${wind_north=0}">SitlState</sensor>
+    <motion_model use_launcher="${launcher=true}" launch_time="${release=40}" launch_speed="${launch_speed=20}"
+        launch_accel="${launch_accel=20}" wind_E="${wind_east=0}" wind_N="${wind_north=0}"
+        gravity_magnitude="9.81" air_density="1.2250"
         inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]"
         thrust_min="0.0" thrust_max="25.0"
         delta_elevator_min="-0.30" delta_elevator_max="0.30"

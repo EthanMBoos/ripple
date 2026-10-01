@@ -28,11 +28,23 @@ pub struct SitlStateConfig {
     /// Must match the motion model's gravity (FixedWing6DOF's default is 9.81).
     #[serde(rename = "gravity_magnitude")]
     gravity_mps2: f64,
+    /// Must match FixedWing6DOF's wind_E/N/U, which the sensor cannot read.
+    #[serde(rename = "wind_E")]
+    wind_east_mps: f64,
+    #[serde(rename = "wind_N")]
+    wind_north_mps: f64,
+    #[serde(rename = "wind_U")]
+    wind_up_mps: f64,
 }
 
 impl Default for SitlStateConfig {
     fn default() -> Self {
-        Self { gravity_mps2: 9.81 }
+        Self {
+            gravity_mps2: 9.81,
+            wind_east_mps: 0.0,
+            wind_north_mps: 0.0,
+            wind_up_mps: 0.0,
+        }
     }
 }
 
@@ -46,10 +58,13 @@ pub struct SitlSample {
     pub gyro_frd_radps: Vec3,
     /// Specific force (what an accelerometer reads): (0, 0, -g) at rest, level.
     pub specific_force_frd_mps2: Vec3,
+    /// True airspeed, the length of the air-relative velocity.
+    pub airspeed_mps: f64,
 }
 
 pub struct SitlState {
     gravity_mps2: f64,
+    wind_world_mps: Vec3,
     /// World velocity one tick ago (the initial velocity before the first
     /// sample), for the acceleration estimate.
     previous_velocity_world_mps: Vec3,
@@ -72,6 +87,11 @@ impl Plugin for SitlState {
     fn new(config: &SitlStateConfig) -> Self {
         Self {
             gravity_mps2: config.gravity_mps2,
+            wind_world_mps: Vec3::new(
+                config.wind_east_mps,
+                config.wind_north_mps,
+                config.wind_up_mps,
+            ),
             previous_velocity_world_mps: Vec3::zeros(),
             previous_time_s: None,
         }
@@ -101,7 +121,12 @@ impl Sensor for SitlState {
             (velocity_world_mps - self.previous_velocity_world_mps) / context.time.dt_s;
         self.previous_velocity_world_mps = velocity_world_mps;
 
-        let sample = sample(context.truth, acceleration_world_mps2, self.gravity_mps2);
+        let sample = sample(
+            context.truth,
+            acceleration_world_mps2,
+            self.wind_world_mps,
+            self.gravity_mps2,
+        );
         context
             .messages
             .publish("LocalNetwork", SITL_STATE_TOPIC, sample)?;
@@ -110,8 +135,16 @@ impl Sensor for SitlState {
 }
 
 /// Convert a truth state and its world acceleration to ArduPilot's frames.
-fn sample(truth: &KinematicState, acceleration_world_mps2: Vec3, gravity_mps2: f64) -> SitlSample {
+fn sample(
+    truth: &KinematicState,
+    acceleration_world_mps2: Vec3,
+    wind_world_mps: Vec3,
+    gravity_mps2: f64,
+) -> SitlSample {
     let attitude = truth.orientation_world_from_body;
+    // FixedWing6DOF adds wind to velocity (a deliberate C++ quirk; see
+    // REFERENCE_NOTES.md), so airspeed must use the same sign to match it.
+    let airspeed_mps = (truth.velocity_world_mps + wind_world_mps).norm();
 
     // Specific force is acceleration minus gravity; gravity points down (-z in ENU).
     let gravity_world_mps2 = Vec3::new(0.0, 0.0, -gravity_mps2);
@@ -134,6 +167,7 @@ fn sample(truth: &KinematicState, acceleration_world_mps2: Vec3, gravity_mps2: f
         orientation_ned_from_frd: [orientation.w, orientation.i, orientation.j, orientation.k],
         gyro_frd_radps: flu_to_frd(gyro_flu_radps),
         specific_force_frd_mps2: flu_to_frd(specific_force_flu_mps2),
+        airspeed_mps,
     }
 }
 
@@ -172,7 +206,7 @@ mod tests {
 
     #[test]
     fn level_at_rest_reads_minus_g_down() {
-        let sample = sample(&state(0.0, 0.0, 0.0), Vec3::zeros(), 9.81);
+        let sample = sample(&state(0.0, 0.0, 0.0), Vec3::zeros(), Vec3::zeros(), 9.81);
         close(sample.specific_force_frd_mps2, Vec3::new(0.0, 0.0, -9.81));
     }
 
@@ -184,7 +218,7 @@ mod tests {
             velocity_world_mps: Vec3::new(20.0, 0.0, 0.0),
             ..state(0.0, 0.0, 0.0)
         };
-        let sample = sample(&truth, Vec3::zeros(), 9.81);
+        let sample = sample(&truth, Vec3::zeros(), Vec3::zeros(), 9.81);
         close(sample.position_ned_m, Vec3::new(20.0, 10.0, -30.0));
         close(sample.velocity_ned_mps, Vec3::new(0.0, 20.0, 0.0));
         let (_, _, yaw) = roll_pitch_yaw(&sample);
@@ -200,7 +234,7 @@ mod tests {
     fn roll_keeps_its_sign_and_tilts_gravity_into_the_right_wing() {
         // FLU roll about forward lifts the left wing: right wing down, which is
         // also ArduPilot's positive roll.
-        let sample = sample(&state(20.0, 0.0, 0.0), Vec3::zeros(), 9.81);
+        let sample = sample(&state(20.0, 0.0, 0.0), Vec3::zeros(), Vec3::zeros(), 9.81);
         let (roll, pitch, _) = roll_pitch_yaw(&sample);
         assert!((roll - 20f64.to_radians()).abs() < 1e-9, "roll {roll}");
         assert!(pitch.abs() < 1e-9);
@@ -217,9 +251,22 @@ mod tests {
     fn pitch_changes_sign() {
         // FLU pitch about the left axis puts the nose down; ArduPilot's pitch is
         // nose up, so +10 degrees here is -10 there (C++ sent -pitch too).
-        let sample = sample(&state(0.0, 10.0, 0.0), Vec3::zeros(), 9.81);
+        let sample = sample(&state(0.0, 10.0, 0.0), Vec3::zeros(), Vec3::zeros(), 9.81);
         let (_, pitch, _) = roll_pitch_yaw(&sample);
         assert!((pitch + 10f64.to_radians()).abs() < 1e-9, "pitch {pitch}");
+    }
+
+    #[test]
+    fn airspeed_adds_wind_like_fixed_wing_6dof() {
+        let truth = KinematicState {
+            velocity_world_mps: Vec3::new(20.0, 0.0, 0.0),
+            ..state(0.0, 0.0, 0.0)
+        };
+        let calm = sample(&truth, Vec3::zeros(), Vec3::zeros(), 9.81);
+        assert!((calm.airspeed_mps - 20.0).abs() < 1e-12);
+        // wind_E = +5 on an eastbound aircraft is a headwind in FixedWing6DOF.
+        let windy = sample(&truth, Vec3::zeros(), Vec3::new(5.0, 0.0, 0.0), 9.81);
+        assert!((windy.airspeed_mps - 25.0).abs() < 1e-12);
     }
 
     #[test]
@@ -229,7 +276,7 @@ mod tests {
             angular_velocity_world_radps: Vec3::new(0.0, 0.0, 0.5),
             ..state(0.0, 0.0, 0.0)
         };
-        let sample = sample(&truth, Vec3::zeros(), 9.81);
+        let sample = sample(&truth, Vec3::zeros(), Vec3::zeros(), 9.81);
         // FRD yaw rate is positive turning right, so a left turn is negative.
         close(sample.gyro_frd_radps, Vec3::new(0.0, 0.0, -0.5));
     }

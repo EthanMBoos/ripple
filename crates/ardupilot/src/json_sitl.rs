@@ -1,7 +1,7 @@
 //! ArduPilot's JSON SITL wire format (libraries/SITL/SIM_JSON.cpp).
 //!
 //! SITL sends a little-endian binary servo packet; the simulator answers each
-//! new frame with one line of JSON. See docs/ARDUPILOT_SITL.md for the rules.
+//! new frame with one line of JSON. The exchange rules are in ardupilot_bridge.rs.
 
 use anyhow::{Result, bail};
 use serde_json::json;
@@ -59,6 +59,7 @@ pub fn state_reply(timestamp_s: f64, sample: &SitlSample) -> String {
         "position": vector(&sample.position_ned_m),
         "velocity": vector(&sample.velocity_ned_mps),
         "quaternion": sample.orientation_ned_from_frd,
+        "airspeed": sample.airspeed_mps,
     });
     format!("\n{reply}\n")
 }
@@ -108,6 +109,7 @@ mod tests {
             orientation_ned_from_frd: [1.0, 0.0, 0.0, 0.0],
             gyro_frd_radps: Vec3::zeros(),
             specific_force_frd_mps2: Vec3::new(0.0, 0.0, -9.81),
+            airspeed_mps: 20.0,
         };
         let reply = state_reply(0.25, &sample);
         assert!(reply.starts_with('\n') && reply.ends_with('\n'));
@@ -116,6 +118,7 @@ mod tests {
         assert_eq!(value["imu"]["accel_body"][2], -9.81);
         assert_eq!(value["position"][2], -3.0);
         assert_eq!(value["quaternion"][0], 1.0);
+        assert_eq!(value["airspeed"], 20.0);
         Ok(())
     }
 }

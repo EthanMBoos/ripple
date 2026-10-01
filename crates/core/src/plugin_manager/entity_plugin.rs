@@ -21,7 +21,9 @@ enum Values<'a> {
     Yaml(&'a serde_yaml_ng::Mapping),
 }
 impl<'a> PluginParams<'a> {
-    pub(crate) fn new(config: &'a PluginConfig) -> Self {
+    /// A plugin's parameters from a resolved mission; tools that read a
+    /// mission, such as the ArduPilot SITL launcher, pass them to `configure`.
+    pub fn new(config: &'a PluginConfig) -> Self {
         let values = match &config.params {
             PluginValues::Text(params) => Values::Text(params),
             PluginValues::Yaml(params) => Values::Yaml(params),

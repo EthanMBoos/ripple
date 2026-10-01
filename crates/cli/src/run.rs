@@ -156,6 +156,11 @@ pub fn run_scenario(
 
     let runs = settings.root.join("runs").join(&settings.name);
     let output = output::create_directory(settings.output.as_deref(), &runs)?;
+    // One ArduPlane SITL container per ArduPilotBridge aircraft, stopped when
+    // this function returns (crates/ardupilot/src/sitl_launcher.rs).
+    #[cfg(feature = "ardupilot")]
+    let _sitl =
+        ardupilot::SitlLauncher::start(simulation.scenario(), simulation.terrain(), &output)?;
     // Unique per run; the manifest records it for `scrimmage replay --draw-trails`.
     let recording_id = format!(
         "{}-{}",

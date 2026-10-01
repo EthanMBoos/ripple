@@ -7,6 +7,9 @@
 //! waits for the next frame, and writes the four FixedWing6DOF inputs.
 //! User guide: book/src/guides/ardupilot.md.
 //!
+//! `SitlLauncher` starts and stops one ArduPlane SITL container per aircraft
+//! around a `scrimmage run`.
+//!
 //! The `scrimmage` command registers these plugins only when built with
 //! `--features ardupilot`.
 use anyhow::Result;
@@ -14,8 +17,10 @@ use scrimmage_core::plugin::PluginRegistry;
 
 mod ardupilot_bridge;
 mod json_sitl;
+mod sitl_launcher;
 mod sitl_state;
 pub use ardupilot_bridge::ArduPilotBridge;
+pub use sitl_launcher::SitlLauncher;
 pub use sitl_state::{SITL_STATE_TOPIC, SitlSample, SitlState};
 
 /// Adds this crate's plugins to `registry`.

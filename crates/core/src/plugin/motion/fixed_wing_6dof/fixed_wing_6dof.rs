@@ -7,11 +7,13 @@
 
 mod aerodynamics;
 mod dynamics;
+mod landing_gear;
 
 use anyhow::{Context, Result, bail, ensure};
 use nalgebra::{Matrix3, UnitQuaternion};
 use serde::Deserialize;
 
+use crate::Terrain;
 use crate::math::{self, KinematicState, Vec3};
 use crate::plugin::{
     Frame, MotionContext, MotionModel, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
@@ -19,6 +21,7 @@ use crate::plugin::{
 
 use aerodynamics::{Aerodynamics, Airframe};
 use dynamics::{AircraftState, derivative, flip_yz};
+use landing_gear::Wheel;
 
 // Preserve the C++ rounded limit rather than replacing it with exactly pi/6.
 #[allow(clippy::approx_constant)]
@@ -134,6 +137,9 @@ struct FixedWingParams {
     #[serde(rename = "C_D_delta_elevator")]
     c_d_elevator_ignored_by_cpp: Option<f64>,
     use_ground_model: bool,
+    /// Wheels that roll on the ground (YAML only; see `landing_gear.rs`).
+    /// Replaces the flat spring, so `use_ground_model` must be false.
+    landing_gear: Vec<Wheel>,
     use_launcher: bool,
     #[serde(rename = "launch_time")]
     launch_time_s: f64,
@@ -199,6 +205,7 @@ impl Default for FixedWingParams {
             c_n_rudder: 0.032,
             c_d_elevator_ignored_by_cpp: None,
             use_ground_model: true,
+            landing_gear: Vec::new(),
             use_launcher: false,
             launch_time_s: 30.0,
             launch_accel_mps2: 200.0,
@@ -231,6 +238,7 @@ pub struct FixedWingConfig {
     rudder_limits_rad: [f64; 2],
     aerodynamics: Aerodynamics,
     use_ground_model: bool,
+    landing_gear: Vec<Wheel>,
     use_launcher: bool,
     launch_time_s: f64,
     launch_accel_mps2: f64,
@@ -281,6 +289,11 @@ impl Plugin for FixedWing6Dof {
                 && params.rudder_min_rad <= params.rudder_max_rad,
             "FixedWing6DOF requires each delta_*_min <= delta_*_max"
         );
+        ensure!(
+            params.landing_gear.is_empty() || !params.use_ground_model,
+            "FixedWing6DOF: set use_ground_model to false with landing_gear; the wheels replace it"
+        );
+        landing_gear::check_wheels(&params.landing_gear)?;
         let inertia_kgm2 = parse_inertia(&params)?;
         let inverse_inertia = inertia_kgm2
             .try_inverse()
@@ -309,6 +322,7 @@ impl Plugin for FixedWing6Dof {
             rudder_limits_rad: [params.rudder_min_rad, params.rudder_max_rad],
             aerodynamics: Aerodynamics::new(&params),
             use_ground_model: params.use_ground_model,
+            landing_gear: params.landing_gear,
             use_launcher: params.use_launcher,
             launch_time_s: params.launch_time_s,
             launch_accel_mps2: params.launch_accel_mps2,
@@ -366,6 +380,13 @@ impl MotionModel for FixedWing6Dof {
             "FixedWing6DOF: set use_ground_model to false when terrain is configured; \
              add TerrainCollision to remove aircraft that hit terrain"
         );
+        if let Some(terrain) = context.terrain {
+            ensure!(
+                self.config.landing_gear.is_empty() || terrain.missing_samples() == 0,
+                "FixedWing6DOF landing gear needs complete terrain; {} samples have no height",
+                terrain.missing_samples()
+            );
+        }
         Ok(())
     }
 
@@ -376,9 +397,17 @@ impl MotionModel for FixedWing6Dof {
             aileron_rad: io.read("aileron")?,
             rudder_rad: io.read("rudder")?,
         };
+        if !self.config.landing_gear.is_empty() {
+            landing_gear::check_step(
+                &self.config.landing_gear,
+                self.config.mass_kg,
+                context.time.dt_s,
+            )?;
+        }
         self.integrate(
             context.truth,
             control,
+            context.terrain,
             context.time.time_s,
             context.time.dt_s,
         )?;
@@ -391,6 +420,7 @@ impl FixedWing6Dof {
         &mut self,
         truth: &mut KinematicState,
         control: Control,
+        terrain: Option<&Terrain>,
         time_s: f64,
         dt_s: f64,
     ) -> Result<()> {
@@ -416,7 +446,7 @@ impl FixedWing6Dof {
         math::rk4(&mut coordinates, dt_s, |coordinates| {
             let stage = AircraftState::from_coordinates(*coordinates);
             let (acceleration_model_mps2, angular_acceleration_model_radps2) =
-                config.accelerations(&stage, control, flying, catapult_force_n);
+                config.accelerations(&stage, control, flying, catapult_force_n, terrain, dt_s);
             derivative(
                 stage,
                 acceleration_model_mps2,
@@ -452,6 +482,11 @@ impl FixedWing6Dof {
 }
 
 impl FixedWingConfig {
+    /// When the launcher releases the aircraft, or `None` without a launcher.
+    pub fn launch_time_s(&self) -> Option<f64> {
+        self.use_launcher.then_some(self.launch_time_s)
+    }
+
     /// Linear and angular acceleration in the model frame for one state.
     fn accelerations(
         &self,
@@ -459,6 +494,8 @@ impl FixedWingConfig {
         control: Control,
         flying: bool,
         catapult_force_n: f64,
+        terrain: Option<&Terrain>,
+        dt_s: f64,
     ) -> (Vec3, Vec3) {
         let rotation = UnitQuaternion::new_normalize(state.attitude_model);
         let wind_model_mps = rotation.inverse_transform_vector(&flip_yz(self.wind_world_mps));
@@ -485,14 +522,23 @@ impl FixedWingConfig {
         let thrust_model_n = Vec3::new(self.thrust_n(control.throttle), 0.0, 0.0);
         loads.force_model_n = weight_model_n + thrust_model_n + loads.force_model_n;
 
+        if !self.landing_gear.is_empty() {
+            let (force_model_n, moment_model_nm) = landing_gear::loads(
+                &self.landing_gear,
+                state,
+                &rotation,
+                terrain,
+                control.rudder_rad,
+                self.mass_kg,
+                dt_s,
+            );
+            loads.force_model_n += force_model_n;
+            loads.moment_model_nm += moment_model_nm;
+        }
         if self.use_ground_model && state.position_world_m.z < 0.0 {
             // Inherited ground model: damping is only 40 N*s/m, not mass-scaled.
-            // This is not a validated landing model for the default eight-tonne aircraft.
-            // TODO(terrain): replace with ground reactions at landing-gear contact
-            // points (spring, damper, friction, and their moments), using the
-            // terrain's height and slope from `MotionContext::terrain`. That
-            // breaks C++ parity for ground contact and needs its own checks:
-            // resting, a drop, a slope, friction, and timestep convergence.
+            // This is not a validated landing model for the default eight-tonne
+            // aircraft; `landing_gear` is the real ground contact.
             let ground_force_n = (-400.0 * self.mass_kg * state.position_world_m.z
                 - 40.0 * state.velocity_world_mps.z)
                 .max(0.0);

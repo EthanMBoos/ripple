@@ -16,9 +16,11 @@
 //! run. A frame gap, SITL restarting, or a timeout therefore fails the run
 //! instead of being smoothed over. It must run every tick (no `loop_rate`).
 //!
-//! The last frame applied is never answered, because the run ends first; the
-//! launcher stops SITL when SCRIMMAGE exits. See book/src/guides/ardupilot.md.
+//! The last frame applied is never answered, because the run ends first;
+//! `scrimmage run` stops SITL when the run ends (`sitl_launcher.rs`). See
+//! book/src/guides/ardupilot.md.
 
+use std::collections::BTreeMap;
 use std::net::{SocketAddr, UdpSocket};
 use std::time::{Duration, Instant};
 
@@ -47,6 +49,9 @@ pub struct ServoMap {
 }
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
+/// `mode`, `waypoints`, `goto`, and `speedup` set up this aircraft's SITL
+/// session (`sitl_launcher.rs`, `docker/session.py`); the bridge itself only
+/// exchanges frames.
 /// The default maps are ArduPlane's default outputs (SERVO1 aileron, SERVO2
 /// elevator, SERVO3 throttle, SERVO4 rudder) onto the Rascal's real surface
 /// throws in radians, from C++'s FixedWing6DOF-Rascal.xml before commit
@@ -66,6 +71,26 @@ pub struct ArduPilotBridgeConfig {
     elevator: ServoMap,
     aileron: ServoMap,
     rudder: ServoMap,
+    /// The ArduPlane mode to arm in: LOITER by default, AUTO with
+    /// `waypoints`, GUIDED with `goto`.
+    pub(crate) mode: Option<String>,
+    /// An AUTO route that repeats: points `[east, north, up]` in metres from
+    /// where the aircraft starts (ArduPlane moves home to where it arms).
+    pub(crate) waypoints: Vec<[f64; 3]>,
+    /// Start the AUTO route with a takeoff climbing to this height (m).
+    pub(crate) takeoff_altitude: Option<f64>,
+    /// End the AUTO route with a landing at its last waypoint instead of
+    /// repeating it; that waypoint's `up` is the ground's height there
+    /// relative to the start.
+    pub(crate) land: bool,
+    /// A GUIDED target `[east, north, up]` from the start, sent once armed;
+    /// ArduPlane flies there and circles it.
+    pub(crate) goto: Option<[f64; 3]>,
+    /// SITL's `--speedup`, its cap on running faster than real time.
+    pub(crate) speedup: f64,
+    /// ArduPilot parameters for this aircraft, loaded after
+    /// `docker/rascal.parm`, such as ground steering for a runway mission.
+    pub(crate) ardupilot_params: BTreeMap<String, f64>,
 }
 
 impl Default for ArduPilotBridgeConfig {
@@ -78,6 +103,13 @@ impl Default for ArduPilotBridgeConfig {
             elevator: ServoMap::from([2.0, 1000.0, 2000.0, -0.30, 0.30]),
             aileron: ServoMap::from([1.0, 1000.0, 2000.0, -0.35, 0.35]),
             rudder: ServoMap::from([4.0, 1000.0, 2000.0, -0.35, 0.35]),
+            mode: None,
+            waypoints: Vec::new(),
+            takeoff_altitude: None,
+            land: false,
+            goto: None,
+            speedup: 100.0,
+            ardupilot_params: BTreeMap::new(),
         }
     }
 }
@@ -127,6 +159,11 @@ impl Plugin for ArduPilotBridge {
         ] {
             map.validate(name)?;
         }
+        config.mode()?;
+        ensure!(
+            config.speedup > 0.0,
+            "ArduPilotBridge speedup must be positive"
+        );
         Ok(config)
     }
 
@@ -221,6 +258,37 @@ impl Autonomy for ArduPilotBridge {
         io.write("aileron", inputs.aileron_rad)?;
         io.write("rudder", inputs.rudder_rad)?;
         Ok(Update::Applied)
+    }
+}
+
+impl ArduPilotBridgeConfig {
+    pub(crate) fn port(&self) -> u16 {
+        self.port
+    }
+
+    /// The mode to arm in, checked against `waypoints` and `goto`.
+    pub(crate) fn mode(&self) -> Result<&str> {
+        ensure!(
+            !self.waypoints.is_empty() || (self.takeoff_altitude.is_none() && !self.land),
+            "ArduPilotBridge takeoff_altitude and land need waypoints"
+        );
+        ensure!(
+            self.waypoints.is_empty() || self.goto.is_none(),
+            "ArduPilotBridge takes waypoints (AUTO) or goto (GUIDED), not both"
+        );
+        let needed = if !self.waypoints.is_empty() {
+            Some(("AUTO", "waypoints"))
+        } else {
+            self.goto.map(|_| ("GUIDED", "goto"))
+        };
+        match (self.mode.as_deref(), needed) {
+            (Some(mode), Some((needed, key))) if mode != needed => {
+                bail!("ArduPilotBridge {key} needs mode {needed}, not {mode}")
+            }
+            (Some(mode), _) => Ok(mode),
+            (None, Some((needed, _))) => Ok(needed),
+            (None, None) => Ok("LOITER"),
+        }
     }
 }
 
@@ -355,6 +423,41 @@ mod tests {
     fn swapped_outputs_reverse_a_channel() {
         let reversed = ServoMap::from([2.0, 1000.0, 2000.0, 0.30, -0.30]);
         assert!((reversed.output(&frame_with(2, 2000)).unwrap() + 0.30).abs() < 1e-12);
+    }
+
+    #[test]
+    fn the_mode_follows_the_route_and_conflicts_are_refused() {
+        let config = |change: fn(&mut ArduPilotBridgeConfig)| {
+            let mut config = ArduPilotBridgeConfig::default();
+            change(&mut config);
+            config
+        };
+        assert_eq!(config(|_| {}).mode().unwrap(), "LOITER");
+        let route = |config: &mut ArduPilotBridgeConfig| config.waypoints = vec![[1.0, 2.0, 3.0]];
+        assert_eq!(config(route).mode().unwrap(), "AUTO");
+        assert_eq!(
+            config(|config| config.goto = Some([1.0, 2.0, 3.0]))
+                .mode()
+                .unwrap(),
+            "GUIDED"
+        );
+        assert!(
+            config(|config| {
+                config.waypoints = vec![[1.0, 2.0, 3.0]];
+                config.goto = Some([1.0, 2.0, 3.0]);
+            })
+            .mode()
+            .is_err()
+        );
+        assert!(
+            config(|config| {
+                config.waypoints = vec![[1.0, 2.0, 3.0]];
+                config.mode = Some("GUIDED".into());
+            })
+            .mode()
+            .is_err()
+        );
+        assert!(config(|config| config.land = true).mode().is_err());
     }
 
     #[test]

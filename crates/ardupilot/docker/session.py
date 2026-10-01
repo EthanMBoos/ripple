@@ -2,7 +2,7 @@
 """Run ArduPlane SITL for one aircraft: start it, arm it in a mode, then keep
 reading MAVLink until SITL exits or the container is stopped.
 
-Runs inside the container (see Dockerfile); crates/ardupilot/launch.py sets
+Runs inside the container (see Dockerfile); crates/ardupilot/src/sitl_launcher.rs sets
 the environment. MAVLink stays inside the container: SITL sends to this
 script on UDP 14550. Reading continuously matters above --speedup 1, where
 SITL stalls when its MAVLink output queue fills.
@@ -17,7 +17,17 @@ the run fails instead of releasing a disarmed aircraft.
 If WAYPOINTS is set ("east,north,up; ..." in metres from where the aircraft
 starts), it uploads them as an AUTO mission that loops back to the first
 waypoint, then arms in AUTO. "Up" is from the start too: ArduPlane moves home
-to where it arms, and waypoint altitudes are relative to home.
+to where it arms, and waypoint altitudes are relative to home. TAKEOFF_ALT (m)
+starts the route with a NAV_TAKEOFF climbing to that height; LAND=1 makes the
+last waypoint a NAV_LAND, whose "up" is the ground's height there relative to
+the start (0 on the same runway), and the route does not repeat.
+With a takeoff it arms first, on the ground in its boot mode with the throttle
+stick low, and then switches to AUTO, as a pilot would: in AUTO while
+disarmed, ArduPlane runs through the mission and then refuses to arm "in
+landing sequence".
+
+The launcher writes the mission's own ArduPilot parameters to mission.parm in
+the run folder; SITL loads it after plane.parm and rascal.parm.
 
 If GOTO is set ("east,north,up", the same convention), it arms in GUIDED and
 then sends that point as the target (ArduPlane only accepts one while already
@@ -36,6 +46,7 @@ import time
 from pymavlink import mavutil
 
 from command_clock import CommandClock
+from release_check import ReleaseCheck
 
 # GPS fix and EKF flags (attitude, horizontal and vertical velocity, absolute
 # horizontal and vertical position) required before arming.
@@ -61,7 +72,8 @@ def start_sitl(run_dir):
         "--speedup", os.environ.get("SPEEDUP", "1"),
         "--sysid", os.environ.get("SYSID", "1"),
         "--serial0", "udpclient:127.0.0.1:14550",
-        "--defaults", "/opt/ardupilot/plane.parm,/opt/ardupilot/rascal.parm",
+        # mission.parm: the mission's own parameters, written by the launcher.
+        "--defaults", f"/opt/ardupilot/plane.parm,/opt/ardupilot/rascal.parm,{run_dir}/mission.parm",
     ]
     print("starting:", " ".join(command), flush=True)
     return subprocess.Popen(command, cwd=run_dir)
@@ -107,6 +119,8 @@ def offset_location(start_lat_deg, start_lon_deg, east_m, north_m):
     return lat_deg, lon_deg
 
 
+# TODO: change GUIDED targets during a run (for example from a SCRIMMAGE
+# autonomy) when an experiment needs it; today one target is sent once armed.
 def send_guided_target(connection, start_lat_deg, start_lon_deg, target):
     """Send one GUIDED target: a mission item with current = 2, which ArduPlane
     treats as "fly here now" rather than part of the mission."""
@@ -119,15 +133,26 @@ def send_guided_target(connection, start_lat_deg, start_lon_deg, target):
     )
 
 
-def upload_mission(connection, start_lat_deg, start_lon_deg, waypoints):
-    """Upload the waypoints as an AUTO mission, ending with a jump back to the
-    first one so the route repeats. Item 0 is home, which ArduPilot replaces."""
+def upload_mission(connection, start_lat_deg, start_lon_deg, waypoints, takeoff_alt_m, land):
+    """Upload the waypoints as an AUTO mission: optionally a takeoff first, and
+    either a landing at the last waypoint or a jump back to the first one so the
+    route repeats. Item 0 is home, which ArduPilot replaces."""
     frame = mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT_INT
     items = [(mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, start_lat_deg, start_lon_deg, 0.0)]
-    for east_m, north_m, altitude_m in waypoints:
+    if takeoff_alt_m is not None:
+        # Pitch 0 leaves ArduPlane's own minimum takeoff pitch.
+        items.append((mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 0, start_lat_deg, start_lon_deg,
+                      takeoff_alt_m))
+    first = len(items)
+    for index, (east_m, north_m, altitude_m) in enumerate(waypoints):
         lat_deg, lon_deg = offset_location(start_lat_deg, start_lon_deg, east_m, north_m)
-        items.append((mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, lat_deg, lon_deg, altitude_m))
-    items.append((mavutil.mavlink.MAV_CMD_DO_JUMP, 1, -1, 0.0, 0.0, 0.0))
+        if land and index == len(waypoints) - 1:
+            # Its altitude is the ground's there, relative to home.
+            items.append((mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 0, lat_deg, lon_deg, altitude_m))
+        else:
+            items.append((mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 0, lat_deg, lon_deg, altitude_m))
+    if not land:
+        items.append((mavutil.mavlink.MAV_CMD_DO_JUMP, first, -1, 0.0, 0.0, 0.0))
 
     connection.mav.mission_count_send(connection.target_system, connection.target_component, len(items))
     deadline = time.monotonic() + 10
@@ -151,7 +176,10 @@ def upload_mission(connection, start_lat_deg, start_lon_deg, waypoints):
 def main():
     mode_wanted = os.environ.get("MODE", "LOITER")
     release_s = float(os.environ["RELEASE_S"]) if os.environ.get("RELEASE_S") else None
+    release_check = ReleaseCheck(release_s)
     waypoints = parse_waypoints(os.environ.get("WAYPOINTS", ""))
+    takeoff_alt_m = float(os.environ["TAKEOFF_ALT"]) if os.environ.get("TAKEOFF_ALT") else None
+    land = os.environ.get("LAND") == "1"
     mission_uploaded = not waypoints
     goto = parse_waypoints(os.environ.get("GOTO", ""))
     position = None
@@ -165,6 +193,7 @@ def main():
 
     mode, armed, gps_fix, ekf_flags, boot_s = "", False, 0, 0, 0.0
     announced = False
+    disarmed_after_flight = False
     commands = CommandClock()
     try:
         while running and plane.poll() is None:
@@ -193,7 +222,7 @@ def main():
                     print("ardupilot:", message.text, flush=True)
 
             ready_to_fly = armed and mode == mode_wanted
-            if release_s is not None and not ready_to_fly and boot_s >= release_s - 1.0:
+            if release_check.missed(boot_s, ready_to_fly):
                 print(f"error: not armed in {mode_wanted} by the {release_s:g} s release "
                       f"(mode {mode or 'unknown'}, armed {armed}, GPS fix {gps_fix}, "
                       f"EKF flags {ekf_flags})", flush=True)
@@ -201,17 +230,30 @@ def main():
 
             if boot_s == 0.0 or not commands.due(boot_s):
                 continue
-            neutral_rc(connection, 1500 if armed else 1000)
+            neutral_rc(connection, 1500 if armed and mode == mode_wanted else 1000)
             ready = gps_fix >= REQUIRED_GPS_FIX and (ekf_flags & REQUIRED_EKF_FLAGS) == REQUIRED_EKF_FLAGS
             if ready and start is None and position is not None:
                 start = position
+            if announced and not armed:
+                # Armed once and now disarmed, as after a landing: stay down.
+                if not disarmed_after_flight:
+                    print("disarmed after flight", flush=True)
+                    disarmed_after_flight = True
+                continue
             if not mission_uploaded:
                 # AUTO needs the mission first; it is placed relative to where
                 # the aircraft is, so wait for a good position.
                 if start is not None:
-                    upload_mission(connection, *start, waypoints)
+                    upload_mission(connection, *start, waypoints, takeoff_alt_m, land)
                     print(f"uploaded {len(waypoints)} waypoints", flush=True)
                     mission_uploaded = True
+            elif takeoff_alt_m is not None and not armed:
+                if ready:
+                    connection.mav.command_long_send(
+                        connection.target_system, connection.target_component,
+                        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                        1, 0, 0, 0, 0, 0, 0,
+                    )
             elif mode != mode_wanted:
                 mode_id = connection.mode_mapping().get(mode_wanted)
                 if mode_id is None:

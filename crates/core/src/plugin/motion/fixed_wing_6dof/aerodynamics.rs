@@ -102,6 +102,10 @@ impl Aerodynamics {
         let q_radps = rates_model_radps.y;
         let r_radps = rates_model_radps.z;
 
+        // TODO: a stall model (lift that peaks and falls past the critical
+        // angle), from JSBSim's Rascal lift table, so a three-point landing
+        // flare stays down instead of ballooning (rascal-runway.yaml). Opt-in
+        // and Rust-only: the C++ comparison keeps this linear lift.
         let lift_coefficient = self.c_l0
             + self.c_l_alpha * alpha_rad
             + self.c_lq * q_radps * chord_m / twice_speed_mps

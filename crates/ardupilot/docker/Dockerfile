@@ -1,6 +1,6 @@
 # ArduPlane SITL for one aircraft, driven by scrimmage's ArduPilotBridge over
 # the JSON backend. Adapted from UnrealVehicleDynamics' ardupilot/Dockerfile.
-# Build context: crates/ardupilot/docker (crates/ardupilot/launch.py builds it).
+# Build context: crates/ardupilot/docker (crates/ardupilot/src/sitl_launcher.rs builds it).
 FROM ubuntu:24.04 AS build
 
 ARG ARDUPILOT_COMMIT=e0652af4c0c9657c04672ed3e21b71de75c74763
@@ -28,5 +28,5 @@ COPY --from=build /ardupilot/build/sitl/bin/arduplane /opt/ardupilot/arduplane
 # ArduPilot's own SITL plane defaults, from the same pinned checkout.
 COPY --from=build /ardupilot/Tools/autotest/models/plane.parm /opt/ardupilot/plane.parm
 COPY --from=build /opt/ardupilot-venv /opt/ardupilot-venv
-COPY rascal.parm entrypoint.sh session.py command_clock.py /opt/ardupilot/
+COPY rascal.parm entrypoint.sh session.py command_clock.py release_check.py /opt/ardupilot/
 ENTRYPOINT ["/opt/ardupilot/entrypoint.sh"]

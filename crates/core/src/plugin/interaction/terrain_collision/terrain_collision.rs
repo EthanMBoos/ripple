@@ -10,21 +10,25 @@
 //! run has already moved one step when this plugin first sees it, and only
 //! where it ended that step is checked (see `step`).
 //! Entities are points: set `clearance_m` to collide that far above the
-//! ground. Off the terrain grid the ground is flat at `off_terrain_z`; inside
-//! it, the terrain must have no missing samples.
+//! ground. The ground is the terrain's (`Terrain::ground_height`), flat at
+//! `z = 0` off the grid; the terrain must have no missing samples.
+//!
+//! An aircraft meant to land lists `structure_points_frd_m` instead: points
+//! on its airframe (nose, wingtips), forward/right/down from its centre in
+//! metres. Then each point's path is checked, moved with the entity's
+//! attitude, and the centre is not: wheels holding the aircraft up (its
+//! motion model's landing gear) are not a collision, a nose or wingtip strike
+//! is. Each point moves in a straight line from its last position, so a fast
+//! rotation within one step is only approximated.
 //!
 //! FixedWing6DOF's own flat ground at `z = 0` (`use_ground_model`) must be off
 //! in terrain missions; FixedWing6DOF refuses to start otherwise.
-// TODO(terrain): any touch removes the entity. Once motion models support
-// ground contact, aircraft meant to land need a crash rule that tells a
-// touchdown on the gear from a wingtip or fuselage strike.
-
 use anyhow::{Context, Result, ensure};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 
 use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update, WorldContext};
-use crate::{Entity, EventKind, Terrain, Vec3};
+use crate::{Entity, EventKind, Quaternion, Terrain, Vec3};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -32,20 +36,20 @@ use crate::{Entity, EventKind, Terrain, Vec3};
 struct TerrainCollisionParams {
     /// Collide this far above the ground (m).
     clearance_m: f64,
-    /// Ground height (local z) outside the terrain grid.
-    off_terrain_z: f64,
     enable_startup_collisions: bool,
     /// `all`, or one team ID.
     team: String,
+    /// Airframe points checked instead of the centre, forward/right/down (m).
+    structure_points_frd_m: Vec<[f64; 3]>,
 }
 
 impl Default for TerrainCollisionParams {
     fn default() -> Self {
         Self {
             clearance_m: 0.0,
-            off_terrain_z: 0.0,
             enable_startup_collisions: true,
             team: "all".into(),
+            structure_points_frd_m: Vec::new(),
         }
     }
 }
@@ -53,17 +57,19 @@ impl Default for TerrainCollisionParams {
 #[derive(Clone)]
 pub struct TerrainCollisionConfig {
     clearance_m: f64,
-    off_terrain_z: f64,
     startup_collisions: bool,
     team_id: Option<i32>,
+    /// Forward/left/up body axes, as entity truth uses; empty checks the centre.
+    structure_points_body_m: Vec<Vec3>,
 }
 
 pub struct TerrainCollision {
     config: TerrainCollisionConfig,
     /// Set in `initialize` from the mission's terrain.
     terrain: Option<Terrain>,
-    /// Where each live, checked entity was at the end of the last step.
-    last_position_world_m: BTreeMap<i32, Vec3>,
+    /// Where each live, checked entity was at the end of the last step, and
+    /// its attitude.
+    last_pose: BTreeMap<i32, (Vec3, Quaternion)>,
 }
 
 impl Plugin for TerrainCollision {
@@ -84,9 +90,13 @@ impl Plugin for TerrainCollision {
         };
         Ok(TerrainCollisionConfig {
             clearance_m: params.clearance_m,
-            off_terrain_z: params.off_terrain_z,
             startup_collisions: params.enable_startup_collisions,
             team_id,
+            structure_points_body_m: params
+                .structure_points_frd_m
+                .iter()
+                .map(|&[forward, right, down]| Vec3::new(forward, -right, -down))
+                .collect(),
         })
     }
 
@@ -94,7 +104,7 @@ impl Plugin for TerrainCollision {
         Self {
             config: config.clone(),
             terrain: None,
-            last_position_world_m: BTreeMap::new(),
+            last_pose: BTreeMap::new(),
         }
     }
 }
@@ -103,9 +113,7 @@ impl TerrainCollision {
     /// Height above the ground plus clearance; zero or less is a collision.
     fn clearance_left_m(&self, position_world_m: Vec3) -> f64 {
         let terrain = self.terrain.as_ref().expect("set in initialize");
-        let ground_z = terrain
-            .height_at(position_world_m.x, position_world_m.y)
-            .unwrap_or(self.config.off_terrain_z);
+        let ground_z = terrain.ground_height(position_world_m.x, position_world_m.y);
         position_world_m.z - ground_z - self.config.clearance_m
     }
 
@@ -156,7 +164,7 @@ impl TerrainCollision {
                         )
                         .expect("inside the grid")
                 } else {
-                    self.config.off_terrain_z
+                    Terrain::OFF_GRID_Z
                 };
                 position_m.z - ground_z - self.config.clearance_m
             };
@@ -196,7 +204,7 @@ impl Interaction for TerrainCollision {
     }
 
     fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
-        let last_position_world_m = std::mem::take(&mut self.last_position_world_m);
+        let last_pose = std::mem::take(&mut self.last_pose);
         for index in 0..context.entities.len() {
             let entity = &context.entities[index];
             if entity.health() <= 0
@@ -207,7 +215,11 @@ impl Interaction for TerrainCollision {
             {
                 continue;
             }
-            let (id, end_world_m) = (entity.id(), entity.truth().position_world_m);
+            let id = entity.id();
+            let end = (
+                entity.truth().position_world_m,
+                entity.truth().orientation_world_from_body,
+            );
             // An entity seen for the first time has no earlier position here:
             // either it was just created and has not moved, or it spawned
             // during the run and has moved one step. Interactions only see
@@ -216,15 +228,22 @@ impl Interaction for TerrainCollision {
             // velocity has the opposite sign to its climb), so only its end is
             // checked. A new spawn can therefore cross a thin ridge unnoticed
             // on its first step only.
-            let start_world_m = last_position_world_m
-                .get(&id)
-                .copied()
-                .unwrap_or(end_world_m);
-            if self.path_touches_ground(start_world_m, end_world_m) {
+            let start = last_pose.get(&id).copied().unwrap_or(end);
+            let touches = if self.config.structure_points_body_m.is_empty() {
+                self.path_touches_ground(start.0, end.0)
+            } else {
+                self.config.structure_points_body_m.iter().any(|&point| {
+                    let at = |(position, attitude): (Vec3, Quaternion)| {
+                        position + attitude.rotate_body_to_world(point)
+                    };
+                    self.path_touches_ground(at(start), at(end))
+                })
+            };
+            if touches {
                 context.entities[index].set_health(0);
                 context.emit(EventKind::GroundCollision, vec![id])?;
             } else {
-                self.last_position_world_m.insert(id, end_world_m);
+                self.last_pose.insert(id, end);
             }
         }
         Ok(Update::Applied)

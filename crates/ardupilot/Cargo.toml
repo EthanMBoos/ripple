@@ -1,6 +1,6 @@
 # ArduPilot SITL adapter: an optional user crate, outside the default build.
 # The `scrimmage` command includes it only with `--features ardupilot`
-# (crates/cli). Design and history: docs/ARDUPILOT_SITL.md.
+# (crates/cli). User guide: book/src/guides/ardupilot.md.
 [package]
 name = "ardupilot"
 version.workspace = true

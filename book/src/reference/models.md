@@ -57,7 +57,7 @@ the simulation loop. No runtime library loading is planned.
   independent sensor RNG streams differ from C++; its inherited covariance
   payload is not calibrated uncertainty. See the [paper's validation](https://github.com/EthanMBoos/scrimmage-rs/blob/main/paper/README.md).
 
-ROS and JSBSim integrations are not planned; ArduPlane SITL is on the [roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md). Terrain is covered in [Terrain](../guides/terrain.md).
+ROS and JSBSim integrations are not planned; ArduPlane SITL is optional; see [Flying ArduPlane](../guides/ardupilot.md). Terrain is covered in [Terrain](../guides/terrain.md).
 
 The plugin audit's selected additions are complete: NoisyContacts and
 SphereNetwork + AuctionAssign. The other proposed ports and the force, dynamics

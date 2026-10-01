@@ -17,7 +17,7 @@
 //! instead of being smoothed over. It must run every tick (no `loop_rate`).
 //!
 //! The last frame applied is never answered, because the run ends first; the
-//! launcher stops SITL when SCRIMMAGE exits. See docs/ARDUPILOT_SITL.md.
+//! launcher stops SITL when SCRIMMAGE exits. See book/src/guides/ardupilot.md.
 
 use std::net::{SocketAddr, UdpSocket};
 use std::time::{Duration, Instant};
@@ -50,7 +50,8 @@ pub struct ServoMap {
 /// The default maps are ArduPlane's default outputs (SERVO1 aileron, SERVO2
 /// elevator, SERVO3 throttle, SERVO4 rudder) onto the Rascal's real surface
 /// throws in radians, from C++'s FixedWing6DOF-Rascal.xml before commit
-/// 2cab6d119. Surface directions are not yet checked against ArduPlane.
+/// 2cab6d119. The maps are plain; the elevator and rudder reversal FixedWing6DOF
+/// needs is set in ArduPilot (docker/rascal.parm), so do not reverse them here too.
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct ArduPilotBridgeConfig {
@@ -96,6 +97,17 @@ pub struct ArduPilotBridge {
     applied_frame: Option<u32>,
     /// Time of the previous step, to check that no tick was skipped.
     previous_time_s: Option<f64>,
+    /// Motion inputs last written, held for channels SITL is not driving yet.
+    inputs: MotionInputs,
+}
+
+/// The four FixedWing6DOF inputs.
+#[derive(Clone, Copy, Default)]
+struct MotionInputs {
+    throttle: f64,
+    elevator_rad: f64,
+    aileron_rad: f64,
+    rudder_rad: f64,
 }
 
 impl Plugin for ArduPilotBridge {
@@ -131,6 +143,8 @@ impl Plugin for ArduPilotBridge {
             sitl_address: None,
             applied_frame: None,
             previous_time_s: None,
+            // Zero throttle and centred surfaces until SITL drives a channel.
+            inputs: MotionInputs::default(),
         }
     }
 
@@ -194,11 +208,18 @@ impl Autonomy for ArduPilotBridge {
         let frame = self.next_frame()?;
         self.applied_frame = Some(frame.frame_count);
 
-        // 3. Servo outputs to motion inputs.
-        io.write("throttle", self.throttle.output(&frame))?;
-        io.write("elevator", self.elevator.output(&frame))?;
-        io.write("aileron", self.aileron.output(&frame))?;
-        io.write("rudder", self.rudder.output(&frame))?;
+        // 3. Servo outputs to motion inputs. While booting, SITL sends PWM 0 on
+        // channels it is not driving yet; those keep their last input instead
+        // of being read as full deflection.
+        let inputs = &mut self.inputs;
+        inputs.throttle = self.throttle.output(&frame).unwrap_or(inputs.throttle);
+        inputs.elevator_rad = self.elevator.output(&frame).unwrap_or(inputs.elevator_rad);
+        inputs.aileron_rad = self.aileron.output(&frame).unwrap_or(inputs.aileron_rad);
+        inputs.rudder_rad = self.rudder.output(&frame).unwrap_or(inputs.rudder_rad);
+        io.write("throttle", inputs.throttle)?;
+        io.write("elevator", inputs.elevator_rad)?;
+        io.write("aileron", inputs.aileron_rad)?;
+        io.write("rudder", inputs.rudder_rad)?;
         Ok(Update::Applied)
     }
 }
@@ -272,12 +293,16 @@ impl ServoMap {
         Ok(())
     }
 
-    /// The motion input for this channel's PWM, clamped to the PWM range.
-    fn output(&self, frame: &ServoFrame) -> f64 {
-        let pwm_us = f64::from(frame.pwm_us[self.channel as usize - 1])
-            .clamp(self.pwm_min_us, self.pwm_max_us);
+    /// The motion input for this channel's PWM, clamped to the PWM range, or
+    /// `None` when the channel reads 0 (SITL is not driving it yet).
+    fn output(&self, frame: &ServoFrame) -> Option<f64> {
+        let raw_pwm_us = frame.pwm_us[self.channel as usize - 1];
+        if raw_pwm_us == 0 {
+            return None;
+        }
+        let pwm_us = f64::from(raw_pwm_us).clamp(self.pwm_min_us, self.pwm_max_us);
         let fraction = (pwm_us - self.pwm_min_us) / (self.pwm_max_us - self.pwm_min_us);
-        self.output_min + fraction * (self.output_max - self.output_min)
+        Some(self.output_min + fraction * (self.output_max - self.output_min))
     }
 }
 
@@ -310,19 +335,26 @@ mod tests {
     #[test]
     fn pwm_maps_linearly_and_clamps() {
         let aileron = ArduPilotBridgeConfig::default().aileron;
-        assert_eq!(aileron.output(&frame_with(1, 1500)), 0.0);
-        assert!((aileron.output(&frame_with(1, 2000)) - 0.35).abs() < 1e-12);
-        assert!((aileron.output(&frame_with(1, 1000)) + 0.35).abs() < 1e-12);
-        // An unset channel (0) or an out-of-range value is clamped.
-        assert!((aileron.output(&frame_with(1, 0)) + 0.35).abs() < 1e-12);
+        let output = |map: ServoMap, frame| map.output(&frame).unwrap();
+        assert_eq!(output(aileron, frame_with(1, 1500)), 0.0);
+        assert!((output(aileron, frame_with(1, 2000)) - 0.35).abs() < 1e-12);
+        assert!((output(aileron, frame_with(1, 1000)) + 0.35).abs() < 1e-12);
+        // An out-of-range value is clamped.
+        assert!((output(aileron, frame_with(1, 900)) + 0.35).abs() < 1e-12);
         let throttle = ArduPilotBridgeConfig::default().throttle;
-        assert!((throttle.output(&frame_with(3, 1250)) - 0.25).abs() < 1e-12);
+        assert!((output(throttle, frame_with(3, 1250)) - 0.25).abs() < 1e-12);
+    }
+
+    #[test]
+    fn pwm_zero_means_not_driven_yet() {
+        let aileron = ArduPilotBridgeConfig::default().aileron;
+        assert_eq!(aileron.output(&frame_with(1, 0)), None);
     }
 
     #[test]
     fn swapped_outputs_reverse_a_channel() {
         let reversed = ServoMap::from([2.0, 1000.0, 2000.0, 0.30, -0.30]);
-        assert!((reversed.output(&frame_with(2, 2000)) + 0.30).abs() < 1e-12);
+        assert!((reversed.output(&frame_with(2, 2000)).unwrap() + 0.30).abs() < 1e-12);
     }
 
     #[test]

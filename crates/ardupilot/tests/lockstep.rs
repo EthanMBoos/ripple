@@ -105,6 +105,9 @@ fn simulation(mission: &str, overrides: &[(&str, String)], workers: usize) -> Re
     ardupilot::register(&mut registry)?;
     let mut params = Params::from([
         ("dt".into(), DT_S.to_string()),
+        // No hold: these tests check the exchange and the physics from tick one.
+        ("launcher".into(), "false".into()),
+        ("start_speed".into(), "20".into()),
         ("frame_timeout".into(), "1.5".into()),
         ("first_frame_timeout".into(), "5".into()),
     ]);

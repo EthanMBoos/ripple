@@ -9,7 +9,7 @@
      "normalized" surface limits (C++ commit 2cab6d119) allow about 3x the real
      deflection, because the coefficients are per radian; a SITL mission should
      use C++'s earlier radian limits (elevator +-0.30, aileron and rudder +-0.35).
-     See docs/ARDUPILOT_SITL.md.
+     See book/src/guides/ardupilot.md.
      Aircraft: PID from a level start, PID recovering from a roll/pitch upset, and
      a hands-off glide (all gains zero, so zero throttle and neutral surfaces). -->
 <runscript name="FixedWing6DOF Rascal">

@@ -1,0 +1,351 @@
+//! Exchange state for servo commands with one ArduPilot SITL, in lockstep.
+//!
+//! Rust-only; replaces C++ SCRIMMAGE's ArduPilot autonomy (which used its own
+//! binary protocol and free-ran by default) with ArduPilot's JSON backend.
+//! Autonomy phase, every tick:
+//!   1. reply to the frame applied last tick with this tick's `SitlSample`
+//!      (skipped on the first tick);
+//!   2. wait for SITL's next new frame, dropping its resends of the old one;
+//!   3. map the servo PWM to the FixedWing6DOF inputs.
+//!
+//! Every phase waits for all entities, so N bridges keep N SITLs on one clock.
+//! Use no controller after it: its outputs are the motion model's inputs.
+//!
+//! The exchange must be exactly one reply per frame: a reply carries no frame
+//! number, so an extra one would leave SITL a frame behind for the rest of the
+//! run. A frame gap, SITL restarting, or a timeout therefore fails the run
+//! instead of being smoothed over. It must run every tick (no `loop_rate`).
+//!
+//! The last frame applied is never answered, because the run ends first; the
+//! launcher stops SITL when SCRIMMAGE exits. See docs/ARDUPILOT_SITL.md.
+
+use std::net::{SocketAddr, UdpSocket};
+use std::time::{Duration, Instant};
+
+use anyhow::{Context, Result, bail, ensure};
+use scrimmage_core::plugin::{
+    AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, StepTime, Unit,
+    Update,
+};
+use serde::Deserialize;
+
+use crate::json_sitl::{ServoFrame, parse_servo_packet, state_reply};
+use crate::sitl_state::{SITL_STATE_TOPIC, SitlSample};
+
+/// How one servo channel maps to a motion input: PWM `pwm_min_us..pwm_max_us`
+/// maps linearly onto `output_min..output_max` (swap the outputs to reverse).
+/// In a mission: `"channel, pwm_min, pwm_max, output_min, output_max"`.
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(from = "[f64; 5]")]
+pub struct ServoMap {
+    /// ArduPilot output number, 1-based (SERVO1 is 1).
+    channel: f64,
+    pwm_min_us: f64,
+    pwm_max_us: f64,
+    output_min: f64,
+    output_max: f64,
+}
+
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+/// The default maps are ArduPlane's default outputs (SERVO1 aileron, SERVO2
+/// elevator, SERVO3 throttle, SERVO4 rudder) onto the Rascal's real surface
+/// throws in radians, from C++'s FixedWing6DOF-Rascal.xml before commit
+/// 2cab6d119. Surface directions are not yet checked against ArduPlane.
+#[derive(Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct ArduPilotBridgeConfig {
+    /// UDP port this aircraft's SITL sends to (its `--sim-port-out`).
+    port: u16,
+    #[serde(rename = "first_frame_timeout")]
+    first_frame_timeout_s: f64,
+    /// Longest wait for each later frame; must exceed SITL's 1 s resend.
+    #[serde(rename = "frame_timeout")]
+    frame_timeout_s: f64,
+    throttle: ServoMap,
+    elevator: ServoMap,
+    aileron: ServoMap,
+    rudder: ServoMap,
+}
+
+impl Default for ArduPilotBridgeConfig {
+    fn default() -> Self {
+        Self {
+            port: 9002,
+            first_frame_timeout_s: 60.0,
+            frame_timeout_s: 10.0,
+            throttle: ServoMap::from([3.0, 1000.0, 2000.0, 0.0, 1.0]),
+            elevator: ServoMap::from([2.0, 1000.0, 2000.0, -0.30, 0.30]),
+            aileron: ServoMap::from([1.0, 1000.0, 2000.0, -0.35, 0.35]),
+            rudder: ServoMap::from([4.0, 1000.0, 2000.0, -0.35, 0.35]),
+        }
+    }
+}
+
+pub struct ArduPilotBridge {
+    port: u16,
+    first_frame_timeout: Duration,
+    frame_timeout: Duration,
+    throttle: ServoMap,
+    elevator: ServoMap,
+    aileron: ServoMap,
+    rudder: ServoMap,
+    socket: Option<UdpSocket>,
+    /// Where SITL sends from; replies go back to that address.
+    sitl_address: Option<SocketAddr>,
+    /// The frame applied last tick, which this tick's reply answers.
+    applied_frame: Option<u32>,
+    /// Time of the previous step, to check that no tick was skipped.
+    previous_time_s: Option<f64>,
+}
+
+impl Plugin for ArduPilotBridge {
+    type Config = ArduPilotBridgeConfig;
+
+    fn configure(params: &PluginParams<'_>) -> Result<ArduPilotBridgeConfig> {
+        let config: ArduPilotBridgeConfig = params.parse()?;
+        ensure!(
+            config.first_frame_timeout_s > 0.0 && config.frame_timeout_s > 1.0,
+            "ArduPilotBridge timeouts must be positive, and frame_timeout longer than SITL's 1 s resend"
+        );
+        for (name, map) in [
+            ("throttle", config.throttle),
+            ("elevator", config.elevator),
+            ("aileron", config.aileron),
+            ("rudder", config.rudder),
+        ] {
+            map.validate(name)?;
+        }
+        Ok(config)
+    }
+
+    fn new(config: &ArduPilotBridgeConfig) -> Self {
+        Self {
+            port: config.port,
+            first_frame_timeout: Duration::from_secs_f64(config.first_frame_timeout_s),
+            frame_timeout: Duration::from_secs_f64(config.frame_timeout_s),
+            throttle: config.throttle,
+            elevator: config.elevator,
+            aileron: config.aileron,
+            rudder: config.rudder,
+            socket: None,
+            sitl_address: None,
+            applied_frame: None,
+            previous_time_s: None,
+        }
+    }
+
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        // Free the port now; the simulation keeps closed plugins until it is dropped.
+        self.socket = None;
+        Ok(())
+    }
+
+    fn ports(_config: &ArduPilotBridgeConfig) -> Ports {
+        Ports::default()
+            .output(Port::new("throttle", Unit::Dimensionless, Frame::None))
+            .output(Port::new("elevator", Unit::Radians, Frame::Model))
+            .output(Port::new("aileron", Unit::Radians, Frame::Model))
+            .output(Port::new("rudder", Unit::Radians, Frame::Model))
+    }
+}
+
+impl Autonomy for ArduPilotBridge {
+    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
+        context
+            .messages
+            .subscribe::<SitlSample>("LocalNetwork", SITL_STATE_TOPIC)?;
+        let socket = UdpSocket::bind(("0.0.0.0", self.port))
+            .with_context(|| format!("ArduPilotBridge could not bind UDP port {}", self.port))?;
+        self.socket = Some(socket);
+        Ok(())
+    }
+
+    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+        if let Some(previous_time_s) = self.previous_time_s {
+            let elapsed_s = context.time.time_s - previous_time_s;
+            ensure!(
+                (elapsed_s - context.time.dt_s).abs() <= 1e-9 * context.time.dt_s.max(1.0),
+                "ArduPilotBridge must run every tick (remove its loop_rate)"
+            );
+        }
+        self.previous_time_s = Some(context.time.time_s);
+
+        // 1. Answer last tick's frame with the state that frame produced.
+        let latest_sample = context
+            .messages
+            .receive::<SitlSample>("LocalNetwork", SITL_STATE_TOPIC)?
+            .pop();
+        if let Some(frame_count) = self.applied_frame {
+            let Some(sample) = latest_sample else {
+                bail!(
+                    "no SitlState sample to answer SITL frame {frame_count}; \
+                     add a SitlState sensor running every tick and LocalNetwork"
+                );
+            };
+            let reply = state_reply(context.time.time_s, &sample.value);
+            let (socket, address) = (
+                self.socket()?,
+                self.sitl_address.context("no SITL address")?,
+            );
+            socket.send_to(reply.as_bytes(), address)?;
+        }
+
+        // 2. Wait for the next new frame.
+        let frame = self.next_frame()?;
+        self.applied_frame = Some(frame.frame_count);
+
+        // 3. Servo outputs to motion inputs.
+        io.write("throttle", self.throttle.output(&frame))?;
+        io.write("elevator", self.elevator.output(&frame))?;
+        io.write("aileron", self.aileron.output(&frame))?;
+        io.write("rudder", self.rudder.output(&frame))?;
+        Ok(Update::Applied)
+    }
+}
+
+impl ArduPilotBridge {
+    fn socket(&self) -> Result<&UdpSocket> {
+        self.socket
+            .as_ref()
+            .context("ArduPilotBridge is not initialized")
+    }
+
+    /// Read datagrams until SITL's next new frame. Resends of the frame
+    /// already answered are dropped; anything else out of order is an error.
+    fn next_frame(&mut self) -> Result<ServoFrame> {
+        let timeout = match self.applied_frame {
+            None => self.first_frame_timeout,
+            Some(_) => self.frame_timeout,
+        };
+        let deadline = Instant::now() + timeout;
+        let mut buffer = [0u8; 512];
+        loop {
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            if remaining.is_zero() {
+                bail!(
+                    "no new frame from ArduPilot SITL on UDP port {} within {:.1} s",
+                    self.port,
+                    timeout.as_secs_f64()
+                );
+            }
+            let socket = self.socket()?;
+            socket.set_read_timeout(Some(remaining))?;
+            let (length, source) = match socket.recv_from(&mut buffer) {
+                Ok(received) => received,
+                Err(error)
+                    if matches!(
+                        error.kind(),
+                        std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                    ) =>
+                {
+                    continue;
+                }
+                Err(error) => return Err(error.into()),
+            };
+            let frame = parse_servo_packet(&buffer[..length])?;
+            match self.applied_frame {
+                None => {}
+                Some(last) if frame.frame_count == last => continue,
+                Some(last) if frame.frame_count == last.wrapping_add(1) => {}
+                Some(last) => bail!(
+                    "ArduPilot SITL sent frame {} after frame {last}; \
+                     a gap means lost lockstep and a lower count means SITL restarted",
+                    frame.frame_count
+                ),
+            }
+            self.sitl_address = Some(source);
+            return Ok(frame);
+        }
+    }
+}
+
+impl ServoMap {
+    fn validate(&self, name: &str) -> Result<()> {
+        ensure!(
+            self.channel.fract() == 0.0 && (1.0..=16.0).contains(&self.channel),
+            "ArduPilotBridge {name} channel must be a whole number from 1 to 16"
+        );
+        ensure!(
+            self.pwm_max_us > self.pwm_min_us,
+            "ArduPilotBridge {name} pwm_max must exceed pwm_min"
+        );
+        Ok(())
+    }
+
+    /// The motion input for this channel's PWM, clamped to the PWM range.
+    fn output(&self, frame: &ServoFrame) -> f64 {
+        let pwm_us = f64::from(frame.pwm_us[self.channel as usize - 1])
+            .clamp(self.pwm_min_us, self.pwm_max_us);
+        let fraction = (pwm_us - self.pwm_min_us) / (self.pwm_max_us - self.pwm_min_us);
+        self.output_min + fraction * (self.output_max - self.output_min)
+    }
+}
+
+impl From<[f64; 5]> for ServoMap {
+    fn from([channel, pwm_min_us, pwm_max_us, output_min, output_max]: [f64; 5]) -> Self {
+        Self {
+            channel,
+            pwm_min_us,
+            pwm_max_us,
+            output_min,
+            output_max,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn frame_with(channel: usize, pwm_us: u16) -> ServoFrame {
+        let mut pwm = [1500; 16];
+        pwm[channel - 1] = pwm_us;
+        ServoFrame {
+            frame_rate_hz: 400,
+            frame_count: 0,
+            pwm_us: pwm,
+        }
+    }
+
+    #[test]
+    fn pwm_maps_linearly_and_clamps() {
+        let aileron = ArduPilotBridgeConfig::default().aileron;
+        assert_eq!(aileron.output(&frame_with(1, 1500)), 0.0);
+        assert!((aileron.output(&frame_with(1, 2000)) - 0.35).abs() < 1e-12);
+        assert!((aileron.output(&frame_with(1, 1000)) + 0.35).abs() < 1e-12);
+        // An unset channel (0) or an out-of-range value is clamped.
+        assert!((aileron.output(&frame_with(1, 0)) + 0.35).abs() < 1e-12);
+        let throttle = ArduPilotBridgeConfig::default().throttle;
+        assert!((throttle.output(&frame_with(3, 1250)) - 0.25).abs() < 1e-12);
+    }
+
+    #[test]
+    fn swapped_outputs_reverse_a_channel() {
+        let reversed = ServoMap::from([2.0, 1000.0, 2000.0, 0.30, -0.30]);
+        assert!((reversed.output(&frame_with(2, 2000)) + 0.30).abs() < 1e-12);
+    }
+
+    #[test]
+    fn bad_maps_are_rejected() {
+        assert!(
+            ServoMap::from([0.0, 1000.0, 2000.0, -1.0, 1.0])
+                .validate("x")
+                .is_err()
+        );
+        assert!(
+            ServoMap::from([17.0, 1000.0, 2000.0, -1.0, 1.0])
+                .validate("x")
+                .is_err()
+        );
+        assert!(
+            ServoMap::from([1.5, 1000.0, 2000.0, -1.0, 1.0])
+                .validate("x")
+                .is_err()
+        );
+        assert!(
+            ServoMap::from([1.0, 2000.0, 1000.0, -1.0, 1.0])
+                .validate("x")
+                .is_err()
+        );
+    }
+}

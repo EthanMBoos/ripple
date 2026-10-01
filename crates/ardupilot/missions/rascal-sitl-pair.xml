@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!-- Two Rascals, each flown by its own ArduPlane SITL, in lockstep: the
+     multi-vehicle case. Same as rascal-sitl.xml otherwise. Needs the scrimmage
+     command built with the ardupilot feature, and two SITLs started with model
+     JSON:<host>, rate 400, and sim-port-out ${port_a} and ${port_b}.
+     Aircraft: missions/fixed-wing-6dof-rascal.xml's C++ Rascal parameters, but
+     with C++'s original radian surface limits (elevator +-0.30, aileron and
+     rudder +-0.35, from before commit 2cab6d119), matching ArduPilotBridge's
+     default PWM maps. No controller: the bridge writes the motion inputs.
+     dt 0.0025 s (400 Hz) is a whole multiple of ArduPlane's 50 Hz loop.
+     It starts flying immediately: start high, since the aircraft glides until
+     ArduPlane is armed. For a timed or catapult start, set FixedWing6DOF's
+     use_launcher (see docs/ARDUPILOT_SITL.md). Not yet: airspeed in the reply
+     (so keep wind at zero), terrain. -->
+<runscript name="Rascal SITL pair">
+  <run start="0" end="${end=60}" dt="${dt=0.0025}" enable_gui="false" start_paused="false" time_warp="0" />
+  <seed>1</seed><end_condition>time</end_condition><output_type>all</output_type>
+  <network>LocalNetwork</network><network>GlobalNetwork</network>
+  <metrics>SimpleCollisionMetrics</metrics>
+
+  <entity>
+    <count>1</count><team_id>1</team_id>
+    <x>0</x><y>0</y><z>200</z>
+    <vx>20</vx><vy>0</vy><vz>0</vz><heading>0</heading>
+    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <autonomy port="${port_a=9002}" frame_timeout="${frame_timeout=10}"
+              first_frame_timeout="${first_frame_timeout=60}">ArduPilotBridge</autonomy>
+    <sensor>SitlState</sensor>
+    <motion_model gravity_magnitude="9.81" air_density="1.2250"
+        inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]"
+        thrust_min="0.0" thrust_max="25.0"
+        delta_elevator_min="-0.30" delta_elevator_max="0.30"
+        delta_aileron_min="-0.35" delta_aileron_max="0.35"
+        delta_rudder_min="-0.35" delta_rudder_max="0.35"
+        mass="5.91" wing_span="2.70" surface_area_of_wing="0.982" chord_length="0.351"
+        C_D0="0.028" C_D_alpha="0.0"
+        C_L0="0.25" C_L_alpha="5" C_LQ="0.0" C_L_alpha_dot="0.0" C_L_delta_elevator="0.2"
+        C_Y_beta="-1.0" C_Y_delta_rudder="0.0"
+        C_L_beta="-0.1" C_LP="-0.4" C_LR="0.15" C_L_delta_aileron="0.13" C_L_delta_rudder="0.01"
+        C_M0="0.0" C_MQ="-12.0" C_M_alpha="-0.5" C_M_alpha_dot="-7.0" C_M_delta_elevator="-0.5"
+        C_N_beta="0.12" C_NP="0.0" C_NR="-0.15" C_N_delta_aileron="-0.03" C_N_delta_rudder="-0.05">FixedWing6DOF</motion_model>
+    <visual_model>sphere</visual_model>
+  </entity>
+  <entity>
+    <count>1</count><team_id>2</team_id>
+    <x>0</x><y>300</y><z>200</z>
+    <vx>20</vx><vy>0</vy><vz>0</vz><heading>0</heading>
+    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <autonomy port="${port_b=9012}" frame_timeout="${frame_timeout=10}"
+              first_frame_timeout="${first_frame_timeout=60}">ArduPilotBridge</autonomy>
+    <sensor>SitlState</sensor>
+    <motion_model gravity_magnitude="9.81" air_density="1.2250"
+        inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]"
+        thrust_min="0.0" thrust_max="25.0"
+        delta_elevator_min="-0.30" delta_elevator_max="0.30"
+        delta_aileron_min="-0.35" delta_aileron_max="0.35"
+        delta_rudder_min="-0.35" delta_rudder_max="0.35"
+        mass="5.91" wing_span="2.70" surface_area_of_wing="0.982" chord_length="0.351"
+        C_D0="0.028" C_D_alpha="0.0"
+        C_L0="0.25" C_L_alpha="5" C_LQ="0.0" C_L_alpha_dot="0.0" C_L_delta_elevator="0.2"
+        C_Y_beta="-1.0" C_Y_delta_rudder="0.0"
+        C_L_beta="-0.1" C_LP="-0.4" C_LR="0.15" C_L_delta_aileron="0.13" C_L_delta_rudder="0.01"
+        C_M0="0.0" C_MQ="-12.0" C_M_alpha="-0.5" C_M_alpha_dot="-7.0" C_M_delta_elevator="-0.5"
+        C_N_beta="0.12" C_NP="0.0" C_NR="-0.15" C_N_delta_aileron="-0.03" C_N_delta_rudder="-0.05">FixedWing6DOF</motion_model>
+    <visual_model>sphere</visual_model>
+  </entity>
+</runscript>

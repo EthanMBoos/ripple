@@ -15,11 +15,17 @@
 //! surrounding ones; off the grid, or next to a missing sample, there is no
 //! height.
 //!
+//! `ground_height` and `ground_normal` are the one ground that everything
+//! touching it uses (TerrainCollision, landing gear): the interpolated surface
+//! on the grid, and flat ground at `z = 0`, the origin's altitude, off it.
+//!
 //! No C++ counterpart: C++ drew its mission terrain in the viewer only, and its
 //! TerrainGenerator's random height map was used by no stock mission.
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::Path, sync::Arc};
+
+use crate::Vec3;
 
 /// Where the grid's local frame is on the Earth.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
@@ -51,6 +57,14 @@ struct Header {
     imagery: Option<String>,
     /// The value marking a missing sample in the heights file.
     no_data: f32,
+}
+
+/// The interpolated surface at one point: height, and rise per metre east
+/// and north.
+struct Surface {
+    height_m: f64,
+    slope_east: f64,
+    slope_north: f64,
 }
 
 #[derive(Clone, Debug)]
@@ -154,12 +168,35 @@ impl Terrain {
         })
     }
 
+    /// The ground's height (local `z`) off the grid: the origin's altitude.
+    pub const OFF_GRID_Z: f64 = 0.0;
+
     /// Ground height (local `z`) at a position, interpolated between the four
     /// surrounding samples. `None` off the grid or next to a missing sample.
-    // TODO(terrain): the ground off the grid is TerrainCollision's
-    // `off_terrain_z` today. Once motion models also touch the ground, it must
-    // be shared, so collision and contact agree on one ground.
     pub fn height_at(&self, east_m: f64, north_m: f64) -> Option<f64> {
+        self.surface_at(east_m, north_m)
+            .map(|surface| surface.height_m)
+    }
+
+    /// The ground everything that touches it uses: `height_at` on the grid,
+    /// `OFF_GRID_Z` off it. A missing sample counts as off the grid, so
+    /// plugins that touch the ground refuse terrain with missing samples.
+    pub fn ground_height(&self, east_m: f64, north_m: f64) -> f64 {
+        self.height_at(east_m, north_m).unwrap_or(Self::OFF_GRID_Z)
+    }
+
+    /// The ground's upward unit normal (east, north, up) at a position, from
+    /// the slope of the interpolated surface; straight up off the grid.
+    pub fn ground_normal(&self, east_m: f64, north_m: f64) -> Vec3 {
+        match self.surface_at(east_m, north_m) {
+            Some(surface) => Vec3::new(-surface.slope_east, -surface.slope_north, 1.0).normalize(),
+            None => Vec3::z(),
+        }
+    }
+
+    /// Height and slope of the interpolated surface, `None` off the grid or
+    /// next to a missing sample.
+    fn surface_at(&self, east_m: f64, north_m: f64) -> Option<Surface> {
         let column = (east_m - self.west_m) / self.cell_m;
         let row = (self.north_m - north_m) / self.cell_m;
         let last_column = (self.columns - 1) as f64;
@@ -174,12 +211,19 @@ impl Terrain {
         let (column0, row0) = (column0 as usize, row0 as usize);
         let sample =
             |row: usize, column: usize| f64::from(self.heights_m[row * self.columns + column]);
-        let north_edge = sample(row0, column0) * (1.0 - east_fraction)
-            + sample(row0, column0 + 1) * east_fraction;
-        let south_edge = sample(row0 + 1, column0) * (1.0 - east_fraction)
-            + sample(row0 + 1, column0 + 1) * east_fraction;
+        let (north_west, north_east) = (sample(row0, column0), sample(row0, column0 + 1));
+        let (south_west, south_east) = (sample(row0 + 1, column0), sample(row0 + 1, column0 + 1));
+        let north_edge = north_west * (1.0 - east_fraction) + north_east * east_fraction;
+        let south_edge = south_west * (1.0 - east_fraction) + south_east * east_fraction;
         let height_m = north_edge * (1.0 - south_fraction) + south_edge * south_fraction;
-        height_m.is_finite().then_some(height_m)
+        let rise_east = (north_east - north_west) * (1.0 - south_fraction)
+            + (south_east - south_west) * south_fraction;
+        height_m.is_finite().then_some(Surface {
+            height_m,
+            slope_east: rise_east / self.cell_m,
+            // The south fraction grows going south.
+            slope_north: (north_edge - south_edge) / self.cell_m,
+        })
     }
 
     /// The sample at a row (from the north) and column (from the west): its
@@ -259,6 +303,23 @@ mod tests {
         assert_eq!(terrain.height_at(10.0, -0.1), None);
         assert_eq!(terrain.height_at(3.0, 3.0), None);
         assert_eq!(terrain.height_at(5.0, 15.0), Some(5.0));
+    }
+
+    #[test]
+    fn ground_is_the_surface_on_the_grid_and_flat_off_it() {
+        let terrain = slope();
+        assert_eq!(terrain.ground_height(5.0, 15.0), 5.0);
+        assert_eq!(terrain.ground_height(-0.1, 10.0), Terrain::OFF_GRID_Z);
+        assert_eq!(terrain.ground_normal(-0.1, 10.0), Vec3::z());
+        // Rising 1 m per metre east: the normal leans 45 degrees west.
+        let normal = terrain.ground_normal(5.0, 15.0);
+        let expected = Vec3::new(-1.0, 0.0, 1.0).normalize();
+        assert!((normal - expected).norm() < 1e-12, "{normal}");
+        // Rising 0.5 m per metre north, from a grid of rows.
+        let rows = Terrain::from_grid(0.0, 10.0, 10.0, 2, vec![5.0, 5.0, 0.0, 0.0]).unwrap();
+        let normal = rows.ground_normal(5.0, 5.0);
+        let expected = Vec3::new(0.0, -0.5, 1.0).normalize();
+        assert!((normal - expected).norm() < 1e-12, "{normal}");
     }
 
     #[test]

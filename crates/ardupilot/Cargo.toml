@@ -11,6 +11,8 @@ publish = false
 [dependencies]
 scrimmage-core = { path = "../core" }
 anyhow.workspace = true
+# Stops the SITL containers when a run is interrupted.
+ctrlc = "3"
 nalgebra.workspace = true
 serde.workspace = true
 serde_json.workspace = true

@@ -252,6 +252,12 @@ world plugins read and TerrainCollision uses. Like C++'s `altitude_origin`,
 local `z = 0` is the terrain's origin altitude. There is nothing in C++ to
 compare it with.
 
+FixedWing6DOF's `landing_gear` and TerrainCollision's `structure_points_frd_m`
+are Rust-only too: C++ ground contact was the flat spring at `z = 0`
+(`use_ground_model`), which stays unchanged for the comparison missions. The
+gear follows JSBSim's FGLGear wheels (`landing_gear.rs`), so the comparison
+does not cover it; its own tests do (`crates/core/tests/landing_gear.rs`).
+
 ## Spawn RNG mismatch (accepted)
 
 The native macOS baseline matched; the Ubuntu Docker fixture diverges at

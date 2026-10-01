@@ -32,6 +32,10 @@ per terrain, and give `altitude_m` in the same reference.
 `height_at` interpolates between the four surrounding samples. It returns
 `None` off the grid or next to a missing sample.
 
+Everything that touches the ground uses one rule, `ground_height` (and
+`ground_normal` for its slope): the interpolated surface on the grid, and flat
+ground at `z = 0`, the origin's altitude, off it.
+
 ## TerrainCollision
 
 Each step checks the straight line from an agent's last position to its new
@@ -46,16 +50,16 @@ same `GroundCollision` event as the flat `GroundCollision` plugin.
 | Parameter | Default | Meaning |
 | --- | --- | --- |
 | `clearance_m` | 0 | Collide this far above the ground. |
-| `off_terrain_z` | 0 | Ground height (local `z`) outside the grid. |
 | `enable_startup_collisions` | true | Treat spawn positions below the ground as collisions, so they are redrawn. |
 | `team` | `all` | Check every agent, or only one team ID. |
+| `structure_points_frd_m` | none | Points on an airframe, `[[forward, right, down], ...]` in metres from its centre, checked instead of the centre (see [Landing gear](#landing-gear)). |
 
 Set `team` when a mission mixes aircraft with vehicles meant to drive on the
 ground: those sit at ground height and would otherwise count as crashes. For
 example, `team: 1` checks only the aircraft on team 1. `GroundCollision` has
 the same option.
 
-Off the grid, the ground is flat at `off_terrain_z`. Inside it, TerrainCollision
+Off the grid, the ground is flat at `z = 0`. Inside it, TerrainCollision
 refuses to start if any sample is missing, so a data hole never becomes a gap
 in a hillside.
 
@@ -66,11 +70,71 @@ that looks like it touches the drawn ground may not quite, and the reverse.
 FixedWing6DOF has its own flat ground at `z = 0` (`use_ground_model`, on by
 default), which would push aircraft up in mid-air over valleys below `z = 0`.
 It refuses to start in a terrain mission unless `use_ground_model` is false;
-add TerrainCollision to remove aircraft that hit the terrain.
+add TerrainCollision to remove aircraft that hit the terrain, or give it
+landing gear.
 
-Not modelled: landing or ground contact (a collision only removes the agent),
-trees and buildings (the McMillan data is bare ground), terrain blocking
-sensors, and terrain beyond the grid.
+Not modelled: trees and buildings (the McMillan data is bare ground), terrain
+blocking sensors, and terrain beyond the grid.
+
+## Landing gear
+
+FixedWing6DOF can roll, take off, and land on wheels, with or without terrain
+(without it the ground is flat at `z = 0`). Each wheel is a point on a strut
+along the aircraft's down axis, following JSBSim's
+[landing gear](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGLGear.html)
+(`landing_gear.rs` has the details). The Rascal's wheels, from ArduPilot's
+JSBSim Rascal (`Rascal.xml`):
+
+```yaml
+motion_model:
+  FixedWing6DOF:
+    use_ground_model: false          # the wheels replace the flat spring
+    landing_gear:
+      # forward, right, down from the centre of gravity (m)
+      - {position_frd_m: [0.084, -0.328, 0.434], spring_n_per_m: 7005, damping_n_s_per_m: 1459,
+         static_friction: 0.8, rolling_friction: 0.1}
+      - {position_frd_m: [0.084, 0.328, 0.434], spring_n_per_m: 7005, damping_n_s_per_m: 1459,
+         static_friction: 0.8, rolling_friction: 0.1}
+      - {position_frd_m: [-0.826, 0, 0.203], spring_n_per_m: 7005, damping_n_s_per_m: 1459,
+         static_friction: 0.8, rolling_friction: 0.1, castered: true}
+```
+
+A wheel below the ground pushes along the ground's normal with its spring and
+damper, and never pulls. Its friction is the force that stops it sliding
+within one step, up to a limit: `rolling_friction` times its load along the
+wheel (there are no brakes), and sideways Pacejka's Magic Formula of the slip
+angle with JSBSim's default factors, peaking at `static_friction`. A
+`castered` wheel swivels to its motion, so it gives no side force. Forces and
+their moments are recomputed at every RK4 stage.
+
+- **The step must be short.** The struts are stiff and heavily damped.
+  FixedWing6DOF refuses a step where `dt × total damping / mass` is beyond
+  RK4's stable range (for the Rascal, above about 0.0037 s), but that is only
+  a basic damping check: it leaves out the springs, rotation, and wheel
+  layout, so a step it accepts is not guaranteed stable. 0.0025 s is the
+  tested Rascal setting; use `dt_s` or `motion_multiplier` to get there.
+- **Simplified from JSBSim:** friction is solved wheel by wheel, each stopping
+  its share of the mass, where JSBSim solves all wheels together; and forces
+  act at the uncompressed wheel point.
+- **Results are close to first order in the step,** not RK4's fourth, because
+  contact switches on and off and JSBSim's rules are written per step. A
+  drop's lowest point changes by under 2 mm from 0.0025 s to 0.0003 s.
+- **No stall in the aerodynamics,** so lift at the high angles of a takeoff
+  roll or a flare is too optimistic, and an aircraft rolling backwards meets
+  the air at 180° and brakes hard.
+
+To tell a touchdown from a crash, give TerrainCollision the airframe's
+`structure_points_frd_m`. It then checks those points, moved with the
+aircraft's attitude, instead of its centre: wheels holding the aircraft up are
+not a collision, a nose or wingtip strike is. For the Rascal: the propeller
+`[0.899, 0, 0.102]` (from JSBSim's file) and the wingtips `[0, ±1.35, 0]`
+(half its span, at the centre's height). There is no tail point: the tail
+wheel is at the tail.
+
+The checks are in `crates/core/tests/landing_gear.rs`: resting height and
+attitude, a drop, holding on a gentle slope and rolling down a steep one,
+friction stopping a rolling aircraft, convergence as the step shrinks, the
+step refusal, and a wingtip strike against a touchdown.
 
 ## Why it is built this way
 
@@ -100,7 +164,9 @@ Terrain here does three separate jobs, kept in separate places:
   turns contact into physics: each contact point has a spring and damper,
   static, sliding, and rolling friction, brakes and steering, and produces
   forces and moments on the aircraft. `STRUCTURE` contact points on the
-  fuselage and wings mark crashes, as opposed to wheels touching down.
+  fuselage and wings push back on the airframe too, with their own friction;
+  JSBSim does not remove the aircraft. Removing it when one touches is this
+  simulator's simpler rule (TerrainCollision's `structure_points_frd_m`).
 - **[MuJoCo](https://mujoco.readthedocs.io/en/stable/computation/index.html)**
   treats terrain as collision geometry (a
   [height field](https://mujoco.readthedocs.io/en/stable/XMLreference.html#asset-hfield))
@@ -119,7 +185,7 @@ normals, friction, moments, and a timestep chosen for contact.
   disagree about where the ground is. That is also why FixedWing6DOF refuses
   its old flat-ground spring when terrain is configured: two definitions of the
   ground would push aircraft up in mid-air over valleys below `z = 0`.
-- **Crash-only for now.** The research this simulator serves is mostly
+- **Crash by default.** The research this simulator serves is mostly
   airborne: swarms, routes, and sensing over terrain. For that, "remove the
   agent when it hits the ground" is the whole requirement, and it works for
   every motion model, because TerrainCollision only needs positions. It checks
@@ -129,18 +195,16 @@ normals, friction, moments, and a timestep chosen for contact.
   FixedWing6DOF's spring and put it at the terrain's height. It would look like
   ground contact, but it pushes straight up at one point: no wheels, no
   friction, no pitching or rolling moments, and wrong on slopes. The JSBSim
-  comparison shows how much is missing, so this design says plainly that
-  ground contact is not modelled rather than half-model it.
-- **Room for real contact later.** Motion models already receive the terrain
-  (`MotionContext::terrain`), which is where ground reactions would read height
-  and slope. Adding them is its own feature, on the
-  [roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md):
-  contact points and their forces and moments, JSBSim-style; one shared rule
-  for the ground off the grid; crash rules that tell a touchdown from a wingtip
-  strike; and checks that the response is right (resting, a drop, a slope,
-  friction, and results that settle as the timestep shrinks). That breaks C++
-  parity for ground contact, which is fine: matching C++ is not evidence that
-  its ground physics is correct.
+  comparison shows how much is missing, so contact is modelled with wheels
+  or not at all.
+- **Real contact as its own feature.** Motion models receive the terrain
+  (`MotionContext::terrain`), and FixedWing6DOF's [landing gear](#landing-gear)
+  reads height and slope there: contact points and their forces and moments,
+  JSBSim-style; one shared rule for the ground off the grid
+  (`Terrain::ground_height`); crash rules that tell a touchdown from a wingtip
+  strike; and checks that the response is right. It breaks C++ parity for
+  ground contact, which is fine: matching C++ is not evidence that its ground
+  physics is correct, and the comparison missions keep the old spring.
 
 ## Making a terrain
 

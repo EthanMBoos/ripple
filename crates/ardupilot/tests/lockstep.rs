@@ -99,20 +99,35 @@ fn fake_sitl(
     }))
 }
 
-fn simulation(mission: &str, overrides: &[(&str, String)], workers: usize) -> Result<Simulation> {
+/// Load a SITL mission with test settings: no hold, starting at 20 m/s, short
+/// timeouts, and each named aircraft's bridge on the given port.
+fn simulation(
+    mission: &str,
+    aircraft: &[(&str, u16)],
+    end_s: f64,
+    workers: usize,
+) -> Result<Simulation> {
     let crate_folder = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut registry = PluginRegistry::with_builtins();
     ardupilot::register(&mut registry)?;
     let mut params = Params::from([
-        ("dt".into(), DT_S.to_string()),
-        // No hold: these tests check the exchange and the physics from tick one.
-        ("launcher".into(), "false".into()),
-        ("start_speed".into(), "20".into()),
-        ("frame_timeout".into(), "1.5".into()),
-        ("first_frame_timeout".into(), "5".into()),
+        ("run.dt_s".into(), DT_S.to_string()),
+        ("run.end_s".into(), end_s.to_string()),
     ]);
-    for (key, value) in overrides {
-        params.insert((*key).into(), value.clone());
+    for (label, port) in aircraft {
+        let entity = format!("entities.{label}");
+        let bridge = format!("{entity}.autonomy.ArduPilotBridge");
+        params.extend([
+            (format!("{bridge}.port"), port.to_string()),
+            (format!("{bridge}.frame_timeout"), "1.5".into()),
+            (format!("{bridge}.first_frame_timeout"), "5".into()),
+            // No hold: these tests check the exchange and the physics from tick one.
+            (
+                format!("{entity}.motion_model.FixedWing6DOF.use_launcher"),
+                "false".into(),
+            ),
+            (format!("{entity}.velocity_mps"), "[20, 0, 0]".into()),
+        ]);
     }
     let mission = Mission::load_with_registry(
         &crate_folder.join("missions").join(mission),
@@ -125,8 +140,7 @@ fn simulation(mission: &str, overrides: &[(&str, String)], workers: usize) -> Re
 
 /// Run the one-aircraft mission to its end.
 fn run(port: u16, end_s: f64) -> Result<()> {
-    let overrides = [("port", port.to_string()), ("end", end_s.to_string())];
-    let mut simulation = simulation("rascal-sitl.xml", &overrides, 1)?;
+    let mut simulation = simulation("rascal-sitl.yaml", &[("rascal", port)], end_s, 1)?;
     while simulation.step()?.is_some() {}
     Ok(())
 }
@@ -236,8 +250,7 @@ fn the_first_reply_includes_the_first_step_acceleration() -> Result<()> {
 fn closing_frees_the_port() -> Result<()> {
     let port = free_port()?;
     let sitl = fake_sitl(port, FakeSitl::Normal, HALF_THROTTLE_US)?;
-    let overrides = [("port", port.to_string()), ("end", "0.1".to_string())];
-    let mut simulation = simulation("rascal-sitl.xml", &overrides, 1)?;
+    let mut simulation = simulation("rascal-sitl.yaml", &[("rascal", port)], 0.1, 1)?;
     while simulation.step()?.is_some() {}
     // The finished simulation is still alive, but its bridge has closed.
     UdpSocket::bind(("0.0.0.0", port))?;
@@ -253,12 +266,8 @@ fn two_aircraft_share_one_clock_and_keep_their_own_commands() -> Result<()> {
         // Aircraft A at full throttle, B at idle.
         let sitl_a = fake_sitl(port_a, FakeSitl::Normal, 2000)?;
         let sitl_b = fake_sitl(port_b, FakeSitl::Normal, 1000)?;
-        let overrides = [
-            ("port_a", port_a.to_string()),
-            ("port_b", port_b.to_string()),
-            ("end", "0.5".to_string()),
-        ];
-        let mut simulation = simulation("rascal-sitl-pair.xml", &overrides, workers)?;
+        let aircraft = [("rascal_a", port_a), ("rascal_b", port_b)];
+        let mut simulation = simulation("rascal-sitl-pair.yaml", &aircraft, 0.5, workers)?;
         while simulation.step()?.is_some() {}
         let (replies_a, replies_b) = (sitl_a.join().unwrap()?, sitl_b.join().unwrap()?);
 

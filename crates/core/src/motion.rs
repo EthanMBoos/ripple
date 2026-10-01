@@ -12,11 +12,9 @@ pub struct MotionContext<'a> {
     pub entity: EntityInfo,
     pub time: StepTime,
     pub truth: &'a mut KinematicState,
-    /// The mission's ground heights, if it names terrain. No motion model
-    /// uses it for contact yet: TerrainCollision removes agents that reach
-    /// the ground.
-    // TODO(terrain): ground reactions (landing, rolling, takeoff) would read
-    // the ground here: height and slope at the aircraft's contact points.
+    /// The mission's ground heights, if it names terrain. FixedWing6DOF's
+    /// landing gear reads the ground here (`Terrain::ground_height` and
+    /// `ground_normal`); without terrain it is flat at `z = 0`.
     pub terrain: Option<&'a Terrain>,
 }
 

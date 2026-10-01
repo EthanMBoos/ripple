@@ -63,18 +63,15 @@ fn agents_hit_a_ridge_crossed_between_steps_and_flat_ground_off_the_grid() -> Re
             ..RunConfig::default()
         },
         terrain: Some(terrain.clone()),
-        interactions: vec![
-            PluginConfig::new("TerrainCollision")
-                .with_params(serde_json::json!({"off_terrain_z": 10.0}))?,
-        ],
+        interactions: vec![PluginConfig::new("TerrainCollision")],
         entities: vec![
             // 25 m per step, ending steps at 80 m and 105 m east: both points are
             // below 30 m of ground, but the ridge between them rises to 50 m.
             agent(1, Vec3::new(5.0, 5.0, 30.0), [25.0, 0.0, 0.0])?,
             // Clears the ridge.
             agent(2, Vec3::new(5.0, 5.0, 60.0), [25.0, 0.0, 0.0])?,
-            // West of the grid, descending onto the flat 10 m ground there.
-            agent(3, Vec3::new(-100.0, 5.0, 15.0), [0.0, 0.0, -10.0])?,
+            // West of the grid, descending onto the flat ground at z = 0 there.
+            agent(3, Vec3::new(-100.0, 5.0, 5.0), [0.0, 0.0, -10.0])?,
             // From 97 m to 127 m east, 0.5 m below the ridge top at 100 m; no
             // sample point along the way need land near the top.
             agent(4, Vec3::new(97.0, 5.0, 49.5), [30.0, 0.0, 0.0])?,

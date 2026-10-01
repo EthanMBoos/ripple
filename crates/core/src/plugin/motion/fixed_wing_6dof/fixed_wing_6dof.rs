@@ -395,9 +395,8 @@ impl FixedWing6Dof {
         dt_s: f64,
     ) -> Result<()> {
         let catapult_force_n = self.advance_launcher(time_s);
+        let flying = matches!(self.launch, LaunchState::Flying);
         let config = &self.config;
-        let state = AircraftState::from_truth(truth);
-        let rotation = UnitQuaternion::new_unchecked(state.attitude_model);
         let control = Control {
             throttle: control.throttle.clamp(-1.0, 1.0),
             elevator_rad: control
@@ -410,60 +409,16 @@ impl FixedWing6Dof {
                 .rudder_rad
                 .clamp(config.rudder_limits_rad[0], config.rudder_limits_rad[1]),
         };
-        let thrust_n = config.thrust_n(control.throttle);
-        let wind_model_mps = rotation.inverse_transform_vector(&flip_yz(config.wind_world_mps));
-        // Deliberate reference quirk: wind is ADDED to velocity, not subtracted.
-        let air_velocity_model_mps = state.velocity_model_mps + wind_model_mps;
-        let airframe = Airframe {
-            density_kgpm3: config.density_kgpm3,
-            span_m: config.span_m,
-            area_m2: config.area_m2,
-            chord_m: config.chord_m,
-            efficiency: config.efficiency,
-        };
-        let mut loads = config.aerodynamics.loads(
-            &airframe,
-            air_velocity_model_mps,
-            state.rates_model_radps,
-            control,
-        );
-        let weight_model_n = rotation.inverse_transform_vector(&Vec3::new(
-            0.0,
-            0.0,
-            config.mass_kg * config.gravity_mps2,
-        ));
-        loads.force_model_n = weight_model_n + Vec3::new(thrust_n, 0.0, 0.0) + loads.force_model_n;
-
-        if config.use_ground_model && state.position_world_m.z < 0.0 {
-            // Inherited ground model: damping is only 40 N*s/m, not mass-scaled.
-            // This is not a validated landing model for the default eight-tonne aircraft.
-            // TODO(terrain): replace with ground reactions at landing-gear contact
-            // points (spring, damper, friction, and their moments), using the
-            // terrain's height and slope from `MotionContext::terrain`. That
-            // breaks C++ parity for ground contact and needs its own checks:
-            // resting, a drop, a slope, friction, and timestep convergence.
-            let ground_force_n = (-400.0 * config.mass_kg * state.position_world_m.z
-                - 40.0 * state.velocity_world_mps.z)
-                .max(0.0);
-            loads.force_model_n +=
-                rotation.inverse_transform_vector(&Vec3::new(0.0, 0.0, -ground_force_n));
-        }
-        if !matches!(self.launch, LaunchState::Flying) {
-            loads.force_model_n = Vec3::zeros();
-            loads.moment_model_nm = Vec3::zeros();
-        }
-        loads.force_model_n.x += catapult_force_n;
-        let acceleration_model_mps2 = loads.force_model_n / config.mass_kg;
-        let rates = state.rates_model_radps;
-        let angular_acceleration_model_radps2 = config.inverse_inertia
-            * (loads.moment_model_nm - rates.cross(&(config.inertia_kgm2 * rates)));
-
-        // C++ evaluates loads from x_ (the start of the step), not RK4 stage x.
-        // Freeze loads here; only kinematics and attitude vary inside the stages.
-        let mut coordinates = state.coordinates();
+        // Forces and moments are recomputed from each RK4 stage's state. C++
+        // holds them at the start-of-step state, which makes the step first
+        // order; the comparison branch fixes that (docs/REFERENCE_NOTES.md).
+        let mut coordinates = AircraftState::from_truth(truth).coordinates();
         math::rk4(&mut coordinates, dt_s, |coordinates| {
+            let stage = AircraftState::from_coordinates(*coordinates);
+            let (acceleration_model_mps2, angular_acceleration_model_radps2) =
+                config.accelerations(&stage, control, flying, catapult_force_n);
             derivative(
-                AircraftState::from_coordinates(*coordinates),
+                stage,
                 acceleration_model_mps2,
                 angular_acceleration_model_radps2,
             )
@@ -497,6 +452,66 @@ impl FixedWing6Dof {
 }
 
 impl FixedWingConfig {
+    /// Linear and angular acceleration in the model frame for one state.
+    fn accelerations(
+        &self,
+        state: &AircraftState,
+        control: Control,
+        flying: bool,
+        catapult_force_n: f64,
+    ) -> (Vec3, Vec3) {
+        let rotation = UnitQuaternion::new_normalize(state.attitude_model);
+        let wind_model_mps = rotation.inverse_transform_vector(&flip_yz(self.wind_world_mps));
+        // Deliberate reference quirk: wind is ADDED to velocity, not subtracted.
+        let air_velocity_model_mps = state.velocity_model_mps + wind_model_mps;
+        let airframe = Airframe {
+            density_kgpm3: self.density_kgpm3,
+            span_m: self.span_m,
+            area_m2: self.area_m2,
+            chord_m: self.chord_m,
+            efficiency: self.efficiency,
+        };
+        let mut loads = self.aerodynamics.loads(
+            &airframe,
+            air_velocity_model_mps,
+            state.rates_model_radps,
+            control,
+        );
+        let weight_model_n = rotation.inverse_transform_vector(&Vec3::new(
+            0.0,
+            0.0,
+            self.mass_kg * self.gravity_mps2,
+        ));
+        let thrust_model_n = Vec3::new(self.thrust_n(control.throttle), 0.0, 0.0);
+        loads.force_model_n = weight_model_n + thrust_model_n + loads.force_model_n;
+
+        if self.use_ground_model && state.position_world_m.z < 0.0 {
+            // Inherited ground model: damping is only 40 N*s/m, not mass-scaled.
+            // This is not a validated landing model for the default eight-tonne aircraft.
+            // TODO(terrain): replace with ground reactions at landing-gear contact
+            // points (spring, damper, friction, and their moments), using the
+            // terrain's height and slope from `MotionContext::terrain`. That
+            // breaks C++ parity for ground contact and needs its own checks:
+            // resting, a drop, a slope, friction, and timestep convergence.
+            let ground_force_n = (-400.0 * self.mass_kg * state.position_world_m.z
+                - 40.0 * state.velocity_world_mps.z)
+                .max(0.0);
+            loads.force_model_n +=
+                rotation.inverse_transform_vector(&Vec3::new(0.0, 0.0, -ground_force_n));
+        }
+        if !flying {
+            loads.force_model_n = Vec3::zeros();
+            loads.moment_model_nm = Vec3::zeros();
+        }
+        loads.force_model_n.x += catapult_force_n;
+        let rates = state.rates_model_radps;
+        (
+            loads.force_model_n / self.mass_kg,
+            self.inverse_inertia
+                * (loads.moment_model_nm - rates.cross(&(self.inertia_kgm2 * rates))),
+        )
+    }
+
     fn thrust_n(&self, throttle: f64) -> f64 {
         // C++ Utilities::scale clamps again to the configured input range.
         // Defaults map zero throttle to -36,000 N (reverse thrust), not idle.

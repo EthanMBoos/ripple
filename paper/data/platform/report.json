@@ -14,7 +14,7 @@
     "trace.jsonl"
   ],
   "identical": false,
-  "max_position_difference_m": 2.5281346186607607e-12,
+  "max_position_difference_m": 6.62512424438931e-12,
   "cases": [
     {
       "mission": "missions_auction-sphere.xml",
@@ -39,6 +39,28 @@
       "max_position_difference_m": 0.0
     },
     {
+      "mission": "missions_fixed-wing-6dof-rascal.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 7.105427357601002e-15
+    },
+    {
+      "mission": "missions_fixed-wing-6dof-rascal.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 7.105427357601002e-15
+    },
+    {
       "mission": "missions_fixed-wing-6dof.xml",
       "workers": 1,
       "identical": {
@@ -47,7 +69,7 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 1.4210854715202004e-13
+      "max_position_difference_m": 2.3678883310186693e-12
     },
     {
       "mission": "missions_fixed-wing-6dof.xml",
@@ -58,7 +80,7 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 1.4210854715202004e-13
+      "max_position_difference_m": 2.3678883310186693e-12
     },
     {
       "mission": "missions_multirotor.xml",
@@ -567,7 +589,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-000.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-000.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -575,10 +597,10 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 7.163454916467663e-13
+      "max_position_difference_m": 4.1698628908537813e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-000.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-000.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -586,10 +608,10 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 7.163454916467663e-13
+      "max_position_difference_m": 4.1698628908537813e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-001.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-001.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -600,7 +622,7 @@
       "max_position_difference_m": 1.4210854715202004e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-001.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-001.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -611,7 +633,7 @@
       "max_position_difference_m": 1.4210854715202004e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-002.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-002.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -622,7 +644,7 @@
       "max_position_difference_m": 5.859285502108464e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-002.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-002.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -633,7 +655,7 @@
       "max_position_difference_m": 5.859285502108464e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-003.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-003.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -644,7 +666,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-003.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-003.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -655,7 +677,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-004.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-004.xml",
       "workers": 1,
       "identical": {
         "frames.bin": true,
@@ -666,7 +688,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-004.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-004.xml",
       "workers": 8,
       "identical": {
         "frames.bin": true,
@@ -677,7 +699,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-005.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-005.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -688,7 +710,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-005.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-005.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -699,7 +721,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-006.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-006.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -710,7 +732,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-006.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-006.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -721,7 +743,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-007.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-007.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -732,7 +754,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-007.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-007.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -743,7 +765,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-008.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-008.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -754,7 +776,7 @@
       "max_position_difference_m": 1.2710574864626038e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-008.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-008.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -765,7 +787,7 @@
       "max_position_difference_m": 1.2710574864626038e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-009.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-009.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -773,10 +795,10 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 2.2680452892996077e-12
+      "max_position_difference_m": 6.456171315449266e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-009.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-009.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -784,120 +806,10 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 2.2680452892996077e-12
+      "max_position_difference_m": 6.456171315449266e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-010.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-010.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-011.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-011.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-012.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-012.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-013.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-013.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-014.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-014.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-015.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-010.xml",
       "workers": 1,
       "identical": {
         "frames.bin": true,
@@ -908,7 +820,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-015.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-010.xml",
       "workers": 8,
       "identical": {
         "frames.bin": true,
@@ -919,7 +831,117 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-016.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-011.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-011.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-012.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-012.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-013.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-013.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-014.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-014.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-015.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-015.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-016.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -930,7 +952,7 @@
       "max_position_difference_m": 2.1316282072803006e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-016.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-016.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -941,7 +963,7 @@
       "max_position_difference_m": 2.1316282072803006e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-017.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-017.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -952,7 +974,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-017.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-017.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -963,7 +985,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-018.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-018.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -971,10 +993,10 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 1.5167715973946468e-12
+      "max_position_difference_m": 2.2914314707516465e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-018.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-018.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -982,10 +1004,10 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 1.5167715973946468e-12
+      "max_position_difference_m": 2.2914314707516465e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-019.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-019.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -996,7 +1018,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-019.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-019.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -1007,7 +1029,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-020.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-020.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -1018,7 +1040,7 @@
       "max_position_difference_m": 7.105427357601002e-15
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-020.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-020.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -1029,7 +1051,7 @@
       "max_position_difference_m": 7.105427357601002e-15
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-021.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-021.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -1040,7 +1062,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-021.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-021.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -1051,7 +1073,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-022.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-022.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -1059,10 +1081,10 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 1.5916157281026244e-12
+      "max_position_difference_m": 4.963638160851638e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-022.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-022.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -1070,274 +1092,10 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 1.5916157281026244e-12
+      "max_position_difference_m": 4.963638160851638e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-023.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.842170943040401e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-023.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.842170943040401e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-024.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 4.2537719614005497e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-024.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 4.2537719614005497e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-025.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-025.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-026.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-026.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-027.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-027.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-028.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-028.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-029.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-029.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-030.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-030.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-031.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-031.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-032.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.5281346186607607e-12
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-032.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.5281346186607607e-12
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-033.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-033.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-034.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 4.832213032818602e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-034.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 4.832213032818602e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-035.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-023.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -1348,7 +1106,7 @@
       "max_position_difference_m": 2.842170943040401e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-035.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-023.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -1359,997 +1117,7 @@
       "max_position_difference_m": 2.842170943040401e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-036.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 5.684341886080802e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-036.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 5.684341886080802e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-037.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 5.087332167107919e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-037.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 5.087332167107919e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-038.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-038.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-039.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-039.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-040.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-040.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-041.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-041.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-042.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-042.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-043.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.1247960480156585e-12
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-043.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.1247960480156585e-12
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-044.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-044.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-045.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-045.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-046.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-046.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-047.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 6.355287432313019e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-047.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 6.355287432313019e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-048.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-048.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-049.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 1.3877787807814457e-16
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-049.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 1.3877787807814457e-16
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-050.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-050.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-051.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.1316282072803006e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-051.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.1316282072803006e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-052.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-052.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-053.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-053.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-054.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-054.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-055.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 3.552713678800501e-15
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-055.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 3.552713678800501e-15
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-056.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.6812987050722663e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-056.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.6812987050722663e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-057.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-057.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-058.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-058.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-059.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-059.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-060.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.842170943040401e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-060.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.842170943040401e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-061.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 4.689582056016661e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-061.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 4.689582056016661e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-062.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-062.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-063.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-063.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-064.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 6.521915363565902e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-064.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 6.521915363565902e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-065.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-065.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-066.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-066.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-067.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-067.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-068.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-068.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-069.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 9.25343817704044e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-069.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 9.25343817704044e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-070.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-070.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-071.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.842170943040401e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-071.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.842170943040401e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-072.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-072.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-073.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-073.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-074.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.842170943040401e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-074.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 2.842170943040401e-14
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-075.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-075.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-076.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 3.8254412661252485e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-076.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 3.8254412661252485e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-077.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 5.481780795544725e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-077.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 5.481780795544725e-13
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-078.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-078.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-079.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-079.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-080.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-080.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-081.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-024.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2360,7 +1128,7 @@
       "max_position_difference_m": 1.6077746776921858e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-081.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-024.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2371,7 +1139,51 @@
       "max_position_difference_m": 1.6077746776921858e-13
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-082.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-025.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-025.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-026.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-026.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-027.xml",
       "workers": 1,
       "identical": {
         "frames.bin": true,
@@ -2382,7 +1194,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-082.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-027.xml",
       "workers": 8,
       "identical": {
         "frames.bin": true,
@@ -2393,7 +1205,183 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-083.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-028.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-028.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-029.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-029.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-030.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-030.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-031.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-031.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-032.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.153605071473261e-12
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-032.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.153605071473261e-12
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-033.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-033.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-034.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 4.832213032818602e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-034.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 4.832213032818602e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-035.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.842170943040401e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-035.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.842170943040401e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-036.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2404,7 +1392,7 @@
       "max_position_difference_m": 5.684341886080802e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-083.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-036.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2415,7 +1403,29 @@
       "max_position_difference_m": 5.684341886080802e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-084.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-037.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 7.105427357601002e-15
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-037.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 7.105427357601002e-15
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-038.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2426,7 +1436,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-084.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-038.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2437,7 +1447,469 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-085.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-039.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-039.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-040.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-040.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-041.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-041.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-042.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-042.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-043.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 1.368970808788651e-12
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-043.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 1.368970808788651e-12
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-044.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-044.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-045.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-045.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-046.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-046.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-047.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 5.605637319182512e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-047.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 5.605637319182512e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-048.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-048.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-049.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 1.3877787807814457e-16
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-049.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 1.3877787807814457e-16
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-050.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-050.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-051.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.1316282072803006e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-051.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.1316282072803006e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-052.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-052.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-053.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-053.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-054.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-054.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-055.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 8.550164782543177e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-055.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 8.550164782543177e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-056.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 6.62512424438931e-12
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-056.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 6.62512424438931e-12
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-057.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-057.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-058.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-058.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-059.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-059.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-060.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2448,7 +1920,7 @@
       "max_position_difference_m": 2.842170943040401e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-085.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-060.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2459,7 +1931,7 @@
       "max_position_difference_m": 2.842170943040401e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-086.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-061.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2467,10 +1939,10 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 5.490983052812242e-13
+      "max_position_difference_m": 2.6674043071239034e-12
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-086.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-061.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2478,54 +1950,10 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 5.490983052812242e-13
+      "max_position_difference_m": 2.6674043071239034e-12
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-087.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-087.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-088.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 1.5042040357001544e-12
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-088.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 1.5042040357001544e-12
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-089.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-062.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2536,7 +1964,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-089.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-062.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2547,51 +1975,183 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-090.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-063.xml",
       "workers": 1,
       "identical": {
-        "frames.bin": true,
+        "frames.bin": false,
         "events.json": true,
         "summary.csv": true,
-        "trace.jsonl": true
+        "trace.jsonl": false
       },
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-090.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-063.xml",
       "workers": 8,
       "identical": {
-        "frames.bin": true,
+        "frames.bin": false,
         "events.json": true,
         "summary.csv": true,
-        "trace.jsonl": true
+        "trace.jsonl": false
       },
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-091.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-064.xml",
       "workers": 1,
       "identical": {
-        "frames.bin": true,
+        "frames.bin": false,
         "events.json": true,
         "summary.csv": true,
-        "trace.jsonl": true
+        "trace.jsonl": false
       },
-      "max_position_difference_m": 0.0
+      "max_position_difference_m": 6.521915363565902e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-091.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-064.xml",
       "workers": 8,
       "identical": {
-        "frames.bin": true,
+        "frames.bin": false,
         "events.json": true,
         "summary.csv": true,
-        "trace.jsonl": true
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 6.521915363565902e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-065.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
       },
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-092.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-065.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-066.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-066.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-067.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-067.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-068.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-068.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-069.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 5.362597410144533e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-069.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 5.362597410144533e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-070.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-070.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-071.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2602,7 +2162,7 @@
       "max_position_difference_m": 2.842170943040401e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-092.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-071.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2613,7 +2173,7 @@
       "max_position_difference_m": 2.842170943040401e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-093.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-072.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2624,7 +2184,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-093.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-072.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2635,7 +2195,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-094.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-073.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2646,7 +2206,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-094.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-073.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2657,7 +2217,29 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-095.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-074.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.2914314707516465e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-074.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.2914314707516465e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-075.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2668,7 +2250,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-095.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-075.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2679,29 +2261,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-096.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-096.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "runs_campaign-000_generated-missions_generated-097.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-076.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2709,10 +2269,10 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 2.3437142008433856e-13
+      "max_position_difference_m": 1.1790728258740467e-12
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-097.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-076.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2720,10 +2280,32 @@
         "summary.csv": true,
         "trace.jsonl": false
       },
-      "max_position_difference_m": 2.3437142008433856e-13
+      "max_position_difference_m": 1.1790728258740467e-12
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-098.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-077.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 5.084229945850415e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-077.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 5.084229945850415e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-078.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2734,7 +2316,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-098.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-078.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -2745,7 +2327,51 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-099.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-079.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-079.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-080.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-080.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-081.xml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -2756,7 +2382,403 @@
       "max_position_difference_m": 5.684341886080802e-14
     },
     {
-      "mission": "runs_campaign-000_generated-missions_generated-099.xml",
+      "mission": "runs_campaign-002_generated-missions_generated-081.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 5.684341886080802e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-082.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-082.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-083.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 9.056005846079426e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-083.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 9.056005846079426e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-084.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-084.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-085.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.842170943040401e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-085.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.842170943040401e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-086.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 1.3440343611990355e-12
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-086.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 1.3440343611990355e-12
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-087.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-087.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-088.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.5604789765464394e-12
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-088.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.5604789765464394e-12
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-089.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-089.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-090.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-090.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-091.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-091.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-092.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.842170943040401e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-092.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 2.842170943040401e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-093.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-093.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-094.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-094.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-095.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-095.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-096.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-096.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": true,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-097.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 5.209785393794664e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-097.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 5.209785393794664e-13
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-098.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-098.xml",
+      "workers": 8,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-099.xml",
+      "workers": 1,
+      "identical": {
+        "frames.bin": false,
+        "events.json": true,
+        "summary.csv": true,
+        "trace.jsonl": false
+      },
+      "max_position_difference_m": 5.684341886080802e-14
+    },
+    {
+      "mission": "runs_campaign-002_generated-missions_generated-099.xml",
       "workers": 8,
       "identical": {
         "frames.bin": false,

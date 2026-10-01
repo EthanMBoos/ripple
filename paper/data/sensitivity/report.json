@@ -1,5 +1,5 @@
 {
-  "check": "<workspace>/scrimmage-rs/runs/campaign-000/matrix",
+  "check": "<workspace>/scrimmage-rs/runs/campaign-002/matrix",
   "defects": [
     {
       "name": "controller substeps receive the full step dt",
@@ -45,6 +45,9 @@
           "summary"
         ],
         "fixed-wing-6dof.xml": [
+          "frames"
+        ],
+        "fixed-wing-6dof-rascal.xml": [
           "frames"
         ],
         "multirotor.xml": [
@@ -110,6 +113,10 @@
           "trace"
         ],
         "fixed-wing-6dof.xml": [
+          "summary",
+          "trace"
+        ],
+        "fixed-wing-6dof-rascal.xml": [
           "summary",
           "trace"
         ],
@@ -273,6 +280,7 @@
     "noisy-state-bias.xml": [],
     "networks-local-global.xml": [],
     "fixed-wing-6dof.xml": [],
+    "fixed-wing-6dof-rascal.xml": [],
     "multirotor.xml": [],
     "single-integrator.xml": [],
     "noisy-contacts-bias.xml": [],

@@ -3,11 +3,12 @@
 
 Builds two C++ branches from the sibling checkout: the unmodified baseline
 (Ubuntu-24.04) and the comparison branch (benchmarking-edits), which adds opt-in
-instrumentation, restores interleaved controller/motion substeps, and fixes
-AircraftPIDController (its timestep and default altitude gain).
+instrumentation, restores interleaved controller/motion substeps, fixes
+AircraftPIDController (its timestep and default altitude gain), and evaluates
+FixedWing6DOF and Multirotor forces at every RK4 stage.
 Per mission, the instrumented build with tracing must write the same frames and
-summaries as without it, and with motion_multiplier 1 and no
-AircraftPIDController both must match the baseline (non-interference).
+summaries as without it, and with motion_multiplier 1 and none of those three
+plugins both must match the baseline (non-interference).
 Otherwise the baseline differs by design and its equality is only recorded. The comparison run adds
 SCRIMMAGE_LIBCXX_SPAWN_RANDOM=1 and is compared with Rust frames, summaries, and
 traces. Requires Python 3.10+, Docker, Cargo, and the
@@ -313,10 +314,14 @@ def motion_multiplier(mission):
     return int(run.get("motion_multiplier", "1")) if run is not None else 1
 
 
-def uses_fixed_controller(mission):
-    """Whether the mission flies AircraftPIDController, which the comparison branch fixes."""
-    return any(element.text and element.text.strip() == "AircraftPIDController"
-               for element in ET.parse(mission).getroot().iter("controller"))
+FIXED_PLUGINS = {"AircraftPIDController", "FixedWing6DOF", "Multirotor"}
+
+
+def uses_fixed_plugin(mission):
+    """Whether the mission uses a controller or motion model the comparison branch fixes."""
+    root = ET.parse(mission).getroot()
+    elements = [*root.iter("controller"), *root.iter("motion_model")]
+    return any(element.text and element.text.strip() in FIXED_PLUGINS for element in elements)
 
 
 def check_mission(args, mission, directory, images, rust):
@@ -328,15 +333,15 @@ def check_mission(args, mission, directory, images, rust):
         effective = inputs / "effective.xml"
         # Non-interference: instrumentation must not change C++ outputs. The
         # comparison branch also interleaves substeps, which changes outputs
-        # only when there is more than one, and fixes AircraftPIDController
-        # (docs/REFERENCE_NOTES.md).
+        # only when there is more than one, and fixes AircraftPIDController,
+        # FixedWing6DOF, and Multirotor (docs/REFERENCE_NOTES.md).
         baseline = run_cpp(args, images["baseline"], directory / "cpp-baseline", effective, {})
         untraced = run_cpp(args, images["instrumented"], directory / "cpp-untraced",
                            effective, UNTRACED_ENV)
         traced = run_cpp(args, images["instrumented"], directory / "cpp-traced",
                          effective, TRACED_ENV)
         substeps = motion_multiplier(effective)
-        reference = baseline if substeps == 1 and not uses_fixed_controller(effective) else untraced
+        reference = baseline if substeps == 1 and not uses_fixed_plugin(effective) else untraced
         result["motion_multiplier"] = substeps
         result["cpp_non_interference"] = {
             variant: {name: sha256(logs / name) == sha256(reference / name)

@@ -149,7 +149,7 @@ and compared not only where every agent went, but also what each agent
 believed, what its sensors reported, what each plugin commanded, and when every
 message arrived (Appendix~\ref{app:parity}).
 \begin{itemize}
-\item \emph{They agree.} All 13 hand-written missions and 100 randomly
+\item \emph{They agree.} All 14 hand-written missions and 100 randomly
 generated scenarios match. Positions agree to under a nanometre, usually to
 about $10^{-14}$~m, which is floating-point rounding.
 \item \emph{The comparison is strict enough to catch real mistakes.} To test
@@ -1012,7 +1012,7 @@ the C++ branch can switch spawning to the same fully specified generator Rust
 uses. Rust's sensor noise uses its own random streams by design, so noise is
 compared by distribution instead of sample by sample.
 
-A comparison that cannot fail proves nothing. Beyond thirteen hand-written
+A comparison that cannot fail proves nothing. Beyond fourteen hand-written
 missions, we ran 100 randomly generated scenarios and ten long ones of up to
 1{,}000~s, planted twelve plausible porting bugs to confirm the comparison
 catches them, and tested the noise distributions. Appendix~\ref{app:method}
@@ -1064,12 +1064,16 @@ A checker builds each C++ branch from a \texttt{git archive} inside the
 unmodified upstream dependency image (\texttt{linux/amd64}, GCC~13.3), headless
 and single-threaded. \texttt{Ubuntu-24.04} is the unmodified reference;
 \texttt{benchmarking-edits} adds opt-in comparison support and the substep
-correction (Appendix~\ref{app:substeps}). No model equation is patched. A later
+correction (Appendix~\ref{app:substeps}). A later
 commit (\texttt{5777aeea1}) also makes AircraftPIDController use its given
-timestep and lowers its default altitude derivative gain, matching Rust; the
-campaign reported here includes it. The timestep change is a fix; the lower gain is
+timestep and lowers its default altitude derivative gain, matching Rust. The timestep change is a fix; the lower gain is
 a tuning choice, checked on one aircraft after one upset
-(\texttt{paper/data/aircraft-pid-upset}). Two command drivers exist in both implementations:
+(\texttt{paper/data/aircraft-pid-upset}). A third commit
+(\texttt{1c8595b91}) is the only change to model equations: FixedWing6DOF and
+Multirotor computed forces and moments from the start-of-step state at every
+RK4 stage, which made the step first order; both implementations now use each
+stage's state (\texttt{paper/data/rk4-loads}). The campaign reported here
+includes all three. Two command drivers exist in both implementations:
 \texttt{MotorSpeeds}, because the upstream multirotor controller no longer
 matches the multirotor model, and \texttt{ConstantVelocity}, because no retained
 upstream autonomy commands a velocity. Rust runs at 1, 2, and 8 workers, with
@@ -1090,7 +1094,7 @@ sensor readings must agree within $10^{-8}$~m, $10^{-8}$~m/s, $10^{-9}$~rad, and
 $10^{-9}$~rad/s; outputs within $10^{-8}$; covariances within $10^{-9}$;
 summaries within $10^{-6}$. Deliveries must match exactly, in order. The
 position limit was set at 27 times the largest difference then measured in a
-passing run ($3.7\times10^{-10}$~m); the largest now is $1.8\times10^{-10}$~m.
+passing run ($3.7\times10^{-10}$~m); the largest now is $2.4\times10^{-10}$~m.
 They replace the original 0.01~m and $10^{-3}$, which let a planted
 sub-micrometre bug through.
 
@@ -1125,9 +1129,10 @@ two implementations.
 
 \texttt{generated-007} flies four FixedWing6DOF aircraft with
 AircraftPIDController. It agreed throughout until both implementations lowered
-that controller's altitude derivative gain, which changed the flight. C++ and
-Rust now exceed the tolerance after 30.9~s and end $3.7\times10^{-8}$~m apart;
-the control diverges earlier, after 14.6~s, and ends $2.0\times10^{-6}$~m away
+that controller's altitude derivative gain, which changed the flight; computing
+the aircraft's forces at every RK4 stage changed it again. C++ and
+Rust now exceed the tolerance after 76.4~s and end $8.4\times10^{-9}$~m apart;
+the control diverges much earlier, after 14.4~s, and ends $7.9\times10^{-7}$~m away
 (Table~\ref{tab:long}). Again this suggests numerical sensitivity rather than a
 porting error, with the same caveat. Before the substep
 order was restored, \texttt{generated-009} also diverged, after 69~s; it now

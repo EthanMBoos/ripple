@@ -34,7 +34,7 @@
     "frames.bin": true,
     "summary.csv": true
   },
-  "cpp_log_directory": "cpp/logs/2026-09-30_18-30-26",
+  "cpp_log_directory": "cpp/logs/2026-10-01_12-39-02",
   "cpp_output_hashes": {
     "frames.bin": "fc612c80d3cc9341a5d9a067e1df9d2154b1930127add3099dbd5ba2c5bbdbd0",
     "summary.csv": "77e5f1a49d2ba31565746f680051b65779c04c027fa5e5d97892965e5556b445"
@@ -56,7 +56,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "58e075f2bc18786dea4520baebf78982b3090cbe278d0904e3560a59e0bf46fb",
+  "recording_sha256": "2b7a582969dfbe511d3f9b249598d2b989e99683e9ccc559558f8167b487a5c0",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

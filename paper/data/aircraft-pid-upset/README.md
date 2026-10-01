@@ -26,6 +26,11 @@ altitude, over the whole run and after the first 5 s:
 Measured with the Rust port in the commit that added this folder; with no
 substeps C++ and Rust fly this identically.
 
+Those runs held forces fixed through each RK4 step, as C++ did. With forces
+computed at every stage (`paper/data/rk4-loads`, part D), D 0.01 still
+wanders 91 m and 0.002 peaks at 1.39 m (0.64 m after 5 s), so frozen forces
+were not the cause and the lower gain stands.
+
 ## Why the lower gain is better
 
 The derivative term reacts to how fast the altitude error is changing, not

@@ -106,17 +106,19 @@ The checker builds two committed branches of `../scrimmage`:
   one C++ regression: each substep runs controllers, then motion, as SCRIMMAGE
   did until GPU support split them (GPU motion models are disabled; see
   [reference notes](../docs/REFERENCE_NOTES.md#substep-order-a-c-regression-fixed-on-the-comparison-branch)).
-  And AircraftPIDController uses its given timestep with a lower default
+  AircraftPIDController uses its given timestep with a lower default
   altitude derivative gain ([reference notes](../docs/REFERENCE_NOTES.md#intentional-differences-from-c)).
-  With neither variable set, `motion_multiplier` 1, and no
-  AircraftPIDController, the branch behaves exactly like the reference.
+  And FixedWing6DOF and Multirotor compute forces and moments at every RK4
+  stage instead of once per step ([reference notes](../docs/REFERENCE_NOTES.md#rk4-loads-a-c-defect-fixed-on-the-comparison-branch)).
+  With neither variable set, `motion_multiplier` 1, and none of those three
+  plugins, the branch behaves exactly like the reference.
 
 Each mission runs C++ four times. The instrumented build with and without
 tracing must write byte-identical `frames.bin` and `summary.csv`, and with
-`motion_multiplier` 1 and no AircraftPIDController both must also match the
-unmodified build (`cpp_non_interference` in `result.json`); a difference fails
-the case. With more substeps or AircraftPIDController the unmodified build
-differs by design, and `cpp_baseline_equality` records it. The fourth run, with tracing and the libc++-compatible spawn stream, is
+`motion_multiplier` 1 and no AircraftPIDController, FixedWing6DOF, or
+Multirotor both must also match the unmodified build (`cpp_non_interference`
+in `result.json`); a difference fails the case. With more substeps or one of
+those plugins the unmodified build differs by design, and `cpp_baseline_equality` records it. The fourth run, with tracing and the libc++-compatible spawn stream, is
 the one compared with Rust. Rust runs once more with `--trace`, which must leave
 its frames, events, and summary byte-identical (`trace_equality`).
 

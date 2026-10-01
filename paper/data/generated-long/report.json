@@ -37,7 +37,7 @@
         "frames.bin": false,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-09-30_18-39-52",
+      "cpp_log_directory": "cpp/logs/2026-10-01_12-49-36",
       "cpp_output_hashes": {
         "frames.bin": "bb4856653731cb2d1189d5a3af663216a0093239f6879538e57c3760086d993e",
         "summary.csv": "0c152c641213c21b699733cb45d0b208d72703a77f2ff9121b027a27cbad7d55"
@@ -59,7 +59,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "3352a08ab03b068ea457503c2eb0c46ad88822be69b2b8cc27e7e3f1f05306be",
+      "recording_sha256": "cca91ac486003efe3e0436aaecf0877846f46c28ae30524f2ed5bd9d959fcd42",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -209,7 +209,7 @@
         "frames.bin": true,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-09-30_18-40-54",
+      "cpp_log_directory": "cpp/logs/2026-10-01_12-50-42",
       "cpp_output_hashes": {
         "frames.bin": "11f59cd61efe3f70246988588d7cdfe86a5fd6bb0473911df711a239dc49dc5e",
         "summary.csv": "3ce8464cf8d8bcafd765efb79e7201fd67345da18888c0312141be420040c307"
@@ -231,7 +231,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "fe8d5d0955208cb7ebf78f6068a587dc231278bf59ffc77c561d28e313dfaaae",
+      "recording_sha256": "df8828ba207e367c9db4a3ab170ad61c8af342aaadfb268a4f798790cbea5e5b",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -342,7 +342,7 @@
         "frames.bin": false,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-09-30_18-42-26",
+      "cpp_log_directory": "cpp/logs/2026-10-01_12-52-15",
       "cpp_output_hashes": {
         "frames.bin": "58caeb44e9061b821989e508ad8bfdcf02c1961aeb8c49ae58c6b1df0f0c7027",
         "summary.csv": "ea8b15c6a36de7aeae0a48a847df1ed9ef7c9c9d13e0cc320e2b5b9d1df9f82a"
@@ -364,7 +364,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "1af97d50b97c27a0bea32cebda89d3d9404bf0d65e1c446fe6d1b2eb5f6b45a1",
+      "recording_sha256": "c1683953774b0cc04faeb5baf4279769f29fcd3238af061c91054ebbcc92bc53",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -472,7 +472,7 @@
         "frames.bin": true,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-09-30_18-43-08",
+      "cpp_log_directory": "cpp/logs/2026-10-01_12-52-58",
       "cpp_output_hashes": {
         "frames.bin": "0436f34b271c7626a7dc3d1500e60c7c57223b93c524803136f4ee8b4e577e94",
         "summary.csv": "6e6f4a6d7074c3cc9e119498079fc2192a0d0b5a37b3c31ad6ee77111f15636c"
@@ -494,7 +494,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "8d0ae22001acc2be5305fa8163d137582c24cf4b940d9c32a4090267965ad445",
+      "recording_sha256": "27ae2b483f9662e4f7dd672f9262096c3f08f67f3e35307cd8caf4b0cb4e5945",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -607,7 +607,7 @@
         "frames.bin": true,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-09-30_18-44-19",
+      "cpp_log_directory": "cpp/logs/2026-10-01_12-54-11",
       "cpp_output_hashes": {
         "frames.bin": "cfd358b8dc0d9ea4d8f8fefa364c19b9c5c6b986dc8dc13b546185470ddad51a",
         "summary.csv": "6d813ee03c52f5bd1183f0f82342039f25bc3f999f3910bcd1967db425effdcf"
@@ -629,7 +629,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "31f11709e18f7319e585e950d2cf1fece826a2504e9a6807d0f519b887b42bdd",
+      "recording_sha256": "b1874f94c57a2323f7a7f4e9a9ef004887e2273fc2c119567951797f8d6346fe",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -745,7 +745,7 @@
         "frames.bin": true,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-09-30_18-44-37",
+      "cpp_log_directory": "cpp/logs/2026-10-01_12-54-29",
       "cpp_output_hashes": {
         "frames.bin": "0fa08986ecac31aaa80c61e83f1464c79ad99634894a6da0ce7020a821b35520",
         "summary.csv": "5b311aadfb6f7a104e23614ecf71bc281fa08f0f16a734ee2bbd1616af97c7dd"
@@ -767,7 +767,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "db1ac752f0138ac9dc888f013fc923b4389fd50f8def272b07cca28329c43fe9",
+      "recording_sha256": "c3a9b6c9cf42c1d31dbfd343dd317d77c4a78cb9d6a1dd2a9af8b1425629c16c",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -880,7 +880,7 @@
         "frames.bin": false,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-09-30_18-44-58",
+      "cpp_log_directory": "cpp/logs/2026-10-01_12-54-51",
       "cpp_output_hashes": {
         "frames.bin": "511a323a7c53a89fc877cd1aedc3daeef25e21144c2abacf23497eaed600b674",
         "summary.csv": "509e250b13bbf598d9edbcff7df128ddb63956a0922356445c9520cdf5a5028b"
@@ -902,7 +902,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "ac68adbd356e17be93b7e6cba9fbcf3140d5df580e74a0f7c43df6819df380b5",
+      "recording_sha256": "d217278eda3909daa4a41454ca0eb94f8a230b49fd18712eab50d9051458497b",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1010,9 +1010,9 @@
         "frames.bin": false,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-09-30_18-45-31",
+      "cpp_log_directory": "cpp/logs/2026-10-01_12-55-24",
       "cpp_output_hashes": {
-        "frames.bin": "2b8c7243c8e81662ed8abf38f51301e4d108e79fdec62342b2b0ab6d0938a965",
+        "frames.bin": "d428101cf9c4fa35ae758dc87e62d47fa6f7bed9d6a3348175bc783707d5822d",
         "summary.csv": "3bae886dc2656253cf9d266ca7870eef1966a3b6179101abf2ddb15ad4ace1ca"
       },
       "worker_equality": {
@@ -1032,7 +1032,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "0094b43cf1898b8f8b79808a08839ba99d5a1536a7f3c0478326424e95d0a2bc",
+      "recording_sha256": "97012e223cfa86956d6970d764684bbed56140d51e8df2a9758865645df3f0d6",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1040,27 +1040,27 @@
       },
       "rust_output_hashes": {
         "rust-1": {
-          "frames.bin": "674a31adf21f419f93c6641de090d312f1fe608f4f5a8eda80d26c2affd1d9a1",
+          "frames.bin": "516a372ce640c733f5d9a9a537133fc17e7ff38d4b4cc766057df91974d33f57",
           "events.json": "225a91fb3164f50aaed29fd9fe99e00f9aec951a76336a4c01c9bf5338575abb",
           "summary.csv": "c7bc43810a21e389aed689d5e5d544abba3a4d2f5893182a5180cb4a3d069243"
         },
         "rust-2": {
-          "frames.bin": "674a31adf21f419f93c6641de090d312f1fe608f4f5a8eda80d26c2affd1d9a1",
+          "frames.bin": "516a372ce640c733f5d9a9a537133fc17e7ff38d4b4cc766057df91974d33f57",
           "events.json": "225a91fb3164f50aaed29fd9fe99e00f9aec951a76336a4c01c9bf5338575abb",
           "summary.csv": "c7bc43810a21e389aed689d5e5d544abba3a4d2f5893182a5180cb4a3d069243"
         },
         "rust-8": {
-          "frames.bin": "674a31adf21f419f93c6641de090d312f1fe608f4f5a8eda80d26c2affd1d9a1",
+          "frames.bin": "516a372ce640c733f5d9a9a537133fc17e7ff38d4b4cc766057df91974d33f57",
           "events.json": "225a91fb3164f50aaed29fd9fe99e00f9aec951a76336a4c01c9bf5338575abb",
           "summary.csv": "c7bc43810a21e389aed689d5e5d544abba3a4d2f5893182a5180cb4a3d069243"
         },
         "rust-rerun": {
-          "frames.bin": "674a31adf21f419f93c6641de090d312f1fe608f4f5a8eda80d26c2affd1d9a1",
+          "frames.bin": "516a372ce640c733f5d9a9a537133fc17e7ff38d4b4cc766057df91974d33f57",
           "events.json": "225a91fb3164f50aaed29fd9fe99e00f9aec951a76336a4c01c9bf5338575abb",
           "summary.csv": "c7bc43810a21e389aed689d5e5d544abba3a4d2f5893182a5180cb4a3d069243"
         },
         "rust-trace": {
-          "frames.bin": "674a31adf21f419f93c6641de090d312f1fe608f4f5a8eda80d26c2affd1d9a1",
+          "frames.bin": "516a372ce640c733f5d9a9a537133fc17e7ff38d4b4cc766057df91974d33f57",
           "events.json": "225a91fb3164f50aaed29fd9fe99e00f9aec951a76336a4c01c9bf5338575abb",
           "summary.csv": "c7bc43810a21e389aed689d5e5d544abba3a4d2f5893182a5180cb4a3d069243"
         }
@@ -1070,33 +1070,33 @@
         "reference_frames": 10001,
         "candidate_frames": 10001,
         "compared_entity_states": 89548,
-        "max_position_error_m": 5.7683350034741136e-08,
-        "max_velocity_error_mps": 3.3860054268930774e-08,
-        "max_orientation_error_rad": 1.5984485025725341e-09,
-        "max_angular_velocity_error_radps": 3.0556195838506796e-09,
+        "max_position_error_m": 1.1646772033852995e-08,
+        "max_velocity_error_mps": 8.516481400764209e-09,
+        "max_orientation_error_rad": 3.8768947147147573e-10,
+        "max_angular_velocity_error_radps": 7.961804398601193e-10,
         "max_timestamp_error_s": 0.0,
-        "mismatch_count": 6908,
+        "mismatch_count": 173,
         "first_mismatches": [
-          "frame 3093, t=30.940000000002037 s, entity 3: position=1.000758645171782e-08 m, velocity=2.6138990587068795e-09 m/s, orientation=7.626033651277146e-11 rad, angular velocity=1.061292448561711e-10 rad/s",
-          "frame 3094, t=30.95000000000204 s, entity 3: position=1.002705028496139e-08 m, velocity=2.6126072175324067e-09 m/s, orientation=7.541095095462726e-11 rad, angular velocity=1.0912406548409341e-10 rad/s",
-          "frame 3095, t=30.96000000000204 s, entity 3: position=1.0046966197918492e-08 m, velocity=2.611273059224151e-09 m/s, orientation=7.45299980483999e-11 rad, angular velocity=1.1214985814410977e-10 rad/s",
-          "frame 3096, t=30.97000000000204 s, entity 3: position=1.0066436510462282e-08 m, velocity=2.60990391343182e-09 m/s, orientation=7.361838916506544e-11 rad, angular velocity=1.1519282574532953e-10 rad/s",
-          "frame 3097, t=30.980000000002043 s, entity 3: position=1.0086114172931798e-08 m, velocity=2.6084848859710197e-09 m/s, orientation=7.267707202920858e-11 rad, angular velocity=1.1824695134408455e-10 rad/s",
-          "frame 3098, t=30.990000000002045 s, entity 3: position=1.0105652820167838e-08 m, velocity=2.6070161350529803e-09 m/s, orientation=7.170692844756661e-11 rad, angular velocity=1.213022081473951e-10 rad/s",
-          "frame 3099, t=31.000000000002046 s, entity 3: position=1.0125168532503886e-08 m, velocity=2.6054717807549965e-09 m/s, orientation=7.070906100166999e-11 rad, angular velocity=1.2435080799377375e-10 rad/s",
-          "frame 3100, t=31.010000000002048 s, entity 3: position=1.0144598871492784e-08 m, velocity=2.6038631979443924e-09 m/s, orientation=6.968461964411376e-11 rad, angular velocity=1.273850690591065e-10 rad/s",
-          "frame 3101, t=31.02000000000205 s, entity 3: position=1.0163805680845156e-08 m, velocity=2.602175260065452e-09 m/s, orientation=6.863473136764408e-11 rad, angular velocity=1.303972942009376e-10 rad/s",
-          "frame 3102, t=31.03000000000205 s, entity 3: position=1.0183241580072652e-08 m, velocity=2.600404395009895e-09 m/s, orientation=6.756090312115608e-11 rad, angular velocity=1.3338181623406502e-10 rad/s",
-          "frame 3103, t=31.040000000002053 s, entity 3: position=1.0202275784351463e-08 m, velocity=2.598534545404123e-09 m/s, orientation=6.646426394534415e-11 rad, angular velocity=1.3633275725078916e-10 rad/s",
-          "frame 3104, t=31.050000000002054 s, entity 3: position=1.0221830642808332e-08 m, velocity=2.5965677023180673e-09 m/s, orientation=6.534641927978532e-11 rad, angular velocity=1.392450463130984e-10 rad/s",
-          "frame 3105, t=31.060000000002056 s, entity 3: position=1.024141415106661e-08 m, velocity=2.5944892745334503e-09 m/s, orientation=6.420887988913536e-11 rad, angular velocity=1.4211297439757657e-10 rad/s",
-          "frame 3106, t=31.070000000002057 s, entity 3: position=1.0260687833499471e-08 m, velocity=2.5922951788874804e-09 m/s, orientation=6.30533406088794e-11 rad, angular velocity=1.4493202363731244e-10 rad/s",
-          "frame 3107, t=31.08000000000206 s, entity 3: position=1.0279876700745894e-08 m, velocity=2.5899773978858978e-09 m/s, orientation=6.188137003463332e-11 rad, angular velocity=1.476980447742991e-10 rad/s",
-          "frame 3108, t=31.09000000000206 s, entity 3: position=1.029896326603708e-08 m, velocity=2.5875382153306575e-09 m/s, orientation=6.069507367635807e-11 rad, angular velocity=1.5040530525569704e-10 rad/s",
-          "frame 3109, t=31.100000000002062 s, entity 3: position=1.0318266909653587e-08 m, velocity=2.584975169977813e-09 m/s, orientation=5.949642872664628e-11 rad, angular velocity=1.5305143695212167e-10 rad/s",
-          "frame 3110, t=31.110000000002064 s, entity 3: position=1.033742914126531e-08 m, velocity=2.582275727943306e-09 m/s, orientation=5.828749157949084e-11 rad, angular velocity=1.5563107063838296e-10 rad/s",
-          "frame 3111, t=31.120000000002065 s, entity 3: position=1.0356431192373218e-08 m, velocity=2.5794344439371894e-09 m/s, orientation=5.707078124078568e-11 rad, angular velocity=1.5814234943335394e-10 rad/s",
-          "frame 3112, t=31.130000000002067 s, entity 3: position=1.0375539769067676e-08 m, velocity=2.5764507101858834e-09 m/s, orientation=5.5848591034397686e-11 rad, angular velocity=1.6058013258077188e-10 rad/s"
+          "frame 7639, t=76.40000000000218 s, entity 3: position=1.0007037844209466e-08 m, velocity=2.0607207222377438e-09 m/s, orientation=3.3232807969873545e-10 rad, angular velocity=6.909297780570966e-11 rad/s",
+          "frame 7640, t=76.41000000000219 s, entity 3: position=1.0024511154414771e-08 m, velocity=2.026984626075309e-09 m/s, orientation=3.329869465045888e-10 rad, angular velocity=6.306556864136365e-11 rad/s",
+          "frame 7641, t=76.42000000000219 s, entity 3: position=1.0041912885667387e-08 m, velocity=1.9967302927802287e-09 m/s, orientation=3.335853835462805e-10 rad, angular velocity=5.7061521012988345e-11 rad/s",
+          "frame 7642, t=76.4300000000022 s, entity 3: position=1.0058645935086906e-08 m, velocity=1.970171171165448e-09 m/s, orientation=3.341235742491896e-10 rad, angular velocity=5.108430865496827e-11 rad/s",
+          "frame 7643, t=76.4400000000022 s, entity 3: position=1.0074221733031528e-08 m, velocity=1.947478091577459e-09 m/s, orientation=3.3460172724922454e-10 rad, angular velocity=4.513754127524098e-11 rad/s",
+          "frame 7644, t=76.4500000000022 s, entity 3: position=1.0089297466956175e-08 m, velocity=1.9288266192088147e-09 m/s, orientation=3.3502004839722306e-10 rad, angular velocity=3.9227660498157617e-11 rad/s",
+          "frame 7645, t=76.46000000000221 s, entity 3: position=1.0103697592159867e-08 m, velocity=1.914365450784651e-09 m/s, orientation=3.3537876801542443e-10 rad, angular velocity=3.3363276627100886e-11 rad/s",
+          "frame 7646, t=76.47000000000222 s, entity 3: position=1.0116930173975174e-08 m, velocity=1.9041890766719218e-09 m/s, orientation=3.3567813370894466e-10 rad, angular velocity=2.75616717250824e-11 rad/s",
+          "frame 7647, t=76.48000000000222 s, entity 3: position=1.0129840161776418e-08 m, velocity=1.8983948874613717e-09 m/s, orientation=3.3591841196674465e-10 rad, angular velocity=2.185088466480134e-11 rad/s",
+          "frame 7648, t=76.49000000000223 s, entity 3: position=1.0141734969875433e-08 m, velocity=1.8970325817322133e-09 m/s, orientation=3.3609988075790857e-10 rad, angular velocity=1.630017385312861e-11 rad/s",
+          "frame 7649, t=76.50000000000223 s, entity 3: position=1.0153438752545245e-08 m, velocity=1.900108600149412e-09 m/s, orientation=3.362228361894003e-10 rad, angular velocity=1.1106015559131513e-11 rad/s",
+          "frame 7650, t=76.51000000000224 s, entity 3: position=1.01636729616632e-08 m, velocity=1.9076060191056613e-09 m/s, orientation=3.362875743084532e-10 rad, angular velocity=7.025626373781993e-12 rad/s",
+          "frame 7651, t=76.52000000000224 s, entity 3: position=1.017266353623039e-08 m, velocity=1.9194634075994904e-09 m/s, orientation=3.3629445592974685e-10 rad, angular velocity=6.531589706899672e-12 rad/s",
+          "frame 7652, t=76.53000000000225 s, entity 3: position=1.0181770394529652e-08 m, velocity=1.935601257774749e-09 m/s, orientation=3.362438087592866e-10 rad, angular velocity=1.0100020548232063e-11 rad/s",
+          "frame 7653, t=76.54000000000225 s, entity 3: position=1.018975513361267e-08 m, velocity=1.9558877634282653e-09 m/s, orientation=3.3613597564795973e-10 rad, angular velocity=1.5038882864437533e-11 rad/s",
+          "frame 7654, t=76.55000000000226 s, entity 3: position=1.0196613646719372e-08 m, velocity=1.980189808803126e-09 m/s, orientation=3.3597133453513533e-10 rad, angular velocity=2.0343474587513466e-11 rad/s",
+          "frame 7655, t=76.56000000000226 s, entity 3: position=1.0203299800022433e-08 m, velocity=2.0083253428417213e-09 m/s, orientation=3.3575029453501244e-10 rad, angular velocity=2.5760882480640984e-11 rad/s",
+          "frame 7656, t=76.57000000000227 s, entity 3: position=1.020887797727697e-08 m, velocity=2.0401077522272206e-09 m/s, orientation=3.3547326314072783e-10 rad, angular velocity=3.1210562828393016e-11 rad/s",
+          "frame 7657, t=76.58000000000227 s, entity 3: position=1.0213995153762642e-08 m, velocity=2.0753388770082994e-09 m/s, orientation=3.3514063880372726e-10 rad, angular velocity=3.665718489157513e-11 rad/s",
+          "frame 7658, t=76.59000000000228 s, entity 3: position=1.0217829100258205e-08 m, velocity=2.113815927614892e-09 m/s, orientation=3.347528694554628e-10 rad, angular velocity=4.208301049000127e-11 rad/s"
         ],
         "direct_event_stream_compared": false
       },
@@ -1106,40 +1106,40 @@
         "beliefs": 89548,
         "outputs": 626773,
         "published_states": 0,
-        "max_belief_position_error_m": 5.7683350034741136e-08,
-        "max_belief_velocity_error_mps": 3.3860054268930774e-08,
-        "max_belief_orientation_error_rad": 1.5984485025725341e-09,
-        "max_belief_angular_velocity_error_radps": 3.0556195838506796e-09,
+        "max_belief_position_error_m": 1.1646772033852995e-08,
+        "max_belief_velocity_error_mps": 8.516481400764209e-09,
+        "max_belief_orientation_error_rad": 3.8768947147147573e-10,
+        "max_belief_angular_velocity_error_radps": 7.961804398601193e-10,
         "max_payload_position_error_m": 0.0,
         "max_payload_velocity_error_mps": 0.0,
         "max_payload_orientation_error_rad": 0.0,
         "max_payload_covariance_error": 0.0,
-        "max_output_error": 1.0809813121015477e-08,
+        "max_output_error": 2.428593659509204e-09,
         "max_output_error_port": "AircraftPIDController.elevator",
         "excluded_pre_start_records": 0,
         "delivery_mismatches": 0,
-        "mismatch_count": 6936,
+        "mismatch_count": 173,
         "first_mismatches": [
-          "belief (30.93, 3, 0) differs: (1.000758645171782e-08, 2.6138990587068795e-09, 7.626033651277146e-11, 1.061292448561711e-10)",
-          "belief (30.94, 3, 0) differs: (1.002705028496139e-08, 2.6126072175324067e-09, 7.541095095462726e-11, 1.0912406548409341e-10)",
-          "belief (30.95, 3, 0) differs: (1.0046966197918492e-08, 2.611273059224151e-09, 7.45299980483999e-11, 1.1214985814410977e-10)",
-          "belief (30.96, 3, 0) differs: (1.0066436510462282e-08, 2.60990391343182e-09, 7.361838916506544e-11, 1.1519282574532953e-10)",
-          "belief (30.97, 3, 0) differs: (1.0086114172931798e-08, 2.6084848859710197e-09, 7.267707202920858e-11, 1.1824695134408455e-10)",
-          "belief (30.98, 3, 0) differs: (1.0105652820167838e-08, 2.6070161350529803e-09, 7.170692844756661e-11, 1.213022081473951e-10)",
-          "belief (30.99, 3, 0) differs: (1.0125168532503886e-08, 2.6054717807549965e-09, 7.070906100166999e-11, 1.2435080799377375e-10)",
-          "belief (31.0, 3, 0) differs: (1.0144598871492784e-08, 2.6038631979443924e-09, 6.968461964411376e-11, 1.273850690591065e-10)",
-          "belief (31.01, 3, 0) differs: (1.0163805680845156e-08, 2.602175260065452e-09, 6.863473136764408e-11, 1.303972942009376e-10)",
-          "belief (31.02, 3, 0) differs: (1.0183241580072652e-08, 2.600404395009895e-09, 6.756090312115608e-11, 1.3338181623406502e-10)",
-          "belief (31.03, 3, 0) differs: (1.0202275784351463e-08, 2.598534545404123e-09, 6.646426394534415e-11, 1.3633275725078916e-10)",
-          "belief (31.04, 3, 0) differs: (1.0221830642808332e-08, 2.5965677023180673e-09, 6.534641927978532e-11, 1.392450463130984e-10)",
-          "belief (31.05, 3, 0) differs: (1.024141415106661e-08, 2.5944892745334503e-09, 6.420887988913536e-11, 1.4211297439757657e-10)",
-          "belief (31.06, 3, 0) differs: (1.0260687833499471e-08, 2.5922951788874804e-09, 6.30533406088794e-11, 1.4493202363731244e-10)",
-          "belief (31.07, 3, 0) differs: (1.0279876700745894e-08, 2.5899773978858978e-09, 6.188137003463332e-11, 1.476980447742991e-10)",
-          "belief (31.08, 3, 0) differs: (1.029896326603708e-08, 2.5875382153306575e-09, 6.069507367635807e-11, 1.5040530525569704e-10)",
-          "belief (31.09, 3, 0) differs: (1.0318266909653587e-08, 2.584975169977813e-09, 5.949642872664628e-11, 1.5305143695212167e-10)",
-          "belief (31.1, 3, 0) differs: (1.033742914126531e-08, 2.582275727943306e-09, 5.828749157949084e-11, 1.5563107063838296e-10)",
-          "belief (31.11, 3, 0) differs: (1.0356431192373218e-08, 2.5794344439371894e-09, 5.707078124078568e-11, 1.5814234943335394e-10)",
-          "belief (31.12, 3, 0) differs: (1.0375539769067676e-08, 2.5764507101858834e-09, 5.5848591034397686e-11, 1.6058013258077188e-10)"
+          "belief (76.39, 3, 0) differs: (1.0007037844209466e-08, 2.0607207222377438e-09, 3.3232807969873545e-10, 6.909297780570966e-11)",
+          "belief (76.4, 3, 0) differs: (1.0024511154414771e-08, 2.026984626075309e-09, 3.329869465045888e-10, 6.306556864136365e-11)",
+          "belief (76.41, 3, 0) differs: (1.0041912885667387e-08, 1.9967302927802287e-09, 3.335853835462805e-10, 5.7061521012988345e-11)",
+          "belief (76.42, 3, 0) differs: (1.0058645935086906e-08, 1.970171171165448e-09, 3.341235742491896e-10, 5.108430865496827e-11)",
+          "belief (76.43, 3, 0) differs: (1.0074221733031528e-08, 1.947478091577459e-09, 3.3460172724922454e-10, 4.513754127524098e-11)",
+          "belief (76.44, 3, 0) differs: (1.0089297466956175e-08, 1.9288266192088147e-09, 3.3502004839722306e-10, 3.9227660498157617e-11)",
+          "belief (76.45, 3, 0) differs: (1.0103697592159867e-08, 1.914365450784651e-09, 3.3537876801542443e-10, 3.3363276627100886e-11)",
+          "belief (76.46, 3, 0) differs: (1.0116930173975174e-08, 1.9041890766719218e-09, 3.3567813370894466e-10, 2.75616717250824e-11)",
+          "belief (76.47, 3, 0) differs: (1.0129840161776418e-08, 1.8983948874613717e-09, 3.3591841196674465e-10, 2.185088466480134e-11)",
+          "belief (76.48, 3, 0) differs: (1.0141734969875433e-08, 1.8970325817322133e-09, 3.3609988075790857e-10, 1.630017385312861e-11)",
+          "belief (76.49, 3, 0) differs: (1.0153438752545245e-08, 1.900108600149412e-09, 3.362228361894003e-10, 1.1106015559131513e-11)",
+          "belief (76.5, 3, 0) differs: (1.01636729616632e-08, 1.9076060191056613e-09, 3.362875743084532e-10, 7.025626373781993e-12)",
+          "belief (76.51, 3, 0) differs: (1.017266353623039e-08, 1.9194634075994904e-09, 3.3629445592974685e-10, 6.531589706899672e-12)",
+          "belief (76.52, 3, 0) differs: (1.0181770394529652e-08, 1.935601257774749e-09, 3.362438087592866e-10, 1.0100020548232063e-11)",
+          "belief (76.53, 3, 0) differs: (1.018975513361267e-08, 1.9558877634282653e-09, 3.3613597564795973e-10, 1.5038882864437533e-11)",
+          "belief (76.54, 3, 0) differs: (1.0196613646719372e-08, 1.980189808803126e-09, 3.3597133453513533e-10, 2.0343474587513466e-11)",
+          "belief (76.55, 3, 0) differs: (1.0203299800022433e-08, 2.0083253428417213e-09, 3.3575029453501244e-10, 2.5760882480640984e-11)",
+          "belief (76.56, 3, 0) differs: (1.020887797727697e-08, 2.0401077522272206e-09, 3.3547326314072783e-10, 3.1210562828393016e-11)",
+          "belief (76.57, 3, 0) differs: (1.0213995153762642e-08, 2.0753388770082994e-09, 3.3514063880372726e-10, 3.665718489157513e-11)",
+          "belief (76.58, 3, 0) differs: (1.0217829100258205e-08, 2.113815927614892e-09, 3.347528694554628e-10, 4.208301049000127e-11)"
         ]
       },
       "summary_differences": [
@@ -1185,9 +1185,9 @@
         "frames.bin": false,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-09-30_18-46-21",
+      "cpp_log_directory": "cpp/logs/2026-10-01_12-56-19",
       "cpp_output_hashes": {
-        "frames.bin": "600c3352a933d1a3d2426af83d4756346f5b781efe0fa7599c803e6f426fca3d",
+        "frames.bin": "a7b716fe5cc63be7e5f2c738f8a1c2e99c48e30397cb6cdd6f3b10375fbf42a1",
         "summary.csv": "49b880bf4713758ffbdc44e0d183b1636cba2afa09e5bf641778444d2a82962f"
       },
       "worker_equality": {
@@ -1207,7 +1207,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "aa1d5017f941a3e92d105a559214e711c2ed5c3e9262887d323d4947140ab812",
+      "recording_sha256": "0c549a17ebd9efc6e060847fbdb4f01dab5ed6e8a8ffb52feb93ce0792b0d570",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1215,27 +1215,27 @@
       },
       "rust_output_hashes": {
         "rust-1": {
-          "frames.bin": "bf5fdadea26a4bf92f15b04cc313977ca3cdb36cfc3c5e71a8b3c396416c2034",
+          "frames.bin": "90bb2fd7236b31f9f2c50ab76f06ce08a093c3dd23e1afa1b5c939c4a117e1ee",
           "events.json": "7fb799f9438575944c346a910c44d758d0177c64f86c60cafb97811bceec3388",
           "summary.csv": "49b880bf4713758ffbdc44e0d183b1636cba2afa09e5bf641778444d2a82962f"
         },
         "rust-2": {
-          "frames.bin": "bf5fdadea26a4bf92f15b04cc313977ca3cdb36cfc3c5e71a8b3c396416c2034",
+          "frames.bin": "90bb2fd7236b31f9f2c50ab76f06ce08a093c3dd23e1afa1b5c939c4a117e1ee",
           "events.json": "7fb799f9438575944c346a910c44d758d0177c64f86c60cafb97811bceec3388",
           "summary.csv": "49b880bf4713758ffbdc44e0d183b1636cba2afa09e5bf641778444d2a82962f"
         },
         "rust-8": {
-          "frames.bin": "bf5fdadea26a4bf92f15b04cc313977ca3cdb36cfc3c5e71a8b3c396416c2034",
+          "frames.bin": "90bb2fd7236b31f9f2c50ab76f06ce08a093c3dd23e1afa1b5c939c4a117e1ee",
           "events.json": "7fb799f9438575944c346a910c44d758d0177c64f86c60cafb97811bceec3388",
           "summary.csv": "49b880bf4713758ffbdc44e0d183b1636cba2afa09e5bf641778444d2a82962f"
         },
         "rust-rerun": {
-          "frames.bin": "bf5fdadea26a4bf92f15b04cc313977ca3cdb36cfc3c5e71a8b3c396416c2034",
+          "frames.bin": "90bb2fd7236b31f9f2c50ab76f06ce08a093c3dd23e1afa1b5c939c4a117e1ee",
           "events.json": "7fb799f9438575944c346a910c44d758d0177c64f86c60cafb97811bceec3388",
           "summary.csv": "49b880bf4713758ffbdc44e0d183b1636cba2afa09e5bf641778444d2a82962f"
         },
         "rust-trace": {
-          "frames.bin": "bf5fdadea26a4bf92f15b04cc313977ca3cdb36cfc3c5e71a8b3c396416c2034",
+          "frames.bin": "90bb2fd7236b31f9f2c50ab76f06ce08a093c3dd23e1afa1b5c939c4a117e1ee",
           "events.json": "7fb799f9438575944c346a910c44d758d0177c64f86c60cafb97811bceec3388",
           "summary.csv": "49b880bf4713758ffbdc44e0d183b1636cba2afa09e5bf641778444d2a82962f"
         }
@@ -1245,10 +1245,10 @@
         "reference_frames": 10001,
         "candidate_frames": 10001,
         "compared_entity_states": 20002,
-        "max_position_error_m": 1.7640211864836642e-10,
-        "max_velocity_error_mps": 1.2493207136135997e-10,
-        "max_orientation_error_rad": 7.643982110597097e-12,
-        "max_angular_velocity_error_radps": 1.0631058752361578e-11,
+        "max_position_error_m": 2.4197024923594425e-10,
+        "max_velocity_error_mps": 1.8723623944592893e-10,
+        "max_orientation_error_rad": 8.13109947647867e-12,
+        "max_angular_velocity_error_radps": 1.6041060305774637e-11,
         "max_timestamp_error_s": 0.0,
         "mismatch_count": 0,
         "first_mismatches": [],
@@ -1260,15 +1260,15 @@
         "beliefs": 20002,
         "outputs": 140000,
         "published_states": 0,
-        "max_belief_position_error_m": 1.7640211864836642e-10,
-        "max_belief_velocity_error_mps": 1.2493207136135997e-10,
-        "max_belief_orientation_error_rad": 7.643982110597097e-12,
-        "max_belief_angular_velocity_error_radps": 1.0631058752361578e-11,
+        "max_belief_position_error_m": 2.4197024923594425e-10,
+        "max_belief_velocity_error_mps": 1.8723623944592893e-10,
+        "max_belief_orientation_error_rad": 8.13109947647867e-12,
+        "max_belief_angular_velocity_error_radps": 1.6041060305774637e-11,
         "max_payload_position_error_m": 0.0,
         "max_payload_velocity_error_mps": 0.0,
         "max_payload_orientation_error_rad": 0.0,
         "max_payload_covariance_error": 0.0,
-        "max_output_error": 3.275313353867659e-11,
+        "max_output_error": 5.948877501715799e-11,
         "max_output_error_port": "AircraftPIDController.elevator",
         "excluded_pre_start_records": 0,
         "delivery_mismatches": 0,
@@ -1315,7 +1315,7 @@
         "frames.bin": false,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-09-30_18-46-39",
+      "cpp_log_directory": "cpp/logs/2026-10-01_12-56-38",
       "cpp_output_hashes": {
         "frames.bin": "6fd326471775b485fbf154c0cb78afb06dc83b5054f7e50f981ffa24b51c39aa",
         "summary.csv": "360d3c398e75b6dc37cf823805e3c81cc52aa3d497b6cc6f8a1aabefa53682ea"
@@ -1337,7 +1337,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "9268bd4aa50cf25931d740f1660fc8ab383bc502a5fdb6c9176c31f561ba3a95",
+      "recording_sha256": "11cdf9e2f18b634df7a02d882a93cf47ddc65aea5fc79172710dad2ec3b6b7c5",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1445,15 +1445,15 @@
   },
   "cpp": {
     "branch": "benchmarking-edits",
-    "commit": "5777aeea16965d8f460167bc71ef841d1ff8c38f",
+    "commit": "1c8595b912d789d3ae71b99fdd6e129984318a08",
     "source_checkout": "<workspace>/scrimmage",
     "source_policy": "committed local branch snapshot; no worktree edits",
-    "source_archive_sha256": "96ad1e7d8d6a02638563c7efc71a9f76e988a2326b51499233eaf3fa2e5417cd",
+    "source_archive_sha256": "947b1202a9193ef2b3f8388615c0bf476f049665fd73e93fbb620f99231d5cc3",
     "dependency_dockerfile_sha256": "a2a8aa72201d52858c918dc698d2b87d3780455b2d6afa424a1955e2b82eacfb",
     "dependency_image": "sha256:93ceedc67e6077afc7c53d12c08fce058cf97d6813f908161c0adec905747ce4",
     "build_dockerfile_sha256": "9c5f832b01cda15f8bcfdfbbabcaa0d8f32fcb67ddcbd3fa29f69a98a0fbb0af",
-    "image": "sha256:bc0c63fc1fd57c9584deaff80b6ad40f1512a3e1061db88123f95bda07832c1e",
-    "image_tag": "scrimmage-rs-reference:5777aeea1696",
+    "image": "sha256:8ac17e27d57fb043fb18e2529de8bfbba2adf5705db94873020e10a1aba2713a",
+    "image_tag": "scrimmage-rs-reference:1c8595b912d7",
     "platform": "linux/amd64",
     "fixture_sha256": {
       "ConstantVelocity.cpp": "d04b099509a5e5c9dbce4baee22058905702f997350aee3fc15cc7d12994435e",
@@ -1465,16 +1465,24 @@
   },
   "rust": {
     "binary": "<workspace>/scrimmage-rs/target/debug/scrimmage",
-    "binary_sha256": "79fb23f81cb9c5ea2f8cbd99470f80062e57006d1213fb3e5399369164ba09c7",
+    "binary_sha256": "60f1bc9f25614a5bccec6848f5d2d13b915c67e60fd3ace9a61af2d9a5bdb84a",
     "compiler": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)\nbinary: rustc\ncommit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea\ncommit-date: 2026-08-18\nhost: aarch64-apple-darwin\nrelease: 1.98.0\nLLVM version: 22.1.8",
     "host": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
     "source_hashes": {
-      "Cargo.lock": "d5fab9398b73d088f875327bd3cb28ff3dce4b7ec0354913ea7235aeb52159bd",
-      "Cargo.toml": "a787485c739f2613439e295ad49993d74c4a366d5447d7297886f7986e103cd8",
-      "crates/cli/Cargo.toml": "9a7436ad737f09fbaaf89eb0fddd5dbd5f3008d28bbe959aefd508eb44ae7371",
+      "Cargo.lock": "8e337fd32dd0ba4ee16a90a04a4a48ca1dde4b09e6754e72cfa1bcef139cd948",
+      "Cargo.toml": "dc97a67a861bb9d5c0623911b18af67dae8ac206133ddf34f097b98fe9772c93",
+      "crates/ardupilot/Cargo.toml": "0f4e28356a68d622ede3bb1083d84e7a2846c07a25bbcb58873903a0ab7c116a",
+      "crates/ardupilot/missions/rascal-sitl-pair.xml": "bfb01d48013d8886421e47141d9a93c7e5f8190a0ff7a92b0cf2727478476a70",
+      "crates/ardupilot/missions/rascal-sitl.xml": "a8c7038a0bc16bbe6d80ee53c7afaae33a878db84edb921d8a9750e667b02101",
+      "crates/ardupilot/src/ardupilot_bridge.rs": "94f026e8cdef5db56bc68e909d482d98136952be2d2881b5f1af8af7771c24bc",
+      "crates/ardupilot/src/json_sitl.rs": "00063c23c42032de9c943fc0fa0b47bc5ce1b49303b6e89184dcc197179de4f4",
+      "crates/ardupilot/src/lib.rs": "57517fc63b2852116010eaaa1601eca532362b507ba6cd809f100aca6324ab31",
+      "crates/ardupilot/src/sitl_state.rs": "79aa713de94d5ee06346cced365ce521ab74547ceabdce72f295cce185291399",
+      "crates/ardupilot/tests/lockstep.rs": "81e2092fe0cbbf466e6947f81c4600abbd227d2522f6d2be9edfde1f2cdedfdd",
+      "crates/cli/Cargo.toml": "badedbb12352ca110416ecb76de45e9b38c43a6d6b4051b319e5b8dcb9337f37",
       "crates/cli/src/compare.rs": "83286814e06b440eec72eacad6129206bf86f76a8549e337ef24ca28fa24f04a",
       "crates/cli/src/lib.rs": "27900e0a3a1f9509fb2bce762993229579b802d025c3d86e9872b0b5940c3802",
-      "crates/cli/src/main.rs": "a926e139de8baf765c160c1aed03413309bda72db231f2e3b2b9555a4aa322b6",
+      "crates/cli/src/main.rs": "4bb90f4b746e6c57e9593b0e838ab501fd3565953395d120f3e9555a68d20056",
       "crates/cli/src/replay.rs": "e53df367c2bd29f5eaff3cbf8a126868b26c786ba44f0a85e952044f454d7d3b",
       "crates/cli/src/run/output/tests.rs": "6f96857399dde983b6309bf5d82efd54ab37e722bf07f1d56c2b526de0eb15a5",
       "crates/cli/src/run/output.rs": "7c15d767bd163ccdcbdd6776301bf0e000e8253884aeb2b5b988ec2891179bd6",
@@ -1542,9 +1550,9 @@
       "crates/core/src/plugin/metrics.rs": "ff5bf38169d1e0e60a0033af1203a1f84e31f2e67dc0a86bb823172da7285f29",
       "crates/core/src/plugin/motion/fixed_wing_6dof/aerodynamics.rs": "1ca60ed73a6803444aaca28a72877af5eb7b1d63e1f9062d8f2ddf985300b558",
       "crates/core/src/plugin/motion/fixed_wing_6dof/dynamics.rs": "79ba9b4a08eff0651e87dbc34fb9fac56191cd6469f27fd6934324c86f4e16b9",
-      "crates/core/src/plugin/motion/fixed_wing_6dof/fixed_wing_6dof.rs": "35570b9ef421e3d8e61507dbe82399aa328d332da58af822c51db281f3885431",
+      "crates/core/src/plugin/motion/fixed_wing_6dof/fixed_wing_6dof.rs": "3d3055511944645aabb823f3fd7c740942f5f85d67954379b862888161cbfd34",
       "crates/core/src/plugin/motion/multirotor/dynamics.rs": "5be83eafde2eb5971b9bb42e0559aae511a40d51fe4dce9631f39efa720a9116",
-      "crates/core/src/plugin/motion/multirotor/multirotor.rs": "2753610c1c7ff1dc208fddbc7c459ca90f413dc53396c3dafd142dc26bd7dbeb",
+      "crates/core/src/plugin/motion/multirotor/multirotor.rs": "31e3dccd21faf0b497ea86026f8953d667b78a2a667b481e8576a55634cf71d9",
       "crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs": "8e7e817ebd40375e19ef436ec9cc5cb4947b5600d78b597e87c1f095c7402bec",
       "crates/core/src/plugin/motion/single_integrator/single_integrator.rs": "dc08e01acf37d61e6679be8354d65061fa7df54076774f2a39e362368ec4d73f",
       "crates/core/src/plugin/motion.rs": "90e64ac64dc8fc7bda9a6ac76a979a30c25a6be7892cc36c3c61264196e0d0a9",

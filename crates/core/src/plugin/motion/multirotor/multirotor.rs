@@ -1,7 +1,8 @@
 //! C++ Multirotor motion port (GTRI, LGPL-3.0-or-later).
 //! Motion phase: read motor shaft speeds in rad/s, integrate, write world truth.
 //! Body axes are forward/left/up. This preserves the reference equations,
-//! including frozen RK4 loads; it is not a newly validated flight model.
+//! except that loads are evaluated at every RK4 stage; it is not a newly
+//! validated flight model.
 //! External-force contact, teleport, acceleration sensor access and private CSV
 //! output are not exposed by this port. Use GroundCollision for removal, not landing.
 //! No closed-loop controller is ported yet; MotorSpeeds only supplies fixed rad/s.
@@ -9,7 +10,7 @@
 mod dynamics;
 
 use anyhow::{Context, Result, ensure};
-use nalgebra::Matrix3;
+use nalgebra::{Matrix3, UnitQuaternion};
 use serde::Deserialize;
 
 use crate::math::{self, KinematicState, Vec3};
@@ -207,25 +208,33 @@ impl Multirotor {
             moment_body_nm.y -= thrust_n * rotor.offset_length_m * rotor.xy_angle_rad.cos();
             moment_body_nm.z += sign * config.torque_coefficient * speed_squared;
         }
-        let weight_body_n = truth
-            .orientation_world_from_body
-            .rotate_world_to_body(Vec3::new(0.0, 0.0, -config.mass_kg * config.gravity_mps2));
-        let velocity_body_mps = self.state.velocity_body_mps;
-        let drag_body_n =
-            velocity_body_mps * (-0.5 * config.drag_coefficient * velocity_body_mps.norm());
-        // With no external contact force, the C++ normal-force term remains zero.
-        let acceleration_body_mps2 = (thrust_body_n + weight_body_n + drag_body_n) / config.mass_kg;
-        let rates = self.state.rates_body_radps;
-        let angular_acceleration_body_radps2 =
-            config.inverse_inertia * (moment_body_nm - rates.cross(&(config.inertia_kgm2 * rates)));
-
-        // Matches C++ for now, though it is not full RK4: drag, gravity, thrust moments and
-        // gyroscopic terms use start-of-step state and stay fixed across the stages.
-        // Only the kinematics (velocity cross rates, attitude, position) use stage state.
+        // Weight, drag, and the gyroscopic term are recomputed from each RK4
+        // stage's state. C++ holds them at the start-of-step state, which makes
+        // the step first order; the comparison branch fixes that
+        // (docs/REFERENCE_NOTES.md). With no external contact force, the C++
+        // normal-force term remains zero.
+        let accelerations =
+            |state: &RotorcraftState| -> (Vec3, Vec3) {
+                let weight_body_n =
+                    UnitQuaternion::new_normalize(state.attitude).inverse_transform_vector(
+                        &Vec3::new(0.0, 0.0, -config.mass_kg * config.gravity_mps2),
+                    );
+                let velocity_body_mps = state.velocity_body_mps;
+                let drag_body_n =
+                    velocity_body_mps * (-0.5 * config.drag_coefficient * velocity_body_mps.norm());
+                let rates = state.rates_body_radps;
+                (
+                    (thrust_body_n + weight_body_n + drag_body_n) / config.mass_kg,
+                    config.inverse_inertia
+                        * (moment_body_nm - rates.cross(&(config.inertia_kgm2 * rates))),
+                )
+            };
         let mut coordinates = self.state.coordinates();
         math::rk4(&mut coordinates, dt_s, |coordinates| {
+            let stage = RotorcraftState::from_coordinates(*coordinates);
+            let (acceleration_body_mps2, angular_acceleration_body_radps2) = accelerations(&stage);
             derivative(
-                RotorcraftState::from_coordinates(*coordinates),
+                stage,
                 acceleration_body_mps2,
                 angular_acceleration_body_radps2,
             )
@@ -392,7 +401,7 @@ mod tests {
     }
 
     #[test]
-    fn drag_is_frozen_at_start_of_rk4_step() -> Result<()> {
+    fn drag_is_evaluated_at_every_rk4_stage() -> Result<()> {
         let mut model = quad()?;
         model.config.gravity_mps2 = 0.0;
         model.config.drag_coefficient = 0.3;
@@ -402,8 +411,12 @@ mod tests {
             ..KinematicState::default()
         };
         model.integrate(&mut truth, 0.1)?;
-        assert!((truth.velocity_world_mps.x - 9.0).abs() < 1e-12);
-        assert!((truth.position_world_m.x - 0.95).abs() < 1e-12);
+        // Exact solution of m dv/dt = -0.5 c v^2; frozen drag gives 9.0 and 0.95.
+        let rate = 0.5 * 0.3 * 10.0 / model.config.mass_kg;
+        let velocity = 10.0 / (1.0 + rate * 0.1);
+        let distance = 10.0 / rate * (1.0 + rate * 0.1).ln();
+        assert!((truth.velocity_world_mps.x - velocity).abs() < 1e-5);
+        assert!((truth.position_world_m.x - distance).abs() < 1e-5);
         Ok(())
     }
 

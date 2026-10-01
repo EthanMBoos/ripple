@@ -3,7 +3,7 @@
 Run from the repository root with `scrimmage run missions/<file> --headless`.
 Replay the printed run directory with `scrimmage replay runs/<mission>/runNNN`.
 `waypoints-point-agents.sweep.yaml` is a small example sweep (`scrimmage sweep`).
-These twenty XML files use the compiled built-ins. They are examples and regression
+These twenty-one XML files use the compiled built-ins. They are examples and regression
 inputs, not a copy of every upstream demo. A `.yaml` file beside an XML file is its
 [YAML form](../book/src/guides/yaml-missions.md) and must run identically; check one with
 `scrimmage compare <file>.xml <file>.yaml`. YAML overrides take dotted paths
@@ -13,6 +13,7 @@ inputs, not a copy of every upstream demo. A `.yaml` file beside an XML file is 
 | --- | --- |
 | `straight-no-gui.xml` | Opposing aircraft, collision, removal, and team scores. |
 | `fixed-wing-6dof.xml` | Two aerodynamic aircraft: level eastbound and tilted northbound with wind. A reference fixture, not a trimmed flight demonstration. |
+| `fixed-wing-6dof-rascal.xml` | C++'s Rascal RC-plane parameters, planned for ArduPlane: level flight, recovery from a 60° roll / 30° pitch upset, and a hands-off glide. No stall model; see `docs/ARDUPILOT_SITL.md`. |
 | `multirotor.xml` | Open-loop quad hover, tilted flight, unequal motor speeds, and six-rotor climb. `MotorSpeeds` supplies constant rad/s commands; no autopilot or landing controller. |
 | `networks-local-global.xml` | NoisyState over LocalNetwork; Boundary over GlobalNetwork turns both aircraft; a third aircraft hits the ground. Set `boundary_control:=false` or `ground_team:=1` to see the difference. |
 | `noisy-contacts.xml` | Two route-following agents measure other contacts; typed LocalNetwork messages are available to downstream plugins. The route follower does not consume them. |

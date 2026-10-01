@@ -86,6 +86,13 @@ Rust lifecycle and delivery rules are in the
   supplied SI matrix. Rust accepts either `inertia_matrix_slug_ft_sq` or
   `inertia_matrix`, rejects both together, and uses the slug default if neither
   is supplied.
+- **FixedWing6DOF elevator drag key:** C++ reads `C_D_delta_elevator_` (with a
+  trailing underscore), but every bundled parameter file writes
+  `C_D_delta_elevator`, so C++ always uses the 0.01 default. That is harmless for
+  the A-4D default (its file also says 0.01), but the Rascal file's 0.03 is
+  never used. Rust reads the same underscore key and rejects the plain name, so
+  a value is never silently ignored. `missions/fixed-wing-6dof-rascal.xml`
+  leaves the key out and flies with 0.01, like C++.
 - **AircraftPIDController, fixed on the comparison branch:** unmodified C++
   ignores the timestep it is given and uses the full mission tick
   (`time_->dt()`), so with N substeps its integral terms act N times stronger

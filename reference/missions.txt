@@ -9,6 +9,7 @@ verification/aircraft-substeps-scheduled.xml | substeps, rates, two spawn schedu
 verification/noisy-state-bias.xml | NoisyState bias, belief feedback
 networks-local-global.xml | Boundary, GroundCollision, networks
 fixed-wing-6dof.xml | FixedWing6DOF, AircraftPID, wind
+fixed-wing-6dof-rascal.xml | FixedWing6DOF Rascal, upset, glide
 multirotor.xml | Multirotor (4 and 6 rotors)
 verification/single-integrator.xml | SingleIntegrator command paths
 verification/noisy-contacts-bias.xml | NoisyContacts bias, attitude, covariance

@@ -18,6 +18,8 @@ path = "src/main.rs"
 scrimmage-core = { path = "../core" }
 # User plugin crates compiled into `scrimmage`; each is registered in src/main.rs.
 starter = { path = "../starter" }
+# Optional ArduPilot SITL adapter, outside the default build: `--features ardupilot`.
+ardupilot = { path = "../ardupilot", optional = true }
 anyhow.workspace = true
 clap.workspace = true
 serde_json.workspace = true
@@ -26,6 +28,9 @@ serde_yaml_ng.workspace = true
 # Reads a terrain's aerial image for the viewer; already a dependency of rerun.
 png = "0.18"
 rerun = { version = "=0.36.2", default-features = false, features = ["sdk"] }
+
+[features]
+ardupilot = ["dep:ardupilot"]
 
 [dev-dependencies]
 tempfile = "3"

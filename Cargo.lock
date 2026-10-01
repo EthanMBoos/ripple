@@ -115,6 +115,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ardupilot"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "nalgebra",
+ "scrimmage-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "array-init"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4126,6 +4137,7 @@ name = "scrimmage-rs"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "ardupilot",
  "clap",
  "png",
  "rerun",

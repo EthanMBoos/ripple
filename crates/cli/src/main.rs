@@ -11,5 +11,7 @@ use scrimmage_core::plugin::PluginRegistry;
 fn main() -> anyhow::Result<()> {
     let mut registry = PluginRegistry::with_builtins();
     starter::register(&mut registry)?;
+    #[cfg(feature = "ardupilot")]
+    ardupilot::register(&mut registry)?;
     scrimmage_cli::main(registry, concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))
 }

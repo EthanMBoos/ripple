@@ -136,6 +136,17 @@ struct FixedWingParams {
     /// value is not silently ignored.
     #[serde(rename = "C_D_delta_elevator")]
     c_d_elevator_ignored_by_cpp: Option<f64>,
+    /// Lift coefficient against angle of attack, as `[alpha_rad, C_L]` rows
+    /// sorted by angle (YAML only). Replaces `C_L0 + C_L_alpha * alpha`, so a
+    /// lift that peaks and falls past the critical angle models a stall;
+    /// interpolated linearly and held at the end values, like a JSBSim table.
+    /// Rust-only: C++ has linear lift, which empty (the default) keeps.
+    lift_table: Vec<[f64; 2]>,
+    /// Drag coefficient against angle of attack, as `[alpha_rad, C_D]` rows
+    /// sorted by angle (YAML only), read like `lift_table`. Replaces
+    /// `C_D0 + C_D_alpha * |alpha|`, so drag can rise steeply past the stall;
+    /// induced and elevator drag are still added. Rust-only; empty keeps C++.
+    drag_table: Vec<[f64; 2]>,
     use_ground_model: bool,
     /// Wheels that roll on the ground (YAML only; see `landing_gear.rs`).
     /// Replaces the flat spring, so `use_ground_model` must be false.
@@ -204,6 +215,8 @@ impl Default for FixedWingParams {
             c_n_aileron: 0.06,
             c_n_rudder: 0.032,
             c_d_elevator_ignored_by_cpp: None,
+            lift_table: Vec::new(),
+            drag_table: Vec::new(),
             use_ground_model: true,
             landing_gear: Vec::new(),
             use_launcher: false,
@@ -293,6 +306,8 @@ impl Plugin for FixedWing6Dof {
             params.landing_gear.is_empty() || !params.use_ground_model,
             "FixedWing6DOF: set use_ground_model to false with landing_gear; the wheels replace it"
         );
+        check_alpha_table("lift_table", "C_L", &params.lift_table)?;
+        check_alpha_table("drag_table", "C_D", &params.drag_table)?;
         landing_gear::check_wheels(&params.landing_gear)?;
         let inertia_kgm2 = parse_inertia(&params)?;
         let inverse_inertia = inertia_kgm2
@@ -569,6 +584,19 @@ impl FixedWingConfig {
             (self.thrust_max_n - self.thrust_min_n) / (self.throttle_max - self.throttle_min);
         (throttle - self.throttle_min) * scale + self.thrust_min_n
     }
+}
+
+/// An angle-of-attack table is empty (unused) or has two or more finite rows
+/// in increasing angle.
+fn check_alpha_table(key: &str, coefficient: &str, table: &[[f64; 2]]) -> Result<()> {
+    ensure!(
+        table.is_empty()
+            || (table.len() >= 2
+                && table.iter().flatten().all(|value| value.is_finite())
+                && table.windows(2).all(|rows| rows[0][0] < rows[1][0])),
+        "FixedWing6DOF {key} needs at least two finite [alpha_rad, {coefficient}] rows in increasing angle"
+    );
+    Ok(())
 }
 
 fn parse_inertia(params: &FixedWingParams) -> Result<Matrix3<f64>> {

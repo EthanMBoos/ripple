@@ -258,6 +258,16 @@ are Rust-only too: C++ ground contact was the flat spring at `z = 0`
 gear follows JSBSim's FGLGear wheels (`landing_gear.rs`), so the comparison
 does not cover it; its own tests do (`crates/core/tests/landing_gear.rs`).
 
+FixedWing6DOF's `lift_table` and `drag_table` are Rust-only as well. C++ lift
+is linear in angle of attack (`C_L0 + C_L_alpha * alpha`) at any angle, so it
+never stalls, and its zero-lift drag is `C_D0 + C_D_alpha * |alpha|`. Tables of
+`[alpha_rad, C_L]` and `[alpha_rad, C_D]` rows replace those terms,
+interpolated linearly and held at their ends like a JSBSim `<table>`; induced
+and elevator drag are unchanged. They are opt-in: no mission sets them, and the
+ArduPilot book chapter lists JSBSim's Rascal values. Without tables the output is unchanged: on 2026-10-05
+`fixed-wing-6dof.xml` and `fixed-wing-6dof-rascal.xml` wrote byte-identical
+frames, summaries, events, and traces before and after each table was added.
+
 ## Spawn RNG mismatch (accepted)
 
 The native macOS baseline matched; the Ubuntu Docker fixture diverges at

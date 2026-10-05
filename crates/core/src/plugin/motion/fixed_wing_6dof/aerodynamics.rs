@@ -33,6 +33,8 @@ pub(super) struct Aerodynamics {
     c_nr: f64,
     c_n_aileron: f64,
     c_n_rudder: f64,
+    lift_table: Vec<[f64; 2]>,
+    drag_table: Vec<[f64; 2]>,
 }
 
 pub(super) struct Airframe {
@@ -74,6 +76,8 @@ impl Aerodynamics {
             c_nr: params.c_nr,
             c_n_aileron: params.c_n_aileron,
             c_n_rudder: params.c_n_rudder,
+            lift_table: params.lift_table.clone(),
+            drag_table: params.drag_table.clone(),
         }
     }
 
@@ -102,17 +106,28 @@ impl Aerodynamics {
         let q_radps = rates_model_radps.y;
         let r_radps = rates_model_radps.z;
 
-        // TODO: a stall model (lift that peaks and falls past the critical
-        // angle), from JSBSim's Rascal lift table, so a three-point landing
-        // flare stays down instead of ballooning (rascal-runway.yaml). Opt-in
-        // and Rust-only: the C++ comparison keeps this linear lift.
-        let lift_coefficient = self.c_l0
-            + self.c_l_alpha * alpha_rad
+        // Linear lift, as in C++, unless the mission gives a lift table, whose
+        // peak and fall past the critical angle model a stall (Rust-only).
+        // Accepted limitations: both wings stall together, so there is no
+        // spin, and drag ignores sideslip. A deep stall or flying far sideways
+        // is treated as already a failure; the model is not meant to recover
+        // from it faithfully.
+        let lift_alpha = if self.lift_table.is_empty() {
+            self.c_l0 + self.c_l_alpha * alpha_rad
+        } else {
+            interpolate_clamped(&self.lift_table, alpha_rad)
+        };
+        let lift_coefficient = lift_alpha
             + self.c_lq * q_radps * chord_m / twice_speed_mps
             + self.c_l_elevator * control.elevator_rad;
         let lift_n = lift_coefficient * pressure_area_n;
-        let drag_n = (self.c_d0
-            + self.c_d_alpha * alpha_rad.abs()
+        // Likewise drag, whose table can rise steeply past the stall.
+        let drag_alpha = if self.drag_table.is_empty() {
+            self.c_d0 + self.c_d_alpha * alpha_rad.abs()
+        } else {
+            interpolate_clamped(&self.drag_table, alpha_rad)
+        };
+        let drag_n = (drag_alpha
             + lift_coefficient * lift_coefficient / (PI * aspect_ratio * airframe.efficiency)
             + self.c_d_elevator * control.elevator_rad.abs())
             * pressure_area_n;
@@ -147,6 +162,128 @@ impl Aerodynamics {
         Loads {
             force_model_n,
             moment_model_nm: Vec3::new(roll_nm, pitch_nm, yaw_nm),
+        }
+    }
+}
+
+/// Linear interpolation in a table of `[x, y]` rows sorted by `x`, holding the
+/// end values outside it, as a JSBSim `<table>` does.
+fn interpolate_clamped(table: &[[f64; 2]], x: f64) -> f64 {
+    let first = table[0];
+    let last = table[table.len() - 1];
+    if x <= first[0] {
+        return first[1];
+    }
+    if x >= last[0] {
+        return last[1];
+    }
+    let upper = table.partition_point(|row| row[0] <= x);
+    let [x0, y0] = table[upper - 1];
+    let [x1, y1] = table[upper];
+    y0 + (y1 - y0) * (x - x0) / (x1 - x0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::FixedWingParams;
+    use super::{Aerodynamics, Airframe, Control, interpolate_clamped};
+    use crate::math::Vec3;
+
+    #[test]
+    fn lift_table_stalls_past_its_peak_and_matches_linear_lift_below() {
+        let linear = FixedWingParams {
+            c_l0: 0.25,
+            c_l_alpha: 5.0,
+            ..FixedWingParams::default()
+        };
+        let table = FixedWingParams {
+            lift_table: vec![[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]],
+            ..FixedWingParams::default()
+        };
+        let airframe = Airframe {
+            density_kgpm3: 1.225,
+            span_m: 2.7,
+            area_m2: 0.982,
+            chord_m: 0.351,
+            efficiency: 0.9,
+        };
+        // Lift is the force against the air's up component, at 15 m/s.
+        let lift_n = |params: &FixedWingParams, alpha_rad: f64| {
+            let air_velocity = Vec3::new(alpha_rad.cos(), 0.0, alpha_rad.sin()) * 15.0;
+            let loads = Aerodynamics::new(params).loads(
+                &airframe,
+                air_velocity,
+                Vec3::zeros(),
+                Control::default(),
+            );
+            -loads.force_model_n.z * alpha_rad.cos() + loads.force_model_n.x * alpha_rad.sin()
+        };
+        assert!((lift_n(&linear, 0.1) - lift_n(&table, 0.1)).abs() < 1e-9);
+        assert!(lift_n(&table, 0.4) < lift_n(&table, 0.23));
+        assert!(lift_n(&table, 0.4) < 0.7 * lift_n(&linear, 0.4));
+    }
+
+    #[test]
+    fn drag_table_rises_past_the_stall_where_induced_drag_falls() {
+        let lift_table = vec![[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]];
+        let lift_only = FixedWingParams {
+            c_d0: 0.028,
+            c_d_alpha: 0.0,
+            lift_table: lift_table.clone(),
+            ..FixedWingParams::default()
+        };
+        let with_drag = FixedWingParams {
+            lift_table,
+            drag_table: vec![
+                [-1.57, 1.5],
+                [-0.26, 0.056],
+                [0.0, 0.028],
+                [0.26, 0.056],
+                [1.57, 1.5],
+            ],
+            ..FixedWingParams::default()
+        };
+        let airframe = Airframe {
+            density_kgpm3: 1.225,
+            span_m: 2.7,
+            area_m2: 0.982,
+            chord_m: 0.351,
+            efficiency: 0.995,
+        };
+        // Drag is the force along the air's direction, at 15 m/s.
+        let drag_n = |params: &FixedWingParams, alpha_rad: f64| {
+            let air_velocity = Vec3::new(alpha_rad.cos(), 0.0, alpha_rad.sin()) * 15.0;
+            let loads = Aerodynamics::new(params).loads(
+                &airframe,
+                air_velocity,
+                Vec3::zeros(),
+                Control::default(),
+            );
+            -loads.force_model_n.x * alpha_rad.cos() - loads.force_model_n.z * alpha_rad.sin()
+        };
+        assert!((drag_n(&lift_only, 0.0) - drag_n(&with_drag, 0.0)).abs() < 1e-9);
+        // Past the stall, lift and with it induced drag fall; the table rises.
+        assert!(drag_n(&lift_only, 0.6) < drag_n(&lift_only, 0.23));
+        assert!(drag_n(&with_drag, 0.6) > 3.0 * drag_n(&with_drag, 0.23));
+    }
+
+    #[test]
+    fn lift_table_interpolates_and_holds_its_ends() {
+        // JSBSim's Rascal lift table.
+        let table = [[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]];
+        for (alpha_rad, expected) in [
+            (-1.0, -0.75),
+            (-0.2, -0.75),
+            (-0.1, -0.25),
+            (0.0, 0.25),
+            (0.1, 0.75),
+            (0.23, 1.4),
+            (0.415, 1.055),
+            (0.6, 0.71),
+            (1.5, 0.71),
+        ] {
+            let lift = interpolate_clamped(&table, alpha_rad);
+            assert!((lift - expected).abs() < 1e-12, "{alpha_rad}: {lift}");
         }
     }
 }

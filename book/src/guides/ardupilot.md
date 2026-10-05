@@ -195,10 +195,29 @@ The Rascal is a 6 kg RC plane, using C++ SCRIMMAGE's simplified Rascal, which
 was derived from ArduPilot's JSBSim Rascal. `missions/fixed-wing-6dof-rascal.xml`
 checks it against C++. Know its limits:
 
-- **No stall.** Lift keeps rising with angle of attack. JSBSim's Rascal
-  stalls near 8 m/s level (an estimate from its lift table), and higher in
-  turns. Keep to moderate-angle flight around 20 m/s.
-  This integration has not been checked against the real aircraft.
+- **No stall by default.** Lift keeps rising with angle of attack, as in
+  C++. JSBSim's Rascal stalls near 8.3 m/s level (from its lift table), and
+  higher in turns. Keep to moderate-angle flight around 20 m/s. This
+  integration has not been checked against the real aircraft.
+
+  **Optional stall (Rust-only):** FixedWing6DOF takes tables against angle
+  of attack that replace its linear lift and zero-lift drag, interpolated
+  and held at their ends like a JSBSim `<table>`. No mission sets them; to
+  fly the Rascal with JSBSim's values, add to its `FixedWing6DOF` block:
+
+  ```yaml
+  # [alpha_rad, C_L]: C_L0 + C_L_alpha * alpha up to the 0.23 rad peak, then falling
+  lift_table: [[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]
+  # [alpha_rad, C_D]: zero-lift drag, rising steeply past the stall
+  drag_table: [[-1.57, 1.5], [-0.26, 0.056], [0.0, 0.028], [0.26, 0.056], [1.57, 1.5]]
+  ```
+
+  Use both: induced drag follows `C_L`, so with `lift_table` alone drag
+  falls past the stall. Induced and elevator drag are still added to the
+  table's. Accepted limitations: there is no spin model, and JSBSim's
+  sideslip drag is left out. A deep stall or flying far sideways counts as
+  already a failure; the model is not meant to recover from either
+  faithfully.
 - **Thrust is a fixed 0-25 N with no propeller model,** so top level speed is
   about 38 m/s.
 - **The SITL missions use radian surface limits:** elevator ±0.30, aileron
@@ -295,9 +314,19 @@ What a run looks like (run on 2026-10-01): ArduPlane rolls 22 m and lifts
 off at 12 m/s within 0.3 m of the centreline, climbs out, flies the circuit,
 and touches down at 13 m/s after a 3.9° glide. The rollout stays within 1.6 m of the
 centreline and stops 0.7 m from it, aligned with the runway. The landing is
-not pretty: with no stall in the aerodynamics, the flare at 14° makes about
-three times the weight in lift, so it balloons, lands level at 1.4 m/s sink,
-and bounces (up to 1.7 m) before settling. With ArduPilot's default 1° flare
-it touches down once, tail-high at 17 m/s, but swerves 14 m off the
-centreline when the tail drops. The missing stall clearly causes the
-balloon; whether a stall model would also cure the 1° swerve is untested.
+not pretty: it lands level at 1.4 m/s sink and bounces (up to 1.7 m) before
+settling. With ArduPilot's default 1° flare it touches down once, tail-high
+at 17 m/s, but swerves 14 m off the centreline when the tail drops.
+
+The bounce is not a missing stall. Rerun on 2026-10-05 with and without the
+optional `lift_table` added to the mission, the landing was the same to within centimetres: first touch
+at 15.4 m/s and 1.45 m/s sink, bounces up to 2.0 m, rollout within 1.7 m of
+the centreline. (These numbers come from a different touchdown measure than
+the run above: the first frame after the circuit with the centre within
+5 cm of its resting height.) Adding `drag_table` too, the extra drag at
+small angles helped a little: first touch at 15.1 m/s, bounces up to 1.9 m,
+rollout within 1.2 m. The angle of attack stays below about 9°
+through the approach, flare, and bounces, never reaching the 13.2° stall.
+Each touchdown pitches the nose up by 10–17°, as a taildragger's mains
+ahead of the centre of gravity do. A likely cause is the approach at about
+18.5 m/s, more than twice the stall speed, but that is untested.

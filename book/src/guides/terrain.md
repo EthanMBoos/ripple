@@ -119,9 +119,12 @@ their moments are recomputed at every RK4 stage.
 - **Results are close to first order in the step,** not RK4's fourth, because
   contact switches on and off and JSBSim's rules are written per step. A
   drop's lowest point changes by under 2 mm from 0.0025 s to 0.0003 s.
-- **No stall in the aerodynamics,** so lift at the high angles of a takeoff
-  roll or a flare is too optimistic, and an aircraft rolling backwards meets
-  the air at 180° and brakes hard.
+- **No stall unless the mission adds the optional `lift_table` and
+  `drag_table`** (JSBSim's Rascal values are in the ArduPilot chapter).
+  Without them, lift at the high angles
+  of a takeoff roll or a flare is too optimistic. Either way, an aircraft
+  rolling backwards meets the air at 180°, outside any table's data, and the
+  forces there are not meaningful.
 
 To tell a touchdown from a crash, give TerrainCollision the airframe's
 `structure_points_frd_m`. It then checks those points, moved with the

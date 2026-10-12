@@ -1,53 +1,40 @@
 # Papers
 
-Two documents share this folder, the bibliography, the generated tables, and
-the retained data. Both are the record of evidence for what they claim; there
-is no separate evidence document.
+The paper, its bibliography, the generated tables, and the retained data.
+The paper is the record of evidence for what it claims; there is no separate
+evidence document.
 
-- **[manuscript/main.tex](manuscript/main.tex): the academic paper.** A research
-  testbed for multi-agent robotics across levels of fidelity, with an external
-  baseline at each integration stage. The [roadmap](../docs/TODO.md) drives the
-  work: multirotors, VTOL, vessels and waves, and conditional learned-policy
-  evaluation in a shared world. Experiments ask when these capabilities change
-  conclusions and when simpler models suffice. The testbed is named **Ripple**:
-  small model differences can propagate through
-  motion, sensing, communication, and decisions to affect a team's result.
-- **[manuscript/baseline.tex](manuscript/baseline.tex): the team report.**
-  The evidence that Ripple can replace C++ SCRIMMAGE: the C++
-  comparison, the substep regression, workflow, cost, the estimation stage,
-  the scaling work, and the comparison appendices. The paper cites it.
+- **[manuscript/main.tex](manuscript/main.tex): the academic paper.** Does
+  realistic sensing, communication, and vehicle dynamics change which
+  approach, learned or classical, wins on standard multi-agent tasks? Three
+  tasks (cooperative navigation, circle-crossing collision avoidance, flocking)
+  are run up a fidelity ladder in **Ripple**, whose integrations each have an
+  external baseline. The [roadmap](../docs/TODO.md) drives the work. The
+  appendices hold the agreement with C++ SCRIMMAGE, determinism, the scaling
+  work, and the checks.
 
-Both use the IEEE conference layout. Venue and titles are provisional. Results
+It uses the IEEE conference layout. Venue and titles are provisional. Results
 marked **[Provisional]** do not yet come from a release run of the suite.
 
 ## Framing and scope
 
-The central contribution is making these components work together and showing
-what can be trusted at each stage. Keep three claims separate: matching the
+A changed ranking means something only if each integration can be trusted.
+Keep three claims separate: matching the
 external implementation, matching independent physical measurements, and
 affecting a multi-agent result. A source comparison supports the first claim;
 it does not automatically support the other two. An external autopilot is a
 control-stack choice, not proof of greater physical accuracy.
 
-Complete the roadmap as a sequence of integrations with their comparisons;
-the paper records the evidence as it arrives. A changed strategy ranking is
-not a gate on that work. Unchanged outcomes, useful operating limits, and the
-cost of extra fidelity also matter. The existing gate on learned policies
-remains: run classical strategies first and identify the decision needing them.
-
-Keep the publication scope flexible. A systems paper can emphasize the common
-architecture and several verified integrations; a vehicle-model study can
-emphasize one integration and measured validation; a robotics study can
-emphasize one multi-agent conclusion across fidelity choices. Select a venue
-and a bounded set of completed claims when the evidence supports them. The
-working manuscript can span the program without making every roadmap item a
-prerequisite for every submission. Preserve SCRIMMAGE attribution and the
-baseline report in each relevant account.
+A changed ranking is not a gate on integration work: unchanged outcomes,
+useful operating limits, and the cost of extra fidelity also matter. Preserve
+SCRIMMAGE attribution and the C++ agreement appendix in each relevant
+account.
 
 ## Supporting material
 
-- [Bibliography](references.bib): only sources cited in the two documents.
-- [Original SCRIMMAGE paper and reading map](literature_review/README.md).
+- [Bibliography](references.bib): only sources the paper cites.
+- [Cited papers and code](literature_review/README.md): how to download
+  every cited paper and its repositories for local reading.
 - [C++ comparison tools](../reference/README.md): build, tolerances, provenance.
 - [Implementation roadmap](../docs/TODO.md): current plans, not paper results.
 
@@ -101,11 +88,8 @@ tectonic`):
 ```sh
 cd paper/manuscript
 tectonic -X compile main.tex
-tectonic -X compile baseline.tex
 ```
 
 `latexmk -pdf main.tex` also works with a TeX Live installation providing
 `natbib` and `array`. `IEEEtran.cls` is the unchanged IEEE class,
-including its LPPL notices. Generated build files are ignored. The original
-paper PDF and extracted text under `literature_review/sources/` are third-party
-reference material, not covered by this repository's code license.
+including its LPPL notices. Generated build files are ignored.

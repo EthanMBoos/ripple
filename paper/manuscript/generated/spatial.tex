@@ -2,14 +2,16 @@
 \begin{table*}[t]
 \centering
 \caption{Stepping time in milliseconds per step with SimpleCollision, median of
-5 runs after a warm-up, alternating variants, one worker, Darwin arm64, Apple M2 Pro, 10 CPUs.
+5 runs after a warm-up, alternating variants, one worker, Darwin arm64, Apple M2
+  Pro, 10 CPUs.
 Every variant of a case except the one without a collision check wrote identical
 frames and events.}
 \label{tab:spatial}
 \footnotesize
 \begin{tabular}{lrrrrrrl}
 \toprule
-Case & Agents & Range (m) & Collisions & No collision check & Scan & Grid 5\,m & Best other grid \\
+Case & Agents & Range (m) & Collisions & No collision check & Scan & Grid 5\,m &
+  Best other grid \\
 \midrule
 sparse & 256 & 5 & 0 & 0.18 & 0.21 & 0.23 & -- \\
 sparse & 1{,}024 & 5 & 1 & 0.71 & 1.10 & 0.93 & -- \\
@@ -20,9 +22,13 @@ clustered & 4{,}096 & 5 & 1930 & -- & 0.28 & 0.28 & -- \\
 large range & 4{,}096 & 50 & 1421 & -- & 1.54 & 1.64 & 1.26 (50\,m) \\
 \bottomrule
 \end{tabular}
-\par\smallskip Scan: every contact is tested, the reference answer. No collision check:
-the same mission without SimpleCollision; the difference only estimates the check's cost,
-because that run removes no agents and may place spawns differently. Sparse: aircraft
-spread over about a kilometre at one altitude. Clustered: a 20\,m spread, so most agents
+\par\smallskip Scan: every contact is tested, the reference answer. No collision
+  check:
+the same mission without SimpleCollision; the difference only estimates the
+  check's cost,
+because that run removes no agents and may place spawns differently. Sparse:
+  aircraft
+spread over about a kilometre at one altitude. Clustered: a 20\,m spread, so
+  most agents
 collide early.
 \end{table*}

@@ -1,9 +1,10 @@
 # Ripple
 
-Ripple is a Rust multi-agent robotics simulator for research and teaching. It is
-a port of the useful core of [SCRIMMAGE](https://github.com/gtri/scrimmage), a
-C++ simulator from Georgia Tech Research Institute, rebuilt to be easy to read,
-modify, and learn from.
+Ripple is a deterministic multi-agent robotics simulator in Rust for research
+and teaching, built to be easy to read, modify, and learn from. Every agent acts
+on its own belief rather than the true state, and runs are byte-identical at any
+worker count. It grew out of [SCRIMMAGE](https://github.com/gtri/scrimmage) and
+reads its mission files.
 
 You describe a scenario in a YAML or XML mission file: which vehicles exist,
 what software runs on each one, and how the world behaves. The simulator steps
@@ -11,9 +12,7 @@ every vehicle forward in time, records what happened, and shows it in the
 [Rerun](https://rerun.io) viewer.
 
 > [!NOTE]
-> This is a small, checked subset of SCRIMMAGE, not a drop-in replacement. The
-> [model scope](reference/models.md)
-> lists what is implemented today.
+> The [model scope](reference/models.md) lists what is implemented today.
 
 ## Quick start
 

@@ -1,6 +1,6 @@
 # The YAML form of multirotor.xml; both produce identical output.
 # Open-loop physics checks, not an autopilot demo. MotorSpeeds supplies rad/s.
-# 821.5838362577492 rad/s balances the default 1.5 kg quad's weight.
+# 821.5838362577492 rad/s balances the 1.5 kg quad's weight.
 # Straight speed 0 is only a placeholder autonomy; MotorSpeeds reads no inputs.
 format_version: 1
 name: Multirotor open-loop flight
@@ -26,8 +26,17 @@ templates:
     controller:
       MotorSpeeds:
         speeds: [821.5838362577492, 821.5838362577492, 821.5838362577492, 821.5838362577492]
+    # Illustrative test values, not a real aircraft.
     motion_model:
       Multirotor:
+        mass: 1.5
+        inertia_matrix: "[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]"
+        c_D: 0.058
+        c_T: 5.45e-6
+        c_Q: 2.284e-7
+        omega_min: 346.41
+        omega_max: 1200
+        rotor_config: "[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]"
 
 entities:
   level_hover:
@@ -66,4 +75,11 @@ entities:
         speeds: [680, 680, 680, 680, 680, 680]
     motion_model:
       Multirotor:
+        mass: 1.5
+        inertia_matrix: "[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]"
+        c_D: 0.058
+        c_T: 5.45e-6
+        c_Q: 2.284e-7
+        omega_min: 346.41
+        omega_max: 1200
         rotor_config: "[CW 0.2 0 0 0 0 0] [CCW 0.1 0.17320508075688773 0 0 0 0] [CW -0.1 0.17320508075688773 0 0 0 0] [CCW -0.2 0 0 0 0 0] [CW -0.1 -0.17320508075688773 0 0 0 0] [CCW 0.1 -0.17320508075688773 0 0 0 0]"

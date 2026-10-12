@@ -25,6 +25,7 @@
 - [YAML missions, templates, and sweeps](guides/yaml-missions.md)
 - [Terrain](guides/terrain.md)
 - [Flying ArduPlane (SITL)](guides/ardupilot.md)
+- [Flying a multirotor](guides/multirotor.md)
 - [Building a scenario in Rust](guides/rust-scenarios.md)
 - [Writing plugins](guides/writing-plugins.md)
 - [Organizing larger autonomies](guides/autonomy-composition.md)

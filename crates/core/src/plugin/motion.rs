@@ -5,6 +5,7 @@ pub use fixed_wing_6dof::FixedWing6Dof;
 #[path = "motion/multirotor/multirotor.rs"]
 mod multirotor;
 pub use multirotor::Multirotor;
+pub(crate) use multirotor::{Airframe, AirframeName, AirframeOverrides};
 #[path = "motion/simple_aircraft/simple_aircraft.rs"]
 mod simple_aircraft;
 pub use simple_aircraft::SimpleAircraft;

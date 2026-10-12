@@ -2,8 +2,7 @@
 \begin{table*}[t]
 \centering
 \caption{The checks of \texttt{reference/suite.py} and their outcome in this
-release (\texttt{paper/data/release.json}); all ran on source
-  \texttt{c534d4f90c4f}.
+release (\texttt{paper/data/release.json}); they ran on 4 different sources.
 }
 \label{tab:checks}
 \footnotesize
@@ -45,6 +44,15 @@ Check & What it checks & Against & Outcome \\
   C++ SCRIMMAGE & passed \\
 \texttt{rk4-loads} & what evaluating forces at every RK4 stage changes &
   unmodified C++ SCRIMMAGE, which holds forces through the step & passed \\
+\texttt{multirotor-control} & MultirotorVelocityController's step responses on
+  the Crazyflie, and convergence as the step shrinks & the commands; Förster's
+  rotor drag; the 20-substep run & passed \\
+\texttt{rotors-motor} & Multirotor's motor lag and rotor loads against RotorS,
+  sample by sample & RotorS's motor-plugin source (ethz-asl/rotors\_simulator),
+  compiled in Docker & passed \\
+\texttt{crazyflow-crazyflie} & Multirotor's Crazyflie against Crazyflow's
+  first-principles dynamics, same constants and motor commands & Crazyflow
+  (learnsyslab/crazyflow, pinned), run with uv & passed \\
 \texttt{stall-landing} & whether stall tables change ArduPlane's Rascal landing
   & the same mission without tables, and a repeat of it & passed \\
 \bottomrule

@@ -140,6 +140,36 @@
       "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
       "evidence": "paper/data/rk4-loads/"
     },
+    "multirotor-control": {
+      "purpose": "MultirotorVelocityController's step responses on the Crazyflie, and convergence as the step shrinks",
+      "reference": "the commands; F\u00f6rster's rotor drag; the 20-substep run",
+      "criterion": "every velocity error within 5% over the last second, Crazyflie drag tilt within 2%, 5 substeps within 5 mm",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-12",
+      "source_sha256": "bb5609286c7b57c5cd897dcbf68aa9e484a652ecf6ebc484dd4ae4e85540fac1",
+      "evidence": "paper/data/multirotor-control/"
+    },
+    "rotors-motor": {
+      "purpose": "Multirotor's motor lag and rotor loads against RotorS, sample by sample",
+      "reference": "RotorS's motor-plugin source (ethz-asl/rotors_simulator), compiled in Docker",
+      "criterion": "every sample within 1e-12 relative; samples equal the committed fixture",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-12",
+      "source_sha256": "eaa99e82a560f8d8ab95c56270432f852e0f8ee5b5fec3d839b5a83d723f0bbc",
+      "evidence": "paper/data/rotors-motor/"
+    },
+    "crazyflow-crazyflie": {
+      "purpose": "Multirotor's Crazyflie against Crazyflow's first-principles dynamics, same constants and motor commands",
+      "reference": "Crazyflow (learnsyslab/crazyflow, pinned), run with uv",
+      "criterion": "without rotor drag, within 1e-6 m and 1e-6 rad over 3 s; the drag difference is reported",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-12",
+      "source_sha256": "710eda8cc2c3517ccd479b342947edf325506b2cd9af6ca22ecdce4f527fcf77",
+      "evidence": "paper/data/crazyflow-crazyflie/"
+    },
     "stall-landing": {
       "purpose": "whether stall tables change ArduPlane's Rascal landing",
       "reference": "the same mission without tables, and a repeat of it",

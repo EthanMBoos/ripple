@@ -130,7 +130,7 @@ designs the evader.
    STGNN, and OPEN fly Crazyflies; Vásárhelyi's 30 drones are custom quads),
    so this is the easiest comparison for reviewers. Crazyflow and
    MuJoCo-Drones-Gym simulate the same vehicle, which gives a cross-check on
-   our dynamics. This puts the multirotor work below on the critical path.
+   our dynamics. It is built: see the book chapter "Flying a multirotor".
 3. **Fixed-wing is the stress case**: `SimpleAircraft`, then `FixedWing6DOF`.
    Already built. It's where the classical assumptions break: aircraft can't
    stop, can't park on a landmark, and can't match a neighbor's velocity at
@@ -181,9 +181,8 @@ the goal, and flocking around a moving reference.
 
 None of this is built yet. The simulator side is ready (C++ agreement,
 determinism, fixed-wing with ArduPlane, noisy sensors, lossy networks,
-sweeps); the learning pipeline and the three tasks are not. The first
-milestone doesn't need the multirotor, so it runs alongside the multirotor
-work.
+sweeps, a Crazyflie multirotor with a velocity controller); the learning
+pipeline and the three tasks are not.
 
 1. **Navigation with point agents, matching MPE2.** Train MAPPO in MPE2's
    `simple_spread_v3` (pinned commit) with an existing library, export to ONNX,
@@ -195,9 +194,9 @@ work.
 2. **First fidelity results on navigation.** Sensing noise and belief on the
    point agents, then network delay with the auction baseline. These are the
    first real data points for the paper.
-3. **Navigation on the multirotor**, once it flies. Retrain with VMAS's
-   velocity actions, and cross-check our multirotor's motion against
-   Crazyflow or MuJoCo-Drones-Gym.
+3. **Navigation on the multirotor.** Retrain with VMAS's velocity actions.
+   The multirotor's motion already matches Crazyflow (book: "Flying a
+   multirotor").
 4. **The training bridge**, for the "train at the realistic setting"
    condition. Measure its speed first.
 5. **Collision avoidance**: ORCA family and a barrier function controller on
@@ -224,7 +223,14 @@ Pieces, by where they're needed:
   - a tuning script for the classical baselines and the stats (`rliable`),
     both Python, outside the sim;
   - noise, loss, and delay levels taken from real sensor and radio specs or
-    ArduPilot SITL.
+    ArduPilot SITL. NoisyState's defaults (C++'s 5 m and 5 m/s horizontal)
+    are demo values: on the Rascal they break the speed loop. Its noise is
+    also fresh every tick, where real GPS error drifts slowly;
+  - a standard filter (a Kalman filter on position and velocity) as an
+    estimator plugin, used by learned and classical policies alike. With
+    raw readings in belief (`PassThrough`), even GPS-like noise makes the
+    Rascal's controller jitter (body rates about 0.15 rad/s), and detuning
+    the controller makes it worse.
 - **Navigation:** landmarks, a deterministic Hungarian plugin that can run on
   truth or belief, an auction over the network, the coverage-gap metric.
 - **Collision avoidance:** ORCA, NH-ORCA, constant-speed ORCA, a barrier
@@ -269,32 +275,30 @@ code should make it obvious where that data would go:
   warn outside its valid range, keep "matches its source" separate from
   "matches reality", and add a suite check so the result counts as evidence.
 
-## Multirotor fidelity
+## Next: fixed-wing named vehicles
 
-`Multirotor` is the C++ port: thrust and torque go with rotor speed squared,
-plus quadratic body drag. It's the main vehicle for the learned policy work
-(see "Which vehicles" above), but nothing flies it closed loop yet, so this
-work comes first.
+Organize FixedWing6DOF and AircraftPIDController like Multirotor and its
+controller (`airframe: crazyflie2`): each built-in vehicle is sourced and
+loaded by name, any key overrides one value, optional effects (stall tables,
+landing gear) stay explicit mission keys, there is no default vehicle, and
+the controller's default gains belong to the vehicle they were tuned for.
 
-- **A Rust cascaded controller** (position, velocity, attitude, rate, motor
-  mixing) that takes the same velocity command as point agents.
-- **Fix the C++ defects first, on both sides**: in Rust and on the
-  `benchmarking-edits` branch, written up in `docs/REFERENCE_NOTES.md`, suite
-  rerun. Review each one carefully before fixing it:
-  - body and world velocity are integrated separately and can disagree;
-  - moment arms use the full 3D rotor offset and ignore rotor tilt; use r x F;
-  - thrust drops to zero only at exactly `omega_min`, but yaw torque stays.
-- **Port the RotorS motor and rotor model** (Apache-2.0,
-  `gazebo_motor_model.cpp`) as optional parameters, with C++ defaults staying
-  byte-identical: motor lag, rotor drag (small but first order; it sets the
-  velocity dynamics near hover, Martin & Salaün 2010), rolling moment,
-  reaction torque. Keep C++'s
-  quadratic body drag too, for high speed. Check sample by sample against
-  RotorS. Ground effect and downwash are named zeros.
-- **Crazyflie 2.x parameters** from Förster's 2015 ETH thesis (handle
-  20.500.11850/214143), each value cited, next to the C++ defaults that the
-  comparison uses. Don't use RotorS's Hummingbird motor constants: they're
-  copied digit for digit from its Firefly, with no source.
-- **Later: check against real flights** by replaying NanoBench's recorded
-  motor commands (arXiv 2603.09908, 172 Crazyflie flights with Vicon truth).
-  The fidelity header notes this.
+- **`airframe: a4d`.** Today's defaults appear to be the A-4D Skyhawk from
+  Nelson, *Flight Stability and Automatic Control*, Appendix B (derivatives
+  and geometry match from memory: C_L_alpha 3.45, C_m_alpha -0.38, C_mq -3.6,
+  260 ft^2 wing, 27.5 ft span). Verify against the book, cite each value, and
+  move them from `impl Default for FixedWingParams` and
+  `DEFAULT_INERTIA_SLUG_FT_SQ` into the profile. Today's AircraftPIDController
+  defaults become its gains.
+- **`airframe: rascal`.** From the numbers its missions spell out today
+  (C++'s Rascal file), each checked against JSBSim's Rascal and cited, so
+  the Rascal missions shrink to `airframe: rascal`.
+- **Rascal controller settings.** Keep today's AircraftPIDController gains:
+  measured on the Rascal (heading, altitude, and speed steps; 5/3 and 60/30
+  degree upsets; three step sizes) they track every command, and altitude D
+  from 0 to 0.02 flies identically. Change only the attitude limits, to
+  ArduPlane's defaults (pitch 20, roll 45 degrees; the inherited 45/60 let an
+  altitude step pitch it to 48 degrees, past what a 20 m/s Rascal could fly).
+  These are controller settings stored with the Rascal profile.
+- Missions that fly the jet today name `airframe: a4d`; outputs of every
+  existing mission must stay byte-identical, so the jet's evidence stands.

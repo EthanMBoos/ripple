@@ -1,0 +1,72 @@
+# Closed-loop multirotor flight: MultirotorVelocityController flies the same
+# velocity commands point agents take (velocity_x, velocity_y, velocity_z) on
+# a Crazyflie 2.0. Each vehicle gets one constant command from t = 0, so these
+# are step responses; one starts rolled 15 degrees and must recover to a
+# hover.
+# reference/multirotor_control.py measures them (rise, overshoot, settling,
+# steady tilt, and convergence as the step shrinks).
+# The controller runs at every motion substep: 0.01 s ticks with 5 substeps
+# give 500 Hz attitude and rate loops, as on the Crazyflie.
+format_version: 1
+name: Multirotor velocity control
+
+run:
+  end_s: 10
+  dt_s: 0.01
+  motion_multiplier: 5
+  seed: 1
+
+templates:
+  crazyflie:
+    visual_model: sphere
+    autonomy:
+      ConstantVelocity:
+        velocity: [1, 0, 0]
+    controller:
+      MultirotorVelocityController:
+        airframe: crazyflie2
+    motion_model:
+      Multirotor:
+        # Förster's mass, inertia, thrust, torque, and geometry.
+        airframe: crazyflie2
+        # Optional effects, on explicitly (book chapter "Flying a
+        # multirotor"). Motor lag: Förster eq. 3.16, -T/ln(a) at 500 Hz.
+        motor_time_constant_up: 0.0647
+        motor_time_constant_down: 0.0647
+        # Rotor drag: Förster eq. 4.8, K_aero in plane and along the axis.
+        rotor_drag_coefficient: 9.1785e-7
+        rotor_drag_coefficient_axial: 10.311e-7
+
+entities:
+  crazyflie_forward:
+    template: crazyflie
+    team: 1
+    position_m: [0, 0, 10]
+
+  crazyflie_climb:
+    template: crazyflie
+    team: 1
+    position_m: [0, 2, 10]
+    autonomy:
+      ConstantVelocity:
+        velocity: [0, 0, 0.5]
+
+  # A larger, diagonal command: it leans about 15 degrees at first, inside
+  # the 20 degree tilt limit.
+  crazyflie_fast:
+    template: crazyflie
+    team: 1
+    position_m: [0, 4, 10]
+    autonomy:
+      ConstantVelocity:
+        velocity: [2, 1, 0]
+
+  crazyflie_upset:
+    template: crazyflie
+    team: 1
+    position_m: [0, 6, 10]
+    roll_deg: 15
+    heading_deg: 30
+    autonomy:
+      ConstantVelocity:
+        velocity: [0, 0, 0]

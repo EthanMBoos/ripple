@@ -26,6 +26,7 @@
 - [Terrain](guides/terrain.md)
 - [Flying ArduPlane (SITL)](guides/ardupilot.md)
 - [Flying a multirotor](guides/multirotor.md)
+- [Adding a measured-data vehicle model](guides/measured-vehicle-models.md)
 - [Building a scenario in Rust](guides/rust-scenarios.md)
 - [Writing plugins](guides/writing-plugins.md)
 - [Organizing larger autonomies](guides/autonomy-composition.md)

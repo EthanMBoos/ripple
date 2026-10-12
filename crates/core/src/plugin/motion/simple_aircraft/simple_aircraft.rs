@@ -2,6 +2,19 @@
 //!
 //! C++ counterpart: src/plugins/motion/SimpleAircraft/SimpleAircraft.cpp.
 //! Motion phase: read throttle/model angular rates, integrate, update mutable truth.
+//!
+//! Fidelity
+//! - Source: a kinematic aircraft: speed, roll, and pitch follow commands
+//!   within rate and range limits, and turn rate comes from bank angle and a
+//!   turning radius. The default limits are round numbers, not any aircraft.
+//! - Validated against: C++ SimpleAircraft (the C++ comparison missions, its
+//!   generated scenarios, and the long runs).
+//! - Valid range: a stand-in for an aircraft that turns and climbs within its
+//!   limits; not a physical model.
+//! - Not modeled: forces, aerodynamics, inertia, wind, stall, and energy
+//!   (speed and climb are independent).
+//! - To go further: FixedWing6DOF for anything aerodynamic; to stand in for a
+//!   real aircraft, fit the limits to its turn and climb performance.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;

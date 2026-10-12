@@ -3,7 +3,7 @@
 Run from the repository root with `ripple run missions/<file> --headless`.
 Replay the printed run directory with `ripple replay runs/<mission>/runNNN`.
 `waypoints-point-agents.sweep.yaml` is a small example sweep (`ripple sweep`).
-These twenty-one XML files use the compiled built-ins. They are examples and
+These twenty-two XML files use the compiled built-ins. They are examples and
 regression inputs, not a copy of every upstream demo. A `.yaml` file beside an
 XML file is its [YAML form](../book/src/guides/yaml-missions.md) and must run
 identically; check one with `ripple compare <file>.xml <file>.yaml`. YAML
@@ -16,6 +16,7 @@ variable names.
 | `fixed-wing-6dof.xml` | Two aerodynamic aircraft: level eastbound and tilted northbound with wind. A reference fixture, not a trimmed flight demonstration. |
 | `fixed-wing-6dof-rascal.xml` | C++'s Rascal RC-plane parameters, planned for ArduPlane: level flight, recovery from a 60° roll / 30° pitch upset, and a hands-off glide. No stall model; see `book/src/guides/ardupilot.md`. |
 | `multirotor.xml` | Open-loop quad hover, tilted flight, unequal motor speeds, and six-rotor climb. `MotorSpeeds` supplies constant rad/s commands; no autopilot or landing controller. |
+| `multirotor-velocity.yaml` | Closed-loop flight: `MultirotorVelocityController` flies Crazyflie 2.0 and C++-default quads through velocity steps and a 15° roll upset. `reference/multirotor_control.py` measures it; see the book's [Flying a multirotor](../book/src/guides/multirotor.md). |
 | `networks-local-global.xml` | NoisyState over LocalNetwork; Boundary over GlobalNetwork turns both aircraft; a third aircraft hits the ground. Set `boundary_control:=false` or `ground_team:=1` to see the difference. |
 | `noisy-contacts.xml` | Two route-following agents measure other contacts; typed LocalNetwork messages are available to downstream plugins. The route follower does not consume them. |
 | `auction-sphere.xml` | Stationary agents run a one-shot random-bid auction; the third is out of range. Try `range:=300`, `prob_transmit:=0.65`, or `seed:=42`. Results are typed messages, not stock summary/event fields. |
@@ -32,6 +33,7 @@ variable names.
 | `verification/single-integrator.xml` | SingleIntegrator direct, normalized, zero, and vertical commands from the `ConstantVelocity` test driver. |
 | `verification/noisy-contacts-bias.xml` | Deterministic NoisyContacts biases, attitude order, and covariance, compared through published payloads. |
 | `verification/noisy-contacts-noise.xml` | NoisyContacts with real noise: frames match C++, measurement errors compared by distribution. |
+| `verification/multirotor-fixes.xml` | The three Multirotor fixes shared with the C++ comparison branch: a starting velocity that must move the vehicle, tilted and raised rotors (r x F), and motors held at idle. |
 | `verification/collision-boundary.xml` | SimpleCollision's strict range: pairs exactly at range survive, closing pairs collide (opposing and same team). |
 | `verification/sphere-network-auction.xml` | SphereNetwork reach (inside, exactly at, and beyond range) through AuctionAssign messages on a network named `CommsNetwork`. |
 

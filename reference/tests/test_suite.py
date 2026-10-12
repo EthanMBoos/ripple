@@ -96,7 +96,8 @@ class SuiteTests(unittest.TestCase):
         result = self.run_suite([])
         self.assertEqual(result.code, 0, result.summary)
         self.assertEqual(list(result.summary["checks"]),
-                         ["speed-regression", "rust-tests", "rust-determinism", "cpp-agreement"])
+                         ["speed-regression", "rust-tests", "rust-determinism", "cpp-agreement",
+                          "multirotor-control"])
         self.assertNotIn("make_tables.py", result.steps)
         self.assertTrue(result.kept_old)
 
@@ -104,7 +105,8 @@ class SuiteTests(unittest.TestCase):
         result = self.run_suite(["--retain"])
         self.assertEqual(result.code, 0, result.summary)
         self.assertFalse(result.kept_old)
-        self.assertEqual(result.retained, ["cpp-agreement", "rust-determinism", "speed-regression"])
+        self.assertEqual(result.retained, ["cpp-agreement", "multirotor-control", "rust-determinism",
+                                           "speed-regression"])
         self.assertEqual(result.steps[-1], "make_tables.py")
         self.assertTrue(all(entry["passed"] for entry in result.release["checks"].values()))
 

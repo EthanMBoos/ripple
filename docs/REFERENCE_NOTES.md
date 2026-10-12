@@ -226,6 +226,115 @@ Computing forces once per step is not wrong in itself. JSBSim does it at
 reuse past derivatives, for translation by default. What was wrong here was
 the mismatch: four RK4 stages with first-order forces, unmentioned.
 
+## Multirotor: what Ripple takes from C++
+
+The code, the book, and the missions describe Ripple's multirotor on its own
+terms; this section is the one record of how it relates to C++ SCRIMMAGE's
+`Multirotor` (`src/plugins/motion/Multirotor/`). The module keeps the LGPL
+attribution line it needs as a derived work.
+
+- **Kept:** the model's structure (rigid body, thrust and reaction torque
+  with rotor speed squared, commands clamped to [omega_min, omega_max]), the
+  optional quadratic body drag (`c_D`), the `rotor_config` row format, and
+  the `motor_0...` input ports, so C++ missions run unchanged.
+- **Fixed:** RK4 loads (above) and three further defects (below), on both
+  sides.
+- **Not kept:** C++'s default vehicle. Ripple has no default vehicle and one
+  built-in, the Crazyflie 2.0; any other must be given in full. The C++
+  comparison missions (`multirotor.xml` and its YAML twin,
+  `verification/multirotor-fixes.xml`) write C++'s numbers out; their
+  comments call them illustrative test values. Also not exposed: the C++
+  external-force input, teleport, acceleration output, and private CSV and
+  shape drawing (`write_csv` and `show_shapes` are rejected).
+- **Added, Rust-only:** RotorS's motor and rotor effects, the Crazyflie, and
+  MultirotorVelocityController (see the motor and rotor section below;
+  C++'s MultirotorControllerPID never stabilized anything).
+
+Where C++'s default numbers came from, as far as its history shows: none is
+cited. The first version (`ee26cb264`, 2017-11-29) was a 1.2 kg X quad with
+0.175 m arms; the ArduPilot plugin commit (`e7a115c75`, 2017-12-04) made it
+the 1.5 kg "+" quad of ArduPilot's SITL multicopter of the time (Copter 3.5,
+`mass = 1.5f`, default `quad` frame "+"). The rest looks designed rather than
+measured: c_T 5.45e-6 is exactly 0.8 kgf at the 1200 rad/s top speed;
+omega_min 346.41 is 1200/sqrt(12), so idle thrust is 1/12 of the maximum; the
+inertia, diag(0.0122, 0.0122, 0.0244), is four 0.2 kg point masses on the
+arms (yaw exactly twice roll); c_Q 2.284e-7 and c_D 0.058 have no traceable
+origin (the C++ drag line reads "TODO: Check source"). Searches for the exact
+values found no published source.
+
+## Multirotor: three C++ defects, fixed on the comparison branch
+
+Reviewed one at a time in `src/plugins/motion/Multirotor/Multirotor.cpp`
+before fixing. Rust (`plugin/motion/multirotor/`) and `benchmarking-edits`
+(commit `74571470e`) have the same fixes, line for line.
+
+- **Body and world velocity could disagree.** The state held body velocity
+  (U, V, W, private, initially zero) and world velocity (Uw, Vw, Ww, read from
+  the entity) and integrated both. Position followed body velocity; the
+  reported velocity was the separately integrated world one. So a vehicle
+  spawned or pushed with a velocity reported it but did not move. Body rates
+  were private too. Fix: read body velocity and rates from the entity state at
+  the start of every step (rotated into the body frame), and report world
+  velocity as the rotated body velocity. With truth the only copy, the two
+  cannot drift apart.
+- **Moment arms.** Each rotor's moment was thrust times the full 3D offset
+  length, in the x-y plane, and the rotor's roll/pitch/yaw tilt was parsed
+  but unused (the C++ XML says so). Fix: each rotor pushes along its tilted
+  axis (the rotor quaternion applied to body +z) and its moment is r x F,
+  plus the reaction torque along the same axis. For flat, untilted rotors
+  this is the old moment up to rounding.
+- **Thrust at omega_min.** Commands are clamped to [omega_min, omega_max];
+  thrust was then zeroed only when the clamped speed equalled omega_min
+  ("servo is off"), while its yaw torque stayed: a jump in thrust at the
+  bottom of the range and a motor that twists without pushing. We read
+  omega_min as an armed motor's idle speed: thrust and torque both follow
+  c w² there, with no jump. There is no "off"; set omega_min to 0 for motors
+  that stop (the Crazyflie does).
+
+`missions/multirotor.xml` triggers none of these (no initial velocity, flat
+untilted rotors, motors above idle): before and after the fixes its frames
+differ by at most 6e-12 m and 7e-12 m/s, rounding. The fixture
+`verification/multirotor-fixes.xml` reaches all three (a starting velocity,
+tilted and raised rotors, idle motors). Before the C++ fix it separated C++
+from Rust at the first step on every vehicle; with it, the two agree to
+3.7e-13 m (and `multirotor.xml` to 4.9e-12 m). Unmodified C++ keeps the
+defects, so `reference_check.py` only records Multirotor missions' baseline
+equality, as for the RK4 loads. The C++ commit leaves the `Uw`, `Vw`, `Ww`
+states in the vector but no longer reads them.
+
+## Multirotor motor and rotor effects, and the Crazyflie preset (Rust-only)
+
+C++ has none of this, so there is nothing to compare with it; these effects
+are checked against RotorS and Crazyflow only. Rust adds, as optional
+parameters, RotorS's motor-plugin model (`rotor.rs`, ported from
+`rotors_gazebo_plugins/src/gazebo_motor_model.cpp` at `cd813b7a8c37`,
+Apache-2.0): first-order motor lag with separate up and down time constants,
+rotor drag proportional to rotor speed and the hub's edgewise airspeed, and
+the rolling moment. RotorS's reaction torque (moment constant times thrust)
+is the C++ c_Q w² already. Rust evaluates the lagging speed exactly at each
+RK4 stage; at the end of a step it equals RotorS's filter output. RotorS
+applies drag at the rotor link, which Gazebo turns into an r x F moment, and
+reads the link's own velocity, which includes the body's rotation; Rust does
+both. `reference/rotors_motor.py` compiles RotorS's own filter and
+`UpdateForcesAndMoments` against stand-in Gazebo links and compares 480
+samples: largest errors 3.6e-15 N, 6.7e-16 N m, and 4.5e-13 rad/s.
+
+Each effect is off unless the mission sets its key, for any vehicle, as
+for FixedWing6DOF's stall tables and landing gear. With every effect at zero,
+existing Ripple missions are unchanged: on
+2026-10-12 all 39 missions and workloads of `equivalence.py` were
+byte-identical before and after these effects and the controller were added.
+
+The `crazyflie2` preset takes the vehicle's numbers from Förster's 2015 ETH
+thesis; the book chapter "Flying a multirotor" lists each with its equation,
+and `airframe.rs` derives c_T, c_Q, and the top speed from his fits. His
+motor lag and drag coefficients are not part of the preset: missions write
+them (the book lists them, and `airframe.rs`'s tests derive the lag).
+Förster's drag also has an axial term, which RotorS lacks; it is a separate
+key, `rotor_drag_coefficient_axial`, zero by default. RotorS's Hummingbird motor
+constants are not used: they repeat its Firefly's digit for digit, with no
+source.
+
 ## Ported models keep C++ numerics; new models do not
 
 Ported plugins reproduce the C++ implementation, including its numerical
@@ -294,6 +403,7 @@ reference.
 
 - **MultirotorControllerPID** writes equal hover motor speeds; its attitude
   and yaw corrections are commented out, so it doesn't stabilize anything.
+  Rust's `MultirotorVelocityController` is a new controller, not a port.
 - **RigidBody6DOF** disables gravity and some translational derivatives, and
   sets P/Q/R by clamping U.
 - **Ballistic** puts `-mass * g` in the derivative of vertical acceleration

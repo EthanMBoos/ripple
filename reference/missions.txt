@@ -17,3 +17,4 @@ single-integrator | verification/single-integrator.xml | SingleIntegrator comman
 noisy-contacts-bias | verification/noisy-contacts-bias.xml | NoisyContacts bias, attitude, covariance
 sphere-network-auction | verification/sphere-network-auction.xml | SphereNetwork reach, AuctionAssign
 collision-boundary | verification/collision-boundary.xml | SimpleCollision range boundary
+multirotor-fixes | verification/multirotor-fixes.xml | Multirotor fixes: initial velocity, rotor tilt, idle

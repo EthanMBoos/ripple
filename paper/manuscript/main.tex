@@ -84,8 +84,9 @@ checked at its boundary and again in closed loop.
 Ripple is that simulator. Its Rust core builds on SCRIMMAGE's plugin design
 \cite{demarco2018}, and it agrees with the C++ original to floating-point
 rounding on every compared mission (Appendix~\ref{app:baseline}). Aerodynamic
-tables, terrain contact, and ArduPilot running in lockstep are integrated; rotor
-dynamics are next (Section~\ref{sec:multirotor}). Every vehicle goes through the
+tables, terrain contact, ArduPilot running in lockstep, and a Crazyflie with
+RotorS's rotor effects and a native controller are integrated
+(Section~\ref{sec:multirotor}). Every vehicle goes through the
 same sensing, communication, and estimation stages, which keep the true state
 separate from each agent's belief, and every run is byte-repeatable. A learned
 and a classical policy can therefore read the same belief, command the same
@@ -325,13 +326,13 @@ axis changed and the evidence supporting it.
 Axis & Choices & Status \\
 \midrule
 Motion model & Point agents, constrained kinematics, rigid-body dynamics &
-  Built; multirotor defects under review \\
-Physical effects & Stall, contact, motor lag, rotor drag & Stall and terrain
-  contact built; others planned \\
+  Built; multirotor defects fixed \\
+Physical effects & Stall, contact, motor lag, rotor drag & Stall, terrain
+  contact, and multirotor motor lag and rotor drag built \\
 Physical evidence & Borrowed, estimated, or measured parameters; independent
   validation & Provenance audit; flight-data validation planned \\
-Control stack & Native controllers or external autopilot & ArduPlane SITL built;
-  other vehicle stacks planned \\
+Control stack & Native controllers or external autopilot & ArduPlane SITL and a
+  native multirotor controller built; other vehicle stacks planned \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -471,27 +472,47 @@ further; effects left out are named zero terms in the force sums; and geometry
 and coefficients are parameters (rotor axes as vectors, aerodynamics as tables),
 so a measured model arrives as data or one function.
 
-Reviewing the inherited multirotor model for this work found three defects,
-present in the simulator it was ported from as well. Position is integrated from
-a body-frame velocity that starts at zero, while the reported world velocity is
-integrated separately, so the two can disagree. Moment arms use the full
-three-dimensional rotor offset, so a rotor's height above the centre of gravity
-adds leverage, and configured rotor tilt is ignored. Thrust drops to zero only
-when a rotor's speed equals the minimum exactly, while its yaw torque remains.
-These will be fixed first. Motor lag, rotor drag, and the rolling moment will
-follow RotorS \cite{furrer2016rotors} as optional effects. Rotor drag, linear in
-airspeed, is small but first order: it sets the velocity dynamics near hover and
-is needed to explain accelerometer readings \cite{martin2010accelerometer}. The
-inherited quadratic body drag remains as a second term for higher speeds.
-RotorS's own motor constants carry no source, so the real-vehicle parameter set
-comes from the Crazyflie's measured identification \cite{forster2015crazyflie},
-each value cited, beside the inherited defaults kept for the C++ comparison.
-Replaying public flights with recorded motor commands \cite{ullah2026nanobench}
-would give a stated prediction error; that validation is an extension point. A
-controller comes first: no controller yet flies the model closed loop.
+Motor lag, rotor drag, and the rolling moment follow RotorS
+\cite{furrer2016rotors} as optional parameters, off unless a mission sets them,
+as for the fixed wing's stall tables, so each can be turned on alone. Rotor
+drag, linear in airspeed and in rotor speed, is small but first order: it sets
+the velocity dynamics near hover and is needed to explain accelerometer readings
+\cite{martin2010accelerometer}. RotorS's own filter and force code, compiled
+against stand-in Gazebo links, and Ripple's model agree on 480 sampled states to
+$4\times10^{-15}$~N and $7\times10^{-16}$~N\,m (\texttt{rotors-motor}). RotorS's
+motor constants carry no source, so the real-vehicle parameters come from the
+Crazyflie's identification \cite{forster2015crazyflie}: its mass, measured
+inertia matrix, and drag coefficients as published, and the thrust and torque
+coefficients, top speed, and arm derived from its fits, each cited beside its
+value. A single $c_T\omega^2$ matches the measured thrust exactly at hover and
+within 10.4\% across the measured range. Given these constants and the same
+motor commands, Crazyflow's independent first-principles model
+\cite{schuck2026crazyflow} and Ripple fly the same tumbling 3~s trajectory to
+$3\times10^{-12}$~m with drag off (\texttt{crazyflow-crazyflie}). With drag on
+they part by design, by 2.5~cm after 1~s and up to 4.0~m and 1.2~rad by 3~s:
+Ripple applies drag at each rotor hub, where it also damps rotation, and
+Crazyflow lumps it at the centre of mass.
 
-\stub{Report the multirotor's external comparison, its remaining physical
-uncertainty, and one closed-loop mission.}
+A cascaded controller (velocity, attitude, body rate, motor mixing) flies the
+model from the same velocity command point agents take, reading belief only.
+On the Crazyflie at 500~Hz it reaches a 1~m/s command with a 1.0~s rise, 20\%
+overshoot, and settles within 5\% in 3.6~s; the 65~ms motor lag, not the
+controller structure, limits the inner loops. In steady forward flight the
+Crazyflie leans 1.456$^\circ$ into its rotor drag, against 1.455$^\circ$
+predicted from the identified drag coefficient. Trajectories converge as the
+step shrinks: 2.6~mm from the 20-substep run at 5 substeps, 0.9~mm at 10
+(\texttt{multirotor-control}).
+
+The remaining physical uncertainty is in the motor lag and the drag. The lag was
+identified from motor command to thrust, and Ripple, like RotorS, applies it to
+shaft speed: the same time constant for small changes near hover, an
+approximation for large steps. The fit also did not remove radio or load-cell
+latency, and an independent identification of a similar Crazyflie gives a lag
+twice as long \cite{schuck2026crazyflow}; it is a parameter worth sweeping.
+Ground effect, interference between rotors, inflow, and rotor gyroscopic torques
+are named zero terms. Replaying public flights with recorded motor commands
+\cite{ullah2026nanobench} would give a stated prediction error; that validation
+is an extension point.
 
 \section{Benchmark Tasks}
 \label{sec:tasks}
@@ -700,9 +721,10 @@ communication removed to check that a policy actually uses it
 
 \subsection{Limits}
 
-No learned policy has yet been trained or evaluated in Ripple, the network
-model has no delay, and no controller yet flies the multirotor, the main
-realistic vehicle. No model is yet checked against a vehicle's
+No learned policy has yet been trained or evaluated in Ripple, and the network
+model has no delay. The multirotor flies closed loop, but only on its native
+controller, and its motor lag is uncertain by a factor of two. No model is yet
+checked against a vehicle's
 measured flight data; the stall tables carry JSBSim's Rascal values, which
 their own README calls pre-alpha. The stall result is one mission, one
 aircraft, and one autopilot configuration, on one machine; its
@@ -759,17 +781,13 @@ hash of the source that ran and the C++ commits, \texttt{4bdf41fb0}
 (\texttt{Ubuntu-24.04}) and \texttt{1c8595b91} (\texttt{benchmarking-edits}).
 
 \paragraph{Builds}
-Each C++ branch is built from a \texttt{git archive} in the unmodified
-upstream dependency image (\texttt{linux/amd64}, GCC~13.3), headless and
-single-threaded. \texttt{Ubuntu-24.04} is the unmodified reference.
-\texttt{benchmarking-edits} adds opt-in instrumentation and three fixes that
-Ripple shares: the substep order (below); AircraftPIDController using its
-given timestep, with a lower default altitude derivative gain
-(\texttt{5777aeea1}); and FixedWing6DOF and Multirotor computing forces at
-every RK4 stage instead of only from the start-of-step state
-(\texttt{1c8595b91}, \texttt{paper/data/rk4-loads}). Every mission also runs on
-the unmodified build, and instrumentation must leave frames and summaries
-byte-identical.
+Each C++ branch is built from a \texttt{git archive} in the unmodified upstream
+dependency image (\texttt{linux/amd64}, GCC~13.3), headless and single-threaded.
+\texttt{Ubuntu-24.04} is the unmodified reference. \texttt{benchmarking-edits}
+adds opt-in instrumentation and the fixes Ripple shares: the substep order
+(below) and the vehicle model fixes (Table~\ref{tab:model-fixes}). Every
+mission also runs on the unmodified build, and instrumentation must leave
+frames and summaries byte-identical.
 
 \paragraph{Trace}
 Set with \texttt{SCRIMMAGE\_TRACE} in C++ and \texttt{-{}-trace} in Ripple, it
@@ -831,6 +849,77 @@ Ripple follows it. The unmodified and fixed C++ write identical output on all
 nine curated single-substep missions that use no other corrected plugin, and
 the two substep missions agree with the fixed C++ to $4.8\times10^{-14}$~m.
 
+\paragraph{Vehicle model fixes}
+Reviewing the inherited vehicle models for this work turned up defects in the
+C++ itself (Table~\ref{tab:model-fixes}): first in the fixed-wing aircraft and
+its autopilot, then in the multirotor. Each is the same kind of change. The
+C++ computes something wrong, Ripple computes it correctly, and the comparison
+branch takes the identical fix, so the comparison checks the corrected model
+instead of reproducing the defect. The unmodified build keeps the defects;
+for missions that use these models its equality with Ripple is only recorded.
+These fixes are distinct from the optional upgrades the C++ never had, which
+are off by default and checked against their own sources instead of the C++:
+stall tables and landing gear for the fixed wing, after JSBSim
+(Section~\ref{sec:stall}), and motor lag and rotor drag for the multirotor,
+after RotorS (Section~\ref{sec:multirotor}).
+
+The fixed-wing fixes were measured on their own. With forces held through the
+RK4 stages, a FixedWing6DOF glider ends 17~m from a fine-step reference after
+60~s at 0.05~s steps; computed at each stage, $1.5\times10^{-5}$~m
+(\texttt{paper/data/rk4-loads}). After a 5$^\circ$ roll and 3$^\circ$ pitch
+upset, the old altitude gain lets the default aircraft wander 91~m in altitude
+over 45~s, the new one 1.4~m. The multirotor defects appear only in cases the
+curated mission never flies: before and after the fixes its trajectories differ
+by at most $6\times10^{-12}$~m. A fixture that starts a vehicle moving, tilts
+and raises its rotors, and holds motors at idle separates the unfixed C++ from
+Ripple at the first step and agrees with the fixed C++ to $4\times10^{-13}$~m.
+The multirotor these comparisons fly is the C++ default quad, which Ripple does
+not build in: its numbers carry no source and look designed rather than measured
+(its thrust coefficient gives exactly 0.8~kgf per motor at its round top speed,
+and its inertia is four point-mass motors), so only the comparison missions
+write them out.
+
+\begin{table*}[t]
+\centering
+\caption{Vehicle model defects in the C++, fixed in Ripple and on the C++
+comparison branch alike.}
+\label{tab:model-fixes}
+\small
+\begin{tabularx}{\textwidth}{
+  P{0.15\textwidth}
+  P{0.22\textwidth}
+  >{\raggedright\arraybackslash}X
+  P{0.2\textwidth}
+  P{0.08\textwidth}}
+\toprule
+Model & What the C++ did & Why it is wrong & Fix (both) & Commit \\
+\midrule
+FixedWing6DOF and Multirotor & Computed forces and moments from the
+  start-of-step state and held them through all four RK4 stages & The step is
+  first order at the cost of four evaluations & Recompute them from each
+  stage's state & \texttt{1c8595b91} \\
+AircraftPID\-Controller & Used the full mission tick as its timestep during
+  substeps; altitude derivative gain 0.01 & Its tuning changed with the
+  substep count, and the gain turned a small upset into a growing altitude and
+  heading oscillation & Use the substep given; gain 0.002 &
+  \texttt{5777aeea1} \\
+Multirotor velocity & Kept a private body velocity, starting at zero, and
+  integrated the reported world velocity separately & A vehicle given a
+  velocity reported it without moving, and the two copies could drift apart &
+  Read body velocity and rates from the shared state each step &
+  \texttt{74571470e} \\
+Multirotor moment arms & Multiplied thrust by the full 3D rotor offset, in the
+  horizontal plane, and ignored configured rotor tilt & A rotor mounted higher
+  gained leverage, and a tilted rotor still pushed straight up & Each rotor
+  pushes along its tilted axis; moment $r \times F$ & \texttt{74571470e} \\
+Multirotor idle & Zeroed a rotor's thrust only when its speed equalled the
+  minimum exactly, keeping its yaw torque & Thrust jumped at the bottom of the
+  range, and an idling motor twisted without pushing & The minimum is an armed
+  motor's idle: thrust and torque both continue & \texttt{74571470e} \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
 \paragraph{Coverage and limits}
 Compared: SimpleAircraft, FixedWing6DOF, Multirotor, and SingleIntegrator with
 their controllers; Straight; AuctionAssign's message timing; NoisyState and
@@ -889,11 +978,6 @@ FixedWing6DOF inertia &
 C++'s default silently overrides a supplied SI inertia matrix; Ripple accepts
 either and rejects both together. &
 Fixtures use the default. \\
-AircraftPIDController with substeps &
-C++ uses the full step as the controller timestep during substeps; Ripple uses
-the substep. &
-FixedWing6DOF scenarios run without substeps; \texttt{5777aeea1} fixes the
-comparison branch. \\
 \bottomrule
 \end{tabularx}
 \end{table*}

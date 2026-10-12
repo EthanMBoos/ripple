@@ -5,7 +5,7 @@ mod quaternion;
 mod state;
 
 pub(crate) use angles::{angle_2pi, angle_pi};
-pub use integration::rk4;
+pub use integration::{rk4, rk4_timed};
 pub use quaternion::{EulerAngles, Quaternion};
 pub use state::KinematicState;
 

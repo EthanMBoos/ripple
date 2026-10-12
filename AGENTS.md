@@ -19,8 +19,9 @@ out of the default build.
   The only allowed C++ changes are on the `benchmarking-edits` comparison
   branch: opt-in instrumentation (tracing, test drivers, selectable RNG) that
   leaves outputs byte-identical, and fixes for documented C++ defects (the
-  substep order, AircraftPIDController, and the RK4 loads in FixedWing6DOF and
-  Multirotor, `docs/REFERENCE_NOTES.md`).
+  substep order, AircraftPIDController, the RK4 loads in FixedWing6DOF and
+  Multirotor, and Multirotor's velocity, moment arms, and idle thrust,
+  `docs/REFERENCE_NOTES.md`).
 - User research plugins live in workspace user crates such as `crates/starter`,
   registered in `crates/cli/src/main.rs`; keep the starter building and tested.
 - XML and YAML missions share one typed `ScenarioConfig`; XML is frozen, only

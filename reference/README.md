@@ -37,6 +37,9 @@ check failed. Every script also runs on its own; its docstring says how.
 | `speed-spatial` | release | collision cost, scan against grids (`spatial_benchmark.py`) | the scan | identical output |
 | `speed-messages` | release | routing cost with all-agent messages (`message_benchmark.py`) | native C++ | runs |
 | `rk4-loads` | release | forces at every RK4 stage against held forces (`rk4_loads.py`) | unmodified C++ | runs |
+| `multirotor-control` | quick | MultirotorVelocityController step responses and step-size convergence (`multirotor_control.py`) | the commands; Förster's drag; 20 substeps | whole velocity error within 5%; drag tilt within 2%; within 5 mm |
+| `rotors-motor` | release | Multirotor motor lag and rotor loads (`rotors_motor.py`) | RotorS's motor-plugin source in Docker | every sample within 1e-12 relative |
+| `crazyflow-crazyflie` | release | Multirotor's Crazyflie against Crazyflow's dynamics (`crazyflow_check.py`) | Crazyflow, pinned, via uv | no-drag case within 1e-6 m |
 | `stall-landing` | release | stall tables in ArduPlane's Rascal landing (`stall_landing.py`) | the mission without tables | the repeat is byte-identical |
 
 A check that needs another runs it first (`checker-sensitivity` needs
@@ -125,6 +128,7 @@ resolved from this checkout, so the suite runs the same from any directory name.
 | `generate_scenarios.py`, `divergence.py`, `sensitivity.py`, `noise_statistics.py`, `platform_check.py` | Release checks described [below](#the-scripts-behind-the-release-checks) |
 | `perf.py`, `benchmark.py`, `native_benchmark.py`, `native.py`, `native_build.sh`, `spatial_benchmark.py`, `message_benchmark.py` | Speed and memory |
 | `rk4_loads.py`, `stall_landing.py`, `inputs/` | Focused studies and their input missions |
+| `multirotor_control.py`, `rotors_motor.py`, `rotors/`, `crazyflow_check.py`, `crazyflow/` | Multirotor checks; `rotors/` builds RotorS's motor-plugin source with a stand-in for Gazebo; `crazyflow/` runs Crazyflow's dynamics |
 | `Dockerfile`, `fixtures/` | The C++ reference build and its command-test plugins |
 | `rust.Dockerfile`, `benchmark_runner.rs` | Rust on Linux, for the platform check and benchmarks |
 | `tests/` | Tests for these tools, run without Docker |
@@ -168,6 +172,10 @@ The checker builds two committed branches of `../scrimmage`:
   FixedWing6DOF and Multirotor compute forces and moments at every RK4 stage
   instead of once per step ([reference
   notes](../docs/REFERENCE_NOTES.md#rk4-loads-a-c-defect-fixed-on-the-comparison-branch)).
+  Multirotor also reads body velocity and rates from the entity state, takes
+  rotor moments as r x F along each tilted rotor axis, and keeps idle thrust
+  at `omega_min` ([reference
+  notes](../docs/REFERENCE_NOTES.md#multirotor-three-c-defects-fixed-on-the-comparison-branch)).
   With neither variable set, `motion_multiplier` 1, and none of those three
   plugins, the branch behaves exactly like the reference.
 
@@ -274,6 +282,7 @@ The matrix is [missions.txt](missions.txt):
 | `fixed-wing-a4` | `fixed-wing-6dof.xml` | Aerodynamic flight, tilted/northbound attitude, nonzero rates and wind |
 | `fixed-wing-rascal` | `fixed-wing-6dof-rascal.xml` | The Rascal's parameters, an upset, and a glide |
 | `multirotor` | `multirotor.xml` | Quad hover, tilted flight, unequal motor speeds and a six-rotor configuration |
+| `multirotor-fixes` | `verification/multirotor-fixes.xml` | The three Multirotor fixes: starting velocity, tilted and raised rotors, idle motors |
 | `single-integrator` | `verification/single-integrator.xml` | SingleIntegrator direct, normalized, zero, and vertical commands from `ConstantVelocity` |
 | `noisy-contacts-bias` | `verification/noisy-contacts-bias.xml` | NoisyContacts biases, attitude order, and covariance through published payloads |
 | `sphere-network-auction` | `verification/sphere-network-auction.xml` | SphereNetwork reach inside, at, and beyond range through AuctionAssign messages on `CommsNetwork` |
@@ -287,10 +296,14 @@ Each case runs C++ headless and single-threaded. Rust runs with 1, 2, and 8
 workers without Rerun, plus an eight-worker headless Rerun recording.
 
 For just the Multirotor port, run
-`python3 reference/reference_check.py --mission missions/multirotor.xml` and
-`cargo test -p ripple-core multirotor`. The case covers the selected open-loop
-cases, not a working upstream autopilot or external-force/landing integration.
-Model-specific quirks are commented inline.
+`python3 reference/reference_check.py --mission missions/multirotor.xml
+--mission missions/verification/multirotor-fixes.xml` and `cargo test -p
+ripple-core multirotor`. `multirotor.xml` covers the quad open loop and
+reaches none of the three Multirotor fixes; `multirotor-fixes.xml` reaches all
+three. The Rust-only motor and rotor effects, the Crazyflie preset, and
+MultirotorVelocityController have no C++ counterpart; they are checked against
+RotorS, Förster's data, and Crazyflow (`rotors_motor.py`,
+`crazyflow_check.py`, `multirotor_control.py`).
 
 - C++/Rust frames and team summaries use `reference/compare.py`. Frames must
   contain the same entity IDs, so spawn and removal ticks are compared.
@@ -441,3 +454,18 @@ reference rather than an earlier revision of this project:
   ("frozen") forces come from the unmodified C++ build, which still has them.
 - `stall_landing.py`: ArduPlane's Rascal landing with and without stall tables,
   with a repeat that must be byte-identical.
+- `rotors_motor.py`: Multirotor's motor lag and rotor loads against RotorS's
+  own motor-plugin code (`rotors/`: an extractor that copies RotorS's
+  `FirstOrderFilter` and `UpdateForcesAndMoments` verbatim from a pinned
+  commit, and a harness with stand-in Gazebo links). It writes the samples
+  that the Rust test `rotors_motor_samples` reproduces; `--update-fixture`
+  replaces the committed copy.
+- `crazyflow_check.py`: the `crazyflie2` preset flown open loop in Ripple and
+  in Crazyflow's `first_principles` dynamics (an independent implementation,
+  given the same constants through `crazyflow/integrate.py`), with rotor drag
+  off (must agree to integration precision) and on (Ripple's per-rotor drag
+  against Crazyflow's lumped drag matrix; reported). Crazyflow runs in a uv
+  environment at a pinned commit; `--python` uses an existing one.
+- `multirotor_control.py`: MultirotorVelocityController's step responses on
+  the Crazyflie, its steady tilt against Förster's rotor drag, and
+  convergence at 5, 10, and 20 substeps.

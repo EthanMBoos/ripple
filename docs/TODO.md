@@ -274,31 +274,3 @@ code should make it obvious where that data would go:
   equations as a new motion model, reproduce its published tables as a test,
   warn outside its valid range, keep "matches its source" separate from
   "matches reality", and add a suite check so the result counts as evidence.
-
-## Next: fixed-wing named vehicles
-
-Organize FixedWing6DOF and AircraftPIDController like Multirotor and its
-controller (`airframe: crazyflie2`): each built-in vehicle is sourced and
-loaded by name, any key overrides one value, optional effects (stall tables,
-landing gear) stay explicit mission keys, there is no default vehicle, and
-the controller's default gains belong to the vehicle they were tuned for.
-
-- **`airframe: a4d`.** Today's defaults appear to be the A-4D Skyhawk from
-  Nelson, *Flight Stability and Automatic Control*, Appendix B (derivatives
-  and geometry match from memory: C_L_alpha 3.45, C_m_alpha -0.38, C_mq -3.6,
-  260 ft^2 wing, 27.5 ft span). Verify against the book, cite each value, and
-  move them from `impl Default for FixedWingParams` and
-  `DEFAULT_INERTIA_SLUG_FT_SQ` into the profile. Today's AircraftPIDController
-  defaults become its gains.
-- **`airframe: rascal`.** From the numbers its missions spell out today
-  (C++'s Rascal file), each checked against JSBSim's Rascal and cited, so
-  the Rascal missions shrink to `airframe: rascal`.
-- **Rascal controller settings.** Keep today's AircraftPIDController gains:
-  measured on the Rascal (heading, altitude, and speed steps; 5/3 and 60/30
-  degree upsets; three step sizes) they track every command, and altitude D
-  from 0 to 0.02 flies identically. Change only the attitude limits, to
-  ArduPlane's defaults (pitch 20, roll 45 degrees; the inherited 45/60 let an
-  altitude step pitch it to 48 degrees, past what a 20 m/s Rascal could fly).
-  These are controller settings stored with the Rascal profile.
-- Missions that fly the jet today name `airframe: a4d`; outputs of every
-  existing mission must stay byte-identical, so the jet's evidence stands.

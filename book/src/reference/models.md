@@ -9,7 +9,7 @@ the simulation loop. No runtime library loading is planned.
 | --- | --- | --- |
 | Autonomy | Straight; Rust-native WaypointFollower; AuctionAssign | More research behaviors when needed. MotorSchemas/nested plugin composition and GraphvizFSM are not prerequisites for navigation. Legacy protobuf spawning and camera windows are excluded. |
 | Controller | SimpleAircraftControllerPID; SingleIntegratorControllerSimple; AircraftPIDController; Rust-only MotorSpeeds and MultirotorVelocityController | SimpleAircraft PID roll/glide-slope modes deferred; unsupported modes are errors. MotorSpeeds supplies constant rotor commands for testing. MultirotorVelocityController flies Multirotor from the point agents' velocity command (velocity, attitude, rate, mixing); no position hold or yaw command. See [Flying a multirotor](../guides/multirotor.md). |
-| Motion | SimpleAircraft; SingleIntegrator; FixedWing6DOF; Multirotor | Flight-model limitations are commented beside their equations. FixedWing6DOF computes forces and moments at every RK4 stage, where C++ holds them for the whole step; FixedWing6DOF can also have landing gear (Rust-only, after JSBSim; see the Terrain chapter) and `lift_table` and `drag_table` rows against angle of attack that replace its linear lift and zero-lift drag, so the wing stalls (Rust-only; see the ArduPilot chapter); Multirotor has optional RotorS motor lag, rotor drag, and rolling moment and a built-in Crazyflie 2.0 (see [Flying a multirotor](../guides/multirotor.md)); external-force contact and acceleration sensor access are not exposed. JSBSim is an offline verification candidate, not a runtime plugin. |
+| Motion | SimpleAircraft; SingleIntegrator; FixedWing6DOF; Multirotor | Flight-model limitations are commented beside their equations. FixedWing6DOF has two built-in aircraft and no default: `airframe: a4d` (the A-4D Skyhawk, from Nelson's *Flight Stability and Automatic Control*) and `airframe: rascal` (ArduPilot's JSBSim Rascal), or a mission gives every number. It computes forces and moments at every RK4 stage, where C++ holds them for the whole step; FixedWing6DOF can also have landing gear (Rust-only, after JSBSim; see the Terrain chapter) and `lift_table` and `drag_table` rows against angle of attack that replace its linear lift and zero-lift drag, so the wing stalls (Rust-only; see the ArduPilot chapter); Multirotor has optional RotorS motor lag, rotor drag, and rolling moment and a built-in Crazyflie 2.0 (see [Flying a multirotor](../guides/multirotor.md)); external-force contact and acceleration sensor access are not exposed. JSBSim is an offline verification candidate, not a runtime plugin. |
 | Sensor | NoisyState; NoisyContacts; NoisyPosition (Rust-only teaching example) | NoisyContacts measures every other live entity; no range/FOV, missed detections, or tracker. Cameras and richer sensors are not selected. |
 | Localization, tracking | PassThrough (copies one reading; the default for both) | Filters, dead reckoning, and trackers are research plugins; see [Belief vs truth](../concepts/belief-vs-truth.md). |
 | Interaction | SimpleCollision; GroundCollision; Boundary; Rust-native WaypointBroadcast and TerrainCollision | Physics-engine collisions, richer geometry, and games/scoring environments deferred. No integration-specific spawning here. |
@@ -30,17 +30,17 @@ the simulation loop. No runtime library loading is planned.
   filter.
 - TerrainCollision removes agents that reach the mission's terrain, checking the
   path moved each step; see [Terrain](../guides/terrain.md).
-- AircraftPIDController's default altitude derivative gain is 0.002, not
-  upstream's 0.01, which made the default FixedWing6DOF oscillate after a pitch
-  or roll upset (hundreds of metres in a 45 s test). At 220 m/s, 0.01 makes each
-  altitude correction larger than the motion it reacts to, so the swings grow;
-  at 0.002 they die out. The derivative only damps, so the target altitude and
-  how it is held are unchanged. Its PIDs use the substep as their timestep. The
-  comparison C++ branch makes both changes; see [reference
-  notes](https://github.com/EthanMBoos/ripple/blob/main/docs/REFERENCE_NOTES.md)
-  and the
-  [measurement](https://github.com/EthanMBoos/ripple/blob/main/paper/data/rk4-loads/summary.md)
-  (part C).
+- AircraftPIDController takes the same `airframe` and loads the gains and
+  attitude limits tuned for it; without one, the mission gives them all.
+  `a4d`'s altitude derivative gain is 0.002: at its 220 m/s, 0.01 made each
+  altitude correction larger than the motion it reacts to, so a pitch or roll
+  upset grew into swings of hundreds of metres in a 45 s test; at 0.002 they
+  die out ([measurement](https://github.com/EthanMBoos/ripple/blob/main/paper/data/rk4-loads/summary.md),
+  part C). `rascal` flies the same gains, measured adequate on the Rascal at
+  20 m/s (the derivative gain makes no difference there from 0 to 0.02), with
+  ArduPlane's attitude limits: pitch 20 and roll 45 degrees instead of 45 and
+  60, which let an altitude step pitch the Rascal to 48 degrees. Its PIDs use
+  the substep as their timestep.
 - WaypointBroadcast sends an initial route and optionally one timed replacement.
   WaypointFollower owns a list and current index. No services, route planner, or
   generic state-machine framework. Initial/updated broadcasts are not latched

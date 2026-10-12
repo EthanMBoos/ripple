@@ -2,7 +2,7 @@
 \begin{table*}[t]
 \centering
 \caption{The checks of \texttt{reference/suite.py} and their outcome in this
-release (\texttt{paper/data/release.json}); they ran on 4 different sources.
+release (\texttt{paper/data/release.json}); they ran on 5 different sources.
 }
 \label{tab:checks}
 \footnotesize
@@ -47,6 +47,9 @@ Check & What it checks & Against & Outcome \\
 \texttt{multirotor-control} & MultirotorVelocityController's step responses on
   the Crazyflie, and convergence as the step shrinks & the commands; Förster's
   rotor drag; the 20-substep run & passed \\
+\texttt{rascal-control} & AircraftPIDController's rascal settings on
+  FixedWing6DOF's Rascal: altitude derivative gain after upsets, and steps under
+  each attitude limit & the commands; the a4d limits & passed \\
 \texttt{rotors-motor} & Multirotor's motor lag and rotor loads against RotorS,
   sample by sample & RotorS's motor-plugin source (ethz-asl/rotors\_simulator),
   compiled in Docker & passed \\

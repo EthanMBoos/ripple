@@ -12,7 +12,7 @@
     <vx>222</vx><vy>0</vy><vz>0</vz><heading>0</heading>
     <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
     <autonomy speed="220">Straight</autonomy>
-    <controller heading_pid="0, 0, 0, 45" altitude_pid="0, 0, 0, 10" speed_pid="0, 0, 0, 10" pitch_pid="0, 0, 0, 9" roll_pid="0, 0, 0, 9">AircraftPIDController</controller>
-    <motion_model thrust_min="0">FixedWing6DOF</motion_model><visual_model>sphere</visual_model>
+    <controller airframe="a4d" heading_pid="0, 0, 0, 45" altitude_pid="0, 0, 0, 10" speed_pid="0, 0, 0, 10" pitch_pid="0, 0, 0, 9" roll_pid="0, 0, 0, 9">AircraftPIDController</controller>
+    <motion_model airframe="a4d" thrust_min="0">FixedWing6DOF</motion_model><visual_model>sphere</visual_model>
   </entity>
 </runscript>

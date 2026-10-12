@@ -318,6 +318,12 @@ CHECKS = [
           "every velocity error within 5% over the last second, Crazyflie drag tilt within 2%, 5 substeps within 5 mm",
           (QUICK, RELEASE), script_check("multirotor_control.py", "multirotor-control"),
           keep_named("results.json", "summary.md")),
+    Check("rascal-control", "AircraftPIDController's rascal settings on FixedWing6DOF's Rascal: "
+          "altitude derivative gain after upsets, and steps under each attitude limit",
+          "the commands; the a4d limits", "altitude D changes the error under 1 cm; under the "
+          "rascal limits every step settles and pitch stays under 25 degrees",
+          (QUICK, RELEASE), script_check("rascal_control.py", "rascal-control"),
+          keep_named("results.json", "summary.md")),
     Check("rotors-motor", "Multirotor's motor lag and rotor loads against RotorS, sample by sample",
           "RotorS's motor-plugin source (ethz-asl/rotors_simulator), compiled in Docker",
           "every sample within 1e-12 relative; samples equal the committed fixture",

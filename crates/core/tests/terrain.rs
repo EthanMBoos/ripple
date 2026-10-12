@@ -189,9 +189,13 @@ fn fixed_wing_refuses_its_flat_ground_model_with_terrain() -> Result<()> {
                 autonomy: vec![
                     PluginConfig::new("Straight").with_params(serde_json::json!({"speed": 220}))?,
                 ],
-                controller: vec![PluginConfig::new("AircraftPIDController")],
-                motion_model: PluginConfig::new("FixedWing6DOF")
-                    .with_params(serde_json::json!({"use_ground_model": use_ground_model}))?,
+                controller: vec![
+                    PluginConfig::new("AircraftPIDController")
+                        .with_params(serde_json::json!({"airframe": "a4d"}))?,
+                ],
+                motion_model: PluginConfig::new("FixedWing6DOF").with_params(
+                    serde_json::json!({"airframe": "a4d", "use_ground_model": use_ground_model}),
+                )?,
                 ..EntityGroupConfig::default()
             }],
             ..ScenarioConfig::default()

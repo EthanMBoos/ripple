@@ -23,9 +23,10 @@
 //!   measured range for the Crazyflie (thrust fit within 10.4% from command
 //!   8000 up). Drag terms are linear fits at the airspeeds Förster's wind
 //!   tunnel reached (about 1.5 to 4 m/s).
-//! - Not modeled (named zeros in `rotor.rs`): ground effect, rotor and body
-//!   interference, inflow (thrust change with climb or forward speed),
-//!   rotor gyroscopic and spin-up torques, wind, battery sag, and contact
+//! - Not modeled (named zeros in `integrate`; inflow in `rotor.rs`): ground
+//!   effect, rotor and body interference, inflow (thrust change with climb or
+//!   forward speed), rotor gyroscopic and spin-up torques, wind, battery sag,
+//!   and contact
 //!   (use GroundCollision for removal, not landing). No external force
 //!   input, teleport, or acceleration output.
 //! - To go further: replay NanoBench's recorded Crazyflie motor commands
@@ -265,11 +266,28 @@ impl Multirotor {
                 let velocity_body_mps = state.velocity_body_mps;
                 let drag_body_n = velocity_body_mps
                     * (-0.5 * config.body_drag_coefficient * velocity_body_mps.norm());
+                // Not modeled, each a zero in the sums below. Ground effect adds
+                // thrust within about a rotor diameter of the ground; it needs height
+                // over rotor radius and a measured or published correction. Downwash
+                // between rotors and onto the body needs a wake model or measured data.
+                // A rotor's gyroscopic torque (J_r w x body rates) and its spin-up
+                // reaction (J_r dw/dt) need the rotor's inertia J_r.
+                let ground_effect_body_n = Vec3::zeros();
+                let downwash_body_n = Vec3::zeros();
+                let rotor_gyroscopic_body_nm = Vec3::zeros();
+                let spin_up_reaction_body_nm = Vec3::zeros();
+                let force_body_n = rotor_force_body_n
+                    + weight_body_n
+                    + drag_body_n
+                    + ground_effect_body_n
+                    + downwash_body_n;
+                let moment_body_nm =
+                    rotor_moment_body_nm + rotor_gyroscopic_body_nm + spin_up_reaction_body_nm;
                 let rates = state.rates_body_radps;
                 (
-                    (rotor_force_body_n + weight_body_n + drag_body_n) / airframe.mass_kg,
+                    force_body_n / airframe.mass_kg,
                     config.inverse_inertia
-                        * (rotor_moment_body_nm - rates.cross(&(airframe.inertia_kgm2 * rates))),
+                        * (moment_body_nm - rates.cross(&(airframe.inertia_kgm2 * rates))),
                 )
             };
         let mut coordinates = self.state.coordinates();

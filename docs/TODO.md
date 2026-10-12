@@ -251,26 +251,3 @@ Pieces, by where they're needed:
 - Closest prior work, which we have to cite and say how we differ from:
   Labiosa and Hanna (ICRA 2025), Li et al. (NeurIPS 2025), Kadian et al.
   (RA-L 2020), Muthusamy et al. (2024).
-
-## Vehicle fidelity: scope and extension points
-
-Build each vehicle to the level of the established open simulators (ArduPilot
-and PX4 SITL, RotorS), and say where every number came from. Going past that
-needs measured data from a real vehicle, which we're not collecting. But the
-code should make it obvious where that data would go:
-
-- **A fidelity header on every motion model**, always with the same
-  headings: *Source* (where the equations and numbers come from), *Validated
-  against* ("nothing" is fine), *Valid range*, *Not modeled*, and *To go
-  further* (what data is needed, who has it, what to change). Leads on
-  measured data go there, next to the code, not in this roadmap.
-- **Left-out effects are named zeros.** If an effect belongs in a force sum
-  (slipstream over a wing, ground effect), the code has it as an explicit zero
-  with a comment saying what it would take to model it.
-- **Geometry and coefficients are parameters.** Rotor axes are vectors,
-  aerodynamics use the table-or-linear pattern from the stall tables, so a
-  measured model shows up as data or one function.
-- **A book page, "Adding a measured-data vehicle model":** write the source's
-  equations as a new motion model, reproduce its published tables as a test,
-  warn outside its valid range, keep "matches its source" separate from
-  "matches reality", and add a suite check so the result counts as evidence.

@@ -4,6 +4,42 @@
 //! Motion phase: read throttle and surface angles, update entity truth.
 //! Private body axes are forward/right/down; public truth remains ENU world.
 //! The two-aircraft mission checks the port, not trimmed flight or ArduPilot readiness.
+//!
+//! Fidelity
+//! - Source: a rigid body under aerodynamic forces and moments built from
+//!   linear stability derivatives (lift, drag, side force, roll, pitch, yaw),
+//!   induced drag from an Oswald efficiency, and thrust linear in throttle;
+//!   RK4 with every load evaluated at each stage. Optional lift and drag
+//!   tables against angle of attack follow JSBSim's `<table>`, and optional
+//!   landing gear follows JSBSim's FGLGear (`landing_gear.rs`). Aircraft
+//!   numbers come from `airframe.rs`: the A-4D (Nelson) or the Rascal
+//!   (ArduPilot's JSBSim Rascal), or a mission gives them in full.
+//! - Validated against: C++ FixedWing6DOF on both aircraft
+//!   (`fixed-wing-6dof.xml`, `fixed-wing-6dof-rascal.xml`); step-size
+//!   convergence (`reference/rk4_loads.py`); the landing gear's resting
+//!   height, drops, slopes, friction stops, and convergence
+//!   (`crates/core/tests/landing_gear.rs`); and closed-loop flight by
+//!   ArduPlane, takeoff to landing, repeated byte for byte
+//!   (`reference/stall_landing.py`). Not against JSBSim's own simulation or
+//!   any flight data.
+//! - Valid range: attached flow at small sideslip and moderate angle of
+//!   attack, where linear derivatives hold (past the stall only with the
+//!   tables); subsonic flight, since nothing changes with Mach; near the flight
+//!   condition an aircraft's derivatives were taken at (the Rascal around 20
+//!   m/s).
+//! - Not modeled (named zeros in `accelerations`): propeller slipstream over
+//!   the wing and tail, propeller torque and gyroscopic moments, and ground
+//!   effect. Also: separate wing stalls (so no spin), drag from sideslip,
+//!   unsteady aerodynamics (the alpha-dot derivatives are read but unused),
+//!   engine and propeller dynamics (thrust follows throttle at once),
+//!   compressibility, fuel burn, and gusts. Wind is added to velocity rather
+//!   than subtracted, a quirk kept from the reference.
+//! - To go further: evaluate the Rascal in JSBSim at fixed states and over
+//!   short runs, for a second evaluator of the same aircraft; a propeller
+//!   model from measured data (thrust and torque against advance ratio, as
+//!   published for small propellers) would replace the linear thrust and fill
+//!   the slipstream and torque zeros; a measured lift and moment change near
+//!   the ground would fill ground effect.
 
 mod aerodynamics;
 mod airframe;
@@ -539,7 +575,22 @@ impl FixedWingConfig {
             self.mass_kg * self.gravity_mps2,
         ));
         let thrust_model_n = Vec3::new(self.thrust_n(control.throttle), 0.0, 0.0);
-        loads.force_model_n = weight_model_n + thrust_model_n + loads.force_model_n;
+        // Not modeled, each a zero in the sums below. Propeller slipstream
+        // speeds the air over the wing root and tail; it needs the propeller's
+        // induced velocity (momentum theory or measured wake data). Propeller
+        // torque and gyroscopic moments need the propeller's torque and
+        // inertia. Ground effect raises lift and cuts induced drag within about
+        // a span of the ground; it needs height over span and a measured or
+        // published correction.
+        let slipstream_model_n = Vec3::zeros();
+        let ground_effect_model_n = Vec3::zeros();
+        let propeller_moment_model_nm = Vec3::zeros();
+        loads.force_model_n = weight_model_n
+            + thrust_model_n
+            + loads.force_model_n
+            + slipstream_model_n
+            + ground_effect_model_n;
+        loads.moment_model_nm += propeller_moment_model_nm;
 
         if !self.landing_gear.is_empty() {
             let (force_model_n, moment_model_nm) = landing_gear::loads(

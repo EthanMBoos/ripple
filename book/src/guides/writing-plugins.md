@@ -20,6 +20,9 @@ messages, and lifecycle in detail.
 | Metrics | `Metrics` | Whole world | Events and messages; reports team scores | [SimpleCollisionMetrics](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
 
 Start by copying the built-in for your type. They all follow the same layout.
+A motion model also starts with a fidelity header saying where its equations
+and numbers come from; see [Adding a measured-data vehicle
+model](measured-vehicle-models.md).
 
 ## Anatomy of a plugin
 

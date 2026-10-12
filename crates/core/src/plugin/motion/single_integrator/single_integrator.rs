@@ -1,5 +1,14 @@
 //! Position integrates commanded ENU velocity. C++ counterpart: motion/SingleIntegrator.
 //! Motion phase. Legacy max_speed >= 0 sets speed magnitude; it is not a speed cap.
+//!
+//! Fidelity
+//! - Source: a kinematic point: velocity is whatever was commanded, at once.
+//! - Validated against: C++ SingleIntegrator (`verification/single-integrator.xml`).
+//! - Valid range: any speed; it is an idealization, not a vehicle.
+//! - Not modeled: mass, forces, acceleration limits, and any lag between
+//!   command and motion. The attitude only follows the velocity's direction.
+//! - To go further: a force-driven point (MPE's force and damping) for
+//!   matching learning benchmarks; a vehicle model for anything physical.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;

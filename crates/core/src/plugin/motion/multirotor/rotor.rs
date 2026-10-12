@@ -108,11 +108,10 @@ pub(super) fn rotor_loads(
         moment_body_nm: rotor.offset_body_m.cross(&thrust_force_body_n) + reaction_torque_body_nm,
     };
 
-    // Not modeled, each zero here: ground effect, rotor-to-rotor and
-    // rotor-to-body interference (downwash), thrust change with inflow
-    // (climb or forward speed), the rotor's gyroscopic torque (J_r w x body
-    // rates) and its spin-up reaction (J_r dw/dt), and wind. Each needs a
-    // measured or published model; see the fidelity notes in multirotor.rs.
+    // Not modeled here: thrust change with inflow (climb or forward speed),
+    // which would scale `thrust_n` and needs a measured thrust curve against
+    // airspeed, and wind. Ground effect, downwash, and the rotor's
+    // gyroscopic and spin-up torques are named zeros in multirotor.rs.
     let aerodynamics = coefficients.aerodynamics;
     if aerodynamics.is_off() {
         return loads;

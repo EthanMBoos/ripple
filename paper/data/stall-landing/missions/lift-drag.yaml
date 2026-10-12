@@ -1,0 +1,142 @@
+# A Rascal flown by ArduPlane SITL takes off from the runway south of McMillan
+# Airfield, flies a left-hand circuit, and lands. `ripple run` (built with
+# --features ardupilot) starts the SITL container; see
+# book/src/guides/ardupilot.md, "Takeoff and landing".
+#
+# The aircraft is rascal-sitl.yaml's Rascal, but it sits on its wheels
+# (FixedWing6DOF landing gear, JSBSim's Rascal values) instead of being held
+# and catapulted: still on the ground, ArduPlane boots, aligns, and arms
+# cleanly. TerrainCollision removes it only if the nose or a wingtip touches.
+#
+# The runway: a 600 m strip centred 125 m east and 400 m south of the terrain
+# origin, heading 114 degrees (ESE), with under 0.2 m of bumps along its
+# centreline. The aircraft starts 270 m before its centre, facing down it
+# (ENU heading -24 degrees), resting nose-up on its tail wheel (pitch -14.1:
+# SCRIMMAGE's pitch is positive nose-down). Its height is set by hand: the
+# ground there (z = -23.081) plus the 0.396 m its centre sits above it.
+# TODO: let a spawn start on the ground (terrain height plus resting height)
+# instead of by hand.
+#
+# The AUTO route, in metres [east, north, up] from the start: take off to 50 m,
+# fly 800 m down the runway's line, turn left 300 m, fly back past the start,
+# turn onto final at 30 m 400 m behind the start, and land 100 m along the
+# runway.
+format_version: 1
+name: Rascal runway circuit
+
+run:
+  end_s: 240
+  dt_s: 0.0025
+  seed: 1
+
+terrain: <checkout>/missions/terrain/mcmillan.terrain.yaml
+
+interactions:
+  TerrainCollision:
+    # The propeller (from JSBSim's Rascal) and the wingtips (half the span).
+    structure_points_frd_m: [[0.899, 0.0, 0.102], [0.0, -1.35, 0.0], [0.0, 1.35, 0.0]]
+networks:
+  LocalNetwork:
+  GlobalNetwork:
+metrics:
+  SimpleCollisionMetrics:
+
+entities:
+  rascal:
+    team: 1
+    visual_model: zephyr-blue
+    position_m: [-121.657, -290.181, -22.685]
+    velocity_mps: [0, 0, 0]
+    heading_deg: -24
+    pitch_deg: -14.1
+    autonomy:
+      ArduPilotBridge:
+        port: 9002
+        frame_timeout: 10
+        first_frame_timeout: 60
+        mode: AUTO
+        takeoff_altitude: 50
+        waypoints: [[731, -325, 60], [853, -51, 60], [-243, 437, 60], [-365, 163, 30], [91, -41, 0]]
+        land: true
+        goto: null
+        speedup: 100
+        ardupilot_params:
+          # Ground steering with the rudder below 5 m, for the takeoff and
+          # landing rolls (the tail wheel turns with the rudder). Starting
+          # values from ArduPilot's "Tuning Ground Steering for a Plane";
+          # STEER2SRV_P is the turning circle at full rudder in metres: the
+          # tail wheel 0.91 m behind the mains turned 0.35 rad gives a 2.5 m
+          # radius, a 5 m circle. Not for air starts: ArduPlane measures the
+          # 5 m from home, where an air start arms.
+          GROUND_STEER_ALT: 5
+          STEER2SRV_P: 5
+          STEER2SRV_I: 0.1
+          STEER2SRV_D: 0.02
+          STEER2SRV_TCONST: 0.5
+          STEER2SRV_MINSPD: 1
+          # Flare to the three-point attitude, so the tail wheel touches down
+          # with the mains and steers from the start: resting on its wheels
+          # the Rascal sits 14.2 degrees nose-up. ArduPilot's plane.parm sets
+          # 1, a tail-high wheel landing that swerved on the rollout.
+          LAND_PITCH_DEG: 14
+    sensors:
+      SitlState:
+        wind_E: 0
+        wind_N: 0
+    motion_model:
+      FixedWing6DOF:
+        lift_table: [[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]
+        drag_table: [[-1.57, 1.5], [-0.26, 0.056], [0.0, 0.028], [0.26, 0.056], [1.57, 1.5]]
+        use_launcher: false
+        use_ground_model: false
+        landing_gear:
+          # forward, right, down from the centre of gravity (m); JSBSim's Rascal
+          - {position_frd_m: [0.084, -0.328, 0.434], spring_n_per_m: 7005, damping_n_s_per_m: 1459,
+             static_friction: 0.8, rolling_friction: 0.1}
+          - {position_frd_m: [0.084, 0.328, 0.434], spring_n_per_m: 7005, damping_n_s_per_m: 1459,
+             static_friction: 0.8, rolling_friction: 0.1}
+          # JSBSim's tail wheel castors; linked to the rudder instead, as on RC
+          # taildraggers, since castering ground-looped on the landing roll
+          - {position_frd_m: [-0.826, 0, 0.203], spring_n_per_m: 7005, damping_n_s_per_m: 1459,
+             static_friction: 0.8, rolling_friction: 0.1, steered_by_rudder: true}
+        wind_E: 0
+        wind_N: 0
+        gravity_magnitude: 9.81
+        air_density: 1.2250
+        inertia_matrix_slug_ft_sq: "[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]"
+        thrust_min: 0.0
+        thrust_max: 25.0
+        delta_elevator_min: -0.30
+        delta_elevator_max: 0.30
+        delta_aileron_min: -0.35
+        delta_aileron_max: 0.35
+        delta_rudder_min: -0.35
+        delta_rudder_max: 0.35
+        mass: 5.91
+        wing_span: 2.70
+        surface_area_of_wing: 0.982
+        chord_length: 0.351
+        C_D0: 0.028
+        C_D_alpha: 0.0
+        C_L0: 0.25
+        C_L_alpha: 5
+        C_LQ: 0.0
+        C_L_alpha_dot: 0.0
+        C_L_delta_elevator: 0.2
+        C_Y_beta: -1.0
+        C_Y_delta_rudder: 0.0
+        C_L_beta: -0.1
+        C_LP: -0.4
+        C_LR: 0.15
+        C_L_delta_aileron: 0.13
+        C_L_delta_rudder: 0.01
+        C_M0: 0.0
+        C_MQ: -12.0
+        C_M_alpha: -0.5
+        C_M_alpha_dot: -7.0
+        C_M_delta_elevator: -0.5
+        C_N_beta: 0.12
+        C_NP: 0.0
+        C_NR: -0.15
+        C_N_delta_aileron: -0.03
+        C_N_delta_rudder: -0.05

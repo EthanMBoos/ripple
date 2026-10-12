@@ -65,7 +65,7 @@ def stop(_signal, _frame):
 def start_sitl(run_dir):
     command = [
         "/opt/ardupilot/arduplane",
-        "--model", f"JSON:{os.environ['SCRIMMAGE_ADDRESS']}",
+        "--model", f"JSON:{os.environ['RIPPLE_ADDRESS']}",
         "--sim-port-out", os.environ["SIM_PORT_OUT"],
         "--home", os.environ["HOME_LOCATION"],
         "--rate", os.environ["RATE_HZ"],

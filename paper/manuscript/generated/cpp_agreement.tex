@@ -18,17 +18,17 @@ tracing.}
 \toprule
 & & & \multicolumn{3}{c}{Frames} & \multicolumn{4}{c}{Trace} & \\
 \cmidrule(lr){4-6}\cmidrule(lr){7-10}
-Mission & Exercises & States & Position & Velocity & Attitude & Deliv. & Payload & Outputs & Output err. & Result \\
+Case & Exercises & States & Position & Velocity & Attitude & Deliv. & Payload & Outputs & Output err. & Result \\
 \midrule
-\texttt{straight-no-gui} & SimpleAircraft, PID, collision, removal & 976 & 0 & 0 & 0 & 5 & 0 & 5856 & 0 & match \\
-\texttt{straight\_cpu} & SimpleAircraft, PID, long horizon & 2001 & 0 & 0 & 0 & 1 & 0 & 12000 & 0 & match \\
-\texttt{straight\_cpu\_mul} & as above; upstream multiplier typo & 2001 & 0 & 0 & 0 & 1 & 0 & 12000 & 0 & match \\
-\texttt{aircraft-substeps-spawning} & substeps, rates, randomized spawning & 90 & $2.2\times10^{-14}$ & $1.9\times10^{-14}$ & $7.8\times10^{-15}$ & 4 & 0 & 516 & $9.1\times10^{-14}$ & match \\
-\texttt{aircraft-substeps-scheduled} & substeps, rates, two spawn schedules & 170 & $4.8\times10^{-14}$ & $2.6\times10^{-14}$ & $7.8\times10^{-15}$ & 7 & 0 & 978 & $1.8\times10^{-13}$ & match\textsuperscript{a} \\
+\texttt{aircraft-collision} & SimpleAircraft, PID, collision, removal & 976 & 0 & 0 & 0 & 5 & 0 & 5856 & 0 & match \\
+\texttt{aircraft-long-horizon} & SimpleAircraft, PID, long horizon & 2001 & 0 & 0 & 0 & 1 & 0 & 12000 & 0 & match \\
+\texttt{aircraft-multiplier-typo} & as above; upstream multiplier typo & 2001 & 0 & 0 & 0 & 1 & 0 & 12000 & 0 & match \\
+\texttt{substeps-random-spawn} & substeps, rates, randomized spawning & 90 & $2.2\times10^{-14}$ & $1.9\times10^{-14}$ & $7.8\times10^{-15}$ & 4 & 0 & 516 & $9.1\times10^{-14}$ & match \\
+\texttt{substeps-scheduled-spawn} & substeps, rates, two spawn schedules & 170 & $4.8\times10^{-14}$ & $2.6\times10^{-14}$ & $7.8\times10^{-15}$ & 7 & 0 & 978 & $1.8\times10^{-13}$ & match\textsuperscript{a} \\
 \texttt{noisy-state-bias} & NoisyState bias, belief feedback & 31 & 0 & $3.6\times10^{-15}$ & 0 & 31 & 30 & 180 & $3.6\times10^{-15}$ & match \\
-\texttt{networks-local-global} & Boundary, GroundCollision, networks & 607 & $5.9\times10^{-14}$ & $4.5\times10^{-14}$ & $5.1\times10^{-15}$ & 613 & 605 & 3630 & $5.4\times10^{-14}$ & match\textsuperscript{a} \\
-\texttt{fixed-wing-6dof} & FixedWing6DOF, AircraftPID, wind & 2002 & $6.9\times10^{-13}$ & $8.8\times10^{-14}$ & $4.1\times10^{-15}$ & 2 & 0 & 14000 & $5.0\times10^{-13}$ & match \\
-\texttt{fixed-wing-6dof-rascal} & FixedWing6DOF Rascal, upset, glide & 18003 & $2.3\times10^{-13}$ & $7.3\times10^{-14}$ & $4.0\times10^{-15}$ & 3 & 0 & 126000 & $8.1\times10^{-14}$ & match \\
+\texttt{world-networks} & Boundary, GroundCollision, networks & 607 & $5.9\times10^{-14}$ & $4.5\times10^{-14}$ & $5.1\times10^{-15}$ & 613 & 605 & 3630 & $5.4\times10^{-14}$ & match\textsuperscript{a} \\
+\texttt{fixed-wing-a4} & FixedWing6DOF, AircraftPID, wind & 2002 & $6.9\times10^{-13}$ & $8.8\times10^{-14}$ & $4.1\times10^{-15}$ & 2 & 0 & 14000 & $5.0\times10^{-13}$ & match \\
+\texttt{fixed-wing-rascal} & FixedWing6DOF Rascal, upset, glide & 18003 & $2.3\times10^{-13}$ & $7.3\times10^{-14}$ & $4.0\times10^{-15}$ & 3 & 0 & 126000 & $8.1\times10^{-14}$ & match \\
 \texttt{multirotor} & Multirotor (4 and 6 rotors) & 16004 & $5.0\times10^{-14}$ & $4.8\times10^{-13}$ & $3.6\times10^{-14}$ & 4 & 0 & 72000 & 0 & match \\
 \texttt{single-integrator} & SingleIntegrator command paths & 204 & 0 & 0 & 0 & 4 & 0 & 1200 & 0 & match \\
 \texttt{noisy-contacts-bias} & NoisyContacts bias, attitude, covariance & 93 & $7.1\times10^{-14}$ & $1.6\times10^{-14}$ & $4.4\times10^{-15}$ & 93 & 180 & 540 & $5.5\times10^{-14}$ & match \\

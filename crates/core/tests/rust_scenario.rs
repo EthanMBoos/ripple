@@ -1,5 +1,5 @@
 use anyhow::Result;
-use scrimmage_core::{
+use ripple_core::{
     EntityGroupConfig, Mission, Params, PluginConfig, RunConfig, ScenarioConfig, Simulation, Spawn,
     Vec3, plugin::PluginRegistry, write_frame,
 };

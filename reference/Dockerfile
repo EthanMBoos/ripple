@@ -1,4 +1,4 @@
-ARG DEPENDENCY_IMAGE=scrimmage-rs-reference-deps:ubuntu-24.04
+ARG DEPENDENCY_IMAGE=ripple-reference-deps:ubuntu-24.04
 FROM ${DEPENDENCY_IMAGE}
 
 ARG SOURCE_COMMIT

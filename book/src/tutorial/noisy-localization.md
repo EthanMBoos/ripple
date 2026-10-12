@@ -60,10 +60,10 @@ The finished estimator is in `crates/starter/src/dead_reckoning.rs`:
 //! It estimates position and velocity only; attitude stays at the default.
 
 use anyhow::{Context, Result, ensure};
-use scrimmage_core::plugin::{
+use ripple_core::plugin::{
     Input, Localization, LocalizationContext, Plugin, PluginParams, ReadingKind, Update,
 };
-use scrimmage_core::{KinematicState, Vec3};
+use ripple_core::{KinematicState, Vec3};
 use serde::Deserialize;
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
@@ -318,13 +318,12 @@ before and after the turn points in different directions, so it peaks lower,
 around 7 m. With `speed_gain: 0.8` the predicted position matches the true one
 for the whole run.
 
-The file has two more tests. `noisy_fixes_leave_an_error_after_every_fix`
-adds zero-mean Gaussian noise with a 1 m standard deviation to each fix's x and
-y: each fix then carries its own error, which the
-right gain keeps unchanged until the next fix. `a_wrong_belief_changes_the_real_path`
-checks what you saw in Rerun: with the wrong gain the blue robot's true path
-leaves the gray one's by more than 10 m, and with the right gain the two stay
-together.
+The file has two more tests. `noisy_fixes_leave_an_error_after_every_fix` adds
+zero-mean Gaussian noise with a 1 m standard deviation to each fix's x and y:
+each fix then carries its own error, which the right gain keeps unchanged until
+the next fix. `a_wrong_belief_changes_the_real_path` checks what you saw in
+Rerun: with the wrong gain the blue robot's true path leaves the gray one's by
+more than 10 m, and with the right gain the two stay together.
 
 ## Why this is an honest experiment
 

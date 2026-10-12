@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use scrimmage_core::{Mission, Params, Simulation};
+use ripple_core::{Mission, Params, Simulation};
 
 fn simulation(altitude_bias: f64, sensor_rate: f64) -> Result<Simulation> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
@@ -14,7 +14,7 @@ fn simulation(altitude_bias: f64, sensor_rate: f64) -> Result<Simulation> {
     let mission = Mission::load(&root.join("missions/noisy-state.xml"), &root, &overrides)?;
     Simulation::new(
         mission.scenario,
-        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        &ripple_core::plugin::PluginRegistry::with_builtins(),
         2,
     )
 }
@@ -66,7 +66,7 @@ fn no_sensor_gives_perfect_belief() -> Result<()> {
     )?;
     let mut simulation = Simulation::new(
         mission.scenario,
-        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        &ripple_core::plugin::PluginRegistry::with_builtins(),
         1,
     )?;
     for _ in 0..3 {

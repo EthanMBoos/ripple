@@ -43,7 +43,7 @@ fn replay_with_trails(recording: &Path) -> Result<()> {
     let recording_id = manifest["rerun_recording_id"].as_str().context(
         "this run's manifest has no rerun_recording_id (recorded before --draw-trails); run the mission again",
     )?;
-    let frames = scrimmage_core::read_frames(&run.join("frames.bin"))
+    let frames = ripple_core::read_frames(&run.join("frames.bin"))
         .context("--draw-trails needs the run's frames.bin beside the recording")?;
 
     let port = TcpListener::bind("127.0.0.1:0")?.local_addr()?.port();
@@ -55,7 +55,7 @@ fn replay_with_trails(recording: &Path) -> Result<()> {
         .context(
             "could not launch Rerun; install the matching viewer and ensure rerun is on PATH",
         )?;
-    let trails = RecordingStreamBuilder::new("scrimmage-rs")
+    let trails = RecordingStreamBuilder::new("ripple")
         .recording_id(recording_id)
         .set_sinks(vec![Box::new(GrpcSink::new(
             format!("rerun+http://127.0.0.1:{port}/proxy").parse()?,

@@ -3,7 +3,7 @@
 //! silence fails the run, and two aircraft stay on one clock with their own
 //! commands. No Docker or ArduPilot is needed.
 use anyhow::Result;
-use scrimmage_core::{Mission, Params, Simulation, plugin::PluginRegistry};
+use ripple_core::{Mission, Params, Simulation, plugin::PluginRegistry};
 use serde_json::Value;
 use std::net::UdpSocket;
 use std::path::Path;

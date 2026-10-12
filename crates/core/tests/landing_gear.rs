@@ -3,11 +3,11 @@
 //! slope and rolls down a steep one, stops a rolling aircraft by friction,
 //! converges as the step shrinks, and refuses a step too long for its dampers.
 use anyhow::Result;
-use scrimmage_core::plugin::{
+use ripple_core::plugin::{
     AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, PluginRegistry, Port, Ports,
     Unit, Update,
 };
-use scrimmage_core::{
+use ripple_core::{
     EntityGroupConfig, PluginConfig, RunConfig, ScenarioConfig, Simulation, SimulationFrame, Vec3,
 };
 use serde_json::json;

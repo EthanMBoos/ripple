@@ -1,4 +1,4 @@
-"""Checks for bulk_run.py's collect and Slurm submission (a trimmed copy of Ripple's)."""
+"""Checks for bulk_run.py's collect and Slurm submission."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ import bulk_run
 
 class CollectTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory(prefix="scrimmage-bulk-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="ripple-bulk-")
         self.root = Path(self.temporary.name)
         (self.root / "campaign.json").write_text(json.dumps(
             {"sweep": "test.sweep.yaml", "binary": "scrimmage", "jobs": 2}))
@@ -76,7 +76,7 @@ class CollectTests(unittest.TestCase):
         self.assertIn("--array=0-2", command)
         self.assertIn("--partition=cpu", command)
         self.assertIn("--export=ALL", command)
-        self.assertEqual(run.call_args.kwargs["env"]["SCRIMMAGE_SWEEP_OUTPUT"],
+        self.assertEqual(run.call_args.kwargs["env"]["RIPPLE_SWEEP_OUTPUT"],
                          str((self.root / "new").resolve()))
 
 

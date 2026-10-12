@@ -1,7 +1,7 @@
 //! Rerun observes the run; playback and debug panels never change simulation state.
 use anyhow::{Result, ensure};
 use rerun::{RecordingStream, RecordingStreamBuilder};
-use scrimmage_core::{SimulationFrame, Terrain};
+use ripple_core::{SimulationFrame, Terrain};
 use std::{collections::BTreeSet, path::Path, time::Duration};
 
 mod blueprint;
@@ -27,7 +27,7 @@ pub(crate) struct Viewer {
     live_trails: Option<(RecordingStream, Trails)>,
 }
 impl Viewer {
-    /// `recording_id` lets `scrimmage replay --draw-trails` add trails to the
+    /// `recording_id` lets `ripple replay --draw-trails` add trails to the
     /// same recording later. `draw_trails` shows them in the launched viewer.
     pub fn new(path: &Path, launch: bool, recording_id: &str, draw_trails: bool) -> Result<Self> {
         ensure!(!draw_trails || launch, "--draw-trails needs the viewer");
@@ -49,7 +49,7 @@ impl Viewer {
                 format!("rerun+http://127.0.0.1:{}/proxy", viewer.port).parse()?;
             sinks.push(Box::new(rerun::sink::GrpcSink::new(uri.clone())));
             if draw_trails {
-                let stream = RecordingStreamBuilder::new("scrimmage-rs")
+                let stream = RecordingStreamBuilder::new("ripple")
                     .recording_id(recording_id)
                     .set_sinks(vec![
                         Box::new(rerun::sink::GrpcSink::new(uri)) as Box<dyn rerun::sink::LogSink>
@@ -57,7 +57,7 @@ impl Viewer {
                 live_trails = Some((stream, Trails::default()));
             }
         }
-        let recording = RecordingStreamBuilder::new("scrimmage-rs")
+        let recording = RecordingStreamBuilder::new("ripple")
             .recording_id(recording_id)
             .enabled(true)
             .set_sinks(sinks)?;

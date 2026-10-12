@@ -2,12 +2,13 @@
 
 Most bugs in robotics code are sign and frame bugs: a heading measured from the
 wrong axis, a pitch with the wrong sign, a vector in the body frame used as if
-it were in the world frame. This page lists the conventions scrimmage-rs uses,
+it were in the world frame. This page lists the conventions Ripple uses,
 and the places where individual models differ from them.
 
 ## The world frame: East-North-Up
 
-Positions and velocities are in a local **East-North-Up (ENU)** frame, in meters:
+Positions and velocities are in a local **East-North-Up (ENU)** frame, in
+meters:
 
 | Axis | Points | Field examples |
 | --- | --- | --- |
@@ -94,7 +95,8 @@ mismatch is visible when you read the code:
 | `_world_`, `_body_`, `_model_` | which frame the vector is in |
 
 `angular_velocity_world_radps` is an angular velocity in the **world** frame. To
-get body rates (roll rate, pitch rate, yaw rate as a pilot feels them), rotate it:
+get body rates (roll rate, pitch rate, yaw rate as a pilot feels them), rotate
+it:
 `orientation_world_from_body.rotate_world_to_body(angular_velocity_world_radps)`.
 
 ## What each vehicle's state holds

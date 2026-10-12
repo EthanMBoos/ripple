@@ -1,13 +1,13 @@
 //! Every YAML mission beside an XML mission of the same name must describe the
 //! same simulation: the same setup, and byte-identical frames, events, and summary.
 use anyhow::Result;
-use scrimmage_core::{Mission, Params, ScenarioConfig, Simulation, write_frame};
+use ripple_core::{Mission, Params, ScenarioConfig, Simulation, write_frame};
 use std::path::{Path, PathBuf};
 
 fn outputs(config: ScenarioConfig) -> Result<(Vec<u8>, Vec<u8>, String)> {
     let mut simulation = Simulation::new(
         config,
-        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        &ripple_core::plugin::PluginRegistry::with_builtins(),
         1,
     )?;
     let mut frames = Vec::new();

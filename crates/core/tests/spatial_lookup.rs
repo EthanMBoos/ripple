@@ -1,7 +1,7 @@
 //! The grid answers spatial queries exactly as the scan does, including the pair
 //! order that decides which agent survives a chain of collisions.
 use anyhow::Result;
-use scrimmage_core::{
+use ripple_core::{
     EntityGroupConfig, EventKind, PluginConfig, RunConfig, ScenarioConfig, Simulation,
     SpatialLookup, Vec3,
     plugin::{Interaction, InteractionContext, Plugin, PluginParams, PluginRegistry, Update},

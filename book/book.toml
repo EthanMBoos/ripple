@@ -1,13 +1,13 @@
 [book]
-title = "scrimmage-rs"
+title = "Ripple"
 description = "A Rust multi-agent robotics simulator for research and teaching."
 language = "en"
 src = "src"
 
 [output.html]
-site-url = "/scrimmage-rs/"
-git-repository-url = "https://github.com/EthanMBoos/scrimmage-rs"
-edit-url-template = "https://github.com/EthanMBoos/scrimmage-rs/edit/main/book/{path}"
+site-url = "/ripple/"
+git-repository-url = "https://github.com/EthanMBoos/ripple"
+edit-url-template = "https://github.com/EthanMBoos/ripple/edit/main/book/{path}"
 default-theme = "light"
 preferred-dark-theme = "coal"
 additional-css = ["theme/custom.css"]

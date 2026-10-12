@@ -26,21 +26,24 @@ SCRIMMAGE's. Three things follow from that:
 
 - **A slow SITL slows the whole run.** A dead one fails it after 10 s with "no
   new frame from ArduPilot SITL".
-- **Runs aren't repeatable byte for byte,** unlike other SCRIMMAGE runs: the
-  output also depends on ArduPilot.
+- **Repeatability depends on ArduPilot too,** so it is not guaranteed as it is
+  for other SCRIMMAGE runs. In practice the lockstep exchange makes runs
+  repeat: three runs of `rascal-runway.yaml` on one machine (2026-10-05) wrote
+  byte-identical frames, events, and summaries. Check before relying on it
+  across machines or ArduPilot versions.
 - **Sensor noise belongs to ArduPilot.** SITL is sent the true state on
   purpose. Don't put `NoisyState` on an ArduPilot aircraft; set ArduPilot's
   `SIM_` sensor-noise parameters instead (see [Parameters](#parameters)).
 
 ## Quick start
 
-You need Docker running. Build `scrimmage` with the ArduPilot feature; the
+You need Docker running. Build `ripple` with the ArduPilot feature; the
 first run builds the SITL image, which compiles ArduPlane. That takes about 25
 minutes, and later runs reuse it. From the repository root:
 
 ```sh
-cargo build --release -p scrimmage-rs --features ardupilot
-S=target/release/scrimmage
+cargo build --release -p ripple --features ardupilot
+S=target/release/ripple
 M=crates/ardupilot/missions
 B=autonomy.ArduPilotBridge   # shortens the override paths below
 
@@ -64,14 +67,14 @@ $S run $M/rascal-sitl.yaml --headless run.end_s:=150 \
     entities.rascal.sensors.SitlState.wind_N:=6 entities.rascal.motion_model.FixedWing6DOF.wind_N:=6
 ```
 
-`scrimmage run` starts one SITL container per `ArduPilotBridge` aircraft once
-the mission has loaded, and stops them all when the run ends, fails, or is
+`ripple run` starts one SITL container per `ArduPilotBridge` aircraft once the
+mission has loaded, and stops them all when the run ends, fails, or is
 interrupted with Ctrl-C
-([sitl_launcher.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/ardupilot/src/sitl_launcher.rs)).
+([sitl_launcher.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/ardupilot/src/sitl_launcher.rs)).
 It reads the resolved mission, so templates and overrides apply, and the
-containers always match it. `scrimmage sweep` and `compare` start no SITL.
-Each run writes `runs/<mission>/runNNN/` as usual, plus `sitl/<port>/` inside
-it: one folder per SITL, holding
+containers always match it. `ripple sweep` and `compare` start no SITL. Each run
+writes `runs/<mission>/runNNN/` as usual, plus `sitl/<port>/` inside it: one
+folder per SITL, holding
 
 - `session.log`: ArduPilot's messages, arming, and errors;
 - `logs/*.BIN`: ArduPilot's own flight log;
@@ -145,7 +148,8 @@ So the SITL missions use FixedWing6DOF's launcher.
 
 ArduPilot's documentation is the reference. These are the parts you need here.
 
-**Flight modes** ([ArduPlane flight modes](https://ardupilot.org/plane/docs/flight-modes.html)):
+**Flight modes** ([ArduPlane flight
+modes](https://ardupilot.org/plane/docs/flight-modes.html)):
 
 | Mode | What it does |
 | --- | --- |
@@ -171,7 +175,7 @@ SITL loads two files:
 
 - **`plane.parm`:** ArduPilot's own SITL plane defaults, taken from the pinned
   ArduPilot checkout in the image.
-- **[rascal.parm](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/ardupilot/docker/rascal.parm),
+- **[rascal.parm](https://github.com/EthanMBoos/ripple/blob/main/crates/ardupilot/docker/rascal.parm),
   on top:**
   - `AIRSPEED_MIN 15`, because the model has no stall;
   - `SERVO2_REVERSED` and `SERVO4_REVERSED`: FixedWing6DOF uses the standard
@@ -180,20 +184,22 @@ SITL loads two files:
 
 To change ArduPlane's behavior (speeds, loiter radius, takeoff altitude, sensor
 noise), edit `rascal.parm`, or set them for one mission with the bridge's
-`ardupilot_params`. `scrimmage run` rebuilds the image from
+`ardupilot_params`. `ripple run` rebuilds the image from
 `crates/ardupilot/docker` before every run, so edits (and a newer session
 script after an update) are always used; Docker's cache makes that about a
 second when nothing changed.
 
-**More on SITL:** [SITL overview](https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html),
-[the JSON interface this crate uses](https://ardupilot.org/dev/docs/sitl-with-JSON.html),
-and [MAVLink's mission protocol](https://mavlink.io/en/services/mission.html).
+**More on SITL:** [SITL
+overview](https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html),
+[the JSON interface this crate
+uses](https://ardupilot.org/dev/docs/sitl-with-JSON.html), and [MAVLink's
+mission protocol](https://mavlink.io/en/services/mission.html).
 
 ## The aircraft
 
 The Rascal is a 6 kg RC plane, using C++ SCRIMMAGE's simplified Rascal, which
-was derived from ArduPilot's JSBSim Rascal. `missions/fixed-wing-6dof-rascal.xml`
-checks it against C++. Know its limits:
+was derived from ArduPilot's JSBSim Rascal.
+`missions/fixed-wing-6dof-rascal.xml` checks it against C++. Know its limits:
 
 - **No stall by default.** Lift keeps rising with angle of attack, as in
   C++. JSBSim's Rascal stalls near 8.3 m/s level (from its lift table), and
@@ -227,7 +233,7 @@ checks it against C++. Know its limits:
 ## Adding ArduPilot to a mission
 
 Start from
-[rascal-sitl.yaml](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/ardupilot/missions/rascal-sitl.yaml).
+[rascal-sitl.yaml](https://github.com/EthanMBoos/ripple/blob/main/crates/ardupilot/missions/rascal-sitl.yaml).
 An ArduPilot aircraft is an entity group with count 1 and:
 
 ```yaml
@@ -262,27 +268,28 @@ motion_model:
 
 | Symptom | Look at |
 | --- | --- |
-| `no new frame from ArduPilot SITL on UDP port …` | A SITL stopped. `scrimmage run` prints the session's `error:` line, such as "not armed in LOITER by the 40 s release". Then read that aircraft's `session.log`. |
+| `no new frame from ArduPilot SITL on UDP port …` | A SITL stopped. `ripple run` prints the session's `error:` line, such as "not armed in LOITER by the 40 s release". Then read that aircraft's `session.log`. |
 | Never arms | `PreArm:` lines in `session.log` |
-| Odd flight | ArduPilot's flight log. Decode a message type with the image's tools: `docker run --rm -v "$PWD/runs/<mission>/runNNN/sitl/9002/logs:/logs" --entrypoint /opt/ardupilot-venv/bin/python scrimmage-rs-arduplane -m pymavlink.tools.mavlogdump --types ARSP --format csv /logs/00000001.BIN` (`ARSP` airspeed, `CTUN` attitude control, `TECS` speed and height control). |
-| Containers left over after `scrimmage` was killed (Ctrl-C stops them) | `docker stop $(docker ps -q --filter label=scrimmage-rs-sitl)` |
+| Odd flight | ArduPilot's flight log. Decode a message type with the image's tools: `docker run --rm -v "$PWD/runs/<mission>/runNNN/sitl/9002/logs:/logs" --entrypoint /opt/ardupilot-venv/bin/python ripple-arduplane -m pymavlink.tools.mavlogdump --types ARSP --format csv /logs/00000001.BIN` (`ARSP` airspeed, `CTUN` attitude control, `TECS` speed and height control). |
+| Containers left over after `ripple` was killed (Ctrl-C stops them) | `docker stop $(docker ps -q --filter label=ripple-sitl)` |
 
 For maintainers, the exchange rules (exactly one reply per frame, resends
 ignored, a frame gap fails the run) and the frame conversions are documented in
-the [crate's source](https://github.com/EthanMBoos/scrimmage-rs/tree/main/crates/ardupilot/src)
-and covered by its tests, with no Docker needed: `cargo test -p ardupilot`, plus
+the [crate's
+source](https://github.com/EthanMBoos/ripple/tree/main/crates/ardupilot/src) and
+covered by its tests, with no Docker needed: `cargo test -p ardupilot`, plus
 `python3 -m unittest discover -s crates/ardupilot/docker` for the session's
 command timing. The session paces its commands by ArduPilot's clock, not wall
 time, because sim time runs many times faster.
 
 ## Takeoff and landing
 
-[rascal-runway.yaml](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/ardupilot/missions/rascal-runway.yaml)
-takes off from the runway south of McMillan Airfield, flies a left-hand
-circuit, and lands:
+[rascal-runway.yaml](https://github.com/EthanMBoos/ripple/blob/main/crates/ardupilot/missions/rascal-runway.yaml)
+takes off from the runway south of McMillan Airfield, flies a left-hand circuit,
+and lands:
 
 ```sh
-target/release/scrimmage run crates/ardupilot/missions/rascal-runway.yaml --headless
+target/release/ripple run crates/ardupilot/missions/rascal-runway.yaml --headless
 ```
 
 - **On its wheels.** The Rascal has FixedWing6DOF landing gear with JSBSim's
@@ -310,23 +317,27 @@ target/release/scrimmage run crates/ardupilot/missions/rascal-runway.yaml --head
   taildraggers. JSBSim's castors, and a castering tail wheel ground-looped on
   the landing roll.
 
-What a run looks like (run on 2026-10-01): ArduPlane rolls 22 m and lifts
-off at 12 m/s within 0.3 m of the centreline, climbs out, flies the circuit,
-and touches down at 13 m/s after a 3.9° glide. The rollout stays within 1.6 m of the
-centreline and stops 0.7 m from it, aligned with the runway. The landing is
-not pretty: it lands level at 1.4 m/s sink and bounces (up to 1.7 m) before
-settling. With ArduPilot's default 1° flare it touches down once, tail-high
-at 17 m/s, but swerves 14 m off the centreline when the tail drops.
+What a run looks like (run on 2026-10-01): ArduPlane rolls 22 m and lifts off at
+12 m/s within 0.3 m of the centreline, climbs out, flies the circuit, and
+touches down at 13 m/s after a 3.9° glide. The rollout stays within 1.6 m of the
+centreline and stops 0.7 m from it, aligned with the runway. The landing is not
+pretty: it lands level at 1.4 m/s sink and bounces (up to 1.7 m) before
+settling. With ArduPilot's default 1° flare it touches down once, tail-high at
+17 m/s, but swerves 14 m off the centreline when the tail drops.
 
 The bounce is not a missing stall. Rerun on 2026-10-05 with and without the
-optional `lift_table` added to the mission, the landing was the same to within centimetres: first touch
-at 15.4 m/s and 1.45 m/s sink, bounces up to 2.0 m, rollout within 1.7 m of
-the centreline. (These numbers come from a different touchdown measure than
-the run above: the first frame after the circuit with the centre within
-5 cm of its resting height.) Adding `drag_table` too, the extra drag at
-small angles helped a little: first touch at 15.1 m/s, bounces up to 1.9 m,
-rollout within 1.2 m. The angle of attack stays below about 9°
-through the approach, flare, and bounces, never reaching the 13.2° stall.
-Each touchdown pitches the nose up by 10–17°, as a taildragger's mains
-ahead of the centre of gravity do. A likely cause is the approach at about
-18.5 m/s, more than twice the stall speed, but that is untested.
+optional `lift_table` added to the mission, the landing was the same to within
+centimetres: first touch at 15.4 m/s and 1.45 m/s sink, bounces up to 2.0 m,
+rollout within 1.7 m of the centreline. (These numbers come from a different
+touchdown measure than the run above: the first frame after the circuit with the
+centre within 5 cm of its resting height.) Adding `drag_table` too, the extra
+drag at small angles helped a little: first touch at 15.1 m/s, bounces up to 1.9
+m, rollout within 1.2 m. Airborne, the angle of attack peaks at 11.2°, below the
+13.2° stall, from 15 s before touchdown on; only rolling tail-down on the wheels
+(above 5 m/s) does it pass the stall angle, at 14.5°. The unmodified mission
+repeats byte for byte, so these differences are the tables' effect, not
+run-to-run noise (`reference/stall_landing.py`, evidence in
+`paper/data/stall-landing/`). Each touchdown pitches the nose up by 10–17°, as a
+taildragger's mains ahead of the centre of gravity do. A likely cause is the
+approach at about 18.5 m/s, more than twice the stall speed, but that is
+untested.

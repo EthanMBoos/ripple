@@ -49,7 +49,7 @@ pub fn parse_servo_packet(bytes: &[u8]) -> Result<ServoFrame> {
 
 /// The state reply for one frame. SITL needs the newline before and after.
 pub fn state_reply(timestamp_s: f64, sample: &SitlSample) -> String {
-    let vector = |v: &scrimmage_core::Vec3| [v.x, v.y, v.z];
+    let vector = |v: &ripple_core::Vec3| [v.x, v.y, v.z];
     let reply = json!({
         "timestamp": timestamp_s,
         "imu": {
@@ -80,7 +80,7 @@ pub fn servo_packet(frame_count: u32, pwm_us: [u16; 16]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use scrimmage_core::Vec3;
+    use ripple_core::Vec3;
 
     #[test]
     fn servo_packet_round_trips() -> Result<()> {

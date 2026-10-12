@@ -1,4 +1,4 @@
-# One Rascal flown by ArduPlane SITL over the JSON backend. `scrimmage run`
+# One Rascal flown by ArduPlane SITL over the JSON backend. `ripple run`
 # (built with --features ardupilot) starts the SITL container and stops it when
 # the run ends; see book/src/guides/ardupilot.md.
 #

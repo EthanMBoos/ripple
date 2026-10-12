@@ -26,38 +26,47 @@ the simulation loop. No runtime library loading is planned.
   a zero vector.
 - GroundCollision uses a flat `ground_collision_z` in local meters, optional
   team filtering, and removal. Force response and geodetic altitude are errors.
-  Startup rejection is separately configurable and, like C++, has no team filter.
+  Startup rejection is separately configurable and, like C++, has no team
+  filter.
 - TerrainCollision removes agents that reach the mission's terrain, checking the
   path moved each step; see [Terrain](../guides/terrain.md).
 - AircraftPIDController's default altitude derivative gain is 0.002, not
   upstream's 0.01, which made the default FixedWing6DOF oscillate after a pitch
-  or roll upset (hundreds of metres in a 45 s test). At 220 m/s, 0.01 makes
-  each altitude correction larger than the motion it reacts to, so the swings
-  grow; at 0.002 they die out. The derivative only damps, so the target
-  altitude and how it is held are unchanged. Its PIDs use the substep as their
-  timestep. The comparison C++ branch makes both changes; see
-  [reference notes](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/REFERENCE_NOTES.md)
-  and the [measurement](https://github.com/EthanMBoos/scrimmage-rs/blob/main/paper/data/aircraft-pid-upset/README.md).
+  or roll upset (hundreds of metres in a 45 s test). At 220 m/s, 0.01 makes each
+  altitude correction larger than the motion it reacts to, so the swings grow;
+  at 0.002 they die out. The derivative only damps, so the target altitude and
+  how it is held are unchanged. Its PIDs use the substep as their timestep. The
+  comparison C++ branch makes both changes; see [reference
+  notes](https://github.com/EthanMBoos/ripple/blob/main/docs/REFERENCE_NOTES.md)
+  and the
+  [measurement](https://github.com/EthanMBoos/ripple/blob/main/paper/data/rk4-loads/summary.md)
+  (part C).
 - WaypointBroadcast sends an initial route and optionally one timed replacement.
   WaypointFollower owns a list and current index. No services, route planner, or
   generic state-machine framework. Initial/updated broadcasts are not latched
   for future subscribers: late-spawned agents use their configured fallback
-  route until a later message. Boundary has the same one-shot delivery limitation.
+  route until a later message. Boundary has the same one-shot delivery
+  limitation.
 - The waypoint demos update autonomy each tick. Arrival/overshoot behavior with
   slower autonomy rates, tight aircraft turns, or noisy position at the final
-  point is not a navigation guarantee. Choose sensible speed/radius/turn geometry.
+  point is not a navigation guarantee. Choose sensible speed/radius/turn
+  geometry.
 - SingleIntegrator preserves C++'s unusual `max_speed`: negative means direct
   velocity; nonnegative means normalize to that magnitude, not clamp. Zero
   command stays zero. `override_heading=true` is not implemented.
-- SimpleAircraft preserves legacy model roll/pitch signs, pre-integration limits,
-  and its reported vertical-velocity versus altitude-derivative discrepancy.
-  No claim of a high-fidelity flight model. `show_text_label` in legacy Straight
-  inputs is superseded by Rerun's labels, not a plugin drawing API.
+- SimpleAircraft preserves legacy model roll/pitch signs, pre-integration
+  limits, and its reported vertical-velocity versus altitude-derivative
+  discrepancy. No claim of a high-fidelity flight model. `show_text_label` in
+  legacy Straight inputs is superseded by Rerun's labels, not a plugin drawing
+  API.
 - NoisyState estimates own state, not probabilistic target detection. Rust's
   independent sensor RNG streams differ from C++; its inherited covariance
-  payload is not calibrated uncertainty. See the [paper's validation](https://github.com/EthanMBoos/scrimmage-rs/blob/main/paper/README.md).
+  payload is not calibrated uncertainty. See the [paper's
+  validation](https://github.com/EthanMBoos/ripple/blob/main/paper/README.md).
 
-ROS and JSBSim integrations are not planned; ArduPlane SITL is optional; see [Flying ArduPlane](../guides/ardupilot.md). Terrain is covered in [Terrain](../guides/terrain.md).
+ROS and JSBSim integrations are not planned; ArduPlane SITL is optional; see
+[Flying ArduPlane](../guides/ardupilot.md). Terrain is covered in
+[Terrain](../guides/terrain.md).
 
 The plugin audit's selected additions are complete: NoisyContacts and
 SphereNetwork + AuctionAssign. The other proposed ports and the force, dynamics

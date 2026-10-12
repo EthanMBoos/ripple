@@ -4,7 +4,7 @@
 //! `Terrain` directly.
 use anyhow::{Context, Result, ensure};
 use rerun::RecordingStream;
-use scrimmage_core::Terrain;
+use ripple_core::Terrain;
 use std::{fs::File, io::BufReader, path::Path};
 
 /// At most this many mesh samples per side; the mesh skips samples to fit.

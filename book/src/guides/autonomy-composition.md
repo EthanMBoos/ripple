@@ -29,7 +29,8 @@ These components have different jobs and own different state:
 
 - `RescueMission`: what the agent is trying to accomplish and its current phase.
 - `Navigator`: how to move toward the chosen goal, including any route progress.
-- The existing controller plugin: how to turn desired motion into control inputs.
+- The existing controller plugin: how to turn desired motion into control
+  inputs.
 - The entity's tracking estimator, not the autonomy: what the agent believes
   exists, from its sensor readings. The autonomy reads the result as
   `context.contacts`.
@@ -60,13 +61,15 @@ each other, or engine scheduling. Ordinary calls and borrowed inputs are enough.
 Their mutable state belongs to this agent, so the engine can still schedule the
 whole autonomy as one entity-local update.
 
-Extract a component when it has a distinct responsibility or useful state to own.
-Do not create one for every three-line calculation. Moving code into methods
-that all access every field of the autonomy just spreads the god object around.
+Extract a component when it has a distinct responsibility or useful state to
+own. Do not create one for every three-line calculation. Moving code into
+methods that all access every field of the autonomy just spreads the god object
+around.
 
 ## Sensors still determine what the agent knows
 
-Splitting autonomy does not bypass detection probability or give it perfect truth.
+Splitting autonomy does not bypass detection probability or give it perfect
+truth.
 
 ```text
 World truth
@@ -85,8 +88,8 @@ treat a retained reading as a fresh detection every tick. Those choices belong
 to the research model; a general tracking framework is not required.
 
 States should receive the tracks and known map information they need, not the
-entire mutable simulation. Mission-provided knowledge, such as a known home base,
-is different from hidden targets that must be detected.
+entire mutable simulation. Mission-provided knowledge, such as a known home
+base, is different from hidden targets that must be detected.
 
 An autonomy sees belief only: `context.state` and `context.contacts`. With no
 sensors, belief is perfect; swap the estimators or add sensors to make it
@@ -112,8 +115,8 @@ struct Decision {
 }
 ```
 
-`Search` might own its coverage progress. `Approach` might own a selected track ID
-and an arrival tolerance. Neither needs access to all the other's internals.
+`Search` might own its coverage progress. `Approach` might own a selected track
+ID and an arrival tolerance. Neither needs access to all the other's internals.
 Borrow the belief (`context.contacts`) into each state; do not copy it into
 every state.
 
@@ -144,8 +147,8 @@ within one tick until something stops transitioning.
 
 Constructing the new state initializes its local memory. Changing state normally
 discards the previous state's local memory. If a task must resume later, retain
-the specific progress it needs deliberately. Do not introduce a generic lifecycle
-system until actual tasks need one.
+the specific progress it needs deliberately. Do not introduce a generic
+lifecycle system until actual tasks need one.
 
 A possible layout for a larger built-in:
 
@@ -160,8 +163,8 @@ plugin/autonomy/rescue_autonomy/
 ```
 
 Only add files as the behavior grows. States are not separately registered
-SCRIMMAGE plugins, and their configuration can remain part of the parent plugin's
-typed configuration.
+SCRIMMAGE plugins, and their configuration can remain part of the parent
+plugin's typed configuration.
 
 ## Keep transitions from becoming the next tangle
 
@@ -178,14 +181,15 @@ That second technique is a hierarchical state machine. It can be ordinary enums
 and methods; it does not require a state-machine library.
 
 Use named state data rather than growing a collection of overlapping booleans
-such as `searching`, `returning`, and `approaching`. Give competing interruptions
-an explicit priority. Keep one clear place responsible for the final command;
-do not let several behaviors overwrite controller ports in an accidental order.
+such as `searching`, `returning`, and `approaching`. Give competing
+interruptions an explicit priority. Keep one clear place responsible for the
+final command; do not let several behaviors overwrite controller ports in an
+accidental order.
 
 ## World rules do not belong in every autonomy
 
-An autonomy decides to visit a depot or capture a flag. It does not independently
-declare that refueling or capture actually occurred.
+An autonomy decides to visit a depot or capture a flag. It does not
+independently declare that refueling or capture actually occurred.
 
 | Responsibility | Owner |
 | --- | --- |
@@ -202,7 +206,8 @@ universal action protocol.
 
 ## When another decision structure makes sense
 
-Composition and narrow inputs remain useful regardless of the decision algorithm.
+Composition and narrow inputs remain useful regardless of the decision
+algorithm.
 
 | Approach | Good fit | Cost to watch |
 | --- | --- | --- |
@@ -212,9 +217,9 @@ Composition and narrow inputs remain useful regardless of the decision algorithm
 | Scored choices / utility selection | Selecting targets or tasks among competing objectives | Score tuning and rapidly oscillating choices |
 
 Do not require every autonomy to adopt the same decision framework. A behavior
-tree can live inside one plugin if that project benefits from it. Avoid replacing
-one giant struct with a shared, string-keyed blackboard that every behavior can
-read and mutate without clear ownership.
+tree can live inside one plugin if that project benefits from it. Avoid
+replacing one giant struct with a shared, string-keyed blackboard that every
+behavior can read and mutate without clear ownership.
 
 C++ already explores composition through `MotorSchemas` and `AutonomyExecutor`.
 The useful lesson is composing behavior, not reproducing their nested plugin

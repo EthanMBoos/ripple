@@ -9,9 +9,10 @@ order by an engineer who is not a Rust specialist.
 Use structs and ordinary functions by default. Use an enum when the cases are
 known so `match` forces every case to be handled. A sensor kind, run status, or
 estimator mode should not be a string. Add a trait only when multiple
-implementations need the same interface. [ripgrep](https://github.com/BurntSushi/ripgrep)
-and [Serde](https://github.com/serde-rs/serde) show the difference between a
-closed enum and an interface meant for outside implementations.
+implementations need the same interface.
+[ripgrep](https://github.com/BurntSushi/ripgrep) and
+[Serde](https://github.com/serde-rs/serde) show the difference between a closed
+enum and an interface meant for outside implementations.
 
 Rust often makes unclear ownership show up as a compiler error. Fix the
 ownership boundary instead of reaching for `.clone()`, `Arc`, or
@@ -21,18 +22,19 @@ borrowed while a stateful component owns its mutable state. See
 ownership distinguishing reusable state from one-shot data.
 
 Use `pub` for an actual crate API, not to make a compiler error or integration
-test go away. Unit tests beside a module can test its private code. [fd](https://github.com/sharkdp/fd),
+test go away. Unit tests beside a module can test its private code.
+[fd](https://github.com/sharkdp/fd),
 [rust-analyzer](https://github.com/rust-lang/rust-analyzer), and
 [uutils](https://github.com/uutils/coreutils) keep most implementation modules
 private behind a small set of operations.
 
 ## Parse into stronger types
 
-Serde types describe what can appear in a file. They do not prove that rates
-are positive, IDs are unique, or required combinations are present. Build or parse a
-`ScenarioConfig`; `Simulation::new` validates it and constructs internal resolved
-definitions before execution. This input-to-runtime boundary is used clearly by
-[fd](https://github.com/sharkdp/fd),
+Serde types describe what can appear in a file. They do not prove that rates are
+positive, IDs are unique, or required combinations are present. Build or parse a
+`ScenarioConfig`; `Simulation::new` validates it and constructs internal
+resolved definitions before execution. This input-to-runtime boundary is used
+clearly by [fd](https://github.com/sharkdp/fd),
 [rust-analyzer](https://github.com/rust-lang/rust-analyzer), and
 [Serde](https://github.com/serde-rs/serde).
 
@@ -45,9 +47,9 @@ different results.
 Keep YAML strict with `deny_unknown_fields`. A Serde default means a field may
 intentionally be omitted, not that an old format still needs to work.
 
-Use `Result::Err` with an explanation for an operation that could not be completed,
-including numerical failures. Plugin updates use `Update::Applied` or `Update::Stop`
-for successful completion or a normal stop request. The command
+Use `Result::Err` with an explanation for an operation that could not be
+completed, including numerical failures. Plugin updates use `Update::Applied` or
+`Update::Stop` for successful completion or a normal stop request. The command
 can use `anyhow`; it does not need a custom error framework. This split between
 operational failure and a completed result is visible in
 [Cargo](https://github.com/rust-lang/cargo),
@@ -73,17 +75,19 @@ Use the same reading order in every concrete plugin module:
 
 1. Module documentation: purpose, C++ counterpart (or explicitly Rust-only),
    execution phase, inputs, and outputs.
-2. Explicit imports, grouped as standard library, dependencies, then crate imports.
+2. Explicit imports, grouped as standard library, dependencies, then crate
+   imports.
 3. Port/event constants, named configuration, and state/measurement types.
 4. The plugin struct, which owns its per-instance state.
 5. `impl Plugin`: configuration parsing, construction, and optional ports/close.
-6. The category implementation: optional initialization, then step and reporting.
+6. The category implementation: optional initialization, then step and
+   reporting.
 7. Private model/conversion helpers, followed by module tests.
 
-Separate structs, implementation blocks, and functions with a blank line.
-Keep all imports at the top except test-only imports inside the test module.
-Prefer explicit imports over wildcard imports in concrete plugin implementations.
-Keep the existing C++-familiar directories; do not split declarations and
+Separate structs, implementation blocks, and functions with a blank line. Keep
+all imports at the top except test-only imports inside the test module. Prefer
+explicit imports over wildcard imports in concrete plugin implementations. Keep
+the existing C++-familiar directories; do not split declarations and
 implementations into artificial header/source pairs or add namespace wrappers.
 
 Use descriptive module filenames rather than `mod.rs`. Core modules use the
@@ -124,8 +128,9 @@ preferable to an alias that obscures this distinction.
 
 Use standard rustfmt and Clippy; do not introduce nightly formatting options or
 globally compress code onto longer lines. Readability refactors must preserve
-floating-point operation order, RNG consumption, event order, and phase barriers.
-Compare before/after mission outputs, not just whether both versions compile.
+floating-point operation order, RNG consumption, event order, and phase
+barriers. Compare before/after mission outputs, not just whether both versions
+compile.
 
 ## Names carry frames and units
 

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!-- Deterministic FixedWing6DOF comparison: level and tilted aircraft,
+     different headings, and nonzero ENU wind on the second aircraft.
+     No controller substeps: AircraftPIDController intentionally fixes C++'s dt bug. -->
+<runscript name="FixedWing6DOF aircraft">
+  <run start="0" end="10" dt="0.01" enable_gui="false" start_paused="false" time_warp="0" />
+  <seed>12345</seed><end_condition>time</end_condition><output_type>all</output_type>
+  <network>LocalNetwork</network><network>GlobalNetwork</network>
+  <metrics>SimpleCollisionMetrics</metrics>
+  <entity>
+    <count>1</count><team_id>1</team_id>
+    <x>-1000</x><y>-150</y><z>1000</z>
+    <vx>222</vx><vy>0</vy><vz>0</vz><heading>0</heading>
+    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <autonomy speed="220">Straight</autonomy>
+    <controller>AircraftPIDController</controller>
+    <motion_model>FixedWing6DOF</motion_model><visual_model>sphere</visual_model>
+  </entity>
+  <entity>
+    <count>1</count><team_id>2</team_id>
+    <x>200</x><y>-1000</y><z>1100</z>
+    <vx>0</vx><vy>222</vy><vz>0</vz><heading>90</heading><roll>3</roll><pitch>2</pitch>
+    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <autonomy speed="220">Straight</autonomy>
+    <controller>AircraftPIDController</controller>
+    <motion_model wind_E="3" wind_N="-2">FixedWing6DOF</motion_model><visual_model>sphere</visual_model>
+  </entity>
+</runscript>

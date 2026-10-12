@@ -27,8 +27,7 @@ import xml.etree.ElementTree as ET
 
 from compare import POSITION_TOLERANCE_M, distance
 from frames import read_frames
-
-ROOT = Path(__file__).resolve().parents[1]
+from project import ROOT, build_cli
 GAIN_NUDGE = 1e-12
 # Default [P, I, D, integral band] per loop, from each Rust controller's Default
 # (crates/core/src/plugin/controller/); a mission's own gains replace them.
@@ -95,9 +94,7 @@ def main(argv=None):
     parser.add_argument("--output", type=Path, required=True, help="new directory")
     args = parser.parse_args(argv)
     args.output.mkdir(parents=True)
-    subprocess.run(["cargo", "build", "--locked", "--package", "scrimmage-rs", "--bin",
-                    "scrimmage"], cwd=ROOT, check=True, capture_output=True)
-    binary = ROOT / "target/debug/scrimmage"
+    binary = build_cli()
     cases = []
     for result in sorted(args.check.glob("*/result.json")):
         case = result.parent
@@ -111,7 +108,7 @@ def main(argv=None):
         port, control = growth(cpp, case / "rust-1/frames.bin"), growth(
             case / "rust-1/frames.bin", run / "frames.bin")
         cases.append({
-            "mission": Path(info["mission"]).name,
+            "case": info.get("case", case.name),
             "end_s": port[-1][0],
             "cpp_vs_rust_exceeds_tolerance_at_s": crossing(port),
             "rust_vs_nudged_rust_exceeds_tolerance_at_s": crossing(control),

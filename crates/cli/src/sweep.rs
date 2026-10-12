@@ -1,22 +1,22 @@
-//! `scrimmage sweep`: run one YAML mission across seeds and parameter values,
-//! whole or as one shard, following Ripple's sweep (`../ripple/crates/ripple/src/sweep.rs`).
+//! `ripple sweep`: run one YAML mission across seeds and parameter values,
+//! whole or as one shard.
 //!
 //! Implemented, the minimum that sharding needs:
 //! - the `*.sweep.yaml` file: `name`, `base_scenario`, `seeds`,
 //!   `parameter_combinations` (`cartesian` or `zip`), and dotted-path `parameters`;
-//! - Ripple's case numbering, so `case-0007` means the same seed and values
+//! - a fixed case numbering, so `case-0007` means the same seed and values
 //!   whether the sweep runs whole or in shards;
 //! - `--shard-index i --shard-count n`, which runs cases i, i+n, i+2n, ...;
 //! - one JSON row per case in `results.jsonl`, and `sweep.json` with the case
 //!   counts that `scripts/bulk_run.py collect` checks before merging shards.
 //!
-//! Not implemented (Ripple has them): per-case run folders and recordings,
+//! Not implemented: per-case run folders and recordings,
 //! `--case-id` replay, digests, input archiving and hashes, and CSV/Markdown
-//! summaries. To look at one case, rerun it with `scrimmage run <base> <path>:=<value>`;
+//! summaries. To look at one case, rerun it with `ripple run <base> <path>:=<value>`;
 //! runs are deterministic, so it is the same run.
 use anyhow::{Context, Result, bail, ensure};
 use clap::Args;
-use scrimmage_core::{
+use ripple_core::{
     Mission, Params, ScenarioConfig, Simulation, TerminationReason, plugin::PluginRegistry,
 };
 use serde::{Deserialize, Serialize};
@@ -43,12 +43,12 @@ pub(crate) struct SweepOptions {
     /// Number of shards the sweep is divided into.
     #[arg(long, requires = "shard_index")]
     shard_count: Option<usize>,
-    /// Per-case step limit, as for `scrimmage run`.
+    /// Per-case step limit, as for `ripple run`.
     #[arg(long, default_value_t = 1_000_000)]
     max_steps: usize,
 }
 
-/// The sweep file, field for field Ripple's `SweepSpec`.
+/// The sweep file.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct SweepFile {
@@ -140,7 +140,7 @@ pub(crate) fn sweep(
         "base_scenario must be a YAML mission; XML missions cannot be swept"
     );
 
-    // Ripple's numbering: case i uses seed i % seeds and value combination
+    // Case numbering: case i uses seed i % seeds and value combination
     // i / seeds, so every seed runs with each combination before the next one.
     let seed_count = spec.seeds.len().max(1);
     let total_case_count = combination_count(&spec) * seed_count;
@@ -223,7 +223,7 @@ fn combination_count(spec: &SweepFile) -> usize {
     }
 }
 
-/// The values of combination `index`. Cartesian order matches Ripple: paths in
+/// The values of combination `index`. Cartesian order: paths in
 /// alphabetical order, the last path changing fastest.
 fn parameters_at(spec: &SweepFile, index: usize) -> BTreeMap<String, Value> {
     if matches!(spec.parameter_combinations, Combinations::Zip) {

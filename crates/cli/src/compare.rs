@@ -1,8 +1,8 @@
-//! `scrimmage compare`: check that two mission files (usually an XML mission and
+//! `ripple compare`: check that two mission files (usually an XML mission and
 //! its YAML form) set up the same simulation and record the same outputs.
 use anyhow::{Result, bail, ensure};
 use clap::Args;
-use scrimmage_core::{Mission, Params, Simulation, plugin::PluginRegistry, write_frame};
+use ripple_core::{Mission, Params, Simulation, plugin::PluginRegistry, write_frame};
 use std::path::{Path, PathBuf};
 
 #[derive(Args)]

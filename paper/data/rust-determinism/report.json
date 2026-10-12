@@ -1,0 +1,274 @@
+{
+ "passed": true,
+ "files_compared": [
+  "frames.bin",
+  "events.json",
+  "summary.csv"
+ ],
+ "cli_variants": [
+  "w1",
+  "w2",
+  "w8",
+  "w8-recording",
+  "w1-trace"
+ ],
+ "lookup_variants": [
+  "scan-w1",
+  "scan-w8",
+  "grid5-w1",
+  "grid5-w8",
+  "grid0.7-w2",
+  "grid50-w2",
+  "grid1000-w1"
+ ],
+ "missions": 41,
+ "missions_differing": 0,
+ "results": [
+  {
+   "mission": "missions/auction-sphere.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/fixed-wing-6dof-rascal.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/fixed-wing-6dof.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/multirotor.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/multirotor.yaml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/networks-local-global.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/noisy-contacts.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/noisy-state.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/straight-no-gui.xml",
+   "collisions": 1,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/straight-no-gui.yaml",
+   "collisions": 1,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/terrain-mcmillan.yaml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/test_missions/straight_cpu.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/test_missions/straight_cpu_mul.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/test_missions/straight_cpu_threaded.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/aircraft-substeps-scheduled.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/aircraft-substeps-spawning.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/collision-boundary.xml",
+   "collisions": 2,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/noisy-contacts-bias.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/noisy-contacts-noise.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/noisy-state-bias.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/noisy-state-bias.yaml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/single-integrator.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/sphere-network-auction.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/waypoints-aircraft.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/waypoints-point-agents.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/waypoints-point-agents.yaml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "crates/starter/missions/dead-reckoning.yaml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "crates/starter/missions/follow-nearest.yaml",
+   "collisions": 1,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf motion-64",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf motion-512",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf substeps-64",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf substeps-512",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf sensing-32",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf sensing-128",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf churn-64",
+   "collisions": 7,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf churn-512",
+   "collisions": 153,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf collision-256",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "perf collision-1024",
+   "collisions": 1,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "crowded collision, variance 100 m^2, 512 agents",
+   "collisions": 235,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "crowded collision, variance 400 m^2, 1024 agents",
+   "collisions": 453,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "crowded collision, variance 2500 m^2, 2048 agents",
+   "collisions": 795,
+   "identical": true,
+   "differences": []
+  }
+ ]
+}

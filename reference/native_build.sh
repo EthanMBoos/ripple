@@ -1,0 +1,34 @@
+#!/bin/sh
+# Native macOS build of C++ SCRIMMAGE's comparison branch (benchmarking-edits:
+# Ubuntu-24.04 with interleaved substeps), used by native_benchmark.py,
+# spatial_benchmark.py, and message_benchmark.py.
+# Needs: brew install boost@1.85 protobuf@21 eigen@3 geographiclib libxml2 cmake
+# (the versions Ubuntu 24.04 ships), and the rapidxml headers from the arm64
+# reference image (reference/benchmark.py builds it). No C++ source is changed.
+# NATIVE_CPP sets the build folder (default runs/native-cpp) and CPP_SOURCE the
+# C++ checkout (default ../scrimmage beside this repository).
+set -eu
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+SOURCE=${CPP_SOURCE:-$ROOT/../scrimmage}
+N=$(mkdir -p "${NATIVE_CPP:-$ROOT/runs/native-cpp}" && cd "${NATIVE_CPP:-$ROOT/runs/native-cpp}" && pwd)
+H=$(brew --prefix)
+mkdir -p $N/include
+rm -rf $N/source
+git -C "$SOURCE" archive --format=tar --prefix=source/ benchmarking-edits | tar -x -C $N
+IMAGE=ripple-reference:$(git -C "$SOURCE" rev-parse --short=12 benchmarking-edits)-arm64
+docker run --rm --platform linux/arm64 --entrypoint tar "$IMAGE" \
+  -c -C /usr/include rapidxml | tar -x -C $N/include
+cmake -S $N/source -B $N/build -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_C_COMPILER=/usr/bin/clang \
+  -DCMAKE_PREFIX_PATH="$H/opt/boost@1.85;$H/opt/protobuf@21;$H/opt/eigen@3;$H/opt/geographiclib;$H/opt/libxml2" \
+  -DBoost_DIR="$H/opt/boost@1.85/lib/cmake/Boost-1.85.0" -DCMAKE_IGNORE_PREFIX_PATH="/opt/anaconda3;$H" \
+  -DCMAKE_CXX_FLAGS="-I$N/include -isystem $H/opt/boost@1.85/include -isystem $H/opt/eigen@3/include/eigen3 -isystem $H/opt/protobuf@21/include" \
+  -DSETUP_HOME_CONFIG=OFF -DCMAKE_EXPORT_NO_PACKAGE_REGISTRY=ON \
+  -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_ROS_PLUGINS=OFF -DENABLE_GPU_ACCELERATION=OFF \
+  -DCMAKE_DISABLE_FIND_PACKAGE_VTK=ON -DVTK_FOUND=OFF -DCMAKE_DISABLE_FIND_PACKAGE_GRPC=ON \
+  -DCMAKE_DISABLE_FIND_PACKAGE_OpenCV=ON
+cmake --build $N/build --parallel --target scrimmage-bin Straight_plugin \
+  SimpleAircraftControllerPID_plugin SimpleAircraft_plugin SimpleCollision_plugin \
+  SimpleCollisionMetrics_plugin LocalNetwork_plugin GlobalNetwork_plugin NoisyState_plugin \
+  NoisyContacts_plugin GroundCollision_plugin
+git -C "$SOURCE" rev-parse benchmarking-edits > $N/commit.txt

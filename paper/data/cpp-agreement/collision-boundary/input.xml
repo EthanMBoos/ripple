@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!-- Added verification fixture: SimpleCollision's strict range. Stationary pairs
+     (ConstantVelocity 0) sit exactly at the 5 m collision range, along x and as a
+     3-4-5 triangle in 3D, and must not collide. Two pairs start 6.05 m apart and
+     close at 2 m/s, colliding during the run: one opposing, one same-team. The
+     closing agents add a second ConstantVelocity after the shared stationary one;
+     in both simulators the later autonomy's outputs reach the controller.
+     Startup range stays 2 m. -->
+<runscript name="SimpleCollision range boundary">
+  <run start="0" end="2" dt="0.1"
+       enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+  <seed>3</seed>
+  <end_condition>time</end_condition>
+  <output_type>all</output_type>
+  <create_latest_dir>false</create_latest_dir>
+  <network>GlobalNetwork</network>
+  <network>LocalNetwork</network>
+  <entity_interaction collision_range="5" startup_collision_range="2">SimpleCollision</entity_interaction>
+  <metrics>SimpleCollisionMetrics</metrics>
+  <entity_common name="point">
+    <count>1</count><heading>0</heading>
+    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <autonomy velocity="0 0 0">ConstantVelocity</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
+    <motion_model>SingleIntegrator</motion_model>
+    <visual_model>sphere</visual_model>
+  </entity_common>
+  <entity entity_common="point"><team_id>1</team_id><x>0</x><y>0</y><z>50</z></entity>
+  <entity entity_common="point"><team_id>2</team_id><x>5</x><y>0</y><z>50</z></entity>
+  <entity entity_common="point"><team_id>1</team_id><x>100</x><y>0</y><z>50</z></entity>
+  <entity entity_common="point"><team_id>2</team_id><x>106.05</x><y>0</y><z>50</z>
+    <autonomy velocity="-2 0 0">ConstantVelocity</autonomy></entity>
+  <entity entity_common="point"><team_id>1</team_id><x>200</x><y>0</y><z>50</z></entity>
+  <entity entity_common="point"><team_id>1</team_id><x>206.05</x><y>0</y><z>50</z>
+    <autonomy velocity="-2 0 0">ConstantVelocity</autonomy></entity>
+  <entity entity_common="point"><team_id>2</team_id><x>300</x><y>0</y><z>50</z></entity>
+  <entity entity_common="point"><team_id>1</team_id><x>303</x><y>0</y><z>54</z></entity>
+</runscript>

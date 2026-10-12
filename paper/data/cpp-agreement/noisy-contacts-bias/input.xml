@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!-- Added verification fixture: deterministic NoisyContacts equations, not
+     stochastic RNG parity. Zero standard deviations with nonzero means isolate
+     the bias terms, the roll-pitch-yaw right multiplication of attitude errors,
+     the copied angular velocity, and the 5I covariance. Compared through
+     published payloads in the comparison trace; nothing consumes the messages. -->
+<runscript name="NoisyContacts deterministic bias">
+  <run start="0" end="3" dt="0.1"
+       enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+  <seed>11</seed>
+  <end_condition>time</end_condition>
+  <output_type>all</output_type>
+  <create_latest_dir>false</create_latest_dir>
+  <network>GlobalNetwork</network>
+  <network>LocalNetwork</network>
+  <metrics>SimpleCollisionMetrics</metrics>
+  <entity_common name="aircraft">
+    <count>1</count>
+    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <autonomy speed="22">Straight</autonomy>
+    <controller>SimpleAircraftControllerPID</controller>
+    <motion_model turning_radius="30">SimpleAircraft</motion_model>
+    <sensor pos_noise_0="1.5 0" pos_noise_1="-2 0" pos_noise_2="0.5 0"
+            vel_noise_0="0.25 0" vel_noise_1="-0.5 0" vel_noise_2="0.1 0"
+            orient_noise_0="0.02 0" orient_noise_1="-0.03 0" orient_noise_2="0.05 0">NoisyContacts</sensor>
+    <visual_model>sphere</visual_model>
+  </entity_common>
+  <entity entity_common="aircraft">
+    <team_id>1</team_id><x>0</x><y>0</y><z>200</z><heading>0</heading>
+  </entity>
+  <entity entity_common="aircraft">
+    <team_id>1</team_id><x>100</x><y>50</y><z>210</z><heading>90</heading><roll>5</roll>
+  </entity>
+  <entity entity_common="aircraft">
+    <team_id>2</team_id><x>400</x><y>-80</y><z>190</z><heading>200</heading><pitch>3</pitch>
+  </entity>
+</runscript>

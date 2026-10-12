@@ -1,13 +1,13 @@
-# scrimmage-rs
+# Ripple
 
-scrimmage-rs is a Rust multi-agent robotics simulator for research and teaching.
-It is a port of the useful core of [SCRIMMAGE](https://github.com/gtri/scrimmage),
-a C++ simulator from Georgia Tech Research Institute, rebuilt to be easy to read,
+Ripple is a Rust multi-agent robotics simulator for research and teaching. It is
+a port of the useful core of [SCRIMMAGE](https://github.com/gtri/scrimmage), a
+C++ simulator from Georgia Tech Research Institute, rebuilt to be easy to read,
 modify, and learn from.
 
-You describe a scenario in a YAML or XML mission file: which vehicles exist, what
-software runs on each one, and how the world behaves. The simulator steps every
-vehicle forward in time, records what happened, and shows it in the
+You describe a scenario in a YAML or XML mission file: which vehicles exist,
+what software runs on each one, and how the world behaves. The simulator steps
+every vehicle forward in time, records what happened, and shows it in the
 [Rerun](https://rerun.io) viewer.
 
 > [!NOTE]
@@ -18,7 +18,7 @@ vehicle forward in time, records what happened, and shows it in the
 ## Quick start
 
 You need [Rust](https://www.rust-lang.org/tools/install). From the repository
-root, install the `scrimmage` command:
+root, install the `ripple` command:
 
 ```sh
 cargo install --path crates/cli --locked
@@ -27,16 +27,16 @@ cargo install --path crates/cli --locked
 Run a mission with two teams of aircraft flying toward each other:
 
 ```sh
-scrimmage run missions/straight-no-gui.xml --headless
+ripple run missions/straight-no-gui.xml --headless
 ```
 
-Each run is saved in a new folder under the repository: `runs/straight-no-gui/run000`,
-then `run001`, and so on.
-To watch it, install the [Rerun viewer](https://rerun.io/docs/getting-started/installing-viewer)
-and replay the run:
+Each run is saved in a new folder under the repository:
+`runs/straight-no-gui/run000`, then `run001`, and so on. To watch it, install
+the [Rerun viewer](https://rerun.io/docs/getting-started/installing-viewer) and
+replay the run:
 
 ```sh
-scrimmage replay runs/straight-no-gui/run000
+ripple replay runs/straight-no-gui/run000
 ```
 
 Use `--viewer` instead of `--headless` to watch while the mission runs.
@@ -70,16 +70,22 @@ by name in a mission.
 
 ## Where to go next
 
-- **New here?** Start with [Your first autonomy plugin](tutorial/first-autonomy.md).
-  You will write a plugin that chases the nearest opponent, then test it.
-- **Confused by angles or signs?** Read [Coordinate frames](concepts/coordinate-frames.md).
-- **Adding sensors or noise?** Read [Belief vs truth](concepts/belief-vs-truth.md), then
-  [Your first localization estimator](tutorial/noisy-localization.md).
-- **Writing a plugin of another type?** See [Writing plugins](guides/writing-plugins.md).
-- **Configuring an experiment?** See [YAML missions, templates, and sweeps](guides/yaml-missions.md).
-- **Working on the engine?** Start with the [source map](development/source-layout.md)
-  and [Rust style](development/rust-style.md).
+- **New here?** Start with [Your first autonomy
+  plugin](tutorial/first-autonomy.md). You will write a plugin that chases the
+  nearest opponent, then test it.
+- **Confused by angles or signs?** Read [Coordinate
+  frames](concepts/coordinate-frames.md).
+- **Adding sensors or noise?** Read [Belief vs
+  truth](concepts/belief-vs-truth.md), then [Your first localization
+  estimator](tutorial/noisy-localization.md).
+- **Writing a plugin of another type?** See [Writing
+  plugins](guides/writing-plugins.md).
+- **Configuring an experiment?** See [YAML missions, templates, and
+  sweeps](guides/yaml-missions.md).
+- **Working on the engine?** Start with the [source
+  map](development/source-layout.md) and [Rust
+  style](development/rust-style.md).
 
 The repository's
-[`missions/README.md`](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/README.md)
+[`missions/README.md`](https://github.com/EthanMBoos/ripple/blob/main/missions/README.md)
 lists every runnable mission and what to try with each one.

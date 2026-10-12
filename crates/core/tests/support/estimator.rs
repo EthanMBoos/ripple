@@ -2,7 +2,7 @@
 //! prior, not a reading, so belief differs from truth when the sensor is biased.
 use super::sensor::PositionReading;
 use anyhow::Result;
-use scrimmage_core::plugin::*;
+use ripple_core::plugin::*;
 use serde::Deserialize;
 
 #[derive(Default, Deserialize)]

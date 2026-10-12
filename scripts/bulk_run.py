@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Run a scrimmage sweep in shards, locally or on Slurm, then merge the results.
+"""Run a ripple sweep in shards, locally or on Slurm, then merge the results.
 
-A trimmed copy of Ripple's scripts/bulk_run.py. From the repository root:
+From the repository root:
 
     conda env create -f environment.yaml      # once, on shared storage
-    conda activate scrimmage-rs
-    cargo build --release -p scrimmage-rs
+    conda activate ripple
+    cargo build --release -p ripple
 
     # Local: 4 shards as parallel processes, then collect.
     python3 scripts/bulk_run.py local missions/waypoints-point-agents.sweep.yaml --jobs 4
@@ -20,7 +20,7 @@ Implemented: local shards, one Slurm array submission, the per-task worker, and
 collect, which checks that the shards cover every case exactly once and merges
 their rows in case order into <campaign>/results.jsonl.
 
-Not implemented (Ripple has them): watching the Slurm job, a `status` progress
+Not implemented: watching the Slurm job, a `status` progress
 bar, `replay` of one case, refusing a dirty checkout, input hashes, and
 CPU-hour accounting.
 """
@@ -42,7 +42,7 @@ SWEEP_SUFFIX = ".sweep.yaml"
 
 
 def numbered_output(sweep: Path) -> Path:
-    """<repo>/sweeps/<sweep name>/runNNN, like `scrimmage sweep` without --output."""
+    """<repo>/sweeps/<sweep name>/runNNN, like `ripple sweep` without --output."""
     family = REPOSITORY / "sweeps" / sweep.name.removesuffix(SWEEP_SUFFIX)
     index = 0
     while (family / f"run{index:03}").exists():
@@ -57,7 +57,7 @@ def prepare(arguments: argparse.Namespace) -> tuple[Path, dict]:
     if not sweep.name.endswith(SWEEP_SUFFIX) or not sweep.is_file():
         raise SystemExit(f"sweep input must be an existing file ending in {SWEEP_SUFFIX}")
     if not binary.is_file():
-        raise SystemExit(f"binary not found: {binary}; run cargo build --release -p scrimmage-rs")
+        raise SystemExit(f"binary not found: {binary}; run cargo build --release -p ripple")
     output = arguments.output.resolve() if arguments.output else numbered_output(sweep)
     if output.exists():
         raise SystemExit(f"output already exists: {output}")
@@ -70,7 +70,7 @@ def prepare(arguments: argparse.Namespace) -> tuple[Path, dict]:
 
 
 def worker_command(record: dict, output: Path, index: int) -> list[str]:
-    """One shard: `scrimmage sweep` writing to <campaign>/shard-NNNN."""
+    """One shard: `ripple sweep` writing to <campaign>/shard-NNNN."""
     return [
         record["binary"], "sweep", record["sweep"],
         "--output", str(output / f"shard-{index:04}"),
@@ -113,7 +113,7 @@ def submit(arguments: argparse.Namespace) -> None:
         str(REPOSITORY / "scripts/bulk_run.slurm"),
     ]
     environment = os.environ.copy()
-    environment["SCRIMMAGE_SWEEP_OUTPUT"] = str(output)
+    environment["RIPPLE_SWEEP_OUTPUT"] = str(output)
     submitted = subprocess.run(command, cwd=REPOSITORY, env=environment, check=True,
                                text=True, stdout=subprocess.PIPE)
     job_id = submitted.stdout.strip().split(";")[0]
@@ -123,7 +123,7 @@ def submit(arguments: argparse.Namespace) -> None:
 
 def worker_from_slurm() -> None:
     """Runs inside one Slurm array task: the shard number is the task ID."""
-    output = Path(os.environ["SCRIMMAGE_SWEEP_OUTPUT"])
+    output = Path(os.environ["RIPPLE_SWEEP_OUTPUT"])
     record = json.loads((output / "campaign.json").read_text())
     index = int(os.environ["SLURM_ARRAY_TASK_ID"])
     subprocess.run(worker_command(record, output, index), cwd=REPOSITORY, check=True)
@@ -175,7 +175,7 @@ def parse_arguments() -> argparse.Namespace:
         command.add_argument("sweep", type=Path)
         command.add_argument("--jobs", type=int, default=1, help="number of shards")
         command.add_argument("--binary", type=Path,
-                             default=REPOSITORY / "target/release/scrimmage")
+                             default=REPOSITORY / "target/release/ripple")
         command.add_argument("--output", type=Path,
                              help="campaign folder (default: sweeps/<sweep name>/runNNN)")
     commands.add_parser("worker", help="run by bulk_run.slurm inside a Slurm task")

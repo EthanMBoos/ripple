@@ -1,13 +1,14 @@
 # Working missions
 
-Run from the repository root with `scrimmage run missions/<file> --headless`.
-Replay the printed run directory with `scrimmage replay runs/<mission>/runNNN`.
-`waypoints-point-agents.sweep.yaml` is a small example sweep (`scrimmage sweep`).
-These twenty-one XML files use the compiled built-ins. They are examples and regression
-inputs, not a copy of every upstream demo. A `.yaml` file beside an XML file is its
-[YAML form](../book/src/guides/yaml-missions.md) and must run identically; check one with
-`scrimmage compare <file>.xml <file>.yaml`. YAML overrides take dotted paths
-(`entities.red.heading_deg:=170`) instead of XML variable names.
+Run from the repository root with `ripple run missions/<file> --headless`.
+Replay the printed run directory with `ripple replay runs/<mission>/runNNN`.
+`waypoints-point-agents.sweep.yaml` is a small example sweep (`ripple sweep`).
+These twenty-one XML files use the compiled built-ins. They are examples and
+regression inputs, not a copy of every upstream demo. A `.yaml` file beside an
+XML file is its [YAML form](../book/src/guides/yaml-missions.md) and must run
+identically; check one with `ripple compare <file>.xml <file>.yaml`. YAML
+overrides take dotted paths (`entities.red.heading_deg:=170`) instead of XML
+variable names.
 
 | Mission | What to try or verify |
 | --- | --- |
@@ -38,14 +39,17 @@ WaypointFollower and WaypointBroadcast are small Rust replacements, not ports of
 MotorSchemas or the legacy waypoint composition. Their routes use local ENU
 meters (`x,y,z; x,y,z`), not latitude/longitude. The point example uses
 `max_speed=-1` to follow commanded velocity; a nonnegative SingleIntegrator
-`max_speed` forces that speed magnitude, matching C++ rather than acting as a cap.
-Fixed-wing aircraft cannot stop at a point; their example repeats the route.
+`max_speed` forces that speed magnitude, matching C++ rather than acting as a
+cap. Fixed-wing aircraft cannot stop at a point; their example repeats the
+route.
 
 The original unsupported demos, including `straight.xml`, remain in sibling
-`../scrimmage/missions` on `Ubuntu-24.04`. Use `straight-no-gui.xml` for the small
-collision demo or `networks-local-global.xml` for boundary/ground behavior here.
-Malformed/missing-plugin cases live under `crates/*/tests/`, not this folder.
-The copied C++ guides still describe upstream inputs and are intentionally unchanged.
+`../scrimmage/missions` on `Ubuntu-24.04`. Use `straight-no-gui.xml` for the
+small collision demo or `networks-local-global.xml` for boundary/ground behavior
+here. Malformed/missing-plugin cases live under `crates/*/tests/`, not this
+folder. The copied C++ guides still describe upstream inputs and are
+intentionally unchanged.
 
-See the [paper's validation sections](../paper/README.md) for results, reproduction,
-and comparison limits; [model scope](../book/src/reference/models.md) explains the selection.
+See the [paper's validation sections](../paper/README.md) for results,
+reproduction, and comparison limits; [model
+scope](../book/src/reference/models.md) explains the selection.

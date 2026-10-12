@@ -1,4 +1,4 @@
-//! The `scrimmage` command line as a library.
+//! The `ripple` command line as a library.
 //!
 //! `src/main.rs` builds the plugin registry (the stock plugins plus the user
 //! plugin crates in this workspace, such as crates/starter) and hands it to
@@ -6,7 +6,7 @@
 //! user plugins work everywhere stock plugins do. See book/src/guides/user-plugins.md.
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use scrimmage_core::plugin::PluginRegistry;
+use ripple_core::plugin::PluginRegistry;
 use std::path::{Path, PathBuf};
 
 mod compare;
@@ -21,7 +21,7 @@ pub use run::{RunSettings, run_scenario};
 #[command(
     name = "scrimmage",
     version,
-    about = "SCRIMMAGE Rust port with Rerun visualization"
+    about = "Ripple, a multi-agent robotics simulator ported from SCRIMMAGE, with Rerun visualization"
 )]
 struct Cli {
     #[command(subcommand)]

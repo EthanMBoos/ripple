@@ -14,23 +14,32 @@ from pathlib import Path
 
 DATA = Path(__file__).resolve().parent
 OUTPUT = DATA.parent / "manuscript" / "generated"
-# Written by reference/campaign.py; dates and commits are inside each report.
-COMPARISON = DATA / "cpp-comparison"
-BENCHMARK = DATA / "benchmark" / "timings.json"
-NATIVE_BENCHMARK = DATA / "benchmark-native" / "timings.json"
-GENERATED = DATA / "generated"
-LONG = DATA / "generated-long"
-PLATFORM = DATA / "platform" / "report.json"
-SENSITIVITY = DATA / "sensitivity" / "report.json"
-NOISE = DATA / "noise" / "noise-statistics.json"
-SPATIAL = DATA / "spatial-lookup" / "timings.json"
-MESSAGES = DATA / "message-routing" / "benchmark" / "timings.json"
+# Each folder is one check's evidence, written by reference/suite.py --retain;
+# dates, sources, and references are in release.json and inside each report.
+COMPARISON = DATA / "cpp-agreement"
+BENCHMARK = DATA / "speed-cpp-container" / "timings.json"
+NATIVE_BENCHMARK = DATA / "speed-cpp-native" / "timings.json"
+GENERATED = DATA / "cpp-generated"
+LONG = DATA / "cpp-long"
+PLATFORM = DATA / "rust-platform" / "report.json"
+SENSITIVITY = DATA / "checker-sensitivity" / "report.json"
+NOISE = DATA / "cpp-noise" / "noise-statistics.json"
+SPATIAL = DATA / "speed-spatial" / "timings.json"
+MESSAGES = DATA / "speed-messages" / "timings.json"
+STALL = DATA / "stall-landing" / "results.json"
+RELEASE = DATA / "release.json"
 
 sys.path.insert(0, str(DATA.parents[1] / "reference"))
 from reference_check import comparison_missions  # noqa: E402
 
-# Labels for the agreement table come from reference/missions.txt.
-MODELS = {Path(path).name: label for path, label in comparison_missions()}
+# Labels for the agreement table come from reference/missions.txt, by case ID.
+MODELS = {case: label for case, _, label in comparison_missions()}
+
+
+def cases(folder):
+    """The case results of a retained reference check, in the order they ran."""
+    report = folder / "report.json"
+    return json.loads(report.read_text())["cases"] if report.is_file() else []
 
 
 def number(value):
@@ -57,16 +66,15 @@ def verbatim_name(name):
 
 def agreement_table():
     rows = []
-    for case in sorted(COMPARISON.glob("[0-9]*/result.json")):
-        result = json.loads(case.read_text())
+    for result in cases(COMPARISON):
         comparison, trace = result["comparison"], result["trace_comparison"]
-        name = Path(result["mission"]).name
+        name = result["case"]
         explained = result["summary_agreement"] == "explained_by_scoring_rules"
         outcome = "match" + ("\\textsuperscript{a}" if explained else "")
         if not result["passed"]:
             outcome = "differs"
         rows.append(" & ".join([
-            verbatim_name(name.removesuffix(".xml")),
+            verbatim_name(name),
             MODELS.get(name, ""),
             str(comparison["compared_entity_states"]),
             number(comparison["max_position_error_m"]),
@@ -99,7 +107,7 @@ def agreement_table():
         "\\toprule",
         "& & & \\multicolumn{3}{c}{Frames} & \\multicolumn{4}{c}{Trace} & \\\\",
         "\\cmidrule(lr){4-6}\\cmidrule(lr){7-10}",
-        "Mission & Exercises & States & Position & Velocity & Attitude"
+        "Case & Exercises & States & Position & Velocity & Attitude"
         " & Deliv. & Payload & Outputs & Output err. & Result \\\\",
         "\\midrule",
         *rows,
@@ -162,14 +170,11 @@ def spatial_table():
     timings = json.loads(SPATIAL.read_text())
     rows = []
     for name, case in timings["cases"].items():
-        variants = case["variants"]
-        ms = {variant: value["median_ms_per_step"] for variant, value in variants.items()}
+        ms = {variant: value["median_ms_per_step"] for variant, value in case["variants"].items()}
         cells = [name.rsplit("-", 1)[0].replace("-", " "), f"{case['agents']:,}".replace(",", "{,}"),
                  f"{case['collision_range_m']:g}", str(case["collisions"])]
-        cells += [f"{ms[variant]:.2f}" if variant in ms else "--"
-                  for variant in ("none", "old", "scan", "5")]
-        others = {width: value for width, value in ms.items()
-                  if width not in ("none", "old", "scan", "5")}
+        cells += [f"{ms[variant]:.2f}" if variant in ms else "--" for variant in ("none", "scan", "5")]
+        others = {width: value for width, value in ms.items() if width not in ("none", "scan", "5")}
         best = min(others, key=others.get) if others else None
         cells.append(f"{others[best]:.2f} ({best}\\,m)" if best else "--")
         rows.append(" & ".join(cells) + " \\\\")
@@ -183,19 +188,19 @@ def spatial_table():
         "frames and events.}",
         "\\label{tab:spatial}",
         "\\footnotesize",
-        "\\begin{tabular}{lrrrrrrrl}",
+        "\\begin{tabular}{lrrrrrrl}",
         "\\toprule",
-        "Case & Agents & Range (m) & Collisions & No collision check & Every pair & Scan & Grid 5\\,m"
+        "Case & Agents & Range (m) & Collisions & No collision check & Scan & Grid 5\\,m"
         " & Best other grid \\\\",
         "\\midrule",
         *rows,
         "\\bottomrule",
         "\\end{tabular}",
-        "\\par\\smallskip Every pair: SimpleCollision's previous loop, at revision",
-        f"{latex_text(timings['old_revision'])}. No collision check: the same mission without",
-        "SimpleCollision; the difference only estimates the check's cost, because that run removes",
-        "no agents and may place spawns differently. Sparse: aircraft spread over about a",
-        "kilometre at one altitude. Clustered: a 20\\,m spread, so most agents collide early.",
+        "\\par\\smallskip Scan: every contact is tested, the reference answer. No collision check:",
+        "the same mission without SimpleCollision; the difference only estimates the check's cost,",
+        "because that run removes no agents and may place spawns differently. Sparse: aircraft",
+        "spread over about a kilometre at one altitude. Clustered: a 20\\,m spread, so most agents",
+        "collide early.",
         "\\end{table*}",
         "",
     ])
@@ -205,42 +210,110 @@ def messages_table():
     if not MESSAGES.is_file():
         return None
     timings = json.loads(MESSAGES.read_text())
-    variants = ("cpp", "rust-old", "rust-new")
+    variants = ("cpp", "rust")
     by_agents = {}
     for case in timings["cases"]:
         by_agents.setdefault(case["agents"], {})[case["case"]] = case["variants"]
     rows = []
-    for agents, cases in by_agents.items():
+    for agents, runs in by_agents.items():
         cells = [f"{agents:,}".replace(",", "{,}")]
         for label in ("without messages", "NoisyState"):
-            cells += [f"{cases[label][variant]['ms_per_step']:.2f}" for variant in variants]
+            cells += [f"{runs[label][variant]['ms_per_step']:.2f}" for variant in variants]
         rows.append(" & ".join(cells) + " \\\\")
     return "\n".join([
         "% Generated by paper/data/make_tables.py; do not edit.",
-        "\\begin{table*}[t]",
+        "\\begin{table}[t]",
         "\\centering",
         "\\caption{Milliseconds per step for perf.py's aircraft, without and with a NoisyState",
-        "sensor on every aircraft (whose messages every aircraft's Straight subscribes to): native",
-        "C++, Rust before routing by index, and after. Whole process minus a one-step run, median of",
-        f"{timings['repeats']} runs after a warm-up, alternating variants, one thread, {timings['machine']}.",
-        "The two Rust builds wrote identical output.}",
+        "sensor on every aircraft (whose messages every aircraft's Straight subscribes to), in",
+        "native C++ and in Rust. Whole process minus a one-step run, median of",
+        f"{timings['repeats']} runs after a warm-up, alternating, one thread,",
+        f"{latex_text(timings['provenance']['platform'])}.}}",
         "\\label{tab:messages}",
         "\\footnotesize",
-        "\\begin{tabular}{rrrrrrr}",
+        "\\begin{tabular}{rrrrr}",
         "\\toprule",
-        " & \\multicolumn{3}{c}{Without messages} & \\multicolumn{3}{c}{With NoisyState} \\\\",
-        "Agents & C++ & Rust before & Rust after & C++ & Rust before & Rust after \\\\",
+        " & \\multicolumn{2}{c}{Without messages} & \\multicolumn{2}{c}{With NoisyState} \\\\",
+        "Agents & C++ & Rust & C++ & Rust \\\\",
         "\\midrule",
         *rows,
         "\\bottomrule",
         "\\end{tabular}",
+        "\\end{table}",
+        "",
+    ])
+
+
+def checks_table():
+    if not RELEASE.is_file():
+        return None
+    release = json.loads(RELEASE.read_text())
+    rows = []
+    for name, check in release["checks"].items():
+        outcome = ("passed" if check["passed"] else "\\textbf{failed}") + (
+            f"; {check['note']}" if check["note"] else "")
+        rows.append(" & ".join([verbatim_name(name), latex_text(check["purpose"]),
+                                latex_text(check["reference"]), latex_text(outcome)]) + " \\\\")
+    sources = {check["source_sha256"] for check in release["checks"].values()}
+    return "\n".join([
+        "% Generated by paper/data/make_tables.py; do not edit.",
+        "\\begin{table*}[t]",
+        "\\centering",
+        "\\caption{The checks of \\texttt{reference/suite.py} and their outcome in this",
+        "release (\\texttt{paper/data/release.json}); " + (
+            f"all ran on source \\texttt{{{next(iter(sources))[:12]}}}." if len(sources) == 1
+            else f"they ran on {len(sources)} different sources."),
+        "}",
+        "\\label{tab:checks}",
+        "\\footnotesize",
+        "\\begin{tabularx}{\\textwidth}{lXP{0.22\\textwidth}P{0.22\\textwidth}}",
+        "\\toprule",
+        "Check & What it checks & Against & Outcome \\\\",
+        "\\midrule",
+        *rows,
+        "\\bottomrule",
+        "\\end{tabularx}",
         "\\end{table*}",
         "",
     ])
 
 
+def stall_table():
+    if not STALL.is_file():
+        return None
+    report = json.loads(STALL.read_text())
+    labels = {"linear": "Linear", "lift": "Lift table", "lift-drag": "Both tables"}
+    rows = []
+    for variant, label in labels.items():
+        run = report["results"][variant]
+        rows.append(" & ".join([
+            label, f"{run['touchdown_ground_speed_mps']:.2f}", f"{run['touchdown_sink_mps']:.2f}",
+            f"{run['max_bounce_height_m']:.2f}", f"{run['max_rollout_offset_m']:.2f}",
+            f"{run['max_alpha_airborne_deg']:.1f}$^\\circ$"]) + " \\\\")
+    return "\n".join([
+        "% Generated by paper/data/make_tables.py; do not edit.",
+        "\\begin{table}[t]",
+        "\\centering",
+        "\\small",
+        "\\caption{ArduPlane's runway landing of the Rascal with and without",
+        "stall tables: speed and sink rate at first touchdown, highest bounce, widest",
+        "offset from the centreline after touchdown, and largest airborne angle of",
+        "attack from 15~s before touchdown.}",
+        "\\label{tab:stall}",
+        "\\begin{tabular}{@{}lrrrrr@{}}",
+        "\\toprule",
+        "Lift and drag & m/s & sink & bounce & offset & $\\alpha$ \\\\",
+        "\\midrule",
+        *rows,
+        "\\bottomrule",
+        "\\end{tabular}",
+        "\\end{table}",
+        "",
+    ])
+
+
 def generated_table():
-    results = [json.loads(path.read_text()) for path in sorted(GENERATED.glob("*/result.json"))]
+    results = cases(GENERATED)
     if not results:
         return None
     frames = [result["comparison"] for result in results]
@@ -253,7 +326,7 @@ def generated_table():
                 ("fixed-wing", ">FixedWing6DOF<"), ("point-mass", ">SingleIntegrator<")]
     counts = []
     for label, marker in features:
-        counts.append(sum(marker in (GENERATED / Path(r["mission"]).name).read_text()
+        counts.append(sum(marker in (GENERATED / r["case"] / "input.xml").read_text()
                           for r in results))
     rows = [
         ("Scenarios passing", f"{sum(r['passed'] for r in results)} of {len(results)}"),
@@ -361,11 +434,10 @@ def noise_table():
 
 def parity_table():
     """The one-table summary for the main text."""
-    matrix = [json.loads(p.read_text()) for p in sorted(COMPARISON.glob("[0-9]*/result.json"))]
-    generated = [json.loads(p.read_text()) for p in sorted(GENERATED.glob("*/result.json"))]
+    matrix, generated = cases(COMPARISON), cases(GENERATED)
     defects = json.loads(SENSITIVITY.read_text())["defects"]
     noise = json.loads(NOISE.read_text())["quantities"]
-    long_runs = [json.loads(p.read_text()) for p in sorted(LONG.glob("*/result.json"))]
+    long_runs = cases(LONG)
     divergence = json.loads((LONG / "divergence.json").read_text())["cases"] \
         if (LONG / "divergence.json").is_file() else []
     runs = matrix + generated + long_runs
@@ -419,7 +491,7 @@ def long_table():
     rows = []
     for case in json.loads(divergence.read_text())["cases"]:
         rows.append(" & ".join([
-            verbatim_name(case["mission"].removesuffix(".xml")), f"{case['end_s']:.0f} s",
+            verbatim_name(case["case"]), f"{case['end_s']:.0f} s",
             when(case["cpp_vs_rust_exceeds_tolerance_at_s"]),
             when(case["rust_vs_nudged_rust_exceeds_tolerance_at_s"]),
             number(case["cpp_vs_rust_final_m"]),
@@ -456,7 +528,8 @@ def main():
     (OUTPUT / "parity.tex").write_text(parity_table())
     for name, table in (("generated", generated_table()), ("sensitivity", sensitivity_table()),
                         ("noise", noise_table()), ("spatial", spatial_table()),
-                        ("messages", messages_table())):
+                        ("messages", messages_table()), ("stall", stall_table()),
+                        ("checks", checks_table())):
         if table is not None:
             (OUTPUT / f"{name}.tex").write_text(table)
     (OUTPUT / "cpp_agreement.tex").write_text(agreement_table())

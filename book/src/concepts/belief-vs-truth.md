@@ -1,9 +1,9 @@
 # Belief vs truth
 
 A real robot never knows exactly where it is. It has GPS that is a few meters
-off, an IMU that drifts, and a compass disturbed by its motors. Its software acts
-on an *estimate*. To test autonomy honestly, a simulator has to keep two things
-apart:
+off, an IMU that drifts, and a compass disturbed by its motors. Its software
+acts on an *estimate*. To test autonomy honestly, a simulator has to keep two
+things apart:
 
 - **Truth:** where the vehicle really is. The motion model computes it, and
   collisions and scoring use it.
@@ -11,7 +11,7 @@ apart:
   it. Estimators produce it from sensor readings, and autonomy and controllers
   act on it.
 
-scrimmage-rs keeps these as separate values on every entity.
+Ripple keeps these as separate values on every entity.
 
 ## Who reads and writes what
 
@@ -46,7 +46,7 @@ the same `PassThrough` a noisy sensor would.
 ## Adding noise with a sensor
 
 Sensors measure; they never write belief. The built-in
-[NoisyState](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_state/noisy_state.rs)
+[NoisyState](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/sensor/noisy_state/noisy_state.rs)
 sensor, each tick:
 
 1. copies the true state,
@@ -140,8 +140,10 @@ through one: dead reckoning from commands, corrected by fixes every 5 s. See
 ## Summary
 
 - Truth is physics; belief is what the software thinks.
-- Autonomy and controllers see belief only: `context.state` and `context.contacts`.
+- Autonomy and controllers see belief only: `context.state` and
+  `context.contacts`.
 - Sensors produce readings; one localization and one tracking estimator per
   entity turn them into belief.
 - With no sensor, belief is perfect: `PassThrough` of a perfect measurement.
-- Several possible sensors must be named in `inputs`; nothing is picked silently.
+- Several possible sensors must be named in `inputs`; nothing is picked
+  silently.

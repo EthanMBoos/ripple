@@ -1,6 +1,6 @@
 //! A communication model: configurable fixed delay or complete packet loss.
 use anyhow::{Result, ensure};
-use scrimmage_core::plugin::{Delivery, Network, NetworkContext, Plugin, PluginParams, Update};
+use ripple_core::plugin::{Delivery, Network, NetworkContext, Plugin, PluginParams, Update};
 use serde::Deserialize;
 
 #[derive(Clone, Copy, Default, Deserialize)]

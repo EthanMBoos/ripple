@@ -1,6 +1,6 @@
 //! Run the dead-reckoning mission and compare each tick's belief with the truth.
 use anyhow::Result;
-use scrimmage_core::{Mission, Params, Simulation, plugin::PluginRegistry};
+use ripple_core::{Mission, Params, Simulation, plugin::PluginRegistry};
 use std::path::Path;
 
 /// After every tick: time, the dead-reckoning robot's belief error, and how far

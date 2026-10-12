@@ -1,6 +1,6 @@
 //! A world interaction: keep every entity above a floor and publish the resulting population.
 use anyhow::Result;
-use scrimmage_core::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
+use ripple_core::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
 use serde::Deserialize;
 
 pub struct Population {

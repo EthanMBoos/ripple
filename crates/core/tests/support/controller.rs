@@ -1,6 +1,6 @@
 //! A minimal controller demonstrating composable named input/output channels.
 use anyhow::Result;
-use scrimmage_core::plugin::*;
+use ripple_core::plugin::*;
 use serde::Deserialize;
 
 #[derive(Deserialize)]

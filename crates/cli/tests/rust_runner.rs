@@ -1,7 +1,5 @@
-use scrimmage_cli::{RunSettings, run_scenario};
-use scrimmage_core::{
-    EntityGroupConfig, PluginConfig, ScenarioConfig, Vec3, plugin::PluginRegistry,
-};
+use ripple_cli::{RunSettings, run_scenario};
+use ripple_core::{EntityGroupConfig, PluginConfig, ScenarioConfig, Vec3, plugin::PluginRegistry};
 use std::{fs, process::Command};
 
 fn scenario() -> ScenarioConfig {
@@ -65,7 +63,7 @@ entities:
         .unwrap();
         assert_eq!(output, temp.path().join("runs").join(name).join("run000"));
         let file_output = temp.path().join(format!("file-{workers}"));
-        let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+        let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
             .arg("run")
             .arg(&mission)
             .arg("--output")

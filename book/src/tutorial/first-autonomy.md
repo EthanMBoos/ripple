@@ -19,7 +19,7 @@ It takes about 30 lines of Rust.
 
 > [!TIP]
 > Keep the finished example,
-> [Straight](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs),
+> [Straight](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs),
 > open while you work. It has the same shape as the plugin you are about to write.
 
 ## What an autonomy plugin does
@@ -41,8 +41,8 @@ so a typo is an error, not a silently ignored command.
 ## 1. Find the starter crate
 
 User plugins live in a crate in the repository, `crates/starter`. The
-`scrimmage` command is compiled with that crate's plugins, so its missions run
-with `scrimmage run` and `scrimmage sweep` like any other (see
+`ripple` command is compiled with that crate's plugins, so its missions run
+with `ripple run` and `ripple sweep` like any other (see
 [Writing your own plugins](../guides/user-plugins.md)).
 
 ```text
@@ -66,7 +66,7 @@ Put this in `crates/starter/src/follow_nearest.rs`. We'll walk through it below.
 //! Autonomy phase: read contacts, write desired heading, altitude, and speed.
 
 use anyhow::{Result, ensure};
-use scrimmage_core::plugin::{
+use ripple_core::plugin::{
     AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
 use serde::Deserialize;
@@ -192,14 +192,15 @@ this project:
 1. **Input.** `context.state` is where this vehicle believes it is.
    `context.contacts` are the other entities it knows about (not itself).
 2. **Calculation.** Skip contacts on our own team. Keep the closest of the rest.
-3. **Output.** Point at the target. `atan2(dy, dx)` is the heading from us to it:
-   0 means east and π/2 means north (see [Coordinate frames](../concepts/coordinate-frames.md)).
-   Match its altitude and fly at the configured speed. If no opponent is left,
-   hold the current heading and altitude.
+3. **Output.** Point at the target. `atan2(dy, dx)` is the heading from us to
+   it: 0 means east and π/2 means north (see [Coordinate
+   frames](../concepts/coordinate-frames.md)). Match its altitude and fly at the
+   configured speed. If no opponent is left, hold the current heading and
+   altitude.
 
-Both are *belief*. With no sensors they are perfect, measured at the end of
-the previous tick; add a noisy sensor and the same code acts on noisy
-estimates, without changes. See [Belief vs truth](../concepts/belief-vs-truth.md).
+Both are *belief*. With no sensors they are perfect, measured at the end of the
+previous tick; add a noisy sensor and the same code acts on noisy estimates,
+without changes. See [Belief vs truth](../concepts/belief-vs-truth.md).
 
 `Update::Applied` means "the step succeeded". Returning `Err(...)` stops the
 simulation and names this plugin in the error. Use it for real failures, not
@@ -221,15 +222,15 @@ pub fn register(registry: &mut PluginRegistry) -> Result<()> {
 }
 ```
 
-Missions refer to the plugin by this name. The `scrimmage` command calls
+Missions refer to the plugin by this name. The `ripple` command calls
 `starter::register` when it starts, next to the stock plugins, so you don't
 touch the command itself.
 
 ## 4. Write a mission
 
-`crates/starter/missions/follow-nearest.yaml` pits the plugin against a target. Team 1 flies
-east in a straight line. Team 2 starts behind it, to the side and higher, and
-chases it with your plugin:
+`crates/starter/missions/follow-nearest.yaml` pits the plugin against a target.
+Team 1 flies east in a straight line. Team 2 starts behind it, to the side and
+higher, and chases it with your plugin:
 
 ```yaml
 format_version: 1
@@ -306,7 +307,7 @@ cargo run -- replay runs/follow-nearest/run000
 Use the run folder that the first command prints.
 
 > [!IMPORTANT]
-> Plugins are compiled into `scrimmage`. A `scrimmage` you installed earlier
+> Plugins are compiled into `ripple`. A `ripple` you installed earlier
 > with `cargo install` does not know about `FollowNearest` until you reinstall
 > it, so use `cargo run` while developing.
 
@@ -327,7 +328,7 @@ later. `crates/starter/tests/follow_nearest.rs` contains this one:
 
 ```rust,ignore
 use anyhow::Result;
-use scrimmage_core::{EventKind, Mission, Params, Simulation, plugin::PluginRegistry};
+use ripple_core::{EventKind, Mission, Params, Simulation, plugin::PluginRegistry};
 use std::path::Path;
 
 #[test]
@@ -362,7 +363,7 @@ cargo test -p starter
 This is a *mission-level* test. Instead of checking one function, it runs the
 whole simulation and checks the outcome. It catches problems that only show up
 when plugins work together, such as a wrong sign in a heading.
-The test builds the same registry as `scrimmage` (stock plugins plus
+The test builds the same registry as `ripple` (stock plugins plus
 `starter::register`), and `load_with_registry` loads the mission with it.
 
 > [!NOTE]
@@ -388,10 +389,11 @@ cargo run --release -- sweep crates/starter/missions/follow-nearest.sweep.yaml
 ```
 
 Each case is one line of `sweeps/follow-nearest/run000/results.jsonl`, with the
-speed and the final metrics. `non_team_coll` shows whether the chaser caught
-the target: at 26 and 30 m/s it does, at 18 and 22 m/s it does not within 60 s.
-To watch one case, run it with that speed and open Rerun:
-`cargo run -- run crates/starter/missions/follow-nearest.yaml entities.chaser.autonomy.FollowNearest.speed:=22 --viewer`.
+speed and the final metrics. `non_team_coll` shows whether the chaser caught the
+target: at 26 and 30 m/s it does, at 18 and 22 m/s it does not within 60 s. To
+watch one case, run it with that speed and open Rerun: `cargo run -- run
+crates/starter/missions/follow-nearest.yaml
+entities.chaser.autonomy.FollowNearest.speed:=22 --viewer`.
 
 ## Exercises
 
@@ -410,11 +412,12 @@ To watch one case, run it with that speed and open Rerun:
 ## What you learned
 
 - A plugin is a configuration struct, a state struct, `impl Plugin` for
-  lifecycle, and one category trait (here `impl Autonomy`) for the per-tick work.
+  lifecycle, and one category trait (here `impl Autonomy`) for the per-tick
+  work.
 - Ports connect the plugin stack and are checked before the mission runs.
 - Parameters are a serde struct with a `Default`. Mission values override the
   defaults, and unknown keys are errors.
-- A user crate registers its plugins in one `register()`, which the `scrimmage`
+- A user crate registers its plugins in one `register()`, which the `ripple`
   command and the crate's tests both call.
 - Mission-level tests run the full simulation and check events or scores, and
   sweeps run it across parameter values.

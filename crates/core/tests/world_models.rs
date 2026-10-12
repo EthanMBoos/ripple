@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use scrimmage_core::{EventKind, Mission, Params, Simulation};
+use ripple_core::{EventKind, Mission, Params, Simulation};
 
 fn run(overrides: Params) -> Result<Simulation> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
@@ -12,7 +12,7 @@ fn run(overrides: Params) -> Result<Simulation> {
     )?;
     let mut simulation = Simulation::new(
         mission.scenario,
-        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        &ripple_core::plugin::PluginRegistry::with_builtins(),
         2,
     )?;
     while simulation.step()?.is_some() {}

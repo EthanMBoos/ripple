@@ -1,12 +1,12 @@
 # Architecture overview
 
-scrimmage-rs keeps SCRIMMAGE's structure (entities that carry a stack of
-replaceable plugins, plus world-level plugins that act on every entity) and
-changes how an experiment is described, run, and checked. This section is the
-Rust counterpart of the [C++ architecture guide](../appendix/cpp/architecture.md).
-The main structural difference from C++ is the estimation step: sensors only
-measure, and each entity's estimators own its belief (see
-[Truth, measurements, and belief](information-flow.md)).
+Ripple keeps SCRIMMAGE's structure (entities that carry a stack of replaceable
+plugins, plus world-level plugins that act on every entity) and changes how an
+experiment is described, run, and checked. This section is the Rust counterpart
+of the [C++ architecture guide](../appendix/cpp/architecture.md). The main
+structural difference from C++ is the estimation step: sensors only measure, and
+each entity's estimators own its belief (see [Truth, measurements, and
+belief](information-flow.md)).
 
 ## The big picture
 
@@ -50,13 +50,13 @@ measure, and each entity's estimators own its belief (see
 
 | Crate | Package | What it holds |
 | --- | --- | --- |
-| `crates/core` | `scrimmage-core` | The engine, the scenario types, and the stock plugins |
-| `crates/cli` | `scrimmage-rs` | The `scrimmage` command: run, sweep, replay, validation |
-| `crates/starter` | user crate | Your plugins and missions, compiled into `scrimmage` |
+| `crates/core` | `ripple-core` | The engine, the scenario types, and the stock plugins |
+| `crates/cli` | `ripple` | The `ripple` command: run, sweep, replay, validation |
+| `crates/starter` | user crate | Your plugins and missions, compiled into `ripple` |
 
 Plugins are compiled in, not loaded at run time. A user crate registers its
-plugins in `crates/cli/src/main.rs`, and the same executable runs stock and
-user models. See [User plugins and the starter crate](../guides/user-plugins.md).
+plugins in `crates/cli/src/main.rs`, and the same executable runs stock and user
+models. See [User plugins and the starter crate](../guides/user-plugins.md).
 
 ## Plugin types
 

@@ -1,5 +1,5 @@
 [package]
-name = "scrimmage-rs"
+name = "ripple"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -7,16 +7,16 @@ license.workspace = true
 # The library is the command-line interface; src/main.rs builds the plugin
 # registry (stock plugins plus the user crates below) and calls it.
 [lib]
-name = "scrimmage_cli"
+name = "ripple_cli"
 path = "src/lib.rs"
 
 [[bin]]
-name = "scrimmage"
+name = "ripple"
 path = "src/main.rs"
 
 [dependencies]
-scrimmage-core = { path = "../core" }
-# User plugin crates compiled into `scrimmage`; each is registered in src/main.rs.
+ripple-core = { path = "../core" }
+# User plugin crates compiled into `ripple`; each is registered in src/main.rs.
 starter = { path = "../starter" }
 # Optional ArduPilot SITL adapter, outside the default build: `--features ardupilot`.
 ardupilot = { path = "../ardupilot", optional = true }

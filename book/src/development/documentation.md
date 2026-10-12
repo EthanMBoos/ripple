@@ -1,9 +1,11 @@
 # Editing this book
 
-User guides, API reference, and developer instructions live in `book/src/`.
-Add chapters to [SUMMARY.md](https://github.com/EthanMBoos/scrimmage-rs/blob/main/book/src/SUMMARY.md)
+User guides, API reference, and developer instructions live in `book/src/`. Add
+chapters to
+[SUMMARY.md](https://github.com/EthanMBoos/ripple/blob/main/book/src/SUMMARY.md)
 to put them in the sidebar. Keep plans, audits, and ongoing investigation notes
-in the repository's [docs/ folder](https://github.com/EthanMBoos/scrimmage-rs/tree/main/docs).
+in the repository's [docs/
+folder](https://github.com/EthanMBoos/ripple/tree/main/docs).
 
 From the repository root:
 
@@ -16,8 +18,11 @@ mdbook serve book --open
 Use relative `.md` links between book chapters. For source code, missions, or
 working notes outside the book, use full GitHub URLs so the links work on the
 published site. Paths in shell examples are relative to the repository root.
+Wrap prose at 80 columns so it reads without soft wrapping; tables, code
+blocks, and long URLs are exempt.
 
-The [book workflow](https://github.com/EthanMBoos/scrimmage-rs/blob/main/.github/workflows/book.yml)
+The [book
+workflow](https://github.com/EthanMBoos/ripple/blob/main/.github/workflows/book.yml)
 builds and publishes changes on `main` to GitHub Pages. The repository's Pages
 source setting must be **GitHub Actions**. Generated HTML lives in the ignored
 `book/book/` directory.

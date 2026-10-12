@@ -1,6 +1,6 @@
 //! Measure east position. A bias lets the mission distinguish belief from truth.
 use anyhow::Result;
-use scrimmage_core::plugin::*;
+use ripple_core::plugin::*;
 use serde::Deserialize;
 
 pub struct PositionReading {

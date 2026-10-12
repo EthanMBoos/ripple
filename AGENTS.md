@@ -1,17 +1,19 @@
-**This is a research testbed for students to learn and experiment: optimize for readability and simplicity, not industrial-grade bulletproofing.**
+**This is a research testbed for students to learn and experiment: optimize for
+readability and simplicity, not industrial-grade bulletproofing.**
 
 Prefer small, direct implementations that handle normal research use. Do not
 turn simple requests into validation frameworks, compatibility layers, or
 exhaustive edge-case machinery. Keep basic correctness and clear errors, and
 document unsupported cases rather than adding complexity for hypothetical needs.
 
-# scrimmage-rs
+# Ripple
 
-A Rust port of SCRIMMAGE's simulation and plugin design. Intentional differences
-from C++ are in `docs/REFERENCE_NOTES.md`; the roadmap and scope decisions are in
-`docs/TODO.md`. Do not reintroduce machinery the roadmap excludes (runtime plugin
-loading, legacy protobuf/string-map spawning, OpenCL, VTK, ROS, JSBSim).
-Keep optional adapters (ArduPilot, Burn) out of the default build.
+A multi-agent robotics simulator, ported from SCRIMMAGE's simulation and plugin
+design. Intentional differences from C++ are in `docs/REFERENCE_NOTES.md`; the
+roadmap and scope decisions are in `docs/TODO.md`. Do not reintroduce machinery
+the roadmap excludes (runtime plugin loading, legacy protobuf/string-map
+spawning, OpenCL, VTK, ROS, JSBSim). Keep optional adapters (ArduPilot, Burn)
+out of the default build.
 
 - C++ source: sibling `../scrimmage`, branch `Ubuntu-24.04`. Do not modify it.
   The only allowed C++ changes are on the `benchmarking-edits` comparison
@@ -22,22 +24,28 @@ Keep optional adapters (ArduPilot, Burn) out of the default build.
 - User research plugins live in workspace user crates such as `crates/starter`,
   registered in `crates/cli/src/main.rs`; keep the starter building and tested.
 - XML and YAML missions share one typed `ScenarioConfig`; XML is frozen, only
-  YAML gets templates and sweeps. A `.yaml` beside a `.xml` must run identically.
+  YAML gets templates and sweeps. A `.yaml` beside a `.xml` must run
+  identically.
 
 ## Read before changing code
 
-Read the relevant book chapters: [Rust style](book/src/development/rust-style.md),
-[source map](book/src/development/source-layout.md),
-[plugin API](book/src/reference/plugin-api.md),
-[user plugins](book/src/guides/user-plugins.md),
-[YAML missions](book/src/guides/yaml-missions.md), and the
-[C++ reference guides](book/src/appendix/cpp.md). The copied C++ guides stay
-unchanged; record differences in `docs/REFERENCE_NOTES.md`.
+Read the relevant book chapters: [Rust
+style](book/src/development/rust-style.md), [source
+map](book/src/development/source-layout.md), [plugin
+API](book/src/reference/plugin-api.md), [user
+plugins](book/src/guides/user-plugins.md), [YAML
+missions](book/src/guides/yaml-missions.md), and the [C++ reference
+guides](book/src/appendix/cpp.md). The copied C++ guides stay unchanged; record
+differences in `docs/REFERENCE_NOTES.md`.
 
 User and developer guidance goes in `book/src/` (listed in `SUMMARY.md`);
 `docs/` holds plans, audits, and notes. Verification results go in the paper
-(`paper/manuscript/main.tex`, data in `paper/data/`, tables from
-`paper/data/make_tables.py`), not a separate evidence document.
+(`paper/manuscript/main.tex`; the C++ comparison in `baseline.tex`), with the
+evidence each check retains in `paper/data/<check>/` and tables from
+`paper/data/make_tables.py`, not a separate evidence document.
+
+Wrap Markdown and LaTeX prose at 80 columns. Tables, code blocks, and long
+URLs are exempt.
 
 ## Code rules
 
@@ -45,9 +53,10 @@ User and developer guidance goes in `book/src/` (listed in `SUMMARY.md`);
   `common`, `plugin_manager`, `pubsub`) and the plugin categories: Autonomy,
   Controller, MotionModel, Sensor, Interaction, Network, Metrics, plus the
   Rust-only estimators (Localization and Tracking, in `estimator.rs`).
-- Each built-in lives in `plugin/<category>/<plugin>/<plugin>.rs`. Parameters are
-  a `#[derive(Deserialize)]` struct with `#[serde(default, deny_unknown_fields)]`
-  whose `Default` holds the mission defaults; `configure` calls `params.parse()`.
+- Each built-in lives in `plugin/<category>/<plugin>/<plugin>.rs`. Parameters
+  are a `#[derive(Deserialize)]` struct with `#[serde(default,
+  deny_unknown_fields)]` whose `Default` holds the mission defaults; `configure`
+  calls `params.parse()`.
 - Named module files, not `mod.rs`. Test-only models go in
   `crates/core/tests/support/`. No standalone examples application.
 - Keep type erasure, threads, locks, and dispatch out of plugin author code.
@@ -84,22 +93,26 @@ cargo clippy --workspace --all-targets -- -D warnings
 python3 -m unittest discover -s reference -p 'test_*.py'   # after checker edits
 ```
 
-The executable is `scrimmage` (package `scrimmage-rs`); use
-`cargo run -p scrimmage-rs --bin scrimmage -- run missions/straight-no-gui.xml --headless`.
-Do not overwrite a C++ `scrimmage` install. Runs go to `runs/<mission>/runNNN`;
-never overwrite a previous run.
+The executable is `ripple` (package `ripple`); use `cargo run -p ripple --bin
+ripple -- run missions/straight-no-gui.xml --headless`. Runs go to
+`runs/<mission>/runNNN`; never overwrite a previous run. Checking scripts take
+names and paths from `reference/project.py`.
 
 ## C++ comparison
 
 Keep the C++ comparison passing after any simulation change. Read
-`reference/README.md` first. `reference/reference_check.py` compares against the
-C++ branches in Docker; `reference/campaign.py` reruns all paper checks;
-`reference/perf.py` tracks speed before and after core changes.
+`reference/README.md` first. `python3 reference/suite.py` runs the quick checks
+(tests, determinism, the C++ agreement matrix in Docker, speed against
+`reference/perf_baseline.json`); `--release` runs every check, and `--retain`
+refreshes the evidence in `paper/data/` only when all pass. Refactors and
+renames must pass `reference/equivalence.py OLD NEW` (byte-identical outputs).
 
 - Don't run C++ GUI missions; the C++ reference runs headless in Docker.
 - Do not change the reference branch, seeds, RNG, or tolerances to make checks
-  pass. Preserve failure reports and known parity gaps.
-- The CPU-multiplier mission's `motion_multipler` typo is upstream's; don't fix it.
+  pass. Preserve failure reports and known parity gaps. Never accept a slower
+  performance baseline or retain failing evidence to make a check pass.
+- The CPU-multiplier mission's `motion_multipler` typo is upstream's; don't fix
+  it.
 
 ## Visualization
 

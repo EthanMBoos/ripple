@@ -1,6 +1,6 @@
 //! Drive until belief says the goal has been reached.
 use anyhow::Result;
-use scrimmage_core::plugin::*;
+use ripple_core::plugin::*;
 use serde::Deserialize;
 
 #[derive(Deserialize)]

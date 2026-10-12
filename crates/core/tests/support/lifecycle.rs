@@ -4,7 +4,7 @@ use crate::plugin_fixtures;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use anyhow::{Result, bail};
-use scrimmage_core::{
+use ripple_core::{
     Params, Simulation, TerminationReason,
     plugin::{
         Interaction, InteractionContext, Plugin, PluginParams, Sensor, SensorContext, StepTime,

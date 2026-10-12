@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the C++ Docker reference and compare the current Rust port.
+"""Build the C++ Docker reference and compare Ripple with it.
 
 Builds two C++ branches from the sibling checkout: the unmodified baseline
 (Ubuntu-24.04) and the comparison branch (benchmarking-edits), which adds opt-in
@@ -17,7 +17,6 @@ sibling SCRIMMAGE checkout. No host C++ toolchain is needed.
 
 import argparse
 from dataclasses import asdict
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -31,10 +30,10 @@ import xml.etree.ElementTree as ET
 from compare import Comparison, compare_frames, compare_summaries
 from metrics_model import counts_match, matches, predict, weights
 from frames import read_frames
+from project import IMAGE_PREFIX, ROOT, RUNS, allocate, build_cli, sha256, source_identity
 from traces import compare_traces, read_trace
 
 
-ROOT = Path(__file__).resolve().parents[1]
 BASELINE_BRANCH = "Ubuntu-24.04"
 INSTRUMENTED_BRANCH = "benchmarking-edits"
 # Instrumented-build environments. Non-interference runs must match the baseline.
@@ -47,26 +46,17 @@ DEPENDENCY_DOCKERFILE = "ci/dockerfiles/ubuntu-24.04-slim-dependency-only"
 
 
 def comparison_missions():
-    """(path under missions/, label) pairs from missions.txt."""
+    """(case ID, path under missions/, label) for each line of missions.txt."""
     missions = []
     for line in (ROOT / "reference/missions.txt").read_text().splitlines():
         line = line.strip()
         if line and not line.startswith("#"):
-            path, label = (part.strip() for part in line.split("|", 1))
-            missions.append((path, label))
+            case, path, label = (part.strip() for part in line.split("|", 2))
+            missions.append((case, path, label))
     return missions
 
 
 OUTPUT_FILES = ("frames.bin", "events.json", "summary.csv")
-
-
-
-def sha256(path):
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def write_json(path, value):
@@ -97,23 +87,13 @@ def run_logged(command, log, *, timeout, cwd=ROOT, allow_failure=False):
     return result.returncode
 
 
-def allocate_output(explicit, runs):
-    if explicit is not None:
-        explicit = explicit.resolve()
-        explicit.parent.mkdir(parents=True, exist_ok=True)
-        explicit.mkdir()  # Never reuse an earlier check, even an empty one.
-        return explicit
-    runs.mkdir(parents=True, exist_ok=True)
-    numbers = [int(p.name[15:]) for p in runs.iterdir()
-               if p.name.startswith("reference-check") and p.name[15:].isdigit()]
-    number = max(numbers, default=-1) + 1
-    while True:
-        output = runs / f"reference-check{number:03}"
-        try:
-            output.mkdir()
-            return output.resolve()
-        except FileExistsError:
-            number += 1
+def allocate_output(explicit):
+    if explicit is None:
+        return allocate(RUNS, "reference-check")
+    explicit = explicit.resolve()
+    explicit.parent.mkdir(parents=True, exist_ok=True)
+    explicit.mkdir()  # Never reuse an earlier check, even an empty one.
+    return explicit
 
 
 def prepare_mission(mission, cpp):
@@ -195,8 +175,8 @@ def build_reference(args, output, branch, target_platform=PLATFORM):
     shutil.copytree(ROOT / "reference/fixtures", context / "fixtures")
     fixture_hashes = {path.name: sha256(path) for path in sorted((context / "fixtures").iterdir())}
     suffix = "-" + target_platform.split("/")[1] if native else ""
-    dependency_tag = f"scrimmage-rs-reference-deps:{sha256(dependency_file)[:12]}{suffix}"
-    image_tag = f"scrimmage-rs-reference:{commit[:12]}{suffix}"
+    dependency_tag = f"{IMAGE_PREFIX}-reference-deps:{sha256(dependency_file)[:12]}{suffix}"
+    image_tag = f"{IMAGE_PREFIX}-reference:{commit[:12]}{suffix}"
     dependency_id = logs / "dependencies-image-id.txt"
     image_id = logs / "reference-image-id.txt"
     common = ["docker", "build", "--platform", target_platform, "--progress", "plain"]
@@ -232,21 +212,15 @@ def build_reference(args, output, branch, target_platform=PLATFORM):
     return info
 
 
-def build_rust(args, output):
-    run_logged([
-        "cargo", "build", "--locked", "--package", "scrimmage-rs", "--bin", "scrimmage",
-    ], output / "rust-build.log", timeout=args.build_timeout)
-    metadata = json.loads(capture(["cargo", "metadata", "--no-deps", "--format-version", "1"]))
-    executable = "scrimmage.exe" if os.name == "nt" else "scrimmage"
-    binary = Path(metadata["target_directory"]) / "debug" / executable
-    files = [ROOT / "Cargo.toml", ROOT / "Cargo.lock"]
-    files += [path for path in (ROOT / "crates").rglob("*")
-              if path.is_file() and path.suffix in {".rs", ".xml", ".toml"}]
+def build_rust(output):
+    with (output / "rust-build.log").open("w") as log:
+        binary = build_cli(log=log)
+    identity = source_identity()
     return binary, {
         "binary": str(binary), "binary_sha256": sha256(binary),
         "compiler": capture(["rustc", "--version", "--verbose"]),
         "host": platform.platform(),
-        "source_hashes": {str(path.relative_to(ROOT)): sha256(path) for path in sorted(files)},
+        "source_sha256": identity["source_sha256"], "source_hashes": identity["files"],
     }
 
 
@@ -255,7 +229,7 @@ def run_cpp(args, image, directory, effective, environment):
     directory.mkdir()
     shutil.copyfile(effective, directory / "effective.xml")
     # A unique name permits cleanup if the Docker client times out.
-    container = f"scrimmage-check-{os.getpid()}-{time.time_ns()}"
+    container = f"{IMAGE_PREFIX}-check-{os.getpid()}-{time.time_ns()}"
     variables = [argument for name, value in environment.items()
                  for argument in ("--env", f"{name}={value}")]
     try:
@@ -324,9 +298,9 @@ def uses_fixed_plugin(mission):
     return any(element.text and element.text.strip() in FIXED_PLUGINS for element in elements)
 
 
-def check_mission(args, mission, directory, images, rust):
+def check_mission(args, case, mission, directory, images, rust):
     directory.mkdir()
-    result = {"mission": str(mission), "passed": False}
+    result = {"case": case, "mission": str(mission), "passed": False}
     try:
         inputs = directory / "input"
         result["input"] = prepare_mission(mission, inputs)
@@ -430,16 +404,20 @@ def main(argv=None):
     parser.add_argument("--build-timeout", type=positive_int, default=3600, help="per-build timeout in seconds")
     args = parser.parse_args(argv)
     args.source = args.source.resolve()
-    missions = list(args.mission or [])
+    # Cases are named by ID: missions.txt's, or the file name for other missions.
+    missions = [(path.stem, path) for path in args.mission or []]
     if args.mission_dir:
         found = sorted(args.mission_dir.glob("*.xml"))
         if not found:
             parser.error(f"no *.xml missions in {args.mission_dir}")
-        missions += found
-    missions = missions or [ROOT / "missions" / path for path, _ in comparison_missions()]
-    missions = [mission.resolve(strict=True) for mission in missions]
+        missions += [(path.stem, path) for path in found]
+    missions = missions or [(case, ROOT / "missions" / path)
+                            for case, path, _ in comparison_missions()]
+    missions = [(case, mission.resolve(strict=True)) for case, mission in missions]
+    if len({case for case, _ in missions}) != len(missions):
+        parser.error("two missions have the same case ID (file name)")
     capture(["docker", "version", "--format", "{{.Server.Version}}"])
-    output = allocate_output(args.output, ROOT / "runs")
+    output = allocate_output(args.output)
     print(f"Reference check: {output}", flush=True)
     report = {
         "passed": False, "cases": [], "platform": PLATFORM,
@@ -458,15 +436,14 @@ def main(argv=None):
     try:
         report["cpp_baseline"] = build_reference(args, output, args.baseline_branch)
         report["cpp"] = build_reference(args, output, args.branch)
-        rust, report["rust"] = build_rust(args, output)
+        rust, report["rust"] = build_rust(output)
         images = {"baseline": report["cpp_baseline"]["image"], "instrumented": report["cpp"]["image"]}
-        for index, mission in enumerate(missions):
-            print(f"Checking {mission.name}", flush=True)
-            result = check_mission(args, mission, output / f"{index:02}-{mission.stem}",
-                                   images, rust)
+        for case, mission in missions:
+            print(f"Checking {case} ({mission.name})", flush=True)
+            result = check_mission(args, case, mission, output / case, images, rust)
             report["cases"].append(result)
             write_json(output / "report.json", report)
-            print(f"  {'PASS' if result['passed'] else 'FAIL'}: {mission.name}", flush=True)
+            print(f"  {'PASS' if result['passed'] else 'FAIL'}: {case}", flush=True)
         report["passed"] = bool(report["cases"]) and all(case["passed"] for case in report["cases"])
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         report["error"] = str(error)

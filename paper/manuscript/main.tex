@@ -1,4 +1,6 @@
-% Working outline adapted from Ripple's paper structure.
+% Academic paper: integrating robotics models and control stacks into one
+% multi-agent testbed, with external baselines at each stage.
+% The verification of the base system against C++ SCRIMMAGE is baseline.tex.
 % Choose the venue and replace prompts after the experiments establish results.
 \documentclass[conference]{IEEEtran}
 \usepackage{times}
@@ -11,1455 +13,719 @@
 \usepackage[bookmarks=true]{hyperref}
 
 \newcommand{\stub}[1]{\par\noindent\textit{TODO: #1}\par}
-% Marks results from the working tree that the frozen campaign must replace.
+% Marks results that do not yet come from a release run of the suite
+% (reference/suite.py).
 \newcommand{\prov}{\textbf{[Provisional]}~}
 
 \begin{document}
 
-\title{SCRIMMAGE-RS: A Multi-Agent Robotics Testbed for Experiments on
-Communication, Computation, and Team Scale}
+\title{Ripple: Tracing the Effects of Model Fidelity in Multi-Agent Robotics}
 \author{Author names and affiliations to be added}
 \maketitle
 
 \begin{abstract}
-\stub{State the central question (which developments since SCRIMMAGE change
-the experiments a multi-agent robotics testbed should support), the three
-research questions and the experiment proposed for each, and the validated
-Rust baseline that makes them testable: behavior matching C++, a simpler
-experiment workflow, and comparable cost. Include the two extensions with
-results: the estimation stage, and the removal of two scaling limits inherited
-from SCRIMMAGE: spatial queries (a step with 4,096 agents 3.8 times faster with
-the grid, 1.9 times by default, identical output) and message routing by index
-(a 4,096-agent step with per-agent messaging 40 times faster, identical output).
-Add pilot results once run.}
+Small differences in simulated vehicle behavior can propagate through sensing,
+communication, and decisions to change a team's outcome. Determining when
+these differences matter requires controlled comparisons across levels of
+model fidelity. We present Ripple, a Rust research testbed for tracing these
+effects, which brings fixed-wing aircraft, multirotors, VTOL aircraft, and
+surface vessels into a shared multi-agent world; fixed-wing aircraft with
+aerodynamic tables, terrain contact, and an external autopilot are built, and
+the others are in progress.
+Researchers select vehicle dynamics, aerodynamic and hydrodynamic effects,
+and native or external autopilot control while retaining a common sensing,
+communication, and estimation pipeline. Simple and detailed vehicles can
+coexist in the same experiment. Each integration is checked against an
+external implementation or published model, with explicit provenance for its
+equations and parameters. The evaluation distinguishes agreement with a source
+from physical validation against independent measurements and from the effect
+of fidelity on a multi-agent conclusion. Controlled comparisons vary model
+effects and control stacks, recording task outcomes, operating regimes, and
+computational cost. \textit{[Results and findings pending: identify cases where
+an apparently successful low-fidelity experiment develops catastrophic
+failures or qualitatively different team behavior with added fidelity.
+Quantify the change and trace it to the responsible model effects and
+interactions.]}
+The testbed provides a common experimental setting for measuring how local
+model differences propagate, how much they change multi-agent results, and
+when simpler models are sufficient.
 \end{abstract}
 
 \IEEEpeerreviewmaketitle
 
 \section{Introduction}
 
-SCRIMMAGE provides a plugin-based environment for multi-agent robotics
-experiments \cite{demarco2018}. Since its publication, the field has moved
-toward robots that share maps and plans over limited links, planners that
-evaluate many alternatives on accelerated hardware, and teams that serve
-continuing streams of tasks. This paper asks which of these developments
-change the experiments a multi-agent robotics testbed should support, and what
-evidence would justify building that support.
+Multi-agent robotics experiments connect decisions made by individual robots
+to outcomes for a team. The vehicle and environment models determine how
+those decisions become motion: actuator lag delays a response, aerodynamic
+stall limits a manoeuvre, and waves move a vessel carrying a sensor. A small
+change in motion can change when a robot detects a target, which report it
+shares, and how another robot responds. Through these interactions, a local
+difference can cascade into a different team outcome; it can also diminish or
+leave the outcome effectively unchanged.
 
-We focus on three research questions, each paired with the capability it
-would need and an experiment that could show whether that capability matters:
-\begin{description}
-  \item[RQ1:] When does sharing information improve team performance?
-  \item[RQ2:] When does more planning computation improve the outcome?
-  \item[RQ3:] When does a larger team stop completing more work?
-\end{description}
+Studying these effects requires a setting in which researchers can change the
+physical model while preserving the task, coordination strategy, and sensing
+and communication rules. The motivating question is: \emph{when, through
+which interactions, and by how much do differences in vehicle and environment
+fidelity change the results of a multi-agent experiment?}
 
-Answering these requires a testbed whose results can be trusted, so that a
-different outcome can be attributed to the algorithm rather than to its setup.
-We therefore first establish a baseline: SCRIMMAGE-RS, a Rust implementation
-that retains SCRIMMAGE's simulation structure. We check that it behaves like
-SCRIMMAGE, that experiments are easier to set up and repeat, and that it runs
-at comparable cost (Section~\ref{sec:baseline}).
+Answering this question requires substantial integration. Vehicle models,
+autopilots, sensors, and communication models bring different conventions for
+frames, units, actuator commands, and time. A component can reproduce its
+source in isolation yet behave differently once scheduling, feedback, and
+communication are introduced. A successful demonstration alone cannot show
+whether the integrated component preserves the source behavior. Evidence is
+needed both at the component boundary and in the assembled system.
 
-\stub{State the final contributions once supported by evidence. Supported so
-far: the validated baseline; the estimation stage separating truth,
-measurements, and belief; and spatial queries answered by scan or grid with
-byte-identical output, which make a step with 4,096 agents 3.8 times faster;
-and message routing by index, which makes a 4,096-agent step with per-agent
-messaging 40 times faster (Section~\ref{sec:scaling}).}
+We present Ripple, a research testbed that brings fixed-wing aircraft,
+multirotors, VTOL aircraft, and surface vessels into one simulation with
+selectable levels of model detail. Its Rust core builds on SCRIMMAGE's plugin
+design \cite{demarco2018}, with a separate comparison establishing agreement
+with the C++ baseline \cite{baselinereport}. Aerodynamic tables, terrain
+contact, and ArduPilot in lockstep are integrated; rotor dynamics and vessel
+response to waves are planned (Section~\ref{sec:platforms}). Native controllers
+and external autopilots operate through explicit
+state and command interfaces. Vehicles share sensing, communication, and
+estimation stages that keep physical truth separate from each agent's belief.
+This lets a few detailed vehicles operate alongside many simple ones without
+changing the experiment's information rules.
 
-\section{SCRIMMAGE and What Has Changed}
-\label{sec:original}
-\label{sec:background}
+Trust is established separately for each integration. Comparisons against
+external implementations and published models check that equations, interface
+conversions, and timing retain their intended behavior. Parameter provenance
+and comparisons with independent measurements establish the extent of the
+physical evidence. These are distinct claims: reproducing a reference model
+does not make its estimated coefficients measured, and adding an autopilot
+does not validate the plant it controls. Keeping these distinctions explicit
+allows researchers to choose models according to the experiment and the
+evidence supporting them.
 
-SCRIMMAGE was built to simulate many interacting aerial robots without
-requiring expensive physics for every experiment \cite{demarco2018}.
-Researchers could replace motion, sensor, network, and behavior models while
-keeping the same simulator. Its original paper already described deterministic
-execution, batch runs, cluster deployment, and ROS, MOOS, and OpenAI Gym
-connections. In its predator/prey experiment, repeatedly switching to the
-nearest prey performed worse than committing to a target: the pursuers could
-be distracted just before a capture. That is the kind of behavioral result
-a testbed should make easy to investigate.
+The paper makes three contributions:
+\begin{enumerate}
+\item A common execution and information architecture that integrates
+heterogeneous vehicles, selectable physical effects, and external control
+stacks in repeatable multi-agent experiments.
+\item External baseline comparisons for the integrations, with traceable
+equations and parameters and explicit limits on what source agreement and
+physical measurements establish.
+\item A controlled evaluation of fidelity choices through task outcomes,
+operating regimes, and computational cost, allowing both changed conclusions
+and agreement between simpler and more detailed models to be assessed.
+\end{enumerate}
 
-Table~\ref{tab:timeline} connects selected developments since then to the
-experiments they motivate. Many new coordination algorithms fit SCRIMMAGE's
-existing roles for sensors, networks, controllers, and metrics without
-changing the engine. A core upgrade is justified only when an experiment needs
-a shared capability that these interfaces cannot express clearly, or when the
-existing execution model imposes a measured cost. We distinguish these cases
-from reusable experiment models throughout.
+The evaluation treats model structure, parameter evidence, and control stack
+as separate experimental choices. It measures outcome differences and
+strategy rankings alongside the physical regimes that produce them. Of
+particular interest are cases in which a strategy appears successful under a
+simple model but fails catastrophically or produces qualitatively different
+team behavior when additional physical effects are included. Such cases can
+show how a local modeling assumption changes observations and decisions until
+the team reaches a different outcome.
+
+\stub{Replace this placeholder with the strongest demonstrated cases and
+their findings: the apparent success at low fidelity, the failure or changed
+behavior with added fidelity, and the effects and interactions responsible.
+The current landing study is preliminary evidence, not the headline example;
+do not assume a catastrophic difference before the experiments establish it.}
+
+Section~\ref{sec:system} describes the shared simulation architecture, and
+Section~\ref{sec:verification} presents the integration comparisons.
+Sections~\ref{sec:fidelity} and~\ref{sec:provenance} describe fidelity choices
+and model provenance. Section~\ref{sec:stall} examines the fixed-wing case;
+Sections~\ref{sec:platforms} and~\ref{sec:fleets} describe the vehicle models
+and their composition into heterogeneous fleets. The coordination workloads
+and policy interfaces follow in Sections~\ref{sec:workloads}
+and~\ref{sec:learning}.
+
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Simulators for many agents}
+PettingZoo standardized how a learner steps a multi-agent environment
+\cite{terry2021pettingzoo}. Isaac Gym, VMAS, and JaxMARL moved simulation onto
+the GPU, advancing thousands of independent worlds together
+\cite{makoviychuk2021isaacgym,bettini2022vmas,rutherford2023jaxmarl}; the
+constraint is computation expressed as regular array operations, which MJX
+meets by batching parameters across worlds \cite{mjxdocs}, and Madrona and
+GPUDrive by an entity-component engine
+\cite{shacklett2023madrona,kazemkhani2025gpudrive}.
+Since 2025 these tools have moved toward physical fidelity: Isaac Lab adds
+actuator models and multi-frequency sensors
+\cite{mittal2025isaaclab,isaaclab3backends},
+Crazyflow simulates drone swarms in JAX \cite{schuck2026crazyflow}, and
+MuJoCo-Drones-Gym models aerodynamic effects on the CPU while its GPU backend
+omits them \cite{tayal2026mujocodrones}. A parallel line keeps fast
+environments on the CPU and only learning on the GPU
+\cite{petrenko2020samplefactory,suarez2025pufferlib}. Communication is usually
+an action channel or part of the observation; queued delivery with delay and
+loss comes from co-simulation with a network simulator
+\cite{burmeister2025defiance}. Multi-agent testbeds built for many vehicles,
+such as SCRIMMAGE \cite{demarco2018}, run simple models and delegate physics to
+a separate flight model where needed.
+
+\paragraph{Vehicle dynamics and domain simulators}
+JSBSim builds aircraft from coefficient tables \cite{berndt2004jsbsim}.
+ArduPilot and PX4 ship their own simulators to test autopilot code
+\cite{ardupilotsitl,px4gazebo}, and RotorS models multirotor motors and rotors
+in Gazebo \cite{furrer2016rotors}. Fossen's Marine Systems Simulator gives
+vessel manoeuvring and seakeeping models \cite{fossen2021handbook}; VRX
+simulates an uncrewed surface vessel in waves and wind for an autonomy
+competition \cite{bingham2019vrx}; panel solvers such as Capytaine compute
+hydrodynamic coefficients from a hull \cite{ancellin2019capytaine}.
+
+\paragraph{Fidelity and evaluation}
+Robotics projects increasingly separate fast training from a more realistic
+evaluation stage. Pyquaticus trains maritime game policies in a lightweight
+simulator with embedded vehicle dynamics and deploys them on uncrewed surface
+vessels \cite{crowley2025pyquaticus}. A connected-vehicle benchmark separates
+degradation caused by differences between control stacks from degradation
+caused by increasing environmental realism \cite{beerwerth2026zeroshot}, and
+BVR Sim shows a policy transferring across aircraft through a common
+controller-level interface \cite{sun2026bvrsim}. SMACv2 shows that success on a
+fixed benchmark may not require the observations it provides
+\cite{ellis2023smacv2}. \stub{Search for studies that compare multi-agent
+results across vehicle-model fidelity before claiming the question is
+understudied.}
+
+\section{System}
+\label{sec:system}
+
+Ripple began as a Rust port of SCRIMMAGE \cite{demarco2018}; its agreement
+with the C++ reference is documented separately \cite{baselinereport}. This
+section describes the properties the fidelity question relies on.
+
+\paragraph{One deterministic tick}
+Each tick runs fixed phases: generation; autonomy; controllers then motion in
+each substep; sensors; interactions; networks; delivery and estimation
+(localization then tracking); metrics; and removal, output, and time advance.
+Every phase completes before the next begins,
+even when entities run on different CPU workers, and output is byte-identical
+at 1, 2, and 8 workers and with recording on or off in the core comparisons
+\cite{baselinereport}. Sensor random streams use stable entity and plugin
+identities; legacy spawn draws retain their reference order. External
+autopilots require their own repeatability checks.
+
+\paragraph{Truth, measurements, and belief}
+Sensors read physical truth and produce measurements; estimators turn
+measurements and received messages into each agent's belief; decisions and
+controllers read only belief. A model of higher fidelity therefore reaches a
+decision only through what the agent could have measured or been told.
+
+\paragraph{Scale}
+Finding nearby agents and routing messages each cost the square of the team
+size in the design we started from. Answering spatial queries from a grid, and
+routing each message only to its subscribers, made a 4{,}096-agent step 3.8 and
+40 times faster with byte-identical output \cite{baselinereport}. That lets a
+few expensive vehicles share a world with many cheap ones.
+
+\paragraph{World resources and autopilots}
+Terrain is a shared, read-only world resource that motion models query, for
+example for landing-gear contact; a sea surface is planned as another
+(Section~\ref{sec:platforms}). ArduPilot's software-in-the-loop (SITL)
+autopilot flies a vehicle through a lockstep bridge: each simulation step waits
+for the autopilot's outputs and answers with the vehicle's state, and several
+autopilots run side by side, one per vehicle.
+
+\section{Evidence at Each Integration Stage}
+\label{sec:verification}
+
+The C++ comparison establishes a starting point, not a blanket guarantee for
+new models. Each integration needs its own external baseline. We distinguish
+three questions:
+\begin{enumerate}
+\item \emph{Did we preserve the source behavior?} Compare a port against its
+source on matched inputs and initial conditions. For a bridge, check the
+exchange of states and commands, coordinate conversions, and simulated timing
+against the external system's interface and a reference run.
+\item \emph{Does the model represent the vehicle in the claimed regime?}
+Compare against independent measurements where available. Agreement with
+another simulator establishes implementation agreement; it does not establish
+physical accuracy. Keep calibration data separate from validation data.
+\item \emph{Does the added capability matter for the experiment?} Compare
+outcomes, failures, and cost under controlled changes in model effects or
+control stack. Report the operating regimes actually visited.
+\end{enumerate}
+
+For each comparison, retain the source version, model parameters, frames and
+units, input sequence, initial state, timestep, and error measures. State the
+comparison tolerance and its rationale before interpreting the result. Start
+with forces, moments, derivatives, or command outputs where those are the
+integration boundary, then compare trajectories and a closed-loop mission.
+Preserve failed comparisons and explain intended departures from the source.
+An effect disabled in existing missions must preserve their outputs; a
+deliberate defect correction needs a documented new baseline.
+
+Table~\ref{tab:integration} ties this method to the implementation roadmap.
+These are completion criteria, not claims that the comparisons have run.
+Source comparisons belong with each implemented stage, even when physical
+validation must wait for data. Each stage also measures execution cost at its
+intended team size, so the expense of a few detailed vehicles or external
+autopilots is visible.
 
 \begin{table*}[t]
 \centering
 \small
-\caption{Selected developments since SCRIMMAGE and the experiments they
-motivate. Years refer to the cited publications or preprints; the table is
-not a ranking or a complete history.}
-\label{tab:timeline}
-\begin{tabularx}{\textwidth}{@{}P{0.09\textwidth}>{\raggedright\arraybackslash}X@{}}
+\caption{External baselines for the integration roadmap. Except for the core
+comparison, these are required or planned checks, not completed results.}
+\label{tab:integration}
+\begin{tabularx}{\textwidth}{@{}P{0.17\textwidth}P{0.37\textwidth}X@{}}
 \toprule
-Year & Development and experimental requirement \\
+Stage & External baseline and comparison & What the evidence can establish \\
 \midrule
-2018 & SCRIMMAGE establishes replaceable models and repeated team-behavior experiments; these remain the baseline \cite{demarco2018}. \\
-2020--21 & Graph controllers use local message exchanges; RHCR replans as new goals arrive. Experiments must control information access and measure sustained task throughput \cite{tolstaya2020gnn,li2021rhcr}. \\
-2021--22 & PettingZoo standardizes multi-agent interfaces; Isaac Gym and VMAS accelerate simulation workloads. Distinguish computation across agents, candidate actions, and independent worlds \cite{terry2021pettingzoo,makoviychuk2021isaacgym,bettini2022vmas}. \\
-2022--23 & Physical swarms, Kimera-Multi, and RACER combine local sensing, shared information, and coordinated motion or exploration. Experiments must distinguish world truth from what each robot knows \cite{zhou2022swarm,tian2022kimera,zhou2023racer}. \\
-2023--24 & SMACv2 exposes success without meaningful observation feedback; BenchMARL supports consistent algorithm comparisons. Test unseen scenarios and whether communication or feedback actually contributes \cite{ellis2023smacv2,bettini2024benchmarl}. \\
-2025 & Isaac Lab integrates accelerated simulation and robot-learning workloads. Measure whether additional computation changes the attainable experiment, including its full cost \cite{mittal2025isaaclab}. \\
+Simulation core & C++ SCRIMMAGE: matched missions, internal traces, message delivery, and planted defects \cite{baselinereport} & Agreement for tested configurations; a foundation for extensions \\
+Fixed-wing tables and autopilot & JSBSim table evaluations on matched inputs; ArduPlane state/actuator exchange and reference mission & Table and bridge behavior; repeatability and closed-loop operation, without claiming Rascal flight accuracy \\
+Multirotor dynamics & RotorS motor/rotor outputs sample by sample; Crazyflie parameters from its measured identification & Kernel agreement and sourced parameters; prediction error against flight records is an extension point \\
+VTOL & Matched mission against ArduPilot quadplane SITL & Autopilot compatibility; transition-regime accuracy needs measured data such as LA-8's (an extension point) \\
+Vessels and waves & MSS Otter sample by sample; hull-point buoyancy in waves as in Gazebo and VRX & Source-model agreement; seakeeping with computed hydrodynamic data is an extension point, distinct from tank or field validation \\
+Imported policy (conditional) & Original policy runtime on identical observations; matched normalization, action semantics, and step/reset behavior & Policy and interface agreement before cross-fidelity evaluation \\
 \bottomrule
 \end{tabularx}
 \end{table*}
 
-\section{A Validated Baseline}
-\label{sec:baseline}
-\label{sec:upgrades}
+\section{Fidelity as an Experimental Variable}
+\label{sec:fidelity}
 
-This section describes SCRIMMAGE-RS and summarizes three checks: that it
-behaves like SCRIMMAGE, that an experiment is easier to build in it, and what
-it costs to run. The behavior checks were repeated after adding the
-estimation stage (Section~\ref{sec:estimation}), and the cost measurements
-include it. The details are in the appendices.
+To ask whether fidelity changes a result, fidelity must be a controlled
+variable: changed alone, with everything else held fixed.
 
-\subsection{SCRIMMAGE-RS}
+\paragraph{Attributable differences}
+Run the same mission, seed, and strategy with a specified model change.
+Repeatability makes differences easier to diagnose; attribution also requires
+holding other inputs and interfaces fixed. Record controller tuning, decision
+periods, sensor and network settings, and initial conditions alongside the
+model variant. Core output is byte-identical in the comparisons described in
+Section~\ref{sec:system}. Three runs of the runway mission with ArduPlane
+(Section~\ref{sec:stall}) also wrote byte-identical output on one machine.
+This is evidence for that configuration, not a guarantee for all external
+stacks. Across machines and ArduPilot versions it is untested.
 
-Each entity owns its autonomy, controllers, motion model, and sensors.
-Interactions, networks, and metrics operate on the world. An autonomy chooses
-a desired command; controllers turn it into motion-model inputs; the motion
-model advances the state. Sensors then produce observations, interactions
-apply effects such as collisions, networks deliver messages, and metrics
-update scores. The engine finishes each phase before starting the next, even
-when entities run on different CPU workers.
+\paragraph{Selectable effects}
+Each physical effect is an optional parameter of its model, off by default. A
+mission that does not set it runs exactly as before, so earlier results and
+the verification of the base system \cite{baselinereport} stay valid as
+features are added. Where an inherited model is wrong rather than incomplete,
+it is fixed and the fix recorded. Vehicles of different
+fidelity share one world and the same sensing, network, and estimation
+pipeline, so a few expensive vehicles can run among many cheap ones.
 
-User plugins live in a workspace crate and register with the same
-\texttt{scrimmage} executable as the stock models. A plugin owns its parameters
-and state; the engine handles scheduling and message delivery. XML and YAML
-missions load into one typed scenario; YAML adds shared entity templates and
-parameter sweeps, and the simulator checks the scenario and plugin parameters
-before running. A run saves trajectories, events, scores, and a manifest, with
-Rerun for recorded visualization. Sweeps write one result row per case and can
-be split into local processes or Slurm array shards, although cluster
-submission has so far been tested with a mock scheduler.
-
-\subsection{Behavior}
-\label{sec:parity}
-
-Does SCRIMMAGE-RS behave like SCRIMMAGE? We ran the same mission files in both
-and compared not only where every agent went, but also what each agent
-believed, what its sensors reported, what each plugin commanded, and when every
-message arrived (Appendix~\ref{app:parity}).
-\begin{itemize}
-\item \emph{They agree.} All 14 hand-written missions and 100 randomly
-generated scenarios match. Positions agree to under a nanometre, usually to
-about $10^{-14}$~m, which is floating-point rounding.
-\item \emph{The comparison is strict enough to catch real mistakes.} To test
-it, we introduced 12 small, realistic errors into a copy of the Rust code, such
-as a controller gain 1\% too high or a message arriving one step late. The
-comparison flagged every one.
-\item \emph{Long runs mostly hold.} Nine of ten runs of up to 1{,}000~s
-match throughout. The remaining run ends about 0.2~mm apart; perturbation
-experiments suggest numerical sensitivity.
-\item \emph{Every other difference is a C++ bug that Rust fixes or a
-deliberate choice,} such as C++ scoring late-spawning teams as NaN; all are
-listed in Table~\ref{tab:differences}.
-\end{itemize}
-This holds for the models and configurations we tested
-(Appendix~\ref{app:coverage}), not the whole C++ plugin catalog.
-
-\subsection{A Regression in the Reference}
-\label{sec:substeps}
-
-Matching a reference also means inheriting its mistakes. Reading the C++
-history turned up one that output comparison could not, because both
-simulators did the same thing.
-
-\paragraph{The original design}
-A mission can split each tick into shorter substeps, so that vehicle physics
-runs at a finer time step than decisions and sensing. From its first public
-commit in 2017 until December 2025, SCRIMMAGE ran each substep as the
-controllers followed by the motion model. This is a cascade: a slow outer loop
-(autonomy) sets goals, and a fast inner loop (controller and physics) tracks
-them, with the controller seeing the state the previous substep wrote. JSBSim
-likewise runs its flight-control system before each frame's dynamics
-\cite{berndt2004jsbsim}, and Isaac Lab runs actuator models on every physics
-step while holding a slower policy's action \cite{mittal2025isaaclab}.
-
-\paragraph{What changed and why it matters}
-The commit adding GPU support ran every controller substep before any motion,
-so that one GPU call could advance all substeps together; it gives no reason
-for the new order. With more than one substep, every controller call in a tick
-then sees the same state and the same goal, and the motion model flies only the
-last call's command. The controller gets no feedback within the tick, and a PID
-controller's derivative term, the change in error divided by the time step, is
-zero on every call whose setpoint and measurement are unchanged, so it loses its
-damping. With one substep
-the two orders are identical, which is why most missions were unaffected and
-why comparison against the current C++ could not reveal it.
-
-\paragraph{The fix}
-The C++ comparison branch restores the interleaved order, and SCRIMMAGE-RS
-follows it: controllers and motion alternate at each substep, while autonomy,
-sensing, communication, and interactions keep the outer tick. SCRIMMAGE-RS
-controllers read belief, so when own-state belief comes from the perfect
-measurement it is refreshed after each motion substep, as the C++ controllers
-read truth unless a sensor provides belief. Sensor-based estimates keep their
-own timing, so more substeps do not mean fresher observations, or finer
-collision checks. Every mission and workload with one substep produced
-byte-identical output before and after the change. The two substep missions
-agree with the fixed C++ to $5\times10^{-14}$~m, and one long run with two
-substeps now agrees with C++ throughout. Appendix~\ref{app:substeps} gives the
-commits, the verification, and the cost. The fix changes only the schedule; the
-numerical approximations inside the retained motion models remain.
-
-\subsection{Building an Experiment}
-\label{sec:workflow}
-
-We built the same small experiment in each simulator, following each one's own
-documented workflow. One aircraft flies straight at 18~m/s; another chases it
-with a new FollowNearest autonomy plugin. The question is how fast the chaser
-must be to catch it, so we swept its speed over 18, 22, 26, and 30~m/s.
-Table~\ref{tab:workflow} compares the steps.
+\paragraph{Model detail, physical evidence, and control stack}
+Table~\ref{tab:ladder} separates choices that a single fidelity score would
+conflate. Kinematics and rigid-body dynamics change the model structure;
+measured parameters change its evidential basis; an external autopilot changes
+the control stack. An autopilot can fly an inaccurate plant. A simple model
+with measured parameters can be better supported in its operating regime than
+a more detailed model with borrowed coefficients. Comparisons should name the
+axis changed and the evidence supporting it.
 
 \begin{table}[t]
 \centering
 \small
-\caption{The FollowNearest speed sweep built in each simulator.}
-\label{tab:workflow}
-\begin{tabular}{@{}p{0.16\linewidth}p{0.37\linewidth}p{0.37\linewidth}@{}}
+\caption{Independent choices for fidelity experiments in Ripple.}
+\label{tab:ladder}
+\begin{tabularx}{\linewidth}{@{}P{0.22\linewidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
 \toprule
-Step & SCRIMMAGE (C++) & SCRIMMAGE-RS \\
+Axis & Choices & Status \\
 \midrule
-Mission & XML; each entity lists its own controller, motion model, and spread & YAML; entities share an \texttt{aircraft} template \\
-Mistyped key & Ignored; runs with defaults & Rejected before the run, naming the expected key \\
-Plugin & Generate a 41-file CMake project and 4 plugin files; fix the template by hand & One file in the starter crate; register in 3 lines \\
-Build & CMake; set plugin and library paths & \texttt{cargo build} \\
-Sweep & Mark values as \texttt{\$\{speed=30\}} in the XML; batch scripts broken, so write a loop & 9-line sweep file naming any key; \texttt{scrimmage sweep} \\
-Cluster & \texttt{qsub} helper removed & Same sweep file via \texttt{bulk\_run.py} \\
-Results & One \texttt{summary.csv} per log folder & One \texttt{results.jsonl} row per case \\
+Motion model & Point agents, constrained kinematics, rigid-body dynamics & Built; multirotor defects under review \\
+Physical effects & Stall, contact, motor lag, rotor drag, waves & Stall and terrain contact built; others planned \\
+Physical evidence & Borrowed, estimated, or measured parameters; independent validation & Provenance audit; flight-data validation planned \\
+Control stack & Native controllers or external autopilot & ArduPlane SITL built; other vehicle stacks planned \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
-Both give the same answer: the chaser catches the target at 26 and 30~m/s, at
-45.3~s and 32.0~s, and not at 18 or 22~m/s. The difference is in the work
-around the model. The mission files are the same length, but the YAML one
-states shared setup once, and its sweep needs no edits to the mission. Checking
-matters most: with the end time mistyped as \texttt{ending} and the speed as
-\texttt{initial\_sped}, C++ ran without a warning for its default 50~s at the
-plugin's default 24.3~m/s, and the chaser never caught the target. SCRIMMAGE's
-own test missions \texttt{straight\_cpu\_mul.xml} and \texttt{straight\_gpu\_mul.xml}
-carry such a typo (\texttt{motion\_multipler}), so they never run substeps. In
-YAML, the same mistakes stop the run before it starts.
+\paragraph{The experiment}
+For one coordination workload (Section~\ref{sec:workloads}), compare selected
+model variants across paired seeds and task schedules, then remove individual
+effects within a fixed model and control stack. Keep the strategy's command
+interface fixed where possible; report changes in controllers or tuning as a
+separate factor. Measure strategy rankings, outcome differences, failure rates,
+and computation cost, with uncertainty across runs. Define what outcome
+difference would matter for the task before claiming a simpler model suffices.
+Record the angles of attack, actuator saturation, or sea conditions visited.
+An unchanged ranking alone does not establish equal outcomes or physical
+accuracy; a trial outside an effect's operating regime cannot establish that
+the effect is generally unnecessary.
 
-The plugin code is similar in size (54 lines of C++ against 82 of Rust, which
-also declares its ports and checks its parameter). On the C++ side, the
-generated plugin does not compile until its placeholders are fixed, and neither
-batch script runs, because both need a Python package that is no longer in the
-branch. Appendix~\ref{app:rq2} gives the details, and \texttt{paper/rq2/} holds
-both versions and the commands.
+\section{Where Model Data Comes From}
+\label{sec:provenance}
 
-\subsection{Cost}
-\label{sec:performance}
-
-We ran the same five missions in both simulators on one laptop (an Apple M2
-Pro): aircraft flying straight, the same with finer physics steps, aircraft
-with noisy sensors, a stream of new aircraft that can collide, and a large
-spread-out group checked for collisions every step. Each ran at several sizes,
-up to 2{,}048 aircraft (Appendix~\ref{app:performance}).
-\begin{itemize}
-\item \emph{Rust is faster on one processor core,} by 1.05 to 1.7 times. We
-compare speed only on the two missions where both simulators produce identical
-results.
-\item \emph{Rust uses much less memory,} 2.0 to 6.0 times less on every mission
-and size.
-\item \emph{Collision checking was the limit for large teams, and spatial
-queries remove it.} Both simulators compared every pair of aircraft, so the
-cost grew with the square of the team size: doubling from 1{,}024 to 2{,}048
-aircraft made Rust's collision mission more than three times slower. With the
-spatial queries of Section~\ref{sec:spatial}, a step with 4{,}096 spread-out
-aircraft takes 10.2~ms by default and 5.0~ms with the optional grid, against
-19.1~ms before: 1.9 and 3.8 times faster, with identical output.
-\item \emph{Message routing is the next limit, in both simulators.} Deciding
-which messages reach which plugins takes one check per publisher--subscriber
-pair, so a sensor on every agent that every agent listens to costs $n^2$ checks
-per tick. With 4{,}096 aircraft each running an own-state sensor, a step took
-388~ms in both C++ and Rust. Routing by index (Section~\ref{sec:messages}) cuts
-that to 9.7~ms, 40 times faster, with identical output.
-\item \emph{Extra cores help only when there is enough work.} Rust on eight
-cores ran the sensor mission 3.2 times faster than on one, but the simplest
-missions ran slower: handing out work to the cores every step costs more than
-the work itself.
-\item \emph{C++'s multi-core mode is unreliable.} It froze in 14 of 224 runs,
-gave different answers to the same run when sensors were involved, and was
-usually slower than running C++ on one core. We compare against single-core
-C++.
-\end{itemize}
-We measured both in a Linux container and directly on macOS; the findings hold
-in both.
-
-\section{Separating Measurement from Belief}
-\label{sec:estimation}
-
-The first extension changes how a robot comes to know its own state and its
-surroundings. In SCRIMMAGE a sensor can write the robot's belief directly, any
-sensor can overwrite it, and a planner may read belief, subscribe to a sensor's
-message itself, or fall back to truth when no estimate exists. Every
-experiment that involves imperfect information has to wire these pieces by
-hand. SCRIMMAGE-RS now has an explicit estimation stage: sensors produce
-measurements, estimators own belief, and autonomy and controllers read only
-that belief. Table~\ref{tab:estimation} shows what this changes for a
-developer.
+A model has a structure, its equations, and numbers, its coefficients. Higher
+fidelity means something only if both come from stated sources. We checked the
+sources of the models we use or plan to use, in September and October 2026
+(Table~\ref{tab:provenance}).
 
 \begin{table*}[t]
 \centering
 \small
-\caption{Common tasks before and after the estimation stage.}
-\label{tab:estimation}
-\begin{tabularx}{\textwidth}{@{}P{0.22\textwidth}XX@{}}
+\caption{Where the structure and the numbers of open vehicle models come from,
+as checked in September and October 2026.}
+\label{tab:provenance}
+\begin{tabularx}{\textwidth}{@{}P{0.17\textwidth}P{0.17\textwidth}P{0.2\textwidth}X@{}}
 \toprule
-Task & SCRIMMAGE & With the estimation stage \\
+Source & Vehicle & Structure & Numbers \\
 \midrule
-Choose which sensor feeds the robot's state & Implicit: any sensor can overwrite belief, and the last writer in a step wins & Named in the mission and checked before the run \\
-Give a planner its state & The planner reads belief, subscribes to a sensor's topic itself, or falls back to truth & The planner reads belief, always \\
-Swap the localization method & Edit every planner that selected its own source & Change the localizer; planners are untouched \\
-Configure error & Sensor noise, motion disturbance, and wiring are set in separate places & Each source of error is set once, at its owner \\
-Keep decisions from using hidden truth & Not enforced: decisions can read the true state of every entity & Decisions receive belief only \\
-Measure how wrong the robot was & Worked out by hand after the run & Truth and belief are recorded separately; recording measurements is future work \\
+JSBSim Rascal, the source of our fixed-wing coefficients & 6~kg radio-controlled aircraft & Coefficient tables against angle of attack & Adapted from FlightGear for ArduPilot testing; its README reads ``we are still at pre-pre-pre-alpha with this model'', and its author field ``Author Name'' \\
+ArduPilot SITL plane \cite{ardupilotsitl} & Generic & Linear lift blended into a flat plate past a stall angle & Its source describes it as ``Not aerodynamically accurate, just enough to be able to debug control logic'' \\
+RotorS \cite{furrer2016rotors} & AscTec Hummingbird quadrotor; Firefly hexacopter & Motor lag, rotor drag, rolling moment & Hummingbird mass, arm, and inertia from a published paper; all seven rotor and motor coefficients are identical, digit for digit, for both vehicles, and the rolling-moment coefficient is $10^{-6}$ \\
+PX4 Gazebo motor model \cite{px4gazebo} & Generic & RotorS's, plus thrust falling linearly with axial airspeed to zero at 25~m/s & The thrust reduction is commented ``XXX this has to be modelled better'' \\
+MSS Otter \cite{fossen2021handbook} & 2~m uncrewed catamaran & Six-degree-of-freedom manoeuvring and hydrostatics & Dimensions and masses of the real vehicle; added mass as fixed fractions of mass (0.1, 1.5, and 1.0 in surge, sway, and heave); sway and yaw time constants of 1~s \\
+Crazyflie identification \cite{forster2015crazyflie} & 27~g quadrotor & Thrust and torque against rotor speed; inertia; motor dynamics & Measured on the vehicle with a force/torque sensor and a laser tachometer; 172 public flights with motion capture \cite{ullah2026nanobench} \\
+NeuroBEM \cite{bauersfeld2021neurobem} & 752~g racing quadrotor & Blade-element rotor model with a learned residual & 96 flights, 1~h~15~min of motion capture and motor speeds, up to 18~m/s \\
+NASA LA-8 \cite{simmons2021la8,simmons2023dissertation,north2021la8,simmons2021propeller,geuther2020la8} & 28~kg tandem tilt-wing, eight propellers & Aero-propulsive response surfaces at eight airspeeds & Measured mass properties and a propeller model from 0 to 180$^\circ$ incidence; whole-aircraft coefficients printed at one of the eight airspeeds (16.5~m/s); about 300 pages of wind-tunnel plots \\
 \bottomrule
 \end{tabularx}
 \end{table*}
 
-\paragraph{Two estimators, one belief}
-Belief has two parts, each with one owner. \emph{Localization} answers
-``where am I?'': it turns navigation measurements (GPS, IMU) and the commands
-the robot issued into its estimated state. \emph{Tracking} answers ``what is
-around me?'': it turns contact measurements (radar, camera) into the contacts
-the robot knows about, using the pose localization just produced. Each can be
-replaced without touching the other or any planner. Sensors and evaluation
-keep access to physical truth; estimators and decisions do not.
+Three observations follow. Structure is easy to obtain: every source publishes
+its equations. Numbers measured on the vehicle being simulated are rare, and
+they come from system identification of one airframe. Borrowed numbers are hard
+to see: nothing in RotorS's vehicle files marks its rotor coefficients as
+shared, and nothing in the fixed-wing model we inherited records that its
+coefficients came from a model its authors called pre-alpha. For boats in
+waves, hydrodynamic coefficients are usually computed by panel-method solvers
+such as Capytaine \cite{ancellin2019capytaine} rather than measured. Each model
+in Ripple should therefore state the source of its structure and of its
+numbers, and the regime in which they were measured, and claim no more fidelity
+than those sources support.
 
-\paragraph{What changes in a tick}
-The stage runs after sensors and message delivery and before metrics,
-localization first, and keeps the existing order of every other phase. With a
-0.1~s timestep:
-\begin{enumerate}
-\item \emph{Decide at time 0.0.} Autonomy and controllers read the belief for
-time 0.0 and produce the inputs the motion model will use.
-\item \emph{Advance to 0.1.} The motion model advances physical truth; sensors
-sample the result, interactions apply their effects, and networks deliver the
-messages due.
-\item \emph{Form belief for 0.1.} Localization, then tracking, update belief
-from the completed interval and the information now available.
-\item \emph{Decide at time 0.1,} using that belief.
-\end{enumerate}
-Estimation adds computation to each tick, not simulated delay; modeling
-processing delay would be a separate, explicit choice.
+\stub{Record each model's sources in the book's model reference.}
 
-\paragraph{Pass-through first, prediction next}
-The first implementation copies measurements into belief. With perfect, current
-measurements, which simple missions use by default, belief equals truth at
-each decision for every entity already observed (an entity that has just
-appeared is known from the next measurement). Existing missions are therefore
-unaffected: every mission, at one, two, and eight workers, reproduced the
-previous revision's output byte for byte, and all 13 C++ comparisons still
-pass (Appendix~\ref{app:refactors}). The stage runs inside the existing
-per-entity delivery step, so it adds work but no extra hand-off between
-threads: up to 8\% more stepping time on our timing workloads, most for many
-light agents, where there is little other work per tick (collision workloads
-ran faster, a side effect of the larger entity record on memory access; data in
-\texttt{paper/data/estimation-cost/}). A predictive
-localizer then occupies the same stage: it advances the previous belief using
-the commands the robot issued and its own motion model, and corrects that
-prediction with measurements. Because the physical response, the estimator's
-assumed response, and measurement error are configured separately, an
-experiment can vary each on its own. In the worked example
-(\texttt{crates/starter}), a robot commanded at 10~m/s achieves 8~m/s and gets
-an exact position fix every 5~s. With a localizer that assumes 10~m/s, the
-position error grows by 2~m per second on straight segments, and the largest
-error sampled at the end of a step is 9.8~m (the prediction each fix replaces
-is 10~m off); with one that assumes 8~m/s, the estimated
-position matches the true one. The starter crate's tests check these numbers. Acting on the wrong belief, the robot turns early at every corner
-of its square route and strays up to 22~m from a robot with perfect
-localization.
-% The timing, equality, startup, and removal rules are in the book
-% (architecture/tick.md and information-flow.md); open items in docs/TODO.md.
+\section{A First Extension: Stall}
+\label{sec:stall}
 
-\section{Removing Inherited Scaling Limits}
-\label{sec:scaling}
+FixedWing6DOF, the fixed-wing model we started from, computes lift as $C_{L0} +
+C_{L\alpha}\alpha$ plus
+rate and elevator terms at any angle of attack $\alpha$, so the wing never
+stalls. Its only drag that grows with angle, for the Rascal, is induced drag,
+$C_L^2/(\pi A e)$, which follows the lift: a lift curve that falls past the
+stall would also lose drag there, the opposite of a stalled wing.
 
-Two costs in SCRIMMAGE's design grow with the square of the team size: finding
-which agents are near each other, and deciding which messages reach which
-plugins. Both are hidden inside the engine, and both come to dominate a step
-as teams grow, in C++ as in the Rust port, which kept the same design. They are
-properties of the original design, not porting errors. We remove each inside
-the engine, without changing any plugin's results, so experiments with larger
-teams become practical, which RQ1 and RQ3 need.
+\paragraph{What we added}
+Two optional tables against angle of attack, after JSBSim. A lift table
+replaces $C_{L0} + C_{L\alpha}\alpha$; a drag table replaces the zero-lift drag
+$C_{D0} + C_{D\alpha}|\alpha|$, and induced and elevator drag are still added.
+Values are interpolated linearly and held at the ends, as JSBSim's tables are.
+JSBSim's Rascal lift table equals the mission's linear lift up to a peak at
+0.23~rad (13.2$^\circ$), which puts the level stall near 8.3~m/s; its drag
+table rises from 0.028 at zero to 1.5 at $\pm90^\circ$. Without tables the
+model is the C++ one, and its two comparison missions still agree with C++ to
+rounding \cite{baselinereport}. Spin and drag from sideslip are not modeled; a
+deep stall or large sideslip counts as a failure already.
 
-\subsection{Finding Nearby Agents}
-\label{sec:spatial}
+\paragraph{Does it change a landing?}
+ArduPlane SITL flies the Rascal off a runway on surveyed terrain, around a
+circuit, and lands it with a 14$^\circ$ flare. With linear lift, the landing
+bounced. We flew it three ways: as committed, with the lift table, and with
+both tables (Table~\ref{tab:stall}; \texttt{paper/data/stall-landing}). A
+repeat of the unmodified mission was byte-identical to the first run, so the
+differences between variants are effects of the tables, not run-to-run noise.
 
-Many models ask the same question: which agents are within some distance of a
-point? Collision detection asks it with a few metres, a short-range radio with
-a kilometre, a range-limited sensor with its detection range. SCRIMMAGE's
-SimpleCollision answers by comparing every ordered pair of agents, so each pair
-twice; its R-tree is used only to place agents at spawn time. Its collision
-mission became 3.8 to 9.3 times slower from 1{,}024 to 2{,}048 aircraft
-(Appendix~\ref{app:performance}). The retained Rust plugin compared each pair
-once, and its cost still grew with the square of the team size: at 1{,}024
-agents it took 58\% of each step, at 4{,}096 agents 79\%. SCRIMMAGE-RS moves this question into the engine,
-so each plugin asks it once and the engine decides how to answer. The result
-is large and changes no output: with 4{,}096 spread-out agents, a whole step
-fell from 19.1~ms to 10.2~ms with the default method and to 5.0~ms with the
-optional grid, 3.8 times faster (Table~\ref{tab:spatial}).
+\IfFileExists{generated/stall.tex}{\input{generated/stall}}{}
 
-\paragraph{One question, two answers}
-World plugins (sensors, networks, and metrics) call
-\texttt{within(position, range)} on the true contacts. It returns every
-contact whose distance from \texttt{position} is less than \texttt{range},
-in the contacts' order. It does not filter: the caller itself, and contacts
-already removed, are included, and each plugin applies its own rules.
-Interactions, which change entities, ask the same question by entity index,
-and can also ask for every close pair, \texttt{pairs\_within(range)}, in the
-order a loop over all pairs would visit them.
-The mission chooses how the engine answers, once for the whole run:
+The lift table changed the landing by centimetres. Airborne, the angle of
+attack never passed 11.2$^\circ$, below the 13.2$^\circ$ stall; only rolling
+tail-down on the wheels, above 5~m/s, did it reach 14.5$^\circ$. The drag table
+changed more, because it adds drag at every angle, not only past the stall:
+touchdown 0.27~m/s slower, a bounce 0.15~m lower, and a rollout within 1.23~m
+of the centreline instead of 1.56~m. The bounce itself remains. Touchdown at
+about 15~m/s, nearly twice the stall speed, and main wheels ahead of the centre
+of gravity, which pitch the nose up on contact, are likely causes; neither is
+tested.
+
+\paragraph{What it shows}
+This mission exercises the integrated tables and autopilot, but it does not
+establish the accuracy of post-stall flight or a multi-agent consequence of
+stall. The recorded airborne landing interval stays below the stall angle,
+and the larger change comes from drag at small angles. Direct comparison with
+the source table evaluations remains a separate check
+(Section~\ref{sec:verification}). The lesson is to measure the regime and
+state exactly which claim a trial supports.
+
+\section{Planned Platforms}
+\label{sec:platforms}
+
+Each planned model reaches the level of an established open simulator
+(ArduPilot and PX4 SITL, RotorS, Fossen's MSS): structure from a documented
+source, every number's origin stated, and a check against the source
+implementation. Going further needs measured data for one real vehicle, which
+we do not collect. Instead each model is built so that such data plugs in: a
+header on every motion model states its source, what it was validated
+against, its valid range, what it leaves out, and what data would take it
+further; effects left out are named zero terms in the force sums; and geometry
+and coefficients are parameters (rotor axes as vectors, aerodynamics as tables),
+so a measured model arrives as data or one function.
+
+\paragraph{Multirotors}
+Reviewing the inherited multirotor model for this work found three defects,
+present in the simulator it was ported from as well. Position
+is integrated from a body-frame velocity that starts at zero, while the
+reported world velocity is integrated separately, so the two can disagree.
+Moment arms use the full three-dimensional rotor offset, so a rotor's height
+above the centre of gravity adds leverage, and configured rotor tilt is
+ignored. Thrust drops to zero only when a rotor's speed equals the minimum
+exactly, while its yaw torque remains. These will be fixed first. Motor lag,
+rotor drag, and the
+rolling moment will follow RotorS \cite{furrer2016rotors} as optional effects.
+Rotor drag, linear in airspeed, dominates at typical multirotor speeds
+\cite{martin2010accelerometer}; the inherited quadratic body drag remains as a
+second term for high speed. RotorS's own motor constants carry no source, so
+the real-vehicle parameter set comes from the Crazyflie's measured
+identification \cite{forster2015crazyflie}, each value cited, beside the
+inherited defaults kept for the C++ comparison. Replaying public flights with
+recorded motor commands \cite{ullah2026nanobench} would give a stated
+prediction error; that validation is an extension point. A controller comes
+first: no controller yet flies the model closed loop.
+
+\paragraph{VTOL aircraft}
+Transitions between hover and wingborne flight pass through the angles at which
+a wing stalls, so they exercise the tables of Section~\ref{sec:stall}. A
+quadplane, FixedWing6DOF with lift rotors flown by ArduPilot's quadplane SITL,
+would reach the fidelity of ArduPilot's and PX4's own simulators, neither of
+which models propeller wash over the wing \cite{ardupilotsitl,px4gazebo}.
+Rotor axes are fixed vectors, so a tilt-rotor needs only a control input for
+them, and wing slipstream is a named zero term. NASA's LA-8 is the only open
+source of measured transition data we found; its whole-aircraft model is
+published at one of eight airspeeds
+\cite{simmons2021la8,simmons2023dissertation},
+so a measured transition model depends on the rest being released.
+
+\paragraph{Surface vessels}
+There is no surface vessel yet. Fossen's
+Otter \cite{fossen2021handbook} gives calm-water manoeuvring and hydrostatic
+restoring forces. Waves fit the architecture as a world resource beside
+terrain: a sum of spectral components whose phases are drawn once from the
+mission seed is a pure function of position and time, so every worker reads the
+same sea and output stays byte-identical. Wave loads are buoyancy at points
+on the hull, the level of Gazebo's and VRX's boats \cite{bingham2019vrx}. Motion
+transfer functions and linear seakeeping with radiation memory, using
+coefficients computed by a panel solver \cite{ancellin2019capytaine}, are the
+documented next steps.
+
+\stub{For each implemented platform, report the external comparison, the
+remaining physical uncertainty, and one representative closed-loop mission.
+Use selected platforms for the coordination study; every platform need not
+support every workload before a bounded contribution can be reported.}
+
+\section{Heterogeneous Fleets}
+\label{sec:fleets}
+
+The platforms matter most together. An uncrewed boat carries a multirotor that
+surveys ahead and lands back on its deck in waves; fixed-wing aircraft cover a
+wide area while multirotors inspect what they find; all share what they learn
+over links that drop messages. Each combination asks the fidelity question
+across domains: does a deck landing that succeeds in calm water fail in a
+modeled sea, and does that change which coordination strategy wins?
+
+Bringing the platforms into one world needs:
 \begin{itemize}
-\item \emph{Scan} (the default) tests every contact. It is the reference
-answer, and it keeps the C++ timing comparison like-for-like.
-\item \emph{Grid} (\texttt{spatial\_lookup: \{method: grid, cell\_width\_m:
-$w$\}}) tests only contacts in nearby cells.
+\item \emph{One tick across domains.} Vessel, multirotor, and aircraft dynamics
+advance in the same phases and substeps, so their interactions are ordered
+deterministically.
+\item \emph{Shared world resources.} Terrain for aircraft and wheels, the sea
+surface for vessels, and wind, each a read-only function that every model and
+sensor queries.
+\item \emph{Contact between vehicles.} Landing gear touches terrain today; a
+multirotor on a moving deck needs contact between two vehicles' dynamics.
+\item \emph{An autopilot per vehicle.} ArduPlane, ArduCopter, and ArduRover in
+lockstep, one per vehicle; two ArduPlane instances already run side by side.
+\item \emph{One information pipeline.} The same sensing, network, and
+estimation stages for every domain, so a boat's report reaches an aircraft's
+belief with the same delay and loss rules.
+\item \emph{Mixed fidelity.} A few high-fidelity vehicles among many simple
+ones, chosen per vehicle in the mission.
 \end{itemize}
-Plugin code is the same either way; no plugin knows which method answered.
-XML missions always use the scan.
 
-\paragraph{How the grid works}
-After all motion substeps, the engine gives each agent an integer cell,
-$(\lfloor x/w \rfloor, \lfloor y/w \rfloor, \lfloor z/w \rfloor)$, and adds
-it to a hash map from its vertical $(x, y)$ column to the agents in that
-column. Only occupied columns appear, so memory is one short entry per agent,
-independent of the size of the map. A query with
-range $r$ covers the cells overlapping a box of half-width $r$ around its
-position, padded by a relative $10^{-9}$ so that rounding cannot exclude a
-neighbour (typically nine columns when $r \le w$). The cells supply only
-\emph{candidates}.
-Every candidate then gets the scan's exact test, $\|p - q\| < r$
-computed the same way, and the survivors are returned in entity order. The
-grid can therefore only drop agents the exact test would reject, and never
-changes the answer or its order; it changes only how many agents are tested.
-If any position is not finite or too large for an integer cell, the tick uses
-the scan. A query also scans when looking up its columns would cost more than
-testing every agent; we measured one column lookup at about 30 distance tests.
-Keying by column keeps lookups few when agents are spread out horizontally,
-but a query tests every agent in its columns at any height, so many agents
-stacked above one spot would bring back the every-pair cost.
+\stub{Begin with independently moving vehicles sharing information in one
+world. Moving-deck contact is a further integration with its own mechanical
+baseline, not a prerequisite for the current roadmap.}
 
-\paragraph{When the grid is built}
-After motion, before sensors, which share it without locks because it is built
-before the parallel sensor phase. An interaction may move entities, so the
-engine checks the index against current positions before each interaction and
-again before networks and metrics, and rebuilds it if anything moved; the check
-is one pass over the agents. Every query therefore sees current positions, and
-the scan and the grid always answer from the same ones. SCRIMMAGE instead
-builds its R-tree when entities are generated, before motion, so a plugin that
-queries it later in the tick compares a moved agent with where the others
-were. The index holds positions only: whether an agent is still alive is read
-live by the plugin, because one collision can disable later ones.
+\section{Coordination Workloads}
+\label{sec:workloads}
 
-\paragraph{Collision detection as the first user}
-SimpleCollision previously visited every pair $(i, j)$ with $j > i$ in entity
-order, skipped pairs with a disabled agent, and disabled both agents of each
-pair closer than the collision range. The order matters: in a chain of three
-overlapping agents, the pair visited first decides which agent survives. The
-rewritten plugin iterates over \texttt{pairs\_within}: for each agent $i$ in
-order, the engine finds its neighbours, keeps those with $j > i$, and yields
-them in ascending order, as the plugin consumes them. That is exactly the old
-sequence with the pairs that could never collide removed, so events and
-survivors are unchanged. With the scan, the loop is the old double loop over a
-compact list of positions. Placement at spawn time, which uses an
-inclusive range and an altitude-only option, still scans, so spawn retries and
-random draws are unchanged too.
+The integrations need representative multi-agent use, followed by controlled
+fidelity comparisons. Information sharing is the first workload. Planning
+computation and team scale are later options, not additional prerequisites for
+completing the vehicle roadmap or reporting an integration.
 
-\paragraph{What this preserves}
-We compared the previous revision against the new scan and the grid on 37
-missions (\texttt{paper/data/spatial-lookup/equivalence.py} and its report):
-every mission file in the repository, the timing workloads at both sizes,
-including spawning with collisions (153 collisions at 512 agents), and three
-crowded missions (512 to 2{,}048 agents, 235 to 795 collisions). Frames,
-summaries, and events were byte-identical with the scan at one, two, and eight
-workers and with grids from 0.7 to 1{,}000~m. Tests cover the three-agent chain
-with ids created out of order, an interaction that moves one agent onto another
-before SimpleCollision (the collision is found in the same step), points
-exactly at the range, on cell faces, and at negative coordinates, contacts held
-in a different order from their ids, and non-finite positions and ranges. The
-grid tests use enough agents that the grid, not its fallback, answers. In the
-timing runs below, every variant with a collision check also wrote identical
-output, up to 4{,}096 agents. The full C++ campaign, rerun after the change, is unchanged:
-all 13 missions and 100 generated scenarios pass, and all 12 planted bugs are
-caught.
-Decisions cannot use the grid: autonomy and controllers see only belief, and
-can ask the same \texttt{within} question of their own known contacts, which
-the engine answers by scanning that list.
-
-\paragraph{Cost}
-Table~\ref{tab:spatial} times perf.py's collision mission, alternating the
-previous revision's every-pair loop, the scan, and the grid
-(\texttt{paper/data/spatial-lookup/}). With 4{,}096 spread-out agents, a whole
-step took 19.1~ms before, 10.2~ms with the scan, and 5.0~ms with 5~m cells: 1.9
-and 3.8 times faster. With 2{,}048 agents the grid was 2.5 times faster, and
-with 1{,}024, 1.5 times. The scan reads positions from a compact list and
-touches entity records only for pairs in range. Subtracting a run without
-SimpleCollision estimates the check's own cost at 4{,}096 agents: about 15~ms
-per step before, 6~ms with the scan, and 0.9~ms with the grid. It is only an
-estimate, because that run removes no agents and may place spawns differently.
-Larger cells were slightly faster (4.7~ms per step with 50~m cells), because a
-lookup costs more than the few extra distance tests an occupied cell adds.
-The grid can be slightly slower than the scan. With 256 agents its queries fall
-back to the scan, and building it makes the step 9\% slower (0.23 against
-0.21~ms). In the crowded 1{,}024-agent case the step is 4\% slower, and with a
-50~m range and 5~m cells, 2\% slower; 50~m cells were 7\% faster than the scan
-there. Other workloads are unchanged within 3\% (perf.py). The C++ comparison
-in Section~\ref{sec:performance} was measured before this change.
-
-\IfFileExists{generated/spatial.tex}{\input{generated/spatial}}{}
-
-\subsection{Delivering Messages}
-\label{sec:messages}
-
-Each tick, a network decides which published messages reach which subscribers.
-SCRIMMAGE asks the network one question per link: can this publisher reach this
-subscriber, and does the message get through? C++ keeps each topic's publishers
-and subscribers in lists, so a message is checked against every subscriber to
-its topic, and LocalNetwork, which delivers only within one agent, answers each
-check by comparing the two plugins' parent entities. When every agent publishes
-on a topic that every agent subscribes to, that is $n^2$ checks per tick to
-deliver $n$ messages. The own-state sensor NoisyState does exactly this: every
-agent publishes its reading on LocalNetwork, and every agent's Straight
-autonomy subscribes to it. (In SCRIMMAGE-RS the reading reaches belief through
-the estimation stage, and Straight discards the message; NoisyState keeps
-publishing it only so that delivered messages still match C++. It is a
-convenient built-in source of all-agent traffic, which auctions, shared maps,
-and position broadcasts also produce.) The Rust port delivered the same messages to each
-subscriber in the same order (the C++ comparison checks this), but found the
-links differently: for each message it visited every plugin's mailbox, several
-per agent, and looked up that mailbox's subscriptions by channel name. It
-therefore also checked messages that nobody subscribed to, which C++ skips.
-
-\paragraph{How large the cost is}
-Table~\ref{tab:messages} times perf.py's aircraft with and without NoisyState
-in native C++ and in Rust (\texttt{paper/data/message-routing/}). The
-difference is everything the sensor adds (its noise, readings, estimation, and
-messages), and it grows with the square of the team: 0.46, 6.3, 94, and 385~ms
-per step in C++ at 128, 512, 2{,}048, and 4{,}096 agents, and 0.45, 6.1, 93,
-and 385~ms in Rust, within about 3\% of each other, against 2.9 to 3.7~ms for
-the rest of a 4{,}096-agent step. Profiles of the 2{,}048-agent case (saved
-beside the timings) put almost all of that in routing: in C++, in
-\texttt{LocalNetwork::is\_reachable} and the \texttt{EntityPlugin::parent}
-calls it makes; in Rust, in \texttt{NetworkContext::route} and its
-channel-name comparisons. The two arrive at the same cost by different routes.
-C++ checks only a topic's subscribers, but copies two reference-counted
-pointers per check; Rust checked every mailbox, but each check was cheaper.
-Spawning had the same cost, because each new agent publishes an event: a
-one-step Rust run with 2{,}048 agents took 70~ms before routing by index and
-14~ms after, and with 4{,}096 agents 249 and 26~ms.
-
-\paragraph{Routing by index}
-Each routing phase, the engine indexes the mailboxes subscribed to each channel
-published that phase, in mailbox order, with the message type each expects, so
-a message visits only its subscribers, as in C++. A network that delivers only
-within the sender's own agent says so by calling \texttt{route\_within\_entity}
-instead of \texttt{route}; LocalNetwork does. The index is then kept per agent,
-so each message sees only its own agent's subscribers, and a message from a
-world plugin, which has no agent, sees none. LocalNetwork's rule is unchanged;
-it moved from the plugin into the call it makes. The index is built only in
-phases that have messages, so a network with nothing to route costs nothing
-extra, and queued deliveries find their receivers in one map instead of
-searching every mailbox. Every link a
-network decides is decided with the same inputs and in the same order, so
-deliveries, random draws, and output are unchanged. What the index cannot
-remove are links that exist: a topic every agent publishes and subscribes to on
-a network that can reach every agent (GlobalNetwork, or SphereNetwork in
-range) still has $n^2$ links, and each must be decided.
-
-\paragraph{What this preserves}
-We ran the previous and the new revision on every mission file in the
-repository, perf.py's workloads, and 512 aircraft with NoisyState, at one, two,
-and eight workers, with the C++ comparison trace on
-(\texttt{paper/data/message-routing/equivalence.py} and its report). All 35
-missions wrote byte-identical frames, events, summaries, and traces, which
-record every delivery with its network, topic, sender, and receiver in order: up
-to 153{,}728 deliveries in one run, including SphereNetwork's missions, whose
-loss draws depend on the order in which links are decided. The planted bug that
-lets LocalNetwork deliver across agents is now a call to \texttt{route} instead
-of \texttt{route\_within\_entity}. The full C++ campaign, rerun on the final
-code, is unchanged: all 13 missions and 100 generated scenarios pass, and all 12
-planted bugs are caught, this one by the trace comparison in two missions.
-
-\paragraph{Cost}
-With routing by index, adding NoisyState costs 0.17, 0.72, 3.0, and 6.8~ms per
-step at 128 to 4{,}096 agents, against 0.45, 6.1, 93, and 385~ms before: at
-4{,}096 agents a whole step takes 9.7~ms instead of 388~ms in Rust and 388~ms in
-C++, 40 times faster (Table~\ref{tab:messages}). What remains grows roughly
-linearly; in the new profile no routing function stands out, and the largest
-entries are map lookups and memory allocation. Steps without messages are
-unchanged. On perf.py's workloads, alternating the two builds five times each,
-the sensing workload with 128 aircraft (NoisyContacts and NoisyState on every
-aircraft) was 11\% faster on one worker and 34\% faster on eight; the others
-were within 5\% either way, the run-to-run noise of those short workloads.
-
-\IfFileExists{generated/messages.tex}{\input{generated/messages}}{}
-
-\section{RQ1: When Does Sharing Information Improve Team Performance?}
+\subsection{Sharing Information}
 \label{sec:rq1}
 \label{sec:rq4}
 
-\paragraph{What changed}
-Kimera-Multi builds consistent maps through peer communication, while RACER
-coordinates exploration and workload allocation
-\cite{tian2022kimera,zhou2023racer}. These motivate a question beyond adding
-radio loss: what information should robots share, and when does its value
-outweigh its cost? A comparison is meaningful only if each method receives
-the information allowed by the experiment.
+When does sharing information improve team performance? Kimera-Multi and RACER
+motivate asking what robots should share and when its value outweighs its cost
+\cite{tian2022kimera,zhou2023racer}. The estimation stage
+(Section~\ref{sec:system}) makes the question testable: decisions read only
+belief, so an experiment controls exactly what each robot knows. Compare local
+decisions, periodic sharing, and selective sharing on one exploration or
+target-visiting task under a fixed message budget, measuring coverage,
+duplicated work, and stale decisions, with ideal information as a separate
+reference. Fidelity enters through how long a vehicle takes to act on what it
+learns: a quadrotor with motor lag or a boat in waves reaches a reported target
+later than a point agent, which may change when sharing pays off.
 
-\paragraph{What the baseline cannot express}
-The retained interface exposes truth contacts to autonomy. Rust separates
-owned belief from truth, but a plugin can still read those contacts, and
-own-state feedback falls back to truth when no estimate exists. Sensor and
-network models alone therefore do not enforce partial observability.
+\subsection{Planning Computation}
+\label{sec:planning}
 
-\paragraph{Candidate capability}
-The estimation stage of Section~\ref{sec:estimation}, now in place. With
-decisions reading only belief, and belief formed from named measurements, an
-experiment can control exactly what each robot knows and compare sharing
-policies fairly.
+When does more planning computation improve the outcome? Accelerated
+simulators make evaluating many alternatives cheap
+\cite{makoviychuk2021isaacgym,bettini2022vmas,mittal2025isaaclab}; the question
+is whether doing so changes the decision that can be made in time. A planner
+plugin can already score its own candidates. Batches across entities, and a
+rule for when a slow decision takes effect, would need an optional shared
+interface, with prescribed delays so that GPU completion order never determines
+simulated behavior. Fidelity enters through the planner's model: candidates
+scored with a point model and flown by a vehicle that lags or stalls may rank
+differently from candidates scored with the vehicle's own model.
 
-\paragraph{Experiment}
-Compare local decisions, periodic sharing, and selective sharing on the same
-exploration task under a fixed message budget. Measure coverage, duplicated
-work, and stale decisions, using ideal information as a separate reference
-condition. The upgrade's contribution would be a checkable information
-boundary; the scientific result would identify when sharing helps. A simple
-target-observation model can address this question without implementing a
-visual-SLAM system.
-
-\stub{Pilot: the baseline already traces and compares every message delivery,
-so this question is the natural first experiment.}
-
-\section{RQ2: When Does More Planning Computation Improve the Outcome?}
-\label{sec:rq2}
-
-\paragraph{What changed}
-Isaac Gym, VMAS, and Isaac Lab show the importance of accelerated workloads
-\cite{makoviychuk2021isaacgym,bettini2022vmas,mittal2025isaaclab}. For this
-testbed, the question is whether evaluating more alternatives improves team
-outcomes enough to justify the computation. That requires measuring both
-planning quality and when a decision becomes available.
-
-\paragraph{What the baseline cannot express}
-The retained scheduler calls each entity's autonomy separately and joins the
-phase before advancing. A costly call slows wall-clock execution without
-making its decision late in simulation time. A plugin can already perform
-its own calculations or defer its own output, but shared batches across
-entities and consistent decision-delay rules require additional support.
-
-\paragraph{Candidate capability}
-An optional shared batch interface and an explicit model of decision
-availability. Requests would carry observation times; results would take effect
-at defined phase boundaries. Prescribed or recorded delays would support
-repeatable experiments without letting GPU completion order determine simulated
-behavior.
-
-\paragraph{Experiment}
-The planned Burn workload could evaluate batches of candidate trajectories.
-First compare CPU and GPU execution of the same calculation, including
-packing, transfers, and synchronization. Then vary the planning budget and
-modeled decision delay, measuring completion, collisions, and expired
-commands. The baseline's cost measurements (Section~\ref{sec:performance})
-cover execution time; this experiment asks whether the additional computation
-changes the decision that can be made in time. Batched inference or scoring
-would not imply GPU physics or a batched-world simulator.
-
-\section{RQ3: When Does a Larger Team Stop Completing More Work?}
+\subsection{Team Scale}
 \label{sec:rq3}
 
-\paragraph{What changed}
-RHCR addresses repeated goals, and RACER balances exploration workloads
-\cite{li2021rhcr,zhou2023racer}. These motivate measuring sustained useful
-work as demand and team size grow. Faster simulation of more robots does not
-establish that a coordination method uses those robots effectively.
+When does a larger team stop completing more work? RHCR and RACER motivate
+measuring sustained throughput as demand and team size grow
+\cite{li2021rhcr,zhou2023racer}. Entity generation and removal exist, but task
+arrival, ownership, completion, and reassignment do not; a reusable task model
+with saved arrival schedules would begin as plugins. Compare allocation methods
+under identical arrivals while increasing demand, team size, and interruptions,
+measuring completed tasks per unit time, waiting time, and backlog. Fidelity
+enters through crowding: keeping separation costs a point agent nothing and a
+multirotor time.
 
-\paragraph{What the baseline cannot express}
-Entity generation and removal already exist, but they do not define task
-arrival, ownership, completion, or reassignment.
+\stub{Pilot: every message delivery is already traced, so sharing information
+is the natural first workload.}
 
-\paragraph{Candidate capability}
-A reusable task model with saved arrival schedules and common task events,
-which would make these comparisons repeatable. It should first use the
-existing interaction, autonomy, network, and metrics roles. Only a
-demonstrated limitation would justify moving part of that model into the core.
-
-\paragraph{Experiment}
-Compare allocation methods under identical task arrivals, then increase
-demand, team size, and interruptions. Completed tasks per unit time, waiting
-time, backlog, and recovery after an agent is lost would reveal where
-additional robots help or create congestion. This tests a research capability
-beyond the baseline's runtime, even if no scheduler change is needed.
-Continuing tasks do not by themselves require continual learning.
-
-\section{Learned Policies and Accelerated Simulators}
+\section{Learned Policies}
 \label{sec:learning}
 
-Learned policies are now an expected baseline in multi-agent robotics, and the
-simulators used to train them have changed more since SCRIMMAGE than any other
-part of its design space. This section traces that change and then states our
-position: SCRIMMAGE-RS is a CPU multi-agent testbed for studying decisions
-under explicit sensing, estimation, communication, and vehicle constraints. It
-could also supply experience to a separate learner when a learned decision is
-itself the research question. No learning support is built yet. It, and any
-GPU computation, should be built when an experiment needs it and measured on
-that complete experiment.
+Learning is worth its cost for decisions that classical strategies cannot
+hand-code: weighing many tracks and their uncertainty, teammates' messages,
+vehicle limits, and timing at once. It is not needed to re-solve what a
+classical strategy already does well. A policy for such a decision can learn
+only from the inputs it will face, so it must train in worlds with the same
+sensing, networks, belief, and vehicles. Those are Ripple's own worlds, and
+learned policies belong in the fidelity question with particular force,
+because a policy can exploit a model's simplifications.
 
-\subsection{How the Field Has Moved}
-\label{sec:learning-history}
+\paragraph{Training on Ripple's worlds}
+Ripple contains no training code; an outside learner drives its worlds through
+a standard multi-agent interface
+\cite{terry2021pettingzoo,bettini2024benchmarl}.
+The policy makes a high-level decision (a target, a waypoint, a message, a
+hand-off) at about 1~Hz, and the classical autonomy, controllers, and motion
+carry it out. Learning decisions over existing behaviors, rather than
+low-level control, cuts the samples needed by orders of magnitude and keeps the
+vehicle within its limits. During training a critic may read truth while each
+agent's policy sees only its own belief and messages, a separation Ripple
+already enforces. Rewards come from the metrics plugins, so the training reward
+and the evaluation score agree, and one definition of observations and actions
+serves both training and evaluation. Throughput, decisions per second per core
+at each fidelity level, is unmeasured and is the first thing to measure.
 
-\paragraph{Standard interfaces}
-Gym and PettingZoo standardized how a learner steps an environment
-\cite{terry2021pettingzoo}. They are interfaces, not architectures: both
-support stepping many environments at once, and PettingZoo supports
-simultaneous actions and agents that join or leave. SCRIMMAGE's OpenAI Gym
-interface \cite{demarco2018} crossed between Python and C++ on every step,
-rebuilt the simulation on every reset, and required a compiled C++ plugin for
-each change to a reward or observation. It was removed from the maintained
-branch in 2025, and we found no benchmark or result that depended on it. We
-did not measure why it fell out of use. The simulation's own speed is an
-unlikely cause: on one core, C++ SCRIMMAGE advances the straight-flight
-mission of Section~\ref{sec:performance} at about 1.2 million agent-steps per
-second, computed from the bare-metal timings of Appendix~\ref{app:performance}.
-The overheads around each step and the cost of changing a task are plausible
-causes, but remain hypotheses.
-
-\paragraph{Many worlds on one GPU}
-Isaac Gym, VMAS, and JaxMARL moved the simulation onto the GPU, advancing
-thousands of independent worlds together
-\cite{makoviychuk2021isaacgym,bettini2022vmas,rutherford2023jaxmarl}, with
-reported speedups of several orders of magnitude over CPU implementations. The
-constraint is regular data: computation expressed as compatible array
-operations over bounded capacities. It does not require identical worlds. MJX,
-for example, batches physical parameters across worlds, while structural
-changes force recompilation \cite{mjxdocs}. VMAS and the MPE tasks in JaxMARL
-include communication actions with optional noise. Madrona organizes batched
-simulation as an entity-component-system engine whose simulators also run on
-the CPU \cite{shacklett2023madrona}, and GPUDrive uses it for data-driven
-driving with hundreds of agents per world \cite{kazemkhani2025gpudrive}.
-
-Since 2025 the trend has been toward physical fidelity. Isaac Lab adds
-photorealistic rendering and multi-frequency sensors \cite{mittal2025isaaclab},
-and its 3.0 beta adds Newton as an experimental physics backend
-\cite{isaaclab3backends}. Crazyflow simulates drone swarms in JAX
-\cite{schuck2026crazyflow}. MuJoCo-Drones-Gym offers aerodynamic effects,
-multiple drones, and camera observations on the CPU. Its GPU backend omits the
-aerodynamic effects and leaves multiple drones and vision to future work
-\cite{tayal2026mujocodrones}, which illustrates the cost of maintaining a
-second backend. In these tools communication is an action channel or part of
-the observation; queued network delivery with delay and loss is usually added
-by co-simulation with a network simulator such as ns-3
-\cite{burmeister2025defiance}.
-
-\paragraph{Fast CPU environments, GPU learners}
-A parallel line kept the simulation on the CPU and moved only learning to the
-GPU. Sample Factory fed a GPU learner from asynchronous CPU workers
-\cite{petrenko2020samplefactory}. PufferLib's environments, written in C, each
-run above a million steps per second on one core, and its authors argue that
-only physics-heavy environments are worth moving to a GPU
-\cite{suarez2025pufferlib}. They also attribute the poor adoption of otherwise
-useful environments to system dependencies and slow source builds. Whether a
-simulator of many interacting agents reaches comparable training throughput
-depends on observation construction, rewards, resets, and learning as well as
-the step, and we have not measured it.
-
-\paragraph{Separate evaluation stages}
-The most recent change concerns evaluation rather than speed. SMACv2 showed
-that success on a fixed benchmark may not require the observations it provides
-\cite{ellis2023smacv2}, and robotics projects now separate fast training from
-a more realistic stage that tests the policy. Pyquaticus trains maritime
-capture-the-flag policies in a lightweight simulator that embeds MOOS-IvP
-vehicle dynamics, then deploys them on uncrewed surface vehicles
-\cite{crowley2025pyquaticus}. A connected-vehicle benchmark evaluates policies
-in simulation, a digital twin, and hardware, and separates two causes of
-degradation: differences between control stacks and increasing environmental
-realism \cite{beerwerth2026zeroshot}. BVR Sim gives heterogeneous aircraft a
-common tactical interface, desired heading, altitude, and speed, above
-aircraft-specific controllers. A policy trained on one aircraft won 45.5\% of
-engagements on four unseen aircraft with adapted controllers and 13.2\%
-without \cite{sun2026bvrsim}. These are different aircraft within one flight
-model, so the result supports the controller-level abstraction rather than
-transfer across model fidelities.
-
-These four developments are not competing architectures. The interface, where
-computation runs, and whether evaluation is a separate stage are independent
-choices, and one system can combine all three.
-
-\subsection{What This Testbed Supports, and Why}
-\label{sec:learning-support}
-
-\paragraph{What is distinctive}
-Communication and partial observability exist elsewhere. What SCRIMMAGE-RS
-adds is an explicit pipeline from sensing, through message delivery and
-estimation, to decisions: sensors produce readings, network plugins deliver
-messages through per-subscriber queues, estimators form each agent's belief,
-and autonomy reads only belief (Section~\ref{sec:estimation}). Beneath the
-decision, vehicle-specific controllers and motion models apply their own
-limits. Output is byte-identical at any worker count, and collision checks and
-routing within an entity scale to thousands of agents in one world
-(Section~\ref{sec:scaling}); sensing every other agent and dense radio traffic
-remain expensive. Agreement with C++ verifies the port
-(Section~\ref{sec:baseline}); it does not establish that the models are
-physically realistic.
-
-\paragraph{When learning here would be justified}
-The test is whether an experiment in this testbed has a decision that a learned
-policy could usefully make, and whether reproducing the relevant vehicle or
-information behavior in another simulator would be substantial work. That is
-most likely when the information and decision structure is the research
-problem: learning when to transmit an
-update and when old information suffices; allocating tasks or replanning under
-incomplete, delayed observations; navigating or coordinating above
-vehicle-specific controllers; and comparing learned and classical teammates
-under the same mission, sensing, communication, and lifecycle rules. For such
-studies, training directly here may be simpler than maintaining a matching task
-in another simulator. Contact-rich manipulation, visual learning, and
-low-level flight control are better served by specialist tools such as Isaac
-Lab.
-
-\paragraph{Options}
-Table~\ref{tab:learning} lists the ways learning and GPU computation could be
-added. None is built. Each is independent of the others and would be adopted
-when a measured experiment needs it. Differentiable physics is a further independent
-choice; GPU inference would not make the Rust dynamics differentiable.
+\paragraph{CPU worlds and GPU simulators}
+Simulating on CPUs while a GPU trains the policy is the established
+arrangement for complex environments, and current libraries are built to make
+it fast \cite{petrenko2020samplefactory,suarez2025pufferlib}. GPU-resident
+simulators run thousands of worlds on one device at millions of steps per
+second
+\cite{makoviychuk2021isaacgym,mittal2025isaaclab,rutherford2023jaxmarl,shacklett2023madrona},
+but they reach that speed with batchable models, and most still simplify the
+sensing, belief, and communication these decisions depend on, even as some add
+vehicle fidelity (Section~\ref{sec:related}). The
+question is therefore not CPU against GPU but whether the cheaper world
+produces a policy that still works in the richer one. We plan a hybrid: train
+cheaply wherever possible, including in a GPU simulator, then fine-tune and
+evaluate in Ripple against classical strategies as fidelity rises
+(Section~\ref{sec:fidelity}). A policy trained elsewhere enters as a frozen
+policy behind an autonomy plugin; its observation normalization, frames, action
+meanings, decision period, and termination rules must match its training task.
+If a cheaply trained policy holds up at high fidelity, that is a result too.
+Transfer across fidelity within one simulator complements BVR Sim's transfer
+across aircraft within one flight model \cite{sun2026bvrsim}. One standard
+benchmark task reproduced in Ripple would anchor its learning results to
+published ones. Table~\ref{tab:learning} lists the options; none is built, and
+each is independent of the others.
 
 \begin{table*}[t]
 \centering
 \small
-\caption{Options for learning and GPU computation in SCRIMMAGE-RS. Each is
-independent of the others.}
+\caption{Options for learning and GPU computation. Each is independent of the
+others.}
 \label{tab:learning}
 \begin{tabularx}{\textwidth}{@{}P{0.25\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
 \toprule
 Option & What it provides & Fit \\
 \midrule
-CPU simulation, imported CPU policy & Learned-versus-classical evaluation & Smallest useful integration \\
-CPU worlds, external GPU learner & Training on this testbed's own information, task, and vehicle rules & Default for native learning \\
+CPU simulation, imported CPU policy & Learned-versus-classical evaluation across fidelity & Smallest useful integration \\
+CPU worlds, external GPU learner & Training on this testbed's own information, task, and vehicle rules & Decisions that need the full information; hierarchical over classical behaviors \\
+GPU simulator, then Ripple & Cheap training, then fine-tuning and evaluation at higher fidelity & Tests whether the cheap world was enough \\
 CPU simulation, batched GPU inference & Faster evaluation of large policies or many agents & When inference dominates the step \\
-GPU candidate trajectories in one planner & More planning alternatives per decision & Inside one optional plugin; not necessarily learning \\
+GPU candidate trajectories in one planner & More planning alternatives per decision & Inside one optional plugin \\
 GPU physics or sensing kernels & Acceleration of a measured expensive phase & When the gain covers packing, transfers, and synchronization \\
-Fully GPU-resident worlds & Large rollout batches with little host--device traffic & A new backend with restricted models and its own verification \\
+Fully GPU-resident worlds & Large rollout batches & A new backend with restricted models and its own verification \\
 \bottomrule
 \end{tabularx}
 \end{table*}
 
-\paragraph{Where learning would connect}
-The boundary we would keep is that SCRIMMAGE-RS supplies experience and a
-separate learner updates the policy. The learner runs missions with its current
-policy, collects what they record, updates the policy, and repeats. On-policy
-methods such as PPO need, for each decision, the observation, the sampled
-action and its probability, the reward, and whether the episode ended or was
-cut short, all from the policy that collected them. Ordinary run output
-records truth, events, and summaries, so this data would need an optional
-record. \texttt{Simulation::step} returns the state before the step, so it
-cannot serve as a learning step unchanged, and reset can start by rebuilding
-the simulation, measured before anything more elaborate. The learner's
-language and framework, where policies run during collection, and any batching
-would be chosen once a concrete task makes their requirements clear.
+Any GPU computation must keep the determinism of Section~\ref{sec:system}:
+repeated evaluation on a pinned backend and device, invariant to worker count.
+Assembling each batch in entity order removes batch composition as a source of
+variation, which dominates nondeterminism in LLM inference
+\cite{he2025nondeterminism}; the kernels and any sampling must also be
+deterministic.
 
-\paragraph{Controller-level actions}
-Autonomy plugins already write desired commands for a controller to follow,
-and BVR Sim's result makes this a promising place for a learned policy. The
-motion models do not yet share one tactical interface: SingleIntegrator takes
-a world-frame velocity, the aircraft controllers take heading, speed, and
-altitude, and Multirotor has only an open-loop motor-speed driver. A common
-interface needs per-model adapters and a multirotor navigation controller.
+\stub{Measure decision throughput in the information-sharing workload at
+several fidelity levels; choose the decision to learn and record why classical
+strategies are not enough for it; then report learning curves and the
+fidelity-transfer comparison.}
 
-\paragraph{GPU computation}
-Three GPU extensions are separate. A planner plugin can already score
-thousands of candidate trajectories in one GPU call, with no new interface.
-Evaluating one policy for every agent in one call needs a per-phase batch
-across entities, since each autonomy call otherwise presents one observation;
-this is part of the shared computation proposed for RQ2. Batching independent
-training worlds belongs to the learner and needs neither. The determinism
-contract for any of them is repeated evaluation on a pinned backend and device,
-invariant to worker count. Assembling each batch in entity order removes one
-source of variation, batch composition, which dominates nondeterminism in LLM
-inference \cite{he2025nondeterminism}; the kernels and any sampling must also
-be deterministic. Agreement between CPU and GPU results and reproducible
-training are separate tests.
-
-\paragraph{Deciding whether to build it}
-RQ1 (Section~\ref{sec:rq1}) is the natural candidate, and it needs no learning
-code to begin. Agents reach targets that each senses only within a limited
-range; they send target reports over a network with limited range and delay,
-and an estimator adds received reports to belief. Run it first with classical
-strategies, nearest known target and the existing auction assignment, and
-sweep range, delay, and loss, measuring completion, collisions, and messages
-sent. That result stands on its own. If it reveals a decision the classical
-strategies handle poorly, such as when to transmit or which agent takes a
-target under stale information, that decision becomes the learning
-experiment: train a policy, freeze it, compare it with the classical
-strategies on identical missions, and remove the messages to confirm it uses
-them, as SMACv2 recommends. A familiar task such as cooperative navigation
-could check the plumbing along the way, but would not by itself justify the
-integration. If no such decision appears, learning remains a documented
-extension point.
-
-\paragraph{Imported policies}
-A policy trained in another simulator could be run here for
-learned-versus-classical comparisons. Its observation normalization, coordinate frames,
-action meanings, decision period, and termination rules must match the
-original task, and a fixed-size observation of every agent cannot accept a
-larger team unless it was designed around a bounded set of neighbors.
-
-\stub{Build the RQ1 plugins: a range-limited contact sensor using spatial
-queries, a target-report message, an estimator that adds received reports to
-belief, and a network with delay (SphereNetwork rejects delay settings; a
-custom network can use \texttt{Delivery::After}).}
-\stub{Run RQ1 with nearest-target and auction strategies, sweeping range, delay,
-and loss; report completion, collisions, and messages sent.}
-\stub{Decide from the RQ1 results whether a learned decision is worth
-building. Record the decision and its reason here either way.}
-\stub{Only if learning goes ahead: confirm the gap with a narrower search
-(multi-agent policies evaluated under queued communication delay or loss; see
-\texttt{docs/LEARNING\_SIMULATOR\_LANDSCAPE.md}); add the optional decision
-record; train, freeze, and compare with the classical strategies, with the
-messages-removed control; measure collection throughput, separating the step,
-observation construction, rewards, and reset.}
-\stub{Later options, each only when an experiment needs it: a common tactical
-interface across motion models (per-model adapters and a multirotor navigation
-controller); CPU inference of imported policies, checked byte-identical at 1,
-2, and 8 workers; GPU candidate trajectories inside one planner plugin, then a
-per-phase batch across entities if policy inference dominates, measured against
-the CPU including packing, transfers, and synchronization.}
-
-\section{Discussion and Limitations}
+\section{Discussion}
 \label{sec:discussion}
 
-\subsection{What Would Justify an Upgrade?}
+\subsection{What Makes an Integration Useful?}
 
-Each selected experiment should compare the retained baseline with the
-proposed extension, state what the baseline can already express, and isolate
-the feature's effect. SMACv2 shows why success on fixed scenarios is
-insufficient: some original SMAC tasks admit useful time-only policies
-\cite{ellis2023smacv2}. Use held-out layouts, task schedules, or team sizes,
-and remove the relevant feedback or communication to check that it matters.
-These controls can begin with the existing scenario and sweep tools.
+An integration is useful when it enables an intended experiment and has enough
+evidence to interpret its results. That evidence includes agreement with an
+external baseline, clear physical limits, and measured execution cost. It
+does not require every new effect to change a strategy ranking. Conversely,
+an impressive trajectory or a changed ranking cannot substitute for checking
+that the imported component still behaves as intended.
 
-The estimation stage (Section~\ref{sec:estimation}), on which RQ1 builds, is
-the first core change; shared computation (RQ2) is the other candidate. Task models (RQ3) and evaluation cases should begin as research
-plugins and experiment support. A focused paper could implement one of the core
-candidates and answer its associated question, leaving the others as
-motivated future work. Listing features or demonstrating that they run would
-not establish their research value.
+The roadmap can therefore advance stage by stage. Each stage contributes a
+working capability and a bounded comparison. Studies across fidelity levels
+then establish where the capability affects conclusions and where a cheaper
+model is sufficient within a stated margin. Coordination studies still need
+held-out layouts, task schedules, or team sizes, and removal of communication
+or feedback to check that it matters \cite{ellis2023smacv2}.
 
-\subsection{Limits of the Baseline}
+\subsection{Limits}
 
-The C++ defects that Rust corrects are listed in Table~\ref{tab:differences},
-and the regression Rust inherited in Section~\ref{sec:substeps}. The limits of
-the parity claim are:
-\begin{itemize}
-\item \emph{Scope.} Parity covers the tested configurations of the retained
-models, not the full C++ catalog.
-\item \emph{Message contents.} Only lifecycle, collision, and sensor messages
-are compared by content; other messages, such as auction bids, by delivery only.
-\item \emph{Stochastic behavior.} Sensor noise is tested by seven marginal
-distributions in one NoisyContacts fixture, not for temporal or cross-axis
-dependence, and NoisyState noise is not tested by distribution.
-\item \emph{Rounding.} Results agree to rounding, not bit for bit: C++ and Rust
-call different math libraries and group some operations differently.
-\end{itemize}
+No model is yet checked against a vehicle's measured flight data; the stall
+tables carry JSBSim's Rascal values, which their own README calls pre-alpha.
+The stall result is one mission, one aircraft, and one autopilot
+configuration, on one machine; its byte-repeatability with ArduPilot is shown
+there and not across machines or ArduPilot versions. Effects that are not
+modeled, such as spin, propeller wash over a wing, and waves between vessels,
+bound what the experiments can test. Agreement of the base system with C++
+SCRIMMAGE is established for the models and configurations tested there
+\cite{baselinereport}; extensions require their own comparisons. No
+multi-agent fidelity result is reported yet.
 
 \section{Conclusion}
 
-\stub{Answer the three research questions as far as evidence allows, restate
-the baseline in one sentence, and identify the most useful next experiment.}
+\stub{State the completed integrations and the external evidence supporting
+each. Then report what the selected fidelity experiments establish, including
+unchanged outcomes and cost. Separate source agreement from physical accuracy,
+and end with the next integration or measurement justified by the results.}
 
 \section*{Generative AI Disclosure}
 
-OpenAI Codex assisted with the initial manuscript outline, reference-file
-organization, and drafting the research-agenda literature review and discussion.
-Claude (Anthropic) assisted with implementation, running the
-verification checks, and drafting the validation, agreement, and appendix text
-from retained data. \stub{Update this statement to reflect actual assistance and
-author review, following the selected venue's policy.}
-
-\appendices
-
-\section{Parity Details}
-\label{app:parity}
-
-\paragraph{Approach}
-Both simulators run the same mission files. C++ comes from the current
-\texttt{Ubuntu-24.04} branch, built headless in its own Docker image.
-
-Trajectories alone can hide differences in what agents believe, what their
-plugins command, and what messages they send. We therefore added an optional
-trace to a separate C++ branch. It records each message delivery (tick,
-sender, and receiver), the entities named in lifecycle and collision events,
-published sensor readings, each agent's belief, and the commands each plugin
-passes to the next. Other message contents, such as auction bids, are not
-compared. Rust writes the same trace. Instrumentation that changed C++ would invalidate the
-comparison, so every run is repeated on the unmodified build: frames and
-summaries must be byte-identical.
-
-Randomized runs only compare if both simulators draw the same random numbers.
-The C++ standard leaves its default generator up to each compiler's library, so
-the C++ branch can switch spawning to the same fully specified generator Rust
-uses. Rust's sensor noise uses its own random streams by design, so noise is
-compared by distribution instead of sample by sample.
-
-A comparison that cannot fail proves nothing. Beyond fourteen hand-written
-missions, we ran 100 randomly generated scenarios and ten long ones of up to
-1{,}000~s, planted twelve plausible porting bugs to confirm the comparison
-catches them, and tested the noise distributions. Appendix~\ref{app:method}
-gives the details.
-
-\paragraph{Results}
-Table~\ref{tab:parity} summarizes the evidence. All curated missions and
-generated scenarios pass, and every planted bug is detected. Two
-message-delivery bugs (a message one tick late, local messages crossing
-entities) changed trajectories in the previous campaign (2026-09-25) but no
-longer do; only the summary and trace checks catch them now. We have not
-isolated which later change caused this.
-In passing runs,
-trajectories agree to $1.8\times10^{-10}$~m at worst and usually to
-$10^{-14}$~m or better. No difference was detected in seven NoisyContacts
-marginal error distributions at the corrected significance threshold.
-
-Eight of the ten long runs pass. The other two end about 0.2~mm and
-$4\times10^{-8}$~m apart; perturbation experiments suggest numerical sensitivity
-(Appendix~\ref{app:results}).
-
-In the tested configurations of the retained models,
-SCRIMMAGE-RS agrees with SCRIMMAGE in trajectories, the compared sensor and
-command values, and message-delivery timing, to floating-point rounding.
-Summaries match or are validated against the documented scoring differences.
-The exceptions are listed in Table~\ref{tab:differences}.
-
-These results come from the SCRIMMAGE-RS code committed with them (the
-retained reports record a hash of every Rust source file) and C++ commits
-\texttt{4bdf41fb0} (\texttt{Ubuntu-24.04}) and \texttt{7129e47f5}
-(\texttt{benchmarking-edits}).
-
-\input{generated/parity}
-
-\paragraph{What differs}
-Apart from the long-run divergence above, every remaining difference
-is a C++ defect that Rust corrects or a deliberate choice
-(Table~\ref{tab:differences}). Examples are C++ scoring teams that spawn
-late as NaN, and entities destroyed before the first step still running for a
-tick. None is hidden. Where Rust's summary differs, entity and collision counts
-still match exactly, and Rust's own messages reproduce the C++ summary under the
-C++ scoring rule and the Rust summary under Rust's documented rule.
-
-\section{Comparison Method}
-\label{app:method}
-
-\paragraph{Builds}
-A checker builds each C++ branch from a \texttt{git archive} inside the
-unmodified upstream dependency image (\texttt{linux/amd64}, GCC~13.3), headless
-and single-threaded. \texttt{Ubuntu-24.04} is the unmodified reference;
-\texttt{benchmarking-edits} adds opt-in comparison support and the substep
-correction (Appendix~\ref{app:substeps}). A later
-commit (\texttt{5777aeea1}) also makes AircraftPIDController use its given
-timestep and lowers its default altitude derivative gain, matching Rust. The timestep change is a fix; the lower gain is
-a tuning choice, checked on one aircraft after one upset
-(\texttt{paper/data/aircraft-pid-upset}). A third commit
-(\texttt{1c8595b91}) is the only change to model equations: FixedWing6DOF and
-Multirotor computed forces and moments from the start-of-step state at every
-RK4 stage, which made the step first order; both implementations now use each
-stage's state (\texttt{paper/data/rk4-loads}). The campaign reported here
-includes all three. Two command drivers exist in both implementations:
-\texttt{MotorSpeeds}, because the upstream multirotor controller no longer
-matches the multirotor model, and \texttt{ConstantVelocity}, because no retained
-upstream autonomy commands a velocity. Rust runs at 1, 2, and 8 workers, with
-recording, and with tracing; all must be byte-identical.
-
-\paragraph{Trace}
-Set with \texttt{SCRIMMAGE\_TRACE} in C++ and \texttt{-{}-trace} in Rust. It
-records every message delivery (tick, network, topic, sender, receiver, and the
-entities in lifecycle and collision events), every published sensor state and
-covariance, each entity's belief when its frame is logged, and every output the
-next plugin reads. Each mission runs on the unmodified build, the instrumented
-build, and the instrumented build with tracing; all three must write
-byte-identical frames and summaries.
-
-\paragraph{Criteria}
-Frames must contain the same entities at every tick. States, beliefs, and
-sensor readings must agree within $10^{-8}$~m, $10^{-8}$~m/s, $10^{-9}$~rad, and
-$10^{-9}$~rad/s; outputs within $10^{-8}$; covariances within $10^{-9}$;
-summaries within $10^{-6}$. Deliveries must match exactly, in order. The
-position limit was set at 27 times the largest difference then measured in a
-passing run ($3.7\times10^{-10}$~m); the largest now is $2.4\times10^{-10}$~m.
-They replace the original 0.01~m and $10^{-3}$, which let a planted
-sub-micrometre bug through.
-
-\paragraph{Random draws}
-The C++ standard leaves the default random engine and the normal
-distribution's algorithm to each standard library. The reference build's
-library (GCC's) and the one Rust reproduces (LLVM's) differ in both. With
-\texttt{SCRIMMAGE\_LIBCXX\_SPAWN\_RANDOM}, the C++ branch draws spawns from the
-standard-defined \texttt{std::minstd\_rand} with the same normal algorithm as
-Rust. Without it, the randomized mission differs by up to 8.42~m; with it, it
-agrees to $1.4\times10^{-14}$~m. Sensor noise is compared with
-fixed-bias, zero-noise fixtures and, separately, by distribution.
-
-\paragraph{Long runs}
-Ten generated scenarios run for 1{,}000~s (fixed-wing: 100~s at 0.01~s steps).
-A run agrees if every check passes over its whole length. For a run that
-diverges, a control changes Rust's initial roll, commanded speeds, and turning
-radii by one unit in the last place, scales each controller loop's proportional
-gain by $1+10^{-12}$, and measures when Rust diverges from itself. One-ulp
-parameter changes alone perturb the state far less than the rounding difference
-between C++ and Rust, and do not reach a controller loop directly.
-
-In \texttt{generated-000}, one aircraft settles into a sustained pitch
-oscillation at about 20~s. Its altitude loop never levels off, and its commanded
-pitch rate alternates between about $+1$ and $-3.7$~rad/s every half second.
-Any difference in that loop then grows about tenfold per second until it levels
-off near 0.1~mm. C++ and Rust exceed the tolerance after 28.8~s and end
-$2.0\times10^{-4}$~m apart, and the control does the same after 26.8~s,
-ending $2.1\times10^{-4}$~m away (Table~\ref{tab:long}). This suggests
-numerical sensitivity; it does not rule out a small difference between the
-two implementations.
-
-\texttt{generated-007} flies four FixedWing6DOF aircraft with
-AircraftPIDController. It agreed throughout until both implementations lowered
-that controller's altitude derivative gain, which changed the flight; computing
-the aircraft's forces at every RK4 stage changed it again. C++ and
-Rust now exceed the tolerance after 76.4~s and end $8.4\times10^{-9}$~m apart;
-the control diverges much earlier, after 14.4~s, and ends $7.9\times10^{-7}$~m away
-(Table~\ref{tab:long}). Again this suggests numerical sensitivity rather than a
-porting error, with the same caveat. Before the substep
-order was restored, \texttt{generated-009} also diverged, after 69~s; it now
-agrees throughout.
-
-\paragraph{Summaries and one exclusion}
-A differing summary passes only if entity and collision counts match exactly,
-and the Rust run's metrics messages reproduce the C++ summary under the C++
-scoring rule and the Rust summary under Rust's documented rule
-(\texttt{reference/metrics\_model.py}). For entities C++ destroys before
-the first step, their first-step trace records are excluded and counted, because
-C++ still runs them for that step. No other difference is excluded.
-
-\section{Full Results}
-\label{app:results}
-
-Table~\ref{tab:agreement} gives each curated mission, Table~\ref{tab:generated}
-the generated scenarios, Table~\ref{tab:sensitivity} the planted bugs,
-Table~\ref{tab:noise} the noise distributions, Table~\ref{tab:long} the long
-runs, and Table~\ref{tab:differences} every known difference. Retained data is
-under \texttt{paper/data/}.
-
-\input{generated/cpp_agreement}
-\input{generated/generated}
-\input{generated/sensitivity}
-\input{generated/noise}
-\input{generated/long}
-
-\begin{table*}[t]
-\centering
-\caption{Known C++/Rust differences and how the comparison treats them.}
-\label{tab:differences}
-\small
-\begin{tabularx}{\textwidth}{P{0.18\textwidth}>{\raggedright\arraybackslash}XP{0.22\textwidth}}
-\toprule
-Difference & Cause & Treatment \\
-\midrule
-Survivor flight time &
-C++ publishes \texttt{EntityPresentAtEnd} after its last network phase, so
-metrics credit survivors only until the latest removal. Rust credits them until
-the end. &
-Summary must equal the C++ rule applied to Rust's messages. \\
-Teams first spawned after $t=0$ &
-C++ scores such a team without a normalization window: infinite
-\texttt{flight\_time\_norm}, NaN \texttt{score}. &
-As above. \\
-Entities destroyed before the first step &
-C++ keeps them for one step: they still run their plugins, are reported removed
-twice, and score as surviving. Rust removes them once. &
-First-step trace records excluded and counted; summary as above. \\
-Randomized spawning &
-C++ leaves its default random generator to the standard library; the reference
-build's differs from the one Rust uses. &
-C++ branch uses the same generator as Rust. \\
-Sensor noise samples &
-Rust gives each sensor its own random stream; C++ shares one. &
-Compared by distribution. \\
-SphereNetwork positions &
-C++ queries a range tree built before motion; Rust uses current post-motion
-positions. &
-No compared delivery differed. \\
-FixedWing6DOF inertia &
-C++'s default silently overrides a supplied SI inertia matrix; Rust accepts
-either and rejects both together. &
-Fixtures use the default. \\
-AircraftPIDController with substeps &
-C++ uses the full step as the controller timestep during substeps; Rust uses
-the substep. &
-FixedWing6DOF scenarios run without substeps; \texttt{5777aeea1} fixes the
-comparison branch. \\
-\bottomrule
-\end{tabularx}
-\end{table*}
-
-\section{The Substep Correction}
-\label{app:substeps}
-
-In \texttt{SimControl::run\_entities}, SCRIMMAGE interleaved controller and
-motion substeps from its first public commit (August 2017) until commit
-\texttt{c0a9f42b2} (``added gpu support'', December 2025):
-\begin{verbatim}
-autonomy                      once per tick
-for each substep:
-    controllers               read the state motion just wrote
-    motion model
-sensors, interactions, ...    once per tick
-\end{verbatim}
-That commit closed the controller loop before a new GPU motion call, which
-advances all substeps at once, and passed each controller call the full tick
-length; a later commit restored the substep length but kept the split. A
-comment written afterward still describes the interleaved design. GPU motion
-models need OpenCL and appear in two demonstration missions.
-
-The derivative term vanishes when a controller call sees the same setpoint and
-the same measurement as the previous one: in the split order, autonomy runs
-once per tick and nothing moves between controller calls. A nested controller
-can still shift an inner setpoint between calls (an outer loop's integral keeps
-growing), so the inner derivative is small rather than exactly zero.
-
-The comparison branch (\texttt{7129e47f5}) restores the interleaved loop and
-disables GPU acceleration in CMake, which also disables its GPU network plugin;
-the GPU sources remain but are not built. \texttt{reference\_check.py} requires
-the unmodified and fixed C++ to write identical output only when a mission has
-one substep. Before and after the Rust change, 31 of 35 missions and workloads
-wrote byte-identical frames, events, summaries, and traces at 1, 2, and 8
-workers; the four that changed are the substep workloads
-(\texttt{paper/data/substep-order/}). Against the fixed C++, the two substep
-missions agree to $4.8\times10^{-14}$ and $2.2\times10^{-14}$~m with matching
-traces, and the unmodified C++ differs from the fixed build on both.
-
-Timed against the previous revision, alternating run by run (a warm-up pair
-and five timed pairs), no workload changed consistently on one worker. On eight
-workers, the substep workloads were slower in every pair, by 1--4\% with 64
-aircraft and 4--10\% with 512; the other workloads changed in both directions.
-
-\section{Performance Details}
-\label{app:performance}
-
-Tables~\ref{tab:benchmark} and~\ref{tab:benchmark-native} time five workloads
-(straight flight, ten controller and motion substeps, noisy state and contact
-sensors, scheduled spawning with collisions, and collision checks among aircraft
-spread over about a kilometre, so few collide and the population stays nearly
-constant) on an Apple M2 Pro, first with
-both simulators in one Linux container (\texttt{reference/benchmark.py}) and
-then on bare-metal macOS, where C++ is built with Apple clang
-against the library versions Ubuntu 24.04 ships
-(\texttt{paper/data/benchmark-native/}). Rust output matches single-threaded
-C++ in the first two workloads. The other three depend on random draws that the
-C++ build makes differently without the comparison spawn stream, so their ratios
-are not speed claims.
-C++ is the comparison branch of Appendix~\ref{app:substeps}, so both simulators
-run substeps in the same order.
-
-Where outputs match, Rust with one thread is 1.2 to 1.7 times faster than C++
-in the container and 1.05 to 1.4 times faster on bare metal, and it uses 2.0 to
-6.0 times less memory. These timings include the estimation stage (its cost is
-measured on its own in Section~\ref{sec:estimation}), which raised Rust's peak
-memory, most with 128 sensing aircraft
-(7.4 to 12.3~MiB in the container), where each keeps its own contact list. Two changes made while profiling contributed, both with
-identical output: Rust no longer rebuilds each plugin's message-address name
-every step, which had taken about a fifth of the time on straight flight, and
-it runs single-worker phases without the thread pool (below). Before them,
-native C++ was 1.25 times faster on straight flight.
-
-C++ collision checking compares every pair of aircraft, twice, so its cost
-grows with the square of the number of aircraft; Rust uses the spatial queries
-of Section~\ref{sec:spatial}, by default the scan. From 1{,}024 to 2{,}048
-aircraft, Rust's collision workload takes 2.7 to 2.8 times longer and C++'s
-3.8 to 9.1 times longer. Eight workers barely help, because the check runs in
-one sequential phase.
-
-Parallel speedup depends on each phase carrying enough work. Every phase hands
-entities to a thread pool and joins it, which profiling puts at about
-35~\textmu s on bare metal and roughly ten times that in Docker's virtual
-machine. On bare metal, eight Rust workers beat one with substeps at 1{,}024
-aircraft, with sensors at 64 and 128 aircraft (3.2 times at 128), and with
-collisions at 2{,}048 aircraft, but not on light workloads or with 32 sensing
-aircraft; in the container, only with 128 sensing aircraft. The handoff cost about 7~\textmu s even with one worker,
-so Rust now runs single-worker phases on the calling thread, a third faster on
-light workloads.
-
-C++'s own \texttt{multi\_threaded} mode is not reliable. It deadlocked in 14 of
-224 runs, counting startup runs (each killed after 120~s and retried), its output with sensors differs
-between identical runs, and it is slower than single-threaded C++ except with
-64 or more sensing aircraft on bare metal and 128 in the container. Its entity worker waits on a condition variable without a predicate,
-so a wake-up can be lost; we did not modify it, and single-threaded C++ is the
-baseline.
-
-\IfFileExists{generated/benchmark.tex}{\input{generated/benchmark}}{}
-\IfFileExists{generated/benchmark-native.tex}{\input{generated/benchmark-native}}{}
-
-\section{Coverage}
-\label{app:coverage}
-
-Compared: SimpleAircraft, FixedWing6DOF, Multirotor, and SingleIntegrator with
-their controllers; Straight; AuctionAssign's message-delivery timing and
-topology; NoisyState and
-NoisyContacts; SimpleCollision, GroundCollision, and Boundary; Global, Local,
-and SphereNetwork; and SimpleCollisionMetrics. Also compared: motion substeps,
-update rates, scheduled and randomized spawning, and startup placement.
-AuctionAssign's bids are random and its result message differs on purpose, so
-its bids and winners are not compared. WaypointFollower, WaypointBroadcast, NoisyPosition,
-and the two command drivers are Rust-only.
-
-\section{Rust Self-Consistency}
-\label{app:self}
-
-Rust results are byte-identical across 1, 2, and 8 workers, with and without
-recording and tracing, and whether a scenario comes from XML, YAML, or Rust
-code. Built for another operating system and processor (Linux/amd64 versus
-macOS/arm64), events and summaries stay identical in all 248 runs checked and
-trajectories differ by at most $5.6\times10^{-11}$~m, because each system's math
-library rounds differently (\texttt{reference/platform\_check.py}). This is exact because workers own separate entities, every phase finishes
-before the next starts, and random draws are tied to entities and plugins
-rather than workers.
-
-\section{Verification Suites}
-\label{app:suites}
-
-Table~\ref{tab:suites} lists the executable checks. They run with
-\texttt{cargo test -{}-workspace -{}-locked} together with
-\texttt{cargo fmt -{}-check} and \texttt{cargo clippy -{}- -D warnings}. The Python
-comparison and bulk-run tools have their own unit tests under
-\texttt{reference/} and \texttt{scripts/}.
-
-\begin{table}[h]
-\centering
-\caption{Executable verification suites.}
-\label{tab:suites}
-\footnotesize
-\begin{tabularx}{\columnwidth}{P{0.36\columnwidth}>{\raggedright\arraybackslash}X}
-\toprule
-Suite & What it checks \\
-\midrule
-\texttt{plugin\_contracts} & Seven roles, registration errors, independent
-subscribers, phase visibility, delay/loss, stop, failure, removal, cleanup. \\
-\texttt{simulation\_regression} & Every curated XML mission byte-identical at
-1, 2, 8 workers; tracing leaves outputs unchanged. \\
-\texttt{noisy\_state} & Owned belief, unchanged truth during sensing,
-next-tick feedback, held estimates. \\
-\texttt{world\_models}, \texttt{navigation} & Boundary messages, ground
-removal and scoring, route replacement. \\
-\texttt{yaml\_missions} & Four XML/YAML pairs produce identical setup and
-outputs. \\
-\texttt{rust\_scenario} & Rust API and YAML identical at 1, 2, 8 workers;
-invalid construction rejected; 5{,}000 agents spawned and 1{,}500 removed in one
-tick. \\
-CLI \texttt{run\_output} & Every shipped mission identical with recording on
-and off; failed runs keep diagnostics. \\
-CLI \texttt{sweep} & Whole and sharded sweeps agree; bad paths fail early. \\
-\texttt{reference/tests/} & Comparators, trace rules, C++ scoring model,
-KS test, generator determinism, and checker failure handling. \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-\section{Behavior-Preservation Records}
-\label{app:refactors}
-
-Structural changes were accepted only when every curated mission reproduced the
-previous revision's frames, events, and summaries byte for byte. Retained
-records are under \texttt{paper/data/refactor-equivalence/}.
-\begin{itemize}
-\item Scenario API unification, against \texttt{2cd820a}: 38 runs (14 XML
-missions, four YAML pairs, and the starter mission at 1 and 8 workers), 114
-files, all identical.
-\item Estimation stage, against \texttt{ab085bf}: every mission (25, including
-the starter's) at 1, 2, and 8 workers, 300 files including traces with each
-entity's belief, all identical; also the follow-nearest sweep and runs with
-recording on.
-\item Metrics team reporting and queue limits, against \texttt{613a62f}: 18
-curated XML and YAML missions at 1 and 8 workers, 108 files, all identical.
-The new two-team fixture is excluded because it did not exist at the baseline;
-the behavior it changes is described in Table~\ref{tab:differences}.
-\item Spawn request separation, against its predecessor: 14 missions at 1 and 8
-workers, identical including randomized spawning. The raw artifacts for this
-check were not retained.
-\end{itemize}
-
-\section{Workflow and Visual Checks}
-\label{app:workflow}
-
-Local bulk runs with 3 and 10 shards reproduced the eight-case waypoint sweep's
-complete \texttt{results.jsonl}. Collection rejected missing and mismatched
-shards. Slurm submission has been tested only against a mock scheduler; no
-cluster campaign has run.
-
-Visual review of \texttt{networks-local-global} (Rerun 0.36.2, 1920$\times$1200,
-checkpoints at 0, 0.3, 0.6, 10, and 29.9~s) confirmed map framing, labels,
-status, complete paths, and ground removal
-(\texttt{paper/data/visual-qa/}). The speed plot of a nearly constant-speed
-aircraft autoscaled into unreadable spikes, so the dashboard has not passed a
-complete visual review. The waypoint demonstrations have not been reviewed with
-screenshots.
-
-\section{The Workflow Example}
-\label{app:rq2}
-
-The C++ side used the unmodified \texttt{Ubuntu-24.04} reference image.
-\texttt{create-scrimmage-project.py} generated the project, and
-\texttt{generate-plugin.sh autonomy FollowNearest} generated the header,
-source, parameter XML, and CMake file. The templates on this branch were
-reformatted to \texttt{(>{}>{}> PLUGIN\_NAME < < <)}, which the generator's
-substitution no longer matches, so four placeholders in the source and three in
-the header had to be fixed by hand. The template's example logic already
-follows the nearest opponent, so the plugin body is unchanged from it. Running
-the plugin requires adding the build and header folders to
-\texttt{SCRIMMAGE\_PLUGIN\_PATH} and \texttt{LD\_LIBRARY\_PATH}.
-\texttt{run\_experiments.py} and \texttt{scrimmage\_runner.sh} both import
-\texttt{scrimmage.utils}, which was removed from the branch, and need
-\texttt{pyDOE}, \texttt{pandas}, and \texttt{tqdm}; the \texttt{scrimmage}
-command has no option to set a mission variable. The sweep is therefore a
-shell loop that writes one mission per speed with \texttt{sed}.
-\texttt{paper/rq2/run-cpp.sh} repeats all of this in one command.
-
-The Rust side is the book's first-plugin tutorial: \texttt{follow\_nearest.rs}
-in the starter crate, three lines in its \texttt{lib.rs}, a 48-line YAML
-mission, and a 9-line sweep file. The same sweep file runs locally with
-\texttt{scrimmage sweep} or as Slurm array shards with
-\texttt{scripts/bulk\_run.py}. Line counts exclude blank and comment lines;
-the C++ count covers the header and source, not the generated CMake file.
-Both place the two aircraft at fixed positions, and all four outcomes and
-both catch times agree.
-
-\section{Reproduction}
-\label{app:reproduction}
-
-From the repository root, with Docker and the sibling C++ checkout on both
-branches, \texttt{python3 reference/campaign.py} reruns the C++ comparisons
-(agreement matrix, sensitivity, noise, generated and long scenarios, platform),
-replaces their folders in \texttt{paper/data/}, and regenerates the tables; with
-\texttt{-{}-quick} it runs only the agreement matrix. The individual tools are
-in \texttt{reference/}: \texttt{reference\_check.py} (matrix, traces, and
-non-interference), \texttt{generate\_scenarios.py}, \texttt{sensitivity.py},
-\texttt{noise\_statistics.py}, \texttt{divergence.py},
-\texttt{platform\_check.py}, and \texttt{benchmark.py}. The compared missions
-are listed in \texttt{reference/missions.txt}, and \texttt{reference/README.md}
-documents the builds, tolerances, trace records, and how to add a model. The
-C++ branch \texttt{benchmarking-edits} holds the instrumentation as
-reviewable commits on top of \texttt{Ubuntu-24.04}.
-
-The campaign does not rerun the rest: the timing in Tables~\ref{tab:benchmark}
-and~\ref{tab:benchmark-native} (\texttt{reference/benchmark.py}, and
-\texttt{build.sh} and \texttt{run.py} in \texttt{paper/data/benchmark-native/}), the workflow example
-(\texttt{paper/rq2/run-cpp.sh} and \texttt{scrimmage sweep}), and the Rust and
-Python test suites (\texttt{cargo test -{}-workspace} and
-\texttt{python3 -m unittest discover -s reference -p 'test\_*.py'}).
+Claude (Anthropic) assisted with implementation, running the experiments,
+checking sources for the provenance audit, and drafting text from retained
+data. OpenAI Codex assisted with revising the paper's framing and integration
+evaluation plan. \stub{Update this statement to reflect actual assistance and
+author
+review, following the selected venue's policy.}
 
 \bibliographystyle{plainnat}
 \bibliography{../references}

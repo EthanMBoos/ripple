@@ -10,7 +10,7 @@ functions in your workspace research crate alongside your plugins.
 ## Describe the experiment
 
 ```rust,ignore
-use scrimmage_core::{EntityGroupConfig, PluginConfig, ScenarioConfig, Vec3};
+use ripple_core::{EntityGroupConfig, PluginConfig, ScenarioConfig, Vec3};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -54,10 +54,10 @@ plugin names and parameter compatibility are checked at startup.
 ## Use the shared runner
 
 The existing CLI crate can call your research crate's scenario function and
-pass it to the same runner used by `scrimmage run`:
+pass it to the same runner used by `ripple run`:
 
 ```rust,ignore
-use scrimmage_cli::{RunSettings, run_scenario};
+use ripple_cli::{RunSettings, run_scenario};
 
 let output = run_scenario(my_lab::ring()?, &registry, RunSettings {
     root: repo_root.into(),
@@ -75,13 +75,14 @@ explicit output directory. Invalid configurations fail before output allocation.
 
 The CLI already depends on your plugin crate; keep this call in the CLI rather
 than adding a dependency from the plugin crate back to the CLI. A Rust scenario
-function is not automatically a command or sweep. Existing YAML sweeps and
-Slurm shards continue to use the shared tools described in [YAML missions](yaml-missions.md).
+function is not automatically a command or sweep. Existing YAML sweeps and Slurm
+shards continue to use the shared tools described in [YAML
+missions](yaml-missions.md).
 
 ## Step directly in a test
 
 ```rust,ignore
-use scrimmage_core::{Mission, Params, Simulation};
+use ripple_core::{Mission, Params, Simulation};
 
 // Either load a mission or call your Rust setup function.
 let mission = Mission::load_with_registry(path, root, &Params::new(), &registry)?;
@@ -96,5 +97,6 @@ these are separate from simulation data. Scenario serialization records
 normalized data for manifests, not reloadable mission YAML. The default end
 condition is the time limit, for both Rust and YAML.
 
-The [design notes](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/RUST_API.md)
-explain these boundaries and their references.
+The [design
+notes](https://github.com/EthanMBoos/ripple/blob/main/docs/RUST_API.md) explain
+these boundaries and their references.

@@ -1,0 +1,59 @@
+{
+  "passed": true,
+  "repeat_byte_identical": true,
+  "mission": "crates/ardupilot/missions/rascal-runway.yaml",
+  "tables": {
+    "linear": {},
+    "linear-repeat": {},
+    "lift": {
+      "lift_table": "[[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]"
+    },
+    "lift-drag": {
+      "lift_table": "[[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]",
+      "drag_table": "[[-1.57, 1.5], [-0.26, 0.056], [0.0, 0.028], [0.26, 0.056], [1.57, 1.5]]"
+    }
+  },
+  "source_sha256": "29ead33e5bef3588295b72c3e82ebd38e15b29acbda40ec39175710a3adba61c",
+  "results": {
+    "linear": {
+      "touchdown_time_s": 172.32,
+      "touchdown_ground_speed_mps": 15.36,
+      "touchdown_sink_mps": 1.46,
+      "max_bounce_height_m": 2.03,
+      "max_rollout_offset_m": 1.56,
+      "final_offset_m": 0.74,
+      "max_alpha_airborne_deg": 11.2,
+      "max_alpha_on_ground_deg": 14.4
+    },
+    "linear-repeat": {
+      "touchdown_time_s": 172.32,
+      "touchdown_ground_speed_mps": 15.36,
+      "touchdown_sink_mps": 1.46,
+      "max_bounce_height_m": 2.03,
+      "max_rollout_offset_m": 1.56,
+      "final_offset_m": 0.74,
+      "max_alpha_airborne_deg": 11.2,
+      "max_alpha_on_ground_deg": 14.4
+    },
+    "lift": {
+      "touchdown_time_s": 172.427,
+      "touchdown_ground_speed_mps": 15.36,
+      "touchdown_sink_mps": 1.45,
+      "max_bounce_height_m": 2.04,
+      "max_rollout_offset_m": 1.71,
+      "final_offset_m": 0.75,
+      "max_alpha_airborne_deg": 10.8,
+      "max_alpha_on_ground_deg": 14.5
+    },
+    "lift-drag": {
+      "touchdown_time_s": 172.667,
+      "touchdown_ground_speed_mps": 15.09,
+      "touchdown_sink_mps": 1.53,
+      "max_bounce_height_m": 1.88,
+      "max_rollout_offset_m": 1.23,
+      "final_offset_m": 0.64,
+      "max_alpha_airborne_deg": 8.9,
+      "max_alpha_on_ground_deg": 14.5
+    }
+  }
+}

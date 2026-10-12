@@ -15,7 +15,7 @@ impl Scheduler {
 
         let workers = ThreadPoolBuilder::new()
             .num_threads(worker_count)
-            .thread_name(|index| format!("scrimmage-{index}"))
+            .thread_name(|index| format!("ripple-{index}"))
             .build()?;
 
         Ok(Self { workers })

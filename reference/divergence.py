@@ -29,8 +29,10 @@ from compare import POSITION_TOLERANCE_M, distance
 from frames import read_frames
 from project import ROOT, build_cli
 GAIN_NUDGE = 1e-12
-# Default [P, I, D, integral band] per loop, from each Rust controller's Default
-# (crates/core/src/plugin/controller/); a mission's own gains replace them.
+# Default [P, I, D, integral band] per loop, from each Rust controller
+# (crates/core/src/plugin/controller/; AircraftPIDController's are its `a4d`
+# airframe gains, which generated missions name); a mission's own gains
+# replace them.
 PID_DEFAULTS = {
     "SimpleAircraftControllerPID": {
         "heading_pid": [1.0, 0.01, 2.0, 9.0],

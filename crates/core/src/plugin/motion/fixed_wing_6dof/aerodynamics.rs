@@ -5,7 +5,8 @@ use std::f64::consts::PI;
 
 use crate::math::Vec3;
 
-use super::{Control, FixedWingParams};
+use super::Control;
+use super::airframe::Vehicle;
 
 /// Coefficient names deliberately match the aircraft equations and XML keys.
 #[derive(Clone)]
@@ -51,7 +52,8 @@ pub(super) struct Loads {
 }
 
 impl Aerodynamics {
-    pub(super) fn new(params: &FixedWingParams) -> Self {
+    pub(super) fn new(vehicle: &Vehicle, lift_table: &[[f64; 2]], drag_table: &[[f64; 2]]) -> Self {
+        let params = vehicle;
         Self {
             c_d0: params.c_d0,
             c_d_alpha: params.c_d_alpha,
@@ -76,8 +78,8 @@ impl Aerodynamics {
             c_nr: params.c_nr,
             c_n_aileron: params.c_n_aileron,
             c_n_rudder: params.c_n_rudder,
-            lift_table: params.lift_table.clone(),
-            drag_table: params.drag_table.clone(),
+            lift_table: lift_table.to_vec(),
+            drag_table: drag_table.to_vec(),
         }
     }
 
@@ -185,21 +187,25 @@ fn interpolate_clamped(table: &[[f64; 2]], x: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::super::FixedWingParams;
+    use super::super::airframe::{FixedWingAirframe, Vehicle};
     use super::{Aerodynamics, Airframe, Control, interpolate_clamped};
     use crate::math::Vec3;
 
+    /// The A-4D's coefficients, as a base the tests change.
+    fn a4d() -> Vehicle {
+        FixedWingAirframe::A4d
+            .vehicle()
+            .expect("the A-4D profile parses")
+    }
+
     #[test]
     fn lift_table_stalls_past_its_peak_and_matches_linear_lift_below() {
-        let linear = FixedWingParams {
-            c_l0: 0.25,
-            c_l_alpha: 5.0,
-            ..FixedWingParams::default()
-        };
-        let table = FixedWingParams {
-            lift_table: vec![[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]],
-            ..FixedWingParams::default()
-        };
+        let mut linear_vehicle = a4d();
+        linear_vehicle.c_l0 = 0.25;
+        linear_vehicle.c_l_alpha = 5.0;
+        let linear = Aerodynamics::new(&linear_vehicle, &[], &[]);
+        let lift_table = [[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]];
+        let table = Aerodynamics::new(&a4d(), &lift_table, &[]);
         let airframe = Airframe {
             density_kgpm3: 1.225,
             span_m: 2.7,
@@ -208,14 +214,10 @@ mod tests {
             efficiency: 0.9,
         };
         // Lift is the force against the air's up component, at 15 m/s.
-        let lift_n = |params: &FixedWingParams, alpha_rad: f64| {
+        let lift_n = |aerodynamics: &Aerodynamics, alpha_rad: f64| {
             let air_velocity = Vec3::new(alpha_rad.cos(), 0.0, alpha_rad.sin()) * 15.0;
-            let loads = Aerodynamics::new(params).loads(
-                &airframe,
-                air_velocity,
-                Vec3::zeros(),
-                Control::default(),
-            );
+            let loads =
+                aerodynamics.loads(&airframe, air_velocity, Vec3::zeros(), Control::default());
             -loads.force_model_n.z * alpha_rad.cos() + loads.force_model_n.x * alpha_rad.sin()
         };
         assert!((lift_n(&linear, 0.1) - lift_n(&table, 0.1)).abs() < 1e-9);
@@ -225,24 +227,19 @@ mod tests {
 
     #[test]
     fn drag_table_rises_past_the_stall_where_induced_drag_falls() {
-        let lift_table = vec![[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]];
-        let lift_only = FixedWingParams {
-            c_d0: 0.028,
-            c_d_alpha: 0.0,
-            lift_table: lift_table.clone(),
-            ..FixedWingParams::default()
-        };
-        let with_drag = FixedWingParams {
-            lift_table,
-            drag_table: vec![
-                [-1.57, 1.5],
-                [-0.26, 0.056],
-                [0.0, 0.028],
-                [0.26, 0.056],
-                [1.57, 1.5],
-            ],
-            ..FixedWingParams::default()
-        };
+        let lift_table = [[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]];
+        let mut lift_only_vehicle = a4d();
+        lift_only_vehicle.c_d0 = 0.028;
+        lift_only_vehicle.c_d_alpha = 0.0;
+        let lift_only = Aerodynamics::new(&lift_only_vehicle, &lift_table, &[]);
+        let drag_table = [
+            [-1.57, 1.5],
+            [-0.26, 0.056],
+            [0.0, 0.028],
+            [0.26, 0.056],
+            [1.57, 1.5],
+        ];
+        let with_drag = Aerodynamics::new(&a4d(), &lift_table, &drag_table);
         let airframe = Airframe {
             density_kgpm3: 1.225,
             span_m: 2.7,
@@ -251,14 +248,10 @@ mod tests {
             efficiency: 0.995,
         };
         // Drag is the force along the air's direction, at 15 m/s.
-        let drag_n = |params: &FixedWingParams, alpha_rad: f64| {
+        let drag_n = |aerodynamics: &Aerodynamics, alpha_rad: f64| {
             let air_velocity = Vec3::new(alpha_rad.cos(), 0.0, alpha_rad.sin()) * 15.0;
-            let loads = Aerodynamics::new(params).loads(
-                &airframe,
-                air_velocity,
-                Vec3::zeros(),
-                Control::default(),
-            );
+            let loads =
+                aerodynamics.loads(&airframe, air_velocity, Vec3::zeros(), Control::default());
             -loads.force_model_n.x * alpha_rad.cos() - loads.force_model_n.z * alpha_rad.sin()
         };
         assert!((drag_n(&lift_only, 0.0) - drag_n(&with_drag, 0.0)).abs() < 1e-9);

@@ -44,8 +44,8 @@ def aircraft_block(rng, fixed_wing):
              f'<autonomy speed="{fmt(speed)}" loop_rate="{rng.choice([0, 5, 10])}">Straight</autonomy>']
     if fixed_wing:
         lines += [f"<vx>{fmt(speed)}</vx>",  # FixedWing6DOF needs airspeed at start.
-                  "<controller>AircraftPIDController</controller>",
-                  f'<motion_model wind_E="{fmt(rng.uniform(-3, 3))}" '
+                  '<controller airframe="a4d">AircraftPIDController</controller>',
+                  f'<motion_model airframe="a4d" wind_E="{fmt(rng.uniform(-3, 3))}" '
                   f'wind_N="{fmt(rng.uniform(-3, 3))}">FixedWing6DOF</motion_model>']
     else:
         lines += [f'<controller loop_rate="{rng.choice([0, 20, 50])}">SimpleAircraftControllerPID</controller>',

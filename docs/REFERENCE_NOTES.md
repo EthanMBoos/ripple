@@ -90,8 +90,8 @@ Rust lifecycle and delivery rules are in the
   `verification/aircraft-substeps-scheduled.xml`.
 - **FixedWing6DOF inertia:** C++'s bundled slug-unit default silently overrides
   a supplied SI matrix. Rust accepts either `inertia_matrix_slug_ft_sq` or
-  `inertia_matrix`, rejects both together, and uses the slug default if neither
-  is supplied.
+  `inertia_matrix`, rejects both together, and uses the named airframe's if
+  neither is supplied.
 - **FixedWing6DOF elevator drag key:** C++ reads `C_D_delta_elevator_` (with a
   trailing underscore), but every bundled parameter file writes
   `C_D_delta_elevator`, so C++ always uses the 0.01 default. That is harmless
@@ -225,6 +225,56 @@ Computing forces once per step is not wrong in itself. JSBSim does it at
 120 Hz, with rectangular Euler for rotation and Adams-Bashforth methods, which
 reuse past derivatives, for translation by default. What was wrong here was
 the mismatch: four RK4 stages with first-order forces, unmentioned.
+
+## Fixed wing: built-in aircraft instead of C++'s default
+
+C++ FixedWing6DOF's defaults (`FixedWing6DOF.xml`) are the A-4D Skyhawk; the
+identical `FixedWing6DOF-A-4D.xml` cites Nelson, *Flight Stability and
+Automatic Control*, 2nd ed., p. 405, and Pratt and McGhee's NPSNET paper.
+`FixedWing6DOF-Rascal.xml` cites "Ardupilot JSBSim Model". Ripple has no
+default aircraft: `airframe: a4d` and `airframe: rascal` load those numbers
+(`plugin/motion/fixed_wing_6dof/airframe.rs`), or a mission gives every
+vehicle number; environment and option keys keep their defaults.
+AircraftPIDController takes the same `airframe` for its gains and limits.
+
+- **Missions that flew the default** name `airframe="a4d"` on the motion model
+  and the controller (`fixed-wing-6dof.xml`, `reference/inputs/`, generated
+  scenarios). C++ ignores the key, so the C++ comparison is unchanged: on
+  2026-10-12 `fixed-wing-a4` and `fixed-wing-rascal` agreed to 6.9e-13 m and
+  2.3e-13 m, as before.
+- **The Rascal's numbers** match JSBSim's `Rascal.xml` (tables read at zero
+  angle of attack and low Mach) except: mass 5.91 kg (JSBSim's 13 lb is 5.90
+  kg); span 2.70 m (JSBSim 2.795 m); C_D_alpha 0 (JSBSim's drag table rises
+  about 0.11 per rad); induced drag through efficiency 0.995, inherited from
+  the A-4D default (JSBSim states 0.04 C_L^2); elevator drag 0.01 times
+  |elevator| in radians (C++ never reads its file's 0.03, and JSBSim's 0.03
+  multiplies the signed normalized deflection, elevator / 0.30, so units and
+  sign treatment differ too); elevator limits +-0.30 rad (JSBSim's elevator
+  moves -0.35 to +0.30; aileron and rudder +-0.35 match). These are inherited
+  modeling choices, kept because they are what has been flown. Its thrust
+  range (0 to 25 N) has no JSBSim counterpart. The SITL missions flew these
+  radian limits; `fixed-wing-6dof-rascal.xml` keeps C++'s +-1 limits as
+  overrides.
+- **AircraftPIDController's `rascal` settings** are `a4d`'s gains with
+  ArduPlane's attitude limits (`ROLL_LIMIT_DEG` 45, `PITCH_MAX` 20,
+  `ArduPlane/config.h` at `ccdfd945aefb`). Measured on the Rascal at 20 m/s
+  (`reference/rascal_control.py`, evidence in
+  [`paper/data/rascal-control`](../paper/data/rascal-control/summary.md)):
+  heading, altitude, and speed steps all settle; the altitude derivative gain
+  flies identically from 0 to 0.02 after 5/3 and 60/30 degree upsets at 0.01,
+  0.005, and 0.0025 s steps (the derivative path scales with airspeed, so the
+  A-4D's reason for 0.002 does not apply); and the inherited 45/60 degree
+  limits let a 20 m altitude step pitch it to 48 degrees, where 20/45 settle
+  the same step in 3.4 s at 23 degrees. Unmodified C++ (D 0.01) flies the same
+  upsets as well as Ripple with no substeps; with 5 substeps it ends 53 to 60
+  degrees off heading at D 0.01 and at 0.002 alike, so its substep defects,
+  not the gain, matter there. `fixed-wing-6dof-rascal.xml` keeps the 45/60
+  limits as overrides.
+- **Outputs unchanged.** Before and after (2026-10-12): all 31 missions under
+  `missions/` and `reference/inputs/` wrote byte-identical frames,
+  summaries, and events; the three ArduPilot missions' vehicle blocks, flown
+  20 s under AircraftPIDController, wrote identical frames; and the 21
+  fixed-wing scenarios of `generate_scenarios.py --seed 1` were identical.
 
 ## Multirotor: what Ripple takes from C++
 

@@ -38,6 +38,7 @@ check failed. Every script also runs on its own; its docstring says how.
 | `speed-messages` | release | routing cost with all-agent messages (`message_benchmark.py`) | native C++ | runs |
 | `rk4-loads` | release | forces at every RK4 stage against held forces (`rk4_loads.py`) | unmodified C++ | runs |
 | `multirotor-control` | quick | MultirotorVelocityController step responses and step-size convergence (`multirotor_control.py`) | the commands; Förster's drag; 20 substeps | whole velocity error within 5%; drag tilt within 2%; within 5 mm |
+| `rascal-control` | quick | AircraftPIDController's `rascal` settings: altitude D after upsets, steps under each attitude limit (`rascal_control.py`) | the commands; the `a4d` limits | D changes error under 1 cm; steps settle, pitch under 25 degrees |
 | `rotors-motor` | release | Multirotor motor lag and rotor loads (`rotors_motor.py`) | RotorS's motor-plugin source in Docker | every sample within 1e-12 relative |
 | `crazyflow-crazyflie` | release | Multirotor's Crazyflie against Crazyflow's dynamics (`crazyflow_check.py`) | Crazyflow, pinned, via uv | no-drag case within 1e-6 m |
 | `stall-landing` | release | stall tables in ArduPlane's Rascal landing (`stall_landing.py`) | the mission without tables | the repeat is byte-identical |
@@ -128,6 +129,7 @@ resolved from this checkout, so the suite runs the same from any directory name.
 | `generate_scenarios.py`, `divergence.py`, `sensitivity.py`, `noise_statistics.py`, `platform_check.py` | Release checks described [below](#the-scripts-behind-the-release-checks) |
 | `perf.py`, `benchmark.py`, `native_benchmark.py`, `native.py`, `native_build.sh`, `spatial_benchmark.py`, `message_benchmark.py` | Speed and memory |
 | `rk4_loads.py`, `stall_landing.py`, `inputs/` | Focused studies and their input missions |
+| `rascal_control.py` | The Rascal's controller settings |
 | `multirotor_control.py`, `rotors_motor.py`, `rotors/`, `crazyflow_check.py`, `crazyflow/` | Multirotor checks; `rotors/` builds RotorS's motor-plugin source with a stand-in for Gazebo; `crazyflow/` runs Crazyflow's dynamics |
 | `Dockerfile`, `fixtures/` | The C++ reference build and its command-test plugins |
 | `rust.Dockerfile`, `benchmark_runner.rs` | Rust on Linux, for the platform check and benchmarks |
@@ -466,6 +468,10 @@ reference rather than an earlier revision of this project:
   off (must agree to integration precision) and on (Ripple's per-rotor drag
   against Crazyflow's lumped drag matrix; reported). Crazyflow runs in a uv
   environment at a pinned commit; `--python` uses an existing one.
+- `rascal_control.py`: the measurements behind AircraftPIDController's
+  `rascal` settings: the altitude derivative gain after upsets at three step
+  sizes, and heading, altitude, and speed steps under the `a4d` and `rascal`
+  attitude limits.
 - `multirotor_control.py`: MultirotorVelocityController's step responses on
   the Crazyflie, its steady tilt against Förster's rotor drag, and
   convergence at 5, 10, and 20 substeps.

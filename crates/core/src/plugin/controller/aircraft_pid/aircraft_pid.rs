@@ -3,50 +3,87 @@
 //! C++ counterpart: controller/AircraftPIDController (GTRI, LGPL-3.0-or-later).
 //! Controller phase: read desired commands and belief, output throttle and surfaces.
 
-use anyhow::{Result, ensure};
+use anyhow::{Context, Result, ensure};
 use serde::Deserialize;
 
 use crate::common::{Pid, PidGains};
+use crate::plugin::motion::FixedWingAirframe;
 use crate::plugin::{
     AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
 
-/// Mission parameters; `Default` supplies any key the mission leaves out.
-/// Each PID is `P, I, D, integral band`.
-#[derive(Deserialize)]
+/// Mission parameters. `airframe` loads the gains and attitude limits tuned
+/// for that aircraft, which any key below overrides; without it the mission
+/// gives every gain and limit. Each PID is `P, I, D, integral band`.
+#[derive(Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
-pub struct AircraftPidConfig {
+struct AircraftPidParams {
+    /// `a4d` or `rascal`, as for FixedWing6DOF.
+    airframe: Option<FixedWingAirframe>,
     #[serde(rename = "heading_pid")]
-    heading: PidGains,
+    heading: Option<PidGains>,
     #[serde(rename = "altitude_pid")]
-    altitude: PidGains,
+    altitude: Option<PidGains>,
     #[serde(rename = "speed_pid")]
-    speed: PidGains,
+    speed: Option<PidGains>,
     #[serde(rename = "pitch_pid")]
-    pitch: PidGains,
+    pitch: Option<PidGains>,
     #[serde(rename = "roll_pid")]
-    roll: PidGains,
+    roll: Option<PidGains>,
     #[serde(rename = "max_pitch")]
-    max_pitch_deg: f64,
+    max_pitch_deg: Option<f64>,
     #[serde(rename = "max_roll")]
+    max_roll_deg: Option<f64>,
+    use_roll_control: bool,
+}
+
+#[derive(Clone)]
+pub struct AircraftPidConfig {
+    heading: PidGains,
+    altitude: PidGains,
+    speed: PidGains,
+    pitch: PidGains,
+    roll: PidGains,
+    max_pitch_deg: f64,
     max_roll_deg: f64,
     use_roll_control: bool,
 }
 
-impl Default for AircraftPidConfig {
-    fn default() -> Self {
-        Self {
-            heading: PidGains::from([1.0, 0.2, 1.0, 45.0]),
-            // Upstream's altitude D gain (0.01) makes the default aircraft
-            // oscillate after an upset; see docs/REFERENCE_NOTES.md.
-            altitude: PidGains::from([0.1, 0.0001, 0.002, 10.0]),
-            speed: PidGains::from([1.0, 0.1, 0.03, 10.0]),
-            pitch: PidGains::from([5.0, 0.01, 0.01, 9.0]),
-            roll: PidGains::from([0.3, 0.1, 0.001, 9.0]),
-            max_pitch_deg: 45.0,
-            max_roll_deg: 60.0,
-            use_roll_control: false,
-        }
+/// The gains and limits each aircraft flies with. `use_roll_control` is a
+/// mission choice, not part of a profile.
+fn airframe_settings(airframe: FixedWingAirframe) -> AircraftPidConfig {
+    // Set with the A-4D; its altitude derivative gain is 0.002, where 0.01
+    // let a pitch upset grow into an altitude and heading oscillation at
+    // 220 m/s (docs/REFERENCE_NOTES.md).
+    let a4d = AircraftPidConfig {
+        heading: PidGains::from([1.0, 0.2, 1.0, 45.0]),
+        altitude: PidGains::from([0.1, 0.0001, 0.002, 10.0]),
+        speed: PidGains::from([1.0, 0.1, 0.03, 10.0]),
+        pitch: PidGains::from([5.0, 0.01, 0.01, 9.0]),
+        roll: PidGains::from([0.3, 0.1, 0.001, 9.0]),
+        max_pitch_deg: 45.0,
+        max_roll_deg: 60.0,
+        use_roll_control: false,
+    };
+    match airframe {
+        FixedWingAirframe::A4d => a4d,
+        // DEVNOTE: the A-4D's gains with ArduPlane's default attitude limits
+        // (`ROLL_LIMIT_DEG` 45, `PITCH_MAX` 20 in ArduPlane/config.h; its
+        // pitch-down limit is 25, and this controller's is symmetric).
+        // Measured: the Rascal (`airframe: rascal`) at 20 m/s, in
+        // `reference/rascal_control.py` (evidence in paper/data/rascal-control).
+        // Altitude D from 0 to 0.02 changes the altitude error after 5/3 and
+        // 60/30 degree upsets by under 1 mm at 0.01, 0.005, and 0.0025 s steps,
+        // so the A-4D's 0.002 is kept. Under the A-4D's 45/60 limits a 20 m
+        // altitude step pitched the Rascal to 48 degrees, past what a 20 m/s RC
+        // plane could fly; under 20/45 it settles in 3.4 s at 23 degrees with no
+        // overshoot, and heading and speed steps are unchanged. Rerun that
+        // script after changing these settings.
+        FixedWingAirframe::Rascal => AircraftPidConfig {
+            max_pitch_deg: 20.0,
+            max_roll_deg: 45.0,
+            ..a4d
+        },
     }
 }
 
@@ -65,7 +102,45 @@ impl Plugin for AircraftPidController {
     type Config = AircraftPidConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<AircraftPidConfig> {
-        let config: AircraftPidConfig = params.parse()?;
+        let params: AircraftPidParams = params.parse()?;
+        let profile = params.airframe.map(airframe_settings);
+        let missing = |key: &str| {
+            format!(
+                "AircraftPIDController: without `airframe`, the mission must give every \
+                 gain and limit; `{key}` is missing"
+            )
+        };
+        let config = AircraftPidConfig {
+            heading: params
+                .heading
+                .or(profile.as_ref().map(|p| p.heading))
+                .with_context(|| missing("heading_pid"))?,
+            altitude: params
+                .altitude
+                .or(profile.as_ref().map(|p| p.altitude))
+                .with_context(|| missing("altitude_pid"))?,
+            speed: params
+                .speed
+                .or(profile.as_ref().map(|p| p.speed))
+                .with_context(|| missing("speed_pid"))?,
+            pitch: params
+                .pitch
+                .or(profile.as_ref().map(|p| p.pitch))
+                .with_context(|| missing("pitch_pid"))?,
+            roll: params
+                .roll
+                .or(profile.as_ref().map(|p| p.roll))
+                .with_context(|| missing("roll_pid"))?,
+            max_pitch_deg: params
+                .max_pitch_deg
+                .or(profile.as_ref().map(|p| p.max_pitch_deg))
+                .with_context(|| missing("max_pitch"))?,
+            max_roll_deg: params
+                .max_roll_deg
+                .or(profile.as_ref().map(|p| p.max_roll_deg))
+                .with_context(|| missing("max_roll"))?,
+            use_roll_control: params.use_roll_control,
+        };
         ensure!(
             config.max_pitch_deg >= 0.0 && config.max_roll_deg >= 0.0,
             "AircraftPIDController attitude limits must be nonnegative"
@@ -168,7 +243,10 @@ mod tests {
         // Five 0.02-second updates cover one 0.1-second mission tick.
         // With constant speed error 1, I grows by 0.02 each update; D is
         // 0.01 / 0.02 = 0.5 on the first update and zero thereafter.
-        let params = Params::from([("speed_pid".into(), "0,1,0.01,10".into())]);
+        let params = Params::from([
+            ("airframe".into(), "a4d".into()),
+            ("speed_pid".into(), "0,1,0.01,10".into()),
+        ]);
         let config = AircraftPidController::configure(&PluginParams::text(&params))?;
         let mut controller = AircraftPidController::new(&config);
         let mut io = PluginIo::new(&AircraftPidController::ports(&config));
@@ -203,6 +281,26 @@ mod tests {
             )?;
             assert!((io.outputs["throttle"] - expected_throttle).abs() < 1e-12);
         }
+        Ok(())
+    }
+
+    #[test]
+    fn the_rascal_flies_the_a4d_gains_with_arduplane_limits() -> anyhow::Result<()> {
+        let configure = |airframe: &str| {
+            AircraftPidController::configure(&PluginParams::text(&Params::from([(
+                "airframe".into(),
+                airframe.into(),
+            )])))
+        };
+        let a4d = configure("a4d")?;
+        let rascal = configure("rascal")?;
+        assert_eq!((a4d.max_pitch_deg, a4d.max_roll_deg), (45.0, 60.0));
+        assert_eq!((rascal.max_pitch_deg, rascal.max_roll_deg), (20.0, 45.0));
+        assert_eq!(rascal.altitude.derivative, a4d.altitude.derivative);
+        let error = AircraftPidController::configure(&PluginParams::text(&Params::new()))
+            .err()
+            .expect("no airframe and no gains");
+        assert!(error.to_string().contains("without `airframe`"), "{error}");
         Ok(())
     }
 }

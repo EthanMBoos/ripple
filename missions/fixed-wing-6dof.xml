@@ -13,8 +13,8 @@
     <vx>222</vx><vy>0</vy><vz>0</vz><heading>0</heading>
     <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
     <autonomy speed="220">Straight</autonomy>
-    <controller>AircraftPIDController</controller>
-    <motion_model>FixedWing6DOF</motion_model><visual_model>sphere</visual_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d">FixedWing6DOF</motion_model><visual_model>sphere</visual_model>
   </entity>
   <entity>
     <count>1</count><team_id>2</team_id>
@@ -22,7 +22,7 @@
     <vx>0</vx><vy>222</vy><vz>0</vz><heading>90</heading><roll>3</roll><pitch>2</pitch>
     <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
     <autonomy speed="220">Straight</autonomy>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="3" wind_N="-2">FixedWing6DOF</motion_model><visual_model>sphere</visual_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="3" wind_N="-2">FixedWing6DOF</motion_model><visual_model>sphere</visual_model>
   </entity>
 </runscript>

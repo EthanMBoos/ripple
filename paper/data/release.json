@@ -150,6 +150,16 @@
       "source_sha256": "bb5609286c7b57c5cd897dcbf68aa9e484a652ecf6ebc484dd4ae4e85540fac1",
       "evidence": "paper/data/multirotor-control/"
     },
+    "rascal-control": {
+      "purpose": "AircraftPIDController's rascal settings on FixedWing6DOF's Rascal: altitude derivative gain after upsets, and steps under each attitude limit",
+      "reference": "the commands; the a4d limits",
+      "criterion": "altitude D changes the error under 1 cm; under the rascal limits every step settles and pitch stays under 25 degrees",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-12",
+      "source_sha256": "4db36d6a7c93be8679c2350131ceeee76d7df52c642b604e59f94b38ab163bfd",
+      "evidence": "paper/data/rascal-control/"
+    },
     "rotors-motor": {
       "purpose": "Multirotor's motor lag and rotor loads against RotorS, sample by sample",
       "reference": "RotorS's motor-plugin source (ethz-asl/rotors_simulator), compiled in Docker",

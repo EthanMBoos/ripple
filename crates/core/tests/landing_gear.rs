@@ -41,27 +41,12 @@ fn rascal_gear(steered_tail: bool) -> serde_json::Value {
     ])
 }
 
-/// FixedWing6DOF with the SITL missions' Rascal parameters and `gear`.
+/// FixedWing6DOF's Rascal, as the SITL missions fly it, on `gear`.
 fn rascal_motion(gear: serde_json::Value) -> serde_json::Value {
     json!({
+        "airframe": "rascal",
         "use_ground_model": false,
         "landing_gear": gear,
-        "gravity_magnitude": 9.81, "air_density": 1.225,
-        "inertia_matrix_slug_ft_sq": "[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]",
-        "thrust_min": 0.0, "thrust_max": 25.0,
-        "delta_elevator_min": -0.30, "delta_elevator_max": 0.30,
-        "delta_aileron_min": -0.35, "delta_aileron_max": 0.35,
-        "delta_rudder_min": -0.35, "delta_rudder_max": 0.35,
-        "mass": 5.91, "wing_span": 2.70, "surface_area_of_wing": 0.982, "chord_length": 0.351,
-        "C_D0": 0.028, "C_D_alpha": 0.0,
-        "C_L0": 0.25, "C_L_alpha": 5.0, "C_LQ": 0.0, "C_L_alpha_dot": 0.0, "C_L_delta_elevator": 0.2,
-        "C_Y_beta": -1.0, "C_Y_delta_rudder": 0.0,
-        "C_L_beta": -0.1, "C_LP": -0.4, "C_LR": 0.15, "C_L_delta_aileron": 0.13,
-        "C_L_delta_rudder": 0.01,
-        "C_M0": 0.0, "C_MQ": -12.0, "C_M_alpha": -0.5, "C_M_alpha_dot": -7.0,
-        "C_M_delta_elevator": -0.5,
-        "C_N_beta": 0.12, "C_NP": 0.0, "C_NR": -0.15, "C_N_delta_aileron": -0.03,
-        "C_N_delta_rudder": -0.05,
     })
 }
 

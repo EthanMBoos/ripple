@@ -88,6 +88,7 @@ JSBSim Rascal (`Rascal.xml`):
 ```yaml
 motion_model:
   FixedWing6DOF:
+    airframe: rascal
     use_ground_model: false          # the wheels replace the flat spring
     landing_gear:
       # forward, right, down from the centre of gravity (m)

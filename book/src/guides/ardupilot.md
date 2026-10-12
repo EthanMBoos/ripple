@@ -104,7 +104,7 @@ terrain's origin, or McMillan Airfield without terrain.
 
 | | |
 | --- | --- |
-| Aircraft | The Rascal: FixedWing6DOF with C++ SCRIMMAGE's Rascal parameters (see [The aircraft](#the-aircraft)) |
+| Aircraft | The Rascal: FixedWing6DOF's `airframe: rascal` (see [The aircraft](#the-aircraft)) |
 | Number | Any; one container each. ArduPilot aircraft exist from t = 0. |
 | Modes | Any ArduPlane mode by name with `mode`. LOITER, AUTO (`waypoints`), GUIDED (`goto`), and TAKEOFF have been flown. |
 | Starts | Held at rest, then catapulted at the release time, in the air or from the ground; or on wheels from a runway ([Takeoff and landing](#takeoff-and-landing)) |
@@ -197,16 +197,20 @@ mission protocol](https://mavlink.io/en/services/mission.html).
 
 ## The aircraft
 
-The Rascal is a 6 kg RC plane, using C++ SCRIMMAGE's simplified Rascal, which
-was derived from ArduPilot's JSBSim Rascal.
-`missions/fixed-wing-6dof-rascal.xml` checks it against C++. Know its limits:
+The Rascal is a 6 kg RC plane: FixedWing6DOF's `airframe: rascal`, built from
+ArduPilot's JSBSim Rascal. `airframe.rs` cites each value and lists where it
+differs from JSBSim (span, angle-of-attack drag, induced and elevator drag,
+elevator range).
+Flown by AircraftPIDController instead of ArduPlane, `airframe: rascal` on the
+controller gives gains measured on the Rascal and ArduPlane's attitude limits
+(pitch 20, roll 45 degrees). Know its limits:
 
-- **No stall by default.** Lift keeps rising with angle of attack, as in
-  C++. JSBSim's Rascal stalls near 8.3 m/s level (from its lift table), and
+- **No stall by default.** Lift keeps rising with angle of attack. JSBSim's
+  Rascal stalls near 8.3 m/s level (from its lift table), and
   higher in turns. Keep to moderate-angle flight around 20 m/s. This
   integration has not been checked against the real aircraft.
 
-  **Optional stall (Rust-only):** FixedWing6DOF takes tables against angle
+  **Optional stall:** FixedWing6DOF takes tables against angle
   of attack that replace its linear lift and zero-lift drag, interpolated
   and held at their ends like a JSBSim `<table>`. No mission sets them; to
   fly the Rascal with JSBSim's values, add to its `FixedWing6DOF` block:
@@ -226,9 +230,9 @@ was derived from ArduPilot's JSBSim Rascal.
   faithfully.
 - **Thrust is a fixed 0-25 N with no propeller model,** so top level speed is
   about 38 m/s.
-- **The SITL missions use radian surface limits:** elevator ±0.30, aileron
-  and rudder ±0.35, inherited from C++'s Rascal file before it switched to ±1.
-  With coefficients per radian, ±1 would allow about 3× more deflection.
+- **Surface limits in radians:** elevator ±0.30, aileron and rudder ±0.35,
+  matching the bridge's default PWM maps. Aileron and rudder are JSBSim's;
+  its elevator moves −0.35 to +0.30, so ±0.30 is a simplification.
 
 ## Adding ArduPilot to a mission
 
@@ -247,9 +251,9 @@ sensors:
 # no controller: the bridge writes throttle, elevator, aileron, rudder
 motion_model:
   FixedWing6DOF:
+    airframe: rascal
     use_launcher: true
     launch_time: 40
-    # ...Rascal parameters...
 ```
 
 - **The mission needs the `LocalNetwork` network.** The sensor reaches

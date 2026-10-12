@@ -6,7 +6,7 @@ mod plugin_fixtures;
 
 use anyhow::Result;
 use plugin_fixtures::*;
-use scrimmage_core::{Params, Simulation, plugin::PluginRegistry};
+use ripple_core::{Params, Simulation, plugin::PluginRegistry};
 
 #[test]
 fn all_user_plugin_types_work_without_engine_edits() -> Result<()> {
@@ -155,22 +155,22 @@ fn all_world_plugin_categories_resolve_through_the_registry() -> Result<()> {
 }
 
 struct FailingInteraction;
-impl scrimmage_core::plugin::Plugin for FailingInteraction {
+impl ripple_core::plugin::Plugin for FailingInteraction {
     type Config = ();
-    fn configure(params: &scrimmage_core::plugin::PluginParams<'_>) -> Result<()> {
+    fn configure(params: &ripple_core::plugin::PluginParams<'_>) -> Result<()> {
         params.parse()
     }
     fn new(_: &()) -> Self {
         Self
     }
 }
-impl scrimmage_core::plugin::Interaction for FailingInteraction {
+impl ripple_core::plugin::Interaction for FailingInteraction {
     fn step(
         &mut self,
-        context: &mut scrimmage_core::plugin::InteractionContext<'_>,
-    ) -> Result<scrimmage_core::plugin::Update> {
+        context: &mut ripple_core::plugin::InteractionContext<'_>,
+    ) -> Result<ripple_core::plugin::Update> {
         anyhow::ensure!(context.time.time_s < 0.0, "intentional interaction failure");
-        Ok(scrimmage_core::plugin::Update::Applied)
+        Ok(ripple_core::plugin::Update::Applied)
     }
 }
 #[test]
@@ -183,7 +183,7 @@ fn world_plugin_failure_terminates_the_run_and_closes_other_plugins() -> Result<
     assert!(format!("{error:#}").contains("FailingInteraction"));
     assert_eq!(
         simulation.termination(),
-        Some(scrimmage_core::TerminationReason::PluginFailure)
+        Some(ripple_core::TerminationReason::PluginFailure)
     );
     assert!(simulation.step()?.is_none());
     for (_, report) in simulation.metric_reports() {
@@ -193,24 +193,24 @@ fn world_plugin_failure_terminates_the_run_and_closes_other_plugins() -> Result<
 }
 
 struct StopInteraction;
-impl scrimmage_core::plugin::Plugin for StopInteraction {
+impl ripple_core::plugin::Plugin for StopInteraction {
     type Config = ();
-    fn configure(params: &scrimmage_core::plugin::PluginParams<'_>) -> Result<()> {
+    fn configure(params: &ripple_core::plugin::PluginParams<'_>) -> Result<()> {
         params.parse()
     }
     fn new(_: &()) -> Self {
         Self
     }
 }
-impl scrimmage_core::plugin::Interaction for StopInteraction {
+impl ripple_core::plugin::Interaction for StopInteraction {
     fn step(
         &mut self,
-        context: &mut scrimmage_core::plugin::InteractionContext<'_>,
-    ) -> Result<scrimmage_core::plugin::Update> {
+        context: &mut ripple_core::plugin::InteractionContext<'_>,
+    ) -> Result<ripple_core::plugin::Update> {
         Ok(if context.time.time_s >= 0.0 {
-            scrimmage_core::plugin::Update::Stop
+            ripple_core::plugin::Update::Stop
         } else {
-            scrimmage_core::plugin::Update::Applied
+            ripple_core::plugin::Update::Applied
         })
     }
 }
@@ -223,7 +223,7 @@ fn world_plugin_stop_emits_terminal_frame_and_closes_once() -> Result<()> {
     assert!(simulation.step()?.is_some());
     assert_eq!(
         simulation.termination(),
-        Some(scrimmage_core::TerminationReason::PluginRequestedStop)
+        Some(ripple_core::TerminationReason::PluginRequestedStop)
     );
     assert!(simulation.step()?.is_some());
     assert!(simulation.step()?.is_none());
@@ -235,21 +235,21 @@ fn world_plugin_stop_emits_terminal_frame_and_closes_once() -> Result<()> {
 }
 
 struct PanicNetwork;
-impl scrimmage_core::plugin::Plugin for PanicNetwork {
+impl ripple_core::plugin::Plugin for PanicNetwork {
     type Config = ();
     // Stands in for ExampleNetwork under the same name, so it ignores that network's parameters.
-    fn configure(_: &scrimmage_core::plugin::PluginParams<'_>) -> Result<()> {
+    fn configure(_: &ripple_core::plugin::PluginParams<'_>) -> Result<()> {
         Ok(())
     }
     fn new(_: &()) -> Self {
         Self
     }
 }
-impl scrimmage_core::plugin::Network for PanicNetwork {
+impl ripple_core::plugin::Network for PanicNetwork {
     fn step(
         &mut self,
-        _: &mut scrimmage_core::plugin::NetworkContext<'_, '_>,
-    ) -> Result<scrimmage_core::plugin::Update> {
+        _: &mut ripple_core::plugin::NetworkContext<'_, '_>,
+    ) -> Result<ripple_core::plugin::Update> {
         panic!("intentional network panic");
     }
 }
@@ -269,7 +269,7 @@ fn network_panic_is_reported_and_other_plugins_are_closed() -> Result<()> {
     assert!(simulation.step().is_err());
     assert_eq!(
         simulation.termination(),
-        Some(scrimmage_core::TerminationReason::PluginFailure)
+        Some(ripple_core::TerminationReason::PluginFailure)
     );
     for (_, report) in simulation.metric_reports() {
         assert_eq!(report.teams[&1].values["closed"], 1.0);

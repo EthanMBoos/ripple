@@ -1,11 +1,11 @@
 # The tick
 
-Each ordinary call to `Simulation::step()` runs one tick and returns that
-tick's frame: the snapshot taken right after generation, before anything moves
+Each ordinary call to `Simulation::step()` runs one tick and returns that tick's
+frame: the snapshot taken right after generation, before anything moves
 (labelled with the following timestamp, as SCRIMMAGE does). The caller writes
-it; the engine does not. The order is fixed, and it is the order SCRIMMAGE
-uses, with one addition: the estimation step. This is the Rust
-counterpart of the simulation loop in the [C++ data-flow guide](../appendix/cpp/data-flow.md).
+it; the engine does not. The order is fixed, and it is the order SCRIMMAGE uses,
+with one addition: the estimation step. This is the Rust counterpart of the
+simulation loop in the [C++ data-flow guide](../appendix/cpp/data-flow.md).
 
 ## Phase order
 
@@ -57,9 +57,9 @@ with access to every entity.
   written to output.
 - **Spatial queries see current positions.** The engine builds the index that
   answers "who is within range?" with snapshot B, then checks it before each
-  interaction and before networks and metrics, rebuilding it if an
-  interaction moved anything
-  (see [Finding nearby agents](../reference/plugin-api.md#finding-nearby-agents)).
+  interaction and before networks and metrics, rebuilding it if an interaction
+  moved anything (see [Finding nearby
+  agents](../reference/plugin-api.md#finding-nearby-agents)).
 - **Removal happens last.** An entity destroyed in tick k still has its
   messages delivered and counted in tick k's metrics, then it is closed.
 - **Rates skip, they don't reorder.** A plugin with a loop rate below the
@@ -103,7 +103,7 @@ measurement. Startup initializes every entity's belief together from one
 snapshot of the whole initial population, before any decision runs. The
 terminal frame records the last belief; estimators don't run again at the end.
 Open estimation work is in the
-[roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md).
+[roadmap](https://github.com/EthanMBoos/ripple/blob/main/docs/TODO.md).
 
 ## Start and end of a run
 

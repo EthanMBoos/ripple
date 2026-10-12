@@ -9,15 +9,15 @@ messages, and lifecycle in detail.
 
 | Type | Trait | Runs for | Gets | Built-in to copy |
 | --- | --- | --- | --- | --- |
-| Autonomy | `Autonomy` | Each entity | Own belief, contacts, messages, a random stream; writes ports | [Straight](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs) |
-| Controller | `Controller` | Each entity | Same as autonomy; reads and writes ports | [SimpleAircraftControllerPID](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
-| Motion model | `MotionModel` | Each entity | Mutable truth; reads ports | [SimpleAircraft](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
-| Sensor | `Sensor` | Each entity | Read-only truth, contacts, a random stream; publishes readings | [NoisyPosition](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) |
-| Localization | `Localization` | Each entity | Readings, messages, the commands motion read; writes own-state belief | [PassThrough](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
-| Tracking | `Tracking` | Each entity | Readings, messages, localization's pose; writes known contacts | [PassThrough](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
-| Interaction | `Interaction` | Whole world | All entities, mutable; emits events | [GroundCollision](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/interaction/ground_collision/ground_collision.rs) |
-| Network | `Network` | Whole world | Every message, a random stream; decides delivery | [LocalNetwork](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/network/local_network/local_network.rs) |
-| Metrics | `Metrics` | Whole world | Events and messages; reports team scores | [SimpleCollisionMetrics](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
+| Autonomy | `Autonomy` | Each entity | Own belief, contacts, messages, a random stream; writes ports | [Straight](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs) |
+| Controller | `Controller` | Each entity | Same as autonomy; reads and writes ports | [SimpleAircraftControllerPID](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
+| Motion model | `MotionModel` | Each entity | Mutable truth; reads ports | [SimpleAircraft](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
+| Sensor | `Sensor` | Each entity | Read-only truth, contacts, a random stream; publishes readings | [NoisyPosition](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) |
+| Localization | `Localization` | Each entity | Readings, messages, the commands motion read; writes own-state belief | [PassThrough](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
+| Tracking | `Tracking` | Each entity | Readings, messages, localization's pose; writes known contacts | [PassThrough](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
+| Interaction | `Interaction` | Whole world | All entities, mutable; emits events | [GroundCollision](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/interaction/ground_collision/ground_collision.rs) |
+| Network | `Network` | Whole world | Every message, a random stream; decides delivery | [LocalNetwork](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/network/local_network/local_network.rs) |
+| Metrics | `Metrics` | Whole world | Events and messages; reports team scores | [SimpleCollisionMetrics](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
 
 Start by copying the built-in for your type. They all follow the same layout.
 
@@ -52,7 +52,8 @@ impl Autonomy for MyPlugin {           // or Controller, MotionModel, Sensor, ..
   parallel for you. Your plugin is ordinary single-threaded Rust.
 - **Write `step` in three stages**: read inputs, calculate, write outputs. Name
   every physical quantity with its unit and frame (`distance_m`,
-  `heading_world_rad`). See [Coordinate frames](../concepts/coordinate-frames.md).
+  `heading_world_rad`). See [Coordinate
+  frames](../concepts/coordinate-frames.md).
 
 ## Files and registration
 
@@ -72,7 +73,7 @@ Use `register_autonomy`, `register_controller`, `register_motion`,
 
 ### Adding a stock plugin to the simulator
 
-Only when a plugin should ship with scrimmage-rs itself does it go in the
+Only when a plugin should ship with Ripple itself does it go in the
 simulator's source. Each stock plugin gets its own folder:
 
 ```text
@@ -82,8 +83,8 @@ crates/core/src/plugin/<type>/<my_plugin>/
 
 Then make two edits:
 
-1. **Load the module** in the type's file, such as `crates/core/src/plugin/motion.rs`.
-   Entries are alphabetical:
+1. **Load the module** in the type's file, such as
+   `crates/core/src/plugin/motion.rs`. Entries are alphabetical:
 
    ```rust,ignore
    #[path = "motion/my_plugin/my_plugin.rs"]
@@ -128,14 +129,15 @@ A parameter's value comes from the first of these that sets it:
 
 1. an attribute on the mission tag: `<autonomy speed="30">Straight</autonomy>`,
 2. a `param_common` group the tag references,
-3. an optional `Straight.xml` overlay file on `SCRIMMAGE_PLUGIN_PATH`,
+3. an optional `Straight.xml` overlay file on `RIPPLE_PLUGIN_PATH`,
 4. the struct's `Default`.
 
-In a YAML mission the values are ordinary YAML: `speed: 25`, `gains: [1, 0, 2, 9]`.
-In XML every value is text: numbers must be finite, booleans are `true`/`false`
-(or `1`/`0`), and lists such as `"1 2 3"` or `"1, 2, 3"` fill a `Vec` or a fixed
-array like `[f64; 3]`. The same struct reads either. A bad value is an error that names the key, and so is a
-key the struct doesn't have: a typo never silently gives you the default.
+In a YAML mission the values are ordinary YAML: `speed: 25`, `gains: [1, 0, 2,
+9]`. In XML every value is text: numbers must be finite, booleans are
+`true`/`false` (or `1`/`0`), and lists such as `"1 2 3"` or `"1, 2, 3"` fill a
+`Vec` or a fixed array like `[f64; 3]`. The same struct reads either. A bad
+value is an error that names the key, and so is a key the struct doesn't have: a
+typo never silently gives you the default.
 
 ## Ports: the control chain
 
@@ -186,8 +188,8 @@ for message in context.messages.receive::<BoundaryRegion>("GlobalNetwork", "Boun
   sensor data goes to its estimators as readings, not as messages.
 - Messages are delivered in the network phase, after the publisher runs.
   An autonomy sees a sensor's message on its next tick.
-- The mission must list every network you use: `<network>LocalNetwork</network>`.
-  An unlisted network is an error.
+- The mission must list every network you use:
+  `<network>LocalNetwork</network>`. An unlisted network is an error.
 
 ## The order of one tick
 
@@ -211,7 +213,8 @@ order the entities happen to run in. Results are identical whether you run with
 ## Returning from `step`
 
 - `Ok(Update::Applied)`: normal.
-- `Ok(Update::Stop)`: ask to end the simulation. The current tick still finishes.
+- `Ok(Update::Stop)`: ask to end the simulation. The current tick still
+  finishes.
 - `Err(...)`: something went wrong, such as an invalid state or a nonfinite
   number. The simulation stops and the error names your plugin. Use
   `ensure!(condition, "message")` for these checks.
@@ -225,7 +228,7 @@ Two kinds of tests work well:
   hand-picked inputs. For example: "at zero noise, the measurement equals truth
   plus bias".
 - **Mission tests** in your crate's `tests/` folder, such as
-  `crates/starter/tests/`. Build the registry `scrimmage` uses (stock plugins
+  `crates/starter/tests/`. Build the registry `ripple` uses (stock plugins
   plus your crate's `register`), load a mission, run it to the end, and check
   the events or scores. The [tutorial](../tutorial/first-autonomy.md#6-test-it)
   shows one. Stock plugins keep theirs in `crates/core/tests/`.

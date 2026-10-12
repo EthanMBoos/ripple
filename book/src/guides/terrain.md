@@ -12,9 +12,9 @@ interactions:
     clearance_m: 5
 ```
 
-`missions/terrain-mcmillan.yaml` flies aircraft on waypoint routes through the hills around
-McMillan Airfield (Camp Roberts, California), the site of C++ SCRIMMAGE's
-`mcmillan` terrain.
+`missions/terrain-mcmillan.yaml` flies aircraft on waypoint routes through the
+hills around McMillan Airfield (Camp Roberts, California), the site of C++
+SCRIMMAGE's `mcmillan` terrain.
 
 ## Heights and the local frame
 
@@ -155,27 +155,29 @@ Terrain here does three separate jobs, kept in separate places:
 - **C++ SCRIMMAGE** kept terrain out of the simulation. The mission's
   `<terrain>` was a mesh only the viewer drew, and ground contact meant a flat
   plane: FixedWing6DOF's spring at `z = 0`, or GroundCollision's height. Its
-  random TerrainGenerator was used by no stock mission (see
-  [reference notes](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/REFERENCE_NOTES.md#terrain-rust-only)).
-- **[JSBSim](https://jsbsim-team.github.io/jsbsim/)** splits the ground into
-  two parts. A [ground callback](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGGroundCallback.html)
+  random TerrainGenerator was used by no stock mission (see [reference
+  notes](https://github.com/EthanMBoos/ripple/blob/main/docs/REFERENCE_NOTES.md#terrain-rust-only)).
+- **[JSBSim](https://jsbsim-team.github.io/jsbsim/)** splits the ground into two
+  parts. A [ground
+  callback](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGGroundCallback.html)
   answers geometry queries: given a location, it returns the height above
-  ground, the contact point, the surface normal, and the surface's velocity.
-  Its [default](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGDefaultGroundCallback.html)
+  ground, the contact point, the surface normal, and the surface's velocity. Its
+  [default](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGDefaultGroundCallback.html)
   is a round Earth at one terrain elevation; a host such as FlightGear supplies
-  real terrain. Separately, [landing gear](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGLGear.html)
-  turns contact into physics: each contact point has a spring and damper,
-  static, sliding, and rolling friction, brakes and steering, and produces
-  forces and moments on the aircraft. `STRUCTURE` contact points on the
-  fuselage and wings push back on the airframe too, with their own friction;
-  JSBSim does not remove the aircraft. Removing it when one touches is this
-  simulator's simpler rule (TerrainCollision's `structure_points_frd_m`).
+  real terrain. Separately, [landing
+  gear](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGLGear.html) turns
+  contact into physics: each contact point has a spring and damper, static,
+  sliding, and rolling friction, brakes and steering, and produces forces and
+  moments on the aircraft. `STRUCTURE` contact points on the fuselage and wings
+  push back on the airframe too, with their own friction; JSBSim does not remove
+  the aircraft. Removing it when one touches is this simulator's simpler rule
+  (TerrainCollision's `structure_points_frd_m`).
 - **[MuJoCo](https://mujoco.readthedocs.io/en/stable/computation/index.html)**
-  treats terrain as collision geometry (a
-  [height field](https://mujoco.readthedocs.io/en/stable/XMLreference.html#asset-hfield))
+  treats terrain as collision geometry (a [height
+  field](https://mujoco.readthedocs.io/en/stable/XMLreference.html#asset-hfield))
   and contact as soft constraints, each with a normal and friction directions,
-  solved every step. Its documentation stresses that the timestep and
-  integrator decide whether contact stays stable.
+  solved every step. Its documentation stresses that the timestep and integrator
+  decide whether contact stays stable.
 
 Both separate "where is the ground?" from "what does touching it do?", and
 both show that a believable ground response needs contact points, surface

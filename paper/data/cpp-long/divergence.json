@@ -1,0 +1,84 @@
+{
+  "cases": [
+    {
+      "case": "generated-000",
+      "end_s": 999.9999999996382,
+      "cpp_vs_rust_exceeds_tolerance_at_s": 28.800000000000274,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": 26.800000000000246,
+      "cpp_vs_rust_final_m": 0.0002044191754397671,
+      "rust_vs_nudged_rust_final_m": 0.0002130180551775872
+    },
+    {
+      "case": "generated-001",
+      "end_s": 999.9999999996382,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 8.134767913360665e-12,
+      "rust_vs_nudged_rust_final_m": 6.195254669701682e-11
+    },
+    {
+      "case": "generated-002",
+      "end_s": 1000.0000000001588,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 3.637978807091713e-12,
+      "rust_vs_nudged_rust_final_m": 5.4082443047513174e-11
+    },
+    {
+      "case": "generated-003",
+      "end_s": 999.9999999996382,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 7.275957614183426e-12,
+      "rust_vs_nudged_rust_final_m": 6.984185043528847e-11
+    },
+    {
+      "case": "generated-004",
+      "end_s": 999.9999999996382,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 3.637978807091713e-12,
+      "rust_vs_nudged_rust_final_m": 1.8727642129282687e-11
+    },
+    {
+      "case": "generated-005",
+      "end_s": 1000.0000000001588,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 0.0,
+      "rust_vs_nudged_rust_final_m": 0.0
+    },
+    {
+      "case": "generated-006",
+      "end_s": 1000.0000000001588,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 8.957483989248525e-12,
+      "rust_vs_nudged_rust_final_m": 7.499885442698834e-12
+    },
+    {
+      "case": "generated-007",
+      "end_s": 100.00000000001425,
+      "cpp_vs_rust_exceeds_tolerance_at_s": 76.40000000000218,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": 14.429999999999737,
+      "cpp_vs_rust_final_m": 8.4144366560816e-09,
+      "rust_vs_nudged_rust_final_m": 7.932056508122791e-07
+    },
+    {
+      "case": "generated-008",
+      "end_s": 100.00000000001425,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 6.959863265259261e-11,
+      "rust_vs_nudged_rust_final_m": 5.682655432731843e-10
+    },
+    {
+      "case": "generated-009",
+      "end_s": 999.9999999996382,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": 33.00000000000026,
+      "cpp_vs_rust_final_m": 5.4569682106375694e-12,
+      "rust_vs_nudged_rust_final_m": 1.0439519954528409e-06
+    }
+  ]
+}

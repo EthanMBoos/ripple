@@ -14,8 +14,8 @@ use std::collections::BTreeMap;
 use std::sync::Mutex;
 
 use anyhow::Result;
-use scrimmage_core::plugin::*;
-use scrimmage_core::{
+use ripple_core::plugin::*;
+use ripple_core::{
     EntityGroupConfig, KinematicState, PluginConfig, RunConfig, ScenarioConfig, Simulation,
     SimulationFrame, Spawn, Vec3,
 };
@@ -346,7 +346,7 @@ fn perfect_belief_equals_truth_at_every_decision_through_collisions_and_spawns()
         simulation
             .events()
             .iter()
-            .any(|event| event.kind == scrimmage_core::EventKind::NonTeamCollision),
+            .any(|event| event.kind == ripple_core::EventKind::NonTeamCollision),
         "the scenario must include a collision"
     );
 
@@ -525,7 +525,7 @@ fn trackers_are_per_entity_and_leave_truth_alone() -> Result<()> {
     let [biased, perfect] = simulation.entities() else {
         panic!("two entities");
     };
-    let own = |entity: &scrimmage_core::Entity, id: i32| {
+    let own = |entity: &ripple_core::Entity, id: i32| {
         entity
             .contacts_belief()
             .iter()

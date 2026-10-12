@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cut a square of terrain around a mission origin into scrimmage-rs's format.
+"""Cut a square of terrain around a mission origin into Ripple's format.
 
     python3 scripts/terrain/prepare.py NAME --origin LATITUDE LONGITUDE \\
         --altitude-m ALTITUDE --size-m SIZE --cell-m CELL \\

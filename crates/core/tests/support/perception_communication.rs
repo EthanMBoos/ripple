@@ -2,16 +2,16 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use scrimmage_core::plugin::autonomy::{
+use ripple_core::plugin::autonomy::{
     AuctionBid, AuctionResult, AuctionStart, BID_AUCTION_TOPIC, RESULT_AUCTION_TOPIC,
     START_AUCTION_TOPIC,
 };
-use scrimmage_core::plugin::sensor::ContactsWithCovariances;
-use scrimmage_core::plugin::{
+use ripple_core::plugin::sensor::ContactsWithCovariances;
+use ripple_core::plugin::{
     AgentContext, Autonomy, Frame, Interaction, InteractionContext, Plugin, PluginIo, PluginParams,
     PluginRegistry, Port, Ports, Sensor, SensorContext, Unit, Update,
 };
-use scrimmage_core::{Mission, Params, Simulation};
+use ripple_core::{Mission, Params, Simulation};
 use serde::Deserialize;
 
 #[derive(Default, Deserialize)]

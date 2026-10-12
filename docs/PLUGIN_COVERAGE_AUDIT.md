@@ -6,8 +6,9 @@ SphereNetwork, and AuctionAssign additions are complete; their behavior is in
 the [plugin reference](../book/src/reference/plugin-api.md).
 
 The remaining findings below are candidates to revisit when an experiment needs
-them. Current model availability is in the [model reference](../book/src/reference/models.md);
-selected implementation work is in [TODO.md](TODO.md).
+them. Current model availability is in the [model
+reference](../book/src/reference/models.md); selected implementation work is in
+[TODO.md](TODO.md).
 
 ## Missing shared capabilities
 
@@ -37,16 +38,18 @@ per-agent estimated world model.
   provide per-plugin random streams.
 - TerrainGenerator/AltitudeAboveTerrain suggest a typed immutable height-map
   message. Late-spawned subscribers need an explicit delivery strategy because
-  stock messages are not latched. Physical terrain is separate from viewer tiles.
+  stock messages are not latched. Physical terrain is separate from viewer
+  tiles.
 - Capture/scoring rules can use interactions, typed events, and team metrics.
   Per-entity histories and custom diagnostic output still need a chosen sink.
 - An explicit-port energy limiter fits a controller chain;
   [UUV6DOFLinearEnergy](../../scrimmage/src/plugins/controller/UUV6DOFLinearEnergy/UUV6DOFLinearEnergy.cpp)
-  is a small reference. A full battery adds charge reporting and entity retirement.
+  is a small reference. A full battery adds charge reporting and entity
+  retirement.
 - Rust's fixed plugin stack merges autonomy outputs in source order; it is not
-  C++ MotorSchemas/AutonomyExecutor child-plugin activation. Use
-  [ordinary components and state machines](../book/src/guides/autonomy-composition.md)
-  for growing behaviors.
+  C++ MotorSchemas/AutonomyExecutor child-plugin activation. Use [ordinary
+  components and state machines](../book/src/guides/autonomy-composition.md) for
+  growing behaviors.
 
 External readiness/creation belongs to the integration plan. No concrete
 `posthumous` override was found in the audited C++ plugin tree. OpenAIRewards
@@ -58,7 +61,8 @@ Check these before choosing a new port; they are observations of the reviewed
 source, not instructions to change the C++ reference.
 
 - **MultirotorControllerPID:** writes equal hover motor speeds; attitude/yaw
-  corrections are commented out. It does not establish closed-loop stabilization.
+  corrections are commented out. It does not establish closed-loop
+  stabilization.
 - **RigidBody6DOF:** disables gravity and some translational derivatives, and
   assigns P/Q/R by clamping U.
 - **Ballistic:** puts `-mass * g` in the derivative of vertical acceleration,
@@ -72,4 +76,5 @@ source, not instructions to change the C++ reference.
   deterministic behavior need explicit treatment.
 
 The audit inspected source and public interfaces, not numerical correctness of
-all C++ models. Selected behavior and comparison evidence are in the [paper](../paper/README.md).
+all C++ models. Selected behavior and comparison evidence are in the
+[paper](../paper/README.md).

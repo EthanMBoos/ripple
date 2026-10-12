@@ -14,8 +14,8 @@
 
 use anyhow::{Result, ensure};
 use nalgebra::{Matrix3, Rotation3, UnitQuaternion};
-use scrimmage_core::plugin::{Plugin, PluginParams, Sensor, SensorContext, Update};
-use scrimmage_core::{KinematicState, Vec3};
+use ripple_core::plugin::{Plugin, PluginParams, Sensor, SensorContext, Update};
+use ripple_core::{KinematicState, Vec3};
 use serde::Deserialize;
 
 /// LocalNetwork topic carrying one `SitlSample` per tick.
@@ -184,7 +184,7 @@ fn flu_to_frd(flu: Vec3) -> Vec3 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use scrimmage_core::{EulerAngles, Quaternion};
+    use ripple_core::{EulerAngles, Quaternion};
 
     fn state(roll_deg: f64, pitch_deg: f64, yaw_deg: f64) -> KinematicState {
         KinematicState {

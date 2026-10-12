@@ -22,7 +22,7 @@ fn every_shipped_mission_runs_identically_with_recording_on_and_off() {
         let baseline = temp.path().join(format!("{index}-plain"));
         let recorded = temp.path().join(format!("{index}-recorded"));
         for (output, mode) in [(&baseline, "--no-rerun"), (&recorded, "--headless")] {
-            let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+            let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
                 .current_dir(&root)
                 .arg("run")
                 .arg(mission)
@@ -56,7 +56,7 @@ fn cli_allocates_runs_and_accepts_explicit_output_without_changing_results() {
     let mission =
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../core/tests/fixtures/plugin_defaults.xml");
     for output in [None, None, Some("custom/nested/run"), Some("named")] {
-        let mut command = Command::new(env!("CARGO_BIN_EXE_scrimmage"));
+        let mut command = Command::new(env!("CARGO_BIN_EXE_ripple"));
         command
             .current_dir(temp.path())
             .arg("run")
@@ -84,7 +84,7 @@ fn cli_allocates_runs_and_accepts_explicit_output_without_changing_results() {
             );
         }
     }
-    let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+    let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
         .current_dir(temp.path())
         .arg("run")
         .arg(mission)
@@ -108,7 +108,7 @@ fn failed_runs_still_write_outputs_and_record_the_error() {
         xml.replace(r#"turning_radius="23""#, r#"turning_radius="0""#),
     )
     .unwrap();
-    let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+    let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
         .current_dir(temp.path())
         .arg("run")
         .arg(&mission)
@@ -136,7 +136,7 @@ fn failed_runs_still_write_outputs_and_record_the_error() {
 #[test]
 fn invalid_missions_do_not_allocate_run_directories() {
     let temp = tempfile::tempdir().unwrap();
-    let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+    let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
         .current_dir(temp.path())
         .args(["run", "missing-mission.xml", "--no-rerun", "--root"])
         .arg(temp.path())
@@ -157,7 +157,7 @@ fn unavailable_sensor_reports_its_category_before_creating_a_run() {
     // A missing name and a real plugin name registered in the wrong category (motion).
     for name in ["RayTrace", "SimpleAircraft"] {
         fs::write(&mission, xml.replace("NoisyPosition", name)).unwrap();
-        let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+        let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
             .current_dir(temp.path())
             .arg("run")
             .arg(&mission)

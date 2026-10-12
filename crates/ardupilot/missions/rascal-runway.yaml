@@ -1,5 +1,5 @@
 # A Rascal flown by ArduPlane SITL takes off from the runway south of McMillan
-# Airfield, flies a left-hand circuit, and lands. `scrimmage run` (built with
+# Airfield, flies a left-hand circuit, and lands. `ripple run` (built with
 # --features ardupilot) starts the SITL container; see
 # book/src/guides/ardupilot.md, "Takeoff and landing".
 #

@@ -315,7 +315,8 @@ impl NetworkContext<'_, '_> {
         // with the index, 9.7 ms.
         // C++ keeps per-topic subscriber lists but still checks every
         // subscriber, so it costs the same there. Measured with
-        // paper/data/message-routing/benchmark.py. Building the index in phases
+        // reference/message_benchmark.py, which still times C++ against this
+        // routing (the earlier routing is gone). Building the index in phases
         // without messages made steps without messages 27-49% slower, so it is
         // skipped then.
         let mut subscribers = Subscribers::new();

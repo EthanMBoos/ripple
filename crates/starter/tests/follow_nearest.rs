@@ -1,7 +1,7 @@
 //! A mission-level test: run the whole mission with the same plugins as the
-//! `scrimmage` command, and check the outcome.
+//! `ripple` command, and check the outcome.
 use anyhow::Result;
-use scrimmage_core::{EventKind, Mission, Params, Simulation, plugin::PluginRegistry};
+use ripple_core::{EventKind, Mission, Params, Simulation, plugin::PluginRegistry};
 use std::path::Path;
 
 #[test]

@@ -1,10 +1,10 @@
-//! `scrimmage sweep`: shards must reproduce the whole sweep, row for row.
+//! `ripple sweep`: shards must reproduce the whole sweep, row for row.
 use std::{fs, path::Path, process::Command};
 
 fn sweep(root: &Path, extra: &[&str]) -> std::process::Output {
     let sweep = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../missions/waypoints-point-agents.sweep.yaml");
-    Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+    Command::new(env!("CARGO_BIN_EXE_ripple"))
         .arg("sweep")
         .arg(sweep)
         .arg("--root")
@@ -83,7 +83,7 @@ fn a_misspelled_path_fails_before_creating_output() {
         ),
     )
     .unwrap();
-    let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+    let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
         .arg("sweep")
         .arg(&broken)
         .arg("--root")
@@ -95,14 +95,14 @@ fn a_misspelled_path_fails_before_creating_output() {
     assert!(!temp.path().join("sweeps").exists());
 }
 
-/// User plugin crates are compiled into `scrimmage`: the starter's FollowNearest
+/// User plugin crates are compiled into `ripple`: the starter's FollowNearest
 /// runs through the stock command's sweep like a stock plugin.
 #[test]
 fn the_command_sweeps_a_user_plugin() {
     let temp = tempfile::tempdir().unwrap();
     let sweep =
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../starter/missions/follow-nearest.sweep.yaml");
-    let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+    let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
         .arg("sweep")
         .arg(sweep)
         .arg("--root")
@@ -141,7 +141,7 @@ fn invalid_case_values_remain_error_rows_when_sharded() {
     ).unwrap();
     for index in 0..2 {
         let output = temp.path().join(format!("shard-{index}"));
-        let result = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+        let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
             .arg("sweep")
             .arg(&spec)
             .arg("--shard-index")

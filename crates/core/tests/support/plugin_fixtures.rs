@@ -10,7 +10,7 @@ mod perception_communication;
 pub(super) mod sensor;
 
 use anyhow::Result;
-use scrimmage_core::{Mission, Params, Simulation, plugin::PluginRegistry};
+use ripple_core::{Mission, Params, Simulation, plugin::PluginRegistry};
 use std::path::PathBuf;
 
 pub(super) fn registry() -> Result<PluginRegistry> {
@@ -28,7 +28,7 @@ pub(super) fn registry() -> Result<PluginRegistry> {
 pub(super) fn scenario(
     overrides: &Params,
     registry: &PluginRegistry,
-) -> Result<scrimmage_core::ScenarioConfig> {
+) -> Result<ripple_core::ScenarioConfig> {
     let core = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let root = core.join("../..");
     let mut scenario = Mission::load_with_registry(
@@ -43,7 +43,7 @@ pub(super) fn scenario(
     let entity = &mut scenario.entities[0];
     if entity.sensors[0].name == "PositionSensor" {
         entity.localization =
-            scrimmage_core::PluginConfig::new("EastFix").input("fix", "PositionSensor:0");
+            ripple_core::PluginConfig::new("EastFix").input("fix", "PositionSensor:0");
     }
     Ok(scenario)
 }

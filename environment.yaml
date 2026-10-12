@@ -1,6 +1,6 @@
-# Cluster environment for scripts/bulk_run.py (copied from Ripple). Create it once
+# Cluster environment for scripts/bulk_run.py. Create it once
 # on shared storage: conda env create -f environment.yaml
-name: scrimmage-rs
+name: ripple
 channels:
   - conda-forge
   - nodefaults

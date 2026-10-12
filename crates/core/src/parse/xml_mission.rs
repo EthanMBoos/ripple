@@ -31,9 +31,9 @@ pub(super) fn load(
         .context("missing run element")?
         .attrs;
     // Plugin defaults live in each plugin's `Default`. Optional overlay files
-    // on SCRIMMAGE_PLUGIN_PATH replace individual defaults for every use.
+    // on RIPPLE_PLUGIN_PATH replace individual defaults for every use.
     let mut plugins = BTreeMap::new();
-    if let Some(paths) = std::env::var_os("SCRIMMAGE_PLUGIN_PATH") {
+    if let Some(paths) = std::env::var_os("RIPPLE_PLUGIN_PATH") {
         for plugin_path in std::env::split_paths(&paths) {
             collect_xml(&plugin_path, &mut plugins)?;
         }

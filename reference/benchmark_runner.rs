@@ -12,7 +12,7 @@ use std::{
 };
 
 use anyhow::{Result, ensure};
-use scrimmage_core::{Mission, Params, Simulation, SpatialLookup, write_frame};
+use ripple_core::{Mission, Params, Simulation, SpatialLookup, write_frame};
 
 fn main() -> Result<()> {
     let args: Vec<_> = env::args().collect();
@@ -29,7 +29,7 @@ fn main() -> Result<()> {
     }
     let mut simulation = Simulation::new(
         config.scenario,
-        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        &ripple_core::plugin::PluginRegistry::with_builtins(),
         args[4].parse()?,
     )?;
     let setup_s = started.elapsed().as_secs_f64();

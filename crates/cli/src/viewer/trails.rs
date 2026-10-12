@@ -1,11 +1,11 @@
 //! Trails for `--draw-trails`: each agent's path over the last `TRAIL_S`
-//! seconds, on the recording's own timelines. `scrimmage run --viewer` sends
-//! them only to the live viewer, and `scrimmage replay` rebuilds them from a
+//! seconds, on the recording's own timelines. `ripple run --viewer` sends
+//! them only to the live viewer, and `ripple replay` rebuilds them from a
 //! run's frames. They are never saved: redrawing every agent's trail every
 //! frame made large recorded runs much slower (see `draw`).
 use anyhow::Result;
 use rerun::RecordingStream;
-use scrimmage_core::SimulationFrame;
+use ripple_core::SimulationFrame;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use super::{map, playback_time_ns, team_color};
@@ -18,7 +18,7 @@ const MAX_TRAIL_POINTS: usize = 100;
 /// values the run's recording used, so they line up with it.
 ///
 /// DEVNOTE: recording perf.py's `motion` workload at 512 aircraft (2,000
-/// frames, 8 workers) with `scrimmage run --headless` on an M2 Pro took 23-25 s
+/// frames, 8 workers) with `ripple run --headless` on an M2 Pro took 23-25 s
 /// without trails and 38-41 s with them redrawn every frame, so trails are not
 /// recorded. Fewer points (37-40 s), one log call per view for all
 /// trails (52-53 s), and redrawing once a second (28-29 s, visibly jumpy) did

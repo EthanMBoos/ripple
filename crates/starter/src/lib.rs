@@ -1,11 +1,11 @@
-//! User plugins, available to the stock `scrimmage` command.
+//! User plugins, available to the stock `ripple` command.
 //!
 //! To add a plugin: write it in its own file (see `follow_nearest.rs` or
 //! `dead_reckoning.rs`), add a `mod` line below, and register it in `register`
 //! under the name missions use.
-//! The `scrimmage` command calls `register` at startup (crates/cli/src/main.rs).
+//! The `ripple` command calls `register` at startup (crates/cli/src/main.rs).
 use anyhow::Result;
-use scrimmage_core::plugin::PluginRegistry;
+use ripple_core::plugin::PluginRegistry;
 
 mod dead_reckoning;
 mod follow_nearest;

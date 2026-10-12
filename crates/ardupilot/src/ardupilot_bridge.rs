@@ -17,7 +17,7 @@
 //! instead of being smoothed over. It must run every tick (no `loop_rate`).
 //!
 //! The last frame applied is never answered, because the run ends first;
-//! `scrimmage run` stops SITL when the run ends (`sitl_launcher.rs`). See
+//! `ripple run` stops SITL when the run ends (`sitl_launcher.rs`). See
 //! book/src/guides/ardupilot.md.
 
 use std::collections::BTreeMap;
@@ -25,7 +25,7 @@ use std::net::{SocketAddr, UdpSocket};
 use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, bail, ensure};
-use scrimmage_core::plugin::{
+use ripple_core::plugin::{
     AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, StepTime, Unit,
     Update,
 };

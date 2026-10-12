@@ -15,16 +15,17 @@
 //! at 1,024 agents (58% of the step), 4.5 ms at 2,048 (71%), and 18 ms at 4,096
 //! (79%). Positions are kept in a compact list instead of being read from each
 //! `Entity`, whose size had changed collision timings by 20% with identical
-//! output. Measured with paper/data/spatial-lookup/benchmark.py on an M2 Pro
-//! (median of five alternating runs): a step with 4,096 spread-out agents took
-//! 19.1 ms before, 10.2 ms with the compact scan, and 5.0 ms with a 5 m grid.
+//! output. Measured on an M2 Pro (median of five alternating runs): a step with
+//! 4,096 spread-out agents took 19.1 ms with the previous every-pair loop (since
+//! removed), 10.2 ms with the compact scan, and 5.0 ms with a 5 m grid.
 //! Subtracting the same mission without SimpleCollision estimates collision's
 //! own cost at about 15, 6, and 0.9 ms. At 256 agents the grid makes a step 9%
 //! slower than the scan (its build, ~0.02 ms per step). A first grid ran 27 binary
 //! searches per query (one per cell) and was slower than the scan at 1,024
 //! agents (1.9 against 1.2 ms per step); looking up (x, y) columns in a hash
-//! map, and reusing buffers, fixed that. Quick check: perf.py's `collision`
-//! against `collision-grid`.
+//! map, and reusing buffers, fixed that. Rerun the scan against grids with
+//! reference/spatial_benchmark.py; quick check: perf.py's `collision` against
+//! `collision-grid`.
 //!
 //! Only SimpleCollision (`pairs_within`) uses this among the built-ins. The
 //! point queries (`SpatialIndex::within`, `TruthContacts::within`, and
@@ -45,7 +46,7 @@ const MAX_CELL: f64 = (1_u64 << 52) as f64;
 
 /// A query scans instead when its columns times this exceed the entity count.
 /// DEVNOTE: looking up one column cost about as much as 30 distance tests in
-/// paper/data/spatial-lookup/benchmark.py (sparse-4096: ~23 ns per lookup
+/// reference/spatial_benchmark.py (sparse-4096: ~23 ns per lookup
 /// against ~0.7 ns per test). With the fallback at one column per entity, 5 m
 /// cells for a 50 m range (441 columns per query) made collision checking three
 /// times slower than the scan (large-range-4096: 12.0 against 3.9 ms per step).
@@ -76,7 +77,7 @@ impl SpatialIndex {
         // DEVNOTE: the grid is built even when every query will fall back to the
         // scan (few agents, or cells much smaller than the range): about 0.02 ms
         // per step with 256 agents, 9% of the step, in
-        // paper/data/spatial-lookup/benchmark.py. If that ever matters, skip the
+        // reference/spatial_benchmark.py. If that ever matters, skip the
         // build below the entity count a nine-column query needs (9 times
         // COLUMN_COST_IN_TESTS).
         let grid = match lookup {

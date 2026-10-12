@@ -25,13 +25,15 @@ live individual. Public configuration fields are editable until construction.
 `Simulation::new(scenario, &registry, workers)` validates them and keeps the
 resolved definitions internal.
 
-This follows a familiar simulation pattern. [MuJoCo's model-editing API](https://mujoco.readthedocs.io/en/stable/programming/modeledit.html)
-lets XML parsers and programmatic setup populate `mjSpec`, then compiles it into
-a runtime model. [Drake's YAML serialization guidance](https://drake.mit.edu/doxygen_cxx/group__yaml__serialization.html)
-uses public fields for ordinary serializable configuration structures. These
-are references for the boundaries, not proposals to adopt their frameworks.
-[Serde defaults and field adapters](https://serde.rs/field-attrs.html) let the
-Rust definitions own defaults while the readers handle file syntax.
+This follows a familiar simulation pattern. [MuJoCo's model-editing
+API](https://mujoco.readthedocs.io/en/stable/programming/modeledit.html) lets
+XML parsers and programmatic setup populate `mjSpec`, then compiles it into a
+runtime model. [Drake's YAML serialization
+guidance](https://drake.mit.edu/doxygen_cxx/group__yaml__serialization.html)
+uses public fields for ordinary serializable configuration structures. These are
+references for the boundaries, not proposals to adopt their frameworks. [Serde
+defaults and field adapters](https://serde.rs/field-attrs.html) let the Rust
+definitions own defaults while the readers handle file syntax.
 
 ## Choices in this implementation
 

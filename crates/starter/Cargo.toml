@@ -1,6 +1,6 @@
-# User plugins. The stock `scrimmage` command registers this crate's plugins
-# (crates/cli/src/main.rs), so its missions run with `scrimmage run` and
-# `scrimmage sweep` like any other. To add another crate like this one, see
+# User plugins. The stock `ripple` command registers this crate's plugins
+# (crates/cli/src/main.rs), so its missions run with `ripple run` and
+# `ripple sweep` like any other. To add another crate like this one, see
 # book/src/guides/user-plugins.md.
 [package]
 name = "starter"
@@ -10,6 +10,6 @@ license.workspace = true
 publish = false
 
 [dependencies]
-scrimmage-core = { path = "../core" }
+ripple-core = { path = "../core" }
 anyhow.workspace = true
 serde.workspace = true

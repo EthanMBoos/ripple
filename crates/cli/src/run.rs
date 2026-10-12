@@ -1,7 +1,7 @@
 use crate::viewer::Viewer;
 use anyhow::{Context, Result, ensure};
 use clap::Args;
-use scrimmage_core::{
+use ripple_core::{
     Mission, Params, ScenarioConfig, Simulation, plugin::PluginRegistry, write_frame,
 };
 use std::{
@@ -27,7 +27,7 @@ pub(crate) struct RunOptions {
     #[arg(long, conflicts_with_all = ["headless", "no_rerun"])]
     viewer: bool,
     /// Draw each agent's recent path in the live viewer (not saved; see
-    /// `scrimmage replay --draw-trails`).
+    /// `ripple replay --draw-trails`).
     #[arg(long)]
     draw_trails: bool,
     /// Suppress the viewer even if enable_gui is true in the mission.
@@ -129,7 +129,7 @@ impl Default for RunSettings {
     }
 }
 
-/// Run a scenario with the same outputs, recording, and failure handling as `scrimmage run`.
+/// Run a scenario with the same outputs, recording, and failure handling as `ripple run`.
 /// Invalid setup fails before an output directory is created. Step failures retain
 /// partial outputs and their error in `manifest.json`.
 pub fn run_scenario(
@@ -161,7 +161,7 @@ pub fn run_scenario(
     #[cfg(feature = "ardupilot")]
     let _sitl =
         ardupilot::SitlLauncher::start(simulation.scenario(), simulation.terrain(), &output)?;
-    // Unique per run; the manifest records it for `scrimmage replay --draw-trails`.
+    // Unique per run; the manifest records it for `ripple replay --draw-trails`.
     let recording_id = format!(
         "{}-{}",
         settings.name,

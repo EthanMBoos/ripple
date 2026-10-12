@@ -2,9 +2,10 @@
 
 Source review: sibling `../scrimmage`, branch `Ubuntu-24.04`, commit
 `4bdf41fb06facaea358d478d9a07aa4d77fcac27` (2026-09-23/24). This identifies the
-reviewed source, not a required pin. Follow the branch for new comparisons.
-The [roadmap](TODO.md) defines selected scope; the [book](../book/src/SUMMARY.md)
-describes current Rust APIs. Comparison results are in the [paper](../paper/README.md).
+reviewed source, not a required pin. Follow the branch for new comparisons. The
+[roadmap](TODO.md) defines selected scope; the [book](../book/src/SUMMARY.md)
+describes current Rust APIs. Comparison results are in the
+[paper](../paper/README.md).
 
 ## Corrections to the copied C++ guides
 
@@ -36,9 +37,13 @@ Rust lifecycle and delivery rules are in the
   not retain entity `tag` values as spawn-template identities. XML is frozen;
   use YAML's whole-slot replacement for new missions.
 - The original `straight_cpu_mul.xml` misspells `motion_multipler`. Keep the
-  fixture unchanged; `verification/aircraft-substeps-spawning.xml` tests real substeps.
-- `SCRIMMAGE_PLUGIN_PATH` discovers optional XML defaults overlays, not code.
-  YAML configuration does not depend on these overlays.
+  fixture unchanged; `verification/aircraft-substeps-spawning.xml` tests real
+  substeps.
+- `RIPPLE_PLUGIN_PATH` discovers optional XML defaults overlays, not code
+  (C++ reads `SCRIMMAGE_PLUGIN_PATH`; the separate name keeps a C++ install's
+  overlays from changing Ripple's defaults). `RIPPLE_MISSION_PATH` likewise
+  replaces `SCRIMMAGE_MISSION_PATH`. YAML configuration does not depend on
+  these overlays.
 - Rust/YAML position variance defaults to zero; XML retains its legacy default
   of `[100, 100, 0]` m². The XML reader translates positive scalar `speed` into
   world-X velocity when the velocity vector is zero. Native scenarios specify
@@ -72,27 +77,33 @@ Rust lifecycle and delivery rules are in the
   change delivered-message counts and is left for a separate change.
 
 - **Survivor flight time:** C++ publishes `EntityPresentAtEnd` after its last
-  network phase, so metrics credit survivors only until the latest removal.
-  Rust credits them until report time. In `networks-local-global.xml`, surviving
-  teams report 29.9 s instead of 0.4 s. Frames are unaffected; flight-time summary
-  columns differ. See the regression in
+  network phase, so metrics credit survivors only until the latest removal. Rust
+  credits them until report time. In `networks-local-global.xml`, surviving
+  teams report 29.9 s instead of 0.4 s. Frames are unaffected; flight-time
+  summary columns differ. See the regression in
   [SimpleCollisionMetrics](../crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs).
 - **Teams that first spawn after t=0:** C++ SimpleCollisionMetrics lists teams
   at its first step, then totals later teams with no normalization time: their
   `flight_time_norm` is infinite and `score` NaN. Rust reports every team with a
   generated entity using the same normalization as other teams; `flight_time`
-  and collision counts match. Seen in `verification/aircraft-substeps-scheduled.xml`.
-- **FixedWing6DOF inertia:** C++'s bundled slug-unit default silently overrides a
-  supplied SI matrix. Rust accepts either `inertia_matrix_slug_ft_sq` or
+  and collision counts match. Seen in
+  `verification/aircraft-substeps-scheduled.xml`.
+- **FixedWing6DOF inertia:** C++'s bundled slug-unit default silently overrides
+  a supplied SI matrix. Rust accepts either `inertia_matrix_slug_ft_sq` or
   `inertia_matrix`, rejects both together, and uses the slug default if neither
   is supplied.
 - **FixedWing6DOF elevator drag key:** C++ reads `C_D_delta_elevator_` (with a
   trailing underscore), but every bundled parameter file writes
-  `C_D_delta_elevator`, so C++ always uses the 0.01 default. That is harmless for
-  the A-4D default (its file also says 0.01), but the Rascal file's 0.03 is
+  `C_D_delta_elevator`, so C++ always uses the 0.01 default. That is harmless
+  for the A-4D default (its file also says 0.01), but the Rascal file's 0.03 is
   never used. Rust reads the same underscore key and rejects the plain name, so
   a value is never silently ignored. `missions/fixed-wing-6dof-rascal.xml`
   leaves the key out and flies with 0.01, like C++.
+- **PID gain strings:** C++ `PID::init` splits gains on commas only and needs
+  exactly four values; a space-separated string such as `"0.5 0 0.1 9"` logs
+  `PID::init failed` and the loop keeps no gains, while the mission runs on.
+  Rust accepts commas or spaces. Write gains with commas in any mission meant
+  for both (a study input once differed from C++ by kilometres this way).
 - **AircraftPIDController, fixed on the comparison branch:** unmodified C++
   ignores the timestep it is given and uses the full mission tick
   (`time_->dt()`), so with N substeps its integral terms act N times stronger
@@ -112,36 +123,39 @@ Rust lifecycle and delivery rules are in the
   rad of actual pitch change, so a pitch upset grows into an altitude and
   heading oscillation. One FixedWing6DOF, 45 s of `Straight` flight at 1000 m
   after a 5 degree roll and 3 degree pitch upset, 0.01 s ticks
-  (`paper/data/aircraft-pid-upset/`): with no substeps (C++ and Rust
+  (`reference/inputs/aircraft-pid-upset.xml`): with no substeps (C++ and Rust
   identical) the altitude wandered 285 m and the heading 42 degrees; with 5
   substeps, Rust's timing gave 66 m, and C++'s, whose derivative is 5 times
   weaker, peaked at 1.4 m. With no substeps and the altitude D lowered to
   0.002 (or 0), altitude peaked at 1.4 m (1.5 m) and stayed within 0.6 m
   (0.8 m) after the first 5 s; lowering the pitch loop's D instead did not
   help. These figures predate the RK4 loads fix below; with it, D 0.01 still
-  wanders 91 m and 0.002 peaks at 1.39 m, so the choice stands. Measured with
-  the Rust port on this one scenario; missions that fly
+  wanders 91 m and 0.002 peaks at 1.39 m, so the choice stands
+  (`paper/data/rk4-loads/summary.md`, part C, which reruns this with held
+  forces in unmodified C++ and stage forces in Rust). Measured on this one
+  scenario; missions that fly
   AircraftPIDController differ from unmodified C++, so the checker only
   records their baseline equality.
 - **Stochastic sensors/communication:** Rust uses per-plugin, mission-seeded
   streams rather than C++'s shared generator. Measured contacts use sorted typed
   vectors. SphereNetwork queries current post-motion positions rather than the
   earlier C++ R-tree. AuctionAssign has configurable network/deadline and an
-  optional winner instead of a negative sentinel. These are not sample-for-sample
-  C++ RNG ports.
+  optional winner instead of a negative sentinel. These are not
+  sample-for-sample C++ RNG ports.
 
 Source details worth preserving: NoisyContacts copies angular velocity and uses
 5I covariance; NoisyState uses zero angular velocity and identity covariance.
 Both right-multiply attitude errors. SphereNetwork has strict range, inclusive
-altitude-plane bounds, and same-parent geometry bypass that still draws for loss.
-AuctionAssign includes self-bidding, keeps the first maximum on ties, and closes
-strictly after its deadline. See [plugin behavior](../book/src/reference/plugin-api.md#noisycontacts).
+altitude-plane bounds, and same-parent geometry bypass that still draws for
+loss. AuctionAssign includes self-bidding, keeps the first maximum on ties, and
+closes strictly after its deadline. See [plugin
+behavior](../book/src/reference/plugin-api.md#noisycontacts).
 
 ## Findings from the comparison trace
 
-- C++ Straight subscribes to `ContactsWithCovariances` and stores the map without
-  reading it. Rust Straight subscribes and discards the messages so deliveries
-  match; behavior is unaffected.
+- C++ Straight subscribes to `ContactsWithCovariances` and stores the map
+  without reading it. Rust Straight subscribes and discards the messages so
+  deliveries match; behavior is unaffected.
 - C++ `VariableIO::connect` replaces a plugin's output index with the next
   plugin's input index. Outputs the next plugin does not read are silently
   dropped, and reading them returns NaN with a warning. The trace records only
@@ -156,16 +170,16 @@ each substep as controllers, then motion. That commit ran all controller
 substeps before any motion, so with `motion_multiplier` > 1 controllers get no
 fresh state within a tick and a PID's derivative term is zero after the first
 call. `benchmarking-edits` commit `7129e47f5` restores the interleaved order and
-disables GPU acceleration in CMake (which also disables the GPU network
-plugin). Rust interleaves too, refreshing `PassThrough`-of-perfect own-state
-belief between substeps; other estimators, sensors, contacts, interactions, and
+disables GPU acceleration in CMake (which also disables the GPU network plugin).
+Rust interleaves too, refreshing `PassThrough`-of-perfect own-state belief
+between substeps; other estimators, sensors, contacts, interactions, and
 networks keep the outer tick, so more substeps do not mean fresher observations
 or finer collision checks. `m` = 1 missions are unaffected. The benchmarks
-(`reference/benchmark.py`, `paper/data/benchmark-native/`) now build the
-comparison branch, and the paper's timings come from them. The history, the comparison with other simulators, and the
-verification are in the paper (`sec:substeps`); `reference_check.py` requires
-unmodified and fixed C++ to match only when `m` = 1 and no entity uses
-AircraftPIDController, FixedWing6DOF, or Multirotor.
+(`reference/benchmark.py`, `reference/native_benchmark.py`) build the comparison
+branch, and the paper's timings come from them. The history, the comparison with
+other simulators, and the verification are in the paper (`sec:substeps`);
+`reference_check.py` requires unmodified and fixed C++ to match only when `m` =
+1 and no entity uses AircraftPIDController, FixedWing6DOF, or Multirotor.
 
 ## RK4 loads: a C++ defect, fixed on the comparison branch
 
@@ -183,8 +197,9 @@ the pattern for weight, drag, and the gyroscopic term.
 `benchmarking-edits` commit `1c8595b91` computes them from `x`, and both Rust
 models do the same. Missions with either model now differ from unmodified C++
 by design, and `reference_check.py` only records their baseline equality.
-[`paper/data/rk4-loads`](../paper/data/rk4-loads/README.md) measures the change
-in Rust:
+`reference/rk4_loads.py` (evidence in
+[`paper/data/rk4-loads`](../paper/data/rk4-loads/summary.md)) measures the
+change, taking the held forces from unmodified C++, which still has them:
 
 - **Accuracy.** With constant controls, frozen loads halve their error with each
   halving of the step, while stage-evaluated loads reach the fine-step
@@ -193,8 +208,10 @@ in Rust:
   glider over 60 s at 0.05 s. A gently controlled 30 s flight differs by 5.0 m
   at 0.01 s and 81 m at 0.05 s, and the frozen version flips the aircraft at
   0.1 s.
-- **Speed.** Forces are now really computed four times per step: whole runs of
-  128 aircraft took 22% longer for FixedWing6DOF and 7% for Multirotor.
+- **Speed.** Forces are now really computed four times per step instead of
+  once. When first measured, whole runs of 128 aircraft took 22% longer for
+  FixedWing6DOF and 7% for Multirotor; the study no longer times this, since
+  the held-force version exists only in unmodified C++.
 - **AircraftPIDController's altitude D gain.** Frozen loads did not cause the
   oscillation that lowered it from 0.01 to 0.002 (see AircraftPIDController
   above). With correct loads, D 0.01 still wanders 91 m after the 45 s upset at
@@ -219,17 +236,17 @@ these.
 
 **Integrators for new motion models.** For smooth-flight models such as the
 planned fixed-wing and boat, start with RK4 that recomputes forces and moments
-from each stage's state, and verify convergence. Choose another integrator
-when the dynamics warrant it: stiff or strongly damped terms and
-discontinuities (contact, saturation) change the trade-off, and methods that
-evaluate forces once per step can be the better choice there. Document the
-choice, and do not freeze forces through RK4 stages. Whichever method you choose, check
-convergence by running a representative scenario at `dt`, `dt/2`, and `dt/4`,
-and confirm the trajectory stops changing at the step you intend to use.
+from each stage's state, and verify convergence. Choose another integrator when
+the dynamics warrant it: stiff or strongly damped terms and discontinuities
+(contact, saturation) change the trade-off, and methods that evaluate forces
+once per step can be the better choice there. Document the choice, and do not
+freeze forces through RK4 stages. Whichever method you choose, check convergence
+by running a representative scenario at `dt`, `dt/2`, and `dt/4`, and confirm
+the trajectory stops changing at the step you intend to use.
 
 **Evidence still needed for these claims.** Each claim above needs its own
 side-by-side check, and the results belong in `paper/data/`:
-- *Integration accuracy*: done in `paper/data/rk4-loads` (see "RK4 loads"
+- *Integration accuracy*: done in `reference/rk4_loads.py` (see "RK4 loads"
   above). It shows a far smaller error, not a measured fourth-order rate.
 - *What JSBSim does*: cite the pinned `FGPropagate.cpp` source (default
   integrators, forces once per frame), not a summary of it.
@@ -258,29 +275,30 @@ are Rust-only too: C++ ground contact was the flat spring at `z = 0`
 gear follows JSBSim's FGLGear wheels (`landing_gear.rs`), so the comparison
 does not cover it; its own tests do (`crates/core/tests/landing_gear.rs`).
 
-FixedWing6DOF's `lift_table` and `drag_table` are Rust-only as well. C++ lift
-is linear in angle of attack (`C_L0 + C_L_alpha * alpha`) at any angle, so it
-never stalls, and its zero-lift drag is `C_D0 + C_D_alpha * |alpha|`. Tables of
-`[alpha_rad, C_L]` and `[alpha_rad, C_D]` rows replace those terms,
-interpolated linearly and held at their ends like a JSBSim `<table>`; induced
-and elevator drag are unchanged. They are opt-in: no mission sets them, and the
-ArduPilot book chapter lists JSBSim's Rascal values. Without tables the output is unchanged: on 2026-10-05
-`fixed-wing-6dof.xml` and `fixed-wing-6dof-rascal.xml` wrote byte-identical
-frames, summaries, events, and traces before and after each table was added.
+FixedWing6DOF's `lift_table` and `drag_table` are Rust-only as well. C++ lift is
+linear in angle of attack (`C_L0 + C_L_alpha * alpha`) at any angle, so it never
+stalls, and its zero-lift drag is `C_D0 + C_D_alpha * |alpha|`. Tables of
+`[alpha_rad, C_L]` and `[alpha_rad, C_D]` rows replace those terms, interpolated
+linearly and held at their ends like a JSBSim `<table>`; induced and elevator
+drag are unchanged. They are opt-in: no mission sets them, and the ArduPilot
+book chapter lists JSBSim's Rascal values. Without tables the output is
+unchanged: on 2026-10-05 `fixed-wing-6dof.xml` and `fixed-wing-6dof-rascal.xml`
+wrote byte-identical frames, summaries, events, and traces before and after each
+table was added.
 
 ## Spawn RNG mismatch (accepted)
 
 The native macOS baseline matched; the Ubuntu Docker fixture diverges at
 initialization. The inspected libstdc++ uses `minstd_rand0` (multiplier 16807)
-and returns the second polar normal variate first. Rust's
-[legacy RNG](../crates/core/src/common/random.rs) uses multiplier 48271 and returns
-the first variate first, matching Apple libc++.
+and returns the second polar normal variate first. Rust's [legacy
+RNG](../crates/core/src/common/random.rs) uses multiplier 48271 and returns the
+first variate first, matching Apple libc++.
 
 The recorded randomized-spawn comparison had 90/90 mismatched states and about
-8.41934 m maximum position error. Rust outputs still matched across 1/2/8 workers
-and recording on/off. This is an accepted difference of the unmodified Linux
-build: C++ itself differs between libc++ and libstdc++. Comparisons remove it
-with the instrumentation branch's opt-in libc++-compatible spawn stream
+8.41934 m maximum position error. Rust outputs still matched across 1/2/8
+workers and recording on/off. This is an accepted difference of the unmodified
+Linux build: C++ itself differs between libc++ and libstdc++. Comparisons remove
+it with the instrumentation branch's opt-in libc++-compatible spawn stream
 (`SCRIMMAGE_LIBCXX_SPAWN_RANDOM=1`), and keep a zero-variance twin that needs no
 option. Do not change seeds or tolerances to hide randomized mismatches.
 

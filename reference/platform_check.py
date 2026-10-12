@@ -3,7 +3,7 @@
 
     python3 reference/platform_check.py --output runs/platform000 [--mission-dir DIR]
 
-Builds the scrimmage CLI natively (here, macOS/arm64) and in a linux/amd64
+Builds the ripple CLI natively (here, macOS/arm64) and in a linux/amd64
 container (the cli target of reference/rust.Dockerfile), runs every curated mission (and any
 --mission-dir missions) at 1 and 8 workers with the comparison trace, and
 compares frames.bin, events.json, summary.csv, and trace.jsonl byte for byte.
@@ -13,7 +13,6 @@ library only; needs Docker and Cargo.
 """
 
 import argparse
-import hashlib
 import json
 import platform
 import subprocess
@@ -21,20 +20,15 @@ from pathlib import Path
 
 from compare import compare_frames
 from frames import read_frames
+import project
+from project import IMAGE_PREFIX, ROOT, build_cli, sha256
 
-ROOT = Path(__file__).resolve().parents[1]
 FILES = ("frames.bin", "events.json", "summary.csv", "trace.jsonl")
-IMAGE = "scrimmage-rs-platform"
-
-
-def sha256(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+IMAGE = f"{IMAGE_PREFIX}-platform"
 
 
 def missions(extra):
-    found = sorted(path for path in (ROOT / "missions").rglob("*")
-                   if path.suffix in (".xml", ".yaml")
-                   and not path.name.endswith((".sweep.yaml", ".terrain.yaml")))
+    found = project.missions()
     if extra:
         found += sorted(extra.glob("*.xml"))
     return found
@@ -49,9 +43,7 @@ def main(argv=None):
     output = args.output.resolve()
     output.mkdir(parents=True)
 
-    subprocess.run(["cargo", "build", "--locked", "--release", "--package", "scrimmage-rs",
-                    "--bin", "scrimmage"], cwd=ROOT, check=True)
-    native = ROOT / "target/release/scrimmage"
+    native = build_cli("release")
     with (output / "linux-build.log").open("w") as log:
         subprocess.run(["docker", "build", "--platform", "linux/amd64", "--progress", "plain",
                         "-f", ROOT / "reference/rust.Dockerfile", "--target", "cli", "--tag", IMAGE, ROOT],

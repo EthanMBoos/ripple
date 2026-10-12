@@ -1,7 +1,7 @@
 //! Statistics from delivered messages; no access to an interaction's private state.
 use super::interaction::Population;
 use anyhow::Result;
-use scrimmage_core::plugin::{
+use ripple_core::plugin::{
     MetricReport, Metrics, Plugin, PluginParams, StepTime, TeamMetrics, Update, WorldContext,
 };
 use std::collections::BTreeMap;

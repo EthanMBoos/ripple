@@ -121,7 +121,7 @@ dependencies = [
  "anyhow",
  "ctrlc",
  "nalgebra",
- "scrimmage-core",
+ "ripple-core",
  "serde",
  "serde_json",
 ]
@@ -4050,6 +4050,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "ripple"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "ardupilot",
+ "clap",
+ "png",
+ "rerun",
+ "ripple-core",
+ "serde",
+ "serde_json",
+ "serde_yaml_ng",
+ "starter",
+ "tempfile",
+]
+
+[[package]]
+name = "ripple-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "nalgebra",
+ "prost",
+ "rayon",
+ "roxmltree",
+ "serde",
+ "serde_json",
+ "serde_yaml_ng",
+]
+
+[[package]]
 name = "roxmltree"
 version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4177,37 +4208,6 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
-
-[[package]]
-name = "scrimmage-core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "nalgebra",
- "prost",
- "rayon",
- "roxmltree",
- "serde",
- "serde_json",
- "serde_yaml_ng",
-]
-
-[[package]]
-name = "scrimmage-rs"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "ardupilot",
- "clap",
- "png",
- "rerun",
- "scrimmage-core",
- "serde",
- "serde_json",
- "serde_yaml_ng",
- "starter",
- "tempfile",
-]
 
 [[package]]
 name = "scuffle-av1"
@@ -4462,7 +4462,7 @@ name = "starter"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "scrimmage-core",
+ "ripple-core",
  "serde",
 ]
 

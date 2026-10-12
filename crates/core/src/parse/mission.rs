@@ -25,7 +25,7 @@ impl Mission {
         registry: &PluginRegistry,
     ) -> Result<Self> {
         let mut candidates = vec![path.to_path_buf()];
-        if let Some(paths) = std::env::var_os("SCRIMMAGE_MISSION_PATH") {
+        if let Some(paths) = std::env::var_os("RIPPLE_MISSION_PATH") {
             candidates.extend(std::env::split_paths(&paths).map(|directory| directory.join(path)));
         }
         candidates.push(root.join("missions").join(path));

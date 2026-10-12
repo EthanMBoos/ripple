@@ -1,17 +1,19 @@
-# Missions compared with C++ by reference_check.py, and the short label each has
-# in the paper's agreement table. One per line: path under missions/ | label.
-# Add a mission here when it exercises a C++-compared model (see README.md).
-straight-no-gui.xml | SimpleAircraft, PID, collision, removal
-test_missions/straight_cpu.xml | SimpleAircraft, PID, long horizon
-test_missions/straight_cpu_mul.xml | as above; upstream multiplier typo
-verification/aircraft-substeps-spawning.xml | substeps, rates, randomized spawning
-verification/aircraft-substeps-scheduled.xml | substeps, rates, two spawn schedules
-verification/noisy-state-bias.xml | NoisyState bias, belief feedback
-networks-local-global.xml | Boundary, GroundCollision, networks
-fixed-wing-6dof.xml | FixedWing6DOF, AircraftPID, wind
-fixed-wing-6dof-rascal.xml | FixedWing6DOF Rascal, upset, glide
-multirotor.xml | Multirotor (4 and 6 rotors)
-verification/single-integrator.xml | SingleIntegrator command paths
-verification/noisy-contacts-bias.xml | NoisyContacts bias, attitude, covariance
-verification/sphere-network-auction.xml | SphereNetwork reach, AuctionAssign
-verification/collision-boundary.xml | SimpleCollision range boundary
+# Missions compared with C++ by reference_check.py. One per line:
+#   case ID | path under missions/ | label in the paper's agreement table
+# The case ID names the case in reports and retained evidence; keep it stable
+# when a file moves. Add a mission here when it exercises a C++-compared model
+# (see README.md).
+aircraft-collision | straight-no-gui.xml | SimpleAircraft, PID, collision, removal
+aircraft-long-horizon | test_missions/straight_cpu.xml | SimpleAircraft, PID, long horizon
+aircraft-multiplier-typo | test_missions/straight_cpu_mul.xml | as above; upstream multiplier typo
+substeps-random-spawn | verification/aircraft-substeps-spawning.xml | substeps, rates, randomized spawning
+substeps-scheduled-spawn | verification/aircraft-substeps-scheduled.xml | substeps, rates, two spawn schedules
+noisy-state-bias | verification/noisy-state-bias.xml | NoisyState bias, belief feedback
+world-networks | networks-local-global.xml | Boundary, GroundCollision, networks
+fixed-wing-a4 | fixed-wing-6dof.xml | FixedWing6DOF, AircraftPID, wind
+fixed-wing-rascal | fixed-wing-6dof-rascal.xml | FixedWing6DOF Rascal, upset, glide
+multirotor | multirotor.xml | Multirotor (4 and 6 rotors)
+single-integrator | verification/single-integrator.xml | SingleIntegrator command paths
+noisy-contacts-bias | verification/noisy-contacts-bias.xml | NoisyContacts bias, attitude, covariance
+sphere-network-auction | verification/sphere-network-auction.xml | SphereNetwork reach, AuctionAssign
+collision-boundary | verification/collision-boundary.xml | SimpleCollision range boundary

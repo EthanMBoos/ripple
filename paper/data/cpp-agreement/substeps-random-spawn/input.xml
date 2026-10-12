@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!-- Added verification fixture; original reference missions remain unchanged.
+     Exercises actual substeps, loop rates, randomized spawn state, and generation. -->
+<runscript name="Aircraft substeps and scheduled spawning">
+  <run start="0" end="3" dt="0.1" motion_multiplier="5"
+       enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+  <seed>12345</seed>
+  <end_condition>time</end_condition>
+  <no_bin_logging>false</no_bin_logging>
+  <output_type>all</output_type>
+  <create_latest_dir>false</create_latest_dir>
+  <network>GlobalNetwork</network>
+  <network>LocalNetwork</network>
+  <metrics>SimpleCollisionMetrics</metrics>
+  <latitude_origin>35.721025</latitude_origin>
+  <longitude_origin>-120.767925</longitude_origin>
+  <altitude_origin>300</altitude_origin>
+  <entity>
+    <team_id>1</team_id>
+    <count>4</count>
+    <generate_rate>2</generate_rate>
+    <generate_count>1</generate_count>
+    <generate_start_time>0</generate_start_time>
+    <generate_time_variance>0.02</generate_time_variance>
+    <x>10</x><y>20</y><z>200</z>
+    <heading>30</heading><roll>5</roll><pitch>3</pitch>
+    <variance_x>4</variance_x><variance_y>4</variance_y><variance_z>1</variance_z>
+    <variance_heading>9</variance_heading>
+    <use_variance_all_ents>true</use_variance_all_ents>
+    <visual_model>sphere</visual_model>
+    <autonomy speed="24" loop_rate="5">Straight</autonomy>
+    <controller loop_rate="20">SimpleAircraftControllerPID</controller>
+    <motion_model>SimpleAircraft</motion_model>
+  </entity>
+</runscript>

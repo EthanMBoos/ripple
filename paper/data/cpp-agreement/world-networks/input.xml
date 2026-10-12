@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!-- Boundary is shared globally; each aircraft's state observation stays local.
+     The low aircraft has an altitude bias that causes a ground collision. -->
+<runscript name="Local sensing and global boundary">
+  <run start="0" end="30" dt="0.1" enable_gui="false" start_paused="false" time_warp="0" />
+  <seed>12345</seed><end_condition>time</end_condition><output_type>all</output_type>
+  <network>LocalNetwork</network><network>GlobalNetwork</network>
+  <entity_interaction center="0 0 200" lengths="600 600 400" show_boundary="false">Boundary</entity_interaction>
+  <entity_interaction team="${ground_team=all}">GroundCollision</entity_interaction>
+  <entity_interaction collision_range="2">SimpleCollision</entity_interaction>
+  <metrics>SimpleCollisionMetrics</metrics>
+  <param_common name="state_noise">
+    <pos_noise_0>0 0</pos_noise_0><pos_noise_1>0 0</pos_noise_1><pos_noise_2>0 0</pos_noise_2>
+    <vel_noise_0>0 0</vel_noise_0><vel_noise_1>0 0</vel_noise_1><vel_noise_2>0 0</vel_noise_2>
+    <orient_noise_0>0 0</orient_noise_0><orient_noise_1>0 0</orient_noise_1><orient_noise_2>0 0</orient_noise_2>
+  </param_common>
+  <entity_common name="aircraft">
+    <count>1</count><speed>20</speed><z>200</z><y>0</y>
+    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <autonomy speed="20" enable_boundary_control="${boundary_control=true}">Straight</autonomy>
+    <controller>SimpleAircraftControllerPID</controller>
+    <motion_model>SimpleAircraft</motion_model><visual_model>sphere</visual_model>
+    <sensor param_common="state_noise">NoisyState</sensor>
+  </entity_common>
+  <entity entity_common="aircraft"><team_id>1</team_id><x>250</x><heading>0</heading><color>70 130 255</color></entity>
+  <entity entity_common="aircraft"><team_id>2</team_id><x>-250</x><heading>180</heading><color>255 100 70</color></entity>
+  <entity>
+    <count>1</count><team_id>3</team_id><x>0</x><y>-100</y><z>1</z><heading>0</heading><speed>20</speed>
+    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <autonomy speed="20">Straight</autonomy><controller>SimpleAircraftControllerPID</controller>
+    <motion_model>SimpleAircraft</motion_model><visual_model>sphere</visual_model><color>240 210 60</color>
+    <sensor param_common="state_noise" pos_noise_2="20 0">NoisyState</sensor>
+  </entity>
+</runscript>

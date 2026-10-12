@@ -1,5 +1,5 @@
 //! Math helpers available to student plugins in downstream Rust crates.
-use scrimmage_core::{EulerAngles, Pid, PidGains, Quaternion, Vec3, rk4};
+use ripple_core::{EulerAngles, Pid, PidGains, Quaternion, Vec3, rk4};
 
 #[test]
 fn construct_attitude_and_rotate_a_body_vector() {

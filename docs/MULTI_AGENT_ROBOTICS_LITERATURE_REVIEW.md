@@ -1,34 +1,95 @@
 # Multi-agent robotics since SCRIMMAGE: influence, adoption, and research directions
 
-**Evidence snapshot: September 26, 2026.** Review for SCRIMMAGE-RS and its proposed RQ4. Three parallel research strands covered coordination and physical swarms; learning and communication; and simulation and evaluation. The synthesis adds cooperative mapping, recent embodied-agent benchmarks, and checks of citation-record quality. Supporting API responses are retained in [the dated evidence directory](literature-review/2026-09-26/).
+**Evidence snapshot: September 26, 2026.** Review for Ripple and its proposed
+RQ4. Three parallel research strands covered coordination and physical swarms;
+learning and communication; and simulation and evaluation. The synthesis adds
+cooperative mapping, recent embodied-agent benchmarks, and checks of
+citation-record quality. Supporting API responses are retained in [the dated
+evidence directory](literature-review/2026-09-26/).
 
 ## 1. What deserves attention
 
-The field's development is much broader than putting a learned policy into a simulator. The strongest evidence supports five connected changes:
+The field's development is much broader than putting a learned policy into a
+simulator. The strongest evidence supports five connected changes:
 
-1. **Robot teams became more capable in physical, uncertain environments.** Optimized flocking, EGO-Swarm, and *Swarm of micro flying robots in the wild* are substantial physical-robot references. RACER adds collaborative exploration and workload allocation. These are important counterweights to a history dominated by game benchmarks.
-2. **Scalable coordination increasingly addressed continuing tasks.** RHCR and later lifelong-MAPF systems advance repeated-task planning, while PRIMAL, PIBT, and EECBS supply related local-decision and search methods. Classical planning remains central, including inside recent learned systems.
-3. **What each robot knows became part of the architecture.** Graph communication, Kimera-Multi, and Swarm-SLAM address information exchange and collective estimation. A team can fail because its members disagree about the world even when each controller works correctly.
-4. **Shared benchmarks and accelerator-based experimentation changed how methods are developed.** SMAC, PettingZoo, Isaac Gym, and their successors have demonstrable communities. But benchmark success can hide weak feedback: SMACv2 found that time-only policies could succeed on parts of the original benchmark.
-5. **Newer work combines specialized components.** Learned proposals with explicit conflict repair, nominal commands with safety control, and language-based task negotiation with motion validation are more useful architectural observations than “everything is becoming end-to-end learning.”
+1. **Robot teams became more capable in physical, uncertain environments.**
+   Optimized flocking, EGO-Swarm, and *Swarm of micro flying robots in the wild*
+   are substantial physical-robot references. RACER adds collaborative
+   exploration and workload allocation. These are important counterweights to a
+   history dominated by game benchmarks.
+2. **Scalable coordination increasingly addressed continuing tasks.** RHCR and
+   later lifelong-MAPF systems advance repeated-task planning, while PRIMAL,
+   PIBT, and EECBS supply related local-decision and search methods. Classical
+   planning remains central, including inside recent learned systems.
+3. **What each robot knows became part of the architecture.** Graph
+   communication, Kimera-Multi, and Swarm-SLAM address information exchange and
+   collective estimation. A team can fail because its members disagree about the
+   world even when each controller works correctly.
+4. **Shared benchmarks and accelerator-based experimentation changed how methods
+   are developed.** SMAC, PettingZoo, Isaac Gym, and their successors have
+   demonstrable communities. But benchmark success can hide weak feedback:
+   SMACv2 found that time-only policies could succeed on parts of the original
+   benchmark.
+5. **Newer work combines specialized components.** Learned proposals with
+   explicit conflict repair, nominal commands with safety control, and
+   language-based task negotiation with motion validation are more useful
+   architectural observations than “everything is becoming end-to-end learning.”
 
-The evidence for these conclusions is separated below. **Established influence**, **current public attention**, and **promising recent work** are different categories. A relevant title, conference acceptance, or fashionable model name is insufficient to put a paper in the first category.
+The evidence for these conclusions is separated below. **Established
+influence**, **current public attention**, and **promising recent work** are
+different categories. A relevant title, conference acceptance, or fashionable
+model name is insufficient to put a paper in the first category.
 
-For a short reading list, start with **Optimized flocking; PRIMAL; RHCR; EGO-Swarm / Swarm in the wild; RACER; GNN decentralized planning; Kimera-Multi; MAPPO; SMACv2; and Isaac Gym → Isaac Lab**. Add **RoCo, SILLM, and MuJoCo Playground** for newer directions, with the qualifications below. These are prioritized references within the reviewed scope, not a claimed global top-ten ranking.
+For a short reading list, start with **Optimized flocking; PRIMAL; RHCR;
+EGO-Swarm / Swarm in the wild; RACER; GNN decentralized planning; Kimera-Multi;
+MAPPO; SMACv2; and Isaac Gym → Isaac Lab**. Add **RoCo, SILLM, and MuJoCo
+Playground** for newer directions, with the qualifications below. These are
+prioritized references within the reviewed scope, not a claimed global top-ten
+ranking.
 
 ### Strongest measured followings in this review
 
-Among the selected direct robot-team records, the largest totals are [Swarm in the wild (**610**)](https://openalex.org/W4229007520), [MAPF definitions/benchmarks (**608**)](https://openalex.org/W2949992533), and [Optimized flocking (**588**)](https://openalex.org/W2884236119). These are different kinds of contributions, and the counts apply to the linked records. In the learning shortlist, [COMA’s proceedings record (**1,755**)](https://openalex.org/W2617547828) is substantial; QMIX and MAPPO have clearly established adoption but unresolved comparative citation rank. The largest checked software audiences are [Genesis (**29,989 stars**)](https://github.com/Genesis-Embodied-AI/genesis-world), [Isaac Lab (**8,225**)](https://github.com/isaac-sim/IsaacLab), and [PettingZoo (**3,523**)](https://github.com/Farama-Foundation/PettingZoo). For recent papers, prioritize RoCo’s measurable follow-on attention, MuJoCo Playground’s citations and integrations, and SILLM’s award recognition—three distinct kinds of evidence.
+Among the selected direct robot-team records, the largest totals are [Swarm in
+the wild (**610**)](https://openalex.org/W4229007520), [MAPF
+definitions/benchmarks (**608**)](https://openalex.org/W2949992533), and
+[Optimized flocking (**588**)](https://openalex.org/W2884236119). These are
+different kinds of contributions, and the counts apply to the linked records. In
+the learning shortlist, [COMA’s proceedings record
+(**1,755**)](https://openalex.org/W2617547828) is substantial; QMIX and MAPPO
+have clearly established adoption but unresolved comparative citation rank. The
+largest checked software audiences are [Genesis (**29,989
+stars**)](https://github.com/Genesis-Embodied-AI/genesis-world), [Isaac Lab
+(**8,225**)](https://github.com/isaac-sim/IsaacLab), and [PettingZoo
+(**3,523**)](https://github.com/Farama-Foundation/PettingZoo). For recent
+papers, prioritize RoCo’s measurable follow-on attention, MuJoCo Playground’s
+citations and integrations, and SILLM’s award recognition—three distinct kinds
+of evidence.
 
 ## 2. How influence was checked
 
 ### Scope and selection
 
-The core scope is multi-robot coordination, planning, communication, perception, and experimentation from 2018 through the snapshot date. Pre-2018 MARL foundations are included where necessary to avoid presenting an existing idea as a post-SCRIMMAGE invention. General robot-learning platforms and single-robot methods are labeled adjacent; generic software-agent papers are outside scope.
+The core scope is multi-robot coordination, planning, communication, perception,
+and experimentation from 2018 through the snapshot date. Pre-2018 MARL
+foundations are included where necessary to avoid presenting an existing idea as
+a post-SCRIMMAGE invention. General robot-learning platforms and single-robot
+methods are labeled adjacent; generic software-agent papers are outside scope.
 
-The review combined primary papers and project pages, official code, exact-title bibliographic searches, later implementations, conference award records, and current competition rules. An additional discovery pass queried OpenAlex titles for `multi-agent`, `multi-robot`, `swarm robotics`, `robot swarm`, `robot learning`, and `model predictive control`, restricted to 2018–2026 and sorted by citation count, retaining up to 30 results per query. The resulting 180 search slots include duplicates and irrelevant matches; they are **not** 180 validated papers. Broad full-text search produced unrelated results and was not used as a ranking.
+The review combined primary papers and project pages, official code, exact-title
+bibliographic searches, later implementations, conference award records, and
+current competition rules. An additional discovery pass queried OpenAlex titles
+for `multi-agent`, `multi-robot`, `swarm robotics`, `robot swarm`, `robot
+learning`, and `model predictive control`, restricted to 2018–2026 and sorted by
+citation count, retaining up to 30 results per query. The resulting 180 search
+slots include duplicates and irrelevant matches; they are **not** 180 validated
+papers. Broad full-text search produced unrelated results and was not used as a
+ranking.
 
-This is a screened literature review with bibliometric checks, not an exhaustive systematic review or a complete subject-normalized citation census. English-language titles, available public code, and these search terms introduce selection bias. No claim that omitted papers lack influence follows from their omission.
+This is a screened literature review with bibliometric checks, not an exhaustive
+systematic review or a complete subject-normalized citation census.
+English-language titles, available public code, and these search terms introduce
+selection bias. No claim that omitted papers lack influence follows from their
+omission.
 
 ### Evidence rules
 
@@ -41,19 +102,42 @@ This is a screened literature review with bibliometric checks, not an exhaustive
 | Conference award | Expert recognition of a contribution | Broad adoption or a large citation following |
 | Current competition tasks and maintained integrations | An active research problem or functioning ecosystem | Popularity of any one paper |
 
-Counts are not combined into a synthetic score. Repository age and paper age differ; framework stars cannot be assigned to every supported algorithm. Same-lab follow-ons are useful lineage evidence but are distinguished from independent adoption.
+Counts are not combined into a synthetic score. Repository age and paper age
+differ; framework stars cannot be assigned to every supported algorithm.
+Same-lab follow-ons are useful lineage evidence but are distinguished from
+independent adoption.
 
 ### A material problem with the citation indexes
 
-OpenAlex splits several flagship contributions across versions. QMIX has two records for the same arXiv DOI with **480 and 347** citations. MAPPO has records with **600, 373, and 108**. Its proceedings record assigns 357 citations to 2026, while its arXiv record assigns only 17 to that year. That discrepancy cannot responsibly be described as a sudden research surge. **No duplicate counts are summed in this report.**
+OpenAlex splits several flagship contributions across versions. QMIX has two
+records for the same arXiv DOI with **480 and 347** citations. MAPPO has records
+with **600, 373, and 108**. Its proceedings record assigns 357 citations to
+2026, while its arXiv record assigns only 17 to that year. That discrepancy
+cannot responsibly be described as a sudden research surge. **No duplicate
+counts are summed in this report.**
 
-Cross-checks also reveal coverage differences: PettingZoo has **147** on the selected OpenAlex record versus **468** on Semantic Scholar; VMAS **19 versus 95**; BenchMARL **5 versus 66**. Semantic Scholar rate limits prevented a complete second-source census. For fragmented major papers, independent adoption is more reliable than their position in a numeric table. Exact queried records and failures are preserved in the evidence files.
+Cross-checks also reveal coverage differences: PettingZoo has **147** on the
+selected OpenAlex record versus **468** on Semantic Scholar; VMAS **19 versus
+95**; BenchMARL **5 versus 66**. Semantic Scholar rate limits prevented a
+complete second-source census. For fragmented major papers, independent adoption
+is more reliable than their position in a numeric table. Exact queried records
+and failures are preserved in the evidence files.
 
-A useful historical check exists in [Mikayel Samvelyan's 2024 presentation, PDF page 58](https://samvelyan.com/slides/imol_2024.pdf): the real author-profile screenshot shows **2,686** Google Scholar citations for the extended QMIX paper and **1,148** for SMAC. The exact screenshot capture date is unstated. These are historical displayed counts, not current totals; the fictional example in the lower half of that slide is excluded. The screenshot demonstrates why the much smaller current OpenAlex fragments must not be interpreted as whole-paper totals.
+A useful historical check exists in [Mikayel Samvelyan's 2024 presentation, PDF
+page 58](https://samvelyan.com/slides/imol_2024.pdf): the real author-profile
+screenshot shows **2,686** Google Scholar citations for the extended QMIX paper
+and **1,148** for SMAC. The exact screenshot capture date is unstated. These are
+historical displayed counts, not current totals; the fictional example in the
+lower half of that slide is excluded. The screenshot demonstrates why the much
+smaller current OpenAlex fragments must not be interpreted as whole-paper
+totals.
 
 ## 3. Established robot-team papers
 
-**OA** below means the count on the linked OpenAlex record as retrieved September 26, 2026. It is deliberately record-specific. “2025” counts citing works assigned to 2025 in today's index. Rows are grouped by topic, not sorted into a global ranking.
+**OA** below means the count on the linked OpenAlex record as retrieved
+September 26, 2026. It is deliberately record-specific. “2025” counts citing
+works assigned to 2025 in today's index. Rows are grouped by topic, not sorted
+into a global ranking.
 
 ### Physical coordination, exploration, and shared information
 
@@ -67,7 +151,12 @@ A useful historical check exists in [Mikayel Samvelyan's 2024 presentation, PDF 
 | [RACER](https://ieeexplore.ieee.org/document/10038280), T-RO 2023; preprint 2022 | [244 / 104](https://openalex.org/W4319302559) | Decentralized multi-UAV exploration and workload allocation; [T-RO 2023 best-paper recognition](https://www.ieee-ras.org/publications/t-ro/). [Official code](https://github.com/Robotics-STAR-Lab/RACER): **797 / 101**. Particularly useful beyond policy learning. |
 | [Swarm-SLAM](https://arxiv.org/abs/2301.06230), RA-L 2024; online publication 2023 | [174 / 71](https://openalex.org/W4388755261) | Decentralized collaborative SLAM, including communication-conscious loop closure. [Official code](https://github.com/MISTLab/Swarm-SLAM): **705 / 81**. Collective state estimation deserves attention alongside navigation. |
 
-These systems contain perception and mapping capabilities SCRIMMAGE-RS does not currently provide. Their value here is identifying experimental questions, not claiming that a plugin interface alone reproduces their demonstrations. For example, testing how inconsistent reports alter task assignment can begin with simple synthetic observations; reproducing visual SLAM would be a separate project.
+These systems contain perception and mapping capabilities Ripple does not
+currently provide. Their value here is identifying experimental questions, not
+claiming that a plugin interface alone reproduces their demonstrations. For
+example, testing how inconsistent reports alter task assignment can begin with
+simple synthetic observations; reproducing visual SLAM would be a separate
+project.
 
 ### Path planning and continuing tasks
 
@@ -83,11 +172,20 @@ These systems contain perception and mapping capabilities SCRIMMAGE-RS does not 
 | [MAPF-LNS2](https://ojs.aaai.org/index.php/AAAI/article/view/21266), AAAI 2022 | [103 / 29](https://openalex.org/W4283795314) | Repair conflicting subsets rather than repeatedly solve the full fleet problem. A useful architecture for combining fast proposals with explicit repair. |
 | [LaCAM](https://kei18.github.io/lacam/), AAAI 2023; preprint 2022 | [74 / 28](https://openalex.org/W4382202651) | [Code](https://github.com/Kei18/lacam) **82 / 31**. Later learning work uses LaCAM-family planners to generate expert data. Specialist influence is visible through that reuse, despite smaller public counts. |
 
-Continuing-task planning predates SCRIMMAGE: [Ma et al., AAMAS 2017](https://aamas.csc.liv.ac.uk/Proceedings/aamas2017/pdfs/p837.pdf), explicitly formulate lifelong MAPF for online pickup and delivery. RHCR advances its scalable planning methods rather than introducing the problem. “Lifelong” in RHCR and this MAPF literature means that robots receive further tasks after completing earlier ones. It does **not** imply continual learning, lifelong adaptation of a model, or a general solution to long-duration autonomy. For the manuscript, **continuing tasks** or **repeated task assignment** is clearer unless the specific lifelong-MAPF formulation is intended.
+Continuing-task planning predates SCRIMMAGE: [Ma et al., AAMAS
+2017](https://aamas.csc.liv.ac.uk/Proceedings/aamas2017/pdfs/p837.pdf),
+explicitly formulate lifelong MAPF for online pickup and delivery. RHCR advances
+its scalable planning methods rather than introducing the problem. “Lifelong” in
+RHCR and this MAPF literature means that robots receive further tasks after
+completing earlier ones. It does **not** imply continual learning, lifelong
+adaptation of a model, or a general solution to long-duration autonomy. For the
+manuscript, **continuing tasks** or **repeated task assignment** is clearer
+unless the specific lifelong-MAPF formulation is intended.
 
 ## 4. Learning papers with demonstrated following
 
-These papers explain much of the algorithmic background, but game or particle-world results must not be rewritten as physical robot-team validation.
+These papers explain much of the algorithmic background, but game or
+particle-world results must not be rewritten as physical robot-team validation.
 
 | Paper; publication | Scholarly/public evidence | What it contributes; scope |
 |---|---|---|
@@ -101,11 +199,22 @@ These papers explain much of the algorithmic background, but game or particle-wo
 | [Multi-Agent Transformer / MAT](https://arxiv.org/abs/2205.14953), NeurIPS 2022 | [OA 79](https://openalex.org/W4281622133), arXiv record; [code](https://github.com/PKU-MARL/Multi-Agent-Transformer) **517 / 92** | Autoregressive agent decisions. A visible specialist branch; joint sequential decision-making is not automatically decentralized physical execution. |
 | [Heterogeneous-Agent Reinforcement Learning](https://www.jmlr.org/papers/v25/23-0488.html), JMLR 2024; preprint 2023 | [OA arXiv record **22**](https://openalex.org/W4366731969); whole-paper total unresolved; [HARL](https://github.com/PKU-MARL/HARL) **955 / 138**, a multi-algorithm repository | Different policies and update structures for heterogeneous agents. Strong software interest; unresolved whole-paper academic rank. |
 
-For independent implementation evidence, [BenchMARL's algorithm documentation](https://benchmarl.readthedocs.io/en/1.2.1/modules/algorithms.html) includes MADDPG, MAPPO, and QMIX. [JaxMARL](https://github.com/bold-lab-ai/JaxMARL) also implements VDN, QMIX, and MAPPO. Oxford author overlap means JaxMARL is not wholly independent of QMIX; it still demonstrates continued ecosystem use. The [SMACv2 experiments](https://arxiv.org/abs/2212.07489) reuse MAPPO and QMIX as serious baselines; SMACv2 also overlaps with QMIX’s Oxford authors, making the QMIX reuse lineage evidence rather than wholly independent validation.
+For independent implementation evidence, [BenchMARL's algorithm
+documentation](https://benchmarl.readthedocs.io/en/1.2.1/modules/algorithms.html)
+includes MADDPG, MAPPO, and QMIX.
+[JaxMARL](https://github.com/bold-lab-ai/JaxMARL) also implements VDN, QMIX, and
+MAPPO. Oxford author overlap means JaxMARL is not wholly independent of QMIX; it
+still demonstrates continued ecosystem use. The [SMACv2
+experiments](https://arxiv.org/abs/2212.07489) reuse MAPPO and QMIX as serious
+baselines; SMACv2 also overlaps with QMIX’s Oxford authors, making the QMIX
+reuse lineage evidence rather than wholly independent validation.
 
 ## 5. Platforms: substantial public attention versus specialist adoption
 
-The table is ordered by **current repository stars**, not scientific quality or citation rank. Counts were captured on September 26, 2026. These repositories cover different scopes and ages. **S2** means Semantic Scholar; missing citation totals mean unresolved or unqueried coverage, not zero influence.
+The table is ordered by **current repository stars**, not scientific quality or
+citation rank. Counts were captured on September 26, 2026. These repositories
+cover different scopes and ages. **S2** means Semantic Scholar; missing citation
+totals mean unresolved or unqueried coverage, not zero influence.
 
 | Platform / associated paper | Stars / forks | Citation evidence and assessment |
 |---|---:|---|
@@ -124,15 +233,26 @@ The table is ordered by **current repository stars**, not scientific quality or 
 | [OmniDrones](https://github.com/btx0424/OmniDrones), [2023 paper](https://arxiv.org/abs/2309.12825) | **583 / 90** | OA **51**. Relevant GPU aerial specialization; not field-defining solely because it involves drones. |
 | [SMACv2](https://github.com/oxwhirl/smacv2), [preprint 2022 / NeurIPS 2023](https://arxiv.org/abs/2212.07489) | **331 / 54** | Smaller repository but a substantial evaluation lesson: test whether coordination actually needs observations and generalizes to unseen scenarios. |
 
-[FastTD3](https://arxiv.org/abs/2505.22642) evaluates Isaac Lab and MuJoCo Playground, and its [implementation](https://github.com/younggyoseo/FastTD3) provides runnable integrations. There is author overlap with Playground, so this is not wholly independent validation of that platform; it is concrete evidence of use. PettingZoo's RLlib integration is a particularly clear example of adoption outside the original project.
+[FastTD3](https://arxiv.org/abs/2505.22642) evaluates Isaac Lab and MuJoCo
+Playground, and its [implementation](https://github.com/younggyoseo/FastTD3)
+provides runnable integrations. There is author overlap with Playground, so this
+is not wholly independent validation of that platform; it is concrete evidence
+of use. PettingZoo's RLlib integration is a particularly clear example of
+adoption outside the original project.
 
-The architectural change is not just “GPUs are faster.” Distinguish **many agents in one coupled world**, **many independent worlds**, and **many candidate trajectories per decision**. GPU simulation/training systems often optimize the second axis. Burn inference or trajectory scoring in SCRIMMAGE would not by itself move the full physics and communication loop onto a GPU.
+The architectural change is not just “GPUs are faster.” Distinguish **many
+agents in one coupled world**, **many independent worlds**, and **many candidate
+trajectories per decision**. GPU simulation/training systems often optimize the
+second axis. Burn inference or trajectory scoring in SCRIMMAGE would not by
+itself move the full physics and communication loop onto a GPU.
 
 ## 6. What changed each year, and when attention accumulated
 
 ### Publication and development timeline
 
-This table identifies well-supported milestones, **not the number-one paper in each year**. Formal publication years are used where verified; relevant earlier preprints are noted in the paper tables.
+This table identifies well-supported milestones, **not the number-one paper in
+each year**. Formal publication years are used where verified; relevant earlier
+preprints are noted in the paper tables.
 
 | Year | Milestones | What changed for robot-team experiments |
 |---|---|---|
@@ -148,7 +268,11 @@ This table identifies well-supported milestones, **not the number-one paper in e
 
 ### Retrospective citation activity
 
-These are the annual buckets from the selected OpenAlex records, retained in [annual-citation-subset.json](literature-review/2026-09-26/annual-citation-subset.json). **2026 is incomplete.** A dash means the record has no bucket for that year, not that nobody cited the underlying work. Pre-publication citations can reflect preprints. These numbers are not historical year-end snapshots.
+These are the annual buckets from the selected OpenAlex records, retained in
+[annual-citation-subset.json](literature-review/2026-09-26/annual-citation-subset.json).
+**2026 is incomplete.** A dash means the record has no bucket for that year, not
+that nobody cited the underlying work. Pre-publication citations can reflect
+preprints. These numbers are not historical year-end snapshots.
 
 | Work | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 | 2026 partial |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -162,11 +286,19 @@ These are the annual buckets from the selected OpenAlex records, retained in [an
 | RACER | — | — | — | — | — | 11 | 62 | 104 | 67 |
 | RoCo | — | — | — | — | — | 1 | 26 | 73 | 56 |
 
-This supports a more useful interpretation than a sequence of fashionable titles. Older foundations remain active: PRIMAL and optimized flocking each attracted about 100 indexed citations in 2025. Physical swarm flight, collaborative exploration, and shared mapping have substantial recent activity. RoCo shows a newer coordination branch accumulating attention. MAPPO, QMIX, and SMAC are excluded from this annual table because their fragmented records would produce misleading trends.
+This supports a more useful interpretation than a sequence of fashionable
+titles. Older foundations remain active: PRIMAL and optimized flocking each
+attracted about 100 indexed citations in 2025. Physical swarm flight,
+collaborative exploration, and shared mapping have substantial recent activity.
+RoCo shows a newer coordination branch accumulating attention. MAPPO, QMIX, and
+SMAC are excluded from this annual table because their fragmented records would
+produce misleading trends.
 
 ## 7. What is getting attention now
 
-“Trending” is used cautiously: this review verifies recent citation activity, current public attention, recognition, and follow-on use. It does not measure week-by-week star growth or social-media reach.
+“Trending” is used cautiously: this review verifies recent citation activity,
+current public attention, recognition, and follow-on use. It does not measure
+week-by-week star growth or social-media reach.
 
 ### Recent work worth reading, with its actual evidence tier
 
@@ -181,22 +313,57 @@ This supports a more useful interpretation than a sequence of fashionable titles
 | [DIAL-MPC](https://arxiv.org/abs/2409.15610), ICRA 2025; preprint 2024 | [OA 22](https://openalex.org/W4413917178); [code](https://github.com/LeCAR-Lab/dial-mpc) **1,006 / 106** | **Public software interest stronger than citation maturity.** Sampling-based, diffusion-inspired trajectory optimization; chiefly locomotion, but a useful adjacent source for GPU planning ideas. |
 | [MAPF-GPT](https://ojs.aaai.org/index.php/AAAI/article/view/34477), AAAI 2025; preprint 2024 | [OA 11](https://openalex.org/W4409347993); [code](https://github.com/CognitiveAISystems/MAPF-GPT) **135 / 24** | **Watchlist.** Expert-generated data and transformer imitation are interesting; the name does not establish landmark status. |
 
-PARTNR's follow-on evidence is particularly instructive. [Dongre and Hakkani-Tür, May 2026](https://arxiv.org/abs/2605.12920), extend it with dialogue under partial observability and report that fewer action conflicts can coexist with worse task success. [LLawCo, June 2026](https://arxiv.org/abs/2606.28182), provides another extension. These establish activity around the benchmark; this review does not claim that either new paper already has a broad following. Communication quality must be measured against mission outcomes, not just apparent agreement.
+PARTNR's follow-on evidence is particularly instructive. [Dongre and
+Hakkani-Tür, May 2026](https://arxiv.org/abs/2605.12920), extend it with
+dialogue under partial observability and report that fewer action conflicts can
+coexist with worse task success. [LLawCo, June
+2026](https://arxiv.org/abs/2606.28182), provides another extension. These
+establish activity around the benchmark; this review does not claim that either
+new paper already has a broad following. Communication quality must be measured
+against mission outcomes, not just apparent agreement.
 
-The [League of Robot Runners 2026](https://leagueofrobotrunners.org/) adds delayed execution and an execution-policy task alongside planning and scheduling. This is evidence that a research community is investing in uncertainty during execution. It is a stronger reason to examine that problem than finding an isolated recent paper with a matching title.
+The [League of Robot Runners 2026](https://leagueofrobotrunners.org/) adds
+delayed execution and an execution-policy task alongside planning and
+scheduling. This is evidence that a research community is investing in
+uncertainty during execution. It is a stronger reason to examine that problem
+than finding an isolated recent paper with a matching title.
 
 ### Relevant papers that should not dominate the history
 
-- [Learn to Follow](https://ojs.aaai.org/index.php/AAAI/article/view/29704), AAAI 2024, has **36** citations on the checked record. Its hybrid architecture is relevant, but the manuscript should not make it the main historical representative while omitting PRIMAL, RHCR, EGO-Swarm, or RACER.
-- [Graph Neural Networks for Multi-Robot Active Information Acquisition](https://sites.google.com/seas.upenn.edu/gnn4aia/home), ICRA 2023, has **40** checked citations and an ICRA multi-robot award. A good research direction, with recognition stronger than broad citation volume.
-- [Do We Run Large-scale Multi-Robot Systems on the Edge?](https://ieeexplore.ieee.org/document/10610771/), ICRA 2024, has **10** checked citations and the multi-robot award. Its system-size performance collapse is an excellent experiment idea; describe it as recognized specialist work.
-- [PRIMAL3](https://arxiv.org/abs/2608.04905), August 2026, is too new for a durable popularity claim. Its relation to PRIMAL and planning-based experts makes it worth monitoring, not a replacement for established evidence.
-- Genesis has exceptional repository attention, but that does not establish a top-cited paper or validated dominance in multi-agent robotics. VMAS and BenchMARL have legitimate specialist communities, but should not receive the same public-popularity label as Isaac Lab or PettingZoo.
-- Broadly influential single-robot manipulation and vision-language-action work belongs in adjacent context if needed. It should not displace the robot-team literature merely because it has a larger online audience. Surveys, such as [Safe Learning in Robotics](https://doi.org/10.1146/annurev-control-042920-020211), are useful maps of a field, but their citation counts should not be ranked against method papers as if they measure the same contribution.
+- [Learn to Follow](https://ojs.aaai.org/index.php/AAAI/article/view/29704),
+  AAAI 2024, has **36** citations on the checked record. Its hybrid architecture
+  is relevant, but the manuscript should not make it the main historical
+  representative while omitting PRIMAL, RHCR, EGO-Swarm, or RACER.
+- [Graph Neural Networks for Multi-Robot Active Information
+  Acquisition](https://sites.google.com/seas.upenn.edu/gnn4aia/home), ICRA 2023,
+  has **40** checked citations and an ICRA multi-robot award. A good research
+  direction, with recognition stronger than broad citation volume.
+- [Do We Run Large-scale Multi-Robot Systems on the
+  Edge?](https://ieeexplore.ieee.org/document/10610771/), ICRA 2024, has **10**
+  checked citations and the multi-robot award. Its system-size performance
+  collapse is an excellent experiment idea; describe it as recognized specialist
+  work.
+- [PRIMAL3](https://arxiv.org/abs/2608.04905), August 2026, is too new for a
+  durable popularity claim. Its relation to PRIMAL and planning-based experts
+  makes it worth monitoring, not a replacement for established evidence.
+- Genesis has exceptional repository attention, but that does not establish a
+  top-cited paper or validated dominance in multi-agent robotics. VMAS and
+  BenchMARL have legitimate specialist communities, but should not receive the
+  same public-popularity label as Isaac Lab or PettingZoo.
+- Broadly influential single-robot manipulation and vision-language-action work
+  belongs in adjacent context if needed. It should not displace the robot-team
+  literature merely because it has a larger online audience. Surveys, such as
+  [Safe Learning in
+  Robotics](https://doi.org/10.1146/annurev-control-042920-020211), are useful
+  maps of a field, but their citation counts should not be ranked against method
+  papers as if they measure the same contribution.
 
-## 8. Concrete experiments for SCRIMMAGE-RS and Burn
+## 8. Concrete experiments for Ripple and Burn
 
-These are proposals inferred from the literature, not claims of novelty, completed implementation, or capabilities already demonstrated by this repository. Each can begin with a readable conventional baseline. A GPU should answer a concrete computational question.
+These are proposals inferred from the literature, not claims of novelty,
+completed implementation, or capabilities already demonstrated by this
+repository. Each can begin with a readable conventional baseline. A GPU should
+answer a concrete computational question.
 
 | Question | Literature basis | Small first experiment and measurements |
 |---|---|---|
@@ -209,33 +376,78 @@ These are proposals inferred from the literature, not claims of novelty, complet
 | **When does GPU planning help the mission?** | EGO-Swarm, DIAL-MPC, accelerator simulation systems | Batch short candidate trajectories or uncertainty samples in Burn and score collision risk, progress, and effort. Compare against the same CPU calculation, charging transfer and planning latency. Vary candidate count and decision deadline; measure action quality and missed deadlines as well as throughput. |
 | **Do safety and coordination survive real dynamics?** | Optimized flocking, GCBF+ | Use the same nominal planner with point agents, turning limits, and aircraft dynamics; optionally add a conventional safety correction. Test delayed observations. Measure collisions, interventions, deadlock, and whether method rankings change. A continuous-time certificate is not automatically valid under sampled, delayed information. |
 
-For the planned Burn work, **batched trajectory scoring is the clearest first candidate**: bounded inputs and outputs, a direct CPU reference, and useful computation without requiring a training pipeline. Graph inference is a second candidate if message selection becomes the research focus. Neither requires replacing the deterministic CPU coordinator or adding an optional dependency to every normal run. Full GPU physics, photorealistic rendering, and a giant policy-training stack are separate commitments.
+For the planned Burn work, **batched trajectory scoring is the clearest first
+candidate**: bounded inputs and outputs, a direct CPU reference, and useful
+computation without requiring a training pipeline. Graph inference is a second
+candidate if message selection becomes the research focus. Neither requires
+replacing the deterministic CPU coordinator or adding an optional dependency to
+every normal run. Full GPU physics, photorealistic rendering, and a giant
+policy-training stack are separate commitments.
 
-The most coherent initial research sequence is: establish that a continuing-task scenario requires feedback; expose its congestion and communication failures; then test whether a planner, better information exchange, or more candidate evaluations fixes them. This gives the implementation a scientific purpose and keeps performance measurements tied to team outcomes.
+The most coherent initial research sequence is: establish that a continuing-task
+scenario requires feedback; expose its congestion and communication failures;
+then test whether a planner, better information exchange, or more candidate
+evaluations fixes them. This gives the implementation a scientific purpose and
+keeps performance measurements tied to team outcomes.
 
 ## 9. Implications for RQ4 and manuscript flow
 
-The current draft gives Learn to Follow, graph communication, and continuing tasks a useful start, but it underrepresents **physical swarms, exploration, collective perception, benchmark validity, and the scale of the simulation ecosystem**. Those omissions make the field's progress look narrower than the evidence supports.
+The current draft gives Learn to Follow, graph communication, and continuing
+tasks a useful start, but it underrepresents **physical swarms, exploration,
+collective perception, benchmark validity, and the scale of the simulation
+ecosystem**. Those omissions make the field's progress look narrower than the
+evidence supports.
 
 A sharper RQ4 would be:
 
 > Which developments since SCRIMMAGE's publication change the experiments a multi-agent robotics testbed should support?
 
-Answer it with three concrete requirements: **partial and delayed information; continuing tasks with execution constraints; and evaluation across unseen conditions and model assumptions**. Use the influential papers as evidence for those requirements. GPU computation is an enabling method, not itself the research question.
+Answer it with three concrete requirements: **partial and delayed information;
+continuing tasks with execution constraints; and evaluation across unseen
+conditions and model assumptions**. Use the influential papers as evidence for
+those requirements. GPU computation is an enabling method, not itself the
+research question.
 
-For the paper's flow, introduce the changed research needs briefly in the introduction, explain the SCRIMMAGE baseline, present the Rust implementation and measured results, and then use RQ4 to discuss what those results enable and what remains missing. A long separate “How the Field Reached This Point” before the reader understands the contribution would delay the main argument. A compact timeline can accompany RQ4 later; the full review belongs here.
+For the paper's flow, introduce the changed research needs briefly in the
+introduction, explain the SCRIMMAGE baseline, present the Rust implementation
+and measured results, and then use RQ4 to discuss what those results enable and
+what remains missing. A long separate “How the Field Reached This Point” before
+the reader understands the contribution would delay the main argument. A compact
+timeline can accompany RQ4 later; the full review belongs here.
 
-A short manuscript need not cite every row. A balanced set would use the physical swarm lineage, RHCR/PIBT, GNN communication, RACER or Kimera-Multi, SMACv2, and Isaac Gym/VMAS as its main anchors. RoCo or SILLM can illustrate one recent architecture with its evidence tier stated. Preserve the distinction between **verified port behavior**, **existing experiment infrastructure**, and **future research proposals**.
+A short manuscript need not cite every row. A balanced set would use the
+physical swarm lineage, RHCR/PIBT, GNN communication, RACER or Kimera-Multi,
+SMACv2, and Isaac Gym/VMAS as its main anchors. RoCo or SILLM can illustrate one
+recent architecture with its evidence tier stated. Preserve the distinction
+between **verified port behavior**, **existing experiment infrastructure**, and
+**future research proposals**.
 
 ## 10. Retained evidence and remaining limits
 
-The following files preserve exact query URLs, selected identities, counts, available annual buckets, retrieval metadata, and unsuccessful requests. Raw search responses retain rejected neighbors so that their exclusion is auditable; presence in a JSON file does not mean inclusion in the review.
+The following files preserve exact query URLs, selected identities, counts,
+available annual buckets, retrieval metadata, and unsuccessful requests. Raw
+search responses retain rejected neighbors so that their exclusion is auditable;
+presence in a JSON file does not mean inclusion in the review.
 
-- [coordination.json](literature-review/2026-09-26/coordination.json): planning, physical swarms, awards-related candidates, and official repositories.
-- [learning.json](literature-review/2026-09-26/learning.json): MARL, communication, heterogeneous teams, and repository snapshots.
-- [simulators.json](literature-review/2026-09-26/simulators.json): GitHub, OpenAlex, successful Semantic Scholar cross-checks, and rate-limited requests.
-- [additional-systems.json](literature-review/2026-09-26/additional-systems.json): Kimera-Multi, Swarm-SLAM, PARTNR, RoCo, DIAL-MPC, adjacent safety survey, and historical-slide annotation.
-- [discovery.json](literature-review/2026-09-26/discovery.json): six broader title-search result sets used to check the candidate pool.
-- [annual-citation-subset.json](literature-review/2026-09-26/annual-citation-subset.json): the nine identified records underlying the historical activity table.
+- [coordination.json](literature-review/2026-09-26/coordination.json): planning,
+  physical swarms, awards-related candidates, and official repositories.
+- [learning.json](literature-review/2026-09-26/learning.json): MARL,
+  communication, heterogeneous teams, and repository snapshots.
+- [simulators.json](literature-review/2026-09-26/simulators.json): GitHub,
+  OpenAlex, successful Semantic Scholar cross-checks, and rate-limited requests.
+- [additional-systems.json](literature-review/2026-09-26/additional-systems.json):
+  Kimera-Multi, Swarm-SLAM, PARTNR, RoCo, DIAL-MPC, adjacent safety survey, and
+  historical-slide annotation.
+- [discovery.json](literature-review/2026-09-26/discovery.json): six broader
+  title-search result sets used to check the candidate pool.
+- [annual-citation-subset.json](literature-review/2026-09-26/annual-citation-subset.json):
+  the nine identified records underlying the historical activity table.
 
-There is **no defensible exact global citation leaderboard or historical annual popularity ranking** in these data. Producing one would require a defined, deduplicated subject corpus and reliable historical snapshots. Current Google Scholar totals were not obtained; historical star growth was not reconstructed; social-media interest was not measured. The report therefore identifies established and emerging work using visible evidence, explicitly marks unresolved counts, and avoids filling recent timeline slots with unproven papers.
+There is **no defensible exact global citation leaderboard or historical annual
+popularity ranking** in these data. Producing one would require a defined,
+deduplicated subject corpus and reliable historical snapshots. Current Google
+Scholar totals were not obtained; historical star growth was not reconstructed;
+social-media interest was not measured. The report therefore identifies
+established and emerging work using visible evidence, explicitly marks
+unresolved counts, and avoids filling recent timeline slots with unproven
+papers.

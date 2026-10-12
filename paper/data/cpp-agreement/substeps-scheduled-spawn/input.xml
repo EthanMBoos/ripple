@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!-- Added verification fixture; original reference missions remain unchanged.
+     Zero-variance twin of aircraft-substeps-spawning.xml: actual substeps, loop
+     rates, and scheduled generation without randomized state. A zero-deviation
+     normal draw returns its mean, so the platform RNG difference cannot matter. -->
+<runscript name="Aircraft substeps and deterministic scheduled spawning">
+  <run start="0" end="3" dt="0.1" motion_multiplier="5"
+       enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+  <seed>12345</seed>
+  <end_condition>time</end_condition>
+  <no_bin_logging>false</no_bin_logging>
+  <output_type>all</output_type>
+  <create_latest_dir>false</create_latest_dir>
+  <network>GlobalNetwork</network>
+  <network>LocalNetwork</network>
+  <metrics>SimpleCollisionMetrics</metrics>
+  <entity>
+    <team_id>1</team_id>
+    <count>4</count>
+    <generate_rate>2</generate_rate>
+    <generate_count>1</generate_count>
+    <generate_start_time>0</generate_start_time>
+    <generate_time_variance>0</generate_time_variance>
+    <x>10</x><y>20</y><z>200</z>
+    <heading>30</heading><roll>5</roll><pitch>3</pitch>
+    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <variance_heading>0</variance_heading>
+    <use_variance_all_ents>true</use_variance_all_ents>
+    <visual_model>sphere</visual_model>
+    <autonomy speed="24" loop_rate="5">Straight</autonomy>
+    <controller loop_rate="20">SimpleAircraftControllerPID</controller>
+    <motion_model>SimpleAircraft</motion_model>
+  </entity>
+  <entity>
+    <team_id>2</team_id>
+    <count>3</count>
+    <generate_rate>4</generate_rate>
+    <generate_count>2</generate_count>
+    <generate_start_time>0.35</generate_start_time>
+    <generate_time_variance>0</generate_time_variance>
+    <x>-300</x><y>150</y><z>220</z>
+    <heading>-45</heading>
+    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <variance_heading>0</variance_heading>
+    <visual_model>sphere</visual_model>
+    <autonomy speed="18" loop_rate="10">Straight</autonomy>
+    <controller loop_rate="50">SimpleAircraftControllerPID</controller>
+    <motion_model>SimpleAircraft</motion_model>
+  </entity>
+</runscript>

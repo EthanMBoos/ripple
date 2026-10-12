@@ -4,10 +4,10 @@
 //! This is the estimator from the book's "Your first localization estimator" tutorial.
 
 use anyhow::{Context, Result, ensure};
-use scrimmage_core::plugin::{
+use ripple_core::plugin::{
     Input, Localization, LocalizationContext, Plugin, PluginParams, ReadingKind, Update,
 };
-use scrimmage_core::{KinematicState, Vec3};
+use ripple_core::{KinematicState, Vec3};
 use serde::Deserialize;
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.

@@ -241,7 +241,7 @@ fn check_values(value: &Value, path: &str) -> Result<()> {
     Ok(())
 }
 
-/// Sets a dotted path such as `entities.red.spawn.batch_size`, as a Ripple sweep
+/// Sets a dotted path such as `entities.red.spawn.batch_size`, as a sweep
 /// does. Every part must already exist, so a typo is an error, not a new key.
 pub(crate) fn set_path(root: &mut Value, path: &str, replacement: Value) -> Result<()> {
     let mut current = root;

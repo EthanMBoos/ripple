@@ -8,12 +8,12 @@
 //! User guide: book/src/guides/ardupilot.md.
 //!
 //! `SitlLauncher` starts and stops one ArduPlane SITL container per aircraft
-//! around a `scrimmage run`.
+//! around a `ripple run`.
 //!
-//! The `scrimmage` command registers these plugins only when built with
+//! The `ripple` command registers these plugins only when built with
 //! `--features ardupilot`.
 use anyhow::Result;
-use scrimmage_core::plugin::PluginRegistry;
+use ripple_core::plugin::PluginRegistry;
 
 mod ardupilot_bridge;
 mod json_sitl;

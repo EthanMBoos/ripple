@@ -23,17 +23,17 @@ the previous benchmark image, so repeated benchmarks don't fill the disk.
 Rust must write identical output (frames, summary, events) at 1 and 8 workers.
 It must also match single-threaded C++ except in churn, sensing, and collision,
 which depend on random spawn positions and sensor noise that the C++ build
-draws differently without SCRIMMAGE_LIBCXX_SPAWN_RANDOM (the reference check matches them with its comparison build).
+draws differently without SCRIMMAGE_LIBCXX_SPAWN_RANDOM (the reference check
+matches them with its comparison build).
 Every timed run must repeat its warm-up output; C++'s multithreaded mode is
 reported, not required, to do so.
 That mode sometimes deadlocks (SimControl::worker waits on its condition variable
 without a predicate, so a wake-up can be lost): a C++ 8-thread run still going
 after HANG_S is killed, counted, and retried. A hang in any other variant fails.
-The paper's retained results are in paper/data/benchmark/.
+The paper's retained results are in paper/data/speed-cpp-container/.
 """
 import argparse
 from dataclasses import asdict
-import json
 import os
 from pathlib import Path
 import platform
@@ -48,8 +48,8 @@ import xml.etree.ElementTree as ET
 
 from compare import compare_runs
 from perf import HEADER, WORKLOADS
-from reference_check import INSTRUMENTED_BRANCH, ROOT, build_reference, capture, run_logged, \
-    sha256, write_json
+from project import IMAGE_PREFIX, ROOT, sha256, source_identity
+from reference_check import INSTRUMENTED_BRANCH, build_reference, capture, run_logged, write_json
 
 COUNTS = {"motion": (64, 256, 1024), "substeps": (64, 256, 1024),
           "sensing": (32, 64, 128), "churn": (64, 256, 1024), "collision": (256, 1024, 2048)}
@@ -83,9 +83,9 @@ def run(variant, mission_path, directory):
         command = ["/opt/build/bin/scrimmage", mission_path]
         environment = os.environ.copy()
     else:
-        command = ["/usr/local/bin/scrimmage-benchmark", mission_path, ROOT,
+        command = ["/usr/local/bin/ripple-benchmark", mission_path, ROOT,
                    directory / "rust", variant.split("-")[1]]
-        environment = {**os.environ, "SCRIMMAGE_PLUGIN_PATH": ""}  # Rust uses its bundled defaults.
+        environment = {**os.environ, "RIPPLE_PLUGIN_PATH": ""}  # Rust uses its bundled defaults.
     peak = directory / "peak-kb.txt"
     command = ["/usr/bin/time", "-f", "%M", "-o", peak] + command
     with (directory / "console.log").open("w") as console:
@@ -222,23 +222,18 @@ def main():
     run_logged(["docker", "build", "--platform", target, "--progress", "plain",
                 "-f", ROOT / "reference/rust.Dockerfile", "--target", "benchmark",
                 "--build-arg", f"REFERENCE_IMAGE={cpp['image_tag']}",
-                "--tag", f"scrimmage-rs-benchmark:{target.split('/')[1]}",
+                "--tag", f"{IMAGE_PREFIX}-benchmark:{target.split('/')[1]}",
                 "--iidfile", output / "image-id.txt", ROOT], output / "build.log", timeout=3600)
     # The new build took the tag; delete earlier benchmark images (labelled, now untagged).
-    run_logged(["docker", "image", "prune", "--force", "--filter", "label=scrimmage-rs-benchmark"],
+    run_logged(["docker", "image", "prune", "--force", "--filter", f"label={IMAGE_PREFIX}-benchmark"],
                output / "prune.log", timeout=600)
     image = (output / "image-id.txt").read_text().strip()
-    files = [ROOT / "Cargo.toml", ROOT / "Cargo.lock"] + list((ROOT / "crates").rglob("*.rs"))
-    files += list((ROOT / "crates").rglob("*.xml")) + list((ROOT / "crates").rglob("Cargo.toml"))
-    files += list((ROOT / "reference").glob("benchmark*")) + [ROOT / "reference/rust.Dockerfile",
-                                                              ROOT / "reference/perf.py"]
+    identity = source_identity()
     write_json(output / "provenance.json", {
         "cpp": cpp, "benchmark_image": image, "platform": target,
         "host": platform.platform(), "host_machine": platform.machine(),
         "docker_resources": capture(["docker", "info", "--format", "{{.NCPU}} CPUs; {{.MemTotal}} bytes RAM"]),
-        "rust_head": capture(["git", "rev-parse", "HEAD"]),
-        "rust_worktree": capture(["git", "status", "--short"]),
-        "source_hashes": {str(p.relative_to(ROOT)): sha256(p) for p in sorted(files) if p.is_file()},
+        "source_sha256": identity["source_sha256"], "source_hashes": identity["files"],
     })
     command = ["docker", "run", "--rm", "--network", "none", "--platform", target,
                "--env", "PYTHONDONTWRITEBYTECODE=1",

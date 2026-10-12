@@ -1,45 +1,136 @@
-# Docker reference checks
+# Checks and release evidence
 
-These tools compare the Rust workspace with C++ SCRIMMAGE built in Docker.
+This folder holds the checks for Ripple: Rust tests and
+determinism, behavioral agreement with C++ SCRIMMAGE built in Docker, speed and
+memory, and focused studies. One runner, `suite.py`, runs them by ID.
 
 ## Quick start
 
-After a core change, check speed and fidelity:
-
 ```sh
-python3 reference/perf.py                # speed vs your history, about 2 minutes
-python3 reference/campaign.py --quick    # still matches C++? about 20 minutes
-python3 reference/campaign.py --bench    # everything, before committing, about two hours
-python3 reference/perf.py --record --label "spatial index"   # once committed
+python3 reference/suite.py --list        # every check: purpose, reference, pass criterion
+python3 reference/suite.py               # quick set after a change, about 30 minutes
+python3 reference/suite.py --release     # every check before a release, several hours
+python3 reference/suite.py --check cpp-agreement    # one check (repeatable)
 ```
 
-What is in this folder:
+Each run writes `runs/suiteNNN/<check>/` with a log per step and
+`summary.json` last; earlier runs are never reused, and a failed check keeps
+its diagnostics there. The suite prints the C++ agreement numbers before
+(from the release evidence) and after ("what moved"), and exits non-zero if any
+check failed. Every script also runs on its own; its docstring says how.
+
+## Checks
+
+| ID | Set | What it checks | Against | Passes when |
+| --- | --- | --- | --- | --- |
+| `rust-tests` | quick | `cargo test`, `fmt`, `clippy`, and these tools' tests | expected values | all pass |
+| `rust-determinism` | quick | 1, 2, 8 workers, recording, tracing, scan and grid lookup (`determinism.py`) | the one-worker run | byte-identical on every mission |
+| `cpp-agreement` | quick | the curated matrix ([missions.txt](missions.txt), `reference_check.py`) | C++ in Docker | see [Criteria](#criteria) |
+| `speed-regression` | quick | Rust speed and memory (`perf.py`), first, on an idle machine | the accepted baseline | no workload slower beyond noise |
+| `cpp-generated` | release | 100 random scenarios, seed 1 | C++ | all pass |
+| `cpp-long` | release | ten 1,000 s scenarios, seed 7, and `divergence.py` | C++; nudged Rust | runs clean, summaries explained |
+| `cpp-noise` | release | NoisyContacts noise distributions (`noise_statistics.py`) | C++ samples | no KS test below the threshold |
+| `checker-sensitivity` | release | 12 planted porting bugs (`sensitivity.py`) | `cpp-agreement`'s C++ runs | every bug caught |
+| `rust-platform` | release | Linux/amd64 against native (`platform_check.py`) | the native build | runs; differences reported |
+| `speed-cpp-container` | release | C++ and Rust in one Linux container (`benchmark.py`) | C++ comparison branch | Rust deterministic, matches C++ where comparable |
+| `speed-cpp-native` | release | the same on bare-metal macOS (`native_benchmark.py`) | native C++ | as above |
+| `speed-spatial` | release | collision cost, scan against grids (`spatial_benchmark.py`) | the scan | identical output |
+| `speed-messages` | release | routing cost with all-agent messages (`message_benchmark.py`) | native C++ | runs |
+| `rk4-loads` | release | forces at every RK4 stage against held forces (`rk4_loads.py`) | unmodified C++ | runs |
+| `stall-landing` | release | stall tables in ArduPlane's Rascal landing (`stall_landing.py`) | the mission without tables | the repeat is byte-identical |
+
+A check that needs another runs it first (`checker-sensitivity` needs
+`cpp-agreement`). The native checks need macOS and the arm64 C++ image that
+`speed-cpp-container` builds; `native_build.sh` compiles C++ on the host on
+first use. `stall-landing` builds `ripple` with `--features ardupilot` and runs
+ArduPlane SITL in Docker.
+
+## Release evidence
+
+`paper/data/<check>/` holds each check's compact evidence: reports, summaries,
+input missions, and timings, with local paths replaced by `<checkout>` and
+`<run>`. Frames, traces, and recordings stay in the run folder.
+`paper/data/release.json` records, per check, its purpose, reference, pass
+criterion, outcome, date, and the hash of the source that ran (a hash of every
+source file, `project.source_identity`, so no Git history is needed), plus
+the external reference versions (C++ commits and images, the Rust compiler).
+
+```sh
+python3 reference/suite.py --release --retain   # refresh all evidence
+python3 reference/suite.py --check rk4-loads --retain
+```
+
+`--retain` changes the evidence only when every selected check passed. It
+stages the new evidence, swaps it in for the checks that ran, updates
+`release.json`, and regenerates the manuscript tables
+(`paper/data/make_tables.py`). Review the diff and the paper's prose before
+committing. Failures are never retained: fix the cause, or record a known gap
+in the paper and `docs/REFERENCE_NOTES.md`; do not change seeds, tolerances,
+or the reference branches to pass.
+
+## Performance baseline
+
+`perf.py` times six workloads (`motion`, `substeps`, `sensing`, `churn`,
+`collision`, and `collision-grid`, the same collision mission with a 5 m
+spatial grid) natively with the release core-only runner
+(`benchmark_runner.rs`, no viewer), at two agent counts and 1 and 8 workers: a
+warm-up, then five timed runs. It reports the median stepping time with its
+min-max range, and peak memory.
+
+```sh
+python3 reference/perf.py           # compare with reference/perf_baseline.json
+python3 reference/perf.py --quick   # smallest sizes only, under a minute
+python3 reference/perf.py --accept  # make this measurement the baseline
+```
+
+The baseline is one committed record: the workloads (a hash of their
+definitions), the machine, the Rust compiler, and each workload's times. A
+workload is SLOWER when its median lies outside the baseline's range and is
+more than 10% higher (identical code drifted up to 6% between sessions); any
+slower workload fails `speed-regression`. A baseline
+from another machine or toolchain, or for changed workloads, is not compared at
+all: the check fails with "no compatible baseline" until someone reviews the
+numbers and runs `--accept` on an idle machine. A slowdown is never accepted
+automatically.
+
+## Refactors and renames
+
+A change that should not change behavior must leave every output byte for byte
+unchanged:
+
+```sh
+python3 reference/equivalence.py OLD_EXECUTABLE NEW_EXECUTABLE
+```
+
+Build the old executable from any trusted source (for example an exported copy
+of the previous release) and the new one from this checkout. Every mission,
+perf.py's workloads, and a message-heavy mission run at 1, 2, and 8 workers with
+the comparison trace; frames, events, summaries, and traces must be identical,
+and so must manifests except the documented metadata keys (`source`, the
+mission's path), each of which is reported. The report goes to
+`runs/equivalenceNNN/`; it is development evidence, not release evidence.
+
+Names and paths live in one place, [project.py](project.py): the package and
+executable names, Docker image prefix, and the runs and evidence folders, all
+resolved from this checkout, so the suite runs the same from any directory name.
+
+## Tools
 
 | Files | Purpose |
 | --- | --- |
-| `campaign.py` | Runs everything below and refreshes the paper's data |
+| `suite.py`, `project.py`, `retain.py` | The runner, names and paths, and evidence copying |
 | `reference_check.py` | Compares Rust with C++ on `missions.txt` (or `--mission`, `--mission-dir`) |
-| `perf.py` | Rust speed against your history in `perf_history.jsonl` |
-| `compare.py` | Compares two saved runs |
-| `generate_scenarios.py`, `sensitivity.py`, `noise_statistics.py`, `divergence.py`, `platform_check.py`, `benchmark.py` | Paper studies; `campaign.py` runs all but `benchmark.py` (see [Further checks](#further-checks)) |
-| `frames.py`, `traces.py`, `metrics_model.py` | Helpers: read frames, compare traces, model the two scoring rules |
+| `compare.py`, `frames.py`, `traces.py`, `metrics_model.py` | Compare two saved runs; read frames and traces; model the two scoring rules |
+| `determinism.py`, `equivalence.py` | Rust against itself: variants of one build, or two builds |
+| `generate_scenarios.py`, `divergence.py`, `sensitivity.py`, `noise_statistics.py`, `platform_check.py` | Release checks described [below](#the-scripts-behind-the-release-checks) |
+| `perf.py`, `benchmark.py`, `native_benchmark.py`, `native.py`, `native_build.sh`, `spatial_benchmark.py`, `message_benchmark.py` | Speed and memory |
+| `rk4_loads.py`, `stall_landing.py`, `inputs/` | Focused studies and their input missions |
 | `Dockerfile`, `fixtures/` | The C++ reference build and its command-test plugins |
 | `rust.Dockerfile`, `benchmark_runner.rs` | Rust on Linux, for the platform check and benchmarks |
 | `tests/` | Tests for these tools, run without Docker |
 
-`perf.py` is described in [Performance tracking](#performance-tracking) below.
-`campaign.py` reruns the C++ comparisons: the matrix, planted bugs, noise,
-generated and long scenarios, and the platform check. It prints the headline
-numbers before and after ("what moved") and replaces `paper/data/` only if every
-step succeeded, so a failed run never overwrites good results. `--no-retain`
-runs the checks without touching the paper; `python3 reference/reference_check.py`
-runs the matrix alone. Expected differences (randomized spawning against the
-unmodified C++ build, the noise mission's random payloads, late divergence in
-long runs) are reported but are not failures; anything else exits non-zero, and
-`runs/campaign-NNN/summary.json` lists each step's outcome.
-
-The C++ checkout defaults to a sibling `../scrimmage`; pass `--source PATH` to
-either script otherwise. It needs both branches locally, for example:
+The C++ checkout defaults to a sibling `../scrimmage`; pass `--source PATH`
+otherwise. It needs both branches locally, for example:
 
 ```sh
 git clone git@github.com:gtri/scrimmage.git ../scrimmage
@@ -47,52 +138,16 @@ git -C ../scrimmage fetch origin Ubuntu-24.04:Ubuntu-24.04 benchmarking-edits:be
 ```
 
 The checker builds from these committed branches, never from uncommitted files.
-`campaign.py` writes to `runs/campaign-NNN/`, replaces the folders under
-`paper/data/`, and regenerates the manuscript tables; rebuild the paper and
-check the prose afterwards. The missions compared are listed in
-[missions.txt](missions.txt).
-
 Requires Python 3.10+, a running Docker engine, and Rust/Cargo. No native C++
-build is needed.
-The first build downloads a large dependency image and compiles C++; later
-checks reuse Docker's build cache. Allow several GB of disk space.
+build is needed except for the native timings. The first build downloads a
+large dependency image and compiles C++; later checks reuse Docker's build
+cache. Allow several GB of disk space.
 
-Checks are saved automatically as `runs/reference-check000`, `001`, and so on.
-Use `--output path/to/new-check`, `--source path/to/scrimmage`, or `--jobs 4`
-to override locations or compilation parallelism. Existing output directories
-are never reused. `--timeout` controls each mission/comparison; `--build-timeout`
-controls each Docker/Cargo build. Both are in seconds.
-
-## Performance tracking
-
-`perf.py` times the Rust simulation natively, without Docker or C++, so you can
-see what a change does to speed:
-
-```sh
-python3 reference/perf.py                        # measure; compare with the last record
-python3 reference/perf.py --record --label NAME  # measure and append to the history
-python3 reference/perf.py --against NAME         # compare with a specific record
-python3 reference/perf.py --history              # list this machine's records
-python3 reference/perf.py --quick                # smallest sizes only, under a minute
-```
-
-It builds the release core-only runner (`benchmark_runner.rs`, no viewer) and
-runs six workloads (`motion`, `substeps`, `sensing`, `churn`, `collision`, and
-`collision-grid`, the same collision mission with a 5 m spatial grid) at two agent
-counts each and at 1 and 8 workers: a warm-up, then five timed runs. It reports
-the median stepping time with its min-max range, and peak memory. A change is
-flagged only when the new median lies outside the old range and differs by more
-than 5%.
-
-Records go in `perf_history.jsonl` (the first `--record` creates it; commit it), with
-the commit, date, machine, and label. Compare only records from the same machine
-(the script does this automatically) on an idle system with the same power
-settings. Record a baseline from a clean commit; `--record` notes uncommitted
-changes. Do not edit a workload in place: that makes its history incomparable, so
-add a new workload name instead.
-
-`benchmark.py` is different: it times C++ against Rust in the reference Docker
-image for the paper (see [C++ versus Rust benchmark](#c-versus-rust-benchmark)).
+`reference_check.py` alone writes `runs/reference-checkNNN`. Use `--output
+path/to/new-check`, `--source path/to/scrimmage`, or `--jobs 4` to override
+locations or compilation parallelism. Existing output directories are never
+reused. `--timeout` controls each mission/comparison; `--build-timeout` controls
+each Docker/Cargo build. Both are in seconds.
 
 ## Two C++ builds
 
@@ -105,22 +160,28 @@ The checker builds two committed branches of `../scrimmage`:
   `std::minstd_rand` stream with libc++'s normal-variate ordering. It also fixes
   one C++ regression: each substep runs controllers, then motion, as SCRIMMAGE
   did until GPU support split them (GPU motion models are disabled; see
-  [reference notes](../docs/REFERENCE_NOTES.md#substep-order-a-c-regression-fixed-on-the-comparison-branch)).
-  AircraftPIDController uses its given timestep with a lower default
-  altitude derivative gain ([reference notes](../docs/REFERENCE_NOTES.md#intentional-differences-from-c)).
-  And FixedWing6DOF and Multirotor compute forces and moments at every RK4
-  stage instead of once per step ([reference notes](../docs/REFERENCE_NOTES.md#rk4-loads-a-c-defect-fixed-on-the-comparison-branch)).
+  [reference
+  notes](../docs/REFERENCE_NOTES.md#substep-order-a-c-regression-fixed-on-the-comparison-branch)).
+  AircraftPIDController uses its given timestep with a lower default altitude
+  derivative gain ([reference
+  notes](../docs/REFERENCE_NOTES.md#intentional-differences-from-c)). And
+  FixedWing6DOF and Multirotor compute forces and moments at every RK4 stage
+  instead of once per step ([reference
+  notes](../docs/REFERENCE_NOTES.md#rk4-loads-a-c-defect-fixed-on-the-comparison-branch)).
   With neither variable set, `motion_multiplier` 1, and none of those three
   plugins, the branch behaves exactly like the reference.
 
+### Criteria
+
 Each mission runs C++ four times. The instrumented build with and without
 tracing must write byte-identical `frames.bin` and `summary.csv`, and with
-`motion_multiplier` 1 and no AircraftPIDController, FixedWing6DOF, or
-Multirotor both must also match the unmodified build (`cpp_non_interference`
-in `result.json`); a difference fails the case. With more substeps or one of
-those plugins the unmodified build differs by design, and `cpp_baseline_equality` records it. The fourth run, with tracing and the libc++-compatible spawn stream, is
-the one compared with Rust. Rust runs once more with `--trace`, which must leave
-its frames, events, and summary byte-identical (`trace_equality`).
+`motion_multiplier` 1 and no AircraftPIDController, FixedWing6DOF, or Multirotor
+both must also match the unmodified build (`cpp_non_interference` in
+`result.json`); a difference fails the case. With more substeps or one of those
+plugins the unmodified build differs by design, and `cpp_baseline_equality`
+records it. The fourth run, with tracing and the libc++-compatible spawn stream,
+is the one compared with Rust. Rust runs once more with `--trace`, which must
+leave its frames, events, and summary byte-identical (`trace_equality`).
 
 The spawn option reproduces the unmodified C++ on macOS (libc++) when spawning
 is the only consumer of the shared generator, which holds for the matrix. It
@@ -143,33 +204,34 @@ order index, as in `NoisyState0`). Non-finite numbers are written as the strings
 
 ## What gets built
 
-The script reads the exact
-[upstream slim dependency Dockerfile](https://github.com/gtri/scrimmage/blob/Ubuntu-24.04/ci/dockerfiles/ubuntu-24.04-slim-dependency-only)
+The script reads the exact [upstream slim dependency
+Dockerfile](https://github.com/gtri/scrimmage/blob/Ubuntu-24.04/ci/dockerfiles/ubuntu-24.04-slim-dependency-only)
 from the local branch snapshot and builds it without edits. Despite its name,
 that image includes VTK/Qt and other integration dependencies. Its JSBSim setup
-downloads amd64 packages, so the workflow explicitly uses `linux/amd64`, including
-emulation on Apple Silicon. These packages are installed inside Docker only.
+downloads amd64 packages, so the workflow explicitly uses `linux/amd64`,
+including emulation on Apple Silicon. These packages are installed inside Docker
+only.
 
-A second image per branch builds a `git archive` of that local branch. It does not copy
-uncommitted changes, modify the checkout, or fetch/update your local branch.
-The branch is not pinned in this project;
-each check records the actual commit, source archive hash, Dockerfile hashes,
-image IDs, Linux package/compiler versions, Rust compiler, and Rust source hashes.
-The upstream dependency Dockerfile itself clones GitHub for its setup scripts;
-that is distinct from the archived source used for the reference executable.
+A second image per branch builds a `git archive` of that local branch. It does
+not copy uncommitted changes, modify the checkout, or fetch/update your local
+branch. The branch is not pinned in this project; each check records the actual
+commit, source archive hash, Dockerfile hashes, image IDs, Linux
+package/compiler versions, Rust compiler, and Rust source hashes. The upstream
+dependency Dockerfile itself clones GitHub for its setup scripts; that is
+distinct from the archived source used for the reference executable.
 
 [Dockerfile](Dockerfile) disables optional VTK, gRPC, OpenCV, ROS, and GPU build
-paths and builds the executable plus the eighteen upstream C++ plugins needed by the current
-matrix. This is a headless comparison build, not verification of the full C++
-plugin catalog. Model equations are never patched. Two small command drivers in
-`fixtures/` are built into both images: `MotorSpeeds` (the old upstream PID
-writes a different control interface than Multirotor reads) and
+paths and builds the executable plus the eighteen upstream C++ plugins needed by
+the current matrix. This is a headless comparison build, not verification of the
+full C++ plugin catalog. Model equations are never patched. Two small command
+drivers in `fixtures/` are built into both images: `MotorSpeeds` (the old
+upstream PID writes a different control interface than Multirotor reads) and
 `ConstantVelocity` (no retained upstream autonomy writes a nonzero velocity).
 They supply constant commands to unchanged upstream models; neither is an
-autopilot. Rust has matching stock test drivers.
-Fixture source hashes are recorded alongside the upstream source provenance.
-`VTK_FOUND=OFF` is set explicitly because upstream CMake expands that variable
-inside conditionals even when VTK discovery is disabled.
+autopilot. Rust has matching stock test drivers. Fixture source hashes are
+recorded alongside the upstream source provenance. `VTK_FOUND=OFF` is set
+explicitly because upstream CMake expands that variable inside conditionals even
+when VTK discovery is disabled.
 
 Docker image tags/layers remain cached. There is no automatic Docker pruning.
 Mission containers run without network access and can write only to their
@@ -178,53 +240,57 @@ dedicated host output mount; they are removed after the run.
 ## Add a C++ plugin to the comparison
 
 1. Port the plugin to Rust and register it (see the book's plugin guide).
-2. Add its C++ build target to the `cmake --build` lists in [Dockerfile](Dockerfile).
-   If it needs a command source no retained C++ plugin provides, add a small
-   driver to [fixtures/](fixtures/) and the fixture loop in the Dockerfile, with
-   a matching Rust driver.
+2. Add its C++ build target to the `cmake --build` lists in
+   [Dockerfile](Dockerfile). If it needs a command source no retained C++ plugin
+   provides, add a small driver to [fixtures/](fixtures/) and the fixture loop
+   in the Dockerfile, with a matching Rust driver.
 3. Write a fixture mission under `missions/verification/` that exercises it with
-   no randomness it can't share (zero spawn variance, zero sensor noise), and add
-   it to [missions.txt](missions.txt) with a short label. The Rust regression
-   tests pick up every mission under `missions/` automatically.
+   no randomness it can't share (zero spawn variance, zero sensor noise), and
+   add it to [missions.txt](missions.txt) with a case ID that says what it tests
+   and a short label. The Rust regression tests pick up every mission under
+   `missions/` automatically.
 4. If it publishes a new sensor message whose contents should be compared, add
    the payload to both traces: `src/common/Trace.cpp` on the C++ branch and
    `crates/core/src/simcontrol/trace.rs` here (see `sensor_states` in
    `pubsub/messages.rs`). Commit C++ changes on `benchmarking-edits`;
    the checker builds committed branches only.
-5. Optionally add the plugin to `generate_scenarios.py` for random coverage and a
-   one-line defect for it to `sensitivity.py`.
-6. Run `python3 reference/campaign.py --quick`, then the full campaign.
+5. Optionally add the plugin to `generate_scenarios.py` for random coverage and
+   a one-line defect for it to `sensitivity.py`.
+6. Run `python3 reference/suite.py`, then `--release`.
 
 ## Default comparison matrix
 
 The matrix is [missions.txt](missions.txt):
 
-| Mission | Coverage |
-| --- | --- |
-| `straight-no-gui.xml` | Opposing aircraft, collision and removal |
-| `test_missions/straight_cpu.xml` | Longer single-aircraft run |
-| `test_missions/straight_cpu_mul.xml` | Original mission including its `motion_multipler` typo |
-| `verification/aircraft-substeps-spawning.xml` | Actual five-substep execution, rates, randomized state, and scheduled spawning, compared with the libc++-compatible spawn stream |
-| `verification/aircraft-substeps-scheduled.xml` | The same substeps and rates with two zero-variance spawn schedules; deterministic on either engine |
-| `verification/noisy-state-bias.xml` | NoisyState deterministic bias/attitude equations and belief feedback, without stochastic sequence differences |
-| `networks-local-global.xml` | Boundary response over GlobalNetwork, local own-state feedback, ground removal and metrics |
-| `fixed-wing-6dof.xml` | Aerodynamic flight, tilted/northbound attitude, nonzero rates and wind |
-| `multirotor.xml` | Quad hover, tilted flight, unequal motor speeds and a six-rotor configuration |
-| `verification/single-integrator.xml` | SingleIntegrator direct, normalized, zero, and vertical commands from `ConstantVelocity` |
-| `verification/noisy-contacts-bias.xml` | NoisyContacts biases, attitude order, and covariance through published payloads |
-| `verification/collision-boundary.xml` | SimpleCollision strict range at the boundary, and in-run opposing and same-team collisions |
-| `verification/sphere-network-auction.xml` | SphereNetwork reach inside, at, and beyond range through AuctionAssign messages on `CommsNetwork` |
+| Case | Mission | Coverage |
+| --- | --- | --- |
+| `aircraft-collision` | `straight-no-gui.xml` | Opposing aircraft, collision and removal |
+| `aircraft-long-horizon` | `test_missions/straight_cpu.xml` | Longer single-aircraft run |
+| `aircraft-multiplier-typo` | `test_missions/straight_cpu_mul.xml` | Original mission including its `motion_multipler` typo |
+| `substeps-random-spawn` | `verification/aircraft-substeps-spawning.xml` | Actual five-substep execution, rates, randomized state, and scheduled spawning, compared with the libc++-compatible spawn stream |
+| `substeps-scheduled-spawn` | `verification/aircraft-substeps-scheduled.xml` | The same substeps and rates with two zero-variance spawn schedules; deterministic on either engine |
+| `noisy-state-bias` | `verification/noisy-state-bias.xml` | NoisyState deterministic bias/attitude equations and belief feedback, without stochastic sequence differences |
+| `world-networks` | `networks-local-global.xml` | Boundary response over GlobalNetwork, local own-state feedback, ground removal and metrics |
+| `fixed-wing-a4` | `fixed-wing-6dof.xml` | Aerodynamic flight, tilted/northbound attitude, nonzero rates and wind |
+| `fixed-wing-rascal` | `fixed-wing-6dof-rascal.xml` | The Rascal's parameters, an upset, and a glide |
+| `multirotor` | `multirotor.xml` | Quad hover, tilted flight, unequal motor speeds and a six-rotor configuration |
+| `single-integrator` | `verification/single-integrator.xml` | SingleIntegrator direct, normalized, zero, and vertical commands from `ConstantVelocity` |
+| `noisy-contacts-bias` | `verification/noisy-contacts-bias.xml` | NoisyContacts biases, attitude order, and covariance through published payloads |
+| `sphere-network-auction` | `verification/sphere-network-auction.xml` | SphereNetwork reach inside, at, and beyond range through AuctionAssign messages on `CommsNetwork` |
+| `collision-boundary` | `verification/collision-boundary.xml` | SimpleCollision strict range at the boundary, and in-run opposing and same-team collisions |
+
+Case folders and reports use the case ID, so a mission file can move without
+changing what the evidence calls it. Missions given with `--mission` or
+`--mission-dir` use their file name.
 
 Each case runs C++ headless and single-threaded. Rust runs with 1, 2, and 8
 workers without Rerun, plus an eight-worker headless Rerun recording.
 
 For just the Multirotor port, run
 `python3 reference/reference_check.py --mission missions/multirotor.xml` and
-`cargo test -p scrimmage-core multirotor`. The initial four-vehicle check compared
-4,001 frames / 16,004 states: maximum position error 8.63e-15 m, velocity error
-4.82e-13 m/s, matching summaries, and byte-identical Rust worker/recording outputs.
-This establishes the selected open-loop cases, not a working upstream autopilot
-or external-force/landing integration. Model-specific quirks are commented inline.
+`cargo test -p ripple-core multirotor`. The case covers the selected open-loop
+cases, not a working upstream autopilot or external-force/landing integration.
+Model-specific quirks are commented inline.
 
 - C++/Rust frames and team summaries use `reference/compare.py`. Frames must
   contain the same entity IDs, so spawn and removal ticks are compared.
@@ -276,19 +342,20 @@ velocity 1e-8 m/s, orientation 1e-9 rad, angular velocity 1e-9 rad/s, timestamp
 1e-9 s, and summary values 1e-6 (C++ prints six decimals). The largest measured
 differences are 1.4e-10 m, 9.6e-11 m/s, 2.2e-12 rad, and 8.9e-12 rad/s. The
 original comparator used 0.01 m and 1e-3, which let a sub-micrometre spawn
-defect through (`sensitivity.py`). Frames are paired by index, retaining repeated terminal
-timestamps; entities and summary rows are matched by ID. Quaternion signs are
-equivalent. Malformed/nonfinite state is rejected. `frames.py` decodes the
-length-delimited proto3 frame subset from the reference branch's schemas; it is
-not a general protobuf library. `traces.py` compares event streams separately.
+defect through (`sensitivity.py`). Frames are paired by index, retaining
+repeated terminal timestamps; entities and summary rows are matched by ID.
+Quaternion signs are equivalent. Malformed/nonfinite state is rejected.
+`frames.py` decodes the length-delimited proto3 frame subset from the reference
+branch's schemas; it is not a general protobuf library. `traces.py` compares
+event streams separately.
 
 ## Results and failure handling
 
 The command exits zero only when every requested case passes. `report.json`
 contains the overall result and per-mission checks; case directories retain
-`comparison.json`, input missions, C++ logs, Rust variants, hashes, and recordings.
-Build logs and source/image provenance are kept at the check root. A failed
-mission does not prevent the remaining cases from being checked.
+`comparison.json`, input missions, C++ logs, Rust variants, hashes, and
+recordings. Build logs and source/image provenance are kept at the check root. A
+failed mission does not prevent the remaining cases from being checked.
 
 Rust's legacy RNG reproduces Apple libc++. Ubuntu's libstdc++ uses a different
 default engine (multiplier 16807, not 48271) and returns the other polar-method
@@ -298,10 +365,10 @@ branch's spawn option instead of changing seeds or tolerances. The
 zero-variance twin `verification/aircraft-substeps-scheduled.xml` stays in the
 matrix as a check that does not rely on that option.
 
-Recorded outcomes, with retained reports under `paper/data/`, are in the
-[paper](../paper/README.md).
+Recorded outcomes are the release evidence under `paper/data/`, described in
+the [paper README](../paper/README.md).
 
-## Further checks
+## The scripts behind the release checks
 
 - `generate_scenarios.py` writes seeded random missions from retained models;
   run them with `reference_check.py --mission-dir DIR`. `--horizon 1000` makes
@@ -309,11 +376,11 @@ Recorded outcomes, with retained reports under `paper/data/`, are in the
 - `divergence.py CHECK --output DIR` explains long-run divergence: it compares
   when C++ and Rust exceed the tolerance with when Rust diverges from itself
   after one-ulp changes to initial roll, commanded speed, and turning radius,
-  and after scaling each controller loop's proportional gain by 1 + 1e-12 (one-ulp
-  parameter changes alone can miss a flight that is sensitive only in a
+  and after scaling each controller loop's proportional gain by 1 + 1e-12
+  (one-ulp parameter changes alone can miss a flight that is sensitive only in a
   controller loop).
 - `platform_check.py --output DIR` builds Rust for Linux/amd64
-  (`rust.Dockerfile`, target `cli`) and compares every curated mission's outputs and
+  (`rust.Dockerfile`, target `cli`) and compares every mission's outputs and
   traces byte for byte with the native build, at 1 and 8 workers.
 - `sensitivity.py --check CHECK --output DIR` plants one-line defects in a copy
   of the Rust source and reports which comparison layer detects each.
@@ -338,27 +405,39 @@ python3 -m unittest discover -s reference -p 'test_*.py'
 
 ## C++ versus Rust benchmark
 
-```sh
-python3 reference/benchmark.py --output runs/new-benchmark   # --quick: smallest sizes only
-```
-
-This builds the C++ comparison branch (`benchmarking-edits`, whose substeps
-interleave controllers and motion as Rust does; tracing stays off) and the Rust
-core-only runner for this
-machine's own architecture and runs both in one Linux container, so neither is
-emulated (on Apple Silicon, C++ is built without JSBSim, which no workload uses).
-It runs `perf.py`'s five workloads at three agent counts with C++ single-threaded,
-C++ in its own `multi_threaded` mode at 8 threads, and Rust at 1 and 8 workers:
-one warm-up and three timed runs each. Times are whole processes minus a one-step
+`benchmark.py` (check `speed-cpp-container`) builds the C++ comparison branch
+(`benchmarking-edits`, whose substeps interleave controllers and motion as Rust
+does; tracing stays off) and the Rust core-only runner for this machine's own
+architecture and runs both in one Linux container, so neither is emulated (on
+Apple Silicon, C++ is built without JSBSim, which no workload uses). It runs
+`perf.py`'s five workloads at three agent counts with C++ single-threaded, C++
+in its own `multi_threaded` mode at 8 threads, and Rust at 1 and 8 workers: one
+warm-up and three timed runs each. Times are whole processes minus a one-step
 run of the same mission, which removes startup and parsing; peak memory is
 recorded too. Rust must write identical output at 1 and 8 workers, and must
 match single-threaded C++ except in churn, sensing, and collision, whose random
-spawns and sensor noise C++ draws differently without the comparison spawn stream; every run
-must repeat its warm-up output.
+spawns and sensor noise C++ draws differently without the comparison spawn
+stream; every run must repeat its warm-up output. `native_benchmark.py` (check
+`speed-cpp-native`) runs the same on bare-metal macOS against
+`native_build.sh`'s build.
 
 C++'s multithreaded mode sometimes deadlocks (its worker waits on a condition
-variable without a predicate, so a wake-up can be lost; 7 of 40 runs of one
-mission hung). Such runs are killed after 120 s, counted, and retried. To save disk, a timed
-run's output is deleted once it matches the warm-up's, and each build replaces
-the previous `scrimmage-rs-benchmark` image. The
-paper's retained results are in `paper/data/benchmark/`.
+variable without a predicate, so a wake-up can be lost). Such runs are killed
+after 120 s, counted, and retried. To save disk, a timed run's output is deleted
+once it matches the warm-up's, and each build replaces the previous
+`ripple-benchmark` image.
+
+## Focused studies
+
+These answer one question each from the current checkout, against an external
+reference rather than an earlier revision of this project:
+
+- `spatial_benchmark.py`: collision checking cost with the scan (every contact)
+  and with grids of several cell widths, on crowded and spread-out missions;
+  every variant must write identical output.
+- `message_benchmark.py`: what all-agent messages cost per step, in native C++
+  and in Rust, with `sample` profiles of both on macOS.
+- `rk4_loads.py`: what computing forces at every RK4 stage changes. The held
+  ("frozen") forces come from the unmodified C++ build, which still has them.
+- `stall_landing.py`: ArduPlane's Rascal landing with and without stall tables,
+  with a repeat that must be byte-identical.

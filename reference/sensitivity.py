@@ -21,7 +21,8 @@ from pathlib import Path
 import shutil
 import subprocess
 
-from reference_check import ROOT, compare_case, write_json
+from project import ROOT, build_cli
+from reference_check import compare_case, write_json
 
 CORE = "crates/core/src/"
 # (name, file, original text, defective text). Each original must occur exactly once.
@@ -87,18 +88,16 @@ def copy_workspace(destination):
 
 def build(source, target, log):
     with log.open("w") as stream:
-        subprocess.run(["cargo", "build", "--locked", "--package", "scrimmage-rs", "--bin",
-                        "scrimmage"], cwd=source, env={**os.environ, "CARGO_TARGET_DIR": str(target)},
-                       stdout=stream, stderr=subprocess.STDOUT, check=True)
-    return target / "debug" / "scrimmage"
+        return build_cli(cwd=source, env={**os.environ, "CARGO_TARGET_DIR": str(target)},
+                         log=stream)
 
 
 def evaluate(binary, cases, output):
-    """Run every case and compare with its saved C++ run; returns per-mission findings."""
+    """Run every case and compare with its saved C++ run; returns per-case findings."""
     findings = {}
     for case in cases:
         result = json.loads((case / "result.json").read_text())
-        mission = Path(result["mission"]).name
+        mission = result.get("case", case.name)
         run = output / case.name
         completed = subprocess.run([
             binary, "run", case / "input/input.xml", "--root", ROOT, "--output", run,

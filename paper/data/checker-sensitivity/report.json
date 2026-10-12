@@ -1,0 +1,290 @@
+{
+  "check": "<checkout>/runs/suite000/cpp-agreement",
+  "defects": [
+    {
+      "name": "controller substeps receive the full step dt",
+      "file": "crates/core/src/simcontrol.rs",
+      "detected": true,
+      "missions": {
+        "substeps-random-spawn": [
+          "frames",
+          "trace"
+        ],
+        "substeps-scheduled-spawn": [
+          "frames",
+          "trace"
+        ]
+      }
+    },
+    {
+      "name": "frame timestamp labels the step start, not t + dt",
+      "file": "crates/core/src/simcontrol.rs",
+      "detected": true,
+      "missions": {
+        "aircraft-collision": [
+          "frames"
+        ],
+        "aircraft-long-horizon": [
+          "frames"
+        ],
+        "aircraft-multiplier-typo": [
+          "frames"
+        ],
+        "collision-boundary": [
+          "frames",
+          "summary"
+        ],
+        "fixed-wing-a4": [
+          "frames"
+        ],
+        "fixed-wing-rascal": [
+          "frames"
+        ],
+        "multirotor": [
+          "frames"
+        ],
+        "noisy-contacts-bias": [
+          "frames"
+        ],
+        "noisy-state-bias": [
+          "frames"
+        ],
+        "single-integrator": [
+          "frames"
+        ],
+        "sphere-network-auction": [
+          "frames"
+        ],
+        "substeps-random-spawn": [
+          "frames"
+        ],
+        "substeps-scheduled-spawn": [
+          "frames",
+          "summary"
+        ],
+        "world-networks": [
+          "frames",
+          "summary"
+        ]
+      }
+    },
+    {
+      "name": "spawn coordinates skip the C++ six-decimal round trip",
+      "file": "crates/core/src/simcontrol/generation.rs",
+      "detected": true,
+      "missions": {
+        "substeps-random-spawn": [
+          "frames",
+          "trace"
+        ]
+      }
+    },
+    {
+      "name": "network delivers one tick late",
+      "file": "crates/core/src/pubsub/messages.rs",
+      "detected": true,
+      "missions": {
+        "aircraft-collision": [
+          "summary",
+          "trace"
+        ],
+        "aircraft-long-horizon": [
+          "summary",
+          "trace"
+        ],
+        "aircraft-multiplier-typo": [
+          "summary",
+          "trace"
+        ],
+        "collision-boundary": [
+          "summary",
+          "trace"
+        ],
+        "fixed-wing-a4": [
+          "summary",
+          "trace"
+        ],
+        "fixed-wing-rascal": [
+          "summary",
+          "trace"
+        ],
+        "multirotor": [
+          "summary",
+          "trace"
+        ],
+        "noisy-contacts-bias": [
+          "summary",
+          "trace"
+        ],
+        "noisy-state-bias": [
+          "summary",
+          "trace"
+        ],
+        "single-integrator": [
+          "summary",
+          "trace"
+        ],
+        "sphere-network-auction": [
+          "summary",
+          "trace"
+        ],
+        "substeps-random-spawn": [
+          "summary",
+          "trace"
+        ],
+        "substeps-scheduled-spawn": [
+          "summary",
+          "trace"
+        ],
+        "world-networks": [
+          "summary",
+          "trace"
+        ]
+      }
+    },
+    {
+      "name": "SphereNetwork range becomes inclusive",
+      "file": "crates/core/src/plugin/network/sphere_network/sphere_network.rs",
+      "detected": true,
+      "missions": {
+        "sphere-network-auction": [
+          "trace"
+        ]
+      }
+    },
+    {
+      "name": "SimpleCollision range becomes inclusive",
+      "file": "crates/core/src/common/spatial.rs",
+      "detected": true,
+      "missions": {
+        "collision-boundary": [
+          "frames",
+          "summary",
+          "trace"
+        ]
+      }
+    },
+    {
+      "name": "sensor attitude errors applied in yaw-pitch-roll order",
+      "file": "crates/core/src/plugin/sensor/noisy_state/noisy_state.rs",
+      "detected": true,
+      "missions": {
+        "noisy-contacts-bias": [
+          "trace"
+        ],
+        "noisy-state-bias": [
+          "frames",
+          "trace"
+        ]
+      }
+    },
+    {
+      "name": "NoisyContacts covariance is identity, not 5I",
+      "file": "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs",
+      "detected": true,
+      "missions": {
+        "noisy-contacts-bias": [
+          "trace"
+        ]
+      }
+    },
+    {
+      "name": "LocalNetwork delivers across entities",
+      "file": "crates/core/src/plugin/network/local_network/local_network.rs",
+      "detected": true,
+      "missions": {
+        "noisy-contacts-bias": [
+          "trace"
+        ],
+        "world-networks": [
+          "trace"
+        ]
+      }
+    },
+    {
+      "name": "SingleIntegrator yaw swaps atan2 arguments",
+      "file": "crates/core/src/plugin/motion/single_integrator/single_integrator.rs",
+      "detected": true,
+      "missions": {
+        "collision-boundary": [
+          "frames",
+          "trace"
+        ],
+        "single-integrator": [
+          "frames",
+          "trace"
+        ]
+      }
+    },
+    {
+      "name": "heading PID proportional gain 1% high",
+      "file": "crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs",
+      "detected": true,
+      "missions": {
+        "noisy-contacts-bias": [
+          "frames",
+          "trace"
+        ],
+        "noisy-state-bias": [
+          "frames",
+          "trace"
+        ],
+        "substeps-random-spawn": [
+          "frames",
+          "trace"
+        ],
+        "substeps-scheduled-spawn": [
+          "frames",
+          "trace"
+        ],
+        "world-networks": [
+          "frames",
+          "trace"
+        ]
+      }
+    },
+    {
+      "name": "SimpleAircraft yaw rate 0.1% high",
+      "file": "crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs",
+      "detected": true,
+      "missions": {
+        "noisy-contacts-bias": [
+          "frames",
+          "trace"
+        ],
+        "noisy-state-bias": [
+          "frames",
+          "trace"
+        ],
+        "substeps-random-spawn": [
+          "frames",
+          "trace"
+        ],
+        "substeps-scheduled-spawn": [
+          "frames",
+          "trace"
+        ],
+        "world-networks": [
+          "frames",
+          "trace"
+        ]
+      }
+    }
+  ],
+  "control": {
+    "aircraft-collision": [],
+    "aircraft-long-horizon": [],
+    "aircraft-multiplier-typo": [],
+    "collision-boundary": [],
+    "fixed-wing-a4": [],
+    "fixed-wing-rascal": [],
+    "multirotor": [],
+    "noisy-contacts-bias": [],
+    "noisy-state-bias": [],
+    "single-integrator": [],
+    "sphere-network-auction": [],
+    "substeps-random-spawn": [],
+    "substeps-scheduled-spawn": [],
+    "world-networks": []
+  }
+}

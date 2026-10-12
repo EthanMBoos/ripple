@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!-- Open-loop physics checks, not an autopilot demo. MotorSpeeds supplies rad/s.
+     821.5838362577492 rad/s balances the default 1.5 kg quad's weight.
+     The C++ check supplies the same commands through reference/fixtures/MotorSpeeds.cpp.
+     Straight speed="0" is only a placeholder autonomy; MotorSpeeds reads no inputs. -->
+<runscript name="Multirotor open-loop flight">
+  <run start="0" end="4" dt="0.001" enable_gui="false" start_paused="false" time_warp="0" />
+  <seed>12345</seed><end_condition>time</end_condition><output_type>all</output_type>
+  <network>LocalNetwork</network><network>GlobalNetwork</network>
+  <metrics>SimpleCollisionMetrics</metrics>
+  <!-- Level hover. -->
+  <entity>
+    <count>1</count><team_id>1</team_id>
+    <x>-10</x><y>-10</y><z>30</z><heading>0</heading>
+    <autonomy speed="0">Straight</autonomy>
+    <controller speeds="821.5838362577492 821.5838362577492 821.5838362577492 821.5838362577492">MotorSpeeds</controller>
+    <motion_model>Multirotor</motion_model><visual_model>sphere</visual_model>
+  </entity>
+  <!-- Tilted thrust translates the vehicle; no stabilizer levels it. -->
+  <entity>
+    <count>1</count><team_id>2</team_id>
+    <x>10</x><y>-10</y><z>30</z><heading>45</heading><roll>5</roll><pitch>8</pitch>
+    <autonomy speed="0">Straight</autonomy>
+    <controller speeds="821.5838362577492 821.5838362577492 821.5838362577492 821.5838362577492">MotorSpeeds</controller>
+    <motion_model>Multirotor</motion_model><visual_model>sphere</visual_model>
+  </entity>
+  <!-- Slightly unequal motors exercise roll, pitch, yaw and body/world rates. -->
+  <entity>
+    <count>1</count><team_id>3</team_id>
+    <x>-10</x><y>10</y><z>30</z><heading>90</heading><roll>3</roll>
+    <autonomy speed="0">Straight</autonomy>
+    <controller speeds="820 821 823 822">MotorSpeeds</controller>
+    <motion_model>Multirotor</motion_model><visual_model>sphere</visual_model>
+  </entity>
+  <!-- Six rotors demonstrate configured channel names, not a quad-only engine. -->
+  <entity>
+    <count>1</count><team_id>4</team_id>
+    <x>10</x><y>10</y><z>30</z><heading>180</heading>
+    <autonomy speed="0">Straight</autonomy>
+    <controller speeds="680 680 680 680 680 680">MotorSpeeds</controller>
+    <motion_model rotor_config="[CW 0.2 0 0 0 0 0] [CCW 0.1 0.17320508075688773 0 0 0 0] [CW -0.1 0.17320508075688773 0 0 0 0] [CCW -0.2 0 0 0 0 0] [CW -0.1 -0.17320508075688773 0 0 0 0] [CCW 0.1 -0.17320508075688773 0 0 0 0]">Multirotor</motion_model>
+    <visual_model>sphere</visual_model>
+  </entity>
+</runscript>

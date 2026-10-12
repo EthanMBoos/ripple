@@ -1,7 +1,7 @@
 # starter
 
-User plugins. The stock `scrimmage` command registers this crate's plugins, so
-its missions run with `scrimmage run` and `scrimmage sweep` like any other.
+User plugins. The stock `ripple` command registers this crate's plugins, so
+its missions run with `ripple run` and `ripple sweep` like any other.
 
 ```text
 src/lib.rs                 register(): adds this crate's plugins
@@ -25,4 +25,5 @@ To add a plugin, write it in its own file under `src/`, add a `mod` line in
 `src/lib.rs`, and register it in `register()` under the name missions will use.
 See [User plugins and the starter crate](../../book/src/guides/user-plugins.md),
 [Your first autonomy plugin](../../book/src/tutorial/first-autonomy.md), and
-[Your first localization estimator](../../book/src/tutorial/noisy-localization.md).
+[Your first localization
+estimator](../../book/src/tutorial/noisy-localization.md).

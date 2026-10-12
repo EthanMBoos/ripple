@@ -1,6 +1,6 @@
 //! One-dimensional constant-velocity motion along the world's east axis.
 use anyhow::Result;
-use scrimmage_core::{Vec3, plugin::*};
+use ripple_core::{Vec3, plugin::*};
 
 pub struct EastwardMotion;
 impl Plugin for EastwardMotion {

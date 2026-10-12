@@ -1,9 +1,14 @@
 {
-  "date": "2026-10-01T07:45:23",
-  "machine": "Darwin-arm64",
-  "before": "b7053191c9832fa843b265b1ca11aaae625a991d",
-  "after": "b7053191c9832fa843b265b1ca11aaae625a991d",
-  "after_dirty": true,
+  "frozen": {
+    "implementation": "upstream C++",
+    "branch": "Ubuntu-24.04",
+    "commit": "4bdf41fb06facaea358d478d9a07aa4d77fcac27",
+    "image": "sha256:a65a5fb8f62dfbe0f8cd1067bffb870a0835d55015c5fae41b94e89f18ebea44"
+  },
+  "stage": {
+    "implementation": "this checkout",
+    "source_sha256": "29ead33e5bef3588295b72c3e82ebd38e15b29acbda40ec39175710a3adba61c"
+  },
   "part_a": [
     {
       "mission": "multirotor",
@@ -14,32 +19,32 @@
         {
           "multiplier": 1,
           "motion_dt_s": 0.01,
-          "position_m": 0.06113914680798155,
-          "attitude_rad": 0.0010671055375085221
+          "position_m": 0.06113914680798474,
+          "attitude_rad": 0.0010671055375086045
         },
         {
           "multiplier": 2,
           "motion_dt_s": 0.005,
-          "position_m": 0.03057677754738509,
-          "attitude_rad": 0.0005341446627463297
+          "position_m": 0.03057677754738346,
+          "attitude_rad": 0.0005341446627461542
         },
         {
           "multiplier": 4,
           "motion_dt_s": 0.0025,
-          "position_m": 0.015290180558808267,
-          "attitude_rad": 0.00026722036567635376
+          "position_m": 0.015290180558818528,
+          "attitude_rad": 0.00026722036567673735
         },
         {
           "multiplier": 8,
           "motion_dt_s": 0.00125,
-          "position_m": 0.0076455370708021254,
-          "attitude_rad": 0.00013364719989139066
+          "position_m": 0.007645537070807619,
+          "attitude_rad": 0.0001336471998915807
         },
         {
           "multiplier": 16,
           "motion_dt_s": 0.000625,
-          "position_m": 0.003822880085582523,
-          "attitude_rad": 6.683285617374301e-05
+          "position_m": 0.003822880085584488,
+          "attitude_rad": 6.68328561731652e-05
         }
       ],
       "stage": [
@@ -96,31 +101,31 @@
         {
           "multiplier": 1,
           "motion_dt_s": 0.05,
-          "position_m": 16.87080640608002,
+          "position_m": 16.87080640607996,
           "attitude_rad": 0.0066269049802798775
         },
         {
           "multiplier": 2,
           "motion_dt_s": 0.025,
-          "position_m": 8.410657185568791,
+          "position_m": 8.41065718556898,
           "attitude_rad": 0.0033033776348130755
         },
         {
           "multiplier": 4,
           "motion_dt_s": 0.0125,
-          "position_m": 4.199136321723422,
-          "attitude_rad": 0.0016491712903469622
+          "position_m": 4.1991363217243824,
+          "attitude_rad": 0.0016491712903470674
         },
         {
           "multiplier": 8,
           "motion_dt_s": 0.00625,
-          "position_m": 2.0980206673629365,
+          "position_m": 2.0980206673635373,
           "attitude_rad": 0.0008239561696705838
         },
         {
           "multiplier": 16,
           "motion_dt_s": 0.003125,
-          "position_m": 1.0486235434379687,
+          "position_m": 1.048623543440027,
           "attitude_rad": 0.0004118207300918679
         }
       ],
@@ -174,84 +179,50 @@
     {
       "mission": "fixed-wing-recovery",
       "dt_s": 0.01,
-      "frozen_vs_stage_position_m": 4.968847014413068,
-      "frozen_vs_stage_attitude_rad": 0.03823625379966183
+      "frozen_vs_stage_position_m": 4.968847014414342,
+      "frozen_vs_stage_attitude_rad": 0.0382362537996512
     },
     {
       "mission": "fixed-wing-recovery",
       "dt_s": 0.05,
-      "frozen_vs_stage_position_m": 80.45226990976983,
-      "frozen_vs_stage_attitude_rad": 0.22498006521860028
+      "frozen_vs_stage_position_m": 80.45226990976985,
+      "frozen_vs_stage_attitude_rad": 0.22498006521859856
     },
     {
       "mission": "fixed-wing-recovery",
       "dt_s": 0.1,
-      "frozen_vs_stage_position_m": 2830.702223407388,
-      "frozen_vs_stage_attitude_rad": 3.1363823490246387
+      "frozen_vs_stage_position_m": 2830.7022234060096,
+      "frozen_vs_stage_attitude_rad": 3.136382349024226
     }
   ],
   "part_c": [
     {
-      "mission": "fixed-wing-6dof",
-      "agents": 128,
-      "loads": "frozen",
-      "median_s": 0.38119887500215555,
-      "min_s": 0.380051749998529,
-      "max_s": 0.39402991599490633
-    },
-    {
-      "mission": "fixed-wing-6dof",
-      "agents": 128,
-      "loads": "stage",
-      "median_s": 0.46337574999779463,
-      "min_s": 0.46134229200106347,
-      "max_s": 0.46552775000600377
-    },
-    {
-      "mission": "multirotor",
-      "agents": 128,
-      "loads": "frozen",
-      "median_s": 0.4457868750032503,
-      "min_s": 0.4442195410010754,
-      "max_s": 0.44964025000081165
-    },
-    {
-      "mission": "multirotor",
-      "agents": 128,
-      "loads": "stage",
-      "median_s": 0.47633754200069234,
-      "min_s": 0.46252375000040047,
-      "max_s": 0.478312500003085
-    }
-  ],
-  "part_d": [
-    {
       "loads": "frozen",
       "altitude_d": 0.01,
       "dt_s": 0.01,
-      "altitude_error_m": 285.10973401226397,
-      "after_5_s_m": 285.10973401226397
+      "altitude_error_m": 285.10973398719227,
+      "after_5_s_m": 285.10973398719227
     },
     {
       "loads": "frozen",
       "altitude_d": 0.01,
       "dt_s": 0.005,
-      "altitude_error_m": 13.314781946938979,
-      "after_5_s_m": 13.314781946938979
+      "altitude_error_m": 13.31478169398929,
+      "after_5_s_m": 13.31478169398929
     },
     {
       "loads": "frozen",
       "altitude_d": 0.01,
       "dt_s": 0.0025,
-      "altitude_error_m": 67.84613846059437,
-      "after_5_s_m": 67.84613846059437
+      "altitude_error_m": 67.84613846085324,
+      "after_5_s_m": 67.84613846085324
     },
     {
       "loads": "frozen",
       "altitude_d": 0.002,
       "dt_s": 0.01,
       "altitude_error_m": 1.4140432886400731,
-      "after_5_s_m": 0.6327324816425062
+      "after_5_s_m": 0.6327324816420514
     },
     {
       "loads": "frozen",
@@ -272,7 +243,7 @@
       "altitude_d": 0.0,
       "dt_s": 0.01,
       "altitude_error_m": 1.5055089072362762,
-      "after_5_s_m": 0.7917148607812123
+      "after_5_s_m": 0.7917148607814397
     },
     {
       "loads": "frozen",

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use scrimmage_core::{Mission, Params, Simulation, write_frame};
+use ripple_core::{Mission, Params, Simulation, write_frame};
 
 #[derive(Debug, PartialEq, Eq)]
 struct MissionOutput {
@@ -38,7 +38,7 @@ fn run_mission_with_trace(
     let mission = Mission::load(&root.join("missions").join(name), &root, &Params::new())?;
     let mut simulation = Simulation::new(
         mission.scenario,
-        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        &ripple_core::plugin::PluginRegistry::with_builtins(),
         threads,
     )?;
     if let Some(trace) = trace {
@@ -131,7 +131,7 @@ fn contacts_retain_their_mission_entity_block_id() -> Result<()> {
     )?;
     let mut simulation = Simulation::new(
         mission.scenario,
-        &scrimmage_core::plugin::PluginRegistry::with_builtins(),
+        &ripple_core::plugin::PluginRegistry::with_builtins(),
         2,
     )?;
     let initial = simulation.step()?.expect("mission emits an initial frame");

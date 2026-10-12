@@ -3,7 +3,7 @@
 //! This is the plugin from the book's "Your first autonomy plugin" tutorial.
 
 use anyhow::{Result, ensure};
-use scrimmage_core::plugin::{
+use ripple_core::plugin::{
     AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
 use serde::Deserialize;

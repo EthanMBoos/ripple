@@ -13,13 +13,22 @@ class ReferenceCheckTests(unittest.TestCase):
     def test_check_directories_are_numbered_and_never_reused(self):
         with tempfile.TemporaryDirectory() as directory:
             runs = Path(directory).resolve() / "runs"
-            self.assertEqual(check.allocate_output(None, runs), runs / "reference-check000")
-            (runs / "reference-check007").mkdir()
-            self.assertEqual(check.allocate_output(None, runs), runs / "reference-check008")
+            with patch.object(check, "RUNS", runs):
+                self.assertEqual(check.allocate_output(None), runs / "reference-check000")
+                (runs / "reference-check002").mkdir()
+                self.assertEqual(check.allocate_output(None), runs / "reference-check001")
+                self.assertEqual(check.allocate_output(None), runs / "reference-check003")
             explicit = Path(directory).resolve() / "nested/named"
-            self.assertEqual(check.allocate_output(explicit, runs), explicit)
+            self.assertEqual(check.allocate_output(explicit), explicit)
             with self.assertRaises(FileExistsError):
-                check.allocate_output(explicit, runs)
+                check.allocate_output(explicit)
+
+    def test_matrix_cases_have_unique_ids_and_existing_missions(self):
+        cases = check.comparison_missions()
+        self.assertEqual(len({case for case, _, _ in cases}), len(cases))
+        for _, path, label in cases:
+            self.assertTrue((check.ROOT / "missions" / path).is_file(), path)
+            self.assertTrue(label)
 
     def test_headless_overrides_preserve_physics_seed_and_multiplier_typo(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -120,8 +129,8 @@ class ReferenceCheckTests(unittest.TestCase):
         with patch.object(check, "run_logged", side_effect=fake_run), \
              patch.object(check, "compare_case", return_value=comparison), \
              patch.object(check.subprocess, "run"):
-            result = check.check_mission(SimpleNamespace(timeout=1), mission,
-                                         directory, images, Path("scrimmage"))
+            result = check.check_mission(SimpleNamespace(timeout=1), "case", mission,
+                                         directory, images, Path("ripple"))
         return directory, result
 
     @staticmethod
@@ -163,15 +172,16 @@ class ReferenceCheckTests(unittest.TestCase):
 
     def test_failed_case_does_not_skip_the_rest_of_the_matrix(self):
         with tempfile.TemporaryDirectory() as temporary:
-            mission = Path(temporary) / "mission.xml"
-            mission.write_text("<runscript><run/></runscript>")
+            missions = [Path(temporary) / name for name in ("first.xml", "second.xml")]
+            for mission in missions:
+                mission.write_text("<runscript><run/></runscript>")
             output = Path(temporary) / "check"
             cases = [{"passed": False}, {"passed": True}]
             with patch.object(check, "capture", return_value="docker-test"), \
                  patch.object(check, "build_reference", return_value={"image": "test-image"}), \
-                 patch.object(check, "build_rust", return_value=(Path("scrimmage"), {})), \
+                 patch.object(check, "build_rust", return_value=(Path("ripple"), {})), \
                  patch.object(check, "check_mission", side_effect=cases) as run_case:
-                code = check.main(["--mission", str(mission), "--mission", str(mission),
+                code = check.main(["--mission", str(missions[0]), "--mission", str(missions[1]),
                                    "--output", str(output)])
             self.assertEqual(code, 1)
             self.assertEqual(run_case.call_count, 2)

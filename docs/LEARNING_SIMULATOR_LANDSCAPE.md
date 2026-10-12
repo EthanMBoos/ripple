@@ -1,4 +1,4 @@
-# Learning simulators in 2025–26, and where scrimmage-rs fits
+# Learning simulators in 2025–26, and where Ripple fits
 
 A review of recent multi-agent and robot-learning simulators, written to test
 the position in the paper's "Learned Policies and Accelerated Simulators"
@@ -116,7 +116,7 @@ simulation code.
   GPU learner.
 
 **For us.** Our saved benchmarks show about 1.4M agent-steps/s per core on
-light workloads (`paper/data/benchmark-native/timings.json`). That is **not an
+light workloads (`paper/data/speed-cpp-native/timings.json`). That is **not an
 RL benchmark**. Thousands of interacting agents in one world differ from
 thousands of independently resetting worlds, and observation construction,
 rewards, resets, and learning can move the bottleneck. Contact sensing is
@@ -149,9 +149,9 @@ already slow (0.03–0.09M), because `NoisyContacts` senses every other agent.
 - **Zero-Shot MARL Benchmark in the CPM Lab [read]** (arXiv Jan 2026) evaluates
   in three stages: simulation, a digital twin, and hardware. It separates
   degradation from control-stack differences and from environmental realism.
-- **Factory MARL sim-to-real [read]** (arXiv Sep 2026) and **cooperative-competitive
-  craft robots [read]** (ICRA 2026) report real multi-robot deployment of
-  policies trained in simulation.
+- **Factory MARL sim-to-real [read]** (arXiv Sep 2026) and
+  **cooperative-competitive craft robots [read]** (ICRA 2026) report real
+  multi-robot deployment of policies trained in simulation.
 - **SMARTS [snippet]** keeps an agent zoo of trained policies loaded into
   scenarios for benchmarking.
 
@@ -205,7 +205,7 @@ reproducibility guides note. For us:
 
 Evaluating on conditions not seen in training is becoming expected practice.
 
-## Where scrimmage-rs fits
+## Where Ripple fits
 
 Distinctive, as a combination:
 - an explicit sensing → delivery → estimation → decision pipeline, with
@@ -258,7 +258,7 @@ plugins and run RQ1 with classical strategies (nearest known target and
 `AuctionAssign`), sweeping range, delay, and loss. Only if that reveals a
 decision the classical strategies handle poorly does it become the learning
 experiment below. Otherwise learning stays a documented extension point, with
-the boundary that SCRIMMAGE-RS supplies experience and a separate learner
+the boundary that Ripple supplies experience and a separate learner
 updates the policy.
 
 If it goes ahead, the experiment is one small native coordination task whose
@@ -316,7 +316,8 @@ change.
 ## Sources
 
 - Isaac Lab: https://arxiv.org/abs/2511.04831
-- Isaac Lab 3.0 beta multi-backend architecture: https://isaac-sim.github.io/IsaacLab/v3.0.0-beta/source/overview/core-concepts/multi_backend_architecture.html
+- Isaac Lab 3.0 beta multi-backend architecture:
+  https://isaac-sim.github.io/IsaacLab/v3.0.0-beta/source/overview/core-concepts/multi_backend_architecture.html
 - NVIDIA Isaac Sim (2026): https://arxiv.org/pdf/2606.03551
 - Newton: https://developer.nvidia.com/newton-physics
 - MuJoCo Warp: https://github.com/google-deepmind/mujoco_warp
@@ -326,8 +327,10 @@ change.
 - MuJoCo-Drones-Gym: https://arxiv.org/html/2606.08039v1
 - Aerial Gym: https://ieeexplore.ieee.org/document/10910148/
 - Assistax: https://rlj.cs.umass.edu/2026/papers/Paper110.html
-- JaxMARL: https://arxiv.org/abs/2311.10090 and https://github.com/FLAIROx/JaxMARL/blob/main/jaxmarl/environments/mpe/simple.py
-- VMAS: https://arxiv.org/abs/2207.03530 and https://github.com/proroklab/VectorizedMultiAgentSimulator/blob/main/vmas/simulator/core.py
+- JaxMARL: https://arxiv.org/abs/2311.10090 and
+  https://github.com/FLAIROx/JaxMARL/blob/main/jaxmarl/environments/mpe/simple.py
+- VMAS: https://arxiv.org/abs/2207.03530 and
+  https://github.com/proroklab/VectorizedMultiAgentSimulator/blob/main/vmas/simulator/core.py
 - Gymnasium vector environments: https://gymnasium.farama.org/api/vector/
 - PettingZoo parallel API: https://pettingzoo.farama.org/api/parallel/
 - Madrona: https://dl.acm.org/doi/10.1145/3592427
@@ -336,19 +339,24 @@ change.
 - PufferLib 4.0: https://puffer.ai/blog/4.0/
 - Learning to Fly in Seconds (RLtools): https://arxiv.org/abs/2311.13081
 - BVR Sim: https://arxiv.org/html/2608.25419v1
-- Pyquaticus: https://github.com/mit-ll-trusted-autonomy/pyquaticus and https://calinbelta.com/wp-content/uploads/2026/03/pyquaticus-1.pdf
+- Pyquaticus: https://github.com/mit-ll-trusted-autonomy/pyquaticus and
+  https://calinbelta.com/wp-content/uploads/2026/03/pyquaticus-1.pdf
 - Zero-Shot MARL Benchmark in the CPM Lab: https://arxiv.org/abs/2601.16578
 - Factory multi-agent sim-to-real: https://arxiv.org/abs/2609.14567
 - Cooperative-competitive craft robots: https://arxiv.org/abs/2602.21119
-- SMARTS agent zoo: https://smarts.readthedocs.io/en/latest/benchmarks/agent_zoo.html
+- SMARTS agent zoo:
+  https://smarts.readthedocs.io/en/latest/benchmarks/agent_zoo.html
 - DEFIANCE: https://dl.acm.org/doi/10.1145/3747204.3747205
-- Learning to communicate over an unknown shared network: https://arxiv.org/abs/2507.06499
+- Learning to communicate over an unknown shared network:
+  https://arxiv.org/abs/2507.06499
 - Robust and efficient communication in MARL: https://arxiv.org/html/2511.11393
 - Hydrax sampling MPC deployment: https://arxiv.org/abs/2606.20712
 - MR-STORM: https://arxiv.org/abs/2602.10114
 - Feedback-MPPI: https://arxiv.org/abs/2506.14855
 - GATO: https://arxiv.org/abs/2510.07625
-- Defeating Nondeterminism in LLM Inference: https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/
-- PyTorch reproducibility notes: https://docs.pytorch.org/docs/2.14/notes/randomness.html
+- Defeating Nondeterminism in LLM Inference:
+  https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/
+- PyTorch reproducibility notes:
+  https://docs.pytorch.org/docs/2.14/notes/randomness.html
 - Extended MARL benchmarking (AAMAS 2025): https://arxiv.org/abs/2502.04773
 - Burn ONNX import: https://lib.rs/crates/burn-onnx

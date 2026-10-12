@@ -1,5 +1,5 @@
 # ArduPilot SITL adapter: an optional user crate, outside the default build.
-# The `scrimmage` command includes it only with `--features ardupilot`
+# The `ripple` command includes it only with `--features ardupilot`
 # (crates/cli). User guide: book/src/guides/ardupilot.md.
 [package]
 name = "ardupilot"
@@ -9,7 +9,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-scrimmage-core = { path = "../core" }
+ripple-core = { path = "../core" }
 anyhow.workspace = true
 # Stops the SITL containers when a run is interrupted.
 ctrlc = "3"

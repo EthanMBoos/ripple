@@ -1,27 +1,24 @@
 #!/usr/bin/env python3
-"""Track Rust simulation performance against your own history.
+"""Rust speed and memory against the accepted baseline, on this machine.
 
-    python3 reference/perf.py                    # measure and compare with the last record
-    python3 reference/perf.py --record --label "before spatial index"
-    python3 reference/perf.py --history          # list recorded runs on this machine
-    python3 reference/perf.py --quick            # smallest sizes only, about a minute
+    python3 reference/perf.py             # measure; compare with reference/perf_baseline.json
+    python3 reference/perf.py --quick     # smallest agent counts only, about a minute
+    python3 reference/perf.py --accept    # measure and make this the accepted baseline
 
 Runs a fixed set of workloads natively (release build, core-only runner
 reference/benchmark_runner.rs, no viewer), each at a few agent counts and at 1
 and 8 workers: one warm-up, then --repeats timed runs. It reports the median
 stepping time (setup excluded), its min-max spread, and peak memory.
 
-Results are compared with the most recent record from the same machine (or
---against LABEL_OR_COMMIT). A change is flagged only when the new median falls
-outside the old min-max range and differs by more than 5%. --record appends the
-run to reference/perf_history.jsonl, which is committed, so git keeps the history.
-Compare only like with like: same machine, same power settings, idle system.
-Runs one after another drift as the machine warms: timing a change by running
-the old build and then the new one overstated its cost (estimation stage,
-2026-09-27: sensing-32 on eight workers read +18%, but +1% alternating; see
-paper/data/estimation-cost/alternate.py). For a before/after verdict, alternate the two
-runners case by case and compare medians.
-Standard library only; needs Cargo.
+The baseline is one record, not a history. It names the workloads (a hash of
+their definitions), the machine, and the Rust toolchain, and a measurement is
+compared only with a compatible one. Otherwise nothing is compared and the exit
+code is 2: review the numbers, then --accept a new baseline. A workload is
+SLOWER when its median lies outside the baseline's min-max range and is more
+than 10% higher; any slower workload makes the exit code 1. Use an idle machine
+with the same power settings. Runs one after another drift as the machine
+warms, so for a before/after verdict on a change, alternate the two builds run
+by run. Standard library only; needs Cargo.
 """
 
 import argparse
@@ -33,11 +30,17 @@ from pathlib import Path
 import platform
 import statistics
 import subprocess
+import sys
 import tempfile
 
-ROOT = Path(__file__).resolve().parents[1]
-HISTORY = ROOT / "reference/perf_history.jsonl"
-NOISE = 0.05
+from project import ROOT, build_runner
+
+BASELINE = ROOT / "reference/perf_baseline.json"
+# DEVNOTE: identical code, timed in three sessions on an M2 Pro (2026-10-12),
+# drifted up to 6.2% on single workloads (sensing-32-w1 +6.2%,
+# collision-grid-1024-w1 +5.9%, sensing-128-w8 +6.1%), beyond each session's
+# own min-max range. A 5% threshold failed on that noise; 10% does not.
+NOISE = 0.10
 
 HEADER = """<?xml version="1.0"?>
 <runscript name="perf-{name}">
@@ -61,8 +64,9 @@ HEADER = """<?xml version="1.0"?>
 </runscript>
 """
 
-# name: (description, agent counts, mission fields). Keep these stable: changing
-# a workload makes its history incomparable, so add a new name instead.
+# name: (description, agent counts, mission fields). Changing a workload makes
+# the accepted baseline incomparable, so perf.py stops comparing until a new
+# baseline is accepted.
 WORKLOADS = {
     "motion": ("aircraft flying straight", (64, 512), dict(
         end=200, multiplier=1, controller_rate=0, variance=0, world="", spawn="", sensors="")),
@@ -95,17 +99,9 @@ WORKLOADS = {
 WORKERS = (1, 8)
 
 
-def build_runner():
-    """Build the core-only runner and return its path."""
-    output = subprocess.check_output(
-        ["cargo", "bench", "--locked", "-p", "scrimmage-core", "--bench", "reference",
-         "--no-run", "--message-format=json"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL)
-    for line in output.splitlines():
-        message = json.loads(line)
-        if message.get("reason") == "compiler-artifact" and message.get("executable") \
-                and message["target"]["name"] == "reference":
-            return message["executable"]
-    raise RuntimeError("could not find the benchmark runner")
+def workloads_hash():
+    definition = json.dumps([HEADER, WORKLOADS, WORKERS], sort_keys=True)
+    return hashlib.sha256(definition.encode()).hexdigest()[:16]
 
 
 def run_once(runner, mission, output, workers, grid_cell_m=None):
@@ -140,101 +136,104 @@ def measure(runner, repeats, quick, scratch):
                         times.append(seconds)
                         memory = max(memory, peak_mb)
                 results[key] = {"median_s": statistics.median(times), "min_s": min(times),
-                                "max_s": max(times), "steps": steps, "peak_mb": round(memory, 1)}
+                                "max_s": max(times), "times_s": times, "steps": steps,
+                                "peak_mb": round(memory, 1)}
                 print(f"  {key:<22} {results[key]['median_s']:8.3f} s   "
                       f"[{min(times):.3f}, {max(times):.3f}]   {memory:7.1f} MB", flush=True)
     return results
 
 
-def machine():
-    host = hashlib.sha256(platform.node().encode()).hexdigest()[:8]
-    return f"{platform.system()}-{platform.machine()}-{os.cpu_count()}cpu-{host}"
+def cpu_model():
+    try:
+        if platform.system() == "Darwin":
+            return subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"],
+                                           text=True).strip()
+        for line in Path("/proc/cpuinfo").read_text().splitlines():
+            if line.startswith("model name"):
+                return line.split(":", 1)[1].strip()
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return platform.processor() or "unknown"
 
 
-def git(*arguments):
-    return subprocess.check_output(["git", *arguments], cwd=ROOT, text=True).strip()
+def environment():
+    """What a measurement depends on besides the code: workloads, machine, toolchain."""
+    return {"workloads": workloads_hash(),
+            "machine": f"{platform.system()} {platform.machine()}, {cpu_model()}, "
+                       f"{os.cpu_count()} CPUs",
+            "rustc": subprocess.check_output(["rustc", "--version"], text=True).strip()}
 
 
-def load_history():
-    if not HISTORY.is_file():
-        return []
-    return [json.loads(line) for line in HISTORY.read_text().splitlines() if line.strip()]
+def incompatibility(baseline, current, results):
+    """Why the baseline cannot judge this measurement, or None."""
+    if baseline is None:
+        return f"no accepted baseline at {BASELINE.relative_to(ROOT)}"
+    for key in ("workloads", "machine", "rustc"):
+        if baseline["environment"][key] != current[key]:
+            return (f"different {key}: baseline {baseline['environment'][key]!r}, "
+                    f"now {current[key]!r}")
+    missing = sorted(results.keys() - baseline["results"].keys())
+    if missing:
+        return f"the baseline has no {', '.join(missing)}"
+    return None
 
 
 def compare(results, baseline):
-    print(f"\nCompared with {baseline['label'] or baseline['commit'][:10]} "
-          f"({baseline['date']}, commit {baseline['commit'][:10]}"
-          f"{', uncommitted changes' if baseline['dirty'] else ''}):")
-    print(f"  {'workload':<22} {'before':>9} {'after':>9} {'change':>8}")
-    flagged = 0
+    """Print each workload against the baseline; return how many are slower."""
+    print(f"\nCompared with the baseline accepted {baseline['date']}:")
+    print(f"  {'workload':<22} {'baseline':>9} {'now':>9} {'change':>8}")
+    slower = 0
     for key, new in results.items():
-        old = baseline["results"].get(key)
-        if old is None:
-            print(f"  {key:<22} {'-':>9} {new['median_s']:9.3f}      new")
-            continue
+        old = baseline["results"][key]
         change = new["median_s"] / old["median_s"] - 1
         outside = new["median_s"] < old["min_s"] or new["median_s"] > old["max_s"]
         note = ""
         if outside and abs(change) > NOISE:
-            flagged += 1
             note = "  faster" if change < 0 else "  SLOWER"
+            slower += change > 0
         print(f"  {key:<22} {old['median_s']:9.3f} {new['median_s']:9.3f} {change:+8.1%}{note}")
-    print(f"  {flagged} workload(s) changed beyond run-to-run noise.")
+    print(f"  {slower} workload(s) slower beyond run-to-run noise.")
+    return slower
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--record", action="store_true", help="append this run to the history")
-    parser.add_argument("--label", default="", help="short name for a recorded run")
-    parser.add_argument("--against", help="compare with the record with this label or commit")
+    parser.add_argument("--accept", action="store_true",
+                        help="make this measurement the accepted baseline")
     parser.add_argument("--repeats", type=int, default=5, help="timed runs per case (default 5)")
     parser.add_argument("--quick", action="store_true", help="smallest agent counts only")
-    parser.add_argument("--history", action="store_true", help="list this machine's records")
+    parser.add_argument("--output", type=Path, help="also write the measurement to this file")
     args = parser.parse_args(argv)
+    if args.accept and args.quick:
+        parser.error("accept a full measurement, not --quick")
 
-    this_machine = machine()
-    history = [entry for entry in load_history() if entry["machine"] == this_machine]
-    if args.history:
-        for entry in history:
-            print(f"{entry['date']}  {entry['commit'][:10]}{'+' if entry['dirty'] else ' '}  "
-                  f"{entry['label']}")
-        return 0
-
-    print(f"Building the release runner ({this_machine})...", flush=True)
+    current = environment()
+    print(f"Building the release runner ({current['machine']}; {current['rustc']})...", flush=True)
     runner = build_runner()
     with tempfile.TemporaryDirectory() as scratch:
         results = measure(runner, args.repeats, args.quick, Path(scratch))
-
-    if args.against:
-        matches = [entry for entry in history
-                   if entry["label"] == args.against or entry["commit"].startswith(args.against)]
-        baseline = matches[-1] if matches else None
-        if baseline is None:
-            print(f"\nNo record matching {args.against!r} on this machine.")
+    record = {"date": datetime.date.today().isoformat(), "environment": current,
+              "repeats": args.repeats, "results": results}
+    baseline = json.loads(BASELINE.read_text()) if BASELINE.is_file() else None
+    reason = incompatibility(baseline, current, results)
+    if reason is None:
+        record["baseline_date"] = baseline["date"]
+        record["slower"] = compare(results, baseline)
     else:
-        baseline = history[-1] if history else None
-    if baseline is not None:
-        compare(results, baseline)
-    elif not args.against:
-        print("\nNo earlier record on this machine; use --record to start the history.")
-
-    if args.record:
-        entry = {
-            "date": datetime.datetime.now().isoformat(timespec="seconds"),
-            "commit": git("rev-parse", "HEAD"),
-            "dirty": bool(git("status", "--porcelain", "--untracked-files=no")),
-            "label": args.label,
-            "machine": this_machine,
-            "rustc": subprocess.check_output(["rustc", "--version"], text=True).strip(),
-            "repeats": args.repeats,
-            "results": results,
-        }
-        with HISTORY.open("a") as stream:
-            stream.write(json.dumps(entry) + "\n")
-        print(f"\nRecorded in {HISTORY.relative_to(ROOT)}.")
-    return 0
+        print(f"\nNot compared: {reason}. Review the numbers, then --accept a new baseline.")
+    if args.output:
+        args.output.write_text(json.dumps(record, indent=1) + "\n")
+    if args.accept:
+        BASELINE.write_text(json.dumps({key: record[key] for key in
+                                        ("date", "environment", "repeats", "results")},
+                                       indent=1) + "\n")
+        print(f"\nAccepted as the baseline: {BASELINE.relative_to(ROOT)}.")
+        return 0
+    if reason is not None:
+        return 2
+    return 1 if record["slower"] else 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())

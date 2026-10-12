@@ -4,7 +4,7 @@ use std::{fs, process::Command};
 fn missing_recording_fails_without_creating_a_run() {
     let temp = tempfile::tempdir().unwrap();
     for path in ["missing.rrd", "."] {
-        let output = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+        let output = Command::new(env!("CARGO_BIN_EXE_ripple"))
             .current_dir(temp.path())
             .args(["replay", path])
             .output()
@@ -19,7 +19,7 @@ fn missing_recording_fails_without_creating_a_run() {
 fn recording_must_be_a_file_not_a_nested_directory() {
     let temp = tempfile::tempdir().unwrap();
     fs::create_dir(temp.path().join("recording.rrd")).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+    let output = Command::new(env!("CARGO_BIN_EXE_ripple"))
         .current_dir(temp.path())
         .args(["replay", "."])
         .output()
@@ -33,7 +33,7 @@ fn draw_trails_needs_the_run_files_from_a_current_recording() {
     let temp = tempfile::tempdir().unwrap();
     fs::write(temp.path().join("recording.rrd"), b"fixture recording").unwrap();
     let replay = || {
-        Command::new(env!("CARGO_BIN_EXE_scrimmage"))
+        Command::new(env!("CARGO_BIN_EXE_ripple"))
             .current_dir(temp.path())
             .args(["replay", ".", "--draw-trails"])
             .output()
@@ -59,17 +59,17 @@ mod viewer_process {
 
     // Stand-in executable: capture argv without opening a GUI or decoding data.
     const FAKE_VIEWER: &str = r#"#!/bin/sh
-printf '%s\n' "$#" "$1" > "$SCRIMMAGE_REPLAY_TEST_LOG"
-exit "${SCRIMMAGE_REPLAY_TEST_EXIT:-0}"
+printf '%s\n' "$#" "$1" > "$RIPPLE_REPLAY_TEST_LOG"
+exit "${RIPPLE_REPLAY_TEST_EXIT:-0}"
 "#;
 
     fn replay_command(root: &Path) -> Command {
-        let mut command = Command::new(env!("CARGO_BIN_EXE_scrimmage"));
+        let mut command = Command::new(env!("CARGO_BIN_EXE_ripple"));
         command
             .current_dir(root)
             .env("PATH", root.join("bin"))
-            .env("SCRIMMAGE_REPLAY_TEST_LOG", root.join("viewer-args.txt"))
-            .env("SCRIMMAGE_REPLAY_TEST_EXIT", "0")
+            .env("RIPPLE_REPLAY_TEST_LOG", root.join("viewer-args.txt"))
+            .env("RIPPLE_REPLAY_TEST_EXIT", "0")
             .arg("replay");
         command
     }
@@ -138,7 +138,7 @@ exit "${SCRIMMAGE_REPLAY_TEST_EXIT:-0}"
         install_fake_viewer(temp.path());
         fs::write(temp.path().join("recording.rrd"), b"fixture recording").unwrap();
         let output = replay_command(temp.path())
-            .env("SCRIMMAGE_REPLAY_TEST_EXIT", "7")
+            .env("RIPPLE_REPLAY_TEST_EXIT", "7")
             .arg(".")
             .output()
             .unwrap();

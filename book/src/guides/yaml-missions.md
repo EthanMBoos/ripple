@@ -2,20 +2,24 @@
 
 YAML is the native mission format; XML stays supported for single runs. Both
 load into the same typed `ScenarioConfig`, so the simulation cannot tell which
-file it came from. See [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md) for the plan.
+file it came from. See
+[Roadmap](https://github.com/EthanMBoos/ripple/blob/main/docs/TODO.md) for the
+plan.
 
 | | Status |
 | --- | --- |
 | Single missions, plugin parameters, command-line overrides | Implemented |
-| `scrimmage compare a.xml b.yaml` | Implemented |
+| `ripple compare a.xml b.yaml` | Implemented |
 | Templates | Implemented |
 | Sweeps (`*.sweep.yaml`), shards, and the Slurm launcher | Implemented (minimal) |
 
-Paired examples, each checked against its XML by `crates/core/tests/yaml_missions.rs`:
-[straight-no-gui](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/straight-no-gui.yaml),
-[multirotor](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/multirotor.yaml),
-[waypoints-point-agents](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/waypoints-point-agents.yaml), and
-[verification/noisy-state-bias](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/verification/noisy-state-bias.yaml).
+Paired examples, each checked against its XML by
+`crates/core/tests/yaml_missions.rs`:
+[straight-no-gui](https://github.com/EthanMBoos/ripple/blob/main/missions/straight-no-gui.yaml),
+[multirotor](https://github.com/EthanMBoos/ripple/blob/main/missions/multirotor.yaml),
+[waypoints-point-agents](https://github.com/EthanMBoos/ripple/blob/main/missions/waypoints-point-agents.yaml),
+and
+[verification/noisy-state-bias](https://github.com/EthanMBoos/ripple/blob/main/missions/verification/noisy-state-bias.yaml).
 
 ## Rules
 
@@ -33,9 +37,10 @@ Paired examples, each checked against its XML by `crates/core/tests/yaml_mission
   file order, and plugins in a slot run in file order, as XML tag order does.
   YAML itself calls maps unordered, so do not let a tool sort the keys.
 - Only fields Rust uses are accepted. XML's GUI and C++ logging tags
-  (`stream_port`, `grid_size`, `terrain`, `log_dir`, and so on) have no YAML form.
+  (`stream_port`, `grid_size`, `terrain`, `log_dir`, and so on) have no YAML
+  form.
 - No anchors or interpolation. Custom tags (`!name value`) are errors.
-- `SCRIMMAGE_PLUGIN_PATH` overlays apply to XML only; a YAML mission's values
+- `RIPPLE_PLUGIN_PATH` overlays apply to XML only; a YAML mission's values
   are all in the file, so results do not depend on an environment variable.
 
 ## A mission
@@ -93,9 +98,10 @@ entities:
 | `interactions`, `networks`, `metrics` | empty | `<entity_interaction>`, `<network>`, `<metrics>` |
 | `entities` | required | `<entity>` blocks |
 
-`spatial_lookup: {method: grid, cell_width_m: 5}` answers "who is within
-range?" with a grid instead of testing every agent. Results are identical; only
-speed changes. See [Finding nearby agents](../reference/plugin-api.md#finding-nearby-agents).
+`spatial_lookup: {method: grid, cell_width_m: 5}` answers "who is within range?"
+with a grid instead of testing every agent. Results are identical; only speed
+changes. See [Finding nearby
+agents](../reference/plugin-api.md#finding-nearby-agents).
 
 Worker count, pacing, and the viewer are command-line choices (`--workers`,
 `--headless`); XML's `multi_threaded`, `time_warp`, and `start_paused` have no
@@ -159,7 +165,8 @@ the mission must name it. `inputs` maps each estimator input to a sensor label
 ```
 
 An input left out takes the entity's one sensor of that kind, or the perfect
-measurement when it has none. See [Belief vs truth](../concepts/belief-vs-truth.md).
+measurement when it has none. See [Belief vs
+truth](../concepts/belief-vs-truth.md).
 
 Waypoints are a list of points: `waypoints: [[10, 0, 0], [10, 10, 0]]`. The XML
 string form `"10,0,0;10,10,0"` is also accepted.
@@ -170,7 +177,7 @@ XML fills `${name=default}` placeholders from trailing `name:=value` arguments.
 For YAML, the same arguments take a dotted path, as a sweep will:
 
 ```sh
-scrimmage run missions/straight-no-gui.yaml entities.red.heading_deg:=170 run.seed:=7
+ripple run missions/straight-no-gui.yaml entities.red.heading_deg:=170 run.seed:=7
 ```
 
 Every part of the path must already exist (after template expansion), so a
@@ -182,7 +189,7 @@ Quote a value containing brackets or spaces for the shell:
 ## Checking a YAML mission against its XML
 
 ```sh
-scrimmage compare missions/straight-no-gui.xml missions/straight-no-gui.yaml
+ripple compare missions/straight-no-gui.xml missions/straight-no-gui.yaml
 ```
 
 It first lists any setup differences by path (`entities.1.heading_deg: 180.0 vs
@@ -197,8 +204,8 @@ when nothing uses its readings) can differ without `compare` noticing.
 
 ## Sweeps
 
-A sweep is a separate file ending in `.sweep.yaml`, in Ripple's format.
-It names a base mission, which must be YAML:
+A sweep is a separate file ending in `.sweep.yaml`. It names a base mission,
+which must be YAML:
 
 ```yaml
 name: waypoints-point-agents
@@ -210,15 +217,15 @@ parameters:
   interactions.WaypointBroadcast.update_at_s: [3, 100]
 ```
 
-This is 2 seeds × 2 speeds × 2 update times = 8 cases, numbered as Ripple
-numbers them: seeds change fastest, then the last path. Each case sets its paths
+This is 2 seeds × 2 speeds × 2 update times = 8 cases, numbered so that seeds
+change fastest, then the last path. Each case sets its paths
 exactly as a command-line override does (after template expansion), so a path
 must already exist in the base mission. Case 0 is loaded before any output is
 created, so a misspelled path fails immediately.
 
 ```sh
-scrimmage sweep missions/waypoints-point-agents.sweep.yaml                        # all cases
-scrimmage sweep missions/waypoints-point-agents.sweep.yaml --shard-index 1 --shard-count 3
+ripple sweep missions/waypoints-point-agents.sweep.yaml                        # all cases
+ripple sweep missions/waypoints-point-agents.sweep.yaml --shard-index 1 --shard-count 3
 python3 scripts/bulk_run.py local  missions/waypoints-point-agents.sweep.yaml --jobs 4
 python3 scripts/bulk_run.py submit missions/waypoints-point-agents.sweep.yaml --jobs 4 \
     -- --account=<account> --partition=<partition>
@@ -236,14 +243,14 @@ Cases keep no frames or recordings. To look at one, rerun it with its values
 as overrides; runs are deterministic, so it is the same run:
 
 ```sh
-scrimmage run missions/waypoints-point-agents.yaml run.seed:=2 \
+ripple run missions/waypoints-point-agents.yaml run.seed:=2 \
     entities.blue.autonomy.WaypointFollower.speed:=5
 ```
 
-Only what sharding needs is implemented. Ripple's full per-case output,
+Only what sharding needs is implemented. Per-case output folders,
 `--case-id` replay, digests, input hashing, summaries, and Slurm job watching
 are not. Cluster setup: `conda env create -f environment.yaml`, activate it,
-and `cargo build --release -p scrimmage-rs` once on shared storage.
+and `cargo build --release -p ripple` once on shared storage.
 
 ## Templates
 
@@ -286,9 +293,10 @@ command-line overrides or sweep values, then validate. So an override
 can change a field a group inherited:
 
 ```sh
-scrimmage run missions/multirotor.yaml 'entities.level_hover.controller.MotorSpeeds.speeds:=[800, 800, 800, 800]'
+ripple run missions/multirotor.yaml 'entities.level_hover.controller.MotorSpeeds.speeds:=[800, 800, 800, 800]'
 ```
 
 Overrides cannot address `templates` itself; change the groups instead. One
 template per group, and a template cannot use another template.
-[multirotor.yaml](https://github.com/EthanMBoos/scrimmage-rs/blob/main/missions/multirotor.yaml) is the full example.
+[multirotor.yaml](https://github.com/EthanMBoos/ripple/blob/main/missions/multirotor.yaml)
+is the full example.

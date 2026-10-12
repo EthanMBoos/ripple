@@ -1,0 +1,172 @@
+{
+  "checks": {
+    "speed-regression": {
+      "purpose": "Rust speed and memory have not regressed",
+      "reference": "reference/perf_baseline.json, accepted on the same machine and toolchain",
+      "criterion": "no workload's median outside the baseline's range and over 10% slower",
+      "passed": true,
+      "note": "no workload slower than the baseline",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/speed-regression/"
+    },
+    "rust-tests": {
+      "purpose": "Rust unit, integration, and mission regression tests; formatting; lints; tests of these checking tools",
+      "reference": "expected values in the tests",
+      "criterion": "every test passes, no lint or format finding",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": null
+    },
+    "rust-determinism": {
+      "purpose": "worker counts, recording, tracing, and spatial lookup method change no output",
+      "reference": "the one-worker run",
+      "criterion": "byte-identical frames, events, and summaries on every mission and workload",
+      "passed": true,
+      "note": "41 missions, 0 differing",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/rust-determinism/"
+    },
+    "cpp-agreement": {
+      "purpose": "behaviour matches C++ SCRIMMAGE on the curated missions (reference/missions.txt)",
+      "reference": "C++ SCRIMMAGE in Docker: the unmodified and comparison branches",
+      "criterion": "states within tolerance, identical deliveries, summaries equal or explained, C++ instrumentation and Rust variants byte-identical",
+      "passed": true,
+      "note": "14 of 14 pass",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/cpp-agreement/"
+    },
+    "cpp-generated": {
+      "purpose": "agreement over 100 random scenarios (seed 1)",
+      "reference": "C++ SCRIMMAGE",
+      "criterion": "as cpp-agreement, all 100 pass",
+      "passed": true,
+      "note": "100 of 100 pass",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/cpp-generated/"
+    },
+    "cpp-long": {
+      "purpose": "agreement over ten 1,000 s scenarios (seed 7), and whether late divergence is the port or the dynamics",
+      "reference": "C++ SCRIMMAGE; Rust after one-ulp nudges",
+      "criterion": "every run finishes cleanly with explained summaries; divergence is reported",
+      "passed": true,
+      "note": "8 of 10 agree throughout",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/cpp-long/"
+    },
+    "cpp-noise": {
+      "purpose": "sensor noise distributions match where samples cannot",
+      "reference": "C++ SCRIMMAGE NoisyContacts samples",
+      "criterion": "deliveries, covariances, beliefs, outputs agree; no KS test below the Bonferroni threshold",
+      "passed": true,
+      "note": "random payloads differ, as expected",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/cpp-noise/"
+    },
+    "checker-sensitivity": {
+      "purpose": "the C++ comparison catches plausible porting bugs",
+      "reference": "cpp-agreement's saved C++ runs",
+      "criterion": "an unmodified control passes; every planted bug is caught",
+      "passed": true,
+      "note": "12 of 12 planted bugs caught",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/checker-sensitivity/"
+    },
+    "rust-platform": {
+      "purpose": "Linux/amd64 and native builds agree",
+      "reference": "the native build",
+      "criterion": "runs complete; differences are reported",
+      "passed": true,
+      "note": "largest position difference 2.3678883310186693e-12 m",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/rust-platform/"
+    },
+    "speed-cpp-container": {
+      "purpose": "C++ and Rust speed and memory in one Linux container",
+      "reference": "C++ SCRIMMAGE comparison branch, same container",
+      "criterion": "Rust identical at 1 and 8 workers and to C++ where both draw the same numbers",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/speed-cpp-container/"
+    },
+    "speed-cpp-native": {
+      "purpose": "C++ and Rust speed and memory on bare-metal macOS",
+      "reference": "native C++ SCRIMMAGE comparison branch",
+      "criterion": "as speed-cpp-container",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/speed-cpp-native/"
+    },
+    "speed-spatial": {
+      "purpose": "collision checking cost with the scan and with grids",
+      "reference": "the scan, which tests every contact",
+      "criterion": "every variant writes identical output",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/speed-spatial/"
+    },
+    "speed-messages": {
+      "purpose": "message routing cost with all-agent traffic",
+      "reference": "native C++ SCRIMMAGE",
+      "criterion": "both run; timings reported",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/speed-messages/"
+    },
+    "rk4-loads": {
+      "purpose": "what evaluating forces at every RK4 stage changes",
+      "reference": "unmodified C++ SCRIMMAGE, which holds forces through the step",
+      "criterion": "runs complete; errors reported",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/rk4-loads/"
+    },
+    "stall-landing": {
+      "purpose": "whether stall tables change ArduPlane's Rascal landing",
+      "reference": "the same mission without tables, and a repeat of it",
+      "criterion": "the repeat is byte-identical",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-12",
+      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "evidence": "paper/data/stall-landing/"
+    }
+  },
+  "references": {
+    "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)",
+    "cpp": {
+      "cpp_baseline": {
+        "branch": "Ubuntu-24.04",
+        "commit": "4bdf41fb06facaea358d478d9a07aa4d77fcac27",
+        "image": "sha256:a65a5fb8f62dfbe0f8cd1067bffb870a0835d55015c5fae41b94e89f18ebea44",
+        "platform": "linux/amd64"
+      },
+      "cpp": {
+        "branch": "benchmarking-edits",
+        "commit": "1c8595b912d789d3ae71b99fdd6e129984318a08",
+        "image": "sha256:74eeb6da88a7b3b4623698bfa12f694ca5f3066f92180a2d34b1a222a3fd430b",
+        "platform": "linux/amd64"
+      }
+    }
+  },
+  "source_note": "After the run, comments in crates/cli/src/sweep.rs and crates/core/src/parse/yaml_mission.rs changed (source 29ead33e5bef to c534d4f90c4f); the rebuilt release executable was byte-identical."
+}

@@ -1,7 +1,7 @@
 //! TerrainCollision removes agents that reach the mission's terrain, including
 //! over a ridge they cross between two steps, and uses a flat ground off the grid.
 use anyhow::Result;
-use scrimmage_core::{
+use ripple_core::{
     EntityGroupConfig, EventKind, PluginConfig, RunConfig, ScenarioConfig, Simulation, Spawn, Vec3,
     plugin::PluginRegistry,
 };

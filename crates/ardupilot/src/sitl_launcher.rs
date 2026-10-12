@@ -1,10 +1,10 @@
 //! Start one ArduPlane SITL container per ArduPilotBridge aircraft for a run,
 //! and stop them all when it ends.
 //!
-//! `scrimmage run` calls [`SitlLauncher::start`] with the resolved mission once
+//! `ripple run` calls [`SitlLauncher::start`] with the resolved mission once
 //! the run's output directory exists, so the containers always match the
 //! mission: XML or YAML, templates and overrides included. Each aircraft gets
-//! the image `scrimmage-rs-arduplane` (built from `docker/`), its
+//! the image `ripple-arduplane` (built from `docker/`), its
 //! bridge's port, a system id (1, 2, ... in mission order), the run's rate,
 //! and its own folder `<run>/sitl/<port>/` holding SITL's files and
 //! `session.log`. Home, where local (0, 0, 0) is, is the terrain's origin, or
@@ -12,7 +12,7 @@
 //!
 //! Containers are stopped when the launcher is dropped, which covers a normal
 //! end and a failed run, and on Ctrl-C. A run killed any other way leaves them
-//! running; `docker stop $(docker ps -q --filter label=scrimmage-rs-sitl)`
+//! running; `docker stop $(docker ps -q --filter label=ripple-sitl)`
 //! stops them. ArduPilot aircraft all exist from t = 0; spawning them mid-run
 //! is out of scope. See book/src/guides/ardupilot.md.
 
@@ -22,13 +22,13 @@ use std::process::{Child, Command, Stdio};
 use std::sync::{Mutex, Once};
 
 use anyhow::{Context, Result, ensure};
-use scrimmage_core::plugin::{Plugin, PluginParams, motion::FixedWing6Dof};
-use scrimmage_core::{ScenarioConfig, Terrain};
+use ripple_core::plugin::{Plugin, PluginParams, motion::FixedWing6Dof};
+use ripple_core::{ScenarioConfig, Terrain};
 
 use crate::ardupilot_bridge::ArduPilotBridgeConfig;
 
-const IMAGE: &str = "scrimmage-rs-arduplane";
-const LABEL: &str = "scrimmage-rs-sitl";
+const IMAGE: &str = "ripple-arduplane";
+const LABEL: &str = "ripple-sitl";
 /// McMillan Airfield, Camp Roberts: home for missions without terrain
 /// (latitude, longitude, altitude above sea level).
 const DEFAULT_HOME: [f64; 3] = [35.721025, -120.767925, 300.0];

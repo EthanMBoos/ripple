@@ -1,49 +1,51 @@
 # Plugin API and lifecycle
 
-Use [C++ plugin guide](../appendix/cpp/plugin-development.md) for the SCRIMMAGE design.
-This document maps that design to the current Rust API; it does not redefine
-the original documentation or claim that every legacy service is ported.
+Use [C++ plugin guide](../appendix/cpp/plugin-development.md) for the SCRIMMAGE
+design. This document maps that design to the current Rust API; it does not
+redefine the original documentation or claim that every legacy service is
+ported.
 
-For engine navigation, see [Source map](../development/source-layout.md). Category
-interfaces live in named framework modules; concrete built-ins
-live only under `crates/core/src/plugin/<category>/`. The public authoring
-imports remain `scrimmage_core::plugin::*`; the source moves do not require
-changes to an external plugin project.
+For engine navigation, see [Source map](../development/source-layout.md).
+Category interfaces live in named framework modules; concrete built-ins live
+only under `crates/core/src/plugin/<category>/`. The public authoring imports
+remain `ripple_core::plugin::*`; the source moves do not require changes to an
+external plugin project.
 
 ## Extension points
 
 | Type | Owned by | Built-in implementation |
 | --- | --- | --- |
-| Autonomy | Entity | [Straight](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs); [AuctionAssign](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/autonomy/auction_assign/auction_assign.rs) |
-| Controller | Entity | [SimpleAircraftControllerPID](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
-| MotionModel | Entity | [SimpleAircraft](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
-| Sensor | Entity | [NoisyState](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_state/noisy_state.rs); [NoisyContacts](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs); [NoisyPosition](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) (Rust-only illustration) |
-| Localization | Entity | [PassThrough](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
-| Tracking | Entity | [PassThrough](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
-| Interaction | Simulation | [SimpleCollision](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/interaction/simple_collision/simple_collision.rs) |
-| Network | Simulation | [LocalNetwork](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/network/local_network/local_network.rs), [GlobalNetwork](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/network/global_network/global_network.rs), [SphereNetwork](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/network/sphere_network/sphere_network.rs) |
-| Metrics | Simulation | [SimpleCollisionMetrics](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
+| Autonomy | Entity | [Straight](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs); [AuctionAssign](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/autonomy/auction_assign/auction_assign.rs) |
+| Controller | Entity | [SimpleAircraftControllerPID](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
+| MotionModel | Entity | [SimpleAircraft](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
+| Sensor | Entity | [NoisyState](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/sensor/noisy_state/noisy_state.rs); [NoisyContacts](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs); [NoisyPosition](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) (Rust-only illustration) |
+| Localization | Entity | [PassThrough](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
+| Tracking | Entity | [PassThrough](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
+| Interaction | Simulation | [SimpleCollision](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/interaction/simple_collision/simple_collision.rs) |
+| Network | Simulation | [LocalNetwork](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/network/local_network/local_network.rs), [GlobalNetwork](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/network/global_network/global_network.rs), [SphereNetwork](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/network/sphere_network/sphere_network.rs) |
+| Metrics | Simulation | [SimpleCollisionMetrics](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
 
-Each implementation is an ordinary struct containing its own state and model code.
-No plugin author needs to implement the engine's erased adapters, manage
+Each implementation is an ordinary struct containing its own state and model
+code. No plugin author needs to implement the engine's erased adapters, manage
 threads, take locks, or edit the simulator.
 
-Inside the engine, each category has its own constructor catalog and typed slots.
-Updates call the stored plugin directly; there is no all-category instance enum
-to check each tick. The internal forwarding traits remain, and the public
-plugin traits and registration methods are unchanged.
+Inside the engine, each category has its own constructor catalog and typed
+slots. Updates call the stored plugin directly; there is no all-category
+instance enum to check each tick. The internal forwarding traits remain, and the
+public plugin traits and registration methods are unchanged.
 
 ## Where to put your model code
 
-For growing autonomy implementations, see
-[Fighting autonomy plugin bloat](../guides/autonomy-composition.md). It describes
-ordinary component and state composition without adding another plugin framework.
+For growing autonomy implementations, see [Fighting autonomy plugin
+bloat](../guides/autonomy-composition.md). It describes ordinary component and
+state composition without adding another plugin framework.
 
 Every built-in follows the same layout: imports and configuration, owned state,
 `impl Plugin`, the category implementation, private helpers, then tests. Read
 the category's `step` first to understand the algorithm; `configure` explains
-how mission parameters reach it. See [Rust style](../development/rust-style.md#familiar-plugin-authoring)
-for the layout and ownership rules.
+how mission parameters reach it. See [Rust
+style](../development/rust-style.md#familiar-plugin-authoring) for the layout
+and ownership rules.
 
 These are the working patterns; the linked built-ins above contain the
 actual code rather than a second set of templates to keep synchronized:
@@ -65,28 +67,31 @@ Store only the plugin's own persistent model state and configuration. A motion
 model is allowed to update truth, while a sensor borrows truth read-only.
 Messages and readings must follow their documented delivery paths.
 
-For C++ developers: the plugin struct holds what used to be class members;
-`impl Plugin` supplies common lifecycle operations; `impl Sensor` (or another
+For C++ developers: the plugin struct holds what used to be class members; `impl
+Plugin` supplies common lifecycle operations; `impl Sensor` (or another
 category) supplies the specialized update. This is composition through traits,
 not a duplicated inheritance hierarchy. `Result<Update>` distinguishes an
-operation failure (including numerical failure) from an applied or stop-requesting update.
+operation failure (including numerical failure) from an applied or
+stop-requesting update.
 
 Straight uses a named configuration struct. LocalNetwork and GlobalNetwork are
-stateless and use `Config = ()`; configuration still rejects unsupported delay modes.
-Call `configure` and pass its result to `new`. The controller parses legacy
-`[P, I, D, integral band]` XML values into named `PidGains`; angular PID updates
-still use radians and convert the legacy degree-valued band once at construction.
+stateless and use `Config = ()`; configuration still rejects unsupported delay
+modes. Call `configure` and pass its result to `new`. The controller parses
+legacy `[P, I, D, integral band]` XML values into named `PidGains`; angular PID
+updates still use radians and convert the legacy degree-valued band once at
+construction.
 
 Downstream plugins can import `Pid`, `PidGains`, `EulerAngles`, `Quaternion`,
-`Vec3`, and `rk4` directly from `scrimmage_core`. Use `Quaternion::from_euler`
+`Vec3`, and `rk4` directly from `ripple_core`. Use `Quaternion::from_euler`
 for attitude construction and `rotate_body_to_world` to rotate vectors.
 
 ## Add a plugin
 
 A research plugin belongs in a user crate such as `crates/starter`, not among
-the stock plugins: see [User plugins and the starter crate](../guides/user-plugins.md). It implements the
-same traits below and registers itself in the crate's `register()`, which the
-`scrimmage` command calls. The steps here are for adding a stock plugin.
+the stock plugins: see [User plugins and the starter
+crate](../guides/user-plugins.md). It implements the same traits below and
+registers itself in the crate's `register()`, which the `ripple` command calls.
+The steps here are for adding a stock plugin.
 
 1. Use the built-in for your category as a reference. Add the plugin's named
    `<plugin>.rs` implementation under `plugin/<category>/<plugin>/`. Declare and
@@ -103,8 +108,8 @@ same traits below and registers itself in the crate's `register()`, which the
    `register_metrics` in `plugin_manager/builtins.rs` for a bundled plugin.
 5. Reference that registration name in the mission.
 
-[builtins.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/src/plugin_manager/builtins.rs) shows every
-registration category. Missions select the registered names:
+[builtins.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin_manager/builtins.rs)
+shows every registration category. Missions select the registered names:
 
 ```xml
 <entity_interaction>SimpleCollision</entity_interaction>
@@ -119,9 +124,9 @@ the `GlobalNetwork` used by simulator events. As in C++, the mission gets an
 implicit GlobalNetwork when it does not explicitly list one.
 
 The public registry is still covered by
-[plugin_contracts.rs](https://github.com/EthanMBoos/scrimmage-rs/blob/main/crates/core/tests/plugin_contracts.rs). Its supporting
-models are test fixtures, not a separate application or a prescribed project
-layout. Public scenario construction is described in
+[plugin_contracts.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/tests/plugin_contracts.rs).
+Its supporting models are test fixtures, not a separate application or a
+prescribed project layout. Public scenario construction is described in
 [Building a scenario in Rust](../guides/rust-scenarios.md). File and Rust inputs
 use the same registry and plugin configuration checks.
 
@@ -146,7 +151,7 @@ pub use simple_aircraft::SimpleAircraft;
 
 The path is relative to the category file. The logical module remains
 `plugin::motion::simple_aircraft`, and the public type remains
-`scrimmage_core::plugin::motion::SimpleAircraft`. No extra wrapper module or
+`ripple_core::plugin::motion::SimpleAircraft`. No extra wrapper module or
 duplicate implementation is needed. Keep category interfaces in named framework
 files such as `motion.rs`, and registrations in
 `plugin_manager/builtins.rs`; neither belongs in the model equations.
@@ -192,7 +197,8 @@ fn configure(params: &PluginParams<'_>) -> Result<SphereNetworkConfig> {
   names the key, instead of silently using the default.
 - A C++ option that Rust does not implement stays a named field with a comment,
   and `configure` rejects any value other than the one that means "off". An
-  option that is safe to ignore (Straight's `show_text_label`) is a `_`-prefixed field.
+  option that is safe to ignore (Straight's `show_text_label`) is a `_`-prefixed
+  field.
 - When the runtime needs derived values (radians, an inverse inertia, rotor
   geometry), parse a private `...Params` struct and build the `Config` from it,
   as SimpleAircraft and Multirotor do.
@@ -201,12 +207,13 @@ fn configure(params: &PluginParams<'_>) -> Result<SphereNetworkConfig> {
 
 Values are resolved in this order, first match wins: an attribute on the mission
 tag, a `param_common` group the tag references, a `PluginName.xml` overlay found
-on `SCRIMMAGE_PLUGIN_PATH`, then `Default`. Overlays are optional: a lab can use
-one to change a default for every mission without editing code. Their `<library>`
-element is ignored, and any other key must be one the plugin declares.
+on `RIPPLE_PLUGIN_PATH`, then `Default`. Overlays are optional: a lab can use
+one to change a default for every mission without editing code. Their
+`<library>` element is ignored, and any other key must be one the plugin
+declares.
 
-The C++ plugins' XML defaults became these `Default` impls. Plugins are linked as
-Rust code; runtime shared-library loading is intentionally out of scope.
+The C++ plugins' XML defaults became these `Default` impls. Plugins are linked
+as Rust code; runtime shared-library loading is intentionally out of scope.
 NoisyPosition has its own Rust-example defaults and is not a C++ sensor port.
 
 ## Control signals and state
@@ -215,11 +222,11 @@ NoisyPosition has its own Rust-example defaults and is not a C++ sensor port.
 The engine validates connections before execution and supplies `PluginIo`
 to autonomy, controller, and motion updates.
 
-Port names are owned strings, so configuration can determine channel names/count:
-`Port::new(format!("motor_{index}"), Unit::RadiansPerSecond, Frame::None)`.
-String literals work too. `Port` is `Clone` but not `Copy`, so it cannot be a
-`const`: construct declarations in `ports`, and clone only when the same
-declaration is needed for both an input and an output.
+Port names are owned strings, so configuration can determine channel
+names/count: `Port::new(format!("motor_{index}"), Unit::RadiansPerSecond,
+Frame::None)`. String literals work too. `Port` is `Clone` but not `Copy`, so it
+cannot be a `const`: construct declarations in `ports`, and clone only when the
+same declaration is needed for both an input and an output.
 
 ```text
 Autonomy outputs -> Controller chain -> MotionModel inputs
@@ -236,11 +243,12 @@ Structural creation/removal remains engine-owned.
 
 `KinematicState` stores position, linear velocity, and angular velocity in the
 local ENU world frame: `position_world_m`, `velocity_world_mps`, and
-`angular_velocity_world_radps`. Its quaternion rotates forward/left/up body
-axes into world axes. Motion models keep their own body-frame rates private
-and convert when reading/writing truth, as C++ FixedWing6DOF does. Frame recording
+`angular_velocity_world_radps`. Its quaternion rotates forward/left/up body axes
+into world axes. Motion models keep their own body-frame rates private and
+convert when reading/writing truth, as C++ FixedWing6DOF does. Frame recording
 copies world velocities directly; it performs no body/world rotation. A sensor
-or controller needing body rates can use `orientation_world_from_body.rotate_world_to_body(...)`.
+or controller needing body rates can use
+`orientation_world_from_body.rotate_world_to_body(...)`.
 
 `AgentContext` gives autonomy and controllers the entity's belief and nothing
 else: `context.state` is its estimated own state and `context.contacts` the
@@ -353,27 +361,30 @@ Legacy details retained deliberately:
   identity matrix. That covariance is **not** a calibrated sensor uncertainty.
 - Samples use the existing Rust per-sensor RNG, keyed by mission seed, entity
   ID, and sensor instance. Draws interleave position/velocity per axis, followed
-  by roll/pitch/yaw, including zero-noise draws. This is not C++ RNG-sequence parity.
+  by roll/pitch/yaw, including zero-noise draws. This is not C++ RNG-sequence
+  parity.
 
-Try `missions/noisy-state.xml`. Its two aircraft have independent sensor streams.
-The separate `verification/noisy-state-bias.xml` fixes standard deviations at
-zero to compare the retained equations and feedback against C++ independently
-of random-number generation. NoisyPosition remains a distinct Rust illustration.
+Try `missions/noisy-state.xml`. Its two aircraft have independent sensor
+streams. The separate `verification/noisy-state-bias.xml` fixes standard
+deviations at zero to compare the retained equations and feedback against C++
+independently of random-number generation. NoisyPosition remains a distinct Rust
+illustration.
 
 ### NoisyContacts
 
 `NoisyContacts` measures every other active contact after motion, in entity-ID
-order, using the same `pos_noise_0..2`, `vel_noise_0..2`, and `orient_noise_0..2`
-mean/stddev parameters as NoisyState. It is a `Contacts` sensor: tracking's
-`PassThrough` copies each sample into known contacts. It has no range/FOV
-filtering, detection probability, or persistent tracks.
+order, using the same `pos_noise_0..2`, `vel_noise_0..2`, and
+`orient_noise_0..2` mean/stddev parameters as NoisyState. It is a `Contacts`
+sensor: tracking's `PassThrough` copies each sample into known contacts. It has
+no range/FOV filtering, detection probability, or persistent tracks.
 
-The public `plugin::sensor::ContactsWithCovariances` contains a `contacts` vector.
-Each `ContactWithCovariance` contains `entity: EntityInfo` and
-`measurement: StateWithCovariance`. Identity is retained; the kinematic state
-is measured. Like C++, this sensor preserves target angular velocity and sets
+The public `plugin::sensor::ContactsWithCovariances` contains a `contacts`
+vector. Each `ContactWithCovariance` contains `entity: EntityInfo` and
+`measurement: StateWithCovariance`. Identity is retained; the kinematic state is
+measured. Like C++, this sensor preserves target angular velocity and sets
 covariance to **5I**, regardless of configured noise. NoisyState instead uses
-zero angular velocity and identity covariance. Neither is calibrated uncertainty.
+zero angular velocity and identity covariance. Neither is calibrated
+uncertainty.
 
 An autonomy uses the measured contacts through belief:
 
@@ -403,36 +414,39 @@ consumer/output path when those records are needed.
 
 ### SphereNetwork and AuctionAssign
 
-`SphereNetwork` routes between entity endpoints with strict 3D
-`distance < range` (meters, default 100), using current post-motion truth.
-Same-entity endpoints bypass geometry. World plugins have no antenna position
-and are unreachable on this network; use GlobalNetwork for their traffic.
+`SphereNetwork` routes between entity endpoints with strict 3D `distance <
+range` (meters, default 100), using current post-motion truth. Same-entity
+endpoints bypass geometry. World plugins have no antenna position and are
+unreachable on this network; use GlobalNetwork for their traffic.
 `filter_comms_plane=true` permits two endpoints only when both are at/above
-`comms_boundary_altitude - comms_boundary_epsilon`, or both at/below altitude plus
-epsilon. Altitude and epsilon are meters; defaults are zero, epsilon nonnegative.
+`comms_boundary_altitude - comms_boundary_epsilon`, or both at/below altitude
+plus epsilon. Altitude and epsilon are meters; defaults are zero, epsilon
+nonnegative.
 
 Every reachable delivery, including same-entity traffic, independently succeeds
-with `prob_transmit` (0..1, default 1). Delivery is immediate in the network phase;
-there are no retries, persistence, or legacy communication-delay modes. Each
-subscriber has its own loss decision and queue. Adding subscribers changes RNG
-consumption. The stream is deterministic for a fixed configuration at 1/2/8 workers.
+with `prob_transmit` (0..1, default 1). Delivery is immediate in the network
+phase; there are no retries, persistence, or legacy communication-delay modes.
+Each subscriber has its own loss decision and queue. Adding subscribers changes
+RNG consumption. The stream is deterministic for a fixed configuration at 1/2/8
+workers.
 
-`AuctionAssign` is the C++ single-round random-bid demonstration. Entity 1 starts
-once if `auctioneer=true` (default). All recipients, including itself, bid in
-(0,10). On its first update strictly after `auction_duration_s` (default 5), it
-publishes the highest bid it has received; ties retain the first delivery.
-No received bid produces `winner: None`, and late bids never revise the result.
-Use one AuctionAssign instance per entity. There is no retry, consensus guarantee
-under loss, task execution, or support for concurrent auction rounds. Zero world-velocity outputs hold the agent still;
-a later autonomy may overwrite them through the normal port merge.
+`AuctionAssign` is the C++ single-round random-bid demonstration. Entity 1
+starts once if `auctioneer=true` (default). All recipients, including itself,
+bid in (0,10). On its first update strictly after `auction_duration_s` (default
+5), it publishes the highest bid it has received; ties retain the first
+delivery. No received bid produces `winner: None`, and late bids never revise
+the result. Use one AuctionAssign instance per entity. There is no retry,
+consensus guarantee under loss, task execution, or support for concurrent
+auction rounds. Zero world-velocity outputs hold the agent still; a later
+autonomy may overwrite them through the normal port merge.
 
 Typed payloads and topic constants are exported from `plugin::autonomy`:
-`AuctionStart { auctioneer_id }` / `START_AUCTION_TOPIC`,
-`AuctionBid { bidder_id, bid }` / `BID_AUCTION_TOPIC`, and
-`AuctionResult { winner: Option<AuctionBid> }` / `RESULT_AUCTION_TOPIC`.
-The topic strings are `StartAuction`, `BidAuction`, and `ResultAuction`.
-Subscribe to results in an entity plugin. `network_name` defaults to SphereNetwork;
-unlike C++'s hard-coded CommsNetwork alias, it selects a registered network name.
+`AuctionStart { auctioneer_id }` / `START_AUCTION_TOPIC`, `AuctionBid {
+bidder_id, bid }` / `BID_AUCTION_TOPIC`, and `AuctionResult { winner:
+Option<AuctionBid> }` / `RESULT_AUCTION_TOPIC`. The topic strings are
+`StartAuction`, `BidAuction`, and `ResultAuction`. Subscribe to results in an
+entity plugin. `network_name` defaults to SphereNetwork; unlike C++'s hard-coded
+CommsNetwork alias, it selects a registered network name.
 
 Loss and bids draw from each plugin instance's own stream, derived from the
 mission `<seed>`, the entity ID (0 for world plugins), and a stable plugin
@@ -514,9 +528,10 @@ Decisions cannot query truth. Autonomy and controllers see only
 ## Messages
 
 Each plugin instance owns independent subscriptions, an incoming queue, and an
-outgoing queue. Message data is shared immutably for multicast, not plugin state.
-The following excerpt uses the `Population` message and `ExampleNetwork` from
-the plugin contract test fixtures, not names registered by the stock command:
+outgoing queue. Message data is shared immutably for multicast, not plugin
+state. The following excerpt uses the `Population` message and `ExampleNetwork`
+from the plugin contract test fixtures, not names registered by the stock
+command:
 
 ```rust
 // initialize:
@@ -531,19 +546,20 @@ for message in context.messages.receive::<Population>("ExampleNetwork", "populat
 }
 ```
 
-Receive explicitly drains this subscriber's delivered queue at its update;
-it does not drain anyone else's queue. This is the Rust equivalent of processing
+Receive explicitly drains this subscriber's delivered queue at its update; it
+does not drain anyone else's queue. This is the Rust equivalent of processing
 messages in the step body, not a claim that C++ callback registration is ported.
-Each message includes sender identity, publication time, and actual delivery time.
-Wrong message types and unconfigured network names are errors.
+Each message includes sender identity, publication time, and actual delivery
+time. Wrong message types and unconfigured network names are errors.
 
 Queues have fixed message-count limits in `pubsub/messages.rs`: 1,024 outgoing
 publications per entity plugin (65,536 for world plugins), 65,536 unread
-messages per subscriber/channel, and 65,536 pending deliveries per network (including fan-out staged in the current phase).
-Overflow returns an error and terminates the run with normal cleanup; it is not
-silent loss or backpressure. A failing phase is not rolled back. These are simple
-research defaults, not byte limits or legacy queue-policy compatibility. Drain
-subscriptions you create; a deliberately slow subscriber can fill its own queue.
+messages per subscriber/channel, and 65,536 pending deliveries per network
+(including fan-out staged in the current phase). Overflow returns an error and
+terminates the run with normal cleanup; it is not silent loss or backpressure. A
+failing phase is not rolled back. These are simple research defaults, not byte
+limits or legacy queue-policy compatibility. Drain subscriptions you create; a
+deliberately slow subscriber can fill its own queue.
 
 A network implements `step` and calls `context.route` once. Its decision
 function, `|link, random|`, receives a `Transmission` (sender/receiver
@@ -557,8 +573,8 @@ A network that can only deliver between plugins of the same entity should call
 `context.route_within_entity` instead: its decision function then sees only
 links to subscribers in the sender's own entity, and none from world plugins.
 That keeps routing linear in the team size; with `route`, a topic every agent
-publishes and every agent subscribes to costs one decision per pair. LocalNetwork
-uses it.
+publishes and every agent subscribes to costs one decision per pair.
+LocalNetwork uses it.
 
 LocalNetwork connects plugins on the same entity; GlobalNetwork connects all
 endpoints. The source's nonnegative `comm_delay` queue semantics and stochastic
@@ -598,20 +614,21 @@ skipped tick would otherwise be lost. An estimator can do expensive work less
 often inside its own `step`.
 World-level plugins run each phase as in the C++ reference source.
 
-Return `Update::Applied` or `Update::Stop`; use `Result::Err` with an explanation
-when the operation failed, including nonfinite model state. A normal plugin stop
-finishes the current tick, including networks and metrics, then emits terminal
-state. This is an intentional Rust contract, not C++ early-exit equivalence.
-Removal occurs after that tick's delivery/metrics; removed entities receive no
-later messages, including already scheduled deliveries. Pending future messages
-are not flushed at termination. `EntityPresentAtEnd` is written to the event log
-during finalization, not delivered as an extra metrics/network phase.
-Close is called once on removal, terminal completion, failure, or dropping the
-simulation. Close errors/panics do not prevent other plugins from closing.
-Initialization failure also closes every constructed plugin in that entity;
-`close` must tolerate incomplete initialization. Ordinary `Result` failures name
-the responsible plugin; caught panics may have only phase/entity context. Do not
-rely on recovery from an aborted process or a panicking constructor.
+Return `Update::Applied` or `Update::Stop`; use `Result::Err` with an
+explanation when the operation failed, including nonfinite model state. A normal
+plugin stop finishes the current tick, including networks and metrics, then
+emits terminal state. This is an intentional Rust contract, not C++ early-exit
+equivalence. Removal occurs after that tick's delivery/metrics; removed entities
+receive no later messages, including already scheduled deliveries. Pending
+future messages are not flushed at termination. `EntityPresentAtEnd` is written
+to the event log during finalization, not delivered as an extra metrics/network
+phase. Close is called once on removal, terminal completion, failure, or
+dropping the simulation. Close errors/panics do not prevent other plugins from
+closing. Initialization failure also closes every constructed plugin in that
+entity; `close` must tolerate incomplete initialization. Ordinary `Result`
+failures name the responsible plugin; caught panics may have only phase/entity
+context. Do not rely on recovery from an aborted process or a panicking
+constructor.
 
 Metrics return a `MetricReport` containing ordered headers and per-team values
 and scores. Multiple metrics instances are supported. CSV output sums team
@@ -621,16 +638,21 @@ scores and qualifies duplicate column names with the plugin instance identity.
 ## What remains
 
 See [Built-in models](models.md) for the selected aircraft, world, and waypoint
-models, their options, and deliberate limits. The [paper's validation](https://github.com/EthanMBoos/scrimmage-rs/blob/main/paper/README.md) records
-checks and results. [Roadmap](https://github.com/EthanMBoos/scrimmage-rs/blob/main/docs/TODO.md) lists current priorities. Legacy delay
-behavior, additional sensor models, and plugin debug
-geometry need further work. Services, runtime parameters, and
-callbacks should be implemented where selected simulation models need them,
-not copied as an unconditional framework backlog.
+models, their options, and deliberate limits. The [paper's
+validation](https://github.com/EthanMBoos/ripple/blob/main/paper/README.md)
+records checks and results.
+[Roadmap](https://github.com/EthanMBoos/ripple/blob/main/docs/TODO.md) lists
+current priorities. Legacy delay behavior, additional sensor models, and plugin
+debug geometry need further work. Services, runtime parameters, and callbacks
+should be implemented where selected simulation models need them, not copied as
+an unconditional framework backlog.
 
 Compiled downstream Rust plugins remain supported. Runtime shared-library
-discovery/loading and legacy protobuf/string-map spawning are explicitly excluded.
-Burn is considered only if RQ1 supports learning. ROS and JSBSim integrations
-are not planned; ArduPlane SITL is optional ([Flying ArduPlane](../guides/ardupilot.md)). XML/template coverage is partial.
-YAML missions, templates, and sweeps work; typed runtime spawn requests
-are not implemented.
+discovery/loading and legacy protobuf/string-map spawning are explicitly
+excluded. Learned policies are planned as an optional training bridge and
+frozen-policy plugin
+([Roadmap](https://github.com/EthanMBoos/ripple/blob/main/docs/TODO.md)). ROS
+and JSBSim integrations are not planned; ArduPlane SITL is optional ([Flying
+ArduPlane](../guides/ardupilot.md)). XML/template coverage is partial. YAML
+missions, templates, and sweeps work; typed runtime spawn requests are not
+implemented.

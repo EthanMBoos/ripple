@@ -1,37 +1,41 @@
-# Original SCRIMMAGE paper
+# Cited papers and code
 
-- [Local PDF](sources/demarco_scrimmage/paper.pdf)
-- [Searchable text](sources/demarco_scrimmage/paper.txt)
-- [Author-hosted source](https://www.kevindemarco.com/assets/pdf/scrimmage.pdf)
-- [Upstream recommended citation](https://github.com/gtri/scrimmage#citation),
-  used for `demarco2018` in [references.bib](../references.bib).
-
-Downloaded 2026-09-25. The PDF has 14 pages. SHA-256:
-`4886f704a8b808b8044615ce1dca552de8a357cfc1f83a966b46cf6a66203b23`.
-
-Regenerate the text from the repository root with Poppler:
+Every source in [references.bib](../references.bib), downloaded for local
+reading: the PDF, a Markdown copy for searching, and shallow clones of the
+code the authors published. It goes in `sources/`, which git ignores, since
+these are other people's papers and code.
 
 ```sh
-pdftotext -layout paper/literature_review/sources/demarco_scrimmage/paper.pdf \
-  paper/literature_review/sources/demarco_scrimmage/paper.txt
+uv run --with pymupdf4llm scripts/build_paper_sources.py            # everything
+uv run --with pymupdf4llm scripts/build_paper_sources.py --key KEY  # one source
 ```
 
-Page breaks and layout are preserved for review. Figures and equations still
-need the PDF; extraction is not a replacement for inspecting them.
+Rerunning skips what's already downloaded. `sources/INDEX.md` lists what came
+down for each key; `sources/KEY/README.md` says where each file came from and
+which commit each repository is at.
 
-## Reading map
+Download links and repositories live in
+[source_catalog.json](source_catalog.json), one entry per BibTeX key. Adding a
+reference to the paper means adding it there too; the script stops if the two
+don't match. A few papers have no open PDF that a script can fetch; their
+entries say so, and you can drop the PDF in by hand as `sources/KEY/paper.pdf`.
 
-| Section | What to revisit for this paper |
+What we took from the literature, and why: [Learned vs classical: what's out
+there](../../docs/LEARNING_LITERATURE.md).
+
+## The SCRIMMAGE paper
+
+`sources/demarco2018/` is the original SCRIMMAGE paper (14 pages). Sections
+worth rereading for this work:
+
+| Section | Why |
 | --- | --- |
-| 1-2: Introduction and related work | Original motivation and simulator comparisons; update the literature separately. |
-| 3: Design guidelines | Determinism, lockstep execution, and explicit motion equations. |
-| 4: Plugin architecture | Original roles and execution diagram; compare with source-reviewed current behavior. |
-| 5: Integrations | ROS, MOOS, and OpenAI Gym context for choosing a new integration experiment. |
-| 6: Predator/prey case study | Mission setup, models, behaviors, and statistical experiment. |
-| 6.5, Table 1 (PDF page 12) | Simulation/wall-time ratios versus agent count and motion model; historical hardware and single-thread settings are stated here. |
-| 7: Conclusion | Original claims and proposed future learning work. |
+| 3: Design guidelines | Determinism, lockstep execution, explicit motion equations. |
+| 4: Plugin architecture | The original roles and execution order, to compare with the code. |
+| 5: Integrations | ROS, MOOS, and the OpenAI Gym interface. |
+| 6: Predator/prey case study | Mission setup, behaviors, and the batch experiment. |
+| 6.5, Table 1 | Simulation-to-wall-time ratios against agent count; historical hardware. |
 
-Table 1 motivates a new scaling experiment. Its published ratios are historical
-context; rerun matched C++ and Rust workloads on the same machine for a direct
-performance comparison. The paper and the current `Ubuntu-24.04` C++ branch
-represent different points in the project's history.
+Table 1's ratios are history, not a benchmark. For speed comparisons, run the
+matched C++ and Rust workloads on one machine (the paper's scaling appendix
+does).

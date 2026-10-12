@@ -1,8 +1,8 @@
 # Workflow example
 
-The same FollowNearest speed sweep built in C++ SCRIMMAGE and in Ripple, for
-the team report's "Building an Experiment" section and its appendix
-(`paper/manuscript/baseline.tex`).
+The same FollowNearest speed sweep built in C++ SCRIMMAGE and in Ripple, to
+compare what it takes to write a plugin and run a sweep in each. The paper no
+longer reports it; it's kept as a worked comparison.
 
 - `cpp/`: the hand-fixed generated plugin (`FollowNearest.h`, `.cpp`, `.xml`,
   `CMakeLists.txt`), the mission, the sweep loop, and `results.csv`.

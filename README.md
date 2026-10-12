@@ -2,12 +2,19 @@
 
 https://github.com/user-attachments/assets/88d48e3a-dec9-4937-9eec-8b08ec797499
 
-Ripple is a Rust port of [SCRIMMAGE](https://github.com/gtri/scrimmage),
-a multi-agent robotics simulator. It keeps SCRIMMAGE's mission files and plugin
-design, replaces the VTK viewer with [Rerun](https://rerun.io), and runs agents
-in parallel with identical results at any worker count. It covers a small,
-verified subset of the C++ models, built for research and teaching; it is not a
-drop-in replacement.
+Ripple is a deterministic multi-agent robotics simulator in Rust, for
+research and teaching. Point agents, multirotors, and fixed-wing aircraft share
+one world and one sensing, communication, and estimation pipeline, and each
+agent acts on its own belief rather than the true state. Runs are
+byte-identical at any worker count, so two strategies can be compared on
+exactly the same episodes. Recording and replay use [Rerun](https://rerun.io).
+
+It's being built to answer one question: does the ranking between learned and
+classical multi-robot policies hold once sensing is noisy, messages are lost
+or late, and the vehicles have real dynamics? See [the paper](paper/README.md).
+
+Ripple grew out of [SCRIMMAGE](https://github.com/gtri/scrimmage) and still
+reads its mission files.
 
 Each agent runs a plugin stack:
 
@@ -50,9 +57,8 @@ Other missions to try:
   plugin API, and model references. Preview it with `mdbook serve book --open`.
 - [Missions](missions/README.md) and [models](book/src/reference/models.md):
   what is supported.
-- [The paper](paper/README.md): how the port is checked against C++ and what
-  that establishes. [Reference notes](docs/REFERENCE_NOTES.md) list intentional
-  differences; the [roadmap](docs/TODO.md) lists what's next.
+- [The paper](paper/README.md): the learned versus classical question, and
+  how each model is checked. The [roadmap](docs/TODO.md) lists what's next.
 
 ## Development
 
@@ -62,9 +68,8 @@ cargo test --workspace --locked
 cargo clippy --workspace --all-targets --locked -- -D warnings
 ```
 
-`python3 reference/suite.py` runs the quick checks, including the comparison
-with C++ SCRIMMAGE in Docker, and `--release` runs every check; see
-[reference/README.md](reference/README.md). Contributor rules are in
+`python3 reference/suite.py` runs the quick checks and `--release` runs every
+check; see [reference/README.md](reference/README.md). Contributor rules are in
 [AGENTS.md](AGENTS.md).
 
 ## License

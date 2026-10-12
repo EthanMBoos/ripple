@@ -40,7 +40,7 @@ differences in `docs/REFERENCE_NOTES.md`.
 
 User and developer guidance goes in `book/src/` (listed in `SUMMARY.md`);
 `docs/` holds plans, audits, and notes. Verification results go in the paper
-(`paper/manuscript/main.tex`; the C++ comparison in `baseline.tex`), with the
+(`paper/manuscript/main.tex`; the C++ comparison in its appendix), with the
 evidence each check retains in `paper/data/<check>/` and tables from
 `paper/data/make_tables.py`, not a separate evidence document.
 

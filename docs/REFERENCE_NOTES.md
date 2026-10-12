@@ -176,8 +176,8 @@ between substeps; other estimators, sensors, contacts, interactions, and
 networks keep the outer tick, so more substeps do not mean fresher observations
 or finer collision checks. `m` = 1 missions are unaffected. The benchmarks
 (`reference/benchmark.py`, `reference/native_benchmark.py`) build the comparison
-branch, and the paper's timings come from them. The history, the comparison with
-other simulators, and the verification are in the paper (`sec:substeps`);
+branch, and the paper's timings come from them. The history and the verification
+are in the paper's C++ agreement appendix (`app:baseline`);
 `reference_check.py` requires unmodified and fixed C++ to match only when `m` =
 1 and no entity uses AircraftPIDController, FixedWing6DOF, or Multirotor.
 
@@ -285,6 +285,34 @@ book chapter lists JSBSim's Rascal values. Without tables the output is
 unchanged: on 2026-10-05 `fixed-wing-6dof.xml` and `fixed-wing-6dof-rascal.xml`
 wrote byte-identical frames, summaries, events, and traces before and after each
 table was added.
+
+## Unported C++ models: check before porting
+
+From a source audit of the same commit (2026-09-24), not a numerical check of
+every model. These are observations, not changes to make to the C++
+reference.
+
+- **MultirotorControllerPID** writes equal hover motor speeds; its attitude
+  and yaw corrections are commented out, so it doesn't stabilize anything.
+- **RigidBody6DOF** disables gravity and some translational derivatives, and
+  sets P/Q/R by clamping U.
+- **Ballistic** puts `-mass * g` in the derivative of vertical acceleration
+  instead of ordinary constant-gravity motion.
+- **SimpleCar** uses `turn_rate` as a steering angle inside `tan`; its gravity
+  branch multiplies acceleration by mass.
+- **UUV6DOF** stores an external force in `force_ext_body_` but never uses it.
+- **SimpleINS** divides velocity differences by `.01` and uses `rand()` for
+  timing; **LOSSensor** seeds from wall time. Neither is deterministic as
+  written.
+- **OpenAIRewards** gives a reward, not a full episode, reset, and action
+  interface.
+
+Things the C++ plugins need that Ripple doesn't have yet, for whoever ports
+one: a force/moment input and reset hook on motion models
+(ExternalForceField), acceleration and wind in the state sensors read
+(RigidBody6DOFStateSensor), target size for cameras (ContactBlobCamera),
+shared ray or occlusion queries (RayTrace, LOSSensor), retiring one agent
+without ending the run (MotionBattery), and custom per-entity records (CPA).
 
 ## Spawn RNG mismatch (accepted)
 

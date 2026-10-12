@@ -1,261 +1,300 @@
 # Roadmap
 
 Ripple is at its initial release; the
-[baseline report](../paper/manuscript/baseline.tex) records its comparison
+[paper's appendix](../paper/manuscript/main.tex) records its comparison
 with C++ SCRIMMAGE, [reference notes](REFERENCE_NOTES.md) list the intentional
 differences, and the [checks](../reference/README.md) rerun all of it. Keep the
 C++ comparison passing after any simulation change.
 
 ## Integration and evidence
 
-The goal is to complete the capabilities below in one multi-agent robotics
-testbed, so experiments can compare model and environment fidelity. The
-[paper](../paper/manuscript/main.tex) follows that work. Each implemented stage
-needs an external baseline and a clear statement of what it establishes:
+Every new piece (a vehicle model, an autopilot, a sensor) needs something
+outside Ripple to check it against, and a plain statement of what that check
+shows:
 
-- Compare the integrated component with its source on matched inputs, then
-  exercise it in a representative closed-loop mission. Record source versions,
-  parameters, frame and unit conversions, timestep, errors, and known gaps.
-- Keep source agreement separate from physical validation. Use independent
-  measured data where available; borrowed, estimated, or computed coefficients
-  retain those labels even when the source comparison passes.
-- Preserve existing behavior when optional effects are off. Document deliberate
-  corrections and maintain the corresponding reference comparisons.
-- Record the comparison results and execution cost in the paper, with retained
-  data under `paper/data/`. Selected multi-agent experiments then test whether
-  added fidelity changes outcomes or strategy rankings, and at what cost.
+- Compare it with its source on the same inputs, then fly it in a real
+  closed-loop mission. Write down source versions, parameters, frame and unit
+  conversions, timestep, errors, and known gaps.
+- "Matches its source" is not "matches reality". Borrowed or estimated
+  coefficients stay labeled that way even when the source comparison passes.
+- With new effects turned off, old missions must run exactly as before. Write
+  up deliberate fixes and keep the C++ comparison passing.
+- Results and run cost go in the [paper](../paper/manuscript/main.tex), with
+  the data under `paper/data/`.
 
-A changed ranking is not required to justify completing an integration. A
-useful capability with a checked baseline, or evidence that a simpler model is
-adequate in a stated regime, is a result too. The learned-policy gate below
-still applies. The roadmap can support several bounded papers; completing
-every item is not a prerequisite for each submission.
+A new piece doesn't have to change any ranking to be worth finishing. A
+checked capability, or showing that a simpler model is good enough somewhere,
+counts too.
 
 ## Learned policies
 
-Background and options: [learning simulator
-landscape](LEARNING_SIMULATOR_LANDSCAPE.md).
+Sources and numbers: [LEARNING_LITERATURE.md](LEARNING_LITERATURE.md).
 
-Learning is for decisions the classical stack cannot hand-code: weighing
-many tracks and their uncertainty, teammates' messages, vehicle limits,
-terrain, and timing at once. Not for re-solving what classical strategies
-already do. Such a policy can only learn from the inputs it will face, so it
-trains here, in worlds with the real sensing, networks, belief, and vehicles.
+The plan: take a few well known multi-agent tasks, run learned and classical
+policies on them, and see if the winner changes as we make the sim more
+realistic. Realistic here means three separate knobs: noisier sensing (agents
+act on what they believe, not the truth), worse communication (lost and late
+messages), and real vehicle dynamics (multirotors and fixed-wing instead of
+points).
 
-- **No RL algorithms or training loops in this repository.** PPO, MAPPO, and
-  the like come from existing libraries (RLlib, BenchMARL, PufferLib, SB3,
-  CleanRL).
-- **Measure decision throughput first.** Put a decision every second in the
-  paper's information-sharing workload and count decisions per second per
-  core, including observation building and resets, at a few fidelity levels.
-  That says whether training here takes hours or months. Pick the decision to
-  learn and record why classical strategies (nearest known target,
-  `AuctionAssign`) are not enough for it.
-- **Learn the high-level decision; classical behaviors are the actions.** The
-  policy chooses which target, waypoint, message, or hand-off; the existing
-  autonomy, controllers, and motion carry it out at their own rates. Decisions
-  at about 1 Hz instead of every physics step cut the samples needed by orders
-  of magnitude, and the policy cannot fly the vehicle into the ground. Add a
-  decision hook so one decision inside a classical autonomy can be learned
-  without rewriting it.
-- **Training bridge.** An optional PyO3 crate, out of the default build like
-  `ardupilot`, exposing Gymnasium (single agent) and PettingZoo parallel
-  (multi-agent) environments to an outside learner. Its step applies the
-  decisions and runs until the next decision point (`Simulation::step`
-  returns pre-step state, so the bridge needs its own step); reset rebuilds
-  the simulation. Many single-worker worlds in parallel give the scale; the
-  sweep and Slurm tooling already fans runs out.
-- **Truth for the critic, belief for the policy.** Centralized training with
-  decentralized execution: during training a critic may read truth, while
-  each agent's policy sees only its own belief and messages, which Ripple
-  already keeps apart.
-- **One observation and action definition**, shared by the bridge and the
-  evaluation plugin: belief encoded at a fixed size or as a set, frames,
-  normalization, action meanings, decision period, termination. Rewards come
-  from the metrics plugins, so the training reward and the evaluation score
-  agree.
-- **Evaluation in the same setup.** An optional autonomy plugin (or decision
-  hook) that runs a frozen ONNX policy (Burn or `ort`), so learned and
-  classical strategies run side by side in one sweep under identical sensing,
-  network, and vehicle rules. Inference must keep output byte-identical at
-  any worker count: a fixed thread count, and stochastic policies draw from
-  the plugin's own random stream.
-- **Fidelity curriculum.** Train mostly at low fidelity, then fine-tune and
-  evaluate at higher fidelity (stall tables, wind, noisy sensing, lossy
-  networks). How much fidelity training needs, and whether a learned policy
-  holds up as fidelity rises where a classical one does, are questions for
-  the paper.
-- **Position against GPU simulators.** CPU worlds with a GPU learner is the
-  classic setup (Atari, SMAC, OpenAI Five; RLlib, Sample Factory,
-  PufferLib); GPU-resident simulators (Isaac Lab, Brax, MJX, JaxMARL) are
-  faster but simplify the sensing, belief, networks, and vehicles these
-  decisions depend on. Expect reviewers to ask why not train there: answer
-  with measured throughput and learning curves, one standard benchmark task
-  as an anchor, and the hybrid: train cheaply wherever possible (including a
-  GPU simulator), fine-tune and evaluate here against the classical stack.
-  If a cheap simulator's policy holds up here, report that too.
+Why bother: learned policies are mostly built and compared in sims with point
+agents, perfect observations, and free messages (MPE, VMAS, JaxMARL). When
+papers compare against classical methods, the two sides often don't get the
+same information or the same tuning effort. We didn't find anyone who turns
+these knobs one at a time on standard tasks and checks whether the ranking
+holds.
+
+### Tasks
+
+Each one has published learned results and an old, trusted classical answer,
+so our numbers can be checked against other people's. Each leans on one knob
+in particular, but all three knobs get turned on all three tasks.
+
+- **Cooperative navigation.** N agents spread out to cover N landmarks
+  without crashing (MPE's `simple_spread`).
+  - Classical: assign agents to landmarks optimally (Hungarian algorithm) and
+    fly there. Decentralized version: an auction over the network.
+  - Learned results are bunched together on this task, and the raw score
+    also depends on where agents happened to start. So report these as
+    separate numbers, never folded into one:
+    - the benchmark return, exactly as the pinned implementation defines it;
+    - coverage at the end: landmarks occupied, and summed distance from each
+      landmark to its nearest agent;
+    - path cost: total distance flown, divided by the Hungarian assignment's
+      cost (straight-line distance from each agent's start to its optimally
+      assigned landmark, same start). That's a lower bound on travel, not an
+      optimal return: it ignores collisions and what happens along the way;
+    - collisions.
+  - Nobody has compared learned `simple_spread` policies to optimal
+    assignment. The closest is Muthusamy et al. 2024, with noise-free
+    observations, in their own environment.
+  - Main knob: sensing. What happens when assignment runs on each agent's
+    noisy belief, and the auction runs over a lossy network?
+  - First, match one pinned implementation with point agents, transitions
+    and rewards included, not just observations: MPE2's `simple_spread_v3`
+    at a fixed commit, default settings (N = 3, 25 steps, `local_ratio` 0.5,
+    radius 0.15, agents and landmarks in [-1, 1]², force actions with MPE's
+    damping). Parity means the same exported policy gets the same returns in
+    MPE2 and in Ripple from the same starts.
+  - Published returns used other versions, so they're only a sanity check on
+    our training. MAPPO's own `simple_spread` (in its repo) puts landmarks in
+    0.8 × [-1, 1]², counts each agent as colliding with itself, and has no
+    `local_ratio`; Papoudakis et al. used EPyMARL's MPE of 2021. MPE moved
+    from PettingZoo to Farama's MPE2, which dropped the self-collision.
+- **Circle-crossing collision avoidance.** Agents start on a circle and fly
+  to the opposite side, so everyone meets in the middle.
+  - Classical: ORCA (velocity obstacles; the RVO2 library), its versions for
+    wheeled robots (NH-ORCA) and constant-speed aircraft, and a control
+    barrier function controller.
+  - Learned: a CADRL-style policy (published weights exist) and MAPPO.
+  - The published "learned beats ORCA" results are softer than they look:
+    the median gain was small and most of it came from the hardest cases;
+    one paper had to inflate ORCA's radii to stop it colliding; another gave
+    ORCA true neighbor states while the learned policy used a laser. Here
+    both get the same belief.
+  - Main knob: dynamics. ORCA assumes you can slow down or stop. Fixed-wing
+    aircraft can't, and nobody has run this comparison on fixed-wing.
+  - Run symmetric and jittered circles and pair swaps; aircraft need a
+    holding pattern instead of stopping at the goal.
+  - Measure success, collisions, deadlocks, extra time, and closest approach,
+    at the median and in the worst cases: the 75th and 90th percentiles for
+    extra time, the 25th and 10th for closest approach (small is bad).
+- **Flocking with limited communication range.** Agents start with random
+  velocities and have to line up and stay together without colliding,
+  talking only to neighbors in range.
+  - Classical: Reynolds' rules, Olfati-Saber, Vásárhelyi (the 30-drone
+    flock), tuned with CMA-ES.
+  - Learned: a graph network trained to imitate a centralized controller
+    (Tolstaya et al. 2019), and MAPPO.
+  - Tolstaya's network beat the local controller at 1 m range, where passing
+    neighbor info along over several hops matters most, and lost at 4 m. The
+    authors think the 4 m loss may come from how they built the network's
+    inputs, so don't lean on it as a mechanism. Lost and late messages
+    degrade the multi-hop info, so we expect them to change where the
+    network's advantage holds.
+  - Main knob: communication.
+  - Fixed-wing can't hover, so they flock around a moving reference point.
+  - Measure velocity alignment, how many separate groups form, closest
+    approach, and messages sent.
+
+We looked at pursuit too and dropped it: results depend on how each paper
+designs the evader.
+
+### Which vehicles
+
+1. **Point agents first, to match published numbers.** Same setup as
+   PettingZoo or VMAS. If Ripple doesn't reproduce their results here, any
+   change later up the ladder could just be a bug in our setup.
+2. **Multirotor (Crazyflie) is the main realistic vehicle.** Most of the
+   drone work we compare against flies quadrotors, often Crazyflies (Batra,
+   STGNN, and OPEN fly Crazyflies; Vásárhelyi's 30 drones are custom quads),
+   so this is the easiest comparison for reviewers. Crazyflow and
+   MuJoCo-Drones-Gym simulate the same vehicle, which gives a cross-check on
+   our dynamics. This puts the multirotor work below on the critical path.
+3. **Fixed-wing is the stress case**: `SimpleAircraft`, then `FixedWing6DOF`.
+   Already built. It's where the classical assumptions break: aircraft can't
+   stop, can't park on a landmark, and can't match a neighbor's velocity at
+   any speed. Nobody has run these comparisons on fixed-wing. A quad can hover
+   almost like a point, so rankings may hold there; fixed-wing is where we
+   expect them to move.
+
+What the policy outputs: in MPE and VMAS it's a 2-D force by default (VMAS
+can take a target velocity instead, through its velocity controller). Point
+agents keep the force for the runs that match published numbers. After that,
+train with velocity actions: the multirotor takes the velocity as is, and for
+aircraft it becomes a heading and a speed, held at or above a minimum
+airspeed, so "stop here" turns into circling. Per task:
+loiter over the landmark (covered if within a radius), a holding pattern at
+the goal, and flocking around a moving reference.
+
+### How we run it
+
+- **No RL training code in this repo.** Train in VMAS, JaxMARL, or PettingZoo
+  with existing libraries (BenchMARL, MAPPO), export to ONNX, run here. For
+  fine-tuning in Ripple, use the bridge below.
+- **Same commands, same information.** Learned and classical policies send
+  the same command to the same controllers (force for point agents in the
+  matching runs, velocity for the multirotor, heading, speed, altitude for
+  aircraft) and read the same
+  belief. Each task has one observation definition (frames, scaling, how
+  neighbors are encoded, decision rate). A parity test checks it matches the
+  training sim; if it silently doesn't, the whole study is garbage.
+- **Train three ways:** at the benchmark's simple setting, at the realistic
+  setting, and with the setting randomized during training. That tells us
+  whether a learned policy lost because it was trained in the wrong place or
+  because the method is fragile.
+- **Fair tuning.** Classical methods get the same tuning budget (number of
+  evaluations) as the learned ones, at the same setting. Also report them
+  tuned at the simple setting and frozen, to match how the learned policies
+  are trained.
+- **Stats.** 10 training seeds. Report the interquartile mean with bootstrap
+  confidence intervals (the `rliable` library). Learned and classical run on
+  the exact same episodes. To say whether the ranking held, compare each
+  level's ranking to the simple setting's with a rank correlation, and count
+  ranking reversals. Train at
+  N agents, also test at 2N and 4N.
+- **The knobs.** Turn each one alone through four levels, then all together.
+  Pick the noise, loss, and delay levels from real sensor and radio specs or
+  ArduPilot SITL runs, not numbers we made up.
+
+### Build order
+
+None of this is built yet. The simulator side is ready (C++ agreement,
+determinism, fixed-wing with ArduPlane, noisy sensors, lossy networks,
+sweeps); the learning pipeline and the three tasks are not. The first
+milestone doesn't need the multirotor, so it runs alongside the multirotor
+work.
+
+1. **Navigation with point agents, matching MPE2.** Train MAPPO in MPE2's
+   `simple_spread_v3` (pinned commit) with an existing library, export to ONNX,
+   run it in Ripple, and get the same returns from the same starts. Published
+   returns are a sanity check on training only. Needs a point agent with MPE's
+   force and damping dynamics (`SingleIntegrator` takes velocity), landmarks,
+   the coverage metric, the ONNX plugin, the parity test, and the Hungarian
+   baseline. This proves the whole pipeline end to end.
+2. **First fidelity results on navigation.** Sensing noise and belief on the
+   point agents, then network delay with the auction baseline. These are the
+   first real data points for the paper.
+3. **Navigation on the multirotor**, once it flies. Retrain with VMAS's
+   velocity actions, and cross-check our multirotor's motion against
+   Crazyflow or MuJoCo-Drones-Gym.
+4. **The training bridge**, for the "train at the realistic setting"
+   condition. Measure its speed first.
+5. **Collision avoidance**: ORCA family and a barrier function controller on
+   point agents, then multirotor, then fixed-wing (the new part).
+6. **Flocking** last.
+
+Two good tasks are still a paper.
+
+Pieces, by where they're needed:
+
+- **Shared:**
+  - point agents with MPE's force dynamics, and unicycle dynamics;
+  - the ONNX policy autonomy plugin (Burn or `ort`) that keeps output
+    byte-identical at any worker count: fixed thread count, and random
+    actions drawn from the plugin's own random stream;
+  - the observation parity test against MPE2 and VMAS;
+  - delay in the network model;
+  - the training bridge: an optional PyO3 crate, out of the default build like
+    `ardupilot`, that looks like a PettingZoo parallel environment.
+    `Simulation::step` returns the state from before the step, so the bridge
+    needs its own step; reset rebuilds the simulation;
+  - for aircraft, turning a velocity command into heading and speed held
+    above minimum airspeed, and holding or moving-reference goals;
+  - a tuning script for the classical baselines and the stats (`rliable`),
+    both Python, outside the sim;
+  - noise, loss, and delay levels taken from real sensor and radio specs or
+    ArduPilot SITL.
+- **Navigation:** landmarks, a deterministic Hungarian plugin that can run on
+  truth or belief, an auction over the network, the coverage-gap metric.
+- **Collision avoidance:** ORCA, NH-ORCA, constant-speed ORCA, a barrier
+  function controller, circle and swap sweeps, separation metrics.
+- **Flocking:** Reynolds, Olfati-Saber, and Vásárhelyi plugins; neighbor
+  messages that carry hop count and age; alignment and group metrics.
+
+### What could go wrong
+
+- One side is a strawman: an undertrained learned policy or a badly tuned
+  classical one. Use published hyperparameters and weights, and the equal
+  tuning budget.
+- The observations don't match the training sim. The parity test is there
+  for this.
+- The realism levels look made up. Take them from real specs.
+- Nothing flips anywhere. Report it anyway. Reproducing Tolstaya's range
+  result is the check that our setup can show a flip at all.
+- Closest prior work, which we have to cite and say how we differ from:
+  Labiosa and Hanna (ICRA 2025), Li et al. (NeurIPS 2025), Kadian et al.
+  (RA-L 2020), Muthusamy et al. (2024).
 
 ## Vehicle fidelity: scope and extension points
 
-Build each vehicle to the level established open simulators reach (ArduPilot
-and PX4 SITL, RotorS, Fossen's MSS), with every number's source stated. Going
-beyond that needs measured data for one real vehicle; that is not planned
-here, but the code shows where it plugs in:
+Build each vehicle to the level of the established open simulators (ArduPilot
+and PX4 SITL, RotorS), and say where every number came from. Going past that
+needs measured data from a real vehicle, which we're not collecting. But the
+code should make it obvious where that data would go:
 
-- **A fidelity header on every motion model**, with the same headings:
-  *Source* (where its equations and numbers come from), *Validated against*
-  ("nothing" is allowed), *Valid range*, *Not modeled*, and *To go further*
-  (the data needed, who has it, and what to change). Measured-data leads live
-  there, next to the code they concern, rather than in this roadmap.
-- **Effects left out are named terms, not absences.** Where a higher-fidelity
-  effect belongs in a force sum (slipstream over a wing, ground effect), the
-  code computes it as an explicit zero with a comment saying what a model of
-  it needs.
-- **Geometry and coefficients are parameters, not assumptions:** rotor axes
-  as vectors, aerodynamics through the table-or-linear pattern of the stall
-  tables, so a measured model arrives as data or one function.
-- **A book page, "Adding a measured-data vehicle model":** implement the
-  source's equations as a new motion model; reproduce its published tables or
-  predictions as a test; enforce or warn on its stated valid ranges; keep
-  "matches its source" separate from "matches reality"; add a suite check so
-  the result is evidence.
-
-## VTOL
-
-Goal: VTOL vehicles whose transitions (where the wing can stall) are
-plausible at ArduPilot and PX4's level. No C++ comparison exists, so each
-model states its data source and its limits.
-
-- **Quadplane at ArduPilot/PX4 level (plausible, not validated).** Add optional
-  `lift_rotors` to FixedWing6DOF, like `landing_gear`: each rotor's position,
-  axis, spin direction, and thrust and torque coefficients, reusing
-  Multirotor's rotor equations. Add ArduPilot's axial-inflow thrust loss
-  (`SIM_Motor.cpp`) and the rotor drag from the multirotor item below (RotorS's
-  `gazebo_motor_model.cpp`, which PX4's Gazebo motor model derives from). Use
-  the `lift_table` and `drag_table` stall. Missions without rotors stay
-  byte-identical. Fly it with ArduPlane quadplane SITL (`Q_ENABLE=1`): the
-  bridge needs the quad motor channels and Q modes; ArduPilot owns the
-  transition logic. Check it against ArduPilot's own SITL quadplane on the
-  same mission; that shows ArduPilot can fly our model, not that the physics
-  is right (ArduPilot's plane sim calls itself "not aerodynamically
-  accurate"). Accepted limitations, as in ArduPilot and PX4: no prop wash over
-  the wing, no tilting rotors or wings.
-- **Leave the next steps one change away.** Each rotor's axis is a fixed
-  vector parameter; a tilt-rotor later makes it follow a control input, with
-  the rotor equations unchanged. Slipstream lift over the wing is a named zero
-  term. The fidelity header's *To go further* records the measured-data lead:
-  NASA LA-8 (tandem tilt-wing, 8 propellers), the only open source of
-  transition-regime data found (NTRS search, September–October 2026). Its
-  mass properties, a propeller model valid from 0 to 180 degrees incidence
-  (Simmons, J. Aircraft), the control approach (Cook et al., VFS 2021), and
-  wind-tunnel plots (NASA TM-2020-5003178) are published; the whole-aircraft
-  aero-propulsive model is printed at one of eight airspeeds (q = 3.5 psf),
-  and rate damping, NASA's simulation, and flight data are not. Someone with
-  access (NASA Langley, Flight Dynamics Branch) would follow the book page
-  above.
+- **A fidelity header on every motion model**, always with the same
+  headings: *Source* (where the equations and numbers come from), *Validated
+  against* ("nothing" is fine), *Valid range*, *Not modeled*, and *To go
+  further* (what data is needed, who has it, what to change). Leads on
+  measured data go there, next to the code, not in this roadmap.
+- **Left-out effects are named zeros.** If an effect belongs in a force sum
+  (slipstream over a wing, ground effect), the code has it as an explicit zero
+  with a comment saying what it would take to model it.
+- **Geometry and coefficients are parameters.** Rotor axes are vectors,
+  aerodynamics use the table-or-linear pattern from the stall tables, so a
+  measured model shows up as data or one function.
+- **A book page, "Adding a measured-data vehicle model":** write the source's
+  equations as a new motion model, reproduce its published tables as a test,
+  warn outside its valid range, keep "matches its source" separate from
+  "matches reality", and add a suite check so the result counts as evidence.
 
 ## Multirotor fidelity
 
-`Multirotor` is the C++ port: thrust and torque proportional to rotor speed
-squared, quadratic body drag, speed limits, gyroscopic terms. It is not a
-validated flight model and nothing flies it closed-loop (C++'s
-MultirotorControllerPID only holds hover speed).
+`Multirotor` is the C++ port: thrust and torque go with rotor speed squared,
+plus quadratic body drag. It's the main vehicle for the learned policy work
+(see "Which vehicles" above), but nothing flies it closed loop yet, so this
+work comes first.
 
 - **A Rust cascaded controller** (position, velocity, attitude, rate, motor
-  mixing), so `Multirotor` flies at all, and at swarm scale. ArduCopter SITL
-  through the bridge comes later, for a few high-fidelity vehicles; the bridge
-  needs copter motor channels, modes, arming, and takeoff.
-- **Fix C++ defects first, on both sides.** Fix in Rust and on the C++
-  `benchmarking-edits` branch (precedent: substep order, AircraftPIDController,
-  RK4 loads), record in `docs/REFERENCE_NOTES.md`, and rerun the suite so the
-  `multirotor` case still compares. Each needs an in-depth review before the
-  fix:
-  - two velocity states: body velocity (starts at zero, moves the vehicle) and
-    world velocity (reported) are integrated separately and can disagree;
-  - moment arms use the full 3D rotor offset (height above the centre of
-    gravity adds leverage) and ignore the configured rotor tilt; use r x F;
-  - thrust drops to zero only when speed equals `omega_min` exactly, while
-    yaw torque stays on; make thrust continuous and torque follow thrust.
-- **Structure: ETH RotorS's motor and rotor kernel** (Apache-2.0,
-  `rotors_gazebo_plugins/src/gazebo_motor_model.cpp` and `FirstOrderFilter`),
-  as optional parameters with C++ defaults kept byte-identical: asymmetric
-  first-order motor lag, rotor drag against wind-relative motion across the
-  rotor, rolling moment, and reaction torque. These are new physics, not C++
-  defects, so the `multirotor` case stays unchanged. Rotor drag (linear in
-  speed, Martin & Salaün 2010) dominates at typical quad speeds, but RotorS
-  has no body drag, so keep C++'s quadratic body drag as a second term (it
-  matters at high speed, per NeuroBEM). RotorS's reaction torque (moment
-  constant times thrust) equals C++'s c_Q w^2; adopt its form. Not ported:
-  `rotor_velocity_slowdown_sim`, a Gazebo display workaround. Add ArduPilot's
-  thrust change with airflow along the rotor axis, which RotorS lacks. Check
-  the port sample by sample against the RotorS kernel. The same plant is
-  planned for `../UnrealVehicleDynamics` (`docs/COPTER_LANDING.md`); keep the
-  two aligned. Ground effect and downwash between vehicles are named zero
-  terms.
-- **Two parameter sets.** C++'s defaults stay, unchanged, for the C++
-  comparison. Add a Crazyflie 2.x set (27 g) as the recommended real-vehicle
-  mission, from Förster's 2015 ETH thesis ("System Identification of the
-  Crazyflie 2.0 Nano Quadrocopter", handle 20.500.11850/214143): thrust and
-  torque against rotor speed measured on a force/torque sensor with a laser
-  tachometer, inertia, and motor dynamics. Cite each value. gym-pybullet-drones'
-  `cf2x.urdf` (kf = 3.16e-10, km = 7.94e-12 per rpm squared) cites this thesis
-  but mixes in ground-effect, drag, and downwash coefficients from other
-  sources (Luis & Le Ny, arXiv 1608.05786; Landry, MIT 2015): check each one's
-  source or leave it out. Do not use RotorS's Hummingbird numbers: its mass,
-  arm, and inertia come from a paper on the real vehicle (Wang et al.), but its
-  motor, moment, time, drag, and rolling-moment constants are identical, digit
-  for digit, to its Firefly hexacopter's, with no source (checked October
-  2026; the rolling moment is a placeholder 1e-6).
-- **Extension point: validation.** The fidelity header says "validated
-  against: nothing yet" and records the path to a stated prediction error:
-  replay recorded motor commands from NanoBench (arXiv 2603.09908,
-  CC-BY-4.0, 172 Crazyflie 2.1 flights with Vicon truth, motor PWM, and
-  battery telemetry) through the model and compare the motion. A second
-  vehicle is the NeuroBEM racing quad (752 g, UZH RPG, RSS 2021: 96 flights
-  with motion capture and motor speeds, and its own blade-element model).
-
-## Surface vessels
-
-There is no boat. C++ SCRIMMAGE has none either: its only marine model is
-UUV6DOF (a REMUS underwater vehicle whose depth is clamped at `surface_height`;
-nothing floats), and C++ users fake boats with the 2D Unicycle. Neither is
-ported.
-
-- **Port Fossen's Otter** (MSS toolbox, a small catamaran), the same model
-  `../UnrealVehicleDynamics` uses (`core/src/fossen_otter.cpp`). It gives
-  calm-water manoeuvring (coupled 6-axis mass matrix with added mass, hull
-  damping, two propellers with lag, current) and floating: hydrostatic
-  stiffness from metacentric heights restores heave, roll, and pitch. Check it
-  sample by sample against the MSS reference; drive it with ArduRover through
-  the bridge later. Claim: an educational calm-water model. Its numbers are
-  estimates (checked October 2026 in MSS's `otter.py`: real dimensions and
-  masses, but added mass as a rule-of-thumb fraction of mass and 1 s sway and
-  yaw time constants); the fidelity header says so.
-- **Waves at Gazebo/VRX level.** Sea state is a world resource beside
-  terrain: elevation, slope, and water velocity are a sum of components from
-  a standard spectrum (JONSWAP or Pierson-Moskowitz) with random phases drawn
-  once from the mission seed on their own stream, so the sea is a pure
-  function of position and time: byte-identical at any worker count,
-  read-only, truth (sensors see it only through readings). Mission YAML sets
-  spectrum, significant height, peak period, and direction. Wave loads are
-  hull-point buoyancy against the wave surface (Froude-Krylov), as Gazebo's
-  Surface plugin and VRX's WAM-V do: plausible, with no added mass,
-  radiation, or diffraction, which are named zero terms. Boats do not make
-  waves that reach other boats (the usual simplification).
-- **Drawing the sea in Rerun** (output only): Rerun cannot evaluate the wave
-  function, so the sea is logged as a mesh, and its cost scales with area and
-  resolution, not fleet size (hulls are logged once, then poses). Benchmark
-  recording size and viewer frame rate against grid resolution, logging rate,
-  and covered area (one grid over the fleet or a patch per boat) before
-  deciding whether the sea is saved or live-only like trails; record the
-  result in a DEVNOTE, as `viewer/trails.rs` does, and follow the visual QA
-  chapter. Aim: a small fleet.
-- **Going further is an extension point.** The Otter's *To go further*
-  records the path: Fossen's superposition of calm-water manoeuvring and
-  wave-frequency motion from motion RAOs (MSS's WAMIT/ShipX templates), then
-  linear seakeeping (Cummins equation: force RAOs, frequency-dependent added
-  mass and damping, radiation memory as vessel state, as in WEC-Sim), with
-  hydrodynamic tables from an offline panel solver (Capytaine or NEMOH, via
-  WEC-Sim's BEMIO format), checked first on MSS's bundled S175 ShipX data.
-  These are computed, not measured; public tank data for small autonomous
-  boats has not been searched for. Related work: UVD's `docs/WATER.md`, VRX.
+  mixing) that takes the same velocity command as point agents.
+- **Fix the C++ defects first, on both sides**: in Rust and on the
+  `benchmarking-edits` branch, written up in `docs/REFERENCE_NOTES.md`, suite
+  rerun. Review each one carefully before fixing it:
+  - body and world velocity are integrated separately and can disagree;
+  - moment arms use the full 3D rotor offset and ignore rotor tilt; use r x F;
+  - thrust drops to zero only at exactly `omega_min`, but yaw torque stays.
+- **Port the RotorS motor and rotor model** (Apache-2.0,
+  `gazebo_motor_model.cpp`) as optional parameters, with C++ defaults staying
+  byte-identical: motor lag, rotor drag (small but first order; it sets the
+  velocity dynamics near hover, Martin & Salaün 2010), rolling moment,
+  reaction torque. Keep C++'s
+  quadratic body drag too, for high speed. Check sample by sample against
+  RotorS. Ground effect and downwash are named zeros.
+- **Crazyflie 2.x parameters** from Förster's 2015 ETH thesis (handle
+  20.500.11850/214143), each value cited, next to the C++ defaults that the
+  comparison uses. Don't use RotorS's Hummingbird motor constants: they're
+  copied digit for digit from its Firefly, with no source.
+- **Later: check against real flights** by replaying NanoBench's recorded
+  motor commands (arXiv 2603.09908, 172 Crazyflie flights with Vicon truth).
+  The fidelity header notes this.

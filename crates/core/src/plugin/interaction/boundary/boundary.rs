@@ -1,5 +1,5 @@
 //! Publish an axis-aligned mission boundary; autonomies decide how to respond.
-//! C++ counterpart: interaction/Boundary. Publishes once in the interaction phase.
+//! Derived from SCRIMMAGE: interaction/Boundary. Publishes once in the interaction phase.
 //! Geometry is ordinary Rust data, independent of rendering and physical collision.
 
 use anyhow::{Result, ensure};
@@ -17,7 +17,7 @@ pub struct BoundaryRegion {
 }
 
 impl BoundaryRegion {
-    /// Faces are outside, matching the C++ cuboid's strict comparisons.
+    /// Faces are outside (strict comparisons).
     pub fn contains(&self, position_world_m: Vec3) -> bool {
         let offset_m = position_world_m - self.center_world_m;
         for axis in 0..3 {
@@ -102,8 +102,8 @@ impl Plugin for Boundary {
 
 impl Interaction for Boundary {
     fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
-        // Matches C++ for now, though we don't consider it ideal: publishing once means
-        // entities spawned after the first tick never receive the boundary.
+        // Published once: entities spawned after the first tick never receive the
+        // boundary. Only matters if a mission spawns late.
         if !self.published {
             context
                 .messages

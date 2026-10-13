@@ -1,4 +1,4 @@
-//! Pass ENU velocity commands to SingleIntegrator, matching the C++ controller.
+//! Pass ENU velocity commands to SingleIntegrator.
 //! Controller phase; inputs and outputs are separate even though their names match.
 
 use anyhow::Result;

@@ -9,9 +9,9 @@ evidence document.
   approach, learned or classical, wins on standard multi-agent tasks? Three
   tasks (cooperative navigation, circle-crossing collision avoidance, flocking)
   are run up a fidelity ladder in **Ripple**, whose integrations each have an
-  external baseline. The [roadmap](../docs/TODO.md) drives the work. The
-  appendices hold the agreement with C++ SCRIMMAGE, determinism, the scaling
-  work, and the checks.
+  external baseline. The [roadmap](../docs/TODO.md) drives the work. One
+  table summarizes what each component is checked against; the appendix
+  covers determinism, cost, and the command that reruns every check.
 
 It uses the IEEE conference layout. Venue and titles are provisional. Results
 marked **[Provisional]** do not yet come from a release run of the suite.
@@ -26,9 +26,10 @@ it does not automatically support the other two. An external autopilot is a
 control-stack choice, not proof of greater physical accuracy.
 
 A changed ranking is not a gate on integration work: unchanged outcomes,
-useful operating limits, and the cost of extra fidelity also matter. Preserve
-SCRIMMAGE attribution and the C++ agreement appendix in each relevant
-account.
+useful operating limits, and the cost of extra fidelity also matter. Credit
+SCRIMMAGE as the origin of Ripple; the detail of the agreement with it lives
+in [reference/README.md](../reference/README.md) and
+[REFERENCE_NOTES.md](../docs/REFERENCE_NOTES.md), not the paper.
 
 ## Supporting material
 

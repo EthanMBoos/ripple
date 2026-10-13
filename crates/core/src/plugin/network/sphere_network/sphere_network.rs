@@ -1,8 +1,8 @@
 //! Distance-limited communication with independent loss per reachable delivery.
 //!
-//! C++ counterpart: src/plugins/network/SphereNetwork/SphereNetwork.cpp (LGPL-3.0-or-later).
+//! Derived from SCRIMMAGE: src/plugins/network/SphereNetwork/SphereNetwork.cpp (LGPL-3.0-or-later).
 //! Network phase: use current post-motion truth, then apply the optional altitude plane and loss.
-//! Loss draws come from this network's mission-seeded stream, not C++'s shared generator.
+//! Loss draws come from this network's own mission-seeded random stream.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;
@@ -90,7 +90,7 @@ impl Plugin for SphereNetwork {
 impl Network for SphereNetwork {
     fn step(&mut self, context: &mut NetworkContext<'_, '_>) -> Result<Update> {
         context.route(|link, random| {
-            // Like C++, draw only for reachable links, one draw per publisher/subscriber pair.
+            // Draw only for reachable links, one draw per publisher/subscriber pair.
             if self.reachable(link) && random.uniform() <= self.probability_transmit {
                 Ok(Delivery::After { delay_s: 0.0 })
             } else {
@@ -126,17 +126,11 @@ impl SphereNetwork {
         let (Some(sender), Some(receiver)) = (sender, receiver) else {
             return false;
         };
-        // C++ differs slightly here, and we don't copy it: it builds its RTree when
-        // entities are generated (before motion), then queries it with the publisher's
-        // post-motion position, and caches the answer for both directions of the pair.
-        // So C++ compares a new position with an old one, and whichever endpoint
-        // publishes first decides the pair. Rust uses post-motion positions for both
-        // endpoints and decides each link independently. Results differ only for
-        // moving vehicles near the range edge; exact parity would need C++'s
-        // publisher iteration order.
+        // Both endpoints use post-motion positions, and each link is decided on its
+        // own.
         let sender_position_m = sender.truth.position_world_m;
         let receiver_position_m = receiver.truth.position_world_m;
-        // C++ RTree::neighbors_in_range uses a strict distance bound.
+        // Strict distance bound.
         if (sender_position_m - receiver_position_m).norm() >= self.range_m {
             return false;
         }

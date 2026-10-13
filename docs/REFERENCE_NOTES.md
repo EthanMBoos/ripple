@@ -139,7 +139,12 @@ Rust lifecycle and delivery rules are in the
 - **Stochastic sensors/communication:** Rust uses per-plugin, mission-seeded
   streams rather than C++'s shared generator. Measured contacts use sorted typed
   vectors. SphereNetwork queries current post-motion positions rather than the
-  earlier C++ R-tree. AuctionAssign has configurable network/deadline and an
+  earlier C++ R-tree: C++ builds the tree when entities are generated
+  (before motion), queries it with the publisher's post-motion position, and
+  caches the answer for both directions of the pair, so whichever endpoint
+  publishes first decides the link. Results differ only for moving vehicles
+  near the range edge; exact parity would need C++'s publisher order.
+  AuctionAssign has configurable network/deadline and an
   optional winner instead of a negative sentinel. These are not
   sample-for-sample C++ RNG ports.
 
@@ -150,6 +155,39 @@ altitude-plane bounds, and same-parent geometry bypass that still draws for
 loss. AuctionAssign includes self-bidding, keeps the first maximum on ties, and
 closes strictly after its deadline. See [plugin
 behavior](../book/src/reference/plugin-api.md#noisycontacts).
+
+## Behavior kept from SCRIMMAGE
+
+Ripple's code comments explain each behavior on its own terms. This is the
+list of what is there because SCRIMMAGE does it. While the comparison is a
+check, a correctness fix to ported code is made on `benchmarking-edits` too,
+so the two still agree; record each fix and its evidence here.
+
+Simplifications that can stay:
+
+| Behavior | Where | Why |
+| --- | --- | --- |
+| NoisyContacts measures every entity, at any range | `noisy_contacts.rs` | An ideal sensor; range and field of view are a modeling choice |
+| SingleIntegrator draws positive pitch nose-down; yaw snaps to east at zero velocity | `single_integrator.rs` | Drawing only; the motion doesn't depend on attitude |
+| Boundary publishes once | `boundary.rs` | Matters only if a mission spawns late |
+| AuctionAssign runs only on entity 1 | `auction_assign.rs` | A demo plugin |
+| Degrees to radians as `deg * PI / 180` (`Angles::deg2rad`) | `math.rs` | As correct as `to_radians`; keeps outputs bit-identical |
+
+Defects, each fixed in milestone A of the [roadmap](TODO.md) unless noted:
+
+| Defect | Where | Matters when |
+| --- | --- | --- |
+| NoisyState reports zero angular velocity | `noisy_state.rs` | A controller, filter, or policy reads rates (MultirotorVelocity does) |
+| NoisyState's first reading is the exact truth | `noisy_state.rs` | Always: the first decision is noise-free |
+| SimpleAircraft reports +sin(pitch) climb while integrating -sin(pitch) | `simple_aircraft.rs` | Anything reads its vertical velocity |
+| SimpleAircraft reports zero turn rates | `simple_aircraft.rs` | Anything reads its angular velocity |
+| SimpleAircraft integrates a private state, losing interactions' changes to truth | `simple_aircraft.rs` | An interaction pushes it, or wind acts on it |
+| FixedWing6DOF adds wind to velocity | `fixed_wing_6dof.rs`, `sitl_state.rs` | Any mission sets wind; it must pass the negated wind |
+| A rate-limited plugin receives the phase dt, not the time since it last ran | `entity/plugin_stack.rs` | A plugin with `loop_rate` uses dt (WaypointFollower does) |
+| Each sampled spawn heading becomes the next spawn's mean; spawn values are rounded to 6 decimals (`std::to_string`) | `simcontrol/generation.rs` | A mission has heading variance; rounding moves starts by up to a micrometre |
+| Time accumulates by `+= dt` and is wound back one step at the end | `simcontrol.rs` | Analysis needs exact or unique timestamps |
+| Placeholder covariance: identity (NoisyState), 5I (NoisyContacts) | sensors | A filter reads it (milestone B, the Kalman filter) |
+| NoisyState and NoisyContacts publish a duplicate LocalNetwork message; Straight subscribes and discards both | sensors, `straight.rs` | Never for behavior; only the comparison trace reads them (cleanup) |
 
 ## Findings from the comparison trace
 

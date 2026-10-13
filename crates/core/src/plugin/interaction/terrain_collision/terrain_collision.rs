@@ -1,6 +1,5 @@
 //! Remove live entities that reach the mission's terrain and publish GroundCollision.
-//! Needs a mission `terrain:`; see `common/terrain.rs`. No C++ counterpart: C++
-//! terrain was display-only (see docs/REFERENCE_NOTES.md, "Terrain").
+//! Needs a mission `terrain:`; see `common/terrain.rs`.
 //!
 //! Each step checks the straight line from where an entity was at the end of
 //! the last step to where it is now, exactly against the interpolated ground.

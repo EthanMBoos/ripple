@@ -110,7 +110,7 @@ fn facing(
         visual_model: "sphere".into(),
         position_m,
         heading_deg,
-        // SCRIMMAGE's pitch is positive nose-down.
+        // Mission pitch is positive nose-down.
         pitch_deg: -nose_up_deg,
         velocity_mps,
         controller: vec![PluginConfig::new("FixedInputs")],

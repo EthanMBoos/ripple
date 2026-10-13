@@ -229,7 +229,7 @@ impl Simulation {
         let mut entities: Vec<_> = self.entities.iter().map(Entity::snapshot).collect();
         entities.sort_by_key(|entity| entity.id);
         SimulationFrame {
-            // SCRIMMAGE labels pre-step state with the following step's timestamp.
+            // A frame holds the state before a step, labeled with the time after it.
             time_s: self.time_s + self.config.run.dt_s,
             entities,
         }
@@ -337,8 +337,8 @@ impl Simulation {
             return Err(error);
         }
         self.step_count += 1;
-        // Matches C++ for now, though we'd prefer start + step_count * dt: repeated
-        // addition accumulates floating-point drift (e.g. 29.900000000000155).
+        // Known defect: repeated addition drifts in the last digits (e.g.
+        // 29.900000000000155); time should be the step count times dt (docs/TODO.md, milestone A).
         self.time_s += dt_s;
         self.termination = self.reached_end_condition();
         Ok(Some(frame))
@@ -370,9 +370,8 @@ impl Simulation {
 
     fn finish(&mut self) -> Result<SimulationFrame> {
         self.finished = true;
-        // Matches C++ for now, though we'd prefer a monotonic clock: rewinding repeats the
-        // final timestamp in legacy logs, but terminal events, plugin close, and the
-        // metrics report also see this rewound time, not only the frame writer.
+        // Known defect: time is wound back one step, so the final timestamp repeats
+        // in logs, events, plugin close, and the metrics report (docs/TODO.md, milestone A).
         self.time_s -= self.config.run.dt_s;
         for entity in &self.entities {
             self.events.push(Event {
@@ -381,7 +380,7 @@ impl Simulation {
                 entity_ids: vec![entity.id],
             });
         }
-        // C++ logs the terminal frame here too, at the rewound time.
+        // The terminal frame is logged here too, at the rewound time.
         if let Some(trace) = &mut self.trace {
             trace.beliefs(self.time_s, &self.entities)?;
         }

@@ -1,5 +1,5 @@
 //! Remove live entities at or below a flat ground height and publish GroundCollision.
-//! C++ counterpart: interaction/GroundCollision; startup check and interaction phase.
+//! Derived from SCRIMMAGE: interaction/GroundCollision; startup check and interaction phase.
 //! No terrain lookup, geodetic conversion, or external-force response in this version.
 
 use anyhow::{Context, Result, ensure};
@@ -79,7 +79,7 @@ impl Plugin for GroundCollision {
 
 impl Interaction for GroundCollision {
     fn collision_exists(&self, _entities: &[Entity], position_world_m: Vec3) -> bool {
-        // Like C++, startup candidates have no team filter here.
+        // Startup candidates have no team filter here.
         self.config.startup_collisions && position_world_m.z <= self.config.height_world_m
     }
 

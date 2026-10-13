@@ -1,9 +1,9 @@
-//! Position integrates commanded ENU velocity. C++ counterpart: motion/SingleIntegrator.
+//! Position integrates commanded ENU velocity. Derived from SCRIMMAGE: motion/SingleIntegrator.
 //! Motion phase. Legacy max_speed >= 0 sets speed magnitude; it is not a speed cap.
 //!
 //! Fidelity
 //! - Source: a kinematic point: velocity is whatever was commanded, at once.
-//! - Validated against: C++ SingleIntegrator (`verification/single-integrator.xml`).
+//! - Validated against: SCRIMMAGE's SingleIntegrator (`verification/single-integrator.xml`).
 //! - Valid range: any speed; it is an idealization, not a vehicle.
 //! - Not modeled: mass, forces, acceleration limits, and any lag between
 //!   command and motion. The attitude only follows the velocity's direction.
@@ -98,9 +98,9 @@ impl MotionModel for SingleIntegrator {
         let state = &mut context.truth;
         state.velocity_world_mps = velocity_mps;
         state.position_world_m += velocity_mps * context.time.dt_s;
-        // Matches C++ for now, though we don't consider it correct: positive pitch points the
-        // nose down in this frame, so a climbing agent is drawn nose-down, and yaw snaps
-        // to 0 (east) whenever the velocity is zero.
+        // Attitude is for drawing only; the motion doesn't depend on it. Positive
+        // pitch points the nose down in this frame, so a climbing agent is drawn
+        // nose-down, and yaw snaps to 0 (east) whenever the velocity is zero.
         state.orientation_world_from_body = Quaternion::from_euler(EulerAngles {
             roll_world_from_body_rad: 0.0,
             pitch_world_from_body_rad: velocity_mps.z.atan2(velocity_mps.xy().norm()),

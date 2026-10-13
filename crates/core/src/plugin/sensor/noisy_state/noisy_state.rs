@@ -1,9 +1,9 @@
 //! Noisy own-state measurements, as a reading and a typed LocalNetwork message.
 //!
-//! C++ counterpart: src/plugins/sensor/NoisyState/NoisyState.cpp (LGPL-3.0-or-later).
+//! Derived from SCRIMMAGE: src/plugins/sensor/NoisyState/NoisyState.cpp (LGPL-3.0-or-later).
 //! Sensor phase: sample truth, perturb position/velocity/attitude, publish the reading.
 //! Localization (by default PassThrough) turns the reading into belief.
-//! Uses Rust's per-instance RNG, not C++'s shared random sequence.
+//! Draws from this plugin's own mission-seeded random stream.
 
 use anyhow::{Result, ensure};
 use nalgebra::{Matrix3, UnitQuaternion};
@@ -24,7 +24,7 @@ pub(super) struct AxisNoise {
     pub(super) stddev: f64,
 }
 
-/// The C++ state-noise equations, shared by NoisyState and NoisyContacts so both
+/// The state-noise equations, shared by NoisyState and NoisyContacts so both
 /// keep identical parameters, draw order, and attitude perturbation.
 #[derive(Clone, Copy)]
 pub(super) struct StateNoise {
@@ -70,9 +70,9 @@ pub struct NoisyStateConfig {
     noise: StateNoise,
 }
 
-/// Legacy state payload; covariance is a placeholder, NOT configured noise variance.
+/// State payload; covariance is a placeholder, NOT configured noise variance.
 /// NoisyState uses identity and zero angular velocity; NoisyContacts uses 5I
-/// and preserves the target's angular velocity, matching their C++ constructors.
+/// and preserves the target's angular velocity.
 #[derive(Clone, Debug)]
 pub struct StateWithCovariance {
     pub state: KinematicState,
@@ -114,28 +114,17 @@ impl Sensor for NoisyState {
     }
 
     fn initialize(&mut self, context: &mut SensorContext<'_>) -> Result<()> {
-        // The C++ sensor starts its estimate from the initial truth, before the
-        // first motion update and without noise.
-        // TODO(estimation): make this a normal noisy measurement (`self.measure`)
-        // and declare the difference in REFERENCE_NOTES.md. Kept only for C++
-        // parity; with it, every noisy mission starts with perfect belief. Do it
-        // in one "NoisyState measures honestly" commit with the angular velocity
-        // and covariance TODOs in `measure`, then update noisy-state-bias.xml's
-        // C++ comparison (its first belief records change).
+        // Known defect: the first reading is the exact truth, so the first decision
+        // is noise-free (docs/TODO.md, milestone A).
         context.publish_reading(context.truth.clone())
     }
 
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
         let observation = self.measure(context.truth, context.random)?;
         context.publish_reading(observation.state.clone())?;
-        // Duplicate on purpose: belief comes from the reading above, and nothing
-        // uses this message (Straight subscribes and discards it). C++ sends only
-        // this message, and the C++ comparison requires delivered messages to
-        // match, so keeping it keeps that check strict while the port is still
-        // being trusted. TODO(estimation): once it is, delete this publish (and
-        // Straight's subscription), make the trace record the reading instead
-        // (see trace.rs), and note the message-count difference in
-        // REFERENCE_NOTES.md.
+        // Duplicate: belief comes from the reading above, and nothing uses this
+        // message (Straight subscribes and discards it); only the comparison trace
+        // reads it. To remove (docs/TODO.md, milestone A).
         context
             .messages
             .publish("LocalNetwork", STATE_TOPIC, observation)?;
@@ -150,19 +139,13 @@ impl NoisyState {
         random: &mut PluginRandom,
     ) -> Result<StateWithCovariance> {
         let mut measured = self.noise.apply(truth, random)?;
-        // Matches C++ for now, though we don't consider it correct: the C++ message
-        // starts from a default state, so a rotating vehicle reports zero angular velocity.
-        // TODO(estimation): keep the true angular velocity (NoisyState has no
-        // angular velocity noise setting). This state is localization's input,
-        // so a filter reading it would believe the vehicle never rotates. Same
-        // "NoisyState measures honestly" commit as the startup reading in
-        // `initialize`.
+        // Known defect: a rotating vehicle reports zero angular velocity. This state
+        // is localization's input, so belief says the vehicle never rotates, and the
+        // multirotor velocity controller damps attitude with it. To fix: keep the
+        // true angular velocity (docs/TODO.md, milestone A).
         measured.angular_velocity_world_radps = Vec3::zeros();
-        // Matches C++ for now: identity is a placeholder, not the configured noise variance.
-        // TODO(estimation): only the LocalNetwork message carries this, and that
-        // message is being removed (see `step`); the reading has no covariance.
-        // If estimators need the declared uncertainty, add it to the reading then,
-        // computed from the configured standard deviations, not a placeholder.
+        // Known defect: identity is a placeholder, not the configured noise
+        // variance; a filter needs the real one (docs/TODO.md, milestone B).
         Ok(StateWithCovariance {
             state: measured,
             covariance: Matrix3::identity(),
@@ -177,7 +160,7 @@ impl From<[f64; 2]> for AxisNoise {
 }
 
 impl Default for StateNoise {
-    /// The bundled C++ defaults: 5 m horizontal and 1 m vertical position noise,
+    /// The defaults: 5 m horizontal and 1 m vertical position noise,
     /// the same in m/s for velocity, and no attitude noise.
     fn default() -> Self {
         let horizontal = AxisNoise {
@@ -219,14 +202,14 @@ impl StateNoise {
     }
 
     /// Returns truth with noisy position, velocity, and attitude.
-    /// Angular velocity is copied unchanged; callers apply their C++ constructor's rule.
+    /// Angular velocity is copied unchanged; each sensor sets its own.
     pub(super) fn apply(
         &self,
         truth: &KinematicState,
         random: &mut PluginRandom,
     ) -> Result<KinematicState> {
         let mut measured = truth.clone();
-        // C++ interleaves position and velocity samples per axis, including zero noise.
+        // Position and velocity samples interleave per axis, drawn even at zero noise.
         for axis in 0..3 {
             let position_noise = self.position_m[axis];
             let velocity_noise = self.velocity_mps[axis];

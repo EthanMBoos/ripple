@@ -69,8 +69,8 @@ stages the new evidence, swaps it in for the checks that ran, updates
 `release.json`, and regenerates the manuscript tables
 (`paper/data/make_tables.py`). Review the diff and the paper's prose before
 committing. Failures are never retained: fix the cause, or record a known gap
-in the paper and `docs/REFERENCE_NOTES.md`; do not change seeds, tolerances,
-or the reference branches to pass.
+in `docs/REFERENCE_NOTES.md`; do not change seeds, tolerances, or the
+reference branches to pass.
 
 ## Performance baseline
 

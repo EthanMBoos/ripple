@@ -1,6 +1,6 @@
 //! Aerodynamic fixed-wing six-degree-of-freedom motion, with RK4 propagation.
 //!
-//! C++ counterpart: motion/FixedWing6DOF (GTRI, LGPL-3.0-or-later).
+//! Derived from SCRIMMAGE: motion/FixedWing6DOF (GTRI, LGPL-3.0-or-later).
 //! Motion phase: read throttle and surface angles, update entity truth.
 //! Private body axes are forward/right/down; public truth remains ENU world.
 //! The two-aircraft mission checks the port, not trimmed flight or ArduPilot readiness.
@@ -14,7 +14,7 @@
 //!   landing gear follows JSBSim's FGLGear (`landing_gear.rs`). Aircraft
 //!   numbers come from `airframe.rs`: the A-4D (Nelson) or the Rascal
 //!   (ArduPilot's JSBSim Rascal), or a mission gives them in full.
-//! - Validated against: C++ FixedWing6DOF on both aircraft
+//! - Validated against: SCRIMMAGE's FixedWing6DOF on both aircraft
 //!   (`fixed-wing-6dof.xml`, `fixed-wing-6dof-rascal.xml`); step-size
 //!   convergence (`reference/rk4_loads.py`); the landing gear's resting
 //!   height, drops, slopes, friction stops, and convergence
@@ -121,7 +121,7 @@ struct FixedWingParams {
     c_d0: Option<f64>,
     #[serde(rename = "C_D_alpha")]
     c_d_alpha: Option<f64>,
-    /// C++ reads the key WITH the trailing underscore.
+    /// The key has a trailing underscore.
     #[serde(rename = "C_D_delta_elevator_")]
     c_d_elevator: Option<f64>,
     #[serde(rename = "C_L0")]
@@ -170,20 +170,20 @@ struct FixedWingParams {
     c_n_aileron: Option<f64>,
     #[serde(rename = "C_N_delta_rudder")]
     c_n_rudder: Option<f64>,
-    /// The key C++ does NOT read (no trailing underscore); rejected so a tuning
-    /// value is not silently ignored.
+    /// The same name without the underscore, which parameter files often write;
+    /// rejected so a tuning value is not silently ignored.
     #[serde(rename = "C_D_delta_elevator")]
-    c_d_elevator_ignored_by_cpp: Option<f64>,
+    c_d_elevator_without_underscore: Option<f64>,
     /// Lift coefficient against angle of attack, as `[alpha_rad, C_L]` rows
     /// sorted by angle (YAML only). Replaces `C_L0 + C_L_alpha * alpha`, so a
     /// lift that peaks and falls past the critical angle models a stall;
     /// interpolated linearly and held at the end values, like a JSBSim table.
-    /// Rust-only: C++ has linear lift, which empty (the default) keeps.
+    /// Empty (the default) keeps linear lift.
     lift_table: Vec<[f64; 2]>,
     /// Drag coefficient against angle of attack, as `[alpha_rad, C_D]` rows
     /// sorted by angle (YAML only), read like `lift_table`. Replaces
     /// `C_D0 + C_D_alpha * |alpha|`, so drag can rise steeply past the stall;
-    /// induced and elevator drag are still added. Rust-only; empty keeps C++.
+    /// induced and elevator drag are still added. Empty keeps the linear drag.
     drag_table: Vec<[f64; 2]>,
     use_ground_model: bool,
     /// Wheels that roll on the ground (YAML only; see `landing_gear.rs`).
@@ -253,7 +253,7 @@ impl Default for FixedWingParams {
             c_nr: None,
             c_n_aileron: None,
             c_n_rudder: None,
-            c_d_elevator_ignored_by_cpp: None,
+            c_d_elevator_without_underscore: None,
             lift_table: Vec::new(),
             drag_table: Vec::new(),
             use_ground_model: true,
@@ -332,8 +332,8 @@ impl Plugin for FixedWing6Dof {
             );
         }
         ensure!(
-            params.c_d_elevator_ignored_by_cpp.is_none(),
-            "use C_D_delta_elevator_ (trailing underscore), the key read by C++ FixedWing6DOF"
+            params.c_d_elevator_without_underscore.is_none(),
+            "use C_D_delta_elevator_ (with the trailing underscore)"
         );
         let vehicle = vehicle(&params)?;
         ensure!(
@@ -494,9 +494,8 @@ impl FixedWing6Dof {
                 .rudder_rad
                 .clamp(config.rudder_limits_rad[0], config.rudder_limits_rad[1]),
         };
-        // Forces and moments are recomputed from each RK4 stage's state. C++
-        // holds them at the start-of-step state, which makes the step first
-        // order; the comparison branch fixes that (docs/REFERENCE_NOTES.md).
+        // Forces and moments are recomputed from each RK4 stage's state; holding
+        // them at the start-of-step state would make the step first order.
         let mut coordinates = AircraftState::from_truth(truth).coordinates();
         math::rk4(&mut coordinates, dt_s, |coordinates| {
             let stage = AircraftState::from_coordinates(*coordinates);
@@ -554,7 +553,8 @@ impl FixedWingConfig {
     ) -> (Vec3, Vec3) {
         let rotation = UnitQuaternion::new_normalize(state.attitude_model);
         let wind_model_mps = rotation.inverse_transform_vector(&flip_yz(self.wind_world_mps));
-        // Deliberate reference quirk: wind is ADDED to velocity, not subtracted.
+        // Known defect: wind is ADDED to velocity, not subtracted, so a mission must
+        // pass the negated wind to get the physical one (docs/TODO.md, milestone A).
         let air_velocity_model_mps = state.velocity_model_mps + wind_model_mps;
         let airframe = Airframe {
             density_kgpm3: self.density_kgpm3,
@@ -629,7 +629,7 @@ impl FixedWingConfig {
     }
 
     fn thrust_n(&self, throttle: f64) -> f64 {
-        // C++ Utilities::scale clamps again to the configured input range.
+        // Scaling clamps again to the configured input range.
         // Defaults map zero throttle to -36,000 N (reverse thrust), not idle.
         // A non-reversing engine needs different limits; don't compensate in the PID.
         let throttle = throttle

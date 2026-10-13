@@ -1,9 +1,9 @@
 //! Noisy measurements of every other contact, as a reading and on LocalNetwork.
 //!
-//! C++ counterpart: src/plugins/sensor/NoisyContacts/NoisyContacts.cpp (LGPL-3.0-or-later).
+//! Derived from SCRIMMAGE: src/plugins/sensor/NoisyContacts/NoisyContacts.cpp (LGPL-3.0-or-later).
 //! Sensor phase: sample contact truth and publish one complete measured snapshot.
 //! Tracking (by default PassThrough) turns the reading into known contacts.
-//! Uses Rust's per-instance RNG, not C++'s shared random sequence.
+//! Draws from this plugin's own mission-seeded random stream.
 
 use anyhow::{Result, ensure};
 use nalgebra::Matrix3;
@@ -118,8 +118,8 @@ impl Sensor for NoisyContacts {
     }
 
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
-        // Matches C++ for now, though a real sensor would have limited range and
-        // field of view: every other live entity is measured, however far away.
+        // Every other live entity is measured, however far away: an ideal sensor.
+        // A real one would have range and field of view.
         // A range-limited sensor should ask `context.contacts_truth.within(position,
         // range)` instead of filtering this list, so a mission's `spatial_lookup`
         // grid speeds it up. This plugin gains nothing from that: profiling the
@@ -149,14 +149,9 @@ impl Sensor for NoisyContacts {
             });
         }
         context.publish_reading(ContactList::from(reading))?;
-        // Duplicate on purpose: tracking gets the reading above, and nothing uses
-        // this message (Straight subscribes and discards it). C++ sends only this
-        // message, and it is the only thing comparing NoisyContacts' measured
-        // values with C++ (noisy-contacts-bias.xml), so keep it while the port is
-        // still being trusted. TODO(estimation): once it is, make the trace record
-        // the reading instead (see trace.rs), then delete this publish,
-        // `topic_name`, CONTACTS_TOPIC, and Straight's subscription, and note the
-        // difference in REFERENCE_NOTES.md.
+        // Duplicate: tracking gets the reading above, and nothing uses this message
+        // (Straight subscribes and discards it); only the comparison trace reads it.
+        // To remove (docs/TODO.md, milestone A).
         context.messages.publish(
             "LocalNetwork",
             &self.topic,
@@ -172,8 +167,9 @@ impl NoisyContacts {
         truth: &KinematicState,
         random: &mut PluginRandom,
     ) -> Result<StateWithCovariance> {
-        // C++ copies the contact's state, so angular velocity passes through unchanged.
-        // Matches C++ for now: 5I is a placeholder, not the configured noise variance.
+        // Angular velocity passes through unchanged. Known defect: 5I is a
+        // placeholder, not the configured noise variance; a filter needs the real
+        // one (docs/TODO.md, milestone B).
         Ok(StateWithCovariance {
             state: self.noise.apply(truth, random)?,
             covariance: Matrix3::identity() * 5.0,

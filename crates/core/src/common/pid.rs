@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::math::angle_pi;
 
-/// Gains parsed from the C++ controller's [P, I, D, integral band] XML values.
+/// Gains parsed from [P, I, D, integral band] values.
 #[derive(Clone, Copy, Debug, Deserialize)]
 #[serde(from = "[f64; 4]")]
 pub struct PidGains {

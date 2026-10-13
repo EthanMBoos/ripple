@@ -468,7 +468,7 @@ fn a_named_input_selects_its_sensor_and_ambiguity_is_an_error() -> Result<()> {
                 end_s: 0.5,
                 ..RunConfig::default()
             },
-            // NoisyState also publishes on LocalNetwork, as in C++.
+            // NoisyState also publishes on LocalNetwork.
             networks: vec![PluginConfig::new("LocalNetwork")],
             entities: vec![entity],
             ..ScenarioConfig::default()

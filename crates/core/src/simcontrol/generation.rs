@@ -65,16 +65,13 @@ impl Simulation {
         Ok(())
     }
 
-    /// Chooses a scheduled start using the existing C++ behavior.
-    /// TODO: sample headings around the configured mean and remove decimal rounding.
-    /// Keep collision-aware placement and coordinator-owned RNG. These deliberate
-    /// behavior changes need updated tests and compatibility notes.
+    /// Chooses a scheduled start: position and heading sampled around the spawn's.
     fn sample_spawn_start(&mut self, definition_index: usize) -> Result<(Vec3, f64)> {
         let spawn = &self.definitions[definition_index].spawn;
         let origin_world_m = spawn.position_world_m;
-        // Matches C++ for now, though we don't consider it correct: each sampled heading
-        // becomes the mean for the next spawn (a random walk, not independent samples).
-        // Keep that legacy evolution in generator state, not validated configuration.
+        // Known defect: each sampled heading becomes the mean for the next spawn
+        // (a random walk) when the mission has heading variance (docs/TODO.md, milestone A). The walk
+        // lives in generator state, not in the validated configuration.
         let heading_world_deg = legacy_decimal_roundtrip(self.rng.normal(
             self.generators[definition_index].heading_world_deg,
             spawn.heading_variance_deg2.sqrt(),
@@ -153,8 +150,8 @@ impl Simulation {
 }
 
 fn legacy_decimal_roundtrip(value: f64) -> f64 {
-    // Matches C++ for now, though it exists only for parity: C++ sends spawn
-    // coordinates through std::to_string before parsing them again.
+    // Known defect: spawn values are rounded to 6 decimals, moving them by up to
+    // a micrometre (docs/TODO.md, milestone A).
     format!("{value:.6}")
         .parse()
         .expect("formatted finite number must parse")

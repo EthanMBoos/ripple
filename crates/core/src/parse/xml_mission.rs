@@ -67,7 +67,7 @@ pub(super) fn load(
         } else {
             Params::new()
         };
-        // C++ overlay files name their shared library; Rust plugins are compiled in.
+        // Overlay files name a shared library; plugins here are compiled in.
         params.remove("library");
 
         if let Some(group_name) = node.attrs.get("param_common") {
@@ -157,7 +157,7 @@ pub(super) fn load(
             "entity_interaction" => interactions.push(parse_plugin(node)?),
             "network" => {
                 let mut network = parse_plugin(node)?;
-                // C++ names a network instance with `name`; the default is the plugin name.
+                // `name` names a network instance; the default is the plugin name.
                 if let PluginValues::Text(params) = &mut network.params
                     && let Some(name) = params.remove("name")
                 {
@@ -219,7 +219,7 @@ pub(super) fn load(
             end_conditions,
             // XML is frozen: its missions always scan.
             spatial_lookup: SpatialLookup::Scan,
-            // Only YAML missions name terrain; C++'s `<terrain>` was display-only.
+            // Only YAML missions name terrain; XML `<terrain>` is display-only.
             terrain: None,
             entities,
             interactions,
@@ -246,7 +246,7 @@ fn entity(
     }
     let count = integer(params, "count", 1)?;
     // A schedule needs both tags and a positive rate and count; otherwise every
-    // entity spawns at the start, as in C++.
+    // entity spawns at the start.
     let mut spawn = None;
     if let (Some(rate_text), Some(_)) = (params.get("generate_rate"), params.get("generate_count"))
     {
@@ -265,7 +265,7 @@ fn entity(
                 rate_hz,
                 batch_size: batch_count,
                 start_s: number(params, "generate_start_time", 0.0)?,
-                // C++ calls this variance but uses it as a standard deviation.
+                // Called a variance, but it is a standard deviation.
                 time_stddev_s: number(params, "generate_time_variance", 0.0)?,
             });
         }
@@ -276,7 +276,7 @@ fn entity(
         number(params, "vz", 0.0)?,
     );
     let speed_mps = number(params, "speed", 0.0)?;
-    // C++ applies scalar speed along world X only when velocity is zero.
+    // Scalar speed applies along world X only when velocity is zero.
     if speed_mps > 0.0 && velocity_mps == Vec3::zeros() {
         velocity_mps = Vec3::new(speed_mps, 0.0, 0.0);
     }

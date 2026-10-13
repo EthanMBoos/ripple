@@ -95,7 +95,7 @@ impl CompiledWorld {
     pub fn compile(config: &ScenarioConfig, registry: &PluginRegistry) -> Result<Self> {
         let interactions = compile_world_plugins(&registry.interactions, &config.interactions)?;
         let mut networks = compile_world_plugins(&registry.networks, &config.networks)?;
-        // A network's name is its instance name when given (C++ `name`), else its plugin.
+        // A network's name is its instance name when given (`name`), else its plugin.
         for (network, source) in networks.iter_mut().zip(&config.networks) {
             if let Some(instance) = &source.instance {
                 network.name = instance.clone();

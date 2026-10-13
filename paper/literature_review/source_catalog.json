@@ -46,5 +46,10 @@
  {"key": "vasarhelyi2018optimized", "pdf_url": "https://hal.elte.hu/~vasarhelyi/doc/vasarhelyi2018optimized.pdf", "repositories": ["https://github.com/csviragh/robotsim.git"]},
  {"key": "batra2021quadswarm", "pdf_url": "https://arxiv.org/pdf/2109.07735", "repositories": ["https://github.com/Zhehui-Huang/quad-swarm-rl.git"]},
  {"key": "chen2025open", "pdf_url": "https://arxiv.org/pdf/2409.15866", "repositories": [], "note": "No code repository found; project page https://sites.google.com/view/pursuit-evasion-rl."},
- {"key": "chen2023stgnn", "pdf_url": "https://arxiv.org/pdf/2309.17437", "repositories": [], "note": "The authors' site lists it as ICRA 2024; not confirmed, so cited as arXiv."}
+ {"key": "chen2023stgnn", "pdf_url": "https://arxiv.org/pdf/2309.17437", "repositories": [], "note": "The authors' site lists it as ICRA 2024; not confirmed, so cited as arXiv."},
+ {"key": "truong2022rethinking", "pdf_url": "https://arxiv.org/pdf/2207.10821", "repositories": []},
+ {"key": "ourari2022nearest", "pdf_url": "https://arxiv.org/pdf/2104.14912", "repositories": []},
+ {"key": "gao2025airgnn", "pdf_url": "https://arxiv.org/pdf/2302.08447", "repositories": []},
+ {"key": "marino2024gated", "pdf_url": "https://arxiv.org/pdf/2305.19235", "repositories": []},
+ {"key": "yang2025masp", "pdf_url": "https://arxiv.org/pdf/2312.02522", "repositories": [], "note": "Published in Drones 9(7):463 (2025); the PDF is the arXiv version."}
 ]

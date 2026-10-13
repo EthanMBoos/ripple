@@ -1,6 +1,5 @@
 //! The state ArduPilot SITL needs, sampled from truth after motion.
 //!
-//! Rust-only; C++ SCRIMMAGE used RigidBody6DOFStateSensor for the same purpose.
 //! Sensor phase: read truth, convert to ArduPilot's frames, publish a
 //! `SitlSample` on LocalNetwork for `ArduPilotBridge` to send next tick.
 //! Truth is sent on purpose: SITL makes its own noisy IMU, GPS, baro and compass
@@ -9,7 +8,7 @@
 //! It must run every tick (no `loop_rate`): the acceleration divides one
 //! tick's velocity change by one tick. A skipped tick is an error.
 //!
-//! Frames: SCRIMMAGE uses ENU world and forward-left-up (FLU) body axes;
+//! Frames: Ripple uses ENU world and forward-left-up (FLU) body axes;
 //! ArduPilot uses NED world and forward-right-down (FRD) body axes.
 
 use anyhow::{Result, ensure};
@@ -142,8 +141,8 @@ fn sample(
     gravity_mps2: f64,
 ) -> SitlSample {
     let attitude = truth.orientation_world_from_body;
-    // FixedWing6DOF adds wind to velocity (a deliberate C++ quirk; see
-    // REFERENCE_NOTES.md), so airspeed must use the same sign to match it.
+    // FixedWing6DOF adds wind to velocity, so airspeed uses the same sign; fix
+    // both together (docs/TODO.md, milestone A).
     let airspeed_mps = (truth.velocity_world_mps + wind_world_mps).norm();
 
     // Specific force is acceleration minus gravity; gravity points down (-z in ENU).
@@ -212,7 +211,7 @@ mod tests {
 
     #[test]
     fn enu_east_heading_is_ned_yaw_90_degrees() {
-        // SCRIMMAGE yaw 0 faces east (ENU +x); ArduPilot measures yaw from north.
+        // Ripple yaw 0 faces east (ENU +x); ArduPilot measures yaw from north.
         let truth = KinematicState {
             position_world_m: Vec3::new(10.0, 20.0, 30.0),
             velocity_world_mps: Vec3::new(20.0, 0.0, 0.0),
@@ -250,7 +249,7 @@ mod tests {
     #[test]
     fn pitch_changes_sign() {
         // FLU pitch about the left axis puts the nose down; ArduPilot's pitch is
-        // nose up, so +10 degrees here is -10 there (C++ sent -pitch too).
+        // nose up, so +10 degrees here is -10 there.
         let sample = sample(&state(0.0, 10.0, 0.0), Vec3::zeros(), Vec3::zeros(), 9.81);
         let (_, pitch, _) = roll_pitch_yaw(&sample);
         assert!((pitch + 10f64.to_radians()).abs() < 1e-9, "pitch {pitch}");

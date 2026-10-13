@@ -1,6 +1,6 @@
 //! Landing gear: wheels that roll on the ground, after JSBSim's FGLGear
-//! (`BOGEY` contacts), simplified where noted. Rust-only; C++ FixedWing6DOF
-//! had only its flat spring at `z = 0`.
+//! (`BOGEY` contacts), simplified where noted. Without it, FixedWing6DOF has
+//! only a flat spring at `z = 0`.
 //!
 //! Each wheel is a point on a strut along the aircraft's down axis. Below the
 //! ground (`Terrain::ground_height`, or flat `z = 0` without terrain) it

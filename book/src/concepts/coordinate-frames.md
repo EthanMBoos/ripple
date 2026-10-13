@@ -128,11 +128,11 @@ You only need these details when reading or modifying the model itself:
 | SingleIntegrator | Has no attitude dynamics. It points the vehicle along its velocity. |
 
 > [!CAUTION]
-> Some ported models keep C++ behavior that is inconsistent. For example,
-> SimpleAircraft reports vertical velocity with the opposite sign of its actual
-> climb or descent. Each case is marked with a "Matches C++ for now" comment
-> next to the equation. Read those comments before trusting a model's output in
-> an experiment.
+> Some models have known defects. For example, SimpleAircraft reports
+> vertical velocity with the opposite sign of its actual climb or descent.
+> Each case is marked with a "Known defect" comment next to the equation and
+> listed in milestone A of `docs/TODO.md`. Read those comments before trusting
+> a model's output in an experiment.
 
 ## Quick reference
 

@@ -39,5 +39,9 @@ pub(crate) fn register_builtins(registry: &mut PluginRegistry) -> Result<()> {
     registry.register_network::<network::GlobalNetwork>("GlobalNetwork")?;
     registry.register_network::<network::SphereNetwork>("SphereNetwork")?;
     registry.register_metrics::<metrics::SimpleCollisionMetrics>("SimpleCollisionMetrics")?;
+    registry.register_autonomy::<autonomy::ForceReplay>("ForceReplay")?;
+    registry.register_motion::<motion::MpeParticle>("MpeParticle")?;
+    registry.register_interaction::<interaction::MpeContact>("MpeContact")?;
+    registry.register_metrics::<metrics::SimpleSpread>("SimpleSpread")?;
     Ok(())
 }

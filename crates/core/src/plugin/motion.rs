@@ -13,3 +13,6 @@ pub use simple_aircraft::SimpleAircraft;
 #[path = "motion/single_integrator/single_integrator.rs"]
 mod single_integrator;
 pub use single_integrator::SingleIntegrator;
+#[path = "motion/mpe_particle/mpe_particle.rs"]
+mod mpe_particle;
+pub use mpe_particle::MpeParticle;

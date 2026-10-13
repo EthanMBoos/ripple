@@ -71,16 +71,32 @@ in particular, but all three knobs get turned on all three tasks.
   - Main knob: sensing. What happens when assignment runs on each agent's
     noisy belief, and the auction runs over a lossy network?
   - First, match one pinned implementation with point agents, transitions
-    and rewards included, not just observations: MPE2's `simple_spread_v3`
-    at a fixed commit, default settings (N = 3, 25 steps, `local_ratio` 0.5,
-    radius 0.15, agents and landmarks in [-1, 1]², force actions with MPE's
-    damping). Parity means the same exported policy gets the same returns in
-    MPE2 and in Ripple from the same starts.
+    and rewards included, not just observations: MPE2 v1.1.1 (commit
+    `147a8e8`) `simple_spread_v3`, default settings (N = 3, 25 steps,
+    `local_ratio` 0.5, radius 0.15, agents and landmarks in [-1, 1]², force
+    actions with MPE's damping), continuous actions. Parity means the same
+    exported policy gets the same returns in MPE2 and in Ripple from the same
+    starts: MPE2's starts rounded to 6 decimals on both sides, since Ripple's
+    spawn rounds them (`legacy_decimal_roundtrip`, kept for C++ parity).
+  - Continuous, not discrete, because the classical side has to send the
+    same command as the learned one: a controller limited to five
+    full-strength pushes zig-zags, and the later rungs take continuous
+    velocity commands anyway.
+  - MPE2 1.1.1 and PettingZoo 1.25's MPE give bit-identical observations and
+    rewards (400 seeded episodes, discrete and continuous), so libraries that
+    still train on PettingZoo's MPE train on the pinned environment.
+    BenchMARL needs `max_cycles: 25` (its default is 100) and PettingZoo
+    1.25, which needs Python 3.12 or older; 1.26 removed MPE.
   - Published returns used other versions, so they're only a sanity check on
-    our training. MAPPO's own `simple_spread` (in its repo) puts landmarks in
-    0.8 × [-1, 1]², counts each agent as colliding with itself, and has no
-    `local_ratio`; Papoudakis et al. used EPyMARL's MPE of 2021. MPE moved
-    from PettingZoo to Farama's MPE2, which dropped the self-collision.
+    our training. OpenAI's MPE, and MAPPO's copy of it, update velocity
+    before position; PettingZoo swapped the order in 1.23 (PR #965, to match
+    the Mordatch and Abbeel paper) and renamed `simple_spread_v2` to `v3`.
+    MAPPO's copy also puts landmarks in 0.8 × [-1, 1]², counts each agent as
+    colliding with itself, has no `local_ratio`, and mirrors the action
+    directions. Papoudakis et al. used EPyMARL's MPE of 2021.
+  - The ONNX policy plugin goes on `tract-onnx` (pure Rust, single-threaded),
+    in an optional crate. Landmarks are motionless entities on their own team,
+    so policies see them through contacts and the sensing knob reaches them.
 - **Circle-crossing collision avoidance.** Agents start on a circle and fly
   to the opposite side, so everyone meets in the middle.
   - Classical: ORCA (velocity obstacles; the RVO2 library), its versions for
@@ -179,21 +195,24 @@ the goal, and flocking around a moving reference.
 
 ### Build order
 
-None of this is built yet. The simulator side is ready (C++ agreement,
-determinism, fixed-wing with ArduPlane, noisy sensors, lossy networks,
-sweeps, a Crazyflie multirotor with a velocity controller); the learning
-pipeline and the three tasks are not.
+The simulator side is ready (C++ agreement, determinism, fixed-wing with
+ArduPlane, noisy sensors, lossy networks, sweeps, a Crazyflie multirotor with
+a velocity controller, and MPE's point agents checked step by step against
+MPE2 by `reference/mpe_parity.py`); the learning pipeline and the three tasks
+are not.
 
 1. **Navigation with point agents, matching MPE2.** Train MAPPO in MPE2's
    `simple_spread_v3` (pinned commit) with an existing library, export to ONNX,
    run it in Ripple, and get the same returns from the same starts. Published
-   returns are a sanity check on training only. Needs a point agent with MPE's
-   force and damping dynamics (`SingleIntegrator` takes velocity), landmarks,
-   the coverage metric, the ONNX plugin, the parity test, and the Hungarian
-   baseline. This proves the whole pipeline end to end.
+   returns are a sanity check on training only. Still needs the path-cost
+   metric, the ONNX plugin and its observation parity test, and the Hungarian
+   baseline with a force controller. This proves the whole pipeline end to
+   end.
 2. **First fidelity results on navigation.** Sensing noise and belief on the
    point agents, then network delay with the auction baseline. These are the
-   first real data points for the paper.
+   first real data points for the paper. First run a zero-noise NoisyState
+   against perfect belief: sensor readings miss MpeContact's push on contact
+   steps (its header), and this shows whether that changes any result.
 3. **Navigation on the multirotor.** Retrain with VMAS's velocity actions.
    The multirotor's motion already matches Crazyflow (book: "Flying a
    multirotor").
@@ -208,8 +227,8 @@ Two good tasks are still a paper.
 Pieces, by where they're needed:
 
 - **Shared:**
-  - point agents with MPE's force dynamics, and unicycle dynamics;
-  - the ONNX policy autonomy plugin (Burn or `ort`) that keeps output
+  - unicycle dynamics;
+  - the ONNX policy autonomy plugin (`tract-onnx`) that keeps output
     byte-identical at any worker count: fixed thread count, and random
     actions drawn from the plugin's own random stream;
   - the observation parity test against MPE2 and VMAS;
@@ -231,8 +250,10 @@ Pieces, by where they're needed:
     raw readings in belief (`PassThrough`), even GPS-like noise makes the
     Rascal's controller jitter (body rates about 0.15 rad/s), and detuning
     the controller makes it worse.
-- **Navigation:** landmarks, a deterministic Hungarian plugin that can run on
-  truth or belief, an auction over the network, the coverage-gap metric.
+- **Navigation:** a deterministic Hungarian plugin that can run on truth or
+  belief, an auction over the network, and path cost against the Hungarian
+  assignment (SimpleSpread already reports the return, collisions, and
+  coverage).
 - **Collision avoidance:** ORCA, NH-ORCA, constant-speed ORCA, a barrier
   function controller, circle and swap sweeps, separation metrics.
 - **Flocking:** Reynolds, Olfati-Saber, and Vásárhelyi plugins; neighbor

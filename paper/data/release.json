@@ -180,6 +180,16 @@
       "source_sha256": "710eda8cc2c3517ccd479b342947edf325506b2cd9af6ca22ecdce4f527fcf77",
       "evidence": "paper/data/crazyflow-crazyflie/"
     },
+    "mpe-parity": {
+      "purpose": "MPE point agents (MpeParticle, MpeContact, SimpleSpread) against MPE2's simple_spread_v3, step by step from the same (6-decimal) starts with the same forces",
+      "reference": "MPE2 v1.1.1 (Farama-Foundation/MPE2, pinned), run with uv",
+      "criterion": "100 episodes: states within 1e-12, bit-identical without contact, returns to 6 decimals",
+      "passed": true,
+      "note": "",
+      "date": "2026-10-13",
+      "source_sha256": "12354416c25fa77949a3909c6b8bae9a60de4fc808ae3562ba197c8dc78f8015",
+      "evidence": "paper/data/mpe-parity/"
+    },
     "stall-landing": {
       "purpose": "whether stall tables change ArduPlane's Rascal landing",
       "reference": "the same mission without tables, and a repeat of it",

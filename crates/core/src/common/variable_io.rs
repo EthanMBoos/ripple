@@ -7,6 +7,7 @@ pub enum Unit {
     Meters,
     MetersPerSecond,
     MetersPerSecondSquared,
+    Newtons,
     Radians,
     RadiansPerSecond,
 }

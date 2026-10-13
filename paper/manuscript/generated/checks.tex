@@ -2,7 +2,7 @@
 \begin{table*}[t]
 \centering
 \caption{The checks of \texttt{reference/suite.py} and their outcome in this
-release (\texttt{paper/data/release.json}); they ran on 6 different sources.
+release (\texttt{paper/data/release.json}); they ran on 7 different sources.
 }
 \label{tab:checks}
 \footnotesize
@@ -56,6 +56,10 @@ Check & What it checks & Against & Outcome \\
 \texttt{crazyflow-crazyflie} & Multirotor's Crazyflie against Crazyflow's
   first-principles dynamics, same constants and motor commands & Crazyflow
   (learnsyslab/crazyflow, pinned), run with uv & passed \\
+\texttt{mpe-parity} & MPE point agents (MpeParticle, MpeContact, SimpleSpread)
+  against MPE2's simple\_spread\_v3, step by step from the same (6-decimal)
+  starts with the same forces & MPE2 v1.1.1 (Farama-Foundation/MPE2, pinned),
+  run with uv & passed \\
 \texttt{stall-landing} & whether stall tables change ArduPlane's Rascal landing
   & the same mission without tables, and a repeat of it & passed \\
 \bottomrule

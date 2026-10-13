@@ -10,7 +10,7 @@
 //! origin.
 //!
 //! Heights in the file are above sea level. Local `z = 0` is the header's
-//! `origin.altitude_m`, as in C++ SCRIMMAGE's `altitude_origin`, so loading
+//! `origin.altitude_m`, so loading
 //! subtracts it. Between samples, `height_at` interpolates from the four
 //! surrounding ones; off the grid, or next to a missing sample, there is no
 //! height.
@@ -18,9 +18,6 @@
 //! `ground_height` and `ground_normal` are the one ground that everything
 //! touching it uses (TerrainCollision, landing gear): the interpolated surface
 //! on the grid, and flat ground at `z = 0`, the origin's altitude, off it.
-//!
-//! No C++ counterpart: C++ drew its mission terrain in the viewer only, and its
-//! TerrainGenerator's random height map was used by no stock mission.
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::Path, sync::Arc};

@@ -1,274 +1,205 @@
 # Roadmap
 
-Ripple is at its initial release; the
-[paper's appendix](../paper/manuscript/main.tex) records its comparison
-with C++ SCRIMMAGE, [reference notes](REFERENCE_NOTES.md) list the intentional
-differences, and the [checks](../reference/README.md) rerun all of it. Keep the
-C++ comparison passing after any simulation change.
+What's left to build, in order: a correct core (milestone A), the
+disturbance models (milestone B), then the learning study. The study itself
+(question, tasks, predictions, protocol) is in the
+[paper](../paper/manuscript/main.tex);
+sources and version details are in
+[LEARNING_LITERATURE.md](LEARNING_LITERATURE.md); intentional differences from
+C++ SCRIMMAGE are in [reference notes](REFERENCE_NOTES.md). Keep the
+[checks](../reference/README.md) passing after any simulation change.
 
-## Integration and evidence
+## Done
 
-Every new piece (a vehicle model, an autopilot, a sensor) needs something
-outside Ripple to check it against, and a plain statement of what that check
-shows:
+C++ agreement, determinism, fixed-wing with ArduPlane, noisy sensors, lossy
+networks, sweeps, the Crazyflie with a velocity controller, and MPE's point
+agents matched step by step against MPE2 (`reference/mpe_parity.py`).
 
-- Compare it with its source on the same inputs, then fly it in a real
-  closed-loop mission. Write down source versions, parameters, frame and unit
-  conversions, timestep, errors, and known gaps.
-- "Matches its source" is not "matches reality". Borrowed or estimated
-  coefficients stay labeled that way even when the source comparison passes.
-- With new effects turned off, old missions must run exactly as before. Write
-  up deliberate fixes and keep the C++ comparison passing.
-- Results and run cost go in the [paper](../paper/manuscript/main.tex), with
-  the data under `paper/data/`.
+## Kept from SCRIMMAGE
 
-A new piece doesn't have to change any ranking to be worth finishing. A
-checked capability, or showing that a simpler model is good enough somewhere,
-counts too.
+Ripple ported SCRIMMAGE's behavior, defects included, so the two could be
+compared. [Reference notes](REFERENCE_NOTES.md#behavior-kept-from-scrimmage)
+list what was kept: simplifications that can stay, and defects with the
+condition under which each matters. Milestone A fixes the defects. Message
+delay is the one SCRIMMAGE feature not ported yet (milestone B).
+
+## Milestone A: a correct core
+
+The current checks don't exercise these paths; the study will. Each fix
+states a contract and proves it three ways: the failing example before, a
+focused test of the contract, and the comparisons after. A fix to code ported
+from SCRIMMAGE goes on the `benchmarking-edits` branch too, so the two still
+agree to rounding; the fix and its evidence go in REFERENCE_NOTES.md.
+
+1. **NoisyState angular velocity.** It reports zero, so belief says the
+   vehicle never rotates, and the multirotor velocity controller damps its
+   attitude with that. *Contract:* a sensor with no angular-rate noise
+   reports the true angular velocity. Also fly a noisy Crazyflie before and
+   after. *Not exercised:* every NoisyState mission flies SimpleAircraft,
+   whose controller doesn't read rates.
+2. **NoisyState first reading.** It is the exact truth, so the first
+   decision is noise-free at every noise level: 1 of 25 in an MPE episode.
+   *Contract:* the first reading is sampled like every later one.
+3. **SimpleAircraft climb rate.** It integrates altitude with -sin(pitch)
+   but reports +sin(pitch). *Contract:* reported velocity matches the change
+   in position over a small step. *Not exercised:* its controller uses only
+   speed, where the sign drops out, and altitude from position.
+4. **SimpleAircraft turn rates.** It reports zero. *Contract:* reported
+   angular velocity matches the change in attitude over a small step.
+   *Not exercised:* its controller steers from attitude.
+5. **SimpleAircraft state.** It integrates from a private copy, so a change
+   an interaction makes to truth is overwritten. *Contract:* the change is
+   still there on the next step. *Not exercised:* the collision interactions
+   remove entities rather than push them.
+6. **FixedWing6DOF wind sign.** It adds wind to velocity, so missions must
+   pass the negated wind. *Contract:* airspeed is velocity minus wind. Fix
+   the ArduPilot sample's airspeed with it, and the missions that set wind.
+   Needed before any wind sweep.
+7. **Rate-limited plugins.** A plugin with `loop_rate` receives the phase
+   dt, not the time since it last ran; WaypointFollower caps its speed with
+   that dt, so it can overshoot. *Contract:* dt is the time since the plugin
+   last ran.
+8. **Spawn sampling.** Each sampled heading becomes the next spawn's mean (a
+   random walk), and values are rounded to 6 decimals. *Contract:* every
+   spawn is sampled around the configured mean, unrounded. Update
+   `reference/mpe_parity.py`, which rounds MPE2's starts to match.
+9. **Time.** Time accumulates by `+= dt` and drifts in the last digits, and
+   is wound back one step at the end, so the final timestamp repeats.
+   *Contract:* time is the step count times dt, and every frame's timestamp
+   is unique.
+10. **MpeContact timing.** A sensor runs before the contact push, so on
+    contact steps a zero-noise reading differs from perfect belief. Compute
+    the push for the next step and hand it to MpeParticle. *Contract:*
+    zero-noise readings equal perfect belief, and contact episodes still
+    match MPE2 (`reference/mpe_parity.py`); MPE2 is the proof, not SCRIMMAGE.
+    *Not exercised:* the parity check replays forces with no sensor.
+11. **Cleanup: duplicate sensor messages.** NoisyState and NoisyContacts
+    publish a LocalNetwork copy of each reading that only the comparison
+    trace reads; Straight subscribes and discards both. Make the trace record
+    readings, then remove them (on both sides). *Proof:* readings and every
+    decision are unchanged; only the unused messages disappear.
+
+## Milestone B: disturbance models
+
+Built after milestone A and before the learning work.
+
+1. **Units.** MPE's arena has no scale (about ±1, agent radius 0.15). State
+   how many metres one unit is, so metres of GPS error mean something there.
+   GPS specs give a horizontal 95% radius; the YAML takes a per-axis
+   standard deviation, which is about the 95% radius divided by 2.45.
+2. **Design the first noise sweep (point agents).** The agent's own
+   position is noisy (NoisyState); landmarks are exact (they come from a
+   map). Decide how teammates are known: each agent broadcasting its own
+   noisy position (shared GPS error), or NoisyContacts (independent
+   perception error per observer). Contacts need a way to leave a team
+   unperturbed. The base mission sets every noise field to zero explicitly,
+   since both sensors default to 5 m and 5 m/s. White, zero-mean noise;
+   belief from `PassThrough`, stated in the paper. A `.sweep.yaml` with
+   `zip` over both horizontal axes (`pos_noise_0.1`, `pos_noise_1.1`).
+3. **Wind.** Steady wind on the multirotor (drag on airspeed) and
+   `SimpleAircraft`. FixedWing6DOF already has it; it adds wind to velocity
+   (kept from C++), so missions pass the negated wind. Gusts only if steady
+   wind matters.
+4. **Message delay.** The engine already delivers late
+   (`Delivery::After { delay_s }`); give SphereNetwork a `delay_s` and
+   replace the legacy `comm_delay` errors. Loss already works
+   (`prob_transmit`).
+5. **Aircraft on the velocity interface.** Velocity becomes heading and
+   speed above a minimum; holding and moving-reference goals. Fit
+   `SimpleAircraft` (minimum speed, turn radius, climb) to the Rascal from
+   6-DOF runs, so both fixed-wing rungs are the same aircraft.
+6. **A Kalman filter** for the aircraft rungs: raw GPS-like readings as
+   belief make the Rascal's controller jitter (about 0.15 rad/s body rates).
+   Point agents keep `PassThrough`.
+   The sensors' covariance is a placeholder (identity, 5I); the filter
+   needs the configured noise covariance.
+7. **Realistic ranges** for each disturbance, from real specs, published
+   wind limits, or ArduPilot SITL. These go in the paper's ranges figure.
+8. **Later: drifting noise.** Real GPS error drifts slowly; a first-order
+   Gauss-Markov error needs a measured magnitude and correlation time. The
+   navigation prediction (targets swapping) is driven by jitter, so white
+   noise tests it first.
 
 ## Learned policies
 
-Sources and numbers: [LEARNING_LITERATURE.md](LEARNING_LITERATURE.md).
-
-The plan: take a few well known multi-agent tasks, run learned and classical
-policies on them, and see if the winner changes as we make the sim more
-realistic. Realistic here means three separate knobs: noisier sensing (agents
-act on what they believe, not the truth), worse communication (lost and late
-messages), and real vehicle dynamics (multirotors and fixed-wing instead of
-points).
-
-Why bother: learned policies are mostly built and compared in sims with point
-agents, perfect observations, and free messages (MPE, VMAS, JaxMARL). When
-papers compare against classical methods, the two sides often don't get the
-same information or the same tuning effort. We didn't find anyone who turns
-these knobs one at a time on standard tasks and checks whether the ranking
-holds.
-
-### Tasks
-
-Each one has published learned results and an old, trusted classical answer,
-so our numbers can be checked against other people's. Each leans on one knob
-in particular, but all three knobs get turned on all three tasks.
-
-- **Cooperative navigation.** N agents spread out to cover N landmarks
-  without crashing (MPE's `simple_spread`).
-  - Classical: assign agents to landmarks optimally (Hungarian algorithm) and
-    fly there. Decentralized version: an auction over the network.
-  - Learned results are bunched together on this task, and the raw score
-    also depends on where agents happened to start. So report these as
-    separate numbers, never folded into one:
-    - the benchmark return, exactly as the pinned implementation defines it;
-    - coverage at the end: landmarks occupied, and summed distance from each
-      landmark to its nearest agent;
-    - path cost: total distance flown, divided by the Hungarian assignment's
-      cost (straight-line distance from each agent's start to its optimally
-      assigned landmark, same start). That's a lower bound on travel, not an
-      optimal return: it ignores collisions and what happens along the way;
-    - collisions.
-  - Nobody has compared learned `simple_spread` policies to optimal
-    assignment. The closest is Muthusamy et al. 2024, with noise-free
-    observations, in their own environment.
-  - Main knob: sensing. What happens when assignment runs on each agent's
-    noisy belief, and the auction runs over a lossy network?
-  - First, match one pinned implementation with point agents, transitions
-    and rewards included, not just observations: MPE2 v1.1.1 (commit
-    `147a8e8`) `simple_spread_v3`, default settings (N = 3, 25 steps,
-    `local_ratio` 0.5, radius 0.15, agents and landmarks in [-1, 1]², force
-    actions with MPE's damping), continuous actions. Parity means the same
-    exported policy gets the same returns in MPE2 and in Ripple from the same
-    starts: MPE2's starts rounded to 6 decimals on both sides, since Ripple's
-    spawn rounds them (`legacy_decimal_roundtrip`, kept for C++ parity).
-  - Continuous, not discrete, because the classical side has to send the
-    same command as the learned one: a controller limited to five
-    full-strength pushes zig-zags, and the later rungs take continuous
-    velocity commands anyway.
-  - MPE2 1.1.1 and PettingZoo 1.25's MPE give bit-identical observations and
-    rewards (400 seeded episodes, discrete and continuous), so libraries that
-    still train on PettingZoo's MPE train on the pinned environment.
-    BenchMARL needs `max_cycles: 25` (its default is 100) and PettingZoo
-    1.25, which needs Python 3.12 or older; 1.26 removed MPE.
-  - Published returns used other versions, so they're only a sanity check on
-    our training. OpenAI's MPE, and MAPPO's copy of it, update velocity
-    before position; PettingZoo swapped the order in 1.23 (PR #965, to match
-    the Mordatch and Abbeel paper) and renamed `simple_spread_v2` to `v3`.
-    MAPPO's copy also puts landmarks in 0.8 × [-1, 1]², counts each agent as
-    colliding with itself, has no `local_ratio`, and mirrors the action
-    directions. Papoudakis et al. used EPyMARL's MPE of 2021.
-  - The ONNX policy plugin goes on `tract-onnx` (pure Rust, single-threaded),
-    in an optional crate. Landmarks are motionless entities on their own team,
-    so policies see them through contacts and the sensing knob reaches them.
-- **Circle-crossing collision avoidance.** Agents start on a circle and fly
-  to the opposite side, so everyone meets in the middle.
-  - Classical: ORCA (velocity obstacles; the RVO2 library), its versions for
-    wheeled robots (NH-ORCA) and constant-speed aircraft, and a control
-    barrier function controller.
-  - Learned: a CADRL-style policy (published weights exist) and MAPPO.
-  - The published "learned beats ORCA" results are softer than they look:
-    the median gain was small and most of it came from the hardest cases;
-    one paper had to inflate ORCA's radii to stop it colliding; another gave
-    ORCA true neighbor states while the learned policy used a laser. Here
-    both get the same belief.
-  - Main knob: dynamics. ORCA assumes you can slow down or stop. Fixed-wing
-    aircraft can't, and nobody has run this comparison on fixed-wing.
-  - Run symmetric and jittered circles and pair swaps; aircraft need a
-    holding pattern instead of stopping at the goal.
-  - Measure success, collisions, deadlocks, extra time, and closest approach,
-    at the median and in the worst cases: the 75th and 90th percentiles for
-    extra time, the 25th and 10th for closest approach (small is bad).
-- **Flocking with limited communication range.** Agents start with random
-  velocities and have to line up and stay together without colliding,
-  talking only to neighbors in range.
-  - Classical: Reynolds' rules, Olfati-Saber, Vásárhelyi (the 30-drone
-    flock), tuned with CMA-ES.
-  - Learned: a graph network trained to imitate a centralized controller
-    (Tolstaya et al. 2019), and MAPPO.
-  - Tolstaya's network beat the local controller at 1 m range, where passing
-    neighbor info along over several hops matters most, and lost at 4 m. The
-    authors think the 4 m loss may come from how they built the network's
-    inputs, so don't lean on it as a mechanism. Lost and late messages
-    degrade the multi-hop info, so we expect them to change where the
-    network's advantage holds.
-  - Main knob: communication.
-  - Fixed-wing can't hover, so they flock around a moving reference point.
-  - Measure velocity alignment, how many separate groups form, closest
-    approach, and messages sent.
-
-We looked at pursuit too and dropped it: results depend on how each paper
-designs the evader.
-
-### Which vehicles
-
-1. **Point agents first, to match published numbers.** Same setup as
-   PettingZoo or VMAS. If Ripple doesn't reproduce their results here, any
-   change later up the ladder could just be a bug in our setup.
-2. **Multirotor (Crazyflie) is the main realistic vehicle.** Most of the
-   drone work we compare against flies quadrotors, often Crazyflies (Batra,
-   STGNN, and OPEN fly Crazyflies; Vásárhelyi's 30 drones are custom quads),
-   so this is the easiest comparison for reviewers. Crazyflow and
-   MuJoCo-Drones-Gym simulate the same vehicle, which gives a cross-check on
-   our dynamics. It is built: see the book chapter "Flying a multirotor".
-3. **Fixed-wing is the stress case**: `SimpleAircraft`, then `FixedWing6DOF`.
-   Already built. It's where the classical assumptions break: aircraft can't
-   stop, can't park on a landmark, and can't match a neighbor's velocity at
-   any speed. Nobody has run these comparisons on fixed-wing. A quad can hover
-   almost like a point, so rankings may hold there; fixed-wing is where we
-   expect them to move.
-
-What the policy outputs: in MPE and VMAS it's a 2-D force by default (VMAS
-can take a target velocity instead, through its velocity controller). Point
-agents keep the force for the runs that match published numbers. After that,
-train with velocity actions: the multirotor takes the velocity as is, and for
-aircraft it becomes a heading and a speed, held at or above a minimum
-airspeed, so "stop here" turns into circling. Per task:
-loiter over the landmark (covered if within a radius), a holding pattern at
-the goal, and flocking around a moving reference.
-
-### How we run it
-
-- **No RL training code in this repo.** Train in VMAS, JaxMARL, or PettingZoo
-  with existing libraries (BenchMARL, MAPPO), export to ONNX, run here. For
-  fine-tuning in Ripple, use the bridge below.
-- **Same commands, same information.** Learned and classical policies send
-  the same command to the same controllers (force for point agents in the
-  matching runs, velocity for the multirotor, heading, speed, altitude for
-  aircraft) and read the same
-  belief. Each task has one observation definition (frames, scaling, how
-  neighbors are encoded, decision rate). A parity test checks it matches the
-  training sim; if it silently doesn't, the whole study is garbage.
-- **Train three ways:** at the benchmark's simple setting, at the realistic
-  setting, and with the setting randomized during training. That tells us
-  whether a learned policy lost because it was trained in the wrong place or
-  because the method is fragile.
-- **Fair tuning.** Classical methods get the same tuning budget (number of
-  evaluations) as the learned ones, at the same setting. Also report them
-  tuned at the simple setting and frozen, to match how the learned policies
-  are trained.
-- **Stats.** 10 training seeds. Report the interquartile mean with bootstrap
-  confidence intervals (the `rliable` library). Learned and classical run on
-  the exact same episodes. To say whether the ranking held, compare each
-  level's ranking to the simple setting's with a rank correlation, and count
-  ranking reversals. Train at
-  N agents, also test at 2N and 4N.
-- **The knobs.** Turn each one alone through four levels, then all together.
-  Pick the noise, loss, and delay levels from real sensor and radio specs or
-  ArduPilot SITL runs, not numbers we made up.
-
-### Build order
-
-The simulator side is ready (C++ agreement, determinism, fixed-wing with
-ArduPlane, noisy sensors, lossy networks, sweeps, a Crazyflie multirotor with
-a velocity controller, and MPE's point agents checked step by step against
-MPE2 by `reference/mpe_parity.py`); the learning pipeline and the three tasks
-are not.
-
-1. **Navigation with point agents, matching MPE2.** Train MAPPO in MPE2's
-   `simple_spread_v3` (pinned commit) with an existing library, export to ONNX,
-   run it in Ripple, and get the same returns from the same starts. Published
-   returns are a sanity check on training only. Still needs the path-cost
-   metric, the ONNX plugin and its observation parity test, and the Hungarian
-   baseline with a force controller. This proves the whole pipeline end to
-   end.
-2. **First fidelity results on navigation.** Sensing noise and belief on the
-   point agents, then network delay with the auction baseline. These are the
-   first real data points for the paper. First run a zero-noise NoisyState
-   against perfect belief: sensor readings miss MpeContact's push on contact
-   steps (its header), and this shows whether that changes any result.
-3. **Navigation on the multirotor.** Retrain with VMAS's velocity actions.
-   The multirotor's motion already matches Crazyflow (book: "Flying a
-   multirotor").
-4. **The training bridge**, for the "train at the realistic setting"
-   condition. Measure its speed first.
-5. **Collision avoidance**: ORCA family and a barrier function controller on
-   point agents, then multirotor, then fixed-wing (the new part).
-6. **Flocking** last.
+1. **Classical baseline on MPE2.**
+   - Hungarian autonomy, re-solved every tick from each agent's own belief;
+     cost is distance, ties go to the lowest ids.
+   - Stopping-point controller: after a push F, an MPE2 agent stops at
+     p + 4·v·dt + 4·F·dt², so use the F that puts that point on the target,
+     clipped to ±5 per axis. Every number comes from MPE2; no fitted
+     parameters.
+   - Path cost in SimpleSpread (distance flown over the assignment's
+     straight-line cost).
+   - The same baseline in Python against MPE2 must give Ripple's scores on
+     the same starts. Keep the script, starts, and scores as evidence.
+2. **Learned side on MPE2.**
+   - Train MAPPO with BenchMARL (PettingZoo 1.25, Python 3.12 or older,
+     `max_cycles: 25`, continuous actions).
+   - ONNX policy plugin: `tract-onnx` in an optional crate, actions sampled
+     from the plugin's own random stream so output stays byte-identical at
+     any worker count.
+   - The exported policy's observations, actions, and returns match MPE2's
+     on the same starts.
+   - Then the benchmark comparison on paired episodes.
+3. **Side check, outside Ripple.** Reproduce Papoudakis et al.'s MAPPO
+   result with their code (about 5 hours), and score the classical baseline
+   in their environment under the same protocol (their number is the best of
+   41 evaluations averaged over 5 seeds). Start anytime.
+4. **Velocity commands for point agents.** One velocity controller in Ripple
+   and as an MPE2 wrapper, checked against each other. Retrain both sides for
+   velocity commands and measure that switch against step 2, so the sweeps
+   connect to the benchmark's ranking.
+5. **Sensing on navigation**: run the noise sweep designed in milestone B,
+   step 2, with both methods.
+6. **Navigation on the Crazyflie, then fixed-wing**, with noise and wind
+   sweeps. A landmark is covered while an aircraft loiters within a radius;
+   define the radius and arena first.
+7. **Training bridge**, for training at the realistic setting: an optional
+   PyO3 crate shaped like a PettingZoo parallel environment.
+   `Simulation::step` returns the pre-step state, so it needs its own step;
+   reset rebuilds the simulation. Measure its speed first.
+8. **Collision avoidance.** ORCA, NH-ORCA, constant-speed ORCA, a barrier
+   function controller; circle and swap sweeps; separation metrics; a holding
+   pattern at the goal for aircraft.
+9. **Flocking.** Reynolds, Olfati-Saber, and Vásárhelyi plugins; neighbor
+   messages with hop count and age; alignment and group metrics. Reproduce
+   Tolstaya et al.'s range result first.
 
 Two good tasks are still a paper.
 
-Pieces, by where they're needed:
+### Rules for a fair comparison
 
-- **Shared:**
-  - unicycle dynamics;
-  - the ONNX policy autonomy plugin (`tract-onnx`) that keeps output
-    byte-identical at any worker count: fixed thread count, and random
-    actions drawn from the plugin's own random stream;
-  - the observation parity test against MPE2 and VMAS;
-  - delay in the network model;
-  - the training bridge: an optional PyO3 crate, out of the default build like
-    `ardupilot`, that looks like a PettingZoo parallel environment.
-    `Simulation::step` returns the state from before the step, so the bridge
-    needs its own step; reset rebuilds the simulation;
-  - for aircraft, turning a velocity command into heading and speed held
-    above minimum airspeed, and holding or moving-reference goals;
-  - a tuning script for the classical baselines and the stats (`rliable`),
-    both Python, outside the sim;
-  - noise, loss, and delay levels taken from real sensor and radio specs or
-    ArduPilot SITL. NoisyState's defaults (C++'s 5 m and 5 m/s horizontal)
-    are demo values: on the Rascal they break the speed loop. Its noise is
-    also fresh every tick, where real GPS error drifts slowly;
-  - a standard filter (a Kalman filter on position and velocity) as an
-    estimator plugin, used by learned and classical policies alike. With
-    raw readings in belief (`PassThrough`), even GPS-like noise makes the
-    Rascal's controller jitter (body rates about 0.15 rad/s), and detuning
-    the controller makes it worse.
-- **Navigation:** a deterministic Hungarian plugin that can run on truth or
-  belief, an auction over the network, and path cost against the Hungarian
-  assignment (SimpleSpread already reports the return, collisions, and
-  coverage).
-- **Collision avoidance:** ORCA, NH-ORCA, constant-speed ORCA, a barrier
-  function controller, circle and swap sweeps, separation metrics.
-- **Flocking:** Reynolds, Olfati-Saber, and Vásárhelyi plugins; neighbor
-  messages that carry hop count and age; alignment and group metrics.
+- Learned and classical send the same command, read the same belief, and run
+  on the same episodes. One observation definition per task, with a parity
+  test against the training sim.
+- No training code here: train with existing libraries, export to ONNX, run
+  in Ripple.
+- Train three ways: simplest setting, center of the realistic range, and
+  randomized. Evaluate every policy across the whole sweep.
+- Classical gets the same tuning budget as learned, and is also reported
+  tuned at the simplest setting and frozen.
+- One primary metric per task, chosen in advance; collisions, coverage, and
+  the rest are reported separately, never combined into one score.
+- 10 training seeds; seeds are the unit. Interquartile means with bootstrap
+  intervals (`rliable`).
+- Realistic ranges come from real specs, published wind limits, or
+  ArduPilot SITL, never made-up numbers.
+- The paper's predictions are fixed once experiments start; a result that
+  contradicts one is reported as such.
 
-### What could go wrong
+## Other work
 
-- One side is a strawman: an undertrained learned policy or a badly tuned
-  classical one. Use published hyperparameters and weights, and the equal
-  tuning budget.
-- The observations don't match the training sim. The parity test is there
-  for this.
-- The realism levels look made up. Take them from real specs.
-- Nothing flips anywhere. Report it anyway. Reproducing Tolstaya's range
-  result is the check that our setup can show a flip at all.
-- Closest prior work, which we have to cite and say how we differ from:
-  Labiosa and Hanna (ICRA 2025), Li et al. (NeurIPS 2025), Kadian et al.
-  (RA-L 2020), Muthusamy et al. (2024).
+- Every new piece (vehicle, autopilot, sensor) is checked against an outside
+  source, with versions, conversions, and errors written down. Matching a
+  source is not matching reality: borrowed coefficients stay labeled.
+- With new effects off, old missions run exactly as before.
+- Unicycle dynamics.
+- Legacy delay behavior, more sensor models, and plugin debug geometry.
+
+## Not planned
+
+Runtime plugin loading, legacy protobuf/string-map spawning, OpenCL, VTK, ROS,
+and JSBSim. ArduPilot and Burn stay optional, out of the default build.
+Pursuit was dropped as a task: results depend on how each paper designs the
+evader.

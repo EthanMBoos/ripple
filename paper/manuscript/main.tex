@@ -3,14 +3,36 @@
 % in one testbed whose integrations are checked against external baselines.
 % Choose the venue and replace prompts after the experiments establish results.
 \documentclass[conference]{IEEEtran}
+\usepackage[T1]{fontenc}
 \usepackage{times}
+\usepackage[varqu]{zi4}
 \usepackage[numbers]{natbib}
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{array}
 % Ragged-right paragraph column for narrow table cells.
 \newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
-\usepackage[bookmarks=true]{hyperref}
+\usepackage[bookmarks=true,hidelinks]{hyperref}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta}
+% Figure colours, as in the companion real-to-sim paper: classical methods in
+% blue, learned methods in orange, the realistic range in red.
+\definecolor{classc}{RGB}{70,112,150}
+\definecolor{classf}{RGB}{214,226,236}
+\definecolor{learnc}{RGB}{190,112,58}
+\definecolor{learnf}{RGB}{246,226,204}
+\definecolor{accent}{RGB}{204,36,58}
+\definecolor{ink}{RGB}{60,60,60}
+\definecolor{cream}{RGB}{247,243,231}
+\definecolor{creamb}{RGB}{216,208,184}
+% Grey tiles stand in for figures whose content is not drawn yet.
+\tikzset{tile/.style={fill=black!17, rounded corners=2pt},
+  tiletext/.style={font=\ttfamily\scriptsize, text=black!55, align=center}}
+% Run-in bold paragraph headings, as in the companion real-to-sim paper,
+% instead of IEEEtran's lettered ones.
+\renewcommand{\paragraph}[1]{\par\textbf{#1.}\ }
 
 \newcommand{\stub}[1]{\par\noindent\textit{TODO: #1}\par}
 % Marks results that do not yet come from a release run of the suite
@@ -19,1047 +41,653 @@
 
 \begin{document}
 
-\title{Ripple: Does Realism Reorder the Leaderboard? A Controlled Fidelity
-Ladder for Learned versus Classical Multi-Robot Coordination}
-\author{Author names and affiliations to be added}
+\title{Ripple: Do Multi-Robot Benchmarks\\Pick the Right Method?}
+\author{\IEEEauthorblockN{Ethan Moosbrugger Boos}
+\IEEEauthorblockA{Georgia Institute of Technology}}
+% Teaser. Panel 3 is a schematic gap curve; the real curves replace it once
+% the sweeps have run.
+\makeatletter
+\let\@oldmaketitle\@maketitle
+\renewcommand{\@maketitle}{\@oldmaketitle
+\vspace{-0.6em}
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm, font=\footnotesize,
+  >={Stealth[length=2.2mm]},
+  stage/.style={draw=creamb, fill=cream, rounded corners=4pt},
+  hdr/.style={font=\small\bfseries, anchor=west},
+  num/.style={circle, fill=ink, text=white, inner sep=1.2pt,
+              font=\scriptsize\bfseries},
+  mono/.style={font=\ttfamily\scriptsize},
+  agent/.style={circle, fill=ink, inner sep=0pt, minimum size=2.2mm},
+  landmark/.style={fill=black!35, inner sep=0pt, minimum size=1.8mm},
+  slider/.style={ink!45, line width=0.8pt}]
+  % Stage panels and headers
+  \fill[stage] (0,0) rectangle (5.0,4.2);
+  \fill[stage] (5.3,0) rectangle (11.3,4.2);
+  \fill[stage] (11.6,0) rectangle (17.6,4.2);
+  \node[num] at (0.35,3.82) {1};
+  \node[hdr] at (0.6,3.82) {The benchmark};
+  \node[num] at (5.65,3.82) {2};
+  \node[hdr] at (5.9,3.82) {Make it more real};
+  \node[num] at (11.95,3.82) {3};
+  \node[hdr] at (12.2,3.82) {How does the gap move?};
+  \draw[->, ink, line width=1pt] (4.92,2.1) -- (5.38,2.1);
+  \draw[->, ink, line width=1pt] (11.22,2.1) -- (11.68,2.1);
+
+  % Stage 1: the benchmark world
+  \draw[creamb, fill=white, rounded corners=3pt] (0.35,1.0) rectangle (4.65,3.4);
+  \foreach \a/\l in {{(1.0,1.3)}/{(1.5,2.75)}, {(2.35,2.0)}/{(3.8,2.85)},
+                     {(3.3,1.3)}/{(2.85,1.75)}} {
+    \draw[ink!40, dashed] \a -- \l;
+    \node[landmark] at \l {};
+    \node[agent] at \a {};
+  }
+  \node[mono, anchor=west] at (1.15,1.3) {agent};
+  \node[mono, anchor=west] at (1.65,2.75) {landmark};
+  \node[mono, text=black!55, anchor=north west] at (0.4,3.38)
+    {cover the landmarks};
+  \node[mono, text=black!55, align=center] at (2.5,0.5)
+    {point agents,\\exact observations};
+
+  % Stage 2: vehicles, then one disturbance swept
+  \foreach \x/\name in {6.55/point, 8.3/multirotor, 10.05/fixed wing}
+    \node[mono] at (\x,2.35) {\name};
+  \node[agent] at (6.55,2.95) {};
+  \begin{scope}[shift={(8.3,2.95)}]
+    \draw[ink, line width=0.8pt] (-0.16,-0.16) -- (0.16,0.16)
+      (-0.16,0.16) -- (0.16,-0.16);
+    \foreach \x/\y in {-0.16/-0.16, 0.16/0.16, -0.16/0.16, 0.16/-0.16}
+      \draw[ink, fill=white] (\x,\y) circle (0.075);
+  \end{scope}
+  \begin{scope}[shift={(10.05,2.95)}, line cap=round]
+    \draw[ink, line width=1.6pt] (0,-0.22) -- (0,0.24);
+    \draw[ink, line width=1.6pt] (-0.3,0.05) -- (0.3,0.05);
+    \draw[ink, line width=1.2pt] (-0.12,-0.18) -- (0.12,-0.18);
+  \end{scope}
+  \draw[->, ink!50] (6.95,2.95) -- (7.85,2.95);
+  \draw[->, ink!50] (8.7,2.95) -- (9.6,2.95);
+  \node[mono] at (8.3,1.6) {noise, loss, latency, wind};
+  \fill[accent!25] (8.9,1.02) rectangle (9.9,1.18);
+  \draw[ink!45, line width=0.8pt] (6.2,1.1) -- (10.6,1.1);
+  \draw[ink, fill=white] (6.2,1.1) circle (0.07);
+  \node[mono, text=black!55] at (6.2,0.7) {none};
+  \node[mono, text=accent] at (9.4,0.7) {realistic};
+
+  % Stage 3: schematic gap curve, one possible outcome
+  \draw[creamb, fill=white, rounded corners=3pt] (11.95,0.3) rectangle (17.25,3.4);
+  \fill[accent!10] (14.6,0.55) rectangle (15.75,3.0);
+  \node[mono, text=accent] at (15.175,3.2) {realistic};
+  \draw[ink!70] (12.4,1.95) -- (17.1,1.95);
+  \node[rotate=90, mono, text=black!55] at (12.2,1.95) {gap};
+  \node[mono, text=learnc, anchor=west] at (12.5,3.2) {learned ahead};
+  \node[mono, text=classc, anchor=west] at (12.5,0.8) {classical ahead};
+  \fill[ink!12] plot[smooth] coordinates {(12.6,2.80) (13.4,2.78) (14.2,2.68)
+      (14.9,2.36) (15.5,1.96) (16.2,1.50) (16.9,1.18)}
+    -- plot[smooth] coordinates {(16.9,0.50) (16.2,0.90) (15.5,1.46)
+      (14.9,1.93) (14.2,2.28) (13.4,2.44) (12.6,2.48)} -- cycle;
+  \draw[ink, line width=1pt] plot[smooth] coordinates {(12.6,2.64)
+    (13.4,2.61) (14.2,2.48) (14.9,2.14) (15.5,1.71) (16.2,1.20) (16.9,0.84)};
+\end{tikzpicture}\\[7pt]
+\parbox{0.92\textwidth}{\footnotesize Fig.~1. Starting from a standard
+benchmark task, each disturbance is increased in turn on each vehicle, and
+the gap between a learned and a classical method is measured at every level.
+The shaded band is the realistic range; the curve is one possible
+outcome. (Schematic: results pending.)}
+\end{center}
+\vspace{-0.4em}
+}
+\makeatother
 \maketitle
+\setcounter{figure}{1}
 
 \begin{abstract}
-Learned multi-robot policies are usually trained and compared in simulators
-with point agents, exact observations, and messages that are never lost.
-Classical methods such as optimal assignment, reciprocal collision avoidance,
-and flocking rules assume different things. We ask whether the ranking
-between learned and classical policies on standard tasks still holds when
-sensing is noisy, messages are lost or late, and the vehicles have real
-dynamics. To answer it we built Ripple, a deterministic multi-agent simulator
-in Rust. Point agents, multirotors, and fixed-wing aircraft share one world
-and one sensing, communication, and estimation pipeline, and each agent acts
-on its own belief rather than the true state. Fixed-wing aircraft with
-aerodynamic tables, terrain contact, and an external autopilot are built.
-Each model is checked against an external implementation or a published
-model, and the source of every equation and parameter is recorded. Policies
-trained in other simulators run in Ripple unchanged, so learned and classical
-policies see the same information, use the same controllers, and run on the
-same episodes. On cooperative navigation, circle-crossing collision
-avoidance, and flocking with limited communication range, we turn up sensing
-noise, communication loss and delay, and vehicle dynamics one at a time. The
-classical policies get the same tuning budget as the learned ones, and the
-learned policies are trained at the simple setting, the realistic setting,
-and with the setting randomized. \textit{[Results pending: where the ranking
-changes, which factor changes it, and how much training at the realistic
-setting recovers.]}
+Methods for multi-robot coordination are chosen largely by their rank on
+simulated benchmarks, where agents are points, observations are exact, and
+messages always arrive. Learned methods are mostly ranked against one another
+there, and when they are compared with classical methods, the two often receive
+different information. Whether these rankings survive the sensing noise, message
+loss, latency, and vehicle dynamics that real hardware produces, and so whether
+they choose the right method, has not been measured. We measure it in Ripple, a
+deterministic simulator built for controlled sweeps, in which learned and
+classical policies receive the same information and commands and every model is
+verified against an independent implementation or published measurements.
+Starting from cooperative navigation exactly as a standard benchmark defines it,
+we sweep each disturbance from none to beyond what real hardware produces, on
+point agents, a multirotor, and fixed-wing aircraft, across navigation,
+collision avoidance, and flocking, and measure how the gap between the learned
+and classical methods changes. \textit{[Finding: how each gap changes across its
+sweep, whether and where it changes sign relative to the realistic range, and
+which methods degrade gradually and which fail abruptly.]} \textit{[Finding: how
+far retraining under realistic conditions shifts the gap.]} All comparisons are
+between simulations; they describe the modeled effects under the tested
+conditions.
 \end{abstract}
 
 \IEEEpeerreviewmaketitle
 
 \section{Introduction}
+\label{sec:intro}
 
-In a multi-agent experiment, the vehicle, sensing, and communication models
-decide how each robot's choices play out. Actuator lag delays a response. A
-fixed-wing aircraft cannot stop to let another pass. A lost message leaves a
-teammate acting on old information. Small differences like these can change
-what the team achieves, or they can wash out.
+Multi-robot teams are meant to work outside the lab: quadrotors mapping a
+building, fixed-wing aircraft searching a coastline, ground vehicles sharing
+a warehouse. In each, the team's sensing is imperfect, its radios drop and
+delay messages, and its vehicles cannot move however a planner wishes. Yet
+the methods these teams run are mostly chosen in simulators that leave all of
+this out. Multi-agent reinforcement learning is developed on benchmarks built
+for speed, such as the particle environments \cite{lowe2017maddpg}, VMAS
+\cite{bettini2022vmas}, and JaxMARL \cite{rutherford2023jaxmarl}, where agents
+are points, observations are exact, and messages always arrive. Methods are
+ranked there, and the ranking guides which ones are built on and deployed.
+\emph{Does a ranking measured on such a benchmark still hold once sensing,
+communication, and the vehicle become realistic?}
 
-This matters most for learned policies. Multi-agent reinforcement learning is
-developed on simulators built for speed, such as the particle environments
-\cite{lowe2017maddpg}, VMAS \cite{bettini2022vmas}, and JaxMARL
-\cite{rutherford2023jaxmarl}. Their agents move under simple planar physics, and
-although noise on observations and messages can be switched on, published
-results mostly use exact observations and lossless communication. A policy can
-learn to rely on those simplifications. When papers do compare against classical
-methods, the two sides often get different information or different tuning
-effort (Section~\ref{sec:tasks}). Our question is: \emph{when realism is added,
-does the better approach, learned or classical, change, and which part of the
-realism changes it?}
+Some degradation is expected as noise, loss, and dynamics are added. What
+matters for choosing a method is whether they hurt one method more than
+another, and by how much. Consider a team covering a set of landmarks. A
+classical planner assigns each agent to a landmark and flies it there; with
+exact positions, the assignment minimizes total travel. With noisy
+positions, two agents at similar distances may swap targets back and forth.
+One possible outcome is that the planner collapses at a particular noise
+level while a learned policy that reacts to each observation degrades
+smoothly. Whether the benchmark picked the right method then depends on
+where that collapse falls relative
+to the noise that real positioning systems produce. The question therefore
+calls for a curve, not a single comparison: for each disturbance, how the gap
+between the two methods changes as the disturbance grows, and where the
+realistic range lies along it.
 
-Answering this takes a simulator where sensing, communication, and vehicle
-dynamics can each be changed while everything else stays fixed, and where
-each added model can be trusted. Vehicle models, autopilots, sensors, and
-networks each bring their own frames, units, commands, and timing. A model
-can match its source on its own and still behave differently once it is
-scheduled with the rest of the system. If a ranking changes, we need to know
-it was the modeled effect and not an integration bug, so each piece is
-checked at its boundary and again in closed loop.
+We measure these curves with Ripple, a deterministic multi-robot simulator
+built for controlled sweeps (Fig.~1). In Ripple, learned and classical
+policies read the same belief, built from the same sensors and messages, and
+command the same controllers, so neither side receives information the other
+lacks, a confound common in published comparisons
+(Section~\ref{sec:tasks}). Every run can be repeated exactly, so both methods
+are evaluated on identical episodes, and each physical effect can be switched
+on alone. Each model the study relies on is checked against an independent
+implementation or published measurements.
 
-Ripple is that simulator. Its Rust core builds on SCRIMMAGE's plugin design
-\cite{demarco2018}, and it agrees with the C++ original to floating-point
-rounding on every compared mission (Appendix~\ref{app:baseline}). Aerodynamic
-tables, terrain contact, ArduPilot running in lockstep, and a Crazyflie with
-RotorS's rotor effects and a native controller are integrated
-(Section~\ref{sec:multirotor}). Every vehicle goes through the
-same sensing, communication, and estimation stages, which keep the true state
-separate from each agent's belief, and every run is byte-repeatable. A learned
-and a classical policy can therefore read the same belief, command the same
-controllers, and be compared on identical episodes.
+The study starts from cooperative navigation exactly as a standard benchmark
+defines it: Ripple reproduces the benchmark's motion step by step, so the
+starting ranking can be checked by anyone. From there, both methods switch to
+the velocity command a real vehicle takes, and we sweep sensing noise,
+message loss, latency, and, for the aircraft, wind, each from none to well
+beyond what real hardware produces, on point agents, a Crazyflie quadrotor,
+and fixed-wing aircraft, across navigation, collision avoidance, and
+flocking. For each sweep we report the gap curve over ten training seeds,
+whether and where it changes sign relative to the realistic range, and the
+failures behind it.
+Finally, we train the learned policies under realistic conditions to see how
+far that shifts their curves.
 
-We keep two claims apart for every model. Matching an external
-implementation shows the equations, conversions, and timing came through
-intact. Matching measurements of a real vehicle is a separate and stronger
-claim. Reproducing a reference model does not make its estimated
-coefficients measured, and adding an autopilot does not validate the vehicle
-model it flies.
-
-The paper makes three contributions:
-\begin{enumerate}
-\item A simulator in which vehicle models, optional physical effects, and
-external autopilots share one deterministic execution and information
-pipeline.
-\item An external check for each integrated model, with the sources of its
-equations and parameters and a statement of what the check does and does not
-show.
-\item A learned versus classical comparison on three standard tasks, with
-sensing, communication, and dynamics turned up one at a time, equal tuning
-budgets, three training conditions, and a test of whether the ranking holds.
-\end{enumerate}
-
-We are looking for reversals: a policy that wins with the simple model and
-loses, or fails, once a realistic effect is added, along with the effect
-responsible. A ranking that holds is also a result, since it shows where the
-simple simulator was good enough.
-
-\stub{Replace this placeholder with the strongest reversals found and their
-causes, and with the cases where the ranking held. Do not assume a reversal
-before the experiments show one.}
-
-Section~\ref{sec:system} describes the simulator and
-Section~\ref{sec:verification} the integration checks.
-Sections~\ref{sec:fidelity} and~\ref{sec:provenance} cover fidelity choices
-and where model data comes from. Section~\ref{sec:stall} covers the
-fixed-wing stall work and Section~\ref{sec:multirotor} the multirotor.
-Sections~\ref{sec:tasks} and~\ref{sec:learning} give the tasks and the
-training and evaluation protocol.
+Our central contribution is this measurement: gap curves between learned and
+classical multi-robot methods across realistic disturbances and vehicles,
+starting from a benchmark's own task, with both methods given the same
+information and commands. It rests on a second contribution, Ripple, in
+which vehicle models, sensing, communication, and external autopilots share
+one deterministic pipeline and each model is checked against an outside
+source. \stub{Summarize the findings: how each gap changed across its sweep,
+any changes of sign and where they fall relative to the realistic range, and
+which methods fail abruptly. Do not assume a change of sign before the
+experiments show one.}
 
 \section{Related Work}
 \label{sec:related}
 
-\paragraph{Simulators for many agents}
+\paragraph{Multi-agent simulators}
 PettingZoo standardized how a learner steps a multi-agent environment
-\cite{terry2021pettingzoo}. Isaac Gym, VMAS, and JaxMARL moved simulation onto
-the GPU, advancing thousands of independent worlds together
-\cite{makoviychuk2021isaacgym,bettini2022vmas,rutherford2023jaxmarl}. Since
-2025 these tools have moved toward physical fidelity: Isaac Lab adds actuator
-models and multi-frequency sensors \cite{mittal2025isaaclab}, Crazyflow
-simulates drone swarms in JAX \cite{schuck2026crazyflow}, and
-MuJoCo-Drones-Gym models aerodynamic effects on the CPU while its GPU backend
-omits them \cite{tayal2026mujocodrones}. Communication is usually
-an action channel or part of the observation; queued delivery with delay and
-loss comes from co-simulation with a network simulator
-\cite{burmeister2025defiance}. Multi-agent testbeds built for many vehicles,
-such as SCRIMMAGE \cite{demarco2018}, run simple models and delegate physics to
-a separate flight model where needed.
+\cite{terry2021pettingzoo}, and Isaac Gym, VMAS, and JaxMARL moved simulation
+onto the GPU
+\cite{makoviychuk2021isaacgym,bettini2022vmas,rutherford2023jaxmarl}. These
+tools are moving toward physical fidelity, with actuator models and sensors
+in Isaac Lab \cite{mittal2025isaaclab} and drone swarms in Crazyflow
+\cite{schuck2026crazyflow} and MuJoCo-Drones-Gym \cite{tayal2026mujocodrones}.
+Communication is usually an action channel or part of the observation; queued
+delivery with delay and loss comes from co-simulation with a network simulator
+\cite{burmeister2025defiance}. Vehicle dynamics come from dedicated tools such
+as JSBSim \cite{berndt2004jsbsim}, the autopilots' own simulators
+\cite{ardupilotsitl,px4gazebo}, and RotorS \cite{furrer2016rotors}. These tools
+aim at training throughput or at one vehicle's physics. Ripple aims instead at
+controlled comparison: one factor changed at a time, with every run repeatable.
 
-\paragraph{Vehicle dynamics}
-JSBSim builds aircraft from coefficient tables \cite{berndt2004jsbsim}.
-ArduPilot and PX4 ship their own simulators to test autopilot code
-\cite{ardupilotsitl,px4gazebo}, and RotorS models multirotor motors and rotors
-in Gazebo \cite{furrer2016rotors}.
-
-\paragraph{Fidelity and evaluation}
+\paragraph{Fidelity and transfer}
 Several projects train in a fast simulator and test somewhere more
-realistic. Pyquaticus trains maritime game policies with embedded vehicle
-dynamics and runs them on uncrewed surface vessels
-\cite{crowley2025pyquaticus}. A connected-vehicle benchmark separates the
-loss caused by a different control stack from the loss caused by a more
-realistic environment \cite{beerwerth2026zeroshot}. BVR Sim moves a policy
-between aircraft by having it command per-aircraft controllers
-\cite{sun2026bvrsim}. Labiosa and Hanna trained robot soccer policies in a
-deliberately low-fidelity simulator, ablated which changes to it let the
-policies transfer to real robots, and matched a well-tuned hand-written
-behavior \cite{labiosa2025abstract}; their question is what makes transfer
-work, not whether added realism reorders learned and classical methods.
-Kadian et al.\ measure how well performance in simulation predicts
-performance on real robots, with a Pearson correlation and a count of
-ranking reversals \cite{kadian2020sim2real}. Li et al.\ ran cooperative
-MARL under many kinds of perturbation and found that robustness to one does
-not carry over to another, without classical baselines or vehicle dynamics
-\cite{li2025robustness}. SMACv2 showed that a fixed benchmark can be solved
-without the observations it provides \cite{ellis2023smacv2}, and reviews of
-MARL evaluation find inconsistent seeds, metrics, and baselines
-\cite{gorsane2022evaluation,papoudakis2021benchmarking}. We found no study
-that varies sensing, communication, and dynamics separately on standard
-multi-agent tasks and checks whether the ranking of learned and tuned
-classical policies changes.
+realistic: maritime game policies on uncrewed surface vessels
+\cite{crowley2025pyquaticus}, a connected-vehicle benchmark that separates
+the loss from a different control stack from the loss from a more realistic
+environment \cite{beerwerth2026zeroshot}, and policies moved between aircraft
+through per-aircraft controllers \cite{sun2026bvrsim}. Labiosa and Hanna
+ablated which simplifications let robot soccer policies transfer, and matched
+a well-tuned hand-written behavior \cite{labiosa2025abstract}. Truong et
+al.\ found that a lower-fidelity simulator transferred better than a
+higher-fidelity one for legged visual navigation
+\cite{truong2022rethinking}, so a more detailed simulation is not
+automatically closer to reality. These studies ask what makes a policy
+transfer. We ask whether added realism reorders methods.
 
-\section{System}
+\paragraph{Learned and classical methods across simulators}
+MASP compares a MAPPO-trained planner with Hungarian-assignment planners on a
+particle navigation task and on simulated quadrotors, and finds the learned
+planner faster in both \cite{yang2025masp}. Tolstaya et al.\ trained flocking
+controllers on point masses and on quadrotors in AirSim, with classical
+controllers as bounds \cite{tolstaya2020gnn}. In both, the environments
+differ in several ways at once, and the aim is a better method. Kadian et
+al.\ measure how well simulation predicts real-robot results, for a single
+agent and learned policies only \cite{kadian2020sim2real}, and Li et al.\
+find that robustness of cooperative learning to one perturbation does not
+carry over to another \cite{li2025robustness}. Reviews of MARL evaluation
+find inconsistent seeds, metrics, and baselines
+\cite{gorsane2022evaluation,papoudakis2021benchmarking}, and SMACv2 showed
+that a fixed benchmark can be solved without the observations it provides
+\cite{ellis2023smacv2}. In contrast, we change one modeled effect at a time,
+give learned and classical methods the same information and commands, and
+start from a benchmark's own task.
+
+\section{Problem Setup}
+\label{sec:setup}
+
+We compare a learned method $L$ and a classical method $C$ on a task with a
+primary metric $J$, where higher is better. A sweep varies one disturbance,
+such as the standard deviation of position noise, over levels
+$0 = x_0 < x_1 < \dots < x_K$, where $x_0$ is the undisturbed setting.
+Each training seed $s$ yields one learned policy. Both methods run the same
+$E$ evaluation episodes at every level, and the seed's gap at level $x_k$ is
+the learned policy's average lead,
+\begin{equation}
+\Delta_s(x_k) = \frac{1}{E}\sum_{e=1}^{E}
+  \left[ J_{L,s}(x_k, e) - J_C(x_k, e) \right].
+\end{equation}
+The function $x \mapsto \Delta_s(x)$ is the seed's gap curve, and the gap
+curves of ten seeds are the primary result. Published specifications give a
+realistic range $R$ for each disturbance. For one effect, the ranking holds
+if the sign of $\Delta_s(x_0)$ holds at every level inside $R$. On point
+agents, $x_0$ already uses velocity commands; the switch from the
+benchmark's force actions is measured as a step of its own, so its effect
+is not mixed into any sweep. When the sign changes between neighbouring
+levels $x_k$ and $x_{k+1}$, we report the change as bracketed by them, with
+the number of seeds that show it. Vehicles do not form a continuous axis, so
+each vehicle rung has its own sweeps, and rungs are compared at matching
+levels.
+
+\section{Ripple}
 \label{sec:system}
 
-Ripple began as a Rust port of SCRIMMAGE \cite{demarco2018}; its agreement
-with the C++ reference is in Appendix~\ref{app:baseline}. This
-section describes the properties the fidelity question relies on.
+Ripple began as a Rust port of the C++ simulator SCRIMMAGE
+\cite{demarco2018} and agrees with SCRIMMAGE to within floating-point
+rounding on every compared mission (Table~\ref{tab:checks-main}); known
+defects in SCRIMMAGE are fixed in both for the comparison. Four of Ripple's
+properties carry the study.
 
 \paragraph{One deterministic tick}
-Each tick runs fixed phases: generation; autonomy; controllers then motion in
-each substep; sensors; interactions; networks; delivery and estimation
-(localization then tracking); metrics; and removal, output, and time advance.
-Every phase completes before the next begins,
-even when entities run on different CPU workers, and output is byte-identical
-at 1, 2, and 8 workers and with recording on or off
-(Appendix~\ref{app:self}). Sensor random streams use stable entity and plugin
-identities; legacy spawn draws retain their reference order. External
-autopilots require their own repeatability checks.
+Each tick runs fixed phases (Fig.~\ref{fig:tick}), and every phase finishes
+for every agent before the next begins. Output is byte-identical at any
+number of CPU workers and with recording on or off, so learned and classical
+policies can be evaluated on exactly the same episodes, and any run can be
+replayed.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm, font=\scriptsize,
+  >={Stealth[length=1.5mm]},
+  phase/.style={draw=ink, fill=white, rounded corners=2pt,
+                minimum width=1.35cm, minimum height=0.4cm, inner sep=1.5pt},
+  tag/.style={fill=accent!12, draw=accent!60, text=accent, rounded corners=1.5pt,
+              inner sep=1.5pt, font=\ttfamily\tiny},
+  flow/.style={->, ink, line width=0.6pt},
+  mono/.style={font=\ttfamily\tiny, text=black!55}]
+  \fill[cream, draw=creamb, rounded corners=3pt] (-0.1,0.3) rectangle (8.7,4.75);
+  % The phases of one tick, in order, each feeding the next
+  \foreach \name [count=\i from 0] in {autonomy, controllers, motion, sensors,
+      interactions, network, estimation, metrics}
+    \node[phase] (p\i) at (0.85+\i*1.0, 4.35-\i*0.48) {\name};
+  \foreach \i [evaluate=\i as \j using int(\i+1)] in {0,...,6}
+    \draw[flow] ([xshift=-3mm]p\i.south) |- (p\j.west);
+  % Controllers and motion repeat for each substep
+  \draw[flow, ink!60] ([xshift=-2mm]p2.north east) to[out=80, in=0] (p1.east);
+  \node[mono, anchor=south west] at ([xshift=0.5mm, yshift=0.5mm]p2.north east)
+    {each substep};
+  % Back to the top for the next tick
+  \draw[flow] (p7.south) -- ++(0,-0.3) -| node[mono, pos=0.25, above]
+    {next tick: time advances by $\Delta t$} (-0.0,4.35) -- (p0.west);
+  % Where each disturbance enters
+  \node[tag, anchor=west] at ([xshift=1mm]p2.east) {dynamics, wind};
+  \node[tag, anchor=west] at ([xshift=1mm]p3.east) {noise};
+  \node[tag, anchor=west] at ([xshift=1mm]p5.east) {loss, latency};
+\end{tikzpicture}
+\caption{The main phases of one tick in Ripple (spawning, removal, and
+output omitted). Each phase finishes for every agent before the
+next begins, and controllers and motion repeat for each substep. Autonomy,
+learned or classical, reads only the agent's belief, which estimation builds
+from sensor readings and delivered messages. Each disturbance enters at one
+phase (red).}
+\label{fig:tick}
+\end{figure}
 
 \paragraph{Truth, measurements, and belief}
-Sensors read physical truth and produce measurements; estimators turn
-measurements and received messages into each agent's belief; decisions and
-controllers read only belief. A model of higher fidelity therefore reaches a
-decision only through what the agent could have measured or been told.
+Sensors read the true state and produce measurements; estimators turn
+measurements and received messages into each agent's belief; policies and
+controllers read only belief. A disturbance therefore reaches a decision
+only through what the agent could have measured or been told, and learned
+and classical policies receive identical information.
 
-\paragraph{Scale}
-Finding nearby agents and routing messages each cost the square of the team
-size in the design we started from. Answering spatial queries from a grid, and
-routing each message only to its subscribers, made a 4{,}096-agent step 3.8 and
-40 times faster with byte-identical output (Appendix~\ref{app:scaling}).
+\paragraph{Controlled sweeps}
+Every physical effect is an optional parameter of its model, off by default,
+so earlier results stay valid as effects are added. A sweep file varies any
+mission parameter across levels and seeds and runs in parallel shards, so a
+change in a curve can be attributed to the one factor that changed.
 
-\paragraph{World resources and autopilots}
-Terrain is a shared, read-only world resource that motion models query, for
-example for landing-gear contact. ArduPilot's software-in-the-loop (SITL)
-autopilot flies a vehicle through a lockstep bridge: each simulation step waits
-for the autopilot's outputs and answers with the vehicle's state, and several
-autopilots run side by side, one per vehicle.
-
-\section{Evidence at Each Integration Stage}
-\label{sec:verification}
-
-The C++ comparison establishes a starting point, not a blanket guarantee for
-new models. Each integration needs its own external baseline. We distinguish
-three questions:
-\begin{enumerate}
-\item \emph{Did we preserve the source behavior?} Compare a port against its
-source on matched inputs and initial conditions. For a bridge, check the
-exchange of states and commands, coordinate conversions, and simulated timing
-against the external system's interface and a reference run.
-\item \emph{Does the model represent the vehicle in the claimed regime?}
-Compare against independent measurements where available. Agreement with
-another simulator establishes implementation agreement; it does not establish
-physical accuracy. Keep calibration data separate from validation data.
-\item \emph{Does the added capability matter for the experiment?} Compare
-outcomes, failures, and cost under controlled changes in model effects or
-control stack. Report the operating regimes actually visited.
-\end{enumerate}
-
-For each comparison, retain the source version, model parameters, frames and
-units, input sequence, initial state, timestep, and error measures. State the
-comparison tolerance and its rationale before interpreting the result. Start
-with forces, moments, derivatives, or command outputs where those are the
-integration boundary, then compare trajectories and a closed-loop mission.
-Preserve failed comparisons and explain intended departures from the source.
-An effect disabled in existing missions must preserve their outputs; a
-deliberate defect correction needs a documented new baseline.
-
-Table~\ref{tab:integration} ties this method to the implementation roadmap.
-These are completion criteria, not claims that the comparisons have run.
-Source comparisons belong with each implemented stage, even when physical
-validation must wait for data. Each stage also measures execution cost at its
-intended team size, so the expense of a few detailed vehicles or external
-autopilots is visible.
+\paragraph{Checked models}
+Each model the study uses is checked against an external source
+(Table~\ref{tab:checks-main}). Agreement with another implementation shows
+that the equations, conversions, and timing came through intact; agreement
+with a real vehicle requires measurements, which the Crazyflie's parameters
+have and the other models do not yet.
 
 \begin{table*}[t]
 \centering
 \small
-\caption{External baselines for the integrations. Except for the core
-comparison, these are required or planned checks, not completed results.}
-\label{tab:integration}
-\begin{tabularx}{\textwidth}{@{}P{0.17\textwidth}P{0.37\textwidth}X@{}}
+\caption{What each component of the study is checked against. Results come
+from one release run of \texttt{reference/suite.py}, retained in
+\texttt{paper/data/}; rows marked planned are not yet run.}
+\label{tab:checks-main}
+\begin{tabularx}{\textwidth}{@{}P{0.2\textwidth}P{0.34\textwidth}X@{}}
 \toprule
-Stage & External baseline and comparison & What the evidence can establish \\
+Component & Checked against & Result \\
 \midrule
-Simulation core & C++ SCRIMMAGE: matched missions, internal traces, message
-  delivery, and planted defects (Appendix~\ref{app:baseline}) & Agreement for
-  tested configurations; a foundation for extensions \\
-Fixed-wing tables and autopilot & JSBSim table evaluations on matched inputs;
-  ArduPlane state/actuator exchange and reference mission & Table and bridge
-  behavior; repeatability and closed-loop operation, without claiming Rascal
-  flight accuracy \\
-Multirotor dynamics & RotorS motor/rotor outputs sample by sample; Crazyflie
-  parameters from its measured identification & Kernel agreement and sourced
-  parameters; prediction error against flight records is an extension point \\
-Imported policy & Original policy runtime on identical observations; matched
-  normalization, action semantics, and step/reset behavior & Policy and
-  interface agreement before cross-fidelity evaluation \\
+Simulation core & SCRIMMAGE: 14 missions, 100 generated scenarios, every
+  message delivery and plugin output & Agree to
+  $2.4\times10^{-10}$~m at worst; 12 of 12 planted porting bugs caught \\
+Determinism & The same missions at 1, 2, and 8 workers, recording on and off &
+  Byte-identical on 41 missions \\
+Benchmark point agents & MPE2 v1.1.1 \texttt{simple\_spread\_v3}: 100 episodes
+  replayed with the same forces & States within $3.5\times10^{-15}$; 56
+  episodes bit-identical; returns within $5\times10^{-7}$ \\
+Multirotor rotors & RotorS's motor and rotor code on 480 sampled states &
+  Within $4\times10^{-15}$~N and $7\times10^{-16}$~N\,m \\
+Multirotor flight & Crazyflow, an independent model, with the same constants
+  and motor commands & The same 3~s tumbling trajectory to
+  $3\times10^{-12}$~m, rotor drag off \\
+Crazyflie parameters & Its measured identification \cite{forster2015crazyflie}
+  & Mass, inertia, and drag as published; thrust within 10.4\% across the
+  measured range \\
+Fixed-wing stall tables & JSBSim's Rascal tables on matched inputs & Planned
+  \\
+Imported policies & The training simulator on identical observations &
+  Planned \\
 \bottomrule
 \end{tabularx}
 \end{table*}
 
-\section{Fidelity as an Experimental Variable}
-\label{sec:fidelity}
-
-To ask whether fidelity changes a result, fidelity must be a controlled
-variable: changed alone, with everything else held fixed.
-
-\paragraph{Attributable differences}
-Run the same mission, seed, and strategy with a specified model change.
-Repeatability makes differences easier to diagnose; attribution also requires
-holding other inputs and interfaces fixed. Record controller tuning, decision
-periods, sensor and network settings, and initial conditions alongside the
-model variant. Core output is byte-identical in the comparisons described in
-Section~\ref{sec:system}. Three runs of the runway mission with ArduPlane
-(Section~\ref{sec:stall}) also wrote byte-identical output on one machine.
-This is evidence for that configuration, not a guarantee for all external
-stacks. Across machines and ArduPilot versions it is untested.
-
-\paragraph{Selectable effects}
-Each physical effect is an optional parameter of its model, off by default. A
-mission that does not set it runs exactly as before, so earlier results and
-the agreement with C++ (Appendix~\ref{app:baseline}) stay valid as
-features are added. Where an inherited model is wrong rather than incomplete,
-it is fixed and the fix recorded.
-
-\paragraph{Model detail, physical evidence, and control stack}
-Table~\ref{tab:ladder} separates choices that a single fidelity score would
-conflate. Kinematics and rigid-body dynamics change the model structure;
-measured parameters change its evidential basis; an external autopilot changes
-the control stack. An autopilot can fly an inaccurate plant. A simple model
-with measured parameters can be better supported in its operating regime than
-a more detailed model with borrowed coefficients. Comparisons should name the
-axis changed and the evidence supporting it.
-
-\begin{table}[t]
-\centering
-\small
-\caption{Independent choices for fidelity experiments in Ripple.}
-\label{tab:ladder}
-\begin{tabularx}{\linewidth}{@{}
-  P{0.22\linewidth}
-  >{\raggedright\arraybackslash}X
-  >{\raggedright\arraybackslash}X@{}}
-\toprule
-Axis & Choices & Status \\
-\midrule
-Motion model & Point agents, constrained kinematics, rigid-body dynamics &
-  Built; multirotor defects fixed \\
-Physical effects & Stall, contact, motor lag, rotor drag & Stall, terrain
-  contact, and multirotor motor lag and rotor drag built \\
-Physical evidence & Borrowed, estimated, or measured parameters; independent
-  validation & Provenance audit; flight-data validation planned \\
-Control stack & Native controllers or external autopilot & ArduPlane SITL and a
-  native multirotor controller built; other vehicle stacks planned \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-\paragraph{The experiment}
-For each task (Section~\ref{sec:tasks}), start at the benchmark's own
-setting and turn up one factor at a time: sensing noise, communication loss
-and delay, then the vehicle model. Finally turn up all three together. Keep
-the policy's command interface fixed; if controllers or tuning change, report
-that as its own factor. Measure the ranking, outcome differences, failure
-rates, and run cost on paired seeds, with uncertainty across training seeds
-and episodes (Section~\ref{sec:learning}). Decide in advance how large a
-difference matters for the task before claiming a simpler model is enough,
-and record the turn rates, actuator saturation, or message ages actually
-reached. A ranking that does not change does not mean the outcomes are equal
-or the model is accurate, and a trial that never reaches an effect's regime
-cannot show the effect is unnecessary.
-
-\section{Where Model Data Comes From}
-\label{sec:provenance}
-
-A model has a structure, its equations, and numbers, its coefficients. Higher
-fidelity means something only if both come from stated sources. We checked the
-sources of the models we use or plan to use, in September and October 2026
-(Table~\ref{tab:provenance}).
-
-\begin{table*}[t]
-\centering
-\small
-\caption{Where the structure and the numbers of open vehicle models come from,
-as checked in September and October 2026.}
-\label{tab:provenance}
-\begin{tabularx}{\textwidth}{@{}
-  P{0.17\textwidth}
-  P{0.17\textwidth}
-  P{0.2\textwidth}X@{}}
-\toprule
-Source & Vehicle & Structure & Numbers \\
-\midrule
-JSBSim Rascal, the source of our fixed-wing coefficients & 6~kg radio-controlled
-  aircraft & Coefficient tables against angle of attack & Adapted from
-  FlightGear for ArduPilot testing; its README reads ``we are still at
-  pre-pre-pre-alpha with this model'', and its author field ``Author Name'' \\
-ArduPilot SITL plane \cite{ardupilotsitl} & Generic & Linear lift blended into a
-  flat plate past a stall angle & Its source describes it as ``Not
-  aerodynamically accurate, just enough to be able to debug control logic'' \\
-RotorS \cite{furrer2016rotors} & AscTec Hummingbird quadrotor; Firefly
-  hexacopter & Motor lag, rotor drag, rolling moment & Hummingbird mass, arm,
-  and inertia from a published paper; all seven rotor and motor coefficients are
-  identical, digit for digit, for both vehicles, and the rolling-moment
-  coefficient is $10^{-6}$ \\
-PX4 Gazebo motor model \cite{px4gazebo} & Generic & RotorS's, plus thrust
-  falling linearly with axial airspeed to zero at 25~m/s & The thrust reduction
-  is commented ``XXX this has to be modelled better'' \\
-Crazyflie identification \cite{forster2015crazyflie} & 27~g quadrotor & Thrust
-  and torque against rotor speed; inertia; motor dynamics & Measured on the
-  vehicle with a force/torque sensor and a laser tachometer; 172 public flights
-  with motion capture \cite{ullah2026nanobench} \\
-\bottomrule
-\end{tabularx}
-\end{table*}
-
-Three observations follow. Structure is easy to obtain: every source publishes
-its equations. Numbers measured on the vehicle being simulated are rare, and
-they come from system identification of one airframe. Borrowed numbers are hard
-to see: nothing in RotorS's vehicle files marks its rotor coefficients as
-shared, and nothing in the fixed-wing model we inherited records that its
-coefficients came from a model its authors called pre-alpha. Each model
-in Ripple should therefore state the source of its structure and of its
-numbers, and the regime in which they were measured, and claim no more fidelity
-than those sources support.
-
-\stub{Record each model's sources in the book's model reference.}
-
-\section{A First Extension: Stall}
-\label{sec:stall}
-
-FixedWing6DOF, the fixed-wing model we started from, computes lift as $C_{L0} +
-C_{L\alpha}\alpha$ plus
-rate and elevator terms at any angle of attack $\alpha$, so the wing never
-stalls. Its only drag that grows with angle, for the Rascal, is induced drag,
-$C_L^2/(\pi A e)$, which follows the lift: a lift curve that falls past the
-stall would also lose drag there, the opposite of a stalled wing.
-
-\paragraph{What we added}
-Two optional tables against angle of attack, after JSBSim. A lift table replaces
-$C_{L0} + C_{L\alpha}\alpha$; a drag table replaces the zero-lift drag $C_{D0} +
-C_{D\alpha}|\alpha|$, and induced and elevator drag are still added. Values are
-interpolated linearly and held at the ends, as JSBSim's tables are. JSBSim's
-Rascal lift table equals the mission's linear lift up to a peak at 0.23~rad
-(13.2$^\circ$), which puts the level stall near 8.3~m/s; its drag table rises
-from 0.028 at zero to 1.5 at $\pm90^\circ$. Without tables the model is the C++
-one, and its two comparison missions still agree with C++ to rounding
-(Appendix~\ref{app:baseline}). Spin and drag from sideslip are not modeled; a
-deep stall or large sideslip counts as a failure already.
-
-\paragraph{Does it change a landing?}
-ArduPlane SITL flies the Rascal off a runway on surveyed terrain, around a
-circuit, and lands it with a 14$^\circ$ flare. With linear lift, the landing
-bounced. We flew it three ways: as committed, with the lift table, and with
-both tables (Table~\ref{tab:stall}; \texttt{paper/data/stall-landing}). A
-repeat of the unmodified mission was byte-identical to the first run, so the
-differences between variants are effects of the tables, not run-to-run noise.
-
-\IfFileExists{generated/stall.tex}{\input{generated/stall}}{}
-
-The lift table changed the landing by centimetres. Airborne, the angle of
-attack never passed 11.2$^\circ$, below the 13.2$^\circ$ stall; only rolling
-tail-down on the wheels, above 5~m/s, did it reach 14.5$^\circ$. The drag table
-changed more, because it adds drag at every angle, not only past the stall:
-touchdown 0.27~m/s slower, a bounce 0.15~m lower, and a rollout within 1.23~m
-of the centreline instead of 1.56~m. The bounce itself remains. Touchdown at
-about 15~m/s, nearly twice the stall speed, and main wheels ahead of the centre
-of gravity, which pitch the nose up on contact, are likely causes; neither is
-tested.
-
-\paragraph{What it shows}
-This mission exercises the integrated tables and autopilot, but it does not
-establish the accuracy of post-stall flight or a multi-agent consequence of
-stall. The recorded airborne landing interval stays below the stall angle,
-and the larger change comes from drag at small angles. Direct comparison with
-the source table evaluations remains a separate check
-(Section~\ref{sec:verification}). The lesson is to measure the regime and
-state exactly which claim a trial supports.
-
-\section{Multirotor Model}
-\label{sec:multirotor}
-
-Each vehicle model reaches the level of an established open simulator
-(ArduPilot and PX4 SITL, RotorS): structure from a documented
-source, every number's origin stated, and a check against the source
-implementation. Going further needs measured data for one real vehicle, which
-we do not collect. Instead each model is built so that such data plugs in: a
-header on every motion model states its source, what it was validated
-against, its valid range, what it leaves out, and what data would take it
-further; effects left out are named zero terms in the force sums; and geometry
-and coefficients are parameters (rotor axes as vectors, aerodynamics as tables),
-so a measured model arrives as data or one function.
-
-Motor lag, rotor drag, and the rolling moment follow RotorS
-\cite{furrer2016rotors} as optional parameters, off unless a mission sets them,
-as for the fixed wing's stall tables, so each can be turned on alone. Rotor
-drag, linear in airspeed and in rotor speed, is small but first order: it sets
-the velocity dynamics near hover and is needed to explain accelerometer readings
-\cite{martin2010accelerometer}. RotorS's own filter and force code, compiled
-against stand-in Gazebo links, and Ripple's model agree on 480 sampled states to
-$4\times10^{-15}$~N and $7\times10^{-16}$~N\,m (\texttt{rotors-motor}). RotorS's
-motor constants carry no source, so the real-vehicle parameters come from the
-Crazyflie's identification \cite{forster2015crazyflie}: its mass, measured
-inertia matrix, and drag coefficients as published, and the thrust and torque
-coefficients, top speed, and arm derived from its fits, each cited beside its
-value. A single $c_T\omega^2$ matches the measured thrust exactly at hover and
-within 10.4\% across the measured range. Given these constants and the same
-motor commands, Crazyflow's independent first-principles model
-\cite{schuck2026crazyflow} and Ripple fly the same tumbling 3~s trajectory to
-$3\times10^{-12}$~m with drag off (\texttt{crazyflow-crazyflie}). With drag on
-they part by design, by 2.5~cm after 1~s and up to 4.0~m and 1.2~rad by 3~s:
-Ripple applies drag at each rotor hub, where it also damps rotation, and
-Crazyflow lumps it at the centre of mass.
-
-A cascaded controller (velocity, attitude, body rate, motor mixing) flies the
-model from the same velocity command point agents take, reading belief only.
-On the Crazyflie at 500~Hz it reaches a 1~m/s command with a 1.0~s rise, 20\%
-overshoot, and settles within 5\% in 3.6~s; the 65~ms motor lag, not the
-controller structure, limits the inner loops. In steady forward flight the
-Crazyflie leans 1.456$^\circ$ into its rotor drag, against 1.455$^\circ$
-predicted from the identified drag coefficient. Trajectories converge as the
-step shrinks: 2.6~mm from the 20-substep run at 5 substeps, 0.9~mm at 10
-(\texttt{multirotor-control}).
-
-The remaining physical uncertainty is in the motor lag and the drag. The lag was
-identified from motor command to thrust, and Ripple, like RotorS, applies it to
-shaft speed: the same time constant for small changes near hover, an
-approximation for large steps. The fit also did not remove radio or load-cell
-latency, and an independent identification of a similar Crazyflie gives a lag
-twice as long \cite{schuck2026crazyflow}; it is a parameter worth sweeping.
-Ground effect, interference between rotors, inflow, and rotor gyroscopic torques
-are named zero terms. Replaying public flights with recorded motor commands
-\cite{ullah2026nanobench} would give a stated prediction error; that validation
-is an extension point.
-
-\section{Benchmark Tasks}
+\section{Study Design}
 \label{sec:tasks}
 
+\subsection{Vehicles}
+
+\paragraph{Point agents}
+The benchmark's point agents (MPE2's particle model, with its damping and
+soft contact force) reproduce MPE2 step by step
+(Table~\ref{tab:checks-main}). On the ladder of vehicle rungs, the same point
+agents follow a velocity command through a fixed controller.
+
+\paragraph{Multirotor}
+The main realistic vehicle is a Crazyflie, the quadrotor on which learned
+multi-robot policies are most often flown
+\cite{batra2021quadswarm,chen2023stgnn,chen2025open}. Its mass, inertia,
+drag, and thrust and torque coefficients come from bench measurements of the
+real vehicle \cite{forster2015crazyflie}; motor lag, rotor drag, and the
+rolling moment follow RotorS \cite{furrer2016rotors}. A cascaded controller
+flies it from the velocity command, reaching a 1~m/s step with a 1.0~s rise
+and 20\% overshoot at 500~Hz. Its main uncertainty is motor lag: an
+independent identification of a similar vehicle gives a lag twice as long
+\cite{schuck2026crazyflow}, so the lag is itself worth sweeping.
+
+\paragraph{Fixed wing}
+Fixed-wing aircraft are the stress case: they cannot stop, hold a position,
+or match a neighbour's velocity at any speed. Two models separate the causes
+of a failure. A kinematic aircraft has only a minimum speed and a turning
+radius, fitted to the Rascal; a 6-DOF model flies the Rascal's coefficient
+tables, with stall tables after JSBSim, under ArduPilot's autopilot run in
+lockstep or a native controller. A failure on both points to the inability
+to stop; one that appears only with 6-DOF dynamics points to the dynamics,
+or to the controller that flies them.
+For aircraft, the velocity command becomes a heading and a speed held above
+the minimum airspeed, so a command to stop becomes a loiter.
+
+\subsection{Tasks}
+
 We use three standard tasks, each with published learned results and a
-well-established classical method, so every number can be checked against
-prior work. Each task is most sensitive to one factor, but all three factors
-are varied on all three tasks.
+well-established classical method, and each most sensitive to one factor
+(Fig.~\ref{fig:tasks}).
 
-The vehicles follow from that. Point agents come first, set up as in the
-published benchmarks, and before any added realism is interpreted, a policy
-exported from one pinned benchmark implementation must score the same in
-Ripple as in that implementation, with transitions and rewards matched, not
-only observations. Published returns come from other versions of the same
-tasks, so they serve only as a check on training. The multirotor, with Crazyflie
-parameters, is the main realistic vehicle. Learned multi-robot policies that
-leave point agents are typically flown on Crazyflie quadrotors: swarm
-control \cite{batra2021quadswarm}, flocking \cite{chen2023stgnn}, and
-pursuit-evasion \cite{chen2025open}. Current drone learning simulators
-model the same vehicle \cite{schuck2026crazyflow,tayal2026mujocodrones},
-and outdoor flocking with classical rules flies quadrotors too
-\cite{vasarhelyi2018optimized}, so results on it compare directly with that
-work. Fixed-wing aircraft, with
-constrained kinematics and then 6-DOF dynamics, are the stress case: they
-cannot stop, hold a position, or match a neighbour's velocity at any speed,
-which is where the classical methods' assumptions break, and we found no
-learned versus classical comparison on them. In the particle environments
-and VMAS a policy outputs a planar force by default
-\cite{lowe2017maddpg,bettini2022vmas}, and VMAS can instead take a target
-velocity through a velocity controller. Point agents keep the benchmark's own
-force dynamics for the runs that reproduce published results. Beyond those,
-policies output a planar velocity: the multirotor follows it directly, and
-for aircraft it becomes a heading and a speed held at or above a minimum
-airspeed, so a command to stop becomes a loiter. Each task's variant for
-aircraft is given below.
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \fill[tile] (0,0) rectangle (2.7,2.4);
+  \fill[tile] (2.95,0) rectangle (5.65,2.4);
+  \fill[tile] (5.9,0) rectangle (8.6,2.4);
+  \node[tiletext] at (1.35,1.2) {top-down:\\agents and\\landmarks};
+  \node[tiletext] at (4.3,1.2) {top-down:\\crossing\\a circle};
+  \node[tiletext] at (7.25,1.2) {top-down:\\flock and\\radio links};
+  \node[font=\scriptsize\bfseries] at (1.35,-0.25) {(a) Navigation};
+  \node[font=\scriptsize\bfseries] at (4.3,-0.25) {(b) Avoidance};
+  \node[font=\scriptsize\bfseries] at (7.25,-0.25) {(c) Flocking};
+\end{tikzpicture}
+\caption{The three tasks, as trajectories from Ripple runs. (Placeholder:
+plots pending.)}
+\label{fig:tasks}
+\end{figure}
 
-\subsection{Cooperative Navigation}
-\label{sec:navigation}
-
+\paragraph{Cooperative navigation}
 $N$ agents must cover $N$ landmarks without colliding, as in the particle
 environments' \emph{spread} task \cite{lowe2017maddpg}. The classical solution
-is to assign agents to landmarks optimally \cite{kuhn1955hungarian} and fly each
-agent to its landmark, or to plan the assignment and trajectories together
-\cite{turpin2014capt}. With three agents, current learning algorithms score
-within a few percent of one another \cite{papoudakis2021benchmarking}, and the
-return also varies with where the agents start. We therefore report, as separate
-quantities, the benchmark return as the pinned implementation defines it, the
-landmarks occupied at the end, collisions, and the distance flown relative to
-the optimal assignment's straight-line cost from the same start, which bounds
-travel from below but ignores collisions and is not an optimal return. Aircraft
-loiter over their landmark, which counts as covered when an aircraft is within a
-fixed radius. A learned policy has been compared with optimal assignment only
-with noise-free observations, in its authors' own environment, where it came
-close but did not match it \cite{muthusamy2024unlabeled}. Here the main factor
-is sensing: assignment computed from each agent's noisy belief, and assignment
-by auction over a lossy network, compared with the optimum computed from the
-true state.
+assigns agents to landmarks optimally \cite{kuhn1955hungarian}, or plans the
+assignment and trajectories together \cite{turpin2014capt}. Our baseline
+re-solves the assignment at every step from each agent's own belief and
+steers the point where the agent would coast to a stop: with the benchmark's
+damping, an agent at $p$ with velocity $v$ pushed with force $F$ for one step
+$\Delta t$ comes to rest at $p + 4v\Delta t + 4F\Delta t^2$, and the
+controller applies the force that puts that point on the landmark, clipped to
+the benchmark's limit. Every number comes from the benchmark, so the baseline
+has no fitted parameters, and written against the benchmark implementation
+it must reproduce Ripple's scores. We report the benchmark return, the
+landmarks occupied, collisions, and distance flown against the optimal
+assignment's straight-line cost. The main factor is sensing; communication is
+not varied, because the benchmark's agents observe one another directly.
 
-\subsection{Circle-Crossing Collision Avoidance}
-\label{sec:avoidance}
-
+\paragraph{Circle-crossing collision avoidance}
 Agents start on a circle and fly to the opposite side, so all of them meet
 in the middle. The classical method is reciprocal velocity obstacles (ORCA)
-\cite{vandenberg2011orca} and its form for wheeled robots
-\cite{alonsomora2010nhorca}; control barrier functions are another
-\cite{wang2017barrier}, and a learned version scales them to large teams
-\cite{zhang2025gcbf}. Several learned policies are reported to beat ORCA
+\cite{vandenberg2011orca,alonsomora2010nhorca}. Several learned policies are
+reported to beat ORCA
 \cite{chen2017cadrl,long2018towards,everett2021ga3c,fan2020distributed}, but
-the comparisons are less clear than they appear. The median gain was small,
-with most of it in the hardest cases \cite{chen2017cadrl}; ORCA's radii were
-enlarged to stop collisions caused by the discrete time step
-\cite{everett2021ga3c}; and a policy using a laser scanner was compared with
-an ORCA given its neighbours' true states \cite{long2018towards}. In our
-setup both see the same belief. Here the main factor is dynamics. ORCA
-assumes an agent can slow down or stop, which a constant-speed aircraft
-cannot. Durand shows that aircraft held near constant speed and converging
-at small angles settle on parallel tracks without resolving the conflict:
-even with $\pm15\%$ speed variation, ORCA failed in more than 20\% of runs
-with 10 aircraft, against 10\% with 90 aircraft for his constant-speed
-variant \cite{durand2018csorca}. We found no learned versus classical
-comparison on fixed-wing aircraft. We run symmetric and perturbed circles and
-pair swaps; aircraft fly a holding pattern at the goal. We measure success,
-collisions, deadlocks, extra time, and closest approach, at the median and in
-the worst cases (the upper percentiles for extra time, the lower ones for
-closest approach).
+the comparisons are less clear than they appear: the median gain was small
+\cite{chen2017cadrl}, ORCA's radii were enlarged to absorb discrete-time
+collisions \cite{everett2021ga3c}, and a laser-scanner policy was compared
+with an ORCA given its neighbours' true states \cite{long2018towards}. Here
+both read the same belief, and the main factor is dynamics. Aircraft fly a
+holding pattern at the goal. We measure success, collisions, deadlocks, extra
+time, and closest approach, including the worst cases.
 
-\subsection{Flocking with Limited Communication}
-\label{sec:flocking}
+\paragraph{Flocking with limited communication}
+Agents start with random velocities and must align and stay together,
+communicating only with neighbours in range. The classical methods are
+Reynolds' rules \cite{reynolds1987flocks} and Olfati-Saber's algorithms
+\cite{olfatisaber2006flocking}, which have flown outdoors on 30 drones
+\cite{vasarhelyi2018optimized}. Learned flocking has been tested under fading
+and delay \cite{gao2025airgnn,marino2024gated}, against expert controllers
+rather than classical rules. The main factor is communication. Aircraft flock
+around a moving reference point. We measure velocity alignment, the number of
+separate groups, closest approach, and messages sent.
 
-Agents start with random velocities and must align and stay together
-without colliding, communicating only with neighbours in range. The
-classical methods are Reynolds' rules \cite{reynolds1987flocks} and
-Olfati-Saber's algorithms \cite{olfatisaber2006flocking}; a version with
-parameters evolved in a simulator with delay and noise flew 30 drones
-outdoors \cite{vasarhelyi2018optimized}. Tolstaya et al.\ trained a graph
-neural network to imitate a centralized controller, passing neighbours'
-information along over several hops. It beat a local controller at a short
-communication range, where that multi-hop information matters most, and lost
-to it at a longer one, which the authors suggest may come from how the
-network's inputs were built \cite{tolstaya2020gnn}. Lost and late messages
-degrade multi-hop information, so here the main factor is communication, and
-we expect loss and delay to change where the learned controller's advantage
-holds. Fixed-wing
-aircraft cannot hover, so they flock around a moving reference point. We
-measure velocity alignment, the number of separate groups, closest approach,
-and messages sent.
+\subsection{Policies and Training}
 
-\section{Training and Evaluation Protocol}
-\label{sec:learning}
-
-\paragraph{Training elsewhere, evaluating here}
 Ripple has no training code. Policies are trained with existing libraries
 \cite{yu2022mappo,bettini2024benchmarl} in fast simulators
 \cite{bettini2022vmas,rutherford2023jaxmarl,terry2021pettingzoo}, exported,
-and run inside Ripple as an autonomy plugin. The question is not whether
-Ripple trains faster than a GPU simulator, but whether a policy trained in a
-simple world still ranks where it did once the world is more realistic. To
-train at the realistic setting, an outside learner steps Ripple through a
-standard multi-agent interface \cite{terry2021pettingzoo}; how fast that
-runs has not been measured yet, and it is the first thing to measure.
-Learned and classical policies send the same command to the same controllers
-(a planar force for point agents in the benchmark runs, a velocity for the
-multirotor, and heading, speed, and altitude for aircraft) and read the same
-belief. Each task has one observation
-definition (frames, scaling, neighbour encoding, decision rate), and a parity
-test checks it against the training simulator, since an unnoticed mismatch
-would invalidate every result.
+and run inside Ripple as an autonomy plugin with a fixed thread count and
+their own random stream, which keeps runs deterministic. To train at the
+realistic setting, an outside learner steps Ripple through a standard
+multi-agent interface \cite{terry2021pettingzoo}. A parity test checks each
+task's observations against the training simulator, and we reproduce one
+published result, MAPPO on the spread task \cite{papoudakis2021benchmarking},
+with its authors' code, as a check on our training setup. Each learned method
+is trained three ways: at the simplest setting, at the realistic setting, and
+with the setting randomized. Comparing them separates a policy trained in the
+wrong place from a method that is fragile. Classical methods get the same
+tuning budget, counted in evaluations; the navigation baseline has nothing to
+tune.
 
-\paragraph{Training conditions}
-Each learned method is trained three ways: at the benchmark's setting, at
-the realistic setting, and with the setting randomized during training.
-Comparing the three tells a policy trained in the wrong place apart from a
-method that is fragile. Classical methods get the same tuning budget, counted
-in evaluations, at the same setting. We also report them tuned at the
-benchmark's setting and left unchanged, which matches the first learned
-condition.
+\subsection{Sweeps and Evaluation}
 
-\paragraph{Statistics}
-Each learned configuration uses ten training seeds. We report interquartile
-means with stratified bootstrap confidence intervals
-\cite{agarwal2021precipice,gorsane2022evaluation}. Learned and classical
-policies run on exactly the same evaluation episodes, which determinism
-allows. Whether the ranking holds is measured by the rank correlation between
-the ranking at each level and at the benchmark's setting, and by counting
-ranking reversals, as Kadian et al.\ do between simulation and reality
-\cite{kadian2020sim2real}. Policies trained with $N$ agents are also tested
-with $2N$ and $4N$. Table~\ref{tab:matrix} lists the design.
+Each disturbance is swept alone on each rung, then all together, from none
+to well beyond what real hardware produces, with levels spaced finely near
+the realistic range (Fig.~\ref{fig:ranges}). The range comes from published
+sensor and radio specifications, published operating limits for wind, or
+ArduPilot software-in-the-loop runs. We record the turn rates, actuator
+saturation, and message ages actually reached, since a sweep that never
+reaches an effect's regime cannot show the effect is unimportant.
 
-\begin{table}[t]
+Each task's primary metric is chosen in advance: the benchmark's return for
+navigation, success for collision avoidance, and velocity alignment for
+flocking; other outcomes are reported separately. Each learned configuration
+uses ten training seeds, and seeds, not episodes, are the independent units.
+Each method's own curve is summarized with interquartile means and stratified
+bootstrap intervals \cite{agarwal2021precipice,gorsane2022evaluation}. Tests
+cover one comparison chosen in advance per question below, corrected for
+multiplicity; everything else is exploratory. Event counts (collisions,
+deadlocks, assignment switches) are reported at every level, and replays are
+inspected near any change of sign or abrupt fall.
+
+\begin{figure}[t]
 \centering
-\small
-\caption{Experiment design. Each factor is turned up alone from the benchmark
-setting, then all together.}
-\label{tab:matrix}
-\begin{tabularx}{\linewidth}{@{}
-  P{0.24\linewidth}
-  >{\raggedright\arraybackslash}X@{}}
-\toprule
-Factor & Levels \\
-\midrule
-Task & Navigation, collision avoidance, flocking \\
-Policies & Two learned methods; one or two tuned classical methods per task \\
-Sensing & True state, then belief at four noise levels \\
-Communication & Lossless, then four loss and delay levels \\
-Dynamics & Point agent (benchmark match), multirotor (Crazyflie),
-  fixed-wing kinematics, 6-DOF fixed-wing \\
-Training & Benchmark setting, realistic setting, randomized \\
-Team size & $N$, $2N$, $4N$ \\
-Seeds & 10 training seeds; paired evaluation episodes \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \fill[tile] (0,0) rectangle (8.6,2.6);
+  \node[tiletext] at (4.3,1.3) {one axis per disturbance:\\
+    position noise, message loss, latency, wind;\\
+    benchmark default at zero, realistic band shaded,\\
+    sweep levels as ticks, with sources};
+\end{tikzpicture}
+\caption{The sweeps against the realistic range. Each axis runs from the
+benchmark's setting, no disturbance, to beyond what real hardware produces;
+the shaded band comes from published specifications, and the ticks are the
+levels we evaluate. (Placeholder: figure pending.)}
+\label{fig:ranges}
+\end{figure}
 
-\paragraph{Choosing the levels}
-Noise, loss, and delay levels come from published sensor and radio
-specifications or from ArduPilot software-in-the-loop runs, and the dynamics
-levels are the models of Sections~\ref{sec:stall} and~\ref{sec:multirotor}.
-Each level therefore corresponds to a stated physical source rather than a
-number we picked.
+\section{Experiments}
+\label{sec:learning}
 
-\paragraph{Determinism}
-Running a learned policy must not break the determinism of
-Section~\ref{sec:system}: inference uses a fixed thread count and a pinned
-backend, and a stochastic policy draws from the plugin's own random stream.
+The experiments answer five questions. For each, we recorded a prediction
+before the main runs, derived from what each method assumes, and we report
+results that contradict a prediction as such:
+\begin{enumerate}
+\item Does a simple classical baseline belong beside learned methods on the
+benchmark?
+\item Does the navigation ranking survive realistic sensing?
+\item Do fixed-wing aircraft reverse the collision-avoidance ranking, and
+why?
+\item Does lossy, late communication change which method flocks better?
+\item How far does training under realistic conditions shift the learned
+curves?
+\end{enumerate}
 
-\stub{Match the pinned benchmark implementation at the simplest setting,
-then report the rankings at each level, which factor changes them, and how
-much training at the realistic setting recovers.}
+\subsection{Does a classical baseline belong on the benchmark?}
+Learned results on the spread task are usually reported against one another,
+without a classical reference \cite{papoudakis2021benchmarking}, and a
+learned policy has been compared with optimal assignment only in its
+authors' own environment, where it came close but did not match it
+\cite{muthusamy2024unlabeled}. We compare MAPPO, trained with published
+settings, with the assignment baseline at the benchmark's own setting, and
+expect the baseline to match or exceed it on coverage and path cost. We then
+repeat the comparison with both methods on velocity commands, the learned
+one retrained; this links the benchmark's ranking to the vehicle rungs.
+\stub{Results pending.}
 
-\section{Discussion}
-\label{sec:discussion}
+\subsection{Does the navigation ranking survive realistic sensing?}
+Assignment should hold until the noise is comparable to the differences
+between agents' distances to their landmarks, then fall sharply as agents
+swap targets; MAPPO should degrade gradually. We expect the gap to change
+sign within the error of consumer satellite positioning, and count
+assignment switches and path cost to explain it. \stub{Results pending.}
 
-\subsection{What Makes an Integration Useful?}
+\subsection{Do fixed-wing aircraft reverse collision avoidance?}
+ORCA assumes an agent can slow down or stop. Aircraft held near constant
+speed settle on parallel tracks without resolving the conflict
+\cite{durand2018csorca}, and we found no learned versus classical comparison
+on fixed-wing aircraft. We expect the gap at zero disturbance to have the
+opposite sign on the fixed-wing rungs from the point-agent rung, and the
+multirotor, which can nearly stop, to stay close to the point agents. If ORCA
+also fails on the kinematic aircraft, the inability to stop is the cause; if
+only on the 6-DOF aircraft, the dynamics are. We count deadlocks and closest
+approach. \stub{Results pending.}
 
-An integration is useful when it makes an experiment possible and there is
-enough evidence to interpret the results: agreement with an external source,
-known physical limits, and measured run cost. It does not need to change a
-ranking. An impressive trajectory or a changed ranking also does not replace
-checking that the imported model still behaves as intended.
+\subsection{Does lossy communication change who flocks better?}
+A learned flocking controller's advantage comes from information passed over
+several hops: Tolstaya et al.'s graph network beat a local controller at a
+short communication range, where that information matters most
+\cite{tolstaya2020gnn}. Lost and late messages degrade it, while the
+classical rules use only direct neighbours. We expect the gap to change sign
+within the loss and delay of real low-power radios. \stub{Results pending.}
 
-So the work can proceed one model at a time, each adding a level to the
-dynamics factor of Section~\ref{sec:learning}. The coordination results
-still need held-out layouts, team sizes, and opponents, and runs with
-communication removed to check that a policy actually uses it
-\cite{ellis2023smacv2}.
+\subsection{How far does realistic training shift the curves?}
+Training under realistic or randomized conditions removes the learned
+policy's unfamiliarity with the disturbance, while a classical method's
+broken assumption remains. We expect it to shift the learned gap curves in
+their favour, moving any change of sign toward larger disturbances, without
+removing the loss. We compare the three training conditions as groups of ten
+seeds. \stub{Results pending.}
 
-\subsection{Limits}
+\section{Discussion and Future Work}
+\label{sec:limits}
 
-No learned policy has yet been trained or evaluated in Ripple, and the network
-model has no delay. The multirotor flies closed loop, but only on its native
-controller, and its motor lag is uncertain by a factor of two. No model is yet
-checked against a vehicle's
-measured flight data; the stall tables carry JSBSim's Rascal values, which
-their own README calls pre-alpha. The stall result is one mission, one
-aircraft, and one autopilot configuration, on one machine; its
-byte-repeatability with ArduPilot is shown there and not across machines or
-ArduPilot versions. Effects that are not modeled, such as spin and propeller
-wash over a wing, bound what the experiments can test.
-Agreement of the base system with C++ SCRIMMAGE is established for the models
-and configurations in Appendix~\ref{app:baseline}; extensions require
-their own comparisons.
+\stub{Summarize what the gap curves show across the three tasks and the
+vehicle rungs: where the benchmark's ranking held, where it changed, which
+factor changed it, and what realistic training recovered.}
 
-\section{Conclusion}
+Every comparison in this study is between simulations. The ladder measures
+whether a simplified benchmark predicts what a checked, more detailed
+simulation says, not what real vehicles would do, and a more detailed
+simulation is not automatically closer to reality
+\cite{truong2022rethinking}. The results are therefore guidance within the
+tested models and regimes. Where a model's source was measured on hardware,
+as the Crazyflie's parameters were \cite{forster2015crazyflie}, matching that
+source carries some of its evidence. The multirotor's motor lag is uncertain
+by a factor of two, and spin and propeller wash over a wing are not modeled.
 
-\stub{State the completed integrations and the external check behind each.
-Then report what the three tasks show: where rankings changed, which factor
-changed them, where they held, and what training at the realistic setting
-recovered. End with the next model or measurement the results call for.}
+Several directions follow. A few real flights, such as three Crazyflies on
+the navigation task, would test the multirotor rung directly, and measured
+flight data for a fixed-wing aircraft would do the same for the aircraft
+rungs. Gusts, larger teams, and further tasks would extend the sweeps.
+More broadly, we hope that reporting a gap curve with its realistic range,
+rather than a single ranking, becomes a common way to compare multi-robot
+methods, so that a benchmark result says how far it can be trusted.
 
 \section*{Generative AI Disclosure}
 
 Claude (Anthropic) assisted with implementation, running the experiments,
-checking sources for the provenance audit, and drafting text from retained
-data. OpenAI Codex assisted with revising the paper's framing and integration
-evaluation plan. \stub{Update this statement to reflect actual assistance and
-author
-review, following the selected venue's policy.}
+checking sources, and drafting text from retained data. OpenAI Codex
+assisted with revising the paper's framing and evaluation plan.
+\stub{Update this statement to reflect actual assistance and author review,
+following the selected venue's policy.}
 
 \appendices
 
-\section{Agreement with C++ SCRIMMAGE}
-\label{app:baseline}
-
-Ripple began as a port of SCRIMMAGE, so its starting point is checked against
-the C++ simulator. Both run the same mission files, and we compare where every
-agent went, what each agent believed, what its sensors reported, what each
-plugin commanded, and when every message arrived.
-\begin{itemize}
-\item All 14 hand-written missions and 100 randomly generated scenarios agree,
-to $2.4\times10^{-10}$~m at worst and usually to about $10^{-14}$~m, which is
-floating-point rounding.
-\item The comparison catches all 12 planted porting bugs, such as a controller
-gain 1\% too high or a message one tick late. Two message bugs leave
-trajectories unchanged and are caught only by the trace.
-\item Eight of ten runs of up to 1{,}000~s agree throughout; the other two end
-about 0.2~mm and $8\times10^{-9}$~m apart, and perturbation controls suggest
-numerical sensitivity.
-\item Seven NoisyContacts error distributions show no difference at the
-corrected significance threshold (smallest $p = 0.031$ against 0.0071).
-\item Every other difference is a C++ defect that Ripple fixes or a documented
-choice (Table~\ref{tab:differences}).
-\end{itemize}
-The results come from one release run of the checks from a clean checkout
-(Appendix~\ref{app:reproduction}); \texttt{paper/data/release.json} records the
-hash of the source that ran and the C++ commits, \texttt{4bdf41fb0}
-(\texttt{Ubuntu-24.04}) and \texttt{1c8595b91} (\texttt{benchmarking-edits}).
-
-\paragraph{Builds}
-Each C++ branch is built from a \texttt{git archive} in the unmodified upstream
-dependency image (\texttt{linux/amd64}, GCC~13.3), headless and single-threaded.
-\texttt{Ubuntu-24.04} is the unmodified reference. \texttt{benchmarking-edits}
-adds opt-in instrumentation and the fixes Ripple shares: the substep order
-(below) and the vehicle model fixes (Table~\ref{tab:model-fixes}). Every
-mission also runs on the unmodified build, and instrumentation must leave
-frames and summaries byte-identical.
-
-\paragraph{Trace}
-Set with \texttt{SCRIMMAGE\_TRACE} in C++ and \texttt{-{}-trace} in Ripple, it
-records every message delivery (tick, network, topic, sender, receiver, and the
-entities in lifecycle and collision events), every published sensor state and
-covariance, each entity's belief, and every output the next plugin reads.
-Other message contents, such as auction bids, are compared by delivery only.
-
-\paragraph{Criteria}
-States, beliefs, and readings must agree within $10^{-8}$~m, $10^{-8}$~m/s,
-$10^{-9}$~rad, and $10^{-9}$~rad/s; plugin outputs within $10^{-8}$;
-covariances within $10^{-9}$; summaries within $10^{-6}$. Deliveries must
-match exactly and in order. The position limit is 27 times the largest
-difference measured in a passing run when it was set; it replaced a 0.01~m
-limit that let a planted sub-micrometre bug through.
-
-\paragraph{Random draws}
-The C++ standard leaves the default random engine and the normal
-distribution's algorithm to each library, and GCC's differs from the LLVM
-behavior Ripple reproduces. With \texttt{SCRIMMAGE\_LIBCXX\_SPAWN\_RANDOM} the
-C++ branch draws spawns from \texttt{std::minstd\_rand} with Ripple's normal
-algorithm: the randomized mission then agrees to $1.4\times10^{-14}$~m instead
-of differing by up to 8.42~m. Ripple gives each sensor its own random stream,
-so sensor noise is compared with fixed-bias fixtures and by distribution.
-
-\paragraph{Long runs}
-Ten generated scenarios run for up to 1{,}000~s. For one that diverges, a
-control perturbs Ripple alone (one unit in the last place on initial roll,
-speeds, and turn radii, and controller gains scaled by $1+10^{-12}$) and
-measures when Ripple diverges from itself. In \texttt{generated-000} an
-aircraft settles into a sustained pitch oscillation; C++ and Ripple separate
-after 28.8~s and the control after 26.8~s, both ending about
-$2\times10^{-4}$~m away. In \texttt{generated-007} C++ and Ripple separate
-after 76.4~s, the control already after 14.4~s (Table~\ref{tab:long}). This
-suggests numerical sensitivity; it does not rule out a small implementation
-difference.
-
-\paragraph{Summaries}
-A differing summary passes only if entity and collision counts match exactly
-and Ripple's metrics messages reproduce the C++ summary under the C++ scoring
-rule and Ripple's summary under its documented rule
-(\texttt{reference/metrics\_model.py}). The only exclusion: first-step trace
-records of entities C++ destroys before the first step, which C++ still runs
-for that step; they are counted.
-
-\paragraph{The substep correction}
-A mission can split each tick into substeps so that vehicle physics runs
-finer than decisions. From its first public commit in 2017, SCRIMMAGE ran each
-substep as the controllers and then the motion model, a cascade in which the
-controller sees the state the previous substep wrote. The commit adding GPU
-support (\texttt{c0a9f42b2}, December 2025) ran all controller substeps before
-any motion, with no stated reason. With more than one substep, every
-controller call in a tick then sees the same state and goal, the motion model
-flies only the last command, and a PID controller's derivative term is zero on
-calls whose setpoint and measurement are unchanged. With one substep the two
-orders are identical, so comparison with the current C++ could not reveal it.
-The comparison branch (\texttt{7129e47f5}) restores the interleaved order and
-Ripple follows it. The unmodified and fixed C++ write identical output on all
-nine curated single-substep missions that use no other corrected plugin, and
-the two substep missions agree with the fixed C++ to $4.8\times10^{-14}$~m.
-
-\paragraph{Vehicle model fixes}
-Reviewing the inherited vehicle models for this work turned up defects in the
-C++ itself (Table~\ref{tab:model-fixes}): first in the fixed-wing aircraft and
-its autopilot, then in the multirotor. Each is the same kind of change. The
-C++ computes something wrong, Ripple computes it correctly, and the comparison
-branch takes the identical fix, so the comparison checks the corrected model
-instead of reproducing the defect. The unmodified build keeps the defects;
-for missions that use these models its equality with Ripple is only recorded.
-These fixes are distinct from the optional upgrades the C++ never had, which
-are off by default and checked against their own sources instead of the C++:
-stall tables and landing gear for the fixed wing, after JSBSim
-(Section~\ref{sec:stall}), and motor lag and rotor drag for the multirotor,
-after RotorS (Section~\ref{sec:multirotor}).
-
-The fixed-wing fixes were measured on their own. With forces held through the
-RK4 stages, a FixedWing6DOF glider ends 17~m from a fine-step reference after
-60~s at 0.05~s steps; computed at each stage, $1.5\times10^{-5}$~m
-(\texttt{paper/data/rk4-loads}). After a 5$^\circ$ roll and 3$^\circ$ pitch
-upset, the old altitude gain lets the default aircraft wander 91~m in altitude
-over 45~s, the new one 1.4~m. The multirotor defects appear only in cases the
-curated mission never flies: before and after the fixes its trajectories differ
-by at most $6\times10^{-12}$~m. A fixture that starts a vehicle moving, tilts
-and raises its rotors, and holds motors at idle separates the unfixed C++ from
-Ripple at the first step and agrees with the fixed C++ to $4\times10^{-13}$~m.
-The multirotor these comparisons fly is the C++ default quad, which Ripple does
-not build in: its numbers carry no source and look designed rather than measured
-(its thrust coefficient gives exactly 0.8~kgf per motor at its round top speed,
-and its inertia is four point-mass motors), so only the comparison missions
-write them out.
-
-\begin{table*}[t]
-\centering
-\caption{Vehicle model defects in the C++, fixed in Ripple and on the C++
-comparison branch alike.}
-\label{tab:model-fixes}
-\small
-\begin{tabularx}{\textwidth}{
-  P{0.15\textwidth}
-  P{0.22\textwidth}
-  >{\raggedright\arraybackslash}X
-  P{0.2\textwidth}
-  P{0.08\textwidth}}
-\toprule
-Model & What the C++ did & Why it is wrong & Fix (both) & Commit \\
-\midrule
-FixedWing6DOF and Multirotor & Computed forces and moments from the
-  start-of-step state and held them through all four RK4 stages & The step is
-  first order at the cost of four evaluations & Recompute them from each
-  stage's state & \texttt{1c8595b91} \\
-AircraftPID\-Controller & Used the full mission tick as its timestep during
-  substeps; altitude derivative gain 0.01 & Its tuning changed with the
-  substep count, and the gain turned a small upset into a growing altitude and
-  heading oscillation & Use the substep given; gain 0.002 &
-  \texttt{5777aeea1} \\
-Multirotor velocity & Kept a private body velocity, starting at zero, and
-  integrated the reported world velocity separately & A vehicle given a
-  velocity reported it without moving, and the two copies could drift apart &
-  Read body velocity and rates from the shared state each step &
-  \texttt{74571470e} \\
-Multirotor moment arms & Multiplied thrust by the full 3D rotor offset, in the
-  horizontal plane, and ignored configured rotor tilt & A rotor mounted higher
-  gained leverage, and a tilted rotor still pushed straight up & Each rotor
-  pushes along its tilted axis; moment $r \times F$ & \texttt{74571470e} \\
-Multirotor idle & Zeroed a rotor's thrust only when its speed equalled the
-  minimum exactly, keeping its yaw torque & Thrust jumped at the bottom of the
-  range, and an idling motor twisted without pushing & The minimum is an armed
-  motor's idle: thrust and torque both continue & \texttt{74571470e} \\
-\bottomrule
-\end{tabularx}
-\end{table*}
-
-\paragraph{Coverage and limits}
-Compared: SimpleAircraft, FixedWing6DOF, Multirotor, and SingleIntegrator with
-their controllers; Straight; AuctionAssign's message timing; NoisyState and
-NoisyContacts; SimpleCollision, GroundCollision, and Boundary; Global, Local,
-and SphereNetwork; SimpleCollisionMetrics; substeps, update rates, and
-scheduled and randomized spawning. Agreement covers these models in the tested
-configurations, not the whole C++ plugin catalog. Results agree to rounding,
-not bit for bit, because the two call different math libraries. NoisyState
-noise is not tested by distribution, and NoisyContacts only by seven marginal
-distributions in one fixture.
-
-\input{generated/parity}
-\input{generated/cpp_agreement}
-\input{generated/generated}
-\input{generated/sensitivity}
-\input{generated/noise}
-\input{generated/long}
-
-\begin{table*}[t]
-\centering
-\caption{Known C++/Ripple differences and how the comparison treats them.}
-\label{tab:differences}
-\small
-\begin{tabularx}{\textwidth}{
-  P{0.18\textwidth}
-  >{\raggedright\arraybackslash}X
-  P{0.22\textwidth}}
-\toprule
-Difference & Cause & Treatment \\
-\midrule
-Survivor flight time &
-C++ publishes \texttt{EntityPresentAtEnd} after its last network phase, so
-metrics credit survivors only until the latest removal. Ripple credits them
-until the end. &
-Summary must equal the C++ rule applied to Ripple's messages. \\
-Teams first spawned after $t=0$ &
-C++ scores such a team without a normalization window: infinite
-\texttt{flight\_time\_norm}, NaN \texttt{score}. &
-As above. \\
-Entities destroyed before the first step &
-C++ keeps them for one step: they still run their plugins, are reported removed
-twice, and score as surviving. Ripple removes them once. &
-First-step trace records excluded and counted; summary as above. \\
-Randomized spawning &
-C++ leaves its default random generator to the standard library; the reference
-build's differs from the one Ripple uses. &
-C++ branch uses the same generator as Ripple. \\
-Sensor noise samples &
-Ripple gives each sensor its own random stream; C++ shares one. &
-Compared by distribution. \\
-SphereNetwork positions &
-C++ queries a range tree built before motion; Ripple uses current post-motion
-positions. &
-No compared delivery differed. \\
-FixedWing6DOF inertia &
-C++'s default silently overrides a supplied SI inertia matrix; Ripple accepts
-either and rejects both together. &
-Fixtures use the default. \\
-\bottomrule
-\end{tabularx}
-\end{table*}
-
-\section{Determinism}
+\section{Determinism, Cost, and Reproduction}
 \label{app:self}
 
-Ripple's output is byte-identical across 1, 2, and 8 workers, with and without
-recording and tracing, and whether a scenario comes from XML, YAML, or Rust
-code. Workers own separate entities, every phase finishes before the next
-starts, and random draws are tied to entities and plugins rather than workers.
-Built for Linux/amd64 instead of macOS/arm64, events and summaries stay
-identical in all 56 runs checked and trajectories differ by at most
-$2.4\times10^{-12}$~m, because each system's math library rounds differently
-(\texttt{reference/platform\_check.py}).
-
-\section{Scaling}
-\label{app:scaling}
-
-Two costs in SCRIMMAGE's design grow with the square of the team size: finding
-which agents are near each other, and deciding which messages reach which
-plugins. Ripple removes both inside the engine without changing any output.
-
-\paragraph{Finding nearby agents}
-SCRIMMAGE's SimpleCollision compares every ordered pair of agents. In Ripple a
-plugin asks the engine once for the agents within a range, or for every close
-pair, and the mission chooses how the engine answers: a scan of every agent
-(the default, and the only method for XML missions) or a grid of vertical
-columns of width $w$. The grid supplies only candidates; each gets the scan's
-exact distance test, and survivors come back in entity order, so the answer
-and its order never change. The grid is built after motion and rebuilt before
-interactions, networks, and metrics if anything moved. SimpleCollision now
-consumes close pairs in the order its old double loop visited them, so events
-and survivors are unchanged. The determinism check runs every mission and
-three crowded ones (up to 2{,}048 agents and 795 collisions) with the scan and
-with grids from 0.7 to 1{,}000~m: frames, summaries, and events are
-byte-identical. With 4{,}096 spread-out agents a step takes 9.0~ms with the
-scan and 3.8~ms with 5~m cells (Table~\ref{tab:spatial}); with 256 agents the
-grid is 9\% slower.
-
-\paragraph{Delivering messages}
-C++ checks each message against every subscriber to its topic, so when every
-agent publishes on a topic every agent subscribes to, as NoisyState does on
-LocalNetwork, that is $n^2$ checks per tick. Ripple indexes each published
-channel's subscribers per routing phase, and a network that delivers only
-within the sender's agent (LocalNetwork) routes against that agent's
-subscribers alone. Every link a network decides is decided with the same
-inputs and in the same order as in C++, and the C++ comparison requires all
-6{,}132 traced deliveries to match. With 4{,}096 agents running NoisyState a
-step takes 9.4~ms in Ripple against 378~ms in C++ (Table~\ref{tab:messages}).
-
-\paragraph{Cost against C++}
-On five timing workloads on one Apple M2 Pro, Ripple on one core is 1.04 to
-1.6 times faster than single-threaded C++ where the two produce identical
-output, and uses 2.1 to 6.3 times less memory on every workload
-(\texttt{paper/data/speed-cpp-container/},
-\texttt{paper/data/speed-cpp-native/}). C++'s own multi-threaded mode
-deadlocked in 9 of 219 runs and is not used as the baseline.
-
-\IfFileExists{generated/spatial.tex}{\input{generated/spatial}}{}
-\IfFileExists{generated/messages.tex}{\input{generated/messages}}{}
-
-\section{Checks and Reproduction}
-\label{app:reproduction}
-
-One runner, \texttt{reference/suite.py}, runs every check by a stable ID
-(Table~\ref{tab:checks}). The quick set runs after a change; the release set
-adds the slower C++ studies and benchmarks. A check's evidence is kept in
-\texttt{paper/data/<check>/} only when every selected check passed, and
-\texttt{paper/data/release.json} records each outcome with the hash of the
-source that ran. Speed is judged against one accepted baseline recorded with
-its workloads, machine, and compiler. Every result in these appendices comes
-from one command, run in a fresh copy of the repository with no Git history,
-beside the C++ checkout and with Docker running:
+Output is byte-identical across 1, 2, and 8 workers, with and without
+recording and tracing, and whether a scenario comes from XML, YAML, or Rust;
+across Linux/amd64 and macOS/arm64, events and summaries are identical and
+trajectories differ by at most $2.4\times10^{-12}$~m. Spatial queries from a
+grid and message routing by subscriber make a 4{,}096-agent step 2.4 and 40
+times faster than the pairwise designs they replace, with identical output.
+On one core, Ripple runs 1.04 to 1.6 times faster than single-threaded
+SCRIMMAGE and uses 2.1 to 6.3 times less memory. Every verification check in
+this paper comes from one command, run in a fresh copy of the Ripple
+repository next to a SCRIMMAGE checkout:
 \begin{verbatim}
 python3 reference/suite.py --release --retain
 \end{verbatim}
-\texttt{reference/README.md} documents each check, the builds, tolerances, and
-trace records; the compared missions are listed in
-\texttt{reference/missions.txt}.
-
-\IfFileExists{generated/checks.tex}{\input{generated/checks}}{}
+\texttt{reference/README.md} documents each check.
 
 \bibliographystyle{plainnat}
 \bibliography{../references}

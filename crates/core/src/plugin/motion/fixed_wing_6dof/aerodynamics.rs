@@ -108,8 +108,8 @@ impl Aerodynamics {
         let q_radps = rates_model_radps.y;
         let r_radps = rates_model_radps.z;
 
-        // Linear lift, as in C++, unless the mission gives a lift table, whose
-        // peak and fall past the critical angle model a stall (Rust-only).
+        // Linear lift, unless the mission gives a lift table, whose peak and
+        // fall past the critical angle model a stall.
         // Accepted limitations: both wings stall together, so there is no
         // spin, and drag ignores sideslip. A deep stall or flying far sideways
         // is treated as already a failure; the model is not meant to recover

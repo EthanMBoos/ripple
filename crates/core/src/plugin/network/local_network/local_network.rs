@@ -1,6 +1,6 @@
 //! Same-entity communication, not distance-limited communication.
 //!
-//! C++ counterpart: src/plugins/network/LocalNetwork/LocalNetwork.cpp.
+//! Derived from SCRIMMAGE: src/plugins/network/LocalNetwork/LocalNetwork.cpp.
 //! Network phase: inspect endpoint owners, route same-entity messages immediately.
 
 use anyhow::{Result, ensure};
@@ -14,7 +14,7 @@ use crate::plugin::{Delivery, Network, NetworkContext, Plugin, PluginParams, Upd
 pub struct LocalNetworkConfig {
     /// Stochastic delay is not implemented; must stay false.
     is_stochastic_delay: bool,
-    /// C++ uses a negative value to mean no delay; queued delay is not ported.
+    /// A negative value means no delay; queued delay is not implemented.
     #[serde(rename = "comm_delay")]
     comm_delay_s: f64,
 }

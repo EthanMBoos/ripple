@@ -1,6 +1,6 @@
 //! Nested heading/altitude and roll/pitch PID loops for FixedWing6DOF.
 //!
-//! C++ counterpart: controller/AircraftPIDController (GTRI, LGPL-3.0-or-later).
+//! Derived from SCRIMMAGE: controller/AircraftPIDController (GTRI, LGPL-3.0-or-later).
 //! Controller phase: read desired commands and belief, output throttle and surfaces.
 
 use anyhow::{Context, Result, ensure};
@@ -186,10 +186,8 @@ impl Controller for AircraftPidController {
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
         let state = context.state;
         let attitude = state.orientation_world_from_body;
-        // Use the supplied substep interval. Unmodified C++ uses time_->dt()
-        // (the full mission tick), so substeps overcount integral time,
-        // undercount the derivative response, and change the tuning with
-        // motion_multiplier; the comparison branch fixes it the same way.
+        // Use the supplied substep interval, not the full mission tick, so the
+        // tuning doesn't change with motion_multiplier.
         let dt_s = context.time.dt_s;
         let desired_pitch_rad =
             -self

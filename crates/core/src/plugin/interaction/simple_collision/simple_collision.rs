@@ -1,6 +1,6 @@
-//! Fixed-distance collision detection, matching the C++ SimpleCollision plugin.
+//! Fixed-distance collision detection.
 //!
-//! C++ counterpart: src/plugins/interaction/SimpleCollision/SimpleCollision.cpp.
+//! Derived from SCRIMMAGE: src/plugins/interaction/SimpleCollision/SimpleCollision.cpp.
 //! Startup checks candidate positions; the interaction phase marks collisions and emits events.
 //! The interaction phase asks the engine for pairs in range (`SpatialIndex::pairs_within`),
 //! so a mission's `spatial_lookup` grid speeds it up without changing its results.

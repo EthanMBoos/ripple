@@ -1,9 +1,9 @@
 //! A single random-bid auction initiated by entity 1; no task execution or navigation.
 //!
-//! C++ counterpart: src/plugins/autonomy/AuctionAssign/AuctionAssign.cpp (LGPL-3.0-or-later).
+//! Derived from SCRIMMAGE: src/plugins/autonomy/AuctionAssign/AuctionAssign.cpp (LGPL-3.0-or-later).
 //! Autonomy phase: consume delivered starts/bids, then publish bids or the final winner.
 //! Later autonomy plugins may overwrite this demo's zero velocity commands.
-//! Bids come from this plugin's mission-seeded stream, not C++'s shared generator.
+//! Bids come from this plugin's own mission-seeded random stream.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;
@@ -137,14 +137,14 @@ impl Autonomy for AuctionAssign {
             }
         }
 
-        // Matches C++ for now, though we don't consider it correct: only entity ID 1
-        // can run the auction; `auctioneer=true` on any other entity does nothing.
+        // Only entity ID 1 can run the auction; `auctioneer=true` on any other
+        // entity does nothing. Fine for a demo plugin.
         if self.auctioneer && context.entity.id == 1 {
             if let Some(started_at_s) = self.started_at_s {
-                // Preserve the C++ strict deadline: close on the first tick after five seconds.
+                // Strict deadline: close on the first tick after five seconds.
                 if !self.completed && context.time.time_s > started_at_s + self.duration_s {
-                    // C++ also logged the winner with LOG_INFO. Rust has no plugin log
-                    // output yet, so only subscribers see the result; stock run outputs
+                    // There is no plugin log output yet, so only subscribers see the
+                    // result; stock run outputs
                     // (events, summary, Rerun) do not record it. Worth adding later.
                     context.messages.publish(
                         &self.network,

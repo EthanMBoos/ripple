@@ -1,6 +1,6 @@
 //! All endpoints are reachable; the engine handles queued delivery.
 //!
-//! C++ counterpart: src/plugins/network/GlobalNetwork/GlobalNetwork.cpp.
+//! Derived from SCRIMMAGE: src/plugins/network/GlobalNetwork/GlobalNetwork.cpp.
 //! Network phase: route every matching publisher/subscriber link immediately.
 
 use anyhow::{Result, ensure};
@@ -14,7 +14,7 @@ use crate::plugin::{Delivery, Network, NetworkContext, Plugin, PluginParams, Upd
 pub struct GlobalNetworkConfig {
     /// Stochastic delay is not implemented; must stay false.
     is_stochastic_delay: bool,
-    /// C++ uses a negative value to mean no delay; queued delay is not ported.
+    /// A negative value means no delay; queued delay is not implemented.
     #[serde(rename = "comm_delay")]
     comm_delay_s: f64,
 }

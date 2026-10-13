@@ -11,9 +11,8 @@ pub use state::KinematicState;
 
 pub type Vec3 = nalgebra::Vector3<f64>;
 
-/// Degrees to radians with C++ SCRIMMAGE's rounding (`Angles::deg2rad`):
-/// `deg * PI / 180`. `f64::to_radians` multiplies by `PI / 180` instead and can
-/// differ in the last bit, which long runs amplify.
+/// Degrees to radians as `deg * PI / 180`. `f64::to_radians` multiplies by
+/// `PI / 180` instead and can differ in the last bit, which long runs amplify.
 pub(crate) fn deg_to_rad(deg: f64) -> f64 {
     deg * std::f64::consts::PI / 180.0
 }

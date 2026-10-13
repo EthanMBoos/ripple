@@ -1,6 +1,6 @@
 //! Collision scores are an event subscriber, not mutable state inside SimControl.
 //!
-//! C++ counterpart: src/plugins/metrics/SimpleCollisionMetrics/SimpleCollisionMetrics.cpp.
+//! Derived from SCRIMMAGE: src/plugins/metrics/SimpleCollisionMetrics/SimpleCollisionMetrics.cpp.
 //! Metrics phase: consume delivered lifecycle/collision events; report team totals.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -124,9 +124,7 @@ impl Metrics for SimpleCollisionMetrics {
             .to_vec(),
             ..MetricReport::default()
         };
-        // Intentional C++ difference: C++ never delivers EntityPresentAtEnd to metrics,
-        // so survivors there are credited only until the last removal. Here an entity
-        // without a recorded end flies until the report time.
+        // An entity without a recorded end flies until the report time.
         let mut first_spawn_s = f64::INFINITY;
         let mut last_end_s = f64::NEG_INFINITY;
         for score in self.scores.values() {
@@ -139,9 +137,8 @@ impl Metrics for SimpleCollisionMetrics {
             last_end_s
         };
 
-        // Intentional C++ difference: C++ lists teams at its first metrics step, so a
-        // team whose entities all spawn later gets an infinite normalized flight
-        // time and NaN score. Every team with a generated entity is reported here.
+        // Every team with a generated entity is reported, including teams that
+        // first spawn late.
         let teams: BTreeSet<i32> = self.scores.values().map(|score| score.team_id).collect();
         for team_id in &teams {
             let mut entity_count = 0;

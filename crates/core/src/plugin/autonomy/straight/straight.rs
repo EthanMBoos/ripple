@@ -1,6 +1,6 @@
 //! Fly toward a distant point along the initial heading, holding altitude and speed.
 //!
-//! C++ counterpart: src/plugins/autonomy/Straight/Straight.cpp.
+//! Derived from SCRIMMAGE: src/plugins/autonomy/Straight/Straight.cpp.
 //! Autonomy phase: read current state, write desired altitude, speed, and heading.
 
 use anyhow::{Result, ensure};
@@ -105,13 +105,9 @@ impl Autonomy for Straight {
         context
             .messages
             .subscribe::<BoundaryRegion>("GlobalNetwork", BOUNDARY_TOPIC)?;
-        // C++ Straight also subscribes to measured state and contacts. It uses the
-        // state message in place of its own state; here belief already holds that
-        // measurement. Subscribe and discard both so message delivery matches C++:
-        // useful while the port is still being trusted, since the C++ comparison
-        // checks every delivery. TODO(estimation): once it is, remove both
-        // subscriptions (and the receives in `step`) along with NoisyState's and
-        // NoisyContacts' duplicate publishes.
+        // Measured state and contacts are subscribed and discarded: belief already
+        // holds the measurement, and only the comparison trace needs the
+        // deliveries. To remove with the sensors' duplicate messages (docs/TODO.md, milestone A).
         context
             .messages
             .subscribe::<StateWithCovariance>("LocalNetwork", STATE_TOPIC)?;
@@ -150,8 +146,7 @@ impl Autonomy for Straight {
         }
         let displacement_world_m = math::sub(self.goal_world_m, state.position_world_m);
         let distance_m = math::norm(displacement_world_m);
-        // C++ computes speed * diff.normalized(): normalize first, then scale.
-        // The rounding order matters over long runs.
+        // Normalize first, then scale: the rounding order matters over long runs.
         let velocity_world_mps =
             displacement_world_m.map(|component_m| self.speed_mps * (component_m / distance_m));
         let desired_speed_mps = math::norm(velocity_world_mps);

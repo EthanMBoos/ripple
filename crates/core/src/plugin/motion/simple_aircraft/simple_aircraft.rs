@@ -1,13 +1,13 @@
-//! SimpleAircraft dynamics, limits, and RK4 integration from the C++ reference.
+//! SimpleAircraft dynamics, limits, and RK4 integration.
 //!
-//! C++ counterpart: src/plugins/motion/SimpleAircraft/SimpleAircraft.cpp.
+//! Derived from SCRIMMAGE: src/plugins/motion/SimpleAircraft/SimpleAircraft.cpp.
 //! Motion phase: read throttle/model angular rates, integrate, update mutable truth.
 //!
 //! Fidelity
 //! - Source: a kinematic aircraft: speed, roll, and pitch follow commands
 //!   within rate and range limits, and turn rate comes from bank angle and a
 //!   turning radius. The default limits are round numbers, not any aircraft.
-//! - Validated against: C++ SimpleAircraft (the C++ comparison missions, its
+//! - Validated against: SCRIMMAGE's SimpleAircraft (the comparison missions, its
 //!   generated scenarios, and the long runs).
 //! - Valid range: a stand-in for an aircraft that turns and climbs within its
 //!   limits; not a physical model.
@@ -27,7 +27,7 @@ use crate::{
     },
 };
 
-/// Mission parameters in the C++ units; `Default` supplies any key the mission leaves out.
+/// Mission parameters in the mission file's units; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct SimpleAircraftParams {
@@ -209,9 +209,9 @@ impl SimpleAircraft {
         control: AircraftControl,
         dt_s: f64,
     ) -> Result<()> {
-        // Matches C++ for now, though we don't consider it correct: integration continues
-        // from this private state, so changes an interaction makes to truth (position,
-        // velocity, attitude) are overwritten on the next motion step.
+        // Known defect: integration continues from this private state, so changes an
+        // interaction makes to truth (position, velocity, attitude) are overwritten on
+        // the next motion step. To fix: docs/TODO.md, milestone A.
         self.clamp_state();
 
         let limited_control = AircraftControl {
@@ -243,9 +243,10 @@ impl SimpleAircraft {
         let state = self.state;
         truth.position_world_m = state.position_world_m;
         truth.orientation_world_from_body = state.orientation_world_from_body();
-        // Matches C++ for now, though we don't consider it correct: reported vertical
-        // velocity uses +sin(pitch), while altitude integration below uses -sin(pitch).
+        // Known defect: reported vertical velocity uses +sin(pitch), while altitude
+        // integration uses -sin(pitch).
         // Angular velocity is also never set, so turning aircraft report zero rates.
+        // To fix: docs/TODO.md, milestone A.
         truth.velocity_world_mps = Vec3::new(
             state.speed_mps * state.yaw_world_from_body_rad.cos() * state.pitch_model_rad.cos(),
             state.speed_mps * state.yaw_world_from_body_rad.sin() * state.pitch_model_rad.cos(),

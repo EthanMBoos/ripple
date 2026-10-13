@@ -508,8 +508,8 @@ impl Slot<dyn AgentBehavior> {
         state: &KinematicState,
         contacts: KnownContacts<'_>,
     ) -> Result<Update> {
-        // Matches C++ for now, though we don't consider it correct: a rate-limited plugin
-        // receives the phase dt, not the elapsed time since it last ran.
+        // Known defect: a rate-limited plugin receives the phase dt, not the time
+        // since it last ran; wrong for any plugin that uses dt (docs/TODO.md, milestone A).
         if !self.rate.due(time.dt_s) {
             return Ok(Update::Applied);
         }
@@ -549,8 +549,7 @@ pub(crate) struct PluginStack {
     /// Known contacts, written only by tracking.
     contacts: ContactList,
     /// PassThrough localization of the perfect state measurement: belief is
-    /// truth, so controllers can see it after every motion substep, as C++
-    /// controllers read truth through belief when no sensor detaches it.
+    /// truth, so controllers can see it after every motion substep.
     belief_is_perfect_state: bool,
     /// What the motion model read on each substep this tick, for localization.
     command_names: Vec<String>,
@@ -565,7 +564,7 @@ fn handle_update(update: Update, stop_requested: &mut bool) {
     }
 }
 impl PluginStack {
-    /// Sensors, then motion, as C++ orders them. Estimators and decision plugins
+    /// Sensors, then motion. Estimators and decision plugins
     /// start later, in `start`, once the whole population exists.
     pub fn initialize(
         &mut self,

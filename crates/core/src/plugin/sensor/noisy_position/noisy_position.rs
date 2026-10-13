@@ -1,5 +1,5 @@
 //! Small authoring example: world position with configurable bias and Gaussian noise.
-//! This is a new example sensor, not a parity claim for C++ NoisyState.
+//! A new example sensor, separate from NoisyState.
 //! Sensor phase: sample post-motion truth, apply bias/noise, hand the reading to the estimators.
 
 use anyhow::{Result, ensure};

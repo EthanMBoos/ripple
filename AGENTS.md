@@ -20,8 +20,8 @@ out of the default build.
   branch: opt-in instrumentation (tracing, test drivers, selectable RNG) that
   leaves outputs byte-identical, and fixes for documented C++ defects (the
   substep order, AircraftPIDController, the RK4 loads in FixedWing6DOF and
-  Multirotor, and Multirotor's velocity, moment arms, and idle thrust,
-  `docs/REFERENCE_NOTES.md`).
+  Multirotor, Multirotor's velocity, moment arms, and idle thrust, and the
+  milestone A fixes in `docs/TODO.md`; see `docs/REFERENCE_NOTES.md`).
 - User research plugins live in workspace user crates such as `crates/starter`,
   registered in `crates/cli/src/main.rs`; keep the starter building and tested.
 - XML and YAML missions share one typed `ScenarioConfig`; XML is frozen, only
@@ -40,10 +40,16 @@ guides](book/src/appendix/cpp.md). The copied C++ guides stay unchanged; record
 differences in `docs/REFERENCE_NOTES.md`.
 
 User and developer guidance goes in `book/src/` (listed in `SUMMARY.md`);
-`docs/` holds plans, audits, and notes. Verification results go in the paper
-(`paper/manuscript/main.tex`; the C++ comparison in its appendix), with the
-evidence each check retains in `paper/data/<check>/` and tables from
-`paper/data/make_tables.py`, not a separate evidence document.
+`docs/` holds plans, audits, and notes. Verification evidence lives in
+`paper/data/<check>/` (written by the suite) and `reference/README.md`
+describes each check; the paper summarizes it in one table and leaves the
+detail to the code release.
+
+The paper (`paper/manuscript/main.tex`, built with `tectonic`) is about the
+study, not the port: name SCRIMMAGE rather than "the C++", keep the voice
+plain and academic, put weeds in the repository, don't volunteer weaknesses
+the reader doesn't need, and mark unrun checks Planned rather than implying
+them.
 
 Wrap Markdown and LaTeX prose at 80 columns. Tables, code blocks, and long
 URLs are exempt.
@@ -110,7 +116,13 @@ renames must pass `reference/equivalence.py OLD NEW` (byte-identical outputs).
 
 - Don't run C++ GUI missions; the C++ reference runs headless in Docker.
 - Do not change the reference branch, seeds, RNG, or tolerances to make checks
-  pass. Preserve failure reports and known parity gaps. Never accept a slower
+  pass. Preserve failure reports and known parity gaps. Code comments explain
+  behavior on its own terms; what is kept from SCRIMMAGE, simplification or
+  defect, is listed in `docs/REFERENCE_NOTES.md`. Comparison agreement never
+  vetoes a correctness fix, but a fix needs proof: the failing example, a
+  focused test of the contract, and the comparisons after. A fix to ported
+  code goes on `benchmarking-edits` too, so the two still agree; record it in
+  `docs/REFERENCE_NOTES.md`. Never accept a slower
   performance baseline or retain failing evidence to make a check pass.
 - The CPU-multiplier mission's `motion_multipler` typo is upstream's; don't fix
   it.

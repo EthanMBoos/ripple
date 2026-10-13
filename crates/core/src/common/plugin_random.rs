@@ -2,8 +2,8 @@
 use anyhow::{Result, ensure};
 
 /// Per-instance SplitMix64 stream, keyed by mission seed, entity ID, and plugin identity.
-/// C++ plugins shared one mission-seeded generator; separate streams keep draws
-/// independent of worker order and of which other plugins draw.
+/// Separate streams keep draws independent of worker order and of which other
+/// plugins draw.
 pub struct PluginRandom {
     state: u64,
 }

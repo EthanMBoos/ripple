@@ -59,7 +59,7 @@ impl Plugin for WaypointBroadcast {
 
 impl Interaction for WaypointBroadcast {
     fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
-        // Known limitation (Rust-native, mirrors C++ Boundary's publish-once pattern):
+        // Known limitation (the same publish-once pattern as Boundary):
         // entities spawned later never receive the route and keep their own configured one.
         // A possible fix is republishing the current route when an entity is generated.
         if let Some(route) = self.initial.take() {

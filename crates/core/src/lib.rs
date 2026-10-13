@@ -1,5 +1,4 @@
-//! SCRIMMAGE simulation and legacy mission compatibility.
-//! Based on SCRIMMAGE's Ubuntu-24.04 branch.
+//! Ripple's simulation core: missions, entities, plugins, and the tick.
 mod autonomy;
 mod common;
 mod controller;

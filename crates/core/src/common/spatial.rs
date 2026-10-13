@@ -32,8 +32,7 @@
 //! `KnownContacts::within` over belief) are for research plugins, such as a
 //! range-limited sensor; the tests and the plugin API chapter cover them.
 //!
-//! C++ counterpart: src/common/RTree.cpp, which SCRIMMAGE builds when entities
-//! are generated, before motion; this index is built after motion.
+//! The index is built after motion.
 use crate::{Entity, EntitySnapshot, Vec3, scenario::SpatialLookup};
 use std::collections::HashMap;
 

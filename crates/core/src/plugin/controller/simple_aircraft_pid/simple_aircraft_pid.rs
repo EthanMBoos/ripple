@@ -1,6 +1,6 @@
 //! Heading, altitude, and airspeed PID loops for SimpleAircraft.
 //!
-//! C++ counterpart: src/plugins/controller/SimpleAircraftControllerPID/SimpleAircraftControllerPID.cpp.
+//! Derived from SCRIMMAGE: src/plugins/controller/SimpleAircraftControllerPID/SimpleAircraftControllerPID.cpp.
 //! Controller phase: read desired/current state, write throttle and model angular rates.
 
 use anyhow::{Result, ensure};
@@ -115,7 +115,7 @@ impl Controller for SimpleAircraftControllerPid {
     }
 }
 
-/// The positional C++ XML format ends here; controller code uses named gains.
+/// The positional XML format ends here; controller code uses named gains.
 #[cfg(test)]
 mod tests {
     use super::{Plugin, PluginParams, SimpleAircraftControllerPid};

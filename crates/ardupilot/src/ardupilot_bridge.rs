@@ -1,7 +1,6 @@
 //! Exchange state for servo commands with one ArduPilot SITL, in lockstep.
 //!
-//! Rust-only; replaces C++ SCRIMMAGE's ArduPilot autonomy (which used its own
-//! binary protocol and free-ran by default) with ArduPilot's JSON backend.
+//! Talks to ArduPilot SITL through its JSON backend.
 //! Autonomy phase, every tick:
 //!   1. reply to the frame applied last tick with this tick's `SitlSample`
 //!      (skipped on the first tick);

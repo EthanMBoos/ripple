@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
-<!-- Added verification fixture: NoisyContacts noise distributions. The measured
-     contacts feed nothing that moves, so frames still match C++ while the random
-     samples differ (Rust uses independent per-sensor streams). Compared with
-     reference/noise_statistics.py, not sample for sample. -->
+<!-- Added verification fixture: NoisyContacts noise. Each error is keyed by
+     the contact, quantity, and axis, so external verification that draws the
+     same keys compares the measured contacts sample for sample, and their
+     error distributions again with reference/noise_statistics.py. -->
 <runscript name="NoisyContacts noise distributions">
   <run start="0" end="30" dt="0.1"
        enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
@@ -18,7 +18,7 @@
     <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
     <autonomy speed="22">Straight</autonomy>
     <controller>SimpleAircraftControllerPID</controller>
-    <motion_model turning_radius="30">SimpleAircraft</motion_model>
+    <motion_model>SimpleAircraft</motion_model>
     <sensor pos_noise_0="1 5" pos_noise_1="-2 5" pos_noise_2="0.5 1"
             vel_noise_0="0 5" vel_noise_1="0.3 5" vel_noise_2="0 1"
             orient_noise_0="0 0.05" orient_noise_1="0 0.05" orient_noise_2="0.1 0.1">NoisyContacts</sensor>

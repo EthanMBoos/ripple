@@ -16,8 +16,8 @@
     <roll>-3.04759</roll><pitch>-1.91099</pitch>
     <autonomy speed="189.198" loop_rate="10">Straight</autonomy>
     <vx>189.198</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="0.738349" wind_N="2.73252">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="0.738349" wind_N="2.73252">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
 </runscript>

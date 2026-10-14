@@ -1,5 +1,5 @@
 {
-  "check": "<checkout>/runs/suite000/cpp-agreement",
+  "check": "<checkout>/runs.nosync/suite000/cpp-agreement",
   "defects": [
     {
       "name": "controller substeps receive the full step dt",
@@ -17,7 +17,7 @@
       }
     },
     {
-      "name": "frame timestamp labels the step start, not t + dt",
+      "name": "frame timestamp labels the time after the step",
       "file": "crates/core/src/simcontrol.rs",
       "detected": true,
       "missions": {
@@ -43,6 +43,9 @@
         "multirotor": [
           "frames"
         ],
+        "multirotor-fixes": [
+          "frames"
+        ],
         "noisy-contacts-bias": [
           "frames"
         ],
@@ -53,6 +56,9 @@
           "frames"
         ],
         "sphere-network-auction": [
+          "frames"
+        ],
+        "sphere-network-loss": [
           "frames"
         ],
         "substeps-random-spawn": [
@@ -69,11 +75,15 @@
       }
     },
     {
-      "name": "spawn coordinates skip the C++ six-decimal round trip",
-      "file": "crates/core/src/simcontrol/generation.rs",
+      "name": "rate-limited plugins receive the tick's dt",
+      "file": "crates/core/src/entity/plugin_stack.rs",
       "detected": true,
       "missions": {
         "substeps-random-spawn": [
+          "frames",
+          "trace"
+        ],
+        "substeps-scheduled-spawn": [
           "frames",
           "trace"
         ]
@@ -112,6 +122,10 @@
           "summary",
           "trace"
         ],
+        "multirotor-fixes": [
+          "summary",
+          "trace"
+        ],
         "noisy-contacts-bias": [
           "summary",
           "trace"
@@ -125,6 +139,10 @@
           "trace"
         ],
         "sphere-network-auction": [
+          "summary",
+          "trace"
+        ],
+        "sphere-network-loss": [
           "summary",
           "trace"
         ],
@@ -179,24 +197,24 @@
       }
     },
     {
-      "name": "NoisyContacts covariance is identity, not 5I",
-      "file": "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs",
+      "name": "NoisyState reports zero angular velocity",
+      "file": "crates/core/src/plugin/sensor/noisy_state/noisy_state.rs",
       "detected": true,
       "missions": {
-        "noisy-contacts-bias": [
+        "noisy-state-bias": [
+          "trace"
+        ],
+        "world-networks": [
           "trace"
         ]
       }
     },
     {
-      "name": "LocalNetwork delivers across entities",
-      "file": "crates/core/src/plugin/network/local_network/local_network.rs",
+      "name": "SphereNetwork loss key swaps sender and receiver",
+      "file": "crates/core/src/plugin/network/sphere_network/sphere_network.rs",
       "detected": true,
       "missions": {
-        "noisy-contacts-bias": [
-          "trace"
-        ],
-        "world-networks": [
+        "sphere-network-loss": [
           "trace"
         ]
       }
@@ -279,10 +297,12 @@
     "fixed-wing-a4": [],
     "fixed-wing-rascal": [],
     "multirotor": [],
+    "multirotor-fixes": [],
     "noisy-contacts-bias": [],
     "noisy-state-bias": [],
     "single-integrator": [],
     "sphere-network-auction": [],
+    "sphere-network-loss": [],
     "substeps-random-spawn": [],
     "substeps-scheduled-spawn": [],
     "world-networks": []

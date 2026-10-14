@@ -9,14 +9,14 @@ messages, and lifecycle in detail.
 
 | Type | Trait | Runs for | Gets | Built-in to copy |
 | --- | --- | --- | --- | --- |
-| Autonomy | `Autonomy` | Each entity | Own belief, contacts, messages, a random stream; writes ports | [Straight](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs) |
+| Autonomy | `Autonomy` | Each entity | Own belief, contacts, messages, random numbers; writes ports | [Straight](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs) |
 | Controller | `Controller` | Each entity | Same as autonomy; reads and writes ports | [SimpleAircraftControllerPID](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
 | Motion model | `MotionModel` | Each entity | Mutable truth; reads ports | [SimpleAircraft](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
-| Sensor | `Sensor` | Each entity | Read-only truth, contacts, a random stream; publishes readings | [NoisyPosition](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) |
+| Sensor | `Sensor` | Each entity | Read-only truth, contacts, random numbers; publishes readings | [NoisyPosition](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) |
 | Localization | `Localization` | Each entity | Readings, messages, the commands motion read; writes own-state belief | [PassThrough](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
 | Tracking | `Tracking` | Each entity | Readings, messages, localization's pose; writes known contacts | [PassThrough](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
 | Interaction | `Interaction` | Whole world | All entities, mutable; emits events | [GroundCollision](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/interaction/ground_collision/ground_collision.rs) |
-| Network | `Network` | Whole world | Every message, a random stream; decides delivery | [LocalNetwork](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/network/local_network/local_network.rs) |
+| Network | `Network` | Whole world | Every message, random numbers; decides delivery | [LocalNetwork](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/network/local_network/local_network.rs) |
 | Metrics | `Metrics` | Whole world | Events and messages; reports team scores | [SimpleCollisionMetrics](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
 
 Start by copying the built-in for your type. They all follow the same layout.

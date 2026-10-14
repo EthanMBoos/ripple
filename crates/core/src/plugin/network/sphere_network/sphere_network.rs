@@ -1,14 +1,17 @@
 //! Distance-limited communication with independent loss per reachable delivery.
 //!
 //! Derived from SCRIMMAGE: src/plugins/network/SphereNetwork/SphereNetwork.cpp (LGPL-3.0-or-later).
-//! Network phase: use current post-motion truth, then apply the optional altitude plane and loss.
-//! Loss draws come from this network's own mission-seeded random stream.
+//! Network phase: use current post-motion truth, then apply the optional altitude plane, loss,
+//! and delay (`delay_s`, default 0: delivered in this network phase).
+//! A message reaches an entity or not as one draw, keyed by the sending and
+//! receiving entities, the topic, and the message's sequence: the receiving
+//! entity's radio either hears it or doesn't, for all its subscribers.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;
 
 use crate::plugin::{
-    Delivery, Network, NetworkContext, Plugin, PluginParams, Transmission, Update,
+    Delivery, Network, NetworkContext, Plugin, PluginParams, PluginRandom, Transmission, Update,
 };
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
@@ -24,10 +27,9 @@ pub struct SphereNetworkConfig {
     boundary_altitude_m: f64,
     #[serde(rename = "comms_boundary_epsilon")]
     boundary_epsilon_m: f64,
-    /// Legacy delay modes are not implemented; must stay false and negative.
-    is_stochastic_delay: bool,
-    #[serde(rename = "comm_delay")]
-    comm_delay_s: f64,
+    /// A message arrives this long after it was sent, at the first tick at or
+    /// after that time; 0 delivers it in this network phase.
+    delay_s: f64,
 }
 
 impl Default for SphereNetworkConfig {
@@ -38,8 +40,7 @@ impl Default for SphereNetworkConfig {
             filter_comms_plane: false,
             boundary_altitude_m: 0.0,
             boundary_epsilon_m: 0.0,
-            is_stochastic_delay: false,
-            comm_delay_s: -1.0,
+            delay_s: 0.0,
         }
     }
 }
@@ -50,6 +51,7 @@ pub struct SphereNetwork {
     filter_comms_plane: bool,
     boundary_altitude_m: f64,
     boundary_epsilon_m: f64,
+    delay_s: f64,
 }
 
 impl Plugin for SphereNetwork {
@@ -70,8 +72,8 @@ impl Plugin for SphereNetwork {
             "comms_boundary_epsilon must be nonnegative"
         );
         ensure!(
-            !config.is_stochastic_delay && config.comm_delay_s < 0.0,
-            "SphereNetwork supports immediate delivery only; legacy delay modes are not implemented"
+            config.delay_s.is_finite() && config.delay_s >= 0.0,
+            "SphereNetwork delay_s must be finite and nonnegative"
         );
         Ok(config)
     }
@@ -83,6 +85,7 @@ impl Plugin for SphereNetwork {
             filter_comms_plane: config.filter_comms_plane,
             boundary_altitude_m: config.boundary_altitude_m,
             boundary_epsilon_m: config.boundary_epsilon_m,
+            delay_s: config.delay_s,
         }
     }
 }
@@ -90,9 +93,17 @@ impl Plugin for SphereNetwork {
 impl Network for SphereNetwork {
     fn step(&mut self, context: &mut NetworkContext<'_, '_>) -> Result<Update> {
         context.route(|link, random| {
-            // Draw only for reachable links, one draw per publisher/subscriber pair.
-            if self.reachable(link) && random.uniform() <= self.probability_transmit {
-                Ok(Delivery::After { delay_s: 0.0 })
+            let entity = |id: Option<i32>| i64::from(id.unwrap_or(0)) as u64;
+            let key = [
+                entity(link.sender.entity_id),
+                entity(link.receiver.entity_id),
+                PluginRandom::name(link.topic),
+                link.sequence,
+            ];
+            if self.reachable(link) && random.uniform(&key) <= self.probability_transmit {
+                Ok(Delivery::After {
+                    delay_s: self.delay_s,
+                })
             } else {
                 Ok(Delivery::Drop)
             }
@@ -114,7 +125,6 @@ impl SphereNetwork {
         // every contact for every link. The engine's contacts are sorted by id, so
         // a binary search (or an id-to-contact map built once per step) fixes that.
         // This is a lookup by id, not a range query, so `within` doesn't help.
-        // Keep one random draw per reachable link, in the current order.
         let sender = link
             .contacts_truth
             .iter()
@@ -178,6 +188,7 @@ mod tests {
             time: StepTime {
                 time_s: 0.0,
                 dt_s: 0.1,
+                tick: 0,
             },
             sender: &MessageEndpoint {
                 entity_id: sender,
@@ -188,6 +199,7 @@ mod tests {
                 plugin: "subscriber".into(),
             },
             topic: "test",
+            sequence: 0,
             contacts_truth: TruthContacts::from(&contacts[..]),
         })
     }
@@ -249,13 +261,14 @@ mod tests {
     }
 
     #[test]
-    fn invalid_range_probability_and_unsupported_delays_are_rejected() {
+    fn invalid_range_probability_delay_and_old_delay_keys_are_rejected() {
         for (key, value) in [
             ("range", "-1"),
             ("range", "NaN"),
             ("prob_transmit", "1.1"),
             ("prob_transmit", "-0.1"),
             ("comms_boundary_epsilon", "-1"),
+            ("delay_s", "-1"),
             ("comm_delay", "0"),
             ("is_stochastic_delay", "true"),
         ] {

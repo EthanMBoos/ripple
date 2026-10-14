@@ -8,6 +8,10 @@ name: Terrain flights at McMillan Airfield
 run:
   end_s: 150
   dt_s: 0.1
+  # Controllers and motion run every 0.02 s: the altitude loop of
+  # SimpleAircraftControllerPID needs speed x D x step < 2 (below), and these
+  # aircraft fly faster than the 25 m/s a 0.1 s step allows.
+  motion_multiplier: 5
   seed: 7
 
 terrain: terrain/mcmillan.terrain.yaml

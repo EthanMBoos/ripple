@@ -288,7 +288,7 @@ entities:
     sensors:
       coarse:
         plugin: NoisyState
-        pos_noise_0: [0, 5]
+        position_stddev_m: [5, 5, 0]
       NoisyState:
     localization:
       PassThrough:

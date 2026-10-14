@@ -80,7 +80,7 @@ In YAML, name the sensor instance explicitly:
 sensors:
   gps:
     plugin: NoisyState
-    pos_noise_0: [0, 5]
+    position_stddev_m: [5, 5, 1]
 localization:
   PassThrough:
     inputs: {state: gps}
@@ -116,6 +116,13 @@ corrects with readings. That keeps the three sources of error apart:
 - what the vehicle really does: the motion model;
 - what the sensor adds: the sensor;
 - what the vehicle *assumes* about its own motion: the estimator.
+
+`PassThrough` has no model, so it has no model error: belief is the reading,
+wherever the wind really carried the vehicle. A predicting estimator that is
+wrong about the wind drifts by about wind × time between readings before the
+next one corrects it: 0.5 m at 5 m/s with 10 Hz fixes, 5 m at 1 Hz. With
+frequent fixes that is within the sensor noise; it matters when fixes are slow
+or missing, or when a filter trusts its prediction over noisy readings.
 
 A few rules keep such experiments honest:
 

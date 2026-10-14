@@ -53,7 +53,7 @@ versions. Local paths are replaced by `<checkout>` and `<run>`.
 | `data/cpp-agreement/` | `reference_check.py` report with source/image provenance for both C++ branches; per case its `result.json` (non-interference, frame, summary, and trace comparisons), input mission, and both summaries. |
 | `data/cpp-generated/` | The same for the 100 generated scenarios. |
 | `data/cpp-long/` | The same for the ten long runs, plus `divergence.json`. |
-| `data/cpp-noise/` | The noise mission's check and `noise_statistics.py` report. |
+| `data/cpp-noise/` | The noise mission's check (samples compared one for one) and `noise_statistics.py` report. |
 | `data/checker-sensitivity/` | `sensitivity.py` report: planted defects and the layers that detected them. |
 | `data/rust-determinism/` | `determinism.py` report: worker, recording, trace, and lookup variants. |
 | `data/rust-platform/` | `platform_check.py` report: Rust on Linux/amd64 versus the native build. |
@@ -62,15 +62,18 @@ versions. Local paths are replaced by `<checkout>` and `<run>`.
 | `data/speed-cpp-native/` | `native_benchmark.py` bare-metal macOS timings. |
 | `data/speed-spatial/` | `spatial_benchmark.py` timings: collision checking with the scan and grids. |
 | `data/speed-messages/` | `message_benchmark.py` timings and profiles: all-agent messages in C++ and Rust. |
+| `data/simple-aircraft-fit/` | `simple_aircraft_fit.py` results and summary: SimpleAircraft's `rascal` limits against FixedWing6DOF's Rascal. |
 | `data/rk4-loads/` | `rk4_loads.py` results and summary: forces at every RK4 stage against unmodified C++. |
 | `data/stall-landing/` | `stall_landing.py` results, summary, and missions: the Rascal landing with and without stall tables. |
 | `data/visual-qa/` | Viewer review reports. Screenshots stay in ignored `runs/`. |
 | `workflow-example/` | The FollowNearest workflow example in C++ and Rust; see its README. |
 
-Tables are generated from these files; edit the script, not its output:
+[data/SUMMARY.md](data/SUMMARY.md) is the readable detail behind the paper's
+one summary table, generated from these files; edit the script, not its
+output:
 
 ```sh
-python3 paper/data/make_tables.py   # writes manuscript/generated/*.tex
+python3 paper/data/summarize.py   # writes data/SUMMARY.md
 ```
 
 To refresh the evidence after changing code, run `python3 reference/suite.py

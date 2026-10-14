@@ -79,11 +79,12 @@ fn the_right_speed_gain_predicts_exactly() -> Result<()> {
 
 #[test]
 fn noisy_fixes_leave_an_error_after_every_fix() -> Result<()> {
-    let noise = "[0, 1]";
     let errors = belief_errors(&[
         (GAIN, "0.8"),
-        ("entities.dead_reckoning.sensors.gps.pos_noise_0", noise),
-        ("entities.dead_reckoning.sensors.gps.pos_noise_1", noise),
+        (
+            "entities.dead_reckoning.sensors.gps.position_stddev_m",
+            "[1, 1, 0]",
+        ),
     ])?;
     // Right after a fix the error is that fix's noise; the right gain keeps it.
     assert!(error_at(&errors, 5.1) > 0.0);

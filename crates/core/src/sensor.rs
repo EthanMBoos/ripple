@@ -20,7 +20,8 @@ pub struct SensorContext<'a> {
     pub truth: &'a KinematicState,
     /// Every entity's true state, after this tick's motion.
     pub contacts_truth: TruthContacts<'a>,
-    pub random: &'a mut PluginRandom,
+    /// This sensor's random numbers at this tick.
+    pub random: PluginRandom,
     /// This sensor's instance name, which estimators use to select its readings.
     pub(crate) name: &'a str,
     pub(crate) kind: ReadingKind,

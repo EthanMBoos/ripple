@@ -118,6 +118,7 @@ mod tests {
                 time: StepTime {
                     time_s: 0.0,
                     dt_s: 0.1,
+                    tick: 0,
                 },
                 truth: &mut truth,
                 messages: &mut Messages::default(),

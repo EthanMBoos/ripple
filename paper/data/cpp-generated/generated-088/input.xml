@@ -15,8 +15,8 @@
     <roll>3.04924</roll><pitch>1.77988</pitch>
     <autonomy speed="232.05" loop_rate="0">Straight</autonomy>
     <vx>232.05</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="-0.412427" wind_N="0.00946903">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="-0.412427" wind_N="0.00946903">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -28,8 +28,8 @@
     <roll>-4.25295</roll><pitch>2.8579</pitch>
     <autonomy speed="153.214" loop_rate="5">Straight</autonomy>
     <vx>153.214</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="2.62194" wind_N="1.47816">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="2.62194" wind_N="1.47816">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -42,8 +42,8 @@
     <roll>-0.958849</roll><pitch>-2.35634</pitch>
     <autonomy speed="203.749" loop_rate="10">Straight</autonomy>
     <vx>203.749</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="2.46753" wind_N="2.7321">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="2.46753" wind_N="2.7321">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -59,8 +59,8 @@
     <roll>-4.20788</roll><pitch>-2.74645</pitch>
     <autonomy speed="238.161" loop_rate="10">Straight</autonomy>
     <vx>238.161</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="-2.12303" wind_N="2.8979">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="-2.12303" wind_N="2.8979">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
 </runscript>

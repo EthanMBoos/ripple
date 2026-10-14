@@ -17,11 +17,12 @@ out of the default build.
 
 - C++ source: sibling `../scrimmage`, branch `Ubuntu-24.04`. Do not modify it.
   The only allowed C++ changes are on the `benchmarking-edits` comparison
-  branch: opt-in instrumentation (tracing, test drivers, selectable RNG) that
-  leaves outputs byte-identical, and fixes for documented C++ defects (the
+  branch: opt-in instrumentation (tracing, test drivers, keyed random numbers)
+  that leaves outputs byte-identical, and fixes for documented C++ defects (the
   substep order, AircraftPIDController, the RK4 loads in FixedWing6DOF and
-  Multirotor, Multirotor's velocity, moment arms, and idle thrust, and the
-  core defects; see `docs/REFERENCE_NOTES.md`).
+  Multirotor, Multirotor's velocity, moment arms, and idle thrust, the core
+  defects, SimpleAircraft's turn, and SingleIntegrator's `max_speed`; see
+  `docs/REFERENCE_NOTES.md`).
 - User research plugins live in workspace user crates such as `crates/starter`,
   registered in `crates/cli/src/main.rs`; keep the starter building and tested.
 - XML and YAML missions share one typed `ScenarioConfig`; XML is frozen, only
@@ -84,8 +85,9 @@ URLs are exempt.
   its own phase: never run a whole entity chain as one parallel task.
 - Workers own disjoint entity state; every phase joins every task. Rust output
   must be byte-identical at 1, 2, and 8 workers and with Rerun on or off.
-- Every subscriber has its own queue. Preserve legacy spawn RNG draw order;
-  sensor random streams use stable entity/plugin identities.
+- Every subscriber has its own queue. Every random number is keyed by what it
+  is for (seed, entity, plugin identity, tick, and the plugin's key from
+  stable IDs), never by draw order; see the book's "Randomness and seeds".
 - Keep truth, readings, and belief distinct. Autonomy and controllers see
   belief only; estimators never see truth; sensors never write belief. Rerun
   is output only.

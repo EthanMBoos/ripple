@@ -21,6 +21,9 @@ pub(crate) fn register_builtins(registry: &mut PluginRegistry) -> Result<()> {
     registry.register_motion::<motion::SimpleAircraft>("SimpleAircraft")?;
     registry.register_motion::<motion::FixedWing6Dof>("FixedWing6DOF")?;
     registry.register_controller::<controller::AircraftPidController>("AircraftPIDController")?;
+    registry.register_controller::<controller::AircraftVelocityController>(
+        "AircraftVelocityController",
+    )?;
     registry.register_motion::<motion::Multirotor>("Multirotor")?;
     registry.register_controller::<controller::MotorSpeeds>("MotorSpeeds")?;
     registry.register_controller::<controller::MultirotorVelocityController>(

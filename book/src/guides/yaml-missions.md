@@ -28,14 +28,14 @@ and
   (`SimpleAircraft:`) means "this plugin, all defaults".
 - Values are real YAML types: `25`, `true`, `[1, 0.01, 2, 9]`. No comma strings.
 - Non-finite numbers (`.inf`, `.nan`) are rejected, with the path to the value.
-- Field names carry units (`end_s`, `heading_deg`). Plugin parameters keep the
-  C++ names their config structs declare (`speed`, `pos_noise_0`).
+- Field names carry units (`end_s`, `heading_deg`). Plugin parameters are the
+  names their config structs declare (`speed`, `position_stddev_m`).
 - Entities and plugins are map keys (labels), so a path such as
   `entities.red.autonomy.Straight.speed` names one value. Labels must be
   non-empty and contain no dots. Errors name the label: `entity red: ...`.
-- **Key order matters.** Entities spawn, draw random numbers, and get IDs in
-  file order, and plugins in a slot run in file order, as XML tag order does.
-  YAML itself calls maps unordered, so do not let a tool sort the keys.
+- **Key order matters.** Entities spawn and get IDs in file order, and
+  plugins in a slot run in file order, as XML tag order does. YAML itself
+  calls maps unordered, so do not let a tool sort the keys.
 - Only fields Rust uses are accepted. XML's GUI and C++ logging tags
   (`stream_port`, `grid_size`, `terrain`, `log_dir`, and so on) have no YAML
   form.
@@ -142,16 +142,17 @@ Without `spawn`, all `count` entities spawn at the start. With it,
 Each key in a plugin slot is a label and, by default, the plugin name. Its map
 holds the plugin's parameters, plus two framework keys: `loop_rate` (Hz; 0 runs
 every step) and `plugin`. When one entity needs two of the same plugin, give
-each a label and name the plugin; the label also names a sensor's random stream:
+each a label and name the plugin; a sensor's label also keys its random numbers
+([Randomness and seeds](../concepts/randomness.md)):
 
 ```yaml
     sensors:
       gps_coarse:
         plugin: NoisyState
-        pos_noise_0: [0, 5]      # [mean, stddev]
+        position_stddev_m: [5, 5, 10]
       gps_fine:
         plugin: NoisyState
-        pos_noise_0: [0, 0.5]
+        position_stddev_m: [0.5, 0.5, 1]
 ```
 
 With two state sensors, localization can't guess which one feeds belief, so

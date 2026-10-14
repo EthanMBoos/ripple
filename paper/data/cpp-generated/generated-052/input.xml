@@ -15,7 +15,7 @@
     <roll>2.05995</roll><pitch>2.4838</pitch>
     <autonomy speed="16.2135" loop_rate="10">Straight</autonomy>
     <controller loop_rate="20">SimpleAircraftControllerPID</controller>
-    <motion_model turning_radius="48.2125">SimpleAircraft</motion_model>
+    <motion_model max_roll="37.6328">SimpleAircraft</motion_model>
     <sensor pos_noise_0="-1.79225 0" pos_noise_1="0.432135 0" pos_noise_2="-1.54926 0" vel_noise_0="-0.270809 0" vel_noise_1="0.18758 0" vel_noise_2="-0.116342 0" orient_noise_0="0.0186132 0" orient_noise_1="-0.0279897 0" orient_noise_2="-0.0404156 0">NoisyContacts</sensor>
     <visual_model>sphere</visual_model>
   </entity>
@@ -42,7 +42,7 @@
     <roll>-1.0742</roll><pitch>2.08979</pitch>
     <autonomy speed="24.0305" loop_rate="0">Straight</autonomy>
     <controller loop_rate="50">SimpleAircraftControllerPID</controller>
-    <motion_model turning_radius="22.5777">SimpleAircraft</motion_model>
+    <motion_model max_roll="21.6111">SimpleAircraft</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>

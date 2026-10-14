@@ -2,6 +2,9 @@
 #[path = "controller/aircraft_pid/aircraft_pid.rs"]
 mod aircraft_pid;
 pub use aircraft_pid::AircraftPidController;
+#[path = "controller/aircraft_velocity/aircraft_velocity.rs"]
+mod aircraft_velocity;
+pub use aircraft_velocity::AircraftVelocityController;
 #[path = "controller/motor_speeds/motor_speeds.rs"]
 mod motor_speeds;
 pub use motor_speeds::MotorSpeeds;

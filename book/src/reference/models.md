@@ -8,7 +8,7 @@ the simulation loop. No runtime library loading is planned.
 | Role | Selected now | Later / excluded and why |
 | --- | --- | --- |
 | Autonomy | Straight; Rust-native WaypointFollower; AuctionAssign; Rust-only ForceReplay | ForceReplay repeats a list of forces, one per tick, for MpeParticle tests. More research behaviors when needed. MotorSchemas/nested plugin composition and GraphvizFSM are not prerequisites for navigation. Legacy protobuf spawning and camera windows are excluded. |
-| Controller | SimpleAircraftControllerPID; SingleIntegratorControllerSimple; AircraftPIDController; Rust-only MotorSpeeds and MultirotorVelocityController | SimpleAircraft PID roll/glide-slope modes deferred; unsupported modes are errors. MotorSpeeds supplies constant rotor commands for testing. MultirotorVelocityController flies Multirotor from the point agents' velocity command (velocity, attitude, rate, mixing); no position hold or yaw command. See [Flying a multirotor](../guides/multirotor.md). |
+| Controller | SimpleAircraftControllerPID; SingleIntegratorControllerSimple; AircraftPIDController; Rust-only MotorSpeeds, MultirotorVelocityController, and AircraftVelocityController | SimpleAircraft PID roll/glide-slope modes deferred; unsupported modes are errors. MotorSpeeds supplies constant rotor commands for testing. MultirotorVelocityController flies Multirotor from the point agents' velocity command (velocity, attitude, rate, mixing); no position hold or yaw command. See [Flying a multirotor](../guides/multirotor.md). AircraftVelocityController turns the same velocity command into the heading, altitude, and speed that SimpleAircraftControllerPID and AircraftPIDController follow (below). |
 | Motion | SimpleAircraft; SingleIntegrator; FixedWing6DOF; Multirotor; Rust-only MpeParticle | MpeParticle is the Multi-Agent Particle Environment's point (MPE2 v1.1.1): a force-driven unit mass with MPE's per-step damping, for matching learning benchmarks; checked step by step against MPE2 by `reference/mpe_parity.py`. Flight-model limitations are commented beside their equations. FixedWing6DOF has two built-in aircraft and no default: `airframe: a4d` (the A-4D Skyhawk, from Nelson's *Flight Stability and Automatic Control*) and `airframe: rascal` (ArduPilot's JSBSim Rascal), or a mission gives every number. It computes forces and moments at every RK4 stage, where C++ holds them for the whole step; FixedWing6DOF can also have landing gear (Rust-only, after JSBSim; see the Terrain chapter) and `lift_table` and `drag_table` rows against angle of attack that replace its linear lift and zero-lift drag, so the wing stalls (Rust-only; see the ArduPilot chapter); Multirotor has optional RotorS motor lag, rotor drag, and rolling moment and a built-in Crazyflie 2.0 (see [Flying a multirotor](../guides/multirotor.md)); external-force contact and acceleration sensor access are not exposed. JSBSim is an offline verification candidate, not a runtime plugin. |
 | Sensor | NoisyState; NoisyContacts; NoisyPosition (Rust-only teaching example) | NoisyContacts measures every other live entity; no range/FOV, missed detections, or tracker. Cameras and richer sensors are not selected. |
 | Localization, tracking | PassThrough (copies one reading; the default for both) | Filters, dead reckoning, and trackers are research plugins; see [Belief vs truth](../concepts/belief-vs-truth.md). |
@@ -51,9 +51,31 @@ the simulation loop. No runtime library loading is planned.
   slower autonomy rates, tight aircraft turns, or noisy position at the final
   point is not a navigation guarantee. Choose sensible speed/radius/turn
   geometry.
-- SingleIntegrator preserves C++'s unusual `max_speed`: negative means direct
-  velocity; nonnegative means normalize to that magnitude, not clamp. Zero
-  command stays zero. `override_heading=true` is not implemented.
+- SingleIntegrator's `max_speed` caps the speed: a faster command keeps its
+  direction at `max_speed`; negative (the default) means no limit.
+  `override_heading=true` is not implemented.
+- SimpleAircraft turns as a coordinated turn does, at g tan(bank) / speed, so
+  its turn radius grows with speed squared. Its limits are physical:
+  speeds (`min_velocity`, `max_velocity`), bank and pitch (`max_roll`,
+  `max_pitch`, degrees), their rates, acceleration and deceleration
+  (`max_acceleration_mps2`, `max_deceleration_mps2`), and climb and descent
+  rates (`max_climb_rate_mps`, `max_descent_rate_mps`). `airframe: rascal`
+  loads limits fit to FixedWing6DOF's Rascal (`reference/simple_aircraft_fit.py`
+  fits and checks them), which any key overrides; without it the limits are
+  generic round numbers, not any aircraft. Its `throttle` input asks for
+  throttle / 5 m/s², within the acceleration limits.
+- AircraftVelocityController: put it before SimpleAircraftControllerPID or
+  AircraftPIDController to fly an aircraft from a velocity command. The
+  heading is the command's direction (kept when the command has no horizontal
+  part), the speed its magnitude, and the altitude target moves at its climb
+  rate (staying within `max_altitude_error_m`, default 10 m, of the
+  aircraft). The aircraft's own limits bound speed, climb, and turn; there is
+  no holding mode, so a command it can't fly shows as a shortfall.
+- SimpleAircraftControllerPID's altitude loop is stable only while
+  speed × D × step < 2: with the default D of 0.8 and a 0.1 s step, below
+  25 m/s; faster, pitch flips between its rate limits every step. Use motion
+  substeps (`motion_multiplier: 5` gives 0.02 s and 125 m/s) for faster
+  aircraft, such as the `rascal` profile at full speed.
 - SimpleAircraft is a kinematic stand-in: no claim of a high-fidelity flight
   model. `show_text_label` in
   legacy Straight inputs is superseded by Rerun's labels, not a plugin drawing
@@ -73,4 +95,4 @@ telemetry, battery, game, and geometry extensions they motivate are not selected
 backlog. Keep their limitations documented; do not add them for completeness.
 AuctionAssign is a single random-bid messaging demonstration with stationary
 agents, not a task planner. See [plugin contracts](plugin-api.md#noisycontacts)
-for reading types, radio policies, random streams, and examples.
+for reading types, radio policies, random numbers, and examples.

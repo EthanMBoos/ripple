@@ -16,7 +16,7 @@ prerequisite (the planted-bug study needs the agreement matrix) runs it too.
 --retain refreshes the release evidence, paper/data/<check>/, but only when
 every selected check passed: the new evidence is staged first, then swapped in
 for the checks that ran, and paper/data/release.json records each check's
-outcome, date, source hash, and references. The manuscript tables are then
+outcome, date, source hash, and references. paper/data/SUMMARY.md is then
 regenerated. Review the result before committing it: retaining never accepts
 a failure, and a new performance baseline is a separate, explicit step
 (perf.py --accept).
@@ -37,10 +37,8 @@ import shutil
 import subprocess
 import sys
 
-from compare import POSITION_TOLERANCE_M, VELOCITY_TOLERANCE_MPS
 from project import DATA, ROOT, RUNS, allocate, source_identity
 import retain
-from traces import OUTPUT_TOLERANCE
 
 REFERENCE = ROOT / "reference"
 QUICK, RELEASE = "quick", "release"
@@ -106,16 +104,6 @@ def ran_cleanly(result):
                 and all(result["recording_equality"].values()))
     except KeyError:
         return False
-
-
-def only_noise_differs(result):
-    """The noise mission's random measured values differ by design; the deliveries,
-    owner beliefs, and controller outputs must still agree."""
-    trace = result["trace_comparison"]
-    return (trace["delivery_mismatches"] == 0
-            and trace["max_output_error"] <= OUTPUT_TOLERANCE
-            and trace["max_belief_position_error_m"] <= POSITION_TOLERANCE_M
-            and trace["max_belief_velocity_error_mps"] <= VELOCITY_TOLERANCE_MPS)
 
 
 # Each run_* function runs one check in context.out/<check id>/ and judges it
@@ -195,11 +183,12 @@ def run_noise(context):
                       ROOT / "missions/verification/noisy-contacts-noise.xml")
     case_folder = context.out / "cpp-noise/noisy-contacts-noise"
     case = read(case_folder / "result.json")
-    clean = (ran_cleanly(case) and case["comparison"]["passed"] and only_noise_differs(case)
-             and case["summary_agreement"] != "unexplained")
+    # Keyed draws make the measured contacts agree sample for sample; the KS
+    # test of the error distributions is a second check.
+    clean = ran_cleanly(case) and case["passed"]
     statistics = context.step("cpp-noise-statistics", REFERENCE / "noise_statistics.py",
                               case_folder, "--report", context.out / "cpp-noise/noise-statistics.json")
-    return clean and statistics == 0, "random payloads differ, as expected"
+    return clean and statistics == 0, "samples agree; distributions agree"
 
 
 def run_sensitivity(context):
@@ -279,9 +268,9 @@ CHECKS = [
           (RELEASE,), run_long,
           lambda run, evidence: retain.copy_reference_check(run, evidence,
                                                             [Path(run) / "divergence.json"])),
-    Check("cpp-noise", "sensor noise distributions match where samples cannot",
+    Check("cpp-noise", "sensor noise matches sample for sample, and by distribution",
           "C++ SCRIMMAGE NoisyContacts samples",
-          "deliveries, beliefs, outputs agree; no KS test below the Bonferroni threshold",
+          "the case passes (samples within tolerance); no KS test below the Bonferroni threshold",
           (RELEASE,), run_noise,
           lambda run, evidence: retain.copy_reference_check(run, evidence,
                                                             [Path(run) / "noise-statistics.json"])),
@@ -322,6 +311,12 @@ CHECKS = [
           "the commands; the a4d limits", "altitude D changes the error under 1 cm; under the "
           "rascal limits every step settles and pitch stays under 25 degrees",
           (QUICK, RELEASE), script_check("rascal_control.py", "rascal-control"),
+          keep_named("results.json", "summary.md")),
+    Check("simple-aircraft-fit", "SimpleAircraft's rascal limits against FixedWing6DOF's Rascal: "
+          "speeds, acceleration, climb, descent, turn rate, and attitude rates",
+          "FixedWing6DOF's Rascal under AircraftPIDController",
+          "every SimpleAircraft number within 5% (or 0.2) of the Rascal's",
+          (QUICK, RELEASE), script_check("simple_aircraft_fit.py", "simple-aircraft-fit"),
           keep_named("results.json", "summary.md")),
     Check("rotors-motor", "Multirotor's motor lag and rotor loads against RotorS, sample by sample",
           "RotorS's motor-plugin source (ethz-asl/rotors_simulator), compiled in Docker",
@@ -400,7 +395,7 @@ def references(out):
 
 def retain_evidence(out, checks, outcomes, context):
     """Stage the evidence of the checks that ran, swap it in, update release.json, and
-    regenerate the manuscript tables."""
+    regenerate paper/data/SUMMARY.md."""
     staging = DATA / ".suite-staging"
     shutil.rmtree(staging, ignore_errors=True)
     staging.mkdir(parents=True)
@@ -429,8 +424,8 @@ def retain_evidence(out, checks, outcomes, context):
                          if check.id in release["checks"]}
     release["references"] = {**release.get("references", {}), **references(out)}
     (DATA / "release.json").write_text(json.dumps(release, indent=2) + "\n")
-    if context.step("tables", DATA / "make_tables.py") != 0:
-        print("Regenerating the tables failed; see tables.log.")
+    if context.step("summary", DATA / "summarize.py") != 0:
+        print("Regenerating the summary failed; see summary.log.")
         return False
     return True
 

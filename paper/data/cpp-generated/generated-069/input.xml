@@ -17,8 +17,8 @@
     <roll>4.25058</roll><pitch>1.99451</pitch>
     <autonomy speed="222.655" loop_rate="0">Straight</autonomy>
     <vx>222.655</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="-0.0619125" wind_N="2.8199">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="-0.0619125" wind_N="2.8199">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -34,8 +34,8 @@
     <roll>3.22532</roll><pitch>1.66176</pitch>
     <autonomy speed="160.875" loop_rate="0">Straight</autonomy>
     <vx>160.875</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="-0.429197" wind_N="-2.2247">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="-0.429197" wind_N="-2.2247">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -47,8 +47,8 @@
     <roll>-0.950341</roll><pitch>-0.811607</pitch>
     <autonomy speed="242.931" loop_rate="10">Straight</autonomy>
     <vx>242.931</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="0.039063" wind_N="-0.00180493">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="0.039063" wind_N="-0.00180493">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -60,8 +60,8 @@
     <roll>-3.55284</roll><pitch>2.35243</pitch>
     <autonomy speed="219.242" loop_rate="0">Straight</autonomy>
     <vx>219.242</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="-1.99371" wind_N="-1.32532">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="-1.99371" wind_N="-1.32532">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
 </runscript>

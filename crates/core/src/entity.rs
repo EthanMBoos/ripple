@@ -105,7 +105,8 @@ pub struct Entity {
     color: [u8; 3],
     visual_model: String,
     contact_type: EntityKind,
-    born_s: f64,
+    /// The time and tick the entity was created, with a zero dt.
+    born: StepTime,
     active: bool,
     /// Estimators and decision plugins have been initialized.
     started: bool,
@@ -123,7 +124,7 @@ impl Entity {
         definition: &EntityDefinition,
         position_world_m: Vec3,
         heading_world_deg: f64,
-        born_s: f64,
+        born: StepTime,
         seed: u32,
         terrain: Option<&Terrain>,
     ) -> Result<Self> {
@@ -137,10 +138,7 @@ impl Entity {
             ..KinematicState::default()
         };
         let mut plugins = definition.plugins.instantiate(id, seed);
-        let time = StepTime {
-            time_s: born_s,
-            dt_s: 0.0,
-        };
+        let time = born;
         let initialized = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             plugins.initialize(
                 EntityInfo {
@@ -169,7 +167,7 @@ impl Entity {
             color: definition.color,
             visual_model: definition.visual_model.clone(),
             contact_type: definition.contact_type,
-            born_s,
+            born,
             active: true,
             started: false,
             applied_forces_world_n: Vec::new(),
@@ -232,7 +230,7 @@ impl Entity {
     }
 
     pub fn born_s(&self) -> f64 {
-        self.born_s
+        self.born.time_s
     }
 
     fn info(&self) -> EntityInfo {
@@ -262,10 +260,7 @@ impl Entity {
             return Ok(());
         }
         self.started = true;
-        let time = StepTime {
-            time_s: self.born_s,
-            dt_s: 0.0,
-        };
+        let time = self.born;
         let info = self.info();
         // As in `new`, a panicking plugin becomes an error rather than escaping
         // `Simulation::new` (a sweep then records one failed case).

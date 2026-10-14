@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <!-- Added verification fixture. ConstantVelocity (a test driver present in both
      implementations; reference/fixtures/ for C++) feeds the unmodified
-     SingleIntegratorControllerSimple and SingleIntegrator. The four agents cover
-     direct velocity (max_speed < 0), normalization to max_speed with a vertical
-     component, a zero command with max_speed >= 0 (NaN guard), and a heading in
-     another quadrant. Distinct fixed starts; no randomized state. -->
+     SingleIntegratorControllerSimple and SingleIntegrator. The five agents cover
+     direct velocity (max_speed < 0), a command faster than max_speed with a
+     vertical component (capped), a zero command with max_speed >= 0 (NaN
+     guard), a heading in another quadrant, and a command slower than max_speed
+     (used as commanded). Distinct fixed starts; no randomized state. -->
 <runscript name="SingleIntegrator command paths">
   <run start="0" end="5" dt="0.1" motion_multiplier="2"
        enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
@@ -40,5 +41,10 @@
     <team_id>2</team_id><x>300</x><y>0</y><z>10</z>
     <autonomy velocity="-2 1 -1" loop_rate="2">ConstantVelocity</autonomy>
     <motion_model max_speed="-1">SingleIntegrator</motion_model>
+  </entity>
+  <entity entity_common="point">
+    <team_id>2</team_id><x>400</x><y>0</y><z>10</z>
+    <autonomy velocity="1 0.5 0">ConstantVelocity</autonomy>
+    <motion_model max_speed="5">SingleIntegrator</motion_model>
   </entity>
 </runscript>

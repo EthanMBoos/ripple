@@ -1,7 +1,9 @@
-//! All endpoints are reachable; the engine handles queued delivery.
+//! All endpoints are reachable, after a fixed delay.
 //!
 //! Derived from SCRIMMAGE: src/plugins/network/GlobalNetwork/GlobalNetwork.cpp.
-//! Network phase: route every matching publisher/subscriber link immediately.
+//! Network phase: route every matching publisher/subscriber link. A message
+//! arrives `delay_s` after it was sent, at the first tick at or after that
+//! time; 0 (the default) delivers it in this network phase.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;
@@ -9,26 +11,15 @@ use serde::Deserialize;
 use crate::plugin::{Delivery, Network, NetworkContext, Plugin, PluginParams, Update};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize)]
+#[derive(Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct GlobalNetworkConfig {
-    /// Stochastic delay is not implemented; must stay false.
-    is_stochastic_delay: bool,
-    /// A negative value means no delay; queued delay is not implemented.
-    #[serde(rename = "comm_delay")]
-    comm_delay_s: f64,
+    delay_s: f64,
 }
 
-impl Default for GlobalNetworkConfig {
-    fn default() -> Self {
-        Self {
-            is_stochastic_delay: false,
-            comm_delay_s: -1.0,
-        }
-    }
+pub struct GlobalNetwork {
+    delay_s: f64,
 }
-
-pub struct GlobalNetwork;
 
 impl Plugin for GlobalNetwork {
     type Config = GlobalNetworkConfig;
@@ -36,24 +27,23 @@ impl Plugin for GlobalNetwork {
     fn configure(params: &PluginParams<'_>) -> Result<GlobalNetworkConfig> {
         let config: GlobalNetworkConfig = params.parse()?;
         ensure!(
-            !config.is_stochastic_delay,
-            "stochastic delay is not implemented by GlobalNetwork"
-        );
-        ensure!(
-            config.comm_delay_s < 0.0,
-            "legacy queued comm_delay is not yet ported; use a custom Network for explicit delay semantics"
+            config.delay_s.is_finite() && config.delay_s >= 0.0,
+            "GlobalNetwork delay_s must be finite and nonnegative"
         );
         Ok(config)
     }
 
-    fn new(_config: &GlobalNetworkConfig) -> Self {
-        Self
+    fn new(config: &GlobalNetworkConfig) -> Self {
+        Self {
+            delay_s: config.delay_s,
+        }
     }
 }
 
 impl Network for GlobalNetwork {
     fn step(&mut self, context: &mut NetworkContext<'_, '_>) -> Result<Update> {
-        context.route(|_link, _random| Ok(Delivery::After { delay_s: 0.0 }))
+        let delay_s = self.delay_s;
+        context.route(|_link, _random| Ok(Delivery::After { delay_s }))
     }
 }
 
@@ -63,21 +53,17 @@ mod tests {
     use crate::Params;
 
     #[test]
-    fn negative_legacy_delay_is_accepted() -> anyhow::Result<()> {
-        let params = Params::from([("comm_delay".into(), "-2".into())]);
-        GlobalNetwork::configure(&PluginParams::text(&params))?;
-        Ok(())
-    }
-
-    #[test]
-    fn unsupported_delay_modes_remain_errors() {
+    fn negative_delays_and_old_delay_keys_are_errors() {
         for (key, value) in [
-            ("comm_delay", "0"),
+            ("delay_s", "-1"),
             ("comm_delay", "1"),
             ("is_stochastic_delay", "true"),
         ] {
             let params = Params::from([(key.into(), value.into())]);
-            assert!(GlobalNetwork::configure(&PluginParams::text(&params)).is_err());
+            assert!(
+                GlobalNetwork::configure(&PluginParams::text(&params)).is_err(),
+                "{key}"
+            );
         }
     }
 }

@@ -341,7 +341,7 @@ impl CompiledStack {
     }
 
     pub fn instantiate(&self, entity_id: i32, seed: u32) -> PluginStack {
-        // Each instance draws from its own stream, keyed by a stable identity.
+        // Each instance's random numbers are keyed by a stable identity.
         let agent_slots = |category: &str, plugins: &[CompiledPlugin<dyn AgentBehavior>]| {
             plugins
                 .iter()
@@ -361,7 +361,8 @@ impl CompiledStack {
             PluginRandom::new(seed, entity_id, &motion_identity),
             endpoint(entity_id, motion_identity),
         );
-        // Sensor identities predate the other categories; keep them so noise is unchanged.
+        // A sensor's numbers are keyed by its instance name, the name its
+        // readings carry.
         let sensors = self
             .sensors
             .iter()
@@ -499,7 +500,7 @@ impl Slot<dyn AgentBehavior> {
             state,
             contacts,
             messages: &mut self.messages,
-            random: &mut self.random,
+            random: self.random.at_tick(time.tick),
         };
         self.plugin
             .initialize(&mut context)
@@ -527,7 +528,7 @@ impl Slot<dyn AgentBehavior> {
             state,
             contacts,
             messages: &mut self.messages,
-            random: &mut self.random,
+            random: self.random.at_tick(time.tick),
         };
         self.plugin
             .step(&mut context, &mut self.io)
@@ -603,7 +604,7 @@ impl PluginStack {
                     truth,
                     messages: &mut sensor.messages,
                     contacts_truth: TruthContacts::from(&[][..]),
-                    random: &mut sensor.random,
+                    random: sensor.random.at_tick(time.tick),
                     name,
                     kind: *kind,
                     pending: &mut self.pending,
@@ -642,7 +643,7 @@ impl PluginStack {
                     times: &[],
                 },
                 messages: &mut self.localization.messages,
-                random: &mut self.localization.random,
+                random: self.localization.random.at_tick(time.tick),
                 state: &mut self.belief,
             })
             .with_context(|| format!("initialize '{}'", self.localization.name))?;
@@ -654,7 +655,7 @@ impl PluginStack {
                 time,
                 inputs: inputs(&self.tracking_sources),
                 messages: &mut self.tracking.messages,
-                random: &mut self.tracking.random,
+                random: self.tracking.random.at_tick(time.tick),
                 pose: &self.belief,
                 contacts: &mut self.contacts,
             })
@@ -823,7 +824,7 @@ impl PluginStack {
                     truth,
                     messages: &mut sensor.messages,
                     contacts_truth,
-                    random: &mut sensor.random,
+                    random: sensor.random.at_tick(time.tick),
                     name,
                     kind: *kind,
                     pending: &mut self.pending,
@@ -873,7 +874,7 @@ impl PluginStack {
                     times: &self.command_times,
                 },
                 messages: &mut self.localization.messages,
-                random: &mut self.localization.random,
+                random: self.localization.random.at_tick(time.tick),
                 state: &mut self.belief,
             })
             .with_context(|| {
@@ -889,7 +890,7 @@ impl PluginStack {
                 time,
                 inputs: inputs(&self.tracking_sources),
                 messages: &mut self.tracking.messages,
-                random: &mut self.tracking.random,
+                random: self.tracking.random.at_tick(time.tick),
                 pose: &self.belief,
                 contacts: &mut self.contacts,
             })

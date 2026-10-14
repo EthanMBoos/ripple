@@ -22,23 +22,19 @@
   },
   "motion_multiplier": 1,
   "cpp_non_interference": {
-    "untraced": {
-      "frames.bin": true,
-      "summary.csv": true
-    },
     "traced": {
       "frames.bin": true,
       "summary.csv": true
     }
   },
   "cpp_baseline_equality": {
-    "frames.bin": true,
-    "summary.csv": true
+    "frames.bin": false,
+    "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-12_10-50-04",
+  "cpp_log_directory": "cpp/logs/2026-10-14_20-41-21",
   "cpp_output_hashes": {
-    "frames.bin": "37441d93fa8e775cff797bae5c18f303bd4852b7d156b83f5d316f2d11b9ea0e",
-    "summary.csv": "94ce726e02fd8bd1f5064fab580e92544d818e314966d739ede18510525e6193"
+    "frames.bin": "63693023b5f16ea1bbdee32d524510195ec1000fdc8270d7383ab811d6c521c5",
+    "summary.csv": "39ed881f651ae70c10ed72b7af32c4fc0c3695af6559305543f713b7117c77a4"
   },
   "worker_equality": {
     "2": {
@@ -57,7 +53,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "cbb7d82a4055f0f8dff64ec2542df3865c9653cb177f6a7b13242c3cd50e46d4",
+  "recording_sha256": "bd630c37a69d5c9fcea14c14f754881e801271abe4fe2b84667bc1ca433e39b5",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,
@@ -65,29 +61,29 @@
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "e9cb9e00ef017e72bda90e47c271fb90ab4176290a0a51b1f08fd5c3ce52bdb8",
-      "events.json": "2916cd3bcaf454b8f52bd04a26916b1692ff7165aaf3ff5cc174ed1858400728",
-      "summary.csv": "94ce726e02fd8bd1f5064fab580e92544d818e314966d739ede18510525e6193"
+      "frames.bin": "1392d3f34fe41b231eb0a892fd1d431a9c70588a31cefb49826d25cc0fa353d2",
+      "events.json": "000965a0d96f5a00d2f93ad8f5fd4264ad2f8aba593fb56a88f0c58154728376",
+      "summary.csv": "39ed881f651ae70c10ed72b7af32c4fc0c3695af6559305543f713b7117c77a4"
     },
     "rust-2": {
-      "frames.bin": "e9cb9e00ef017e72bda90e47c271fb90ab4176290a0a51b1f08fd5c3ce52bdb8",
-      "events.json": "2916cd3bcaf454b8f52bd04a26916b1692ff7165aaf3ff5cc174ed1858400728",
-      "summary.csv": "94ce726e02fd8bd1f5064fab580e92544d818e314966d739ede18510525e6193"
+      "frames.bin": "1392d3f34fe41b231eb0a892fd1d431a9c70588a31cefb49826d25cc0fa353d2",
+      "events.json": "000965a0d96f5a00d2f93ad8f5fd4264ad2f8aba593fb56a88f0c58154728376",
+      "summary.csv": "39ed881f651ae70c10ed72b7af32c4fc0c3695af6559305543f713b7117c77a4"
     },
     "rust-8": {
-      "frames.bin": "e9cb9e00ef017e72bda90e47c271fb90ab4176290a0a51b1f08fd5c3ce52bdb8",
-      "events.json": "2916cd3bcaf454b8f52bd04a26916b1692ff7165aaf3ff5cc174ed1858400728",
-      "summary.csv": "94ce726e02fd8bd1f5064fab580e92544d818e314966d739ede18510525e6193"
+      "frames.bin": "1392d3f34fe41b231eb0a892fd1d431a9c70588a31cefb49826d25cc0fa353d2",
+      "events.json": "000965a0d96f5a00d2f93ad8f5fd4264ad2f8aba593fb56a88f0c58154728376",
+      "summary.csv": "39ed881f651ae70c10ed72b7af32c4fc0c3695af6559305543f713b7117c77a4"
     },
     "rust-rerun": {
-      "frames.bin": "e9cb9e00ef017e72bda90e47c271fb90ab4176290a0a51b1f08fd5c3ce52bdb8",
-      "events.json": "2916cd3bcaf454b8f52bd04a26916b1692ff7165aaf3ff5cc174ed1858400728",
-      "summary.csv": "94ce726e02fd8bd1f5064fab580e92544d818e314966d739ede18510525e6193"
+      "frames.bin": "1392d3f34fe41b231eb0a892fd1d431a9c70588a31cefb49826d25cc0fa353d2",
+      "events.json": "000965a0d96f5a00d2f93ad8f5fd4264ad2f8aba593fb56a88f0c58154728376",
+      "summary.csv": "39ed881f651ae70c10ed72b7af32c4fc0c3695af6559305543f713b7117c77a4"
     },
     "rust-trace": {
-      "frames.bin": "e9cb9e00ef017e72bda90e47c271fb90ab4176290a0a51b1f08fd5c3ce52bdb8",
-      "events.json": "2916cd3bcaf454b8f52bd04a26916b1692ff7165aaf3ff5cc174ed1858400728",
-      "summary.csv": "94ce726e02fd8bd1f5064fab580e92544d818e314966d739ede18510525e6193"
+      "frames.bin": "1392d3f34fe41b231eb0a892fd1d431a9c70588a31cefb49826d25cc0fa353d2",
+      "events.json": "000965a0d96f5a00d2f93ad8f5fd4264ad2f8aba593fb56a88f0c58154728376",
+      "summary.csv": "39ed881f651ae70c10ed72b7af32c4fc0c3695af6559305543f713b7117c77a4"
     }
   },
   "comparison": {
@@ -109,7 +105,8 @@
     "deliveries": 8,
     "beliefs": 467,
     "outputs": 2754,
-    "published_states": 0,
+    "sensor_states": 0,
+    "skipped_sensor_deliveries": 0,
     "max_belief_position_error_m": 0.0,
     "max_belief_velocity_error_mps": 0.0,
     "max_belief_orientation_error_rad": 0.0,
@@ -117,7 +114,6 @@
     "max_payload_position_error_m": 0.0,
     "max_payload_velocity_error_mps": 0.0,
     "max_payload_orientation_error_rad": 0.0,
-    "max_payload_covariance_error": 0.0,
     "max_output_error": 0.0,
     "max_output_error_port": "",
     "excluded_pre_start_records": 0,

@@ -11,7 +11,9 @@
      use C++'s earlier radian limits (elevator +-0.30, aileron and rudder +-0.35).
      See book/src/guides/ardupilot.md.
      Aircraft: PID from a level start, PID recovering from a roll/pitch upset, and
-     a hands-off glide (all gains zero, so zero throttle and neutral surfaces). -->
+     a hands-off glide (all gains zero, so zero throttle and neutral surfaces).
+     The PID aircraft keep attitude limits of 45 and 60 degrees, wider than the
+     Rascal profile's 20 and 45. -->
 <runscript name="FixedWing6DOF Rascal">
   <run start="0" end="60" dt="0.01" enable_gui="false" start_paused="false" time_warp="0" />
   <seed>12345</seed><end_condition>time</end_condition><output_type>all</output_type>
@@ -25,8 +27,8 @@
     <vx>20</vx><vy>0</vy><vz>0</vz><heading>0</heading>
     <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
     <autonomy speed="20">Straight</autonomy>
-    <controller>AircraftPIDController</controller>
-    <motion_model gravity_magnitude="9.81" air_density="1.2250"
+    <controller airframe="rascal" max_pitch="45" max_roll="60">AircraftPIDController</controller>
+    <motion_model airframe="rascal" gravity_magnitude="9.81" air_density="1.2250"
         inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]"
         thrust_min="0.0" thrust_max="25.0"
         delta_elevator_min="-1" delta_elevator_max="1" delta_aileron_min="-1" delta_aileron_max="1"
@@ -47,8 +49,8 @@
     <vx>20</vx><vy>0</vy><vz>0</vz><heading>0</heading><roll>60</roll><pitch>30</pitch>
     <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
     <autonomy speed="20">Straight</autonomy>
-    <controller>AircraftPIDController</controller>
-    <motion_model gravity_magnitude="9.81" air_density="1.2250"
+    <controller airframe="rascal" max_pitch="45" max_roll="60">AircraftPIDController</controller>
+    <motion_model airframe="rascal" gravity_magnitude="9.81" air_density="1.2250"
         inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]"
         thrust_min="0.0" thrust_max="25.0"
         delta_elevator_min="-1" delta_elevator_max="1" delta_aileron_min="-1" delta_aileron_max="1"
@@ -69,8 +71,8 @@
     <vx>20</vx><vy>0</vy><vz>0</vz><heading>0</heading>
     <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
     <autonomy speed="20">Straight</autonomy>
-    <controller heading_pid="0,0,0,0" altitude_pid="0,0,0,0" speed_pid="0,0,0,0" pitch_pid="0,0,0,0" roll_pid="0,0,0,0">AircraftPIDController</controller>
-    <motion_model gravity_magnitude="9.81" air_density="1.2250"
+    <controller airframe="rascal" heading_pid="0,0,0,0" altitude_pid="0,0,0,0" speed_pid="0,0,0,0" pitch_pid="0,0,0,0" roll_pid="0,0,0,0">AircraftPIDController</controller>
+    <motion_model airframe="rascal" gravity_magnitude="9.81" air_density="1.2250"
         inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]"
         thrust_min="0.0" thrust_max="25.0"
         delta_elevator_min="-1" delta_elevator_max="1" delta_aileron_min="-1" delta_aileron_max="1"

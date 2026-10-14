@@ -152,16 +152,23 @@ struct WorldSlot<T: ?Sized> {
     plugin: Box<T>,
     messages: Messages,
     scheduled: Vec<ScheduledMessage>,
-    // Only networks draw from this today; interactions and metrics can expose it when needed.
+    // Only networks draw today; interactions and metrics can expose it when needed.
     random: PluginRandom,
     closed: bool,
 }
 impl<T: ?Sized> WorldSlot<T> {
     fn new(plugin: &CompiledPlugin<T>, index: usize, category: &str, seed: u32) -> Self {
         let identity = format!("{category}/{}:{index}", plugin.name);
+        // World plugins have no entity (IDs start at 1). A network's numbers
+        // are keyed by its name, which is unique in a mission.
+        let random_identity = if category == "network" {
+            &plugin.name
+        } else {
+            &identity
+        };
         Self {
             name: plugin.name.clone(),
-            random: PluginRandom::new(seed, 0, &identity),
+            random: PluginRandom::new(seed, 0, random_identity),
             endpoint: MessageEndpoint {
                 entity_id: None,
                 plugin: identity,
@@ -318,7 +325,7 @@ impl WorldPlugins {
                 &slot.endpoint,
                 &mut slot.plugin,
                 &mut slot.scheduled,
-                &mut slot.random,
+                slot.random.at_tick(time.tick),
             ));
         }
         let names: Vec<_> = names.iter().map(String::as_str).collect();

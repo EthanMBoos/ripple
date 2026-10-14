@@ -188,7 +188,8 @@ pub struct LocalizationContext<'a> {
     /// Empty during initialization.
     pub commands: Commands<'a>,
     pub messages: &'a mut Messages,
-    pub random: &'a mut PluginRandom,
+    /// This estimator's random numbers at this tick.
+    pub random: PluginRandom,
     /// The entity's own-state belief. It persists between updates.
     pub state: &'a mut KinematicState,
 }
@@ -199,7 +200,8 @@ pub struct TrackingContext<'a> {
     pub time: StepTime,
     pub inputs: Inputs<'a>,
     pub messages: &'a mut Messages,
-    pub random: &'a mut PluginRandom,
+    /// This estimator's random numbers at this tick.
+    pub random: PluginRandom,
     /// Localization's estimate for this tick, for turning relative readings into positions.
     pub pose: &'a KinematicState,
     /// The contacts the entity knows about. They persist between updates.

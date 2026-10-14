@@ -5,7 +5,7 @@
 
 For each case of a completed reference check, nudges each entity group's initial
 roll, each autonomy's commanded speed (Straight) or velocity (ConstantVelocity),
-and each motion model's turning radius by one unit in the last place (changes
+and each motion model's bank limit by one unit in the last place (changes
 that spawn rounding cannot absorb). It also scales each PID controller loop's
 proportional gain by 1 + 1e-12. One-ulp parameter changes perturb the state far
 less than the ~1e-13 m by which C++ and Rust already differ from rounding, and
@@ -54,9 +54,9 @@ def nudged(mission, output):
     for roll in tree.getroot().iter("roll"):
         roll.text = repr(math.nextafter(float(roll.text), math.inf))
     for motion in tree.getroot().iter("motion_model"):
-        if "turning_radius" in motion.attrib:
-            radius = float(motion.get("turning_radius"))
-            motion.set("turning_radius", repr(math.nextafter(radius, math.inf)))
+        if "max_roll" in motion.attrib:
+            bank = float(motion.get("max_roll"))
+            motion.set("max_roll", repr(math.nextafter(bank, math.inf)))
     for controller in tree.getroot().iter("controller"):
         for loop, default in PID_DEFAULTS.get((controller.text or "").strip(), {}).items():
             text = controller.get(loop)

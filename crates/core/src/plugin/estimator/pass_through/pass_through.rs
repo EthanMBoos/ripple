@@ -4,6 +4,15 @@
 //! copies a contacts reading (input `contacts`). With the default perfect
 //! measurement this makes belief equal truth at the next decision. Between a
 //! slow sensor's readings it keeps the last one.
+//!
+//! With no motion model it has no model error: belief is the measurement,
+//! wherever the wind really carried the vehicle. An estimator that predicts
+//! between readings (as the starter crate's DeadReckoning does) can be wrong
+//! about the wind, drag, or speed, and its belief drifts until the next
+//! reading corrects it: by about wind x time between readings, 0.5 m at 5 m/s
+//! and 10 Hz, 5 m at 1 Hz. With frequent position fixes that is within the
+//! sensor noise; it matters when fixes are slow or missing, or when a filter
+//! trusts its prediction over noisy readings.
 
 use anyhow::{Context, Result};
 

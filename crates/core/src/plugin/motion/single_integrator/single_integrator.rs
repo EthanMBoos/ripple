@@ -1,5 +1,5 @@
 //! Position integrates commanded ENU velocity. Derived from SCRIMMAGE: motion/SingleIntegrator.
-//! Motion phase. Legacy max_speed >= 0 sets speed magnitude; it is not a speed cap.
+//! Motion phase. `max_speed`, when set, caps the speed.
 //!
 //! Fidelity
 //! - Source: a kinematic point: velocity is whatever was commanded, at once.
@@ -22,7 +22,8 @@ use crate::plugin::{
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct SingleIntegratorConfig {
-    /// Negative means "use the commanded speed".
+    /// The highest speed; a faster command keeps its direction at this speed.
+    /// Negative (the default) means no limit.
     #[serde(rename = "max_speed")]
     max_speed_mps: f64,
     /// Not implemented; must stay false.
@@ -88,12 +89,10 @@ impl MotionModel for SingleIntegrator {
             io.read("velocity_z")?,
         );
         let speed_mps = desired_velocity_mps.norm();
-        let velocity_mps = if self.max_speed_mps < 0.0 {
-            desired_velocity_mps
-        } else if speed_mps == 0.0 {
-            Vec3::zeros()
-        } else {
+        let velocity_mps = if self.max_speed_mps >= 0.0 && speed_mps > self.max_speed_mps {
             desired_velocity_mps / speed_mps * self.max_speed_mps
+        } else {
+            desired_velocity_mps
         };
         let state = &mut context.truth;
         state.velocity_world_mps = velocity_mps;
@@ -123,12 +122,15 @@ mod tests {
     use crate::{KinematicState, Vec3};
 
     #[test]
-    fn velocity_integrates_position_and_legacy_speed_is_a_magnitude_not_a_cap() -> anyhow::Result<()>
-    {
+    fn velocity_integrates_position_and_max_speed_only_caps_it() -> anyhow::Result<()> {
         for (max_speed_mps, desired, expected) in [
             (-1.0, Vec3::new(3.0, 4.0, 0.0), Vec3::new(3.0, 4.0, 0.0)),
-            (10.0, Vec3::new(3.0, 4.0, 0.0), Vec3::new(6.0, 8.0, 0.0)),
+            // Slower than the cap: used as commanded, not sped up to 10 m/s.
+            (10.0, Vec3::new(3.0, 4.0, 0.0), Vec3::new(3.0, 4.0, 0.0)),
+            // Faster: same direction, at the cap.
+            (2.5, Vec3::new(3.0, 4.0, 0.0), Vec3::new(1.5, 2.0, 0.0)),
             (10.0, Vec3::zeros(), Vec3::zeros()),
+            (0.0, Vec3::new(1.0, 0.0, 0.0), Vec3::zeros()),
             (-1.0, Vec3::new(0.0, 0.0, 2.0), Vec3::new(0.0, 0.0, 2.0)),
         ] {
             let config = SingleIntegratorConfig {
@@ -156,6 +158,7 @@ mod tests {
                     time: StepTime {
                         time_s: 0.0,
                         dt_s: 0.25,
+                        tick: 0,
                     },
                     truth: &mut truth,
                     messages: &mut Messages::default(),

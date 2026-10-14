@@ -3,8 +3,8 @@
   "mission": "<run>-missions/generated-005.xml",
   "passed": true,
   "input": {
-    "input_sha256": "e41db5fb3b5f470a6dc4a6d69cfdf795a9471f844a634c5e4709662ee7d3ff8e",
-    "effective_sha256": "2ecdb9ce488e15f5fce2083775b514c44195ec21d6badf6d07428e63a15ef29b",
+    "input_sha256": "32f04ac36ef1cd306d8f508d9175c7aa3e5224f39b6a048a065be1f95ac5cc8e",
+    "effective_sha256": "79891ba636ff873cee51304e973814c5afe4a82ec35aeb12bf2e5c0b45569a7f",
     "run_overrides": {
       "enable_gui": "false",
       "network_gui": "false",
@@ -22,23 +22,19 @@
   },
   "motion_multiplier": 1,
   "cpp_non_interference": {
-    "untraced": {
-      "frames.bin": true,
-      "summary.csv": true
-    },
     "traced": {
       "frames.bin": true,
       "summary.csv": true
     }
   },
   "cpp_baseline_equality": {
-    "frames.bin": true,
-    "summary.csv": true
+    "frames.bin": false,
+    "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-12_10-58-49",
+  "cpp_log_directory": "cpp/logs/2026-10-14_20-50-12",
   "cpp_output_hashes": {
-    "frames.bin": "0fa08986ecac31aaa80c61e83f1464c79ad99634894a6da0ce7020a821b35520",
-    "summary.csv": "5b311aadfb6f7a104e23614ecf71bc281fa08f0f16a734ee2bbd1616af97c7dd"
+    "frames.bin": "4f78871e7d97138df3d09d9d4e801a66451b9a792c45532eab34b8a23824f812",
+    "summary.csv": "df276f65edf4f7bead35451ca3e92e5835d526bec1dba406d23a9d6bd255b0e6"
   },
   "worker_equality": {
     "2": {
@@ -57,7 +53,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "70f97281d17e4ed7742f60c9c21d5f8bbe2c21753999b40cc00097b6a18d24e6",
+  "recording_sha256": "bf0d4cba16220fe74ecdb07816f0bbb0e4fbdd10705880cca2d39f0bec784592",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,
@@ -65,40 +61,40 @@
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "3631122b993daf50ceec591d5719f99d23e24f44ed0bd0e3c97cf8d32e5636ec",
-      "events.json": "1cfcde363c369fb1baaad98fbd390d3bf34cf28e684e4081f1a911aca7b414ad",
-      "summary.csv": "088d0fb0d0123e081d4cba517993684de5be98f36e88e38488456e1a66010999"
+      "frames.bin": "99d0505add5277ca63b86adc4227e94d977d5c960a24ad628d23289e8c5e2673",
+      "events.json": "fa162c84a315c596117e3c66f3bd749c1b821c529ba7388ff20b3ebc552ff130",
+      "summary.csv": "030164718c84099d10686432926452a14a217fad75978c4cb7d0a3d578ae1b73"
     },
     "rust-2": {
-      "frames.bin": "3631122b993daf50ceec591d5719f99d23e24f44ed0bd0e3c97cf8d32e5636ec",
-      "events.json": "1cfcde363c369fb1baaad98fbd390d3bf34cf28e684e4081f1a911aca7b414ad",
-      "summary.csv": "088d0fb0d0123e081d4cba517993684de5be98f36e88e38488456e1a66010999"
+      "frames.bin": "99d0505add5277ca63b86adc4227e94d977d5c960a24ad628d23289e8c5e2673",
+      "events.json": "fa162c84a315c596117e3c66f3bd749c1b821c529ba7388ff20b3ebc552ff130",
+      "summary.csv": "030164718c84099d10686432926452a14a217fad75978c4cb7d0a3d578ae1b73"
     },
     "rust-8": {
-      "frames.bin": "3631122b993daf50ceec591d5719f99d23e24f44ed0bd0e3c97cf8d32e5636ec",
-      "events.json": "1cfcde363c369fb1baaad98fbd390d3bf34cf28e684e4081f1a911aca7b414ad",
-      "summary.csv": "088d0fb0d0123e081d4cba517993684de5be98f36e88e38488456e1a66010999"
+      "frames.bin": "99d0505add5277ca63b86adc4227e94d977d5c960a24ad628d23289e8c5e2673",
+      "events.json": "fa162c84a315c596117e3c66f3bd749c1b821c529ba7388ff20b3ebc552ff130",
+      "summary.csv": "030164718c84099d10686432926452a14a217fad75978c4cb7d0a3d578ae1b73"
     },
     "rust-rerun": {
-      "frames.bin": "3631122b993daf50ceec591d5719f99d23e24f44ed0bd0e3c97cf8d32e5636ec",
-      "events.json": "1cfcde363c369fb1baaad98fbd390d3bf34cf28e684e4081f1a911aca7b414ad",
-      "summary.csv": "088d0fb0d0123e081d4cba517993684de5be98f36e88e38488456e1a66010999"
+      "frames.bin": "99d0505add5277ca63b86adc4227e94d977d5c960a24ad628d23289e8c5e2673",
+      "events.json": "fa162c84a315c596117e3c66f3bd749c1b821c529ba7388ff20b3ebc552ff130",
+      "summary.csv": "030164718c84099d10686432926452a14a217fad75978c4cb7d0a3d578ae1b73"
     },
     "rust-trace": {
-      "frames.bin": "3631122b993daf50ceec591d5719f99d23e24f44ed0bd0e3c97cf8d32e5636ec",
-      "events.json": "1cfcde363c369fb1baaad98fbd390d3bf34cf28e684e4081f1a911aca7b414ad",
-      "summary.csv": "088d0fb0d0123e081d4cba517993684de5be98f36e88e38488456e1a66010999"
+      "frames.bin": "99d0505add5277ca63b86adc4227e94d977d5c960a24ad628d23289e8c5e2673",
+      "events.json": "fa162c84a315c596117e3c66f3bd749c1b821c529ba7388ff20b3ebc552ff130",
+      "summary.csv": "030164718c84099d10686432926452a14a217fad75978c4cb7d0a3d578ae1b73"
     }
   },
   "comparison": {
     "passed": true,
     "reference_frames": 10001,
     "candidate_frames": 10001,
-    "compared_entity_states": 29997,
+    "compared_entity_states": 29999,
     "max_position_error_m": 0.0,
     "max_velocity_error_mps": 0.0,
     "max_orientation_error_rad": 0.0,
-    "max_angular_velocity_error_radps": 0.0,
+    "max_angular_velocity_error_radps": 6.938893903907228e-18,
     "max_timestamp_error_s": 0.0,
     "mismatch_count": 0,
     "first_mismatches": [],
@@ -107,17 +103,17 @@
   "trace_comparison": {
     "passed": true,
     "deliveries": 13,
-    "beliefs": 29997,
-    "outputs": 179964,
-    "published_states": 0,
+    "beliefs": 29999,
+    "outputs": 179976,
+    "sensor_states": 0,
+    "skipped_sensor_deliveries": 0,
     "max_belief_position_error_m": 0.0,
     "max_belief_velocity_error_mps": 0.0,
     "max_belief_orientation_error_rad": 0.0,
-    "max_belief_angular_velocity_error_radps": 0.0,
+    "max_belief_angular_velocity_error_radps": 6.938893903907228e-18,
     "max_payload_position_error_m": 0.0,
     "max_payload_velocity_error_mps": 0.0,
     "max_payload_orientation_error_rad": 0.0,
-    "max_payload_covariance_error": 0.0,
     "max_output_error": 0.0,
     "max_output_error_port": "",
     "excluded_pre_start_records": 0,
@@ -126,10 +122,10 @@
     "first_mismatches": []
   },
   "summary_differences": [
-    "summary team 1, flight_time: reference 1.6, candidate 999.9",
+    "summary team 1, flight_time: reference 1.6, candidate 1000.0",
     "summary team 2, score: reference nan, candidate -4.0",
-    "summary team 2, flight_time: reference 2.6, candidate 1998.8",
-    "summary team 2, flight_time_norm: reference inf, candidate 1.999"
+    "summary team 2, flight_time: reference 2.8, candidate 1999.2",
+    "summary team 2, flight_time_norm: reference inf, candidate 1.9992"
   ],
   "summary_agreement": "explained_by_scoring_rules",
   "pre_start_removed": []

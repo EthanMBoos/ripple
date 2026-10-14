@@ -10,17 +10,18 @@
 //!
 //! Fidelity
 //! - Source: a kinematic aircraft: speed, roll, and pitch follow commands
-//!   within rate and range limits, and turn rate comes from bank angle and a
-//!   turning radius. The default limits are round numbers, not any aircraft.
+//!   within rate and range limits, and it turns as a coordinated turn does, at
+//!   g tan(bank) / speed. `airframe` names a set of limits fit to a real
+//!   aircraft; without it the limits are generic round numbers, not any
+//!   aircraft.
 //! - Validated against: SCRIMMAGE's SimpleAircraft (the comparison missions, its
-//!   generated scenarios, and the long runs).
+//!   generated scenarios, and the long runs), with the same turn law.
 //! - Valid range: a stand-in for an aircraft that turns and climbs within its
 //!   limits; not a physical model.
 //! - Not modeled: forces, aerodynamics, inertia, wind, stall, sideslip
 //!   (velocity is always along the nose), and energy (speed and climb are
 //!   independent).
-//! - To go further: FixedWing6DOF for anything aerodynamic; to stand in for a
-//!   real aircraft, fit the limits to its turn and climb performance.
+//! - To go further: FixedWing6DOF for anything aerodynamic.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;
@@ -33,44 +34,42 @@ use crate::{
     },
 };
 
-/// Mission parameters in the mission file's units; `Default` supplies any key the mission leaves out.
-#[derive(Deserialize)]
+/// Gravity, as FixedWing6DOF's.
+const GRAVITY_MPS2: f64 = 9.81;
+
+/// Mission parameters, in the mission file's units. `airframe` loads a named
+/// aircraft's limits, which any key overrides; without it, a key left out
+/// takes the generic value. The angle keys keep their XML names and
+/// degrees.
+#[derive(Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct SimpleAircraftParams {
+    airframe: Option<SimpleAirframe>,
     #[serde(rename = "min_velocity")]
-    min_speed_mps: f64,
+    min_speed_mps: Option<f64>,
     #[serde(rename = "max_velocity")]
-    max_speed_mps: f64,
+    max_speed_mps: Option<f64>,
+    /// Bank limit.
     #[serde(rename = "max_roll")]
-    max_roll_deg: f64,
+    max_roll_deg: Option<f64>,
     #[serde(rename = "max_pitch")]
-    max_pitch_deg: f64,
+    max_pitch_deg: Option<f64>,
     #[serde(rename = "max_roll_rate")]
-    max_roll_rate_degps: f64,
+    max_roll_rate_degps: Option<f64>,
     #[serde(rename = "max_pitch_rate")]
-    max_pitch_rate_degps: f64,
-    #[serde(rename = "turning_radius")]
-    turning_radius_m: f64,
-    #[serde(rename = "speed_target")]
-    reference_speed_mps: f64,
-    #[serde(rename = "radius_slope_per_speed")]
-    radius_slope_s: f64,
+    max_pitch_rate_degps: Option<f64>,
+    max_acceleration_mps2: Option<f64>,
+    max_deceleration_mps2: Option<f64>,
+    max_climb_rate_mps: Option<f64>,
+    max_descent_rate_mps: Option<f64>,
 }
 
-impl Default for SimpleAircraftParams {
-    fn default() -> Self {
-        Self {
-            min_speed_mps: 15.0,
-            max_speed_mps: 40.0,
-            max_roll_deg: 30.0,
-            max_pitch_deg: 30.0,
-            max_roll_rate_degps: 57.3,
-            max_pitch_rate_degps: 57.3,
-            turning_radius_m: 13.0,
-            reference_speed_mps: 50.0,
-            radius_slope_s: 0.0,
-        }
-    }
+/// Named aircraft whose limits SimpleAircraft can load.
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum SimpleAirframe {
+    /// FixedWing6DOF's Rascal as AircraftPIDController flies it.
+    Rascal,
 }
 
 #[derive(Clone, Debug)]
@@ -81,14 +80,87 @@ pub struct AircraftConfig {
     max_pitch_rad: f64,
     max_roll_rate_radps: f64,
     max_pitch_rate_radps: f64,
-    turning_radius_m: f64,
-    reference_speed_mps: f64,
-    radius_slope_s: f64,
+    max_acceleration_mps2: f64,
+    max_deceleration_mps2: f64,
+    max_climb_rate_mps: f64,
+    max_descent_rate_mps: f64,
+}
+
+impl AircraftConfig {
+    /// Generic limits: no aircraft in particular. Throttle's
+    /// [-100, 100] range at its scale (below) is +-20 m/s^2, and only
+    /// the pitch limit bounds climb and descent.
+    fn generic() -> Self {
+        Self {
+            min_speed_mps: 15.0,
+            max_speed_mps: 40.0,
+            max_roll_rad: math::deg_to_rad(30.0),
+            max_pitch_rad: math::deg_to_rad(30.0),
+            max_roll_rate_radps: math::deg_to_rad(57.3),
+            max_pitch_rate_radps: math::deg_to_rad(57.3),
+            max_acceleration_mps2: 20.0,
+            max_deceleration_mps2: 20.0,
+            max_climb_rate_mps: f64::INFINITY,
+            max_descent_rate_mps: f64::INFINITY,
+        }
+    }
+
+    fn airframe(airframe: SimpleAirframe) -> Self {
+        match airframe {
+            // Fit to FixedWing6DOF's Rascal under AircraftPIDController (both
+            // `airframe: rascal`) by `reference/simple_aircraft_fit.py`
+            // (evidence in paper/data/simple-aircraft-fit), rounded to 0.1:
+            // the steady level speed at full throttle (38.1 m/s); the slowest
+            // steady speed holding altitude, over speeds asked from 7 to 14 m/s
+            // (9.0); the largest change of speed over 1 s speeding up and
+            // slowing from 20 m/s (2.8, 1.2 m/s^2); steady climb and descent at
+            // 20 m/s asked (5.8, 9.7 m/s); the largest roll and pitch rates
+            // (31, 52 deg/s). The Rascal holds 47 degrees of bank but turns at
+            // 26.3 deg/s, 13% slower than a coordinated turn at that bank; 43
+            // degrees is the bank that gives 26.3 deg/s here, and a bank only
+            // sets the turn rate here. The pitch limit only has to let climb and
+            // descent bind at cruise (asin(9.7 / 20) is 29 degrees). Rerun that
+            // script after changing either model or these numbers.
+            SimpleAirframe::Rascal => Self {
+                min_speed_mps: 9.0,
+                max_speed_mps: 38.1,
+                max_roll_rad: math::deg_to_rad(43.0),
+                max_pitch_rad: math::deg_to_rad(30.0),
+                max_roll_rate_radps: math::deg_to_rad(31.0),
+                max_pitch_rate_radps: math::deg_to_rad(52.0),
+                max_acceleration_mps2: 2.8,
+                max_deceleration_mps2: 1.2,
+                max_climb_rate_mps: 5.8,
+                max_descent_rate_mps: 9.7,
+            },
+        }
+    }
+
+    /// Pitch limits at `speed_mps` (negative is nose up): the attitude limit,
+    /// narrowed so that climb and descent, speed x sin(pitch), stay within
+    /// their limits.
+    #[inline]
+    fn pitch_limits_rad(&self, speed_mps: f64) -> (f64, f64) {
+        // Without a rate limit there is nothing to narrow, and no asin to pay
+        // for in every derivative.
+        let limit = |rate_mps: f64| {
+            if rate_mps.is_finite() {
+                self.max_pitch_rad
+                    .min((rate_mps / speed_mps).min(1.0).asin())
+            } else {
+                self.max_pitch_rad
+            }
+        };
+        (
+            -limit(self.max_climb_rate_mps),
+            limit(self.max_descent_rate_mps),
+        )
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default)]
 struct AircraftControl {
-    // Legacy dimensionless control, saturated to [-100, 100].
+    /// Throttle, in [-100, 100]: it asks for throttle / 5 m/s^2.
     throttle: f64,
     roll_rate_radps: f64,
     pitch_rate_radps: f64,
@@ -115,25 +187,52 @@ impl Plugin for SimpleAircraft {
 
     fn configure(params: &PluginParams<'_>) -> Result<AircraftConfig> {
         let params: SimpleAircraftParams = params.parse()?;
+        let base = params
+            .airframe
+            .map_or_else(AircraftConfig::generic, AircraftConfig::airframe);
+        let angle =
+            |degrees: Option<f64>, base_rad: f64| degrees.map_or(base_rad, math::deg_to_rad);
         let config = AircraftConfig {
-            min_speed_mps: params.min_speed_mps,
-            max_speed_mps: params.max_speed_mps,
-            max_roll_rad: crate::math::deg_to_rad(params.max_roll_deg),
-            max_pitch_rad: crate::math::deg_to_rad(params.max_pitch_deg),
-            max_roll_rate_radps: crate::math::deg_to_rad(params.max_roll_rate_degps),
-            max_pitch_rate_radps: crate::math::deg_to_rad(params.max_pitch_rate_degps),
-            turning_radius_m: params.turning_radius_m,
-            reference_speed_mps: params.reference_speed_mps,
-            radius_slope_s: params.radius_slope_s,
+            min_speed_mps: params.min_speed_mps.unwrap_or(base.min_speed_mps),
+            max_speed_mps: params.max_speed_mps.unwrap_or(base.max_speed_mps),
+            max_roll_rad: angle(params.max_roll_deg, base.max_roll_rad),
+            max_pitch_rad: angle(params.max_pitch_deg, base.max_pitch_rad),
+            max_roll_rate_radps: angle(params.max_roll_rate_degps, base.max_roll_rate_radps),
+            max_pitch_rate_radps: angle(params.max_pitch_rate_degps, base.max_pitch_rate_radps),
+            max_acceleration_mps2: params
+                .max_acceleration_mps2
+                .unwrap_or(base.max_acceleration_mps2),
+            max_deceleration_mps2: params
+                .max_deceleration_mps2
+                .unwrap_or(base.max_deceleration_mps2),
+            max_climb_rate_mps: params.max_climb_rate_mps.unwrap_or(base.max_climb_rate_mps),
+            max_descent_rate_mps: params
+                .max_descent_rate_mps
+                .unwrap_or(base.max_descent_rate_mps),
         };
 
         ensure!(
-            config.min_speed_mps <= config.max_speed_mps
-                && config.max_roll_rad >= 0.0
-                && config.max_pitch_rad >= 0.0
-                && config.max_roll_rate_radps >= 0.0
-                && config.max_pitch_rate_radps >= 0.0,
-            "invalid aircraft limits"
+            config.min_speed_mps > 0.0 && config.min_speed_mps <= config.max_speed_mps,
+            "SimpleAircraft needs 0 < min_velocity <= max_velocity"
+        );
+        ensure!(
+            [
+                config.max_roll_rad,
+                config.max_pitch_rad,
+                config.max_roll_rate_radps,
+                config.max_pitch_rate_radps,
+                config.max_acceleration_mps2,
+                config.max_deceleration_mps2,
+                config.max_climb_rate_mps,
+                config.max_descent_rate_mps,
+            ]
+            .iter()
+            .all(|&limit| limit >= 0.0),
+            "SimpleAircraft limits must be nonnegative"
+        );
+        ensure!(
+            config.max_roll_rad < std::f64::consts::FRAC_PI_2,
+            "SimpleAircraft max_roll must be below 90 degrees"
         );
         Ok(config)
     }
@@ -182,12 +281,13 @@ impl SimpleAircraft {
         state.roll_world_from_body_rad = state
             .roll_world_from_body_rad
             .clamp(-self.config.max_roll_rad, self.config.max_roll_rad);
-        state.pitch_world_from_body_rad = state
-            .pitch_world_from_body_rad
-            .clamp(-self.config.max_pitch_rad, self.config.max_pitch_rad);
         state.speed_mps = state
             .speed_mps
             .clamp(self.config.min_speed_mps, self.config.max_speed_mps);
+        let (min_pitch_rad, max_pitch_rad) = self.config.pitch_limits_rad(state.speed_mps);
+        state.pitch_world_from_body_rad = state
+            .pitch_world_from_body_rad
+            .clamp(min_pitch_rad, max_pitch_rad);
         state
     }
 
@@ -265,17 +365,22 @@ impl SimpleAircraft {
 /// angle back from a quaternion (about 1e-16 rad), far below any motion.
 const AT_LIMIT: f64 = 1e-9;
 
+// DEVNOTE: inlined into the RK4 stages. Not inlined, and with f64::clamp
+// below, perf.py's substeps-512 workload (one worker, ten substeps) ran in
+// 0.92 s against 0.78 s for the build before the acceleration and climb
+// limits; with both changes, 0.79 s. Rerun perf.py after changing this.
+#[inline]
 fn aircraft_derivative(
     state: AircraftState,
     control: AircraftControl,
     config: &AircraftConfig,
 ) -> [f64; 7] {
     let horizontal_speed_mps = state.speed_mps * state.pitch_world_from_body_rad.cos();
-    let effective_turning_radius_m = config.turning_radius_m
-        + config.radius_slope_s * (state.speed_mps - config.reference_speed_mps);
-    // Banked right (positive roll), it turns right: heading decreases.
+    // A coordinated turn: the lift's horizontal part, g tan(roll) per unit
+    // mass, turns the velocity at g tan(roll) / speed. Banked right (positive
+    // roll), it turns right: heading decreases.
     let yaw_rate_world_radps =
-        -state.speed_mps / effective_turning_radius_m * state.roll_world_from_body_rad.tan();
+        -GRAVITY_MPS2 * state.roll_world_from_body_rad.tan() / state.speed_mps;
     // A value at a limit stays there while the command pushes it outward.
     // "At" allows for rounding: truth stores attitude as a quaternion, and
     // reading an angle back from it can land a bit inside the limit.
@@ -287,7 +392,13 @@ fn aircraft_derivative(
         }
     };
     let max_roll_rad = config.max_roll_rad;
-    let max_pitch_rad = config.max_pitch_rad;
+    let (min_pitch_rad, max_pitch_rad) = config.pitch_limits_rad(state.speed_mps);
+    // The throttle scale, within the acceleration limits.
+    // max/min, not f64::clamp, whose check that its bounds are in order
+    // (it can panic) costs speed here; see the DEVNOTE above.
+    let acceleration_mps2 = (control.throttle / 5.0)
+        .max(-config.max_deceleration_mps2)
+        .min(config.max_acceleration_mps2);
 
     [
         horizontal_speed_mps * state.yaw_world_from_body_rad.cos(),
@@ -301,7 +412,7 @@ fn aircraft_derivative(
         ),
         held(
             state.pitch_world_from_body_rad,
-            -max_pitch_rad,
+            min_pitch_rad,
             max_pitch_rad,
             control.pitch_rate_radps,
         ),
@@ -310,7 +421,7 @@ fn aircraft_derivative(
             state.speed_mps,
             config.min_speed_mps,
             config.max_speed_mps,
-            control.throttle / 5.0,
+            acceleration_mps2,
         ),
     ]
 }
@@ -394,7 +505,11 @@ mod tests {
                 team_id: 1,
                 sub_swarm_id: 0,
             },
-            time: StepTime { time_s: 0.0, dt_s },
+            time: StepTime {
+                time_s: 0.0,
+                dt_s,
+                tick: 0,
+            },
             truth,
             messages,
             terrain: None,
@@ -454,10 +569,11 @@ mod tests {
 
     #[test]
     fn nonfinite_integration_returns_an_explanatory_error() -> anyhow::Result<()> {
-        let params = Params::from([("turning_radius".into(), "0".into())]);
-        let config = SimpleAircraft::configure(&PluginParams::text(&params))?;
-        let mut aircraft = SimpleAircraft::new(&config);
-        let mut truth = crate::KinematicState::default();
+        let mut aircraft = aircraft()?;
+        let mut truth = crate::KinematicState {
+            position_world_m: Vec3::new(f64::NAN, 0.0, 0.0),
+            ..crate::KinematicState::default()
+        };
         let error = aircraft
             .integrate(&mut truth, AircraftControl::default(), 0.1)
             .unwrap_err();
@@ -522,13 +638,49 @@ mod tests {
                 "{turned_radps:?} vs {rate_radps:?}"
             );
         }
-        // Banked right, so it turns right: yaw rate -speed / radius * tan(bank).
-        let yaw_rate_radps = -25.0 / 13.0 * 20_f64.to_radians().tan();
+        // Banked right, so it turns right: yaw rate -g tan(bank) / speed.
+        let yaw_rate_radps = -9.81 * 20_f64.to_radians().tan() / 25.0;
         let reported_radps = truth.angular_velocity_world_radps.z;
         assert!(
             (reported_radps - yaw_rate_radps).abs() < 0.05,
             "{reported_radps}"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn a_banked_turn_is_a_coordinated_turn_whose_radius_grows_with_speed_squared()
+    -> anyhow::Result<()> {
+        // Level at the 30 degree bank limit and constant speed: the turn rate is
+        // g tan(bank) / speed, so the radius is speed^2 / (g tan(bank)).
+        let mut radii_m = Vec::new();
+        for speed_mps in [20.0, 25.0, 40.0] {
+            let mut aircraft = aircraft()?;
+            let attitude = Quaternion::from_euler(EulerAngles {
+                roll_world_from_body_rad: 30_f64.to_radians(),
+                ..EulerAngles::default()
+            });
+            let mut truth = KinematicState {
+                velocity_world_mps: Vec3::new(speed_mps, 0.0, 0.0),
+                orientation_world_from_body: attitude,
+                ..KinematicState::default()
+            };
+            initialize(&mut aircraft, &mut truth)?;
+            let heading_rad = |truth: &KinematicState| {
+                truth.orientation_world_from_body.yaw_world_from_body_rad()
+            };
+            let before_rad = heading_rad(&truth);
+            for _ in 0..10 {
+                step(&mut aircraft, &mut truth, [0.0, 0.0, 0.0], 0.1)?;
+            }
+            let rate_radps = (heading_rad(&truth) - before_rad) / 1.0;
+            let expected_radps = -9.81 * 30_f64.to_radians().tan() / speed_mps;
+            assert!((rate_radps - expected_radps).abs() < 1e-12, "{rate_radps}");
+            radii_m.push(speed_mps / rate_radps.abs());
+        }
+        // 110 m at 25 m/s, and four times the radius at twice the speed.
+        assert!((radii_m[1] - 110.4).abs() < 0.1, "{radii_m:?}");
+        assert!((radii_m[2] / radii_m[0] - 4.0).abs() < 1e-9, "{radii_m:?}");
         Ok(())
     }
 
@@ -553,7 +705,8 @@ mod tests {
             (turned_radps - rate_radps).norm() < 1e-9,
             "{turned_radps:?} vs {rate_radps:?}"
         );
-        assert!(rate_radps.z > 1.0, "{rate_radps:?}");
+        // Banked 30 degrees left at 25 m/s: 9.81 tan(30 degrees) / 25 rad/s.
+        assert!((rate_radps.z - 0.2266).abs() < 1e-3, "{rate_radps:?}");
         Ok(())
     }
 

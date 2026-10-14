@@ -87,6 +87,9 @@ pub struct StepTime {
     pub time_s: f64,
     /// This phase's integration interval (smaller during controller/motion substeps).
     pub dt_s: f64,
+    /// The tick, counted from 0 at the start time (-1 for entities created
+    /// one step before it). The same in every phase and substep of a tick.
+    pub tick: i64,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -113,8 +116,8 @@ pub struct AgentContext<'a> {
     pub state: &'a KinematicState,
     /// Known contacts, from tracking.
     pub contacts: KnownContacts<'a>,
-    /// This plugin instance's mission-seeded random stream.
-    pub random: &'a mut PluginRandom,
+    /// This plugin instance's random numbers at this tick.
+    pub random: PluginRandom,
 }
 
 pub struct WorldContext<'a> {

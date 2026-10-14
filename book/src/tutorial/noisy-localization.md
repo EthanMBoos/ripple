@@ -22,7 +22,7 @@ An estimator gets what a real robot would have, and nothing else:
 
 - **readings** from the sensors the mission selects, looked up by input name;
 - **commands**: the values the motion model read on each substep of the tick;
-- the time, messages, and a random stream.
+- the time, messages, and random numbers.
 
 It never sees the truth. So the only way for belief to go wrong is the way it
 goes wrong on a real robot: noisy readings, readings that don't come often,
@@ -32,8 +32,8 @@ or a wrong idea of how the vehicle moves. This tutorial models the last two.
 
 The robot is a point that moves at the velocity it is given
 (`SingleIntegrator`). A `WaypointFollower` autonomy steers it around a 100 m
-square at 10 m/s. But its motion model has `max_speed: 8`: whatever it asks
-for, it really moves at 8 m/s. That is the *hidden truth*, a physical fact
+square at 10 m/s. But its motion model has `max_speed: 8`: asking for 10, it
+really moves at 8 m/s. That is the *hidden truth*, a physical fact
 the robot's software doesn't know.
 
 The estimator has its own idea of how the robot moves, a setting called
@@ -222,7 +222,7 @@ templates:
       SingleIntegratorControllerSimple:
     motion_model:
       SingleIntegrator:
-        max_speed: 8      # the hidden truth: it moves at 8 m/s whatever it asks
+        max_speed: 8      # the hidden truth: its motors only reach 8 m/s
 
 entities:
   dead_reckoning:
@@ -233,9 +233,7 @@ entities:
       gps:
         plugin: NoisyState
         loop_rate: 0.2    # one fix every 5 s
-        pos_noise_0: [0, 0]
-        pos_noise_1: [0, 0]
-        pos_noise_2: [0, 0]
+        position_stddev_m: [0, 0, 0]   # exact fixes; raise to add GPS noise
     localization:
       DeadReckoning:
         speed_gain: 1.0   # assumes it moves as commanded: 2 m/s too fast
@@ -246,10 +244,10 @@ entities:
     color: [160, 160, 160]
 ```
 
-- The fix comes from the stock `NoisyState` sensor, named `gps`, with its
-  position noise set to zero for now (its other measured fields keep their
-  default noise, but the estimator ignores them). `loop_rate: 0.2` runs it once
-  every 5 s.
+- The fix comes from the stock `NoisyState` sensor, named `gps`. Its noise
+  defaults to zero; the mission names `position_stddev_m` anyway so the
+  exercises can raise it from the command line (an override replaces a value
+  the mission has). `loop_rate: 0.2` runs it once every 5 s.
 - `localization:` replaces the default `PassThrough` with `DeadReckoning`.
   It has one sensor that gives state readings, so `gps` feeds its `fix`
   input automatically. With two such sensors you would name one:
@@ -340,14 +338,14 @@ wrong belief, as it would on a real robot.
 ## Exercises
 
 1. **Noisy and wrong.** Give the fixes zero-mean noise with a 2 m standard
-   deviation in x and y (`pos_noise_0` and `pos_noise_1`) and keep
+   deviation in x and y (`position_stddev_m: [2, 2, 0]`) and keep
    `speed_gain: 1.0`. How far does the blue robot stray now? Try it on the
    command line (the quotes keep the shell from reading the brackets):
 
    ```sh
    cargo run -- run crates/starter/missions/dead-reckoning.yaml \
-     'entities.dead_reckoning.sensors.gps.pos_noise_0:=[0, 2]' \
-     'entities.dead_reckoning.sensors.gps.pos_noise_1:=[0, 2]' --viewer
+     'entities.dead_reckoning.sensors.gps.position_stddev_m:=[2, 2, 0]' \
+     --viewer
    ```
 2. **Blend instead of replace.** A noisy fix is not the truth either. Add a
    `fix_weight` parameter between 0 and 1 and move the belief only part of the

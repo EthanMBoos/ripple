@@ -3,7 +3,7 @@
 //! Derived from SCRIMMAGE: src/plugins/autonomy/AuctionAssign/AuctionAssign.cpp (LGPL-3.0-or-later).
 //! Autonomy phase: consume delivered starts/bids, then publish bids or the final winner.
 //! Later autonomy plugins may overwrite this demo's zero velocity commands.
-//! Bids come from this plugin's own mission-seeded random stream.
+//! Each bid is the random number keyed by its auction's auctioneer.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;
@@ -111,13 +111,15 @@ impl Autonomy for AuctionAssign {
     }
 
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
-        for _message in context
+        for message in context
             .messages
             .receive::<AuctionStart>(&self.network, START_AUCTION_TOPIC)?
         {
+            // One bid per auction, keyed by the auctioneer's entity.
+            let auctioneer = i64::from(message.sender.entity_id.unwrap_or(0)) as u64;
             let bid = AuctionBid {
                 bidder_id: context.entity.id,
-                bid: context.random.uniform() * 10.0,
+                bid: context.random.uniform(&[auctioneer]) * 10.0,
             };
             context
                 .messages

@@ -22,22 +22,18 @@
   },
   "motion_multiplier": 1,
   "cpp_non_interference": {
-    "untraced": {
-      "frames.bin": true,
-      "summary.csv": true
-    },
     "traced": {
       "frames.bin": true,
       "summary.csv": true
     }
   },
   "cpp_baseline_equality": {
-    "frames.bin": true,
+    "frames.bin": false,
     "summary.csv": true
   },
-  "cpp_log_directory": "cpp/logs/2026-10-12_10-47-01",
+  "cpp_log_directory": "cpp/logs/2026-10-14_20-38-03",
   "cpp_output_hashes": {
-    "frames.bin": "21d41b94f5e836c1276794eff839ee4666a7b9b4a8dfda4509389a34ab13ba02",
+    "frames.bin": "d7f625d106ab5a07645c489d52b413a8a0fc8bb0721af3833a6c694e8422f18a",
     "summary.csv": "8e11d04f706509ae731986d61806ca86f1c3d33c8c8f618cb58c0600c3ca7705"
   },
   "worker_equality": {
@@ -57,7 +53,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "db7374e0089b5ddae68988a6809f56ae4443604a43e5e5e5a3b86b54f29761cc",
+  "recording_sha256": "7cb15dbe9963034ed19a1b16fd3fc7071452f58307077dcfdcc800b8dffd399f",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,
@@ -65,28 +61,28 @@
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "5f297030126743968a4ffc8af55dc864ca9b23b61f1bac62a1d013d859e6546d",
-      "events.json": "2cb38f259ae3cfeb0122b42ce3506de8933407a6feb9c3d37b1804863daebd9f",
+      "frames.bin": "986318db71f0a1f535b223c99e5bdd39529ee84867410d30f72fd883a5e63382",
+      "events.json": "f620b67576e66bf3267627649d14191260d23447ff4f2c4383369710cfc25362",
       "summary.csv": "8e11d04f706509ae731986d61806ca86f1c3d33c8c8f618cb58c0600c3ca7705"
     },
     "rust-2": {
-      "frames.bin": "5f297030126743968a4ffc8af55dc864ca9b23b61f1bac62a1d013d859e6546d",
-      "events.json": "2cb38f259ae3cfeb0122b42ce3506de8933407a6feb9c3d37b1804863daebd9f",
+      "frames.bin": "986318db71f0a1f535b223c99e5bdd39529ee84867410d30f72fd883a5e63382",
+      "events.json": "f620b67576e66bf3267627649d14191260d23447ff4f2c4383369710cfc25362",
       "summary.csv": "8e11d04f706509ae731986d61806ca86f1c3d33c8c8f618cb58c0600c3ca7705"
     },
     "rust-8": {
-      "frames.bin": "5f297030126743968a4ffc8af55dc864ca9b23b61f1bac62a1d013d859e6546d",
-      "events.json": "2cb38f259ae3cfeb0122b42ce3506de8933407a6feb9c3d37b1804863daebd9f",
+      "frames.bin": "986318db71f0a1f535b223c99e5bdd39529ee84867410d30f72fd883a5e63382",
+      "events.json": "f620b67576e66bf3267627649d14191260d23447ff4f2c4383369710cfc25362",
       "summary.csv": "8e11d04f706509ae731986d61806ca86f1c3d33c8c8f618cb58c0600c3ca7705"
     },
     "rust-rerun": {
-      "frames.bin": "5f297030126743968a4ffc8af55dc864ca9b23b61f1bac62a1d013d859e6546d",
-      "events.json": "2cb38f259ae3cfeb0122b42ce3506de8933407a6feb9c3d37b1804863daebd9f",
+      "frames.bin": "986318db71f0a1f535b223c99e5bdd39529ee84867410d30f72fd883a5e63382",
+      "events.json": "f620b67576e66bf3267627649d14191260d23447ff4f2c4383369710cfc25362",
       "summary.csv": "8e11d04f706509ae731986d61806ca86f1c3d33c8c8f618cb58c0600c3ca7705"
     },
     "rust-trace": {
-      "frames.bin": "5f297030126743968a4ffc8af55dc864ca9b23b61f1bac62a1d013d859e6546d",
-      "events.json": "2cb38f259ae3cfeb0122b42ce3506de8933407a6feb9c3d37b1804863daebd9f",
+      "frames.bin": "986318db71f0a1f535b223c99e5bdd39529ee84867410d30f72fd883a5e63382",
+      "events.json": "f620b67576e66bf3267627649d14191260d23447ff4f2c4383369710cfc25362",
       "summary.csv": "8e11d04f706509ae731986d61806ca86f1c3d33c8c8f618cb58c0600c3ca7705"
     }
   },
@@ -109,7 +105,8 @@
     "deliveries": 5,
     "beliefs": 976,
     "outputs": 5856,
-    "published_states": 0,
+    "sensor_states": 0,
+    "skipped_sensor_deliveries": 0,
     "max_belief_position_error_m": 0.0,
     "max_belief_velocity_error_mps": 0.0,
     "max_belief_orientation_error_rad": 0.0,
@@ -117,7 +114,6 @@
     "max_payload_position_error_m": 0.0,
     "max_payload_velocity_error_mps": 0.0,
     "max_payload_orientation_error_rad": 0.0,
-    "max_payload_covariance_error": 0.0,
     "max_output_error": 0.0,
     "max_output_error_port": "",
     "excluded_pre_start_records": 0,

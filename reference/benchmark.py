@@ -23,8 +23,8 @@ the previous benchmark image, so repeated benchmarks don't fill the disk.
 Rust must write identical output (frames, summary, events) at 1 and 8 workers.
 It must also match single-threaded C++ except in churn, sensing, and collision,
 which depend on random spawn positions and sensor noise that the C++ build
-draws differently without SCRIMMAGE_LIBCXX_SPAWN_RANDOM (the reference check
-matches them with its comparison build).
+draws differently without SCRIMMAGE_KEYED_RANDOM (the reference check matches
+them with it; the timed C++ runs leave it off).
 Every timed run must repeat its warm-up output; C++'s multithreaded mode is
 reported, not required, to do so.
 That mode sometimes deadlocks (SimControl::worker waits on its condition variable

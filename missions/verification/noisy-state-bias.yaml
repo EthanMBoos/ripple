@@ -31,13 +31,7 @@ entities:
     motion_model:
       SimpleAircraft:
     sensors:
-      NoisyState:            # each axis is [mean, stddev]
-        pos_noise_0: [1, 0]
-        pos_noise_1: [-2, 0]
-        pos_noise_2: [3, 0]
-        vel_noise_0: [0.2, 0]
-        vel_noise_1: [-0.1, 0]
-        vel_noise_2: [0.3, 0]
-        orient_noise_0: [0.01, 0]
-        orient_noise_1: [0.02, 0]
-        orient_noise_2: [-0.03, 0]
+      NoisyState:            # biases only; every standard deviation is 0
+        position_bias_m: [1, -2, 3]
+        velocity_bias_mps: [0.2, -0.1, 0.3]
+        attitude_bias_rad: [0.01, 0.02, -0.03]

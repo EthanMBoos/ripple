@@ -58,11 +58,13 @@ impl Sensor for NoisyPosition {
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
         let ideal_position_world_m = context.truth.position_world_m;
 
-        // Preserve x/y/z draw order, even when the configured noise is zero.
+        // Each axis's error is the number keyed by that axis (0, 1, 2) at this
+        // tick: a different key for every number.
+        let random = context.random;
         let noise_world_m = Vec3::new(
-            context.random.normal(0.0, self.stddev_m)?,
-            context.random.normal(0.0, self.stddev_m)?,
-            context.random.normal(0.0, self.stddev_m)?,
+            random.normal(&[0], 0.0, self.stddev_m)?,
+            random.normal(&[1], 0.0, self.stddev_m)?,
+            random.normal(&[2], 0.0, self.stddev_m)?,
         );
         let measured_position_world_m = ideal_position_world_m + self.bias_world_m + noise_world_m;
 
@@ -102,12 +104,11 @@ mod tests {
             position_world_m: Vec3::new(10.0, 20.0, 30.0),
             ..KinematicState::default()
         };
-        let mut random = PluginRandom::new(12345, 1, "NoisyPosition:0");
-        let mut expected_random = PluginRandom::new(12345, 1, "NoisyPosition:0");
+        let random = PluginRandom::new(12345, 1, "NoisyPosition:0").at_tick(20);
         let expected_noise_world_m = Vec3::new(
-            expected_random.normal(0.0, stddev_m)?,
-            expected_random.normal(0.0, stddev_m)?,
-            expected_random.normal(0.0, stddev_m)?,
+            random.normal(&[0], 0.0, stddev_m)?,
+            random.normal(&[1], 0.0, stddev_m)?,
+            random.normal(&[2], 0.0, stddev_m)?,
         );
         let expected_position_world_m =
             truth.position_world_m + Vec3::from(config.bias_world_m) + expected_noise_world_m;
@@ -123,10 +124,11 @@ mod tests {
             time: StepTime {
                 time_s: 2.0,
                 dt_s: 0.1,
+                tick: 20,
             },
             truth: &truth,
             contacts_truth: TruthContacts::from(&[][..]),
-            random: &mut random,
+            random,
             name: "gps",
             kind: ReadingKind::Other,
             pending: &mut pending,
@@ -135,14 +137,13 @@ mod tests {
         let observation = pending
             .get::<PositionObservation>("gps")?
             .expect("sensor output");
-        // Exact equality protects the per-axis draw order, including zero-noise draws.
+        // Exact equality checks each axis's key.
         assert_eq!(
             observation.value.position_world_m,
             expected_position_world_m
         );
         assert_eq!(truth.position_world_m, Vec3::new(10.0, 20.0, 30.0));
         assert!((observation.sampled_at_s - 2.1).abs() < 1e-12);
-        assert_eq!(random.normal(0.0, 1.0)?, expected_random.normal(0.0, 1.0)?);
         Ok(())
     }
 }

@@ -8,8 +8,8 @@ among them frame timestamps, so its outputs differ from the baseline's by design
 Per mission, the instrumented build with tracing must write the same frames and
 summaries as without it (non-interference); equality with the baseline is only
 recorded. The comparison run adds
-SCRIMMAGE_LIBCXX_SPAWN_RANDOM=1 and is compared with Rust frames, summaries, and
-traces. Requires Python 3.10+, Docker, Cargo, and the
+SCRIMMAGE_KEYED_RANDOM=1, so C++ draws Ripple's keyed random numbers, and is
+compared with Rust frames, summaries, and traces. Requires Python 3.10+, Docker, Cargo, and the
 sibling SCRIMMAGE checkout. No host C++ toolchain is needed.
 """
 
@@ -37,7 +37,7 @@ INSTRUMENTED_BRANCH = "benchmarking-edits"
 # Instrumented-build environments. Non-interference runs must match the baseline.
 UNTRACED_ENV = {}
 TRACED_ENV = {"SCRIMMAGE_TRACE": "/run/trace.jsonl"}
-COMPARISON_ENV = {**TRACED_ENV, "SCRIMMAGE_LIBCXX_SPAWN_RANDOM": "1"}
+COMPARISON_ENV = {**TRACED_ENV, "SCRIMMAGE_KEYED_RANDOM": "1"}
 CPP_OUTPUT_FILES = ("frames.bin", "summary.csv")
 PLATFORM = "linux/amd64"  # Upstream install-jsbsim.sh downloads amd64 .deb files.
 DEPENDENCY_DOCKERFILE = "ci/dockerfiles/ubuntu-24.04-slim-dependency-only"
@@ -413,8 +413,8 @@ def main(argv=None):
             "explained by reference/metrics_model.py.",
             "Rust worker/recording checks compare frames, events, and summaries byte-for-byte.",
             "Headless recording is tested; interactive viewer QA is a separate workflow.",
-            "Default random engines/distributions differ between libc++ and libstdc++; the "
-            "comparison run uses the branch's libc++-compatible spawn stream.",
+            "The comparison run draws keyed random numbers in C++ (SCRIMMAGE_KEYED_RANDOM=1) "
+            "for spawns, NoisyState, NoisyContacts, and SphereNetwork, as Ripple does.",
             "Traces compare deliveries, beliefs, and plugin outputs (reference/traces.py).",
         ],
     }

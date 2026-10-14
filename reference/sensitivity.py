@@ -29,7 +29,7 @@ CORE = "crates/core/src/"
 DEFECTS = [
     ("controller substeps receive the full step dt", CORE + "simcontrol.rs",
      "                entity.step_controller(time)\n",
-     "                entity.step_controller(StepTime { time_s: time.time_s, dt_s })\n"),
+     "                entity.step_controller(StepTime { dt_s, ..time })\n"),
     ("frame timestamp labels the time after the step", CORE + "simcontrol.rs",
      "before this tick's step.\n            time_s: self.time_s,",
      "before this tick's step.\n            time_s: self.time_s + self.config.run.dt_s,"),
@@ -53,18 +53,21 @@ DEFECTS = [
      "truth_orientation * yaw_error * pitch_error * roll_error"),
     ("NoisyState reports zero angular velocity",
      CORE + "plugin/sensor/noisy_state/noisy_state.rs",
-     "        self.noise.apply(truth, random)\n",
-     "        let mut measured = self.noise.apply(truth, random)?;\n"
+     "        self.noise.apply(truth, random, reading)\n",
+     "        let mut measured = self.noise.apply(truth, random, reading)?;\n"
      "        measured.angular_velocity_world_radps = Vec3::zeros();\n"
      "        Ok(measured)\n"),
     # "Straight ignores the NoisyState estimate" was an equivalent mutant: Rust
-    # already passes the NoisyState belief as the plugin's state. Replaced by:
-    # LocalNetwork asks the router for same-entity links only; a plain route
-    # offers every subscriber, which LocalNetwork then delivers to.
-    ("LocalNetwork delivers across entities",
-     CORE + "plugin/network/local_network/local_network.rs",
-     "context.route_within_entity(",
-     "context.route("),
+    # already passes the NoisyState belief as the plugin's state. Its
+    # replacement, "LocalNetwork delivers across entities", became one too once
+    # sensors stopped publishing readings on LocalNetwork (no compared mission
+    # sends a LocalNetwork message), so it was undetectable. Replaced by a
+    # defect in the keyed loss draws, which sphere-network-loss compares draw
+    # for draw:
+    ("SphereNetwork loss key swaps sender and receiver",
+     CORE + "plugin/network/sphere_network/sphere_network.rs",
+     "entity(link.sender.entity_id),\n                entity(link.receiver.entity_id),",
+     "entity(link.receiver.entity_id),\n                entity(link.sender.entity_id),"),
     ("SingleIntegrator yaw swaps atan2 arguments",
      CORE + "plugin/motion/single_integrator/single_integrator.rs",
      "yaw_world_from_body_rad: velocity_mps.y.atan2(velocity_mps.x),",
@@ -74,8 +77,8 @@ DEFECTS = [
      "heading_gains: PidGains::from([1.0, 0.01, 2.0, 9.0]),",
      "heading_gains: PidGains::from([1.01, 0.01, 2.0, 9.0]),"),
     ("SimpleAircraft yaw rate 0.1% high", CORE + "plugin/motion/simple_aircraft/simple_aircraft.rs",
-     "state.speed_mps / effective_turning_radius_m * state.roll_model_rad.tan();",
-     "state.speed_mps / effective_turning_radius_m * state.roll_model_rad.tan() * 1.001;"),
+     "-GRAVITY_MPS2 * state.roll_world_from_body_rad.tan() / state.speed_mps;",
+     "-GRAVITY_MPS2 * state.roll_world_from_body_rad.tan() / state.speed_mps * 1.001;"),
 ]
 
 

@@ -214,8 +214,8 @@ pub(super) fn team_color(team_id: i32) -> [u8; 3] {
 
 pub(super) fn playback_time_ns(elapsed_s: f64, previous_ns: Option<i64>) -> i64 {
     let time_ns = (elapsed_s.max(0.0) * 1e9).round() as i64;
-    // Legacy output repeats the final timestamp. Preserve both visual samples without
-    // changing frame files or pretending sequence indices are seconds.
+    // Keep samples strictly increasing even if a frames file repeats a timestamp
+    // (runs recorded before timestamps were unique repeat the final one).
     previous_ns.map_or(time_ns, |previous| time_ns.max(previous.saturating_add(1)))
 }
 

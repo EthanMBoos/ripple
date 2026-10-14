@@ -54,9 +54,8 @@ the simulation loop. No runtime library loading is planned.
 - SingleIntegrator preserves C++'s unusual `max_speed`: negative means direct
   velocity; nonnegative means normalize to that magnitude, not clamp. Zero
   command stays zero. `override_heading=true` is not implemented.
-- SimpleAircraft preserves legacy model roll/pitch signs, pre-integration
-  limits, and its reported vertical-velocity versus altitude-derivative
-  discrepancy. No claim of a high-fidelity flight model. `show_text_label` in
+- SimpleAircraft is a kinematic stand-in: no claim of a high-fidelity flight
+  model. `show_text_label` in
   legacy Straight inputs is superseded by Rerun's labels, not a plugin drawing
   API.
 - NoisyState estimates own state, not probabilistic target detection. Rust's

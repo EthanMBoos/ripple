@@ -6,10 +6,17 @@ and the C++ benchmarking-edits branch (src/common/Trace.cpp):
 
   delivery            a message reached a subscriber this tick
   scheduled_delivery  a message was queued with a positive delay
-  belief              an entity's belief state when its frame is logged (the
-                      final tick twice, as frames repeat the terminal timestamp)
+  belief              an entity's belief state when its frame is logged
   output              an autonomy/controller output after all controller substeps
-  publication         a published sensor payload: states with covariance
+  publication         C++: a sensor's published measurement (NoisyState,
+                      NoisyContacts), states with a placeholder covariance
+  reading             Rust: a sensor's reading, the same states; Rust sensors
+                      publish no message
+
+A publication and a reading from the same sensor and tick are compared as one
+measurement. C++'s deliveries of those publications (to Straight, which
+ignores them) have no Rust counterpart and are skipped; the count is reported.
+The placeholder covariance is not compared.
 
 Known C++ defect: an entity destroyed in the pre-start interaction pass stays in
 C++'s entity list, inactive, until the end of the first tick. It still runs its
@@ -21,7 +28,7 @@ EntityRemoved deliveries are collapsed; the count is reported. Any effect on
 other entities still appears in their records.
 
 Deliveries are grouped by (tick, receiver, network, topic) and must contain the
-same senders and event entity IDs in the same order. Publications must list the
+same senders and event entity IDs in the same order. Measurements must list the
 same contact IDs in order. Belief, payload, and output values use the tolerances
 below. A record present on only one side is a mismatch.
 Python 3.10+, standard library only.
@@ -40,7 +47,6 @@ from compare import (ANGULAR_VELOCITY_TOLERANCE_RADPS, ORIENTATION_TOLERANCE_RAD
                      orientation_distance_rad)
 
 OUTPUT_TOLERANCE = 1e-8  # Absolute; largest observed 2.2e-11 with commands up to ~1000.
-COVARIANCE_TOLERANCE = 1e-9
 TIME_DIGITS = 9  # Ticks are keyed by time rounded to nanoseconds.
 
 
@@ -50,7 +56,8 @@ class TraceComparison:
     deliveries: int = 0
     beliefs: int = 0
     outputs: int = 0
-    published_states: int = 0
+    sensor_states: int = 0
+    skipped_sensor_deliveries: int = 0
     max_belief_position_error_m: float = 0.0
     max_belief_velocity_error_mps: float = 0.0
     max_belief_orientation_error_rad: float = 0.0
@@ -58,7 +65,6 @@ class TraceComparison:
     max_payload_position_error_m: float = 0.0
     max_payload_velocity_error_mps: float = 0.0
     max_payload_orientation_error_rad: float = 0.0
-    max_payload_covariance_error: float = 0.0
     max_output_error: float = 0.0
     max_output_error_port: str = ""
     excluded_pre_start_records: int = 0
@@ -111,32 +117,35 @@ def normalize_endpoint(endpoint, entity_ids):
 
 def index(records):
     entity_ids = {record["id"] for record in records if record["kind"] == "belief"}
+    # (sender, topic) of each sensor publication; their deliveries are skipped.
+    sensor_topics = {(tuple(record["from"]), record["topic"])
+                     for record in records if record["kind"] == "publication"}
     deliveries = defaultdict(list)
-    beliefs, outputs, publications = {}, {}, {}
+    beliefs, outputs, measurements = {}, {}, {}
     belief_counts = defaultdict(int)
     output_counts = defaultdict(int)
+    skipped = 0
     for record in records:
         kind = record["kind"]
         if kind in ("delivery", "scheduled_delivery"):
+            if (tuple(record["from"]), record["topic"]) in sensor_topics:
+                skipped += 1
+                continue
             key = (kind, tick(record), normalize_endpoint(record["to"], entity_ids),
                    record["network"], record["topic"])
             deliveries[key].append((normalize_endpoint(record["from"], entity_ids),
                                     tuple(record.get("ids", ())),
                                     record.get("deliver_at")))
         elif kind == "belief":
-            # The final tick is logged twice: before its step and as the terminal frame.
+            # Counted, so a repeated (tick, entity) is compared rather than lost.
             key = (tick(record), record["id"])
             beliefs[key + (belief_counts[key],)] = record
             belief_counts[key] += 1
-        # TODO(estimation): Rust will record sensor readings instead of the
-        # LocalNetwork publications. Pair C++ publications with those records
-        # here and skip C++'s NoisyState/NoisyContacts deliveries, which Rust
-        # won't have.
-        elif kind == "publication":
-            key = (tick(record), normalize_endpoint(record["from"], entity_ids), record["topic"])
-            if key in publications:
-                raise ValueError(f"duplicate publication record {key}")
-            publications[key] = record["states"]
+        elif kind in ("publication", "reading"):
+            key = (tick(record), normalize_endpoint(record["from"], entity_ids))
+            if key in measurements:
+                raise ValueError(f"duplicate sensor measurement {key}")
+            measurements[key] = record["states"]
         elif kind == "output":
             # Two plugins with one name (e.g. two autonomies) are told apart by chain order.
             key = (tick(record), record["id"], record["plugin"], record["port"])
@@ -144,7 +153,7 @@ def index(records):
             output_counts[key] += 1
         else:
             raise ValueError(f"unknown trace record kind {kind!r}")
-    return deliveries, beliefs, outputs, publications
+    return deliveries, beliefs, outputs, measurements, skipped
 
 
 def state_errors(expected, actual):
@@ -195,8 +204,10 @@ def compare_traces(reference_records, candidate_records, pre_start_removed=(), f
     reference_records, excluded = exclude_pre_start(reference_records, removed, first_tick)
     candidate_records, candidate_excluded = exclude_pre_start(candidate_records, removed, first_tick)
     result.excluded_pre_start_records = excluded + candidate_excluded
-    ref_deliveries, ref_beliefs, ref_outputs, ref_publications = index(reference_records)
-    deliveries, beliefs, outputs, publications = index(candidate_records)
+    ref_deliveries, ref_beliefs, ref_outputs, ref_measurements, ref_skipped = \
+        index(reference_records)
+    deliveries, beliefs, outputs, measurements, skipped = index(candidate_records)
+    result.skipped_sensor_deliveries = ref_skipped + skipped
     result.deliveries = sum(len(v) for v in ref_deliveries.values())
     result.beliefs = len(ref_beliefs)
     result.outputs = len(ref_outputs)
@@ -225,30 +236,24 @@ def compare_traces(reference_records, candidate_records, pre_start_removed=(), f
         if not all(error <= limit for error, limit in zip(errors, STATE_LIMITS)):
             result.mismatch(f"belief {key} differs: {errors}")
 
-    compare_keys("publication", ref_publications, publications, result)
-    for key in sorted(ref_publications.keys() & publications.keys(), key=repr):
-        expected, actual = ref_publications[key], publications[key]
+    compare_keys("sensor measurement", ref_measurements, measurements, result)
+    for key in sorted(ref_measurements.keys() & measurements.keys(), key=repr):
+        expected, actual = ref_measurements[key], measurements[key]
         if [state["id"] for state in expected] != [state["id"] for state in actual]:
-            result.mismatch(f"publication {key} contact IDs differ: "
+            result.mismatch(f"sensor measurement {key} contact IDs differ: "
                             f"{[s['id'] for s in expected]} vs {[s['id'] for s in actual]}")
             continue
         for expected_state, actual_state in zip(expected, actual):
-            result.published_states += 1
+            result.sensor_states += 1
             errors = state_errors(expected_state, actual_state)
-            covariance = max((abs(a - b) for a, b in zip(expected_state["cov"], actual_state["cov"])),
-                             default=0.0)
-            if len(expected_state["cov"]) != len(actual_state["cov"]):
-                covariance = math.inf
             result.max_payload_position_error_m = max(result.max_payload_position_error_m, errors[0])
             result.max_payload_velocity_error_mps = max(
                 result.max_payload_velocity_error_mps, errors[1])
             result.max_payload_orientation_error_rad = max(
                 result.max_payload_orientation_error_rad, errors[2])
-            result.max_payload_covariance_error = max(result.max_payload_covariance_error, covariance)
-            if not (all(error <= limit for error, limit in zip(errors, STATE_LIMITS))
-                    and covariance <= COVARIANCE_TOLERANCE):
-                result.mismatch(f"publication {key} contact {expected_state['id']} differs: "
-                                f"{errors}, covariance {covariance}")
+            if not all(error <= limit for error, limit in zip(errors, STATE_LIMITS)):
+                result.mismatch(f"sensor measurement {key} contact {expected_state['id']} "
+                                f"differs: {errors}")
 
     compare_keys("output", ref_outputs, outputs, result)
     for key in sorted(ref_outputs.keys() & outputs.keys()):

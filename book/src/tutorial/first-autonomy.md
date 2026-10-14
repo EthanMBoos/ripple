@@ -245,8 +245,7 @@ end_conditions: [time, one_team]
 interactions:
   SimpleCollision:
 networks:
-  LocalNetwork:           # Straight listens on it for sensor updates
-  GlobalNetwork:
+  GlobalNetwork:          # Straight listens on it for a boundary
 metrics:
   SimpleCollisionMetrics:
 
@@ -289,7 +288,7 @@ A few things to notice:
 - `heading_deg` is in degrees, with 0 meaning east.
 - `SimpleCollision` removes two vehicles that come within 2 m of each other, and
   `SimpleCollisionMetrics` scores it.
-- `LocalNetwork` is listed because `Straight` listens on it for sensor updates.
+- `GlobalNetwork` is listed because `Straight` listens on it for a boundary.
   Leaving it out is an error.
 
 The full mission format is in

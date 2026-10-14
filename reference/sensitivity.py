@@ -30,13 +30,12 @@ DEFECTS = [
     ("controller substeps receive the full step dt", CORE + "simcontrol.rs",
      "                entity.step_controller(time)\n",
      "                entity.step_controller(StepTime { time_s: time.time_s, dt_s })\n"),
-    ("frame timestamp labels the step start, not t + dt", CORE + "simcontrol.rs",
-     "            time_s: self.time_s + self.config.run.dt_s,",
-     "            time_s: self.time_s,"),
-    ("spawn coordinates skip the C++ six-decimal round trip",
-     CORE + "simcontrol/generation.rs",
-     "    format!(\"{value:.6}\")\n        .parse()\n        .expect(\"formatted finite number must parse\")",
-     "    value"),
+    ("frame timestamp labels the time after the step", CORE + "simcontrol.rs",
+     "before this tick's step.\n            time_s: self.time_s,",
+     "before this tick's step.\n            time_s: self.time_s + self.config.run.dt_s,"),
+    ("rate-limited plugins receive the tick's dt", CORE + "entity/plugin_stack.rs",
+     "            dt_s: elapsed_s,\n",
+     "            dt_s: time.dt_s,\n"),
     ("network delivers one tick late", CORE + "pubsub/messages.rs",
      "if message.envelope.delivered_at_s <= self.time.time_s + 1e-12 {",
      "if message.envelope.delivered_at_s < self.time.time_s - 1e-12 {"),
@@ -52,10 +51,12 @@ DEFECTS = [
      CORE + "plugin/sensor/noisy_state/noisy_state.rs",
      "truth_orientation * roll_error * pitch_error * yaw_error",
      "truth_orientation * yaw_error * pitch_error * roll_error"),
-    ("NoisyContacts covariance is identity, not 5I",
-     CORE + "plugin/sensor/noisy_contacts/noisy_contacts.rs",
-     "covariance: Matrix3::identity() * 5.0,",
-     "covariance: Matrix3::identity(),"),
+    ("NoisyState reports zero angular velocity",
+     CORE + "plugin/sensor/noisy_state/noisy_state.rs",
+     "        self.noise.apply(truth, random)\n",
+     "        let mut measured = self.noise.apply(truth, random)?;\n"
+     "        measured.angular_velocity_world_radps = Vec3::zeros();\n"
+     "        Ok(measured)\n"),
     # "Straight ignores the NoisyState estimate" was an equivalent mutant: Rust
     # already passes the NoisyState belief as the plugin's state. Replaced by:
     # LocalNetwork asks the router for same-entity links only; a plain route

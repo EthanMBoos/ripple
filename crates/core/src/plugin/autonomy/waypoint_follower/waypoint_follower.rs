@@ -105,9 +105,8 @@ impl Autonomy for WaypointFollower {
         let velocity_world_mps = if arrived {
             Vec3::zeros()
         } else {
-            // The point model can land on a waypoint without overshooting the next sample.
-            // Known limitation: with loop_rate set, dt_s is the phase dt, not the time since
-            // this plugin last ran (the rate gate passes dt unchanged) (docs/TODO.md, milestone A).
+            // The point model can land on a waypoint without overshooting before
+            // the next run (dt is the time between runs, so this holds with loop_rate).
             let speed_mps = self.speed_mps.min(distance_m / context.time.dt_s);
             displacement_m / distance_m * speed_mps
         };

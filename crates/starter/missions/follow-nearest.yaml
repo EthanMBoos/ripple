@@ -12,8 +12,7 @@ end_conditions: [time, one_team]
 interactions:
   SimpleCollision:
 networks:
-  LocalNetwork:           # Straight listens on it for sensor updates
-  GlobalNetwork:
+  GlobalNetwork:          # Straight listens on it for a boundary
 metrics:
   SimpleCollisionMetrics:
 

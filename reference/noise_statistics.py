@@ -6,9 +6,9 @@
 
 Rust draws sensor noise from independent per-plugin streams, so samples cannot
 match C++ one for one. This checks that the error distributions do. An error is
-a published contact state minus that contact's true state when it was measured
-(the next tick's logged belief; the mission has no own-state sensor, so belief is
-truth). For position and velocity axes and the attitude error angle, a two-sample
+a measured contact state (C++'s publication, Rust's reading) minus that
+contact's true state when it was measured (the next tick's logged belief; the
+mission has no own-state sensor, so belief is truth). For position and velocity axes and the attitude error angle, a two-sample
 Kolmogorov-Smirnov test compares C++ and Rust samples. The case passes when
 every p-value exceeds 0.05 divided by the number of tests (Bonferroni).
 Standard library only.
@@ -27,27 +27,23 @@ ALPHA = 0.05
 
 
 def errors(records):
-    beliefs, publications = {}, []
+    beliefs, measurements = {}, []
     for record in records:
         if record["kind"] == "belief":
-            beliefs.setdefault((tick(record), record["id"]), []).append(record)
-        elif record["kind"] == "publication" and record["topic"] == "ContactsWithCovariances":
-            publications.append(record)
+            beliefs[(tick(record), record["id"])] = record
+        elif record["kind"] in ("publication", "reading") and record["from"][1].startswith(
+                "NoisyContacts"):
+            measurements.append(record)
     ticks = sorted({key[0] for key in beliefs})
     following = dict(zip(ticks, ticks[1:]))
     samples = {name: [] for name in ("pos_x", "pos_y", "pos_z", "vel_x", "vel_y", "vel_z",
                                      "attitude_rad")}
-    for publication in publications:
-        now = tick(publication)
-        for state in publication["states"]:
-            # Measured after motion: the next pre-step log, or at the end the
-            # terminal frame (the second log of the final tick).
-            if now in following:
-                logged = beliefs.get((following[now], state["id"]), [])
-                truth = logged[0] if logged else None
-            else:
-                logged = beliefs.get((now, state["id"]), [])
-                truth = logged[1] if len(logged) > 1 else None
+    for measurement in measurements:
+        now = tick(measurement)
+        for state in measurement["states"]:
+            # Measured after motion: the next logged belief (the terminal frame
+            # after the last step).
+            truth = beliefs.get((following.get(now), state["id"]))
             if truth is None:
                 continue
             for axis, name in enumerate("xyz"):

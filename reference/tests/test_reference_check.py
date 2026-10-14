@@ -165,7 +165,6 @@ class ReferenceCheckTests(unittest.TestCase):
             fake = self.fake_mission_run({"cpp-traced": b"changed frames"})
             _, result = self.run_case(temporary, fake, self.comparison())
             self.assertEqual(result["cpp_non_interference"], {
-                "untraced": {"frames.bin": True, "summary.csv": True},
                 "traced": {"frames.bin": False, "summary.csv": True},
             })
             self.assertFalse(result["passed"])

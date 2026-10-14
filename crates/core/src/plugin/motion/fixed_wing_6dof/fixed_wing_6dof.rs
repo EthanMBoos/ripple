@@ -91,6 +91,7 @@ struct FixedWingParams {
     chord_m: Option<f64>,
     #[serde(rename = "efficiency_factor")]
     efficiency: Option<f64>,
+    /// Steady wind: the air's velocity over the ground, ENU.
     #[serde(rename = "wind_E")]
     wind_east_mps: f64,
     #[serde(rename = "wind_N")]
@@ -553,9 +554,8 @@ impl FixedWingConfig {
     ) -> (Vec3, Vec3) {
         let rotation = UnitQuaternion::new_normalize(state.attitude_model);
         let wind_model_mps = rotation.inverse_transform_vector(&flip_yz(self.wind_world_mps));
-        // Known defect: wind is ADDED to velocity, not subtracted, so a mission must
-        // pass the negated wind to get the physical one (docs/TODO.md, milestone A).
-        let air_velocity_model_mps = state.velocity_model_mps + wind_model_mps;
+        // Velocity through the air: ground velocity minus the air's (the wind's).
+        let air_velocity_model_mps = state.velocity_model_mps - wind_model_mps;
         let airframe = Airframe {
             density_kgpm3: self.density_kgpm3,
             span_m: self.span_m,
@@ -829,12 +829,65 @@ fn parse_inertia_text(text: &str, slug_ft_sq: bool) -> Result<Matrix3<f64>> {
 
 #[cfg(test)]
 mod tests {
-    use super::FixedWing6Dof;
+    use super::{Control, FixedWing6Dof};
     use crate::{
-        Params,
+        KinematicState, Params,
         plugin::{Plugin, PluginParams},
     };
     use nalgebra::{Matrix3, Vector3};
+
+    #[test]
+    fn flight_in_wind_is_flight_in_still_air_carried_by_the_wind() -> anyhow::Result<()> {
+        // Airspeed is velocity minus wind, so an aircraft flying at v + w in wind
+        // w feels exactly the air an aircraft at v feels in still air.
+        let wind_mps = Vector3::new(-3.0, 2.0, 0.5);
+        let aircraft = |wind: Vector3<f64>| -> anyhow::Result<FixedWing6Dof> {
+            let params = Params::from([
+                ("airframe".into(), "a4d".into()),
+                ("wind_E".into(), wind.x.to_string()),
+                ("wind_N".into(), wind.y.to_string()),
+                ("wind_U".into(), wind.z.to_string()),
+            ]);
+            Ok(FixedWing6Dof::new(&FixedWing6Dof::configure(
+                &PluginParams::text(&params),
+            )?))
+        };
+        let (mut still, mut windy) = (aircraft(Vector3::zeros())?, aircraft(wind_mps)?);
+        let start = KinematicState {
+            position_world_m: Vector3::new(0.0, 0.0, 3000.0),
+            velocity_world_mps: Vector3::new(120.0, 0.0, 0.0),
+            ..KinematicState::default()
+        };
+        let (mut still_truth, mut windy_truth) = (start.clone(), start.clone());
+        windy_truth.velocity_world_mps += wind_mps;
+        let control = Control {
+            throttle: 0.6,
+            elevator_rad: -0.02,
+            aileron_rad: 0.01,
+            rudder_rad: 0.0,
+        };
+        let dt_s = 0.01;
+        for step in 0..200 {
+            let time_s = step as f64 * dt_s;
+            still.integrate(&mut still_truth, control, None, time_s, dt_s)?;
+            windy.integrate(&mut windy_truth, control, None, time_s, dt_s)?;
+        }
+        let carried_m = wind_mps * 2.0;
+        let offset_m = windy_truth.position_world_m - still_truth.position_world_m;
+        assert!((offset_m - carried_m).norm() < 1e-9, "{offset_m:?}");
+        let relative_mps = windy_truth.velocity_world_mps - still_truth.velocity_world_mps;
+        assert!((relative_mps - wind_mps).norm() < 1e-9, "{relative_mps:?}");
+        let (a, b) = (
+            windy_truth.orientation_world_from_body,
+            still_truth.orientation_world_from_body,
+        );
+        assert!(
+            (a.w - b.w).abs() + (a.x - b.x).abs() + (a.y - b.y).abs() + (a.z - b.z).abs() < 1e-12
+        );
+        // The aircraft did maneuver: this is not a trivial straight line.
+        assert!(still_truth.angular_velocity_world_radps.norm() > 1e-3);
+        Ok(())
+    }
 
     #[test]
     fn throttle_scaling_clamps_like_cpp_utilities_scale() -> anyhow::Result<()> {

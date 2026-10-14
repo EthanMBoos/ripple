@@ -79,12 +79,6 @@ not network messages: no network sees them, and only the entity's estimators
 read them, by sensor name, in the estimation step after networks (see
 [Truth, measurements, and belief](information-flow.md)).
 
-`NoisyState` and `NoisyContacts` also publish their measurements on
-`LocalNetwork`, because C++ does, and `Straight` subscribes to both and
-discards them so delivered-message counts match C++. Don't build new
-behavior on those messages: a decision plugin that reads them bypasses the
-estimators.
-
 ## Limits
 
 Queues have fixed capacities (in `pubsub/messages.rs`). They are limits on

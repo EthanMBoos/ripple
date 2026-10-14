@@ -21,7 +21,7 @@ out of the default build.
   leaves outputs byte-identical, and fixes for documented C++ defects (the
   substep order, AircraftPIDController, the RK4 loads in FixedWing6DOF and
   Multirotor, Multirotor's velocity, moment arms, and idle thrust, and the
-  milestone A fixes in `docs/TODO.md`; see `docs/REFERENCE_NOTES.md`).
+  core defects; see `docs/REFERENCE_NOTES.md`).
 - User research plugins live in workspace user crates such as `crates/starter`,
   registered in `crates/cli/src/main.rs`; keep the starter building and tested.
 - XML and YAML missions share one typed `ScenarioConfig`; XML is frozen, only

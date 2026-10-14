@@ -3,9 +3,15 @@
 
     python3 reference/message_benchmark.py --output runs/message-benchmark000
 
-Each case is perf.py's aircraft mission (Straight, which subscribes to
-NoisyState's messages on LocalNetwork) with and without a NoisyState sensor on
-every aircraft, so the difference is what those messages cost. C++ is the
+Each case is perf.py's aircraft mission with and without a NoisyState sensor
+and its messages on every aircraft, so the difference is what those messages
+cost. In SCRIMMAGE, NoisyState publishes the reading on LocalNetwork and
+Straight subscribes to it. Ripple's NoisyState sends no message (the reading
+goes to the entity's estimators), so the Rust mission adds the same traffic
+with a benchmark-only pair from the runner: StateBroadcast publishes each
+aircraft's state on LocalNetwork every step, and StateListener subscribes and
+discards it. Both simulators then route one message per aircraft per step to
+every subscriber's network check. C++ is the
 native build (native_build.sh, built on first use); Rust is the core-only runner
 on one worker. A variant's time per step is the whole process minus a one-step
 run of the same mission, the median of the repeats after a warm-up; variants
@@ -36,7 +42,17 @@ AGENTS = (128, 512, 2048, 4096)
 PROFILED_AGENTS = 2048
 END_S = 10  # 100 steps
 NOISY_STATE = "    <sensor>NoisyState</sensor>"
+# Ripple's stand-in for NoisyState's message and Straight's subscription.
+RUST_MESSAGES = ("    <sensor>StateBroadcast</sensor>\n"
+                 "    <autonomy>StateListener</autonomy>")
 VARIANTS = ("cpp", "rust")
+
+
+def sensors_for(variant, sensors):
+    """The entity's extra elements: Rust adds the message pair wherever NoisyState is."""
+    if variant == "rust" and sensors:
+        return sensors + "\n" + RUST_MESSAGES
+    return sensors
 
 
 def mission(directory, agents, sensors, end_s):
@@ -70,7 +86,8 @@ def wall_seconds(variant, runner, path, output):
 
 def profile(variant, runner, directory, agents, profiles):
     """Save `sample`'s top-of-stack summary for three seconds of stepping."""
-    path = mission(directory / f"profile-{variant}", agents, NOISY_STATE, 120)
+    path = mission(directory / f"profile-{variant}", agents, sensors_for(variant, NOISY_STATE),
+                   120)
     arguments, environment = command(variant, runner, path, directory / f"profile-{variant}/rust")
     process = subprocess.Popen([str(part) for part in arguments], env=environment,
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -103,14 +120,19 @@ def main(argv=None):
     for agents in AGENTS:
         for label, sensors in (("without messages", ""), ("NoisyState", NOISY_STATE)):
             directory = scratch / f"{agents}-{'state' if sensors else 'plain'}"
-            full = mission(directory / "full", agents, sensors, END_S)
-            one = mission(directory / "one-step", agents, sensors, 0.1)
+            paths = {variant: {
+                "full": mission(directory / variant / "full", agents,
+                                sensors_for(variant, sensors), END_S),
+                "one": mission(directory / variant / "one-step", agents,
+                               sensors_for(variant, sensors), 0.1),
+            } for variant in VARIANTS}
             samples = {variant: {"full": [], "one": []} for variant in VARIANTS}
             for repeat in range(args.repeats + 1):
                 shift = repeat % len(VARIANTS)
                 for variant in VARIANTS[shift:] + VARIANTS[:shift]:
-                    for kind, path in (("full", full), ("one", one)):
-                        seconds = wall_seconds(variant, runner, path, directory / f"{variant}-{kind}")
+                    for kind, path in paths[variant].items():
+                        seconds = wall_seconds(variant, runner, path,
+                                               directory / variant / f"{kind}-output")
                         if repeat:  # the first round is a warm-up
                             samples[variant][kind].append(seconds)
             steps = round(END_S / 0.1)

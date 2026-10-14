@@ -51,8 +51,7 @@ sensor, each tick:
 
 1. copies the true state,
 2. adds Gaussian noise to position, velocity, and attitude,
-3. publishes the result as its reading (`context.publish_reading`),
-4. also publishes it as a message on `LocalNetwork`, as C++ does.
+3. publishes the result as its reading (`context.publish_reading`).
 
 Add it to an entity in a mission:
 

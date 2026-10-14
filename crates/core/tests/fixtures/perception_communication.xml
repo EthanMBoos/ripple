@@ -11,7 +11,7 @@
     <autonomy auction_duration_s="${duration=0.5}">AuctionAssign</autonomy>
     <autonomy follow="${follow=false}">ContactFollower</autonomy>
     <controller>SingleIntegratorControllerSimple</controller><motion_model>SingleIntegrator</motion_model>
-    <sensor topic_name="detected" pos_noise_0="${noise=2 0}" pos_noise_1="0 0" pos_noise_2="0 0"
+    <sensor pos_noise_0="${noise=2 0}" pos_noise_1="0 0" pos_noise_2="0 0"
             vel_noise_0="0 0" vel_noise_1="0 0" vel_noise_2="0 0">NoisyContacts</sensor>
     <sensor>Observer</sensor>
   </entity_common>

@@ -229,8 +229,8 @@ impl Simulation {
         let mut entities: Vec<_> = self.entities.iter().map(Entity::snapshot).collect();
         entities.sort_by_key(|entity| entity.id);
         SimulationFrame {
-            // A frame holds the state before a step, labeled with the time after it.
-            time_s: self.time_s + self.config.run.dt_s,
+            // A frame holds the state at the current time, before this tick's step.
+            time_s: self.time_s,
             entities,
         }
     }
@@ -297,6 +297,9 @@ impl Simulation {
         let sensor_contacts = self.snapshot();
         let sensor_truth = TruthContacts::new(&sensor_contacts.entities, &nearby);
         self.run_phase(|entity| entity.step_sensors(StepTime { time_s, dt_s }, sensor_truth))?;
+        if let Some(trace) = &mut self.trace {
+            trace.readings(time_s, &self.entities)?;
+        }
         self.apply_interactions(&mut nearby)?;
         nearby.refresh(&self.entities);
         let time = StepTime { time_s, dt_s };
@@ -337,9 +340,9 @@ impl Simulation {
             return Err(error);
         }
         self.step_count += 1;
-        // Known defect: repeated addition drifts in the last digits (e.g.
-        // 29.900000000000155); time should be the step count times dt (docs/TODO.md, milestone A).
-        self.time_s += dt_s;
+        // Time is counted, not accumulated: repeated addition of dt drifts in
+        // the last digits (0.1 added 299 times is 29.900000000000155).
+        self.time_s = self.config.run.start_s + self.step_count as f64 * dt_s;
         self.termination = self.reached_end_condition();
         Ok(Some(frame))
     }
@@ -370,9 +373,7 @@ impl Simulation {
 
     fn finish(&mut self) -> Result<SimulationFrame> {
         self.finished = true;
-        // Known defect: time is wound back one step, so the final timestamp repeats
-        // in logs, events, plugin close, and the metrics report (docs/TODO.md, milestone A).
-        self.time_s -= self.config.run.dt_s;
+        // The terminal frame holds the state after the last step, at the end time.
         for entity in &self.entities {
             self.events.push(Event {
                 time_s: self.time_s,
@@ -380,7 +381,6 @@ impl Simulation {
                 entity_ids: vec![entity.id],
             });
         }
-        // The terminal frame is logged here too, at the rewound time.
         if let Some(trace) = &mut self.trace {
             trace.beliefs(self.time_s, &self.entities)?;
         }
@@ -415,6 +415,10 @@ impl Simulation {
             time_s: self.time_s,
             dt_s: self.config.run.dt_s,
         };
+        // Forces applied last time acted in the motion phase just run.
+        for entity in &mut self.entities {
+            entity.clear_applied_forces();
+        }
         self.world_stop |=
             self.world
                 .interactions(time, &mut self.entities, nearby, &mut self.events)?;

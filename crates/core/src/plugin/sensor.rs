@@ -5,9 +5,7 @@ pub use noisy_position::NoisyPosition;
 pub use noisy_position::PositionObservation;
 #[path = "sensor/noisy_state/noisy_state.rs"]
 mod noisy_state;
-pub use noisy_state::{NoisyState, STATE_TOPIC, StateWithCovariance};
+pub use noisy_state::NoisyState;
 #[path = "sensor/noisy_contacts/noisy_contacts.rs"]
 mod noisy_contacts;
-pub use noisy_contacts::{
-    CONTACTS_TOPIC, ContactWithCovariance, ContactsWithCovariances, NoisyContacts,
-};
+pub use noisy_contacts::NoisyContacts;

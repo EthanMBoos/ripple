@@ -160,6 +160,7 @@ mod tests {
                     truth: &mut truth,
                     messages: &mut Messages::default(),
                     terrain: None,
+                    applied_forces_world_n: &[],
                 },
                 &mut io,
             )?;

@@ -1,4 +1,4 @@
-//! Noisy own-state measurements, as a reading and a typed LocalNetwork message.
+//! Noisy own-state measurements, as a reading.
 //!
 //! Derived from SCRIMMAGE: src/plugins/sensor/NoisyState/NoisyState.cpp (LGPL-3.0-or-later).
 //! Sensor phase: sample truth, perturb position/velocity/attitude, publish the reading.
@@ -6,15 +6,13 @@
 //! Draws from this plugin's own mission-seeded random stream.
 
 use anyhow::{Result, ensure};
-use nalgebra::{Matrix3, UnitQuaternion};
+use nalgebra::UnitQuaternion;
 use serde::Deserialize;
 
 use crate::math::{KinematicState, Quaternion, Vec3};
 use crate::plugin::{
     Plugin, PluginParams, PluginRandom, ReadingKind, Sensor, SensorContext, Update,
 };
-
-pub const STATE_TOPIC: &str = "StateWithCovariance";
 
 /// Legacy `mean standard_deviation` noise for one axis.
 #[derive(Clone, Copy, Deserialize)]
@@ -70,15 +68,6 @@ pub struct NoisyStateConfig {
     noise: StateNoise,
 }
 
-/// State payload; covariance is a placeholder, NOT configured noise variance.
-/// NoisyState uses identity and zero angular velocity; NoisyContacts uses 5I
-/// and preserves the target's angular velocity.
-#[derive(Clone, Debug)]
-pub struct StateWithCovariance {
-    pub state: KinematicState,
-    pub covariance: Matrix3<f64>,
-}
-
 pub struct NoisyState {
     noise: StateNoise,
 }
@@ -113,43 +102,24 @@ impl Sensor for NoisyState {
         ReadingKind::State
     }
 
+    /// The first reading, sampled like every later one, so the first decision
+    /// sees noise too.
     fn initialize(&mut self, context: &mut SensorContext<'_>) -> Result<()> {
-        // Known defect: the first reading is the exact truth, so the first decision
-        // is noise-free (docs/TODO.md, milestone A).
-        context.publish_reading(context.truth.clone())
+        let measured = self.measure(context.truth, context.random)?;
+        context.publish_reading(measured)
     }
 
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
-        let observation = self.measure(context.truth, context.random)?;
-        context.publish_reading(observation.state.clone())?;
-        // Duplicate: belief comes from the reading above, and nothing uses this
-        // message (Straight subscribes and discards it); only the comparison trace
-        // reads it. To remove (docs/TODO.md, milestone A).
-        context
-            .messages
-            .publish("LocalNetwork", STATE_TOPIC, observation)?;
+        let measured = self.measure(context.truth, context.random)?;
+        context.publish_reading(measured)?;
         Ok(Update::Applied)
     }
 }
 
 impl NoisyState {
-    fn measure(
-        &self,
-        truth: &KinematicState,
-        random: &mut PluginRandom,
-    ) -> Result<StateWithCovariance> {
-        let mut measured = self.noise.apply(truth, random)?;
-        // Known defect: a rotating vehicle reports zero angular velocity. This state
-        // is localization's input, so belief says the vehicle never rotates, and the
-        // multirotor velocity controller damps attitude with it. To fix: keep the
-        // true angular velocity (docs/TODO.md, milestone A).
-        measured.angular_velocity_world_radps = Vec3::zeros();
-        // Known defect: identity is a placeholder, not the configured noise
-        // variance; a filter needs the real one (docs/TODO.md, milestone B).
-        Ok(StateWithCovariance {
-            state: measured,
-            covariance: Matrix3::identity(),
-        })
+    /// Angular velocity is reported exactly: there is no rate noise.
+    fn measure(&self, truth: &KinematicState, random: &mut PluginRandom) -> Result<KinematicState> {
+        self.noise.apply(truth, random)
     }
 }
 
@@ -268,7 +238,7 @@ mod tests {
     }
 
     #[test]
-    fn zero_noise_preserves_legacy_bias_covariance_and_angular_velocity() -> anyhow::Result<()> {
+    fn zero_noise_reports_the_bias_and_the_true_angular_velocity() -> anyhow::Result<()> {
         let truth = KinematicState {
             position_world_m: Vec3::new(10.0, 20.0, 30.0),
             velocity_world_mps: Vec3::new(3.0, 4.0, 5.0),
@@ -276,10 +246,9 @@ mod tests {
             ..KinematicState::default()
         };
         let sample = sensor(0.0).measure(&truth, &mut PluginRandom::new(123, 1, "NoisyState:0"))?;
-        assert_eq!(sample.state.position_world_m, Vec3::new(12.0, 22.0, 32.0));
-        assert_eq!(sample.state.velocity_world_mps, Vec3::new(2.0, 3.0, 4.0));
-        assert_eq!(sample.state.angular_velocity_world_radps, Vec3::zeros());
-        assert_eq!(sample.covariance, nalgebra::Matrix3::identity());
+        assert_eq!(sample.position_world_m, Vec3::new(12.0, 22.0, 32.0));
+        assert_eq!(sample.velocity_world_mps, Vec3::new(2.0, 3.0, 4.0));
+        assert_eq!(sample.angular_velocity_world_radps, Vec3::repeat(7.0));
         assert_eq!(truth.position_world_m, Vec3::new(10.0, 20.0, 30.0));
         Ok(())
     }
@@ -298,7 +267,6 @@ mod tests {
         };
         let sample = sensor.measure(&truth, &mut PluginRandom::new(123, 1, "NoisyState:0"))?;
         let nose = sample
-            .state
             .orientation_world_from_body
             .rotate_body_to_world(Vec3::x());
         assert!((nose - Vec3::new(-1.0, 0.0, 0.0)).norm() < 1e-12);
@@ -311,14 +279,8 @@ mod tests {
         let mut expected = PluginRandom::new(123, 1, "NoisyState:0");
         let sample = sensor(0.5).measure(&KinematicState::default(), &mut random)?;
         for axis in 0..3 {
-            assert_eq!(
-                sample.state.position_world_m[axis],
-                expected.normal(2.0, 0.5)?
-            );
-            assert_eq!(
-                sample.state.velocity_world_mps[axis],
-                expected.normal(-1.0, 0.5)?
-            );
+            assert_eq!(sample.position_world_m[axis], expected.normal(2.0, 0.5)?);
+            assert_eq!(sample.velocity_world_mps[axis], expected.normal(-1.0, 0.5)?);
         }
         for _ in 0..3 {
             expected.normal(0.0, 0.0)?;
@@ -336,7 +298,6 @@ mod tests {
         for _ in 0..10000 {
             let x = sensor
                 .measure(&KinematicState::default(), &mut random)?
-                .state
                 .position_world_m
                 .x;
             sum += x;

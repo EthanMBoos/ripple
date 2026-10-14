@@ -40,7 +40,7 @@ import sys
 from compare import POSITION_TOLERANCE_M, VELOCITY_TOLERANCE_MPS
 from project import DATA, ROOT, RUNS, allocate, source_identity
 import retain
-from traces import COVARIANCE_TOLERANCE, OUTPUT_TOLERANCE
+from traces import OUTPUT_TOLERANCE
 
 REFERENCE = ROOT / "reference"
 QUICK, RELEASE = "quick", "release"
@@ -109,11 +109,10 @@ def ran_cleanly(result):
 
 
 def only_noise_differs(result):
-    """The noise mission's random payload values differ by design; the deliveries,
-    covariances, owner beliefs, and controller outputs must still agree."""
+    """The noise mission's random measured values differ by design; the deliveries,
+    owner beliefs, and controller outputs must still agree."""
     trace = result["trace_comparison"]
     return (trace["delivery_mismatches"] == 0
-            and trace["max_payload_covariance_error"] <= COVARIANCE_TOLERANCE
             and trace["max_output_error"] <= OUTPUT_TOLERANCE
             and trace["max_belief_position_error_m"] <= POSITION_TOLERANCE_M
             and trace["max_belief_velocity_error_mps"] <= VELOCITY_TOLERANCE_MPS)
@@ -282,7 +281,7 @@ CHECKS = [
                                                             [Path(run) / "divergence.json"])),
     Check("cpp-noise", "sensor noise distributions match where samples cannot",
           "C++ SCRIMMAGE NoisyContacts samples",
-          "deliveries, covariances, beliefs, outputs agree; no KS test below the Bonferroni threshold",
+          "deliveries, beliefs, outputs agree; no KS test below the Bonferroni threshold",
           (RELEASE,), run_noise,
           lambda run, evidence: retain.copy_reference_check(run, evidence,
                                                             [Path(run) / "noise-statistics.json"])),
@@ -336,9 +335,9 @@ CHECKS = [
           (RELEASE,), script_check("crazyflow_check.py", "crazyflow-crazyflie"),
           keep_named("results.json")),
     Check("mpe-parity", "MPE point agents (MpeParticle, MpeContact, SimpleSpread) against MPE2's "
-          "simple_spread_v3, step by step from the same (6-decimal) starts with the same forces",
+          "simple_spread_v3, step by step from the same starts with the same forces",
           "MPE2 v1.1.1 (Farama-Foundation/MPE2, pinned), run with uv",
-          "100 episodes: states within 1e-12, bit-identical without contact, returns to 6 decimals",
+          "100 episodes: every state bit-identical, with and without contact; returns to 6 decimals",
           (RELEASE,), script_check("mpe_parity.py", "mpe-parity"),
           keep_named("results.json")),
     Check("stall-landing", "whether stall tables change ArduPlane's Rascal landing",

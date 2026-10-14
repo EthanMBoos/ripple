@@ -8,9 +8,6 @@ use serde::Deserialize;
 
 use crate::math::{self, Vec3};
 use crate::plugin::interaction::{BOUNDARY_TOPIC, BoundaryRegion};
-use crate::plugin::sensor::{
-    CONTACTS_TOPIC, ContactsWithCovariances, STATE_TOPIC, StateWithCovariance,
-};
 use crate::plugin::{
     AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
@@ -105,25 +102,10 @@ impl Autonomy for Straight {
         context
             .messages
             .subscribe::<BoundaryRegion>("GlobalNetwork", BOUNDARY_TOPIC)?;
-        // Measured state and contacts are subscribed and discarded: belief already
-        // holds the measurement, and only the comparison trace needs the
-        // deliveries. To remove with the sensors' duplicate messages (docs/TODO.md, milestone A).
-        context
-            .messages
-            .subscribe::<StateWithCovariance>("LocalNetwork", STATE_TOPIC)?;
-        context
-            .messages
-            .subscribe::<ContactsWithCovariances>("LocalNetwork", CONTACTS_TOPIC)?;
         Ok(())
     }
 
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
-        context
-            .messages
-            .receive::<StateWithCovariance>("LocalNetwork", STATE_TOPIC)?;
-        context
-            .messages
-            .receive::<ContactsWithCovariances>("LocalNetwork", CONTACTS_TOPIC)?;
         for message in context
             .messages
             .receive::<BoundaryRegion>("GlobalNetwork", BOUNDARY_TOPIC)?

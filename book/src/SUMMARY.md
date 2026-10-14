@@ -11,6 +11,7 @@
 
 - [Coordinate frames](concepts/coordinate-frames.md)
 - [Belief vs truth](concepts/belief-vs-truth.md)
+- [Randomness and seeds](concepts/randomness.md)
 
 # Architecture
 

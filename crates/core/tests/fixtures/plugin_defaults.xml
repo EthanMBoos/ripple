@@ -7,7 +7,7 @@
   <entity_interaction>SimpleCollision</entity_interaction>
   <metrics>SimpleCollisionMetrics</metrics>
   <param_common name="aircraft">
-    <turning_radius>19</turning_radius>
+    <max_roll>19</max_roll>
     <min_velocity>16</min_velocity>
   </param_common>
   <entity>
@@ -23,7 +23,7 @@
     <x>100</x><y>0</y><z>100</z>
     <autonomy speed="${speed=26}">Straight</autonomy>
     <controller>SimpleAircraftControllerPID</controller>
-    <motion_model param_common="aircraft" turning_radius="23">SimpleAircraft</motion_model>
+    <motion_model param_common="aircraft" max_roll="23">SimpleAircraft</motion_model>
     <sensor stddev_m="0">NoisyPosition</sensor>
   </entity>
 </runscript>

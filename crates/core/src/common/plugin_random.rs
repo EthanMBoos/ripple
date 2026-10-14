@@ -1,47 +1,70 @@
-//! Stable, per-plugin random streams, independent of worker order.
+//! A plugin's random numbers, keyed by what each one is for.
 use anyhow::{Result, ensure};
 
-/// Per-instance SplitMix64 stream, keyed by mission seed, entity ID, and plugin identity.
-/// Separate streams keep draws independent of worker order and of which other
-/// plugins draw.
+use super::random;
+
+/// The random numbers of one plugin instance at one tick. Each number is a
+/// function of its label: the mission seed, entity ID, plugin identity, and
+/// tick (supplied by the engine), then the plugin's own key, such as a
+/// target's ID and an axis. A plugin asking for the same key twice in a tick
+/// gets the same number, so every number needs its own key; build keys from
+/// stable IDs, never from list positions. Draws don't depend on worker order,
+/// on other plugins, or on how many numbers this plugin drew before.
+#[derive(Clone, Copy, Debug)]
 pub struct PluginRandom {
-    state: u64,
+    /// The hash of the seed, entity ID, and plugin identity.
+    instance: u64,
+    /// `instance` with the tick absorbed: where every key starts.
+    at_tick: u64,
 }
 impl PluginRandom {
-    /// The engine gives each sensor, autonomy, controller, and network its own stream
-    /// through its context. Construct one directly only in tests.
+    /// The engine gives each plugin its numbers through its context. Construct
+    /// one directly only in tests.
     pub fn new(seed: u32, entity_id: i32, identity: &str) -> Self {
-        let mut state = 0xcbf29ce484222325_u64;
-        for byte in seed
-            .to_le_bytes()
-            .into_iter()
-            .chain(entity_id.to_le_bytes())
-            .chain(identity.bytes())
-        {
-            state = (state ^ u64::from(byte)).wrapping_mul(0x100000001b3);
+        let instance = random::label(&[
+            u64::from(seed),
+            i64::from(entity_id) as u64,
+            random::name(identity),
+        ]);
+        Self {
+            instance,
+            at_tick: random::absorb(instance, 0),
         }
-        Self { state }
     }
-    fn uniform_open(&mut self) -> f64 {
-        self.state = self.state.wrapping_add(0x9e3779b97f4a7c15);
-        let mut bits = self.state;
-        bits = (bits ^ (bits >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
-        bits = (bits ^ (bits >> 27)).wrapping_mul(0x94d049bb133111eb);
-        bits ^= bits >> 31;
-        // Strictly inside (0, 1), avoiding log(0) in Box-Muller.
-        ((bits >> 12) as f64 + 0.5) / 4_503_599_627_370_496.0
+    /// The same instance's numbers at `tick`.
+    pub(crate) fn at_tick(self, tick: i64) -> Self {
+        Self {
+            at_tick: random::absorb(self.instance, tick as u64),
+            ..self
+        }
     }
-    /// Uniform sample strictly inside (0, 1).
-    pub fn uniform(&mut self) -> f64 {
-        self.uniform_open()
+    fn label(&self, key: &[u64]) -> u64 {
+        key.iter()
+            .fold(self.at_tick, |hash, &part| random::absorb(hash, part))
     }
-    pub fn normal(&mut self, mean: f64, stddev: f64) -> Result<f64> {
+    /// The numbers whose keys start with `prefix`: `random.with(&[a]).normal(&[b], ..)`
+    /// is `random.normal(&[a, b], ..)`. It saves hashing a shared prefix again
+    /// for every number.
+    pub fn with(&self, prefix: &[u64]) -> Self {
+        Self {
+            at_tick: self.label(prefix),
+            ..*self
+        }
+    }
+    /// A name (a topic, say) as a key part.
+    pub fn name(text: &str) -> u64 {
+        random::name(text)
+    }
+    /// The uniform number for `key`, strictly inside (0, 1).
+    pub fn uniform(&self, key: &[u64]) -> f64 {
+        random::uniform(self.label(key))
+    }
+    /// The normal number for `key`.
+    pub fn normal(&self, key: &[u64], mean: f64, stddev: f64) -> Result<f64> {
         ensure!(
             mean.is_finite() && stddev.is_finite() && stddev >= 0.0,
             "invalid normal parameters"
         );
-        let radius = (-2.0 * self.uniform_open().ln()).sqrt();
-        let angle_rad = std::f64::consts::TAU * self.uniform_open();
-        Ok(mean + stddev * radius * angle_rad.cos())
+        Ok(random::normal(self.label(key), mean, stddev))
     }
 }

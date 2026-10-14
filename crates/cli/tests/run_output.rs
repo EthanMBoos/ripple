@@ -98,14 +98,24 @@ fn cli_allocates_runs_and_accepts_explicit_output_without_changing_results() {
 #[test]
 fn failed_runs_still_write_outputs_and_record_the_error() {
     let temp = tempfile::tempdir().unwrap();
-    let fixture =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("../core/tests/fixtures/plugin_defaults.xml");
-    let xml = fs::read_to_string(fixture).unwrap();
     let mission = temp.path().join("mission.xml");
-    // A zero turning radius makes SimpleAircraft produce a nonfinite state.
+    // A point moving at 1.7e308 m/s leaves the range of f64 within a few steps.
     fs::write(
         &mission,
-        xml.replace(r#"turning_radius="23""#, r#"turning_radius="0""#),
+        r#"<?xml version="1.0"?>
+<runscript name="Overflow">
+  <run start="0" end="3" dt="0.1" enable_gui="false" />
+  <seed>1</seed>
+  <metrics>SimpleCollisionMetrics</metrics>
+  <entity>
+    <team_id>1</team_id><count>1</count><x>0</x><y>0</y><z>0</z>
+    <variance_x>0</variance_x><variance_y>0</variance_y>
+    <autonomy velocity="1.7e308 0 0">ConstantVelocity</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
+    <motion_model>SingleIntegrator</motion_model>
+  </entity>
+</runscript>
+"#,
     )
     .unwrap();
     let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
@@ -117,7 +127,7 @@ fn failed_runs_still_write_outputs_and_record_the_error() {
         .unwrap();
     assert!(!result.status.success());
     let error = String::from_utf8_lossy(&result.stderr);
-    assert!(error.contains("nonfinite state"), "{error}");
+    assert!(error.contains("nonfinite position"), "{error}");
     let output = temp.path().join("failed");
     for file in ["frames.bin", "events.json", "summary.csv", "manifest.json"] {
         assert!(output.join(file).exists(), "{file}");
@@ -129,7 +139,7 @@ fn failed_runs_still_write_outputs_and_record_the_error() {
         manifest["error"]
             .as_str()
             .unwrap()
-            .contains("nonfinite state")
+            .contains("nonfinite position")
     );
 }
 

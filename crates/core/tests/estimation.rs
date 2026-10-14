@@ -440,8 +440,7 @@ fn decisions_and_belief_are_worker_independent() -> Result<()> {
 
 fn noisy_state(instance: &str, altitude_bias_m: f64) -> Result<PluginConfig> {
     let mut config = PluginConfig::new("NoisyState").with_params(json!({
-        "pos_noise_0": [0, 0], "pos_noise_1": [0, 0], "pos_noise_2": [altitude_bias_m, 0],
-        "vel_noise_0": [0, 0], "vel_noise_1": [0, 0], "vel_noise_2": [0, 0],
+        "position_bias_m": [0, 0, altitude_bias_m],
     }))?;
     config.instance = Some(instance.into());
     Ok(config)
@@ -498,8 +497,7 @@ fn trackers_are_per_entity_and_leave_truth_alone() -> Result<()> {
         "unused",
     )?;
     biased.sensors = vec![PluginConfig::new("NoisyContacts").with_params(json!({
-        "pos_noise_0": [3, 0], "pos_noise_1": [0, 0], "pos_noise_2": [0, 0],
-        "vel_noise_0": [0, 0], "vel_noise_1": [0, 0], "vel_noise_2": [0, 0],
+        "position_bias_m": [3, 0, 0],
     }))?];
     let perfect = mover(
         "perfect",

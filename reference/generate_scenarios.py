@@ -8,8 +8,8 @@ Each mission is a seeded draw over: timestep, horizon, motion substeps, entity
 families (SimpleAircraft, SingleIntegrator, FixedWing6DOF), start states, update
 rates, spawn schedules and positional variance, sensor biases (zero noise), and
 interactions (SimpleCollision, GroundCollision, Boundary). Every choice is
-comparable: spawn draws use the checker's libc++-compatible stream, sensor noise
-is zero, and FixedWing6DOF runs without substeps, where unmodified C++'s
+comparable: spawn draws are keyed on both sides (SCRIMMAGE_KEYED_RANDOM=1),
+sensor noise is zero, and FixedWing6DOF runs without substeps, where unmodified C++'s
 AircraftPIDController uses the wrong timestep (the comparison branch fixes it). Standard library only; the same seed
 always writes the same files.
 """
@@ -49,7 +49,7 @@ def aircraft_block(rng, fixed_wing):
                   f'wind_N="{fmt(rng.uniform(-3, 3))}">FixedWing6DOF</motion_model>']
     else:
         lines += [f'<controller loop_rate="{rng.choice([0, 20, 50])}">SimpleAircraftControllerPID</controller>',
-                  f'<motion_model turning_radius="{fmt(rng.uniform(20, 60))}">SimpleAircraft</motion_model>']
+                  f'<motion_model max_roll="{fmt(rng.uniform(20, 45))}">SimpleAircraft</motion_model>']
         if rng.random() < 0.4:
             lines.append(sensor_bias(rng, rng.choice(["NoisyState", "NoisyContacts"])))
     return lines

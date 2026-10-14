@@ -13,46 +13,46 @@
       "drag_table": "[[-1.57, 1.5], [-0.26, 0.056], [0.0, 0.028], [0.26, 0.056], [1.57, 1.5]]"
     }
   },
-  "source_sha256": "63946ea714bc6c9563b32c311c8fc3054d565c49085a77269456bb3a8ea62b5b",
+  "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
   "results": {
     "linear": {
-      "touchdown_time_s": 172.32,
-      "touchdown_ground_speed_mps": 15.36,
-      "touchdown_sink_mps": 1.46,
-      "max_bounce_height_m": 2.03,
-      "max_rollout_offset_m": 1.56,
-      "final_offset_m": 0.74,
-      "max_alpha_airborne_deg": 11.2,
-      "max_alpha_on_ground_deg": 14.4
+      "touchdown_time_s": 172.602,
+      "touchdown_ground_speed_mps": 15.38,
+      "touchdown_sink_mps": 1.06,
+      "max_bounce_height_m": 2.25,
+      "max_rollout_offset_m": 1.44,
+      "final_offset_m": 0.63,
+      "max_alpha_airborne_deg": 11.8,
+      "max_alpha_on_ground_deg": 14.6
     },
     "linear-repeat": {
-      "touchdown_time_s": 172.32,
-      "touchdown_ground_speed_mps": 15.36,
-      "touchdown_sink_mps": 1.46,
-      "max_bounce_height_m": 2.03,
-      "max_rollout_offset_m": 1.56,
-      "final_offset_m": 0.74,
-      "max_alpha_airborne_deg": 11.2,
-      "max_alpha_on_ground_deg": 14.4
+      "touchdown_time_s": 172.602,
+      "touchdown_ground_speed_mps": 15.38,
+      "touchdown_sink_mps": 1.06,
+      "max_bounce_height_m": 2.25,
+      "max_rollout_offset_m": 1.44,
+      "final_offset_m": 0.63,
+      "max_alpha_airborne_deg": 11.8,
+      "max_alpha_on_ground_deg": 14.6
     },
     "lift": {
-      "touchdown_time_s": 172.427,
-      "touchdown_ground_speed_mps": 15.36,
-      "touchdown_sink_mps": 1.45,
-      "max_bounce_height_m": 2.04,
-      "max_rollout_offset_m": 1.71,
-      "final_offset_m": 0.75,
-      "max_alpha_airborne_deg": 10.8,
-      "max_alpha_on_ground_deg": 14.5
+      "touchdown_time_s": 172.595,
+      "touchdown_ground_speed_mps": 15.38,
+      "touchdown_sink_mps": 1.09,
+      "max_bounce_height_m": 2.26,
+      "max_rollout_offset_m": 1.49,
+      "final_offset_m": 0.6,
+      "max_alpha_airborne_deg": 11.9,
+      "max_alpha_on_ground_deg": 14.8
     },
     "lift-drag": {
-      "touchdown_time_s": 172.667,
-      "touchdown_ground_speed_mps": 15.09,
-      "touchdown_sink_mps": 1.53,
-      "max_bounce_height_m": 1.88,
-      "max_rollout_offset_m": 1.23,
-      "final_offset_m": 0.64,
-      "max_alpha_airborne_deg": 8.9,
+      "touchdown_time_s": 173.0,
+      "touchdown_ground_speed_mps": 15.04,
+      "touchdown_sink_mps": 0.86,
+      "max_bounce_height_m": 2.06,
+      "max_rollout_offset_m": 1.8,
+      "final_offset_m": 0.79,
+      "max_alpha_airborne_deg": 10.0,
       "max_alpha_on_ground_deg": 14.5
     }
   }

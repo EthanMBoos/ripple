@@ -29,7 +29,7 @@ check failed. Every script also runs on its own; its docstring says how.
 | `speed-regression` | quick | Rust speed and memory (`perf.py`), first, on an idle machine | the accepted baseline | no workload slower beyond noise |
 | `cpp-generated` | release | 100 random scenarios, seed 1 | C++ | all pass |
 | `cpp-long` | release | ten 1,000 s scenarios, seed 7, and `divergence.py` | C++; nudged Rust | runs clean, summaries explained |
-| `cpp-noise` | release | NoisyContacts noise distributions (`noise_statistics.py`) | C++ samples | no KS test below the threshold |
+| `cpp-noise` | release | NoisyContacts noise, sample for sample and by distribution (`noise_statistics.py`) | C++ samples | the case passes; no KS test below the threshold |
 | `checker-sensitivity` | release | 12 planted porting bugs (`sensitivity.py`) | `cpp-agreement`'s C++ runs | every bug caught |
 | `rust-platform` | release | Linux/amd64 against native (`platform_check.py`) | the native build | runs; differences reported |
 | `speed-cpp-container` | release | C++ and Rust in one Linux container (`benchmark.py`) | C++ comparison branch | Rust deterministic, matches C++ where comparable |
@@ -38,6 +38,7 @@ check failed. Every script also runs on its own; its docstring says how.
 | `speed-messages` | release | routing cost with all-agent messages (`message_benchmark.py`) | native C++ | runs |
 | `rk4-loads` | release | forces at every RK4 stage against held forces (`rk4_loads.py`) | unmodified C++ | runs |
 | `multirotor-control` | quick | MultirotorVelocityController step responses and step-size convergence (`multirotor_control.py`) | the commands; Förster's drag; 20 substeps | whole velocity error within 5%; drag tilt within 2%; within 5 mm |
+| `simple-aircraft-fit` | quick | SimpleAircraft's `rascal` limits flown against FixedWing6DOF's Rascal (`simple_aircraft_fit.py`) | the Rascal under AircraftPIDController | every number within 5% (or 0.2) |
 | `rascal-control` | quick | AircraftPIDController's `rascal` settings: altitude D after upsets, steps under each attitude limit (`rascal_control.py`) | the commands; the `a4d` limits | D changes error under 1 cm; steps settle, pitch under 25 degrees |
 | `rotors-motor` | release | Multirotor motor lag and rotor loads (`rotors_motor.py`) | RotorS's motor-plugin source in Docker | every sample within 1e-12 relative |
 | `crazyflow-crazyflie` | release | Multirotor's Crazyflie against Crazyflow's dynamics (`crazyflow_check.py`) | Crazyflow, pinned, via uv | no-drag case within 1e-6 m |
@@ -66,9 +67,9 @@ python3 reference/suite.py --check rk4-loads --retain
 
 `--retain` changes the evidence only when every selected check passed. It
 stages the new evidence, swaps it in for the checks that ran, updates
-`release.json`, and regenerates the manuscript tables
-(`paper/data/make_tables.py`). Review the diff and the paper's prose before
-committing. Failures are never retained: fix the cause, or record a known gap
+`release.json`, and regenerates the readable summary of the evidence,
+`paper/data/SUMMARY.md` (`paper/data/summarize.py`). Review the diff and the
+paper's prose before committing. Failures are never retained: fix the cause, or record a known gap
 in `docs/REFERENCE_NOTES.md`; do not change seeds, tolerances, or the
 reference branches to pass.
 
@@ -130,6 +131,7 @@ resolved from this checkout, so the suite runs the same from any directory name.
 | `perf.py`, `benchmark.py`, `native_benchmark.py`, `native.py`, `native_build.sh`, `spatial_benchmark.py`, `message_benchmark.py` | Speed and memory |
 | `rk4_loads.py`, `stall_landing.py`, `inputs/` | Focused studies and their input missions |
 | `rascal_control.py` | The Rascal's controller settings |
+| `simple_aircraft_fit.py` | SimpleAircraft's `rascal` limits, fit to and checked against the Rascal |
 | `multirotor_control.py`, `rotors_motor.py`, `rotors/`, `crazyflow_check.py`, `crazyflow/` | Multirotor checks; `rotors/` builds RotorS's motor-plugin source with a stand-in for Gazebo; `crazyflow/` runs Crazyflow's dynamics |
 | `Dockerfile`, `fixtures/` | The C++ reference build and its command-test plugins |
 | `rust.Dockerfile`, `benchmark_runner.rs` | Rust on Linux, for the platform check and benchmarks |
@@ -162,8 +164,10 @@ The checker builds two committed branches of `../scrimmage`:
 - `Ubuntu-24.04`, the unmodified reference.
 - `benchmarking-edits`, the comparison branch created from it. It adds opt-in
   comparison support: `SCRIMMAGE_TRACE=<file>` writes a per-tick trace, and
-  `SCRIMMAGE_LIBCXX_SPAWN_RANDOM=1` draws entity generation from a dedicated
-  `std::minstd_rand` stream with libc++'s normal-variate ordering. It also fixes
+  `SCRIMMAGE_KEYED_RANDOM=1` makes generation, NoisyState, NoisyContacts, and
+  SphereNetwork draw Ripple's keyed random numbers ([reference
+  notes](../docs/REFERENCE_NOTES.md#random-numbers-keyed-draws-on-both-sides)).
+  It also fixes
   one C++ regression: each substep runs controllers, then motion, as SCRIMMAGE
   did until GPU support split them (GPU motion models are disabled; see
   [reference
@@ -191,14 +195,13 @@ Each mission runs C++ four times. The instrumented build with and without
 tracing must write byte-identical `frames.bin` and `summary.csv`
 (`cpp_non_interference` in `result.json`); a difference fails the case. The
 unmodified build differs by design, and `cpp_baseline_equality` records it.
-The fourth run, with tracing and the libc++-compatible spawn stream,
-is the one compared with Rust. Rust runs once more with `--trace`, which must
+The fourth run, with tracing and keyed random numbers, is the one compared
+with Rust. Rust runs once more with `--trace`, which must
 leave its frames, events, and summary byte-identical (`trace_equality`).
 
-The spawn option reproduces the unmodified C++ on macOS (libc++) when spawning
-is the only consumer of the shared generator, which holds for the matrix. It
-lets randomized spawning be compared sample for sample on Linux. Other draws,
-such as sensor noise, stay on the original engine.
+Keyed draws make randomized spawns, sensor noise, and network loss the same
+numbers on both sides. AuctionAssign's bids stay on C++'s shared engine; bids
+are compared by delivery only.
 
 `traces.py` compares the traces (`trace-comparison.json`):
 
@@ -279,7 +282,7 @@ The matrix is [missions.txt](missions.txt):
 | `aircraft-collision` | `straight-no-gui.xml` | Opposing aircraft, collision and removal |
 | `aircraft-long-horizon` | `test_missions/straight_cpu.xml` | Longer single-aircraft run |
 | `aircraft-multiplier-typo` | `test_missions/straight_cpu_mul.xml` | Original mission including its `motion_multipler` typo |
-| `substeps-random-spawn` | `verification/aircraft-substeps-spawning.xml` | Actual five-substep execution, rates, randomized state, and scheduled spawning, compared with the libc++-compatible spawn stream |
+| `substeps-random-spawn` | `verification/aircraft-substeps-spawning.xml` | Actual five-substep execution, rates, randomized state, and scheduled spawning, with keyed spawn draws |
 | `substeps-scheduled-spawn` | `verification/aircraft-substeps-scheduled.xml` | The same substeps and rates with two zero-variance spawn schedules; deterministic on either engine |
 | `noisy-state-bias` | `verification/noisy-state-bias.xml` | NoisyState deterministic bias/attitude equations and belief feedback, without stochastic sequence differences |
 | `world-networks` | `networks-local-global.xml` | Boundary response over GlobalNetwork, local own-state feedback, ground removal and metrics |
@@ -290,6 +293,7 @@ The matrix is [missions.txt](missions.txt):
 | `single-integrator` | `verification/single-integrator.xml` | SingleIntegrator direct, normalized, zero, and vertical commands from `ConstantVelocity` |
 | `noisy-contacts-bias` | `verification/noisy-contacts-bias.xml` | NoisyContacts biases, attitude order, and covariance through published payloads |
 | `sphere-network-auction` | `verification/sphere-network-auction.xml` | SphereNetwork reach inside, at, and beyond range through AuctionAssign messages on `CommsNetwork` |
+| `sphere-network-loss` | `verification/sphere-network-loss.xml` | SphereNetwork loss at `prob_transmit` 0.5, keyed draw for draw, through the same auction |
 | `collision-boundary` | `verification/collision-boundary.xml` | SimpleCollision strict range at the boundary, and in-run opposing and same-team collisions |
 
 Case folders and reports use the case ID, so a mission file can move without
@@ -332,11 +336,10 @@ C++ mission, with all headless/logging overrides recorded. It does not change
 physics, seeds, rates, parameter defaults, or the multiplier typo.
 
 The build also includes NoisyState. Its deterministic bias/attitude fixture can
-be checked with `--mission missions/verification/noisy-state-bias.xml`.
-`missions/noisy-state.xml` uses Rust's independent sensor random streams and is
-not expected to match C++ sample-for-sample. Keep stochastic mismatch reports;
-use the deterministic fixture and sensor unit tests to verify equations/noise
-without pretending the random sequences are identical.
+be checked with `--mission missions/verification/noisy-state-bias.xml`. Noisy
+missions draw keyed random numbers on both sides, so they compare sample for
+sample too; keep any stochastic mismatch report rather than loosening a
+tolerance.
 
 ## Compare saved runs
 
@@ -374,13 +377,13 @@ contains the overall result and per-mission checks; case directories retain
 recordings. Build logs and source/image provenance are kept at the check root. A
 failed mission does not prevent the remaining cases from being checked.
 
-Rust's legacy RNG reproduces Apple libc++. Ubuntu's libstdc++ uses a different
-default engine (multiplier 16807, not 48271) and returns the other polar-method
-variate first, so the unmodified Linux build diverges on randomized spawning.
-The comparison run removes that platform effect with the instrumentation
-branch's spawn option instead of changing seeds or tolerances. The
-zero-variance twin `verification/aircraft-substeps-scheduled.xml` stays in the
-matrix as a check that does not rely on that option.
+The unmodified Linux build draws spawns from libstdc++'s default engine
+(`minstd_rand0`, multiplier 16807, which also returns the other polar-method
+variate first), so it diverges on randomized spawning; the suite records that
+comparison and expects it to fail. The comparison run uses keyed draws instead
+of changing seeds or tolerances. The zero-variance twin
+`verification/aircraft-substeps-scheduled.xml` stays in the matrix as a check
+that does not rely on them.
 
 Recorded outcomes are the release evidence under `paper/data/`, described in
 the [paper README](../paper/README.md).
@@ -392,7 +395,7 @@ the [paper README](../paper/README.md).
   long runs (fixed-wing capped at 100 s).
 - `divergence.py CHECK --output DIR` explains long-run divergence: it compares
   when C++ and Rust exceed the tolerance with when Rust diverges from itself
-  after one-ulp changes to initial roll, commanded speed, and turning radius,
+  after one-ulp changes to initial roll, commanded speed, and bank limit,
   and after scaling each controller loop's proportional gain by 1 + 1e-12
   (one-ulp parameter changes alone can miss a flight that is sensitive only in a
   controller loop).
@@ -403,7 +406,7 @@ the [paper README](../paper/README.md).
   of the Rust source and reports which comparison layer detects each.
 - `noise_statistics.py CASE` compares NoisyContacts error distributions
   (two-sample Kolmogorov-Smirnov) for `verification/noisy-contacts-noise.xml`,
-  whose random samples differ by design.
+  a second check beside the sample-for-sample comparison.
 
 The archive has no `.git` directory, so upstream's optional Git metadata
 collection prints warnings in C++ console logs. `source.json` and image
@@ -474,6 +477,13 @@ reference rather than an earlier revision of this project:
   `rascal` settings: the altitude derivative gain after upsets at three step
   sizes, and heading, altitude, and speed steps under the `a4d` and `rascal`
   attitude limits.
+- `simple_aircraft_fit.py`: SimpleAircraft's `rascal` limits. It flies
+  FixedWing6DOF's Rascal through maneuvers that each reach one limit (full
+  throttle, idle, a long climb and descent, a 180 degree turn, and level
+  flight asked at 7 to 14 m/s), then flies SimpleAircraft with
+  `airframe: rascal` through the same ones and compares speeds, acceleration,
+  climb, descent, turn rate (and the bank a coordinated turn needs for it),
+  and roll and pitch rates.
 - `multirotor_control.py`: MultirotorVelocityController's step responses on
   the Crazyflie, its steady tilt against Förster's rotor drag, and
   convergence at 5, 10, and 20 substeps.

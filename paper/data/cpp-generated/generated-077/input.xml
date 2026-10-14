@@ -17,8 +17,8 @@
     <roll>2.65258</roll><pitch>-2.42338</pitch>
     <autonomy speed="184.746" loop_rate="0">Straight</autonomy>
     <vx>184.746</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="1.66663" wind_N="2.14147">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="1.66663" wind_N="2.14147">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -30,8 +30,8 @@
     <roll>3.88671</roll><pitch>-0.457604</pitch>
     <autonomy speed="220.949" loop_rate="0">Straight</autonomy>
     <vx>220.949</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="-2.99109" wind_N="0.48731">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="-2.99109" wind_N="0.48731">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -44,8 +44,8 @@
     <roll>-2.97092</roll><pitch>0.422822</pitch>
     <autonomy speed="191.812" loop_rate="0">Straight</autonomy>
     <vx>191.812</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="-1.97352" wind_N="2.00632">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="-1.97352" wind_N="2.00632">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
 </runscript>

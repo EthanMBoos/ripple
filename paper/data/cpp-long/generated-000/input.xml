@@ -17,7 +17,7 @@
     <roll>4.76255</roll><pitch>-2.7205</pitch>
     <autonomy speed="23.6565" loop_rate="0">Straight</autonomy>
     <controller loop_rate="20">SimpleAircraftControllerPID</controller>
-    <motion_model turning_radius="36.7656">SimpleAircraft</motion_model>
+    <motion_model max_roll="30.4785">SimpleAircraft</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -29,7 +29,7 @@
     <roll>2.77229</roll><pitch>-0.206389</pitch>
     <autonomy speed="22.4462" loop_rate="5">Straight</autonomy>
     <controller loop_rate="20">SimpleAircraftControllerPID</controller>
-    <motion_model turning_radius="31.9907">SimpleAircraft</motion_model>
+    <motion_model max_roll="27.4942">SimpleAircraft</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
 </runscript>

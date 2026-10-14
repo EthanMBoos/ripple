@@ -19,8 +19,8 @@
     <roll>-0.249684</roll><pitch>0.131785</pitch>
     <autonomy speed="163.731" loop_rate="10">Straight</autonomy>
     <vx>163.731</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="-2.78155" wind_N="-1.83649">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="-2.78155" wind_N="-1.83649">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -32,8 +32,8 @@
     <roll>-2.70189</roll><pitch>2.09869</pitch>
     <autonomy speed="156.493" loop_rate="5">Straight</autonomy>
     <vx>156.493</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="-0.98822" wind_N="1.47652">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="-0.98822" wind_N="1.47652">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -46,8 +46,8 @@
     <roll>2.40951</roll><pitch>-0.133424</pitch>
     <autonomy speed="192.721" loop_rate="0">Straight</autonomy>
     <vx>192.721</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="-1.08296" wind_N="-0.900304">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="-1.08296" wind_N="-0.900304">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -64,8 +64,8 @@
     <roll>-1.12471</roll><pitch>1.30043</pitch>
     <autonomy speed="243.762" loop_rate="5">Straight</autonomy>
     <vx>243.762</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="1.44479" wind_N="-1.18142">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="1.44479" wind_N="-1.18142">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
 </runscript>

@@ -5,7 +5,7 @@ The repeat of `linear` was byte-identical.
 
 | Variant | Touchdown speed (m/s) | Sink (m/s) | Highest bounce (m) | Largest rollout offset (m) | Airborne alpha (deg) | Rolling alpha (deg) |
 |---|---|---|---|---|---|---|
-| linear | 15.36 | 1.46 | 2.03 | 1.56 | 11.2 | 14.4 |
-| linear-repeat | 15.36 | 1.46 | 2.03 | 1.56 | 11.2 | 14.4 |
-| lift | 15.36 | 1.45 | 2.04 | 1.71 | 10.8 | 14.5 |
-| lift-drag | 15.09 | 1.53 | 1.88 | 1.23 | 8.9 | 14.5 |
+| linear | 15.38 | 1.06 | 2.25 | 1.44 | 11.8 | 14.6 |
+| linear-repeat | 15.38 | 1.06 | 2.25 | 1.44 | 11.8 | 14.6 |
+| lift | 15.38 | 1.09 | 2.26 | 1.49 | 11.9 | 14.8 |
+| lift-drag | 15.04 | 0.86 | 2.06 | 1.8 | 10.0 | 14.5 |

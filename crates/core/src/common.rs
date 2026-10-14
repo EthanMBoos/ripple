@@ -1,4 +1,4 @@
-//! Shared control wiring, update rates, deterministic random streams, spatial lookup,
+//! Shared control wiring, update rates, keyed random numbers, spatial lookup,
 //! and terrain.
 mod loop_rate;
 mod pid;

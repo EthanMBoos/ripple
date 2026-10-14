@@ -17,7 +17,7 @@
     <roll>0.676974</roll><pitch>0.910138</pitch>
     <autonomy speed="15.0515" loop_rate="0">Straight</autonomy>
     <controller loop_rate="20">SimpleAircraftControllerPID</controller>
-    <motion_model turning_radius="52.6328">SimpleAircraft</motion_model>
+    <motion_model max_roll="40.3955">SimpleAircraft</motion_model>
     <sensor pos_noise_0="-0.492877 0" pos_noise_1="1.22762 0" pos_noise_2="0.180155 0" vel_noise_0="0.422252 0" vel_noise_1="-0.360666 0" vel_noise_2="0.32699 0" orient_noise_0="0.0485809 0" orient_noise_1="0.0483171 0" orient_noise_2="-0.0200633 0">NoisyState</sensor>
     <visual_model>sphere</visual_model>
   </entity>
@@ -34,7 +34,7 @@
     <roll>3.5924</roll><pitch>-1.80265</pitch>
     <autonomy speed="22.1585" loop_rate="10">Straight</autonomy>
     <controller loop_rate="50">SimpleAircraftControllerPID</controller>
-    <motion_model turning_radius="45.6736">SimpleAircraft</motion_model>
+    <motion_model max_roll="36.046">SimpleAircraft</motion_model>
     <sensor pos_noise_0="0.8674 0" pos_noise_1="-0.034652 0" pos_noise_2="-1.80544 0" vel_noise_0="0.330118 0" vel_noise_1="0.468582 0" vel_noise_2="-0.433268 0" orient_noise_0="-0.0457387 0" orient_noise_1="-0.00680629 0" orient_noise_2="0.0236964 0">NoisyState</sensor>
     <visual_model>sphere</visual_model>
   </entity>
@@ -47,7 +47,7 @@
     <roll>2.39388</roll><pitch>1.72474</pitch>
     <autonomy speed="27.3982" loop_rate="5">Straight</autonomy>
     <controller loop_rate="0">SimpleAircraftControllerPID</controller>
-    <motion_model turning_radius="33.104">SimpleAircraft</motion_model>
+    <motion_model max_roll="28.19">SimpleAircraft</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -59,7 +59,7 @@
     <roll>3.3153</roll><pitch>0.579679</pitch>
     <autonomy speed="29.8496" loop_rate="5">Straight</autonomy>
     <controller loop_rate="0">SimpleAircraftControllerPID</controller>
-    <motion_model turning_radius="51.9425">SimpleAircraft</motion_model>
+    <motion_model max_roll="39.9641">SimpleAircraft</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
 </runscript>

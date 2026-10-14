@@ -47,8 +47,9 @@ class SuiteTests(unittest.TestCase):
                 if "--mission" in args:
                     noise = CLEAN_CASE
                     if fail.get("noise") == "deliveries":
-                        noise = {**CLEAN_CASE, "trace_comparison": {
-                            **CLEAN_CASE["trace_comparison"], "delivery_mismatches": 500}}
+                        noise = {**CLEAN_CASE, "passed": False, "trace_comparison": {
+                            **CLEAN_CASE["trace_comparison"], "passed": False,
+                            "delivery_mismatches": 500}}
                     write_case(output, "noisy-contacts-noise", noise)
                 elif "--timeout" in args:
                     for index in range(10):
@@ -71,7 +72,7 @@ class SuiteTests(unittest.TestCase):
                 write(output / "report.json", {"cases": [], "max_position_difference_m": 0})
             elif script == "sensitivity.py":
                 write(output / "report.json", {"control": {}, "defects": [{"detected": True}]})
-            elif script == "make_tables.py" and fail.get("tables"):
+            elif script == "summarize.py" and fail.get("summary"):
                 return SimpleNamespace(returncode=1)
             return SimpleNamespace(returncode=0)
 
@@ -97,8 +98,8 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(result.code, 0, result.summary)
         self.assertEqual(list(result.summary["checks"]),
                          ["speed-regression", "rust-tests", "rust-determinism", "cpp-agreement",
-                          "multirotor-control", "rascal-control"])
-        self.assertNotIn("make_tables.py", result.steps)
+                          "multirotor-control", "rascal-control", "simple-aircraft-fit"])
+        self.assertNotIn("summarize.py", result.steps)
         self.assertTrue(result.kept_old)
 
     def test_retained_evidence_replaces_only_the_checks_that_ran(self):
@@ -106,8 +107,9 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(result.code, 0, result.summary)
         self.assertFalse(result.kept_old)
         self.assertEqual(result.retained, ["cpp-agreement", "multirotor-control", "rascal-control",
-                                           "rust-determinism", "speed-regression"])
-        self.assertEqual(result.steps[-1], "make_tables.py")
+                                           "rust-determinism", "simple-aircraft-fit",
+                                           "speed-regression"])
+        self.assertEqual(result.steps[-1], "summarize.py")
         self.assertTrue(all(entry["passed"] for entry in result.release["checks"].values()))
 
     def test_full_release_runs_every_check(self):
@@ -123,7 +125,7 @@ class SuiteTests(unittest.TestCase):
         result = self.run_suite(["--retain"], fail={"reference_check.py": "crash"})
         self.assertEqual(result.code, 1)
         self.assertFalse(result.summary["checks"]["cpp-agreement"]["passed"])
-        self.assertNotIn("make_tables.py", result.steps)
+        self.assertNotIn("summarize.py", result.steps)
         self.assertTrue(result.kept_old)
         self.assertIsNone(result.release)
 
@@ -137,8 +139,8 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(result.code, 1)
         self.assertFalse(result.summary["checks"]["cpp-noise"]["passed"])
 
-    def test_failed_tables_report_a_failed_retain(self):
-        result = self.run_suite(["--retain"], fail={"tables": True})
+    def test_failed_summary_reports_a_failed_retain(self):
+        result = self.run_suite(["--retain"], fail={"summary": True})
         self.assertEqual(result.code, 1)
         self.assertFalse(result.summary["retained"])
 

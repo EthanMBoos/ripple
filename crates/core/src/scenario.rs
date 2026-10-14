@@ -80,7 +80,7 @@ pub(crate) enum PluginValues {
 #[derive(Clone, Debug, Serialize)]
 pub struct PluginConfig {
     pub name: String,
-    /// Stable instance identity, including for a sensor's random stream.
+    /// Stable instance identity, which also keys a sensor's random numbers.
     pub instance: Option<String>,
     /// Zero runs the plugin every step.
     pub loop_rate_hz: f64,

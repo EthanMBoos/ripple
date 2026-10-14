@@ -1,4 +1,4 @@
 <?xml version="1.0"?>
 <params>
-  <turning_radius>37</turning_radius>
+  <max_roll>37</max_roll>
 </params>

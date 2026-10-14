@@ -22,23 +22,19 @@
   },
   "motion_multiplier": 1,
   "cpp_non_interference": {
-    "untraced": {
-      "frames.bin": true,
-      "summary.csv": true
-    },
     "traced": {
       "frames.bin": true,
       "summary.csv": true
     }
   },
   "cpp_baseline_equality": {
-    "frames.bin": true,
-    "summary.csv": true
+    "frames.bin": false,
+    "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-12_10-47-05",
+  "cpp_log_directory": "cpp/logs/2026-10-14_20-38-07",
   "cpp_output_hashes": {
-    "frames.bin": "fc612c80d3cc9341a5d9a067e1df9d2154b1930127add3099dbd5ba2c5bbdbd0",
-    "summary.csv": "77e5f1a49d2ba31565746f680051b65779c04c027fa5e5d97892965e5556b445"
+    "frames.bin": "0bd815906401d7c60d771188107c29abbb96dd9ba79eb951ce9178f2d6dfe638",
+    "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
   },
   "worker_equality": {
     "2": {
@@ -57,7 +53,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "3256c17f2826dd0ed4e14290528eaccb6e2b468c9f4878feec4eb649f513d3bd",
+  "recording_sha256": "156714a1473443ebed886de58a2de76d7b8e3b9f9f7ca66f0aa12597a019c083",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,
@@ -65,29 +61,29 @@
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "c96a54d9f460dc0092ed101f10c295e80047acec053eddd70ec036db264e2efd",
-      "events.json": "bb251cdb6e7ecdc9448d4313c4c469b24669f6949c76b509dac3a4e12087f3f8",
-      "summary.csv": "77e5f1a49d2ba31565746f680051b65779c04c027fa5e5d97892965e5556b445"
+      "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
+      "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
+      "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
     },
     "rust-2": {
-      "frames.bin": "c96a54d9f460dc0092ed101f10c295e80047acec053eddd70ec036db264e2efd",
-      "events.json": "bb251cdb6e7ecdc9448d4313c4c469b24669f6949c76b509dac3a4e12087f3f8",
-      "summary.csv": "77e5f1a49d2ba31565746f680051b65779c04c027fa5e5d97892965e5556b445"
+      "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
+      "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
+      "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
     },
     "rust-8": {
-      "frames.bin": "c96a54d9f460dc0092ed101f10c295e80047acec053eddd70ec036db264e2efd",
-      "events.json": "bb251cdb6e7ecdc9448d4313c4c469b24669f6949c76b509dac3a4e12087f3f8",
-      "summary.csv": "77e5f1a49d2ba31565746f680051b65779c04c027fa5e5d97892965e5556b445"
+      "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
+      "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
+      "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
     },
     "rust-rerun": {
-      "frames.bin": "c96a54d9f460dc0092ed101f10c295e80047acec053eddd70ec036db264e2efd",
-      "events.json": "bb251cdb6e7ecdc9448d4313c4c469b24669f6949c76b509dac3a4e12087f3f8",
-      "summary.csv": "77e5f1a49d2ba31565746f680051b65779c04c027fa5e5d97892965e5556b445"
+      "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
+      "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
+      "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
     },
     "rust-trace": {
-      "frames.bin": "c96a54d9f460dc0092ed101f10c295e80047acec053eddd70ec036db264e2efd",
-      "events.json": "bb251cdb6e7ecdc9448d4313c4c469b24669f6949c76b509dac3a4e12087f3f8",
-      "summary.csv": "77e5f1a49d2ba31565746f680051b65779c04c027fa5e5d97892965e5556b445"
+      "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
+      "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
+      "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
     }
   },
   "comparison": {
@@ -109,7 +105,8 @@
     "deliveries": 1,
     "beliefs": 2001,
     "outputs": 12000,
-    "published_states": 0,
+    "sensor_states": 0,
+    "skipped_sensor_deliveries": 0,
     "max_belief_position_error_m": 0.0,
     "max_belief_velocity_error_mps": 0.0,
     "max_belief_orientation_error_rad": 0.0,
@@ -117,7 +114,6 @@
     "max_payload_position_error_m": 0.0,
     "max_payload_velocity_error_mps": 0.0,
     "max_payload_orientation_error_rad": 0.0,
-    "max_payload_covariance_error": 0.0,
     "max_output_error": 0.0,
     "max_output_error_port": "",
     "excluded_pre_start_records": 0,

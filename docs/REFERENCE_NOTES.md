@@ -47,7 +47,7 @@ Rust lifecycle and delivery rules are in the
 - Rust/YAML position variance defaults to zero; XML retains its legacy default
   of `[100, 100, 0]` m². The XML reader translates positive scalar `speed` into
   world-X velocity when the velocity vector is zero. Native scenarios specify
-  `velocity_mps` directly. Spawn sampling and draw order are shared afterward.
+  `velocity_mps` directly. Spawn sampling is shared afterward.
 
 ## Intentional differences from C++
 
@@ -172,12 +172,12 @@ Simplifications that can stay:
 | Degrees to radians as `deg * PI / 180` (`Angles::deg2rad`) | `math.rs` | As correct as `to_radians`; keeps outputs bit-identical |
 
 SCRIMMAGE's defects were kept until they were fixed on both sides; see [core
-defects](#core-defects-fixed-on-both-sides). One is left, for milestone B of
-the [roadmap](TODO.md):
+defects](#core-defects-fixed-on-both-sides). One is left, for the disturbance
+models in the [roadmap](TODO.md):
 
 | Defect | Where | Matters when |
 | --- | --- | --- |
-| Neither sensor reports its noise covariance (SCRIMMAGE's messages carry a placeholder, identity or 5I) | sensors | A filter needs it (milestone B, the Kalman filter) |
+| Neither sensor reports its noise covariance (SCRIMMAGE's messages carry a placeholder, identity or 5I) | sensors | A filter needs it (the roadmap's Kalman filter) |
 
 ## Left behind when the comparison is retired
 
@@ -267,6 +267,72 @@ Details worth knowing:
   deliveries are skipped as described. MPE2 parity: all 100 episodes
   bit-identical (56 before; the 44 others were contact episodes). The other
   checks run in the full suite.
+
+## Interfaces fixed for the study
+
+Interfaces and behavior kept to match SCRIMMAGE that got in the way of the
+study (the roadmap's milestone A). Where SCRIMMAGE's behavior changes, it
+changes on `benchmarking-edits` too (commits "Replace the libc++ spawn stream
+with keyed random draws" and "Turn SimpleAircraft as a coordinated turn and
+make SingleIntegrator's max_speed a cap"), so the comparison still agrees;
+the rest are Ripple interfaces whose defaults reproduce SCRIMMAGE. The numbers
+in "Before" are the focused tests' output on the code before the change
+(`cc6661a`, with the new tests copied in).
+
+| Change | Contract | Before | Test | SCRIMMAGE files |
+| --- | --- | --- | --- | --- |
+| Keyed random numbers | An observer's error on a target doesn't depend on what else it sees | Target 2's x error at tick 1: -8.566 m in one run, -2.563 m with a third target | `an_observers_error_on_a_target_does_not_depend_on_what_else_it_sees` | `KeyedRandom.h` (new), `Random.cpp/.h`, `Time.h`, `EntityPlugin.h`, `Entity.cpp`, `NoisyState.cpp/.h`, `NoisyContacts.cpp`, `Network.cpp/.h`, `SphereNetwork.cpp/.h`, `SimControl.cpp/.h`; opt-in (below) |
+| SimpleAircraft turn | Turn rate g tan(bank) / speed: 110 m radius at 25 m/s and 30 degrees, growing with speed squared | speed / 13 m x tan(bank): a 22.5 m radius at every speed | `a_banked_turn_is_a_coordinated_turn_whose_radius_grows_with_speed_squared` | `SimpleAircraft.cpp/.h/.xml` |
+| SingleIntegrator `max_speed` | A cap: a slower command is flown as commanded, a faster one at `max_speed` | A 5 m/s command with `max_speed` 10 flew at 10 m/s | `velocity_integrates_position_and_max_speed_only_caps_it` | `SingleIntegrator.cpp` |
+| Noise parameters | A sensor with no parameters measures exactly; named bias and standard deviation per axis | 5 m and 5 m/s of noise unless every axis was zeroed | `without_parameters_there_is_no_noise`, `scrimmage_noise_keys_become_named_fields_with_scrimmage_defaults` | none: XML keeps `pos_noise_0="mean stddev"` and SCRIMMAGE's defaults |
+| SimpleAircraft limits | Physical limits (speeds, bank, acceleration, climb, descent); `airframe: rascal` flies like FixedWing6DOF's Rascal within 5% | Throttle in [-100, 100] / 5; no climb limit but pitch | `reference/simple_aircraft_fit.py` | none: the defaults are SCRIMMAGE's numbers |
+| Velocity commands for aircraft | Heading along the command (kept at zero), speed and climb within the aircraft's limits, turns no tighter than its bank allows | none: aircraft took heading, altitude, and speed | `crates/core/tests/aircraft_velocity.rs` | none (Rust-only controller) |
+| Message delay | `delay_s` on GlobalNetwork and SphereNetwork arrives at the first tick at or after it | delay rejected | `global_network_delay_arrives_at_the_first_tick_at_or_after_it` | none (below) |
+
+Details worth knowing:
+
+- **Keyed random numbers** are described under [Random
+  numbers](#random-numbers-keyed-draws-on-both-sides).
+- **The turn law.** The fixed-wing rung exists to test methods on a vehicle
+  that can't turn on a dime; SCRIMMAGE's law turned five times too tight at
+  25 m/s and 30 degrees. `turning_radius`, `speed_target`, and
+  `radius_slope_per_speed` are gone on both sides; the generated scenarios vary
+  the bank limit instead, and `divergence.py` nudges it.
+- **SimpleAircraft's `rascal`.** The Rascal holds 47 degrees of bank but turns
+  at 26.3 deg/s, 13% slower than a coordinated turn at that bank (it doesn't
+  fly perfectly coordinated). SimpleAircraft's bank only sets its turn rate, so
+  its bank limit is 43 degrees, the bank that gives 26.3 deg/s. Its pitch
+  limit, 30 degrees, only has to let the climb and descent limits bind at
+  cruise: SimpleAircraft keeps its speed in a climb or dive (it has no energy
+  model), where the Rascal slows to 17.4 m/s climbing and speeds up to
+  32 m/s descending.
+- **XML noise.** `<sensor>NoisyState</sensor>` in XML still measures with 5 m
+  of horizontal noise, as SCRIMMAGE does; the XML reader turns
+  `pos_noise_*`, `vel_noise_*`, and `orient_noise_*` into the named fields.
+- **SCRIMMAGE's message delay** (not ported; Ripple's engine delays
+  correctly). `comm_delay` works on every network but: queued messages are
+  released only inside the per-publisher loop when that topic has new
+  messages, so they stall when publishing stops (`src/pubsub/Network.cpp`,
+  `Network::step`); `comm_delay="0"` queues instead of delivering (only -1,
+  the default, is immediate); `is_stochastic_delay` only sorts the queue (the
+  base delay is constant); the due time is written onto the message object
+  all subscribers share (`msg->time`); trimming a device's queues to its
+  `max_queue_size` subtracts the limit from the undelivered queue's size
+  without checking which is larger, so a short undelivered queue underflows
+  (`NetworkDevice::enforce_queue_size`); and the `DelayedComms` plugin
+  `missions/delay-test.xml` names doesn't exist. No compared mission uses
+  delay, so nothing changes on `benchmarking-edits`.
+- **Comparisons after.** The C++ matrix (16 missions, with the new
+  `sphere-network-loss`) passes against `benchmarking-edits` with these
+  changes. `reference/equivalence.py` found the 30 of 42 cases that draw no
+  random numbers byte-identical after the keyed draws; the other 12 (noise,
+  randomized spawns, churn, collision) change once.
+- **Planted bugs.** "LocalNetwork delivers across entities" stopped being
+  detectable once sensors no longer published readings on LocalNetwork (the
+  duplicate-message fix above): no compared mission sends a LocalNetwork
+  message. `sensitivity.py` replaces it with a defect in the keyed loss draws
+  (sender and receiver swapped in the key), which `sphere-network-loss`
+  compares draw for draw.
 
 ## Findings from the comparison trace
 
@@ -591,21 +657,56 @@ one: a force/moment input and reset hook on motion models
 shared ray or occlusion queries (RayTrace, LOSSensor), retiring one agent
 without ending the run (MotionBattery), and custom per-entity records (CPA).
 
-## Spawn RNG mismatch (accepted)
+## Random numbers: keyed draws on both sides
 
-The native macOS baseline matched; the Ubuntu Docker fixture diverges at
-initialization. The inspected libstdc++ uses `minstd_rand0` (multiplier 16807)
-and returns the second polar normal variate first. Rust's [legacy
-RNG](../crates/core/src/common/random.rs) uses multiplier 48271 and returns the
-first variate first, matching Apple libc++.
+Ripple keys every random number by what it is for, never by draw order (see
+[Randomness and seeds](../book/src/concepts/randomness.md)). SCRIMMAGE draws
+everything from one shared `std::default_random_engine`, so a number depends on
+every draw before it, in any plugin. Ripple used to have two generators of its
+own: spawns drew from a copy of Apple libc++'s `minstd_rand` and its
+uniform and normal conversions (so randomized spawns matched SCRIMMAGE on
+macOS), and every plugin drew from its own SplitMix64 stream.
 
-The recorded randomized-spawn comparison had 90/90 mismatched states and about
-8.41934 m maximum position error. Rust outputs still matched across 1/2/8
-workers and recording on/off. This is an accepted difference of the unmodified
-Linux build: C++ itself differs between libc++ and libstdc++. Comparisons remove
-it with the instrumentation branch's opt-in libc++-compatible spawn stream
-(`SCRIMMAGE_LIBCXX_SPAWN_RANDOM=1`), and keep a zero-variance twin that needs no
-option. Do not change seeds or tolerances to hide randomized mismatches.
+A stream breaks paired comparisons. In
+`an_observers_error_on_a_target_does_not_depend_on_what_else_it_sees`
+(`crates/core/tests/core_contracts.rs`), one observer measures two targets with
+NoisyContacts, then the same mission runs with a third target spawned last.
+On the streams (`cc6661a`), the observer's x error on target 2 at tick 1 was
+-8.566 m in the first run and -2.563 m in the second: measuring the third
+target shifted every later number. With keyed draws every error on the two
+shared targets is identical, at every tick and axis.
+
+`benchmarking-edits` copies the scheme behind `SCRIMMAGE_KEYED_RANDOM=1`
+(`include/scrimmage/common/KeyedRandom.h`), which replaced
+`SCRIMMAGE_LIBCXX_SPAWN_RANDOM` and its `minstd_rand` stream. Generation,
+NoisyState, NoisyContacts, and SphereNetwork use it; the comparison run sets
+it, so randomized spawns, noise, and loss are compared sample for sample.
+Labels, not draw order, have to match: `Time` carries the step count, sensors
+carry Ripple's identity (`NoisyState:0`, the name and its count among the
+entity's sensors of that name), and `Network::step` names each message by its
+topic and the sender entity's sequence on it. The labels and hashes are
+integer arithmetic and agree exactly; the normal conversion's `log` and `cos`
+can differ in the last bit between macOS and glibc, well inside the frame
+tolerances. Without the option every C++ draw is unchanged. AuctionAssign's
+bids still come from the shared engine in C++; bids are compared by delivery
+only.
+
+Keyed draws change two things about what is random, on both sides:
+
+- **SphereNetwork loss is per receiving entity.** A message's draw is keyed by
+  the sending and receiving entities, the topic, and the sequence, so all
+  subscribers on one entity hear it or none do, as with one radio. SCRIMMAGE
+  draws once per subscriber. Each subscriber still receives with probability
+  `prob_transmit`.
+- **NoisyState's first reading has its own key.** It is taken when the entity
+  is created, in the tick of the sensor phase's next reading; without a
+  separate key both readings would carry the same errors.
+
+The unmodified Linux build still differs on randomized spawns: libstdc++'s
+default engine is `minstd_rand0` (multiplier 16807) and its polar method
+returns the second variate first. The suite reports that comparison
+(`unmodified-linux-randomized-spawning.json`) and expects it to fail. Do not
+change seeds or tolerances to hide randomized mismatches.
 
 Use the [Docker workflow](../reference/README.md) for fresh comparisons. Its
 traces compare message deliveries, lifecycle and collision events, sensor

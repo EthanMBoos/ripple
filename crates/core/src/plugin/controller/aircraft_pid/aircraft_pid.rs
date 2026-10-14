@@ -269,11 +269,12 @@ mod tests {
                     time: StepTime {
                         time_s: index as f64 * 0.02,
                         dt_s: 0.02,
+                        tick: index as i64,
                     },
                     state: &state,
                     contacts: KnownContacts::new(&[], 1),
                     messages: &mut messages,
-                    random: &mut PluginRandom::new(1, 1, "test"),
+                    random: PluginRandom::new(1, 1, "test"),
                 },
                 &mut io,
             )?;

@@ -91,6 +91,9 @@ pub(super) fn load(
             number(&params, "loop_rate", 0.0).with_context(|| format!("plugin '{name}'"))?;
         params.remove("loop_rate");
         let instance = params.remove("instance");
+        if node.name == "sensor" && matches!(name.as_str(), "NoisyState" | "NoisyContacts") {
+            state_noise(&mut params).with_context(|| format!("plugin '{name}'"))?;
+        }
         Ok(PluginConfig {
             name: name.clone(),
             instance,
@@ -227,6 +230,61 @@ pub(super) fn load(
             metrics,
         },
     })
+}
+
+/// XML keeps its older noise parameters for NoisyState and NoisyContacts:
+/// `pos_noise_0="mean stddev"` per axis (and `vel_noise_*`, `orient_noise_*`),
+/// with these defaults for any left out: 5 m (m/s) horizontally, 1 m
+/// (m/s) vertically, and no attitude noise. They become the plugins' named
+/// bias and standard deviation fields, which XML doesn't set directly.
+fn state_noise(params: &mut Params) -> Result<()> {
+    for (prefix, bias, stddev, default_stddev) in [
+        (
+            "pos_noise",
+            "position_bias_m",
+            "position_stddev_m",
+            ["5", "5", "1"],
+        ),
+        (
+            "vel_noise",
+            "velocity_bias_mps",
+            "velocity_stddev_mps",
+            ["5", "5", "1"],
+        ),
+        (
+            "orient_noise",
+            "attitude_bias_rad",
+            "attitude_stddev_rad",
+            ["0", "0", "0"],
+        ),
+    ] {
+        ensure!(
+            !params.contains_key(bias) && !params.contains_key(stddev),
+            "XML sets noise with {prefix}_0..2, not {bias} or {stddev}"
+        );
+        let mut biases = Vec::new();
+        let mut stddevs = Vec::new();
+        for (axis, default) in default_stddev.into_iter().enumerate() {
+            let key = format!("{prefix}_{axis}");
+            match params.remove(&key) {
+                Some(text) => {
+                    let values: Vec<&str> = text.split_whitespace().collect();
+                    let [mean, deviation] = values[..] else {
+                        bail!("{key} must be 'mean stddev', got {text:?}");
+                    };
+                    biases.push(mean.to_owned());
+                    stddevs.push(deviation.to_owned());
+                }
+                None => {
+                    biases.push("0".to_owned());
+                    stddevs.push(default.to_owned());
+                }
+            }
+        }
+        params.insert(bias.to_owned(), biases.join(" "));
+        params.insert(stddev.to_owned(), stddevs.join(" "));
+    }
+    Ok(())
 }
 
 /// An entity block's own tags (not its plugins), converted from text.
@@ -405,13 +463,41 @@ mod tests {
 
         let overrides = &mission.scenario.entities[1];
         assert_eq!(text(&overrides.autonomy[0])["speed"], "26");
-        assert_eq!(text(&overrides.motion_model)["turning_radius"], "23");
+        assert_eq!(text(&overrides.motion_model)["max_roll"], "23");
         assert_eq!(text(&overrides.motion_model)["min_velocity"], "16");
         assert!(!text(&overrides.motion_model).contains_key("param_common"));
         assert_eq!(text(&overrides.sensors[0])["stddev_m"], "0");
         mission
             .scenario
             .resolve(&crate::plugin::PluginRegistry::with_builtins())?;
+        Ok(())
+    }
+
+    #[test]
+    fn xml_noise_keys_become_named_fields_with_xml_defaults() -> Result<()> {
+        let mut params = Params::from([
+            ("pos_noise_0".into(), "1 2".into()),
+            ("orient_noise_2".into(), "0.1 0.05".into()),
+        ]);
+        state_noise(&mut params)?;
+        let expected = [
+            ("position_bias_m", "1 0 0"),
+            ("position_stddev_m", "2 5 1"),
+            ("velocity_bias_mps", "0 0 0"),
+            ("velocity_stddev_mps", "5 5 1"),
+            ("attitude_bias_rad", "0 0 0.1"),
+            ("attitude_stddev_rad", "0 0 0.05"),
+        ];
+        assert_eq!(
+            params,
+            Params::from(expected.map(|(k, v)| (k.into(), v.into())))
+        );
+        for bad in [
+            Params::from([("pos_noise_1".into(), "1 2 3".into())]),
+            Params::from([("position_stddev_m".into(), "1 1 1".into())]),
+        ] {
+            assert!(state_noise(&mut bad.clone()).is_err());
+        }
         Ok(())
     }
 
@@ -451,7 +537,7 @@ mod tests {
             overlay.join("SimpleAircraft.xml")
         );
         let defaults = read_xml(&plugins["SimpleAircraft"], &Params::new(), &mut Vec::new())?;
-        assert_eq!(defaults.params()["turning_radius"], "37");
+        assert_eq!(defaults.params()["max_roll"], "37");
         Ok(())
     }
 }

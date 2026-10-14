@@ -183,6 +183,10 @@ pub struct Transmission<'a> {
     pub sender: &'a MessageEndpoint,
     pub receiver: &'a MessageEndpoint,
     pub topic: &'a str,
+    /// Which of the sender entity's messages on this network and topic this
+    /// tick it is, from 0, in publication order. With the entities and topic
+    /// it names the message, as a random key.
+    pub sequence: u64,
     pub contacts_truth: TruthContacts<'a>,
 }
 #[derive(Clone, Copy, Debug)]
@@ -230,7 +234,7 @@ pub struct NetworkContext<'a, 'mailbox> {
     pub(crate) endpoint: &'a MessageEndpoint,
     pub(crate) mailboxes: &'a mut [Mailbox<'mailbox>],
     pub(crate) scheduled: &'a mut Vec<ScheduledMessage>,
-    pub(crate) random: &'a mut PluginRandom,
+    pub(crate) random: PluginRandom,
     pub(crate) routed: bool,
     /// Present only when the simulation writes a comparison trace.
     pub(crate) trace: Option<&'a mut NetworkTrace>,
@@ -248,7 +252,7 @@ impl NetworkContext<'_, '_> {
     /// order: publications in mailbox order, then subscribers in mailbox order.
     pub fn route(
         &mut self,
-        decide: impl FnMut(&Transmission<'_>, &mut PluginRandom) -> Result<Delivery>,
+        decide: impl FnMut(&Transmission<'_>, &PluginRandom) -> Result<Delivery>,
     ) -> Result<Update> {
         self.route_links(false, decide)
     }
@@ -257,14 +261,14 @@ impl NetworkContext<'_, '_> {
     /// sender's own entity, and none from world plugins, which have no entity.
     pub fn route_within_entity(
         &mut self,
-        decide: impl FnMut(&Transmission<'_>, &mut PluginRandom) -> Result<Delivery>,
+        decide: impl FnMut(&Transmission<'_>, &PluginRandom) -> Result<Delivery>,
     ) -> Result<Update> {
         self.route_links(true, decide)
     }
     fn route_links(
         &mut self,
         within_entity: bool,
-        mut decide: impl FnMut(&Transmission<'_>, &mut PluginRandom) -> Result<Delivery>,
+        mut decide: impl FnMut(&Transmission<'_>, &PluginRandom) -> Result<Delivery>,
     ) -> Result<Update> {
         ensure!(!self.routed, "network may route once per phase");
         self.routed = true;
@@ -310,7 +314,13 @@ impl NetworkContext<'_, '_> {
                 }
             }
         }
+        let mut sequences = BTreeMap::new();
         for (sender, publication) in publications {
+            let sequence = sequences
+                .entry((sender.entity_id, publication.channel.1.clone()))
+                .or_insert(0);
+            let message_sequence = *sequence;
+            *sequence += 1;
             let group = match (within_entity, sender.entity_id) {
                 (false, _) => None,
                 (true, Some(entity_id)) => Some(entity_id),
@@ -332,9 +342,10 @@ impl NetworkContext<'_, '_> {
                     sender: &sender,
                     receiver: mailbox.endpoint,
                     topic: &publication.channel.1,
+                    sequence: message_sequence,
                     contacts_truth: self.contacts_truth,
                 };
-                if let Delivery::After { delay_s } = decide(&link, self.random)? {
+                if let Delivery::After { delay_s } = decide(&link, &self.random)? {
                     ensure!(
                         delay_s.is_finite() && delay_s >= 0.0,
                         "network delay must be finite and nonnegative"
@@ -490,13 +501,17 @@ mod tests {
                 },
             ];
             run(&mut NetworkContext {
-                time: StepTime { time_s, dt_s: 0.1 },
+                time: StepTime {
+                    time_s,
+                    dt_s: 0.1,
+                    tick: 0,
+                },
                 contacts_truth: TruthContacts::from(&[][..]),
                 name: "test",
                 endpoint: &endpoint,
                 mailboxes: &mut mailboxes,
                 scheduled: &mut self.scheduled,
-                random: &mut PluginRandom::new(1, 0, "test"),
+                random: PluginRandom::new(1, 0, "test"),
                 routed: false,
                 trace: None,
             })?;
@@ -580,6 +595,30 @@ mod tests {
                 .len(),
             1
         );
+        Ok(())
+    }
+
+    #[test]
+    fn global_network_delay_arrives_at_the_first_tick_at_or_after_it() -> Result<()> {
+        let params = Params::from([("delay_s".into(), "0.25".into())]);
+        let mut global =
+            GlobalNetwork::new(&GlobalNetwork::configure(&PluginParams::text(&params))?);
+        let mut mailboxes = TestMailboxes::new()?;
+        mailboxes.sender.publish("test", "sample", 5_i32)?;
+        for time_s in [0.0, 0.1, 0.2] {
+            mailboxes.phase(time_s, |context| Network::step(&mut global, context))?;
+            assert!(
+                mailboxes
+                    .other_entity
+                    .receive::<i32>("test", "sample")?
+                    .is_empty()
+            );
+        }
+        mailboxes.phase(0.3, |context| Network::step(&mut global, context))?;
+        let received = mailboxes.other_entity.receive::<i32>("test", "sample")?;
+        assert_eq!(received.len(), 1);
+        assert_eq!(received[0].sent_at_s, 0.0);
+        assert_eq!(received[0].delivered_at_s, 0.3);
         Ok(())
     }
 

@@ -367,7 +367,9 @@ Sensors read the true state and produce measurements; estimators turn
 measurements and received messages into each agent's belief; policies and
 controllers read only belief. A disturbance therefore reaches a decision
 only through what the agent could have measured or been told, and learned
-and classical policies receive identical information.
+and classical policies receive identical information. In the noise sweeps the
+estimator copies the latest reading into belief, so belief is the measurement
+and a curve reflects the noise itself rather than the quality of a filter.
 
 \paragraph{Controlled sweeps}
 Every physical effect is an optional parameter of its model, off by default,
@@ -393,14 +395,14 @@ from one release run of \texttt{reference/suite.py}, retained in
 \toprule
 Component & Checked against & Result \\
 \midrule
-Simulation core & SCRIMMAGE: 14 missions, 100 generated scenarios, every
-  message delivery and plugin output & Agree to
-  $2.4\times10^{-10}$~m at worst; 12 of 12 planted porting bugs caught \\
+Simulation core & SCRIMMAGE: 16 missions, 100 generated scenarios, every
+  message delivery, plugin output, and noise sample & Agree to
+  $2.8\times10^{-11}$~m at worst; 12 of 12 planted porting bugs caught \\
 Determinism & The same missions at 1, 2, and 8 workers, recording on and off &
-  Byte-identical on 41 missions \\
+  Byte-identical on 45 missions \\
 Benchmark point agents & MPE2 v1.1.1 \texttt{simple\_spread\_v3}: 100 episodes
-  replayed with the same forces & States within $3.5\times10^{-15}$; 56
-  episodes bit-identical; returns within $5\times10^{-7}$ \\
+  replayed with the same forces & All 100 bit-identical, 49 with contact;
+  returns within $5\times10^{-7}$ \\
 Multirotor rotors & RotorS's motor and rotor code on 480 sampled states &
   Within $4\times10^{-15}$~N and $7\times10^{-16}$~N\,m \\
 Multirotor flight & Crazyflow, an independent model, with the same constants
@@ -409,6 +411,8 @@ Multirotor flight & Crazyflow, an independent model, with the same constants
 Crazyflie parameters & Its measured identification \cite{forster2015crazyflie}
   & Mass, inertia, and drag as published; thrust within 10.4\% across the
   measured range \\
+Kinematic aircraft & The 6-DOF Rascal flown through the same maneuvers &
+  Speeds, acceleration, climb, descent, and turn rate within 3\% \\
 Fixed-wing stall tables & JSBSim's Rascal tables on matched inputs & Planned
   \\
 Imported policies & The training simulator on identical observations &
@@ -443,8 +447,9 @@ independent identification of a similar vehicle gives a lag twice as long
 \paragraph{Fixed wing}
 Fixed-wing aircraft are the stress case: they cannot stop, hold a position,
 or match a neighbour's velocity at any speed. Two models separate the causes
-of a failure. A kinematic aircraft has only a minimum speed and a turning
-radius, fitted to the Rascal; a 6-DOF model flies the Rascal's coefficient
+of a failure. A kinematic aircraft has only speed, climb, and bank limits and
+turns as a coordinated turn does, with its limits fitted to the Rascal; a
+6-DOF model flies the Rascal's coefficient
 tables, with stall tables after JSBSim, under ArduPilot's autopilot run in
 lockstep or a native controller. A failure on both points to the inability
 to stop; one that appears only with 6-DOF dynamics points to the dynamics,
@@ -523,8 +528,10 @@ separate groups, closest approach, and messages sent.
 Ripple has no training code. Policies are trained with existing libraries
 \cite{yu2022mappo,bettini2024benchmarl} in fast simulators
 \cite{bettini2022vmas,rutherford2023jaxmarl,terry2021pettingzoo}, exported,
-and run inside Ripple as an autonomy plugin with a fixed thread count and
-their own random stream, which keeps runs deterministic. To train at the
+and run inside Ripple as an autonomy plugin with a fixed thread count. Every
+random number in Ripple is a function of what it is for (seed, agent, plugin,
+tick, and target), so runs are deterministic and paired runs of two methods
+draw the same noise on the same measurements. To train at the
 realistic setting, an outside learner steps Ripple through a standard
 multi-agent interface \cite{terry2021pettingzoo}. A parity test checks each
 task's observations against the training simulator, and we reproduce one

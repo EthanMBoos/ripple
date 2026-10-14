@@ -2,6 +2,13 @@
 //!
 //! Derived from SCRIMMAGE: src/plugins/controller/SimpleAircraftControllerPID/SimpleAircraftControllerPID.cpp.
 //! Controller phase: read desired/current state, write throttle and roll and pitch rates.
+//!
+//! The altitude loop commands pitch rate, and SimpleAircraft climbs at speed x
+//! sin(pitch), so the loop's derivative gain is effectively speed x D. Run
+//! every dt, it is stable only while speed x D x dt < 2: with the default D of
+//! 0.8 and a 0.1 s step, below 25 m/s. Faster, the pitch flips between the
+//! rate limits every step. Use motion substeps (`motion_multiplier`) for
+//! faster aircraft: at 0.02 s the bound is 125 m/s.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;

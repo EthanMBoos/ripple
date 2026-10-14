@@ -49,12 +49,7 @@ entities:
       SimpleAircraft:
     sensors:
       NoisyState:
-        pos_noise_0: [0, 0]
-        pos_noise_1: [0, 0]
-        pos_noise_2: [3, 0]
-        vel_noise_0: [0, 0]
-        vel_noise_1: [0, 0]
-        vel_noise_2: [0, 0]
+        position_bias_m: [0, 0, 3]
 "
         ),
     )?;
@@ -164,12 +159,6 @@ fn a_zero_noise_reading_is_the_true_state_through_mpe_contact() -> Result<()> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let path = std::env::temp_dir().join(format!("ripple-mpe-contact-{}.yaml", std::process::id()));
     let agent = |name: &str, x: f64, force: f64| {
-        let axes = ["pos", "vel", "orient"]
-            .iter()
-            .flat_map(|kind| {
-                (0..3).map(move |axis| format!("        {kind}_noise_{axis}: [0, 0]\n"))
-            })
-            .collect::<String>();
         format!(
             "  {name}:
     team: 1
@@ -180,8 +169,8 @@ fn a_zero_noise_reading_is_the_true_state_through_mpe_contact() -> Result<()> {
     motion_model:
       MpeParticle:
     sensors:
-      NoisyState:
-{axes}",
+      NoisyState:        # no noise: every parameter defaults to zero
+",
             vec![[force, 0.0]; 10]
         )
     };

@@ -19,8 +19,8 @@
     <roll>1.96885</roll><pitch>0.120473</pitch>
     <autonomy speed="158.651" loop_rate="5">Straight</autonomy>
     <vx>158.651</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="2.09221" wind_N="-2.22201">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="2.09221" wind_N="-2.22201">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -36,8 +36,8 @@
     <roll>1.72512</roll><pitch>-2.53518</pitch>
     <autonomy speed="218.611" loop_rate="5">Straight</autonomy>
     <vx>218.611</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="0.40104" wind_N="2.865">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="0.40104" wind_N="2.865">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -53,8 +53,8 @@
     <roll>3.23488</roll><pitch>0.580016</pitch>
     <autonomy speed="202.359" loop_rate="10">Straight</autonomy>
     <vx>202.359</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="2.18337" wind_N="0.24186">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="2.18337" wind_N="0.24186">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>
@@ -66,8 +66,8 @@
     <roll>2.5691</roll><pitch>-0.364755</pitch>
     <autonomy speed="208.096" loop_rate="10">Straight</autonomy>
     <vx>208.096</vx>
-    <controller>AircraftPIDController</controller>
-    <motion_model wind_E="-0.230128" wind_N="-2.10317">FixedWing6DOF</motion_model>
+    <controller airframe="a4d">AircraftPIDController</controller>
+    <motion_model airframe="a4d" wind_E="-0.230128" wind_N="-2.10317">FixedWing6DOF</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
 </runscript>

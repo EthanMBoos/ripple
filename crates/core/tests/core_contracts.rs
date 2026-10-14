@@ -212,3 +212,93 @@ entities:
     }
     Ok(())
 }
+
+/// (tick, target, axis) -> the observer's position error on that target.
+fn contact_errors(
+    yaml: &str,
+    name: &str,
+) -> Result<std::collections::BTreeMap<(usize, i32, usize), f64>> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let path = std::env::temp_dir().join(format!("ripple-{name}-{}.yaml", std::process::id()));
+    std::fs::write(&path, yaml)?;
+    let mut registry = PluginRegistry::with_builtins();
+    registry.register_motion::<Still>("Still")?;
+    let mission = Mission::load_with_registry(&path, &root, &Params::new(), &registry);
+    std::fs::remove_file(&path)?;
+    let mut simulation = Simulation::new(mission?.scenario, &registry, 1)?;
+    let mut errors = std::collections::BTreeMap::new();
+    let mut tick = 0;
+    while simulation.step()?.is_some() {
+        let entities = simulation.entities();
+        let observer = entities.iter().find(|entity| entity.id() == 1).unwrap();
+        for contact in observer.contacts_belief() {
+            let target = entities
+                .iter()
+                .find(|entity| entity.id() == contact.id)
+                .unwrap();
+            for axis in 0..3 {
+                let error =
+                    contact.state.position_world_m[axis] - target.truth().position_world_m[axis];
+                errors.insert((tick, contact.id, axis), error);
+            }
+        }
+        tick += 1;
+    }
+    Ok(errors)
+}
+
+#[test]
+fn an_observers_error_on_a_target_does_not_depend_on_what_else_it_sees() -> Result<()> {
+    let mission = |extra_target: &str| {
+        format!(
+            "format_version: 1
+name: keyed noise
+run:
+  end_s: 2
+  dt_s: 0.1
+  seed: 7
+entities:
+  observer:
+    team: 1
+    position_m: [0, 0, 0]
+    sensors:
+      NoisyContacts:
+        position_stddev_m: [5, 5, 1]
+    motion_model:
+      Still:
+  targets:
+    team: 2
+    count: 2
+    position_m: [50, 0, 0]
+    position_variance_m2: [100, 100, 0]
+    randomize_every_spawn: true
+    motion_model:
+      Still:
+{extra_target}"
+        )
+    };
+    let two = contact_errors(&mission(""), "keyed-two")?;
+    // A third target, spawned last so the first three keep their IDs; with a
+    // stream of draws, measuring it would shift every later error.
+    let three = contact_errors(
+        &mission(
+            "  late_target:
+    team: 2
+    position_m: [-50, 0, 0]
+    motion_model:
+      Still:
+",
+        ),
+        "keyed-three",
+    )?;
+    assert!(three.len() > two.len());
+    let mut shared = 0;
+    for (key, error) in &two {
+        assert_eq!(three.get(key), Some(error), "{key:?}");
+        assert!(*error != 0.0);
+        shared += 1;
+    }
+    // 20 steps and the terminal frame, two targets, three axes.
+    assert_eq!(shared, 21 * 2 * 3);
+    Ok(())
+}

@@ -3,80 +3,80 @@
     "implementation": "upstream C++",
     "branch": "Ubuntu-24.04",
     "commit": "4bdf41fb06facaea358d478d9a07aa4d77fcac27",
-    "image": "sha256:a65a5fb8f62dfbe0f8cd1067bffb870a0835d55015c5fae41b94e89f18ebea44"
+    "image": "sha256:aa441c0668a80a22dcd56e799e62611edc1e906eb8f2a54c411ab65aa6e46d7a"
   },
   "stage": {
     "implementation": "this checkout",
-    "source_sha256": "29ead33e5bef3588295b72c3e82ebd38e15b29acbda40ec39175710a3adba61c"
+    "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0"
   },
   "part_a": [
     {
       "mission": "multirotor",
       "dt_s": 0.01,
       "reference_multiplier": 1024,
-      "reference_self_check_m": 2.5110611822882955e-11,
+      "reference_self_check_m": 3.381932048812502e-10,
       "frozen": [
         {
           "multiplier": 1,
           "motion_dt_s": 0.01,
-          "position_m": 0.06113914680798474,
-          "attitude_rad": 0.0010671055375086045
+          "position_m": 0.061139147406144866,
+          "attitude_rad": 0.001067105524559078
         },
         {
           "multiplier": 2,
           "motion_dt_s": 0.005,
-          "position_m": 0.03057677754738346,
-          "attitude_rad": 0.0005341446627461542
+          "position_m": 0.03057677814538763,
+          "attitude_rad": 0.0005341446497778922
         },
         {
           "multiplier": 4,
           "motion_dt_s": 0.0025,
-          "position_m": 0.015290180558818528,
-          "attitude_rad": 0.00026722036567673735
+          "position_m": 0.015290181156744841,
+          "attitude_rad": 0.0002672203526990951
         },
         {
           "multiplier": 8,
           "motion_dt_s": 0.00125,
-          "position_m": 0.007645537070807619,
-          "attitude_rad": 0.0001336471998915807
+          "position_m": 0.007645537668695038,
+          "attitude_rad": 0.00013364718690924733
         },
         {
           "multiplier": 16,
           "motion_dt_s": 0.000625,
-          "position_m": 0.003822880085584488,
-          "attitude_rad": 6.68328561731652e-05
+          "position_m": 0.0038228806834524724,
+          "attitude_rad": 6.683284318849041e-05
         }
       ],
       "stage": [
         {
           "multiplier": 1,
           "motion_dt_s": 0.01,
-          "position_m": 5.055380493596281e-10,
-          "attitude_rad": 1.620854560314222e-11
+          "position_m": 1.0540471140564627e-09,
+          "attitude_rad": 3.104719063151295e-11
         },
         {
           "multiplier": 2,
           "motion_dt_s": 0.005,
-          "position_m": 3.524263474480738e-11,
-          "attitude_rad": 1.0525781376367397e-11
+          "position_m": 7.03362868168258e-10,
+          "attitude_rad": 4.353530277097094e-11
         },
         {
           "multiplier": 4,
           "motion_dt_s": 0.0025,
-          "position_m": 2.481450850615097e-11,
-          "attitude_rad": 1.0730734586423716e-11
+          "position_m": 6.858099671147905e-10,
+          "attitude_rad": 4.430278178867929e-11
         },
         {
           "multiplier": 8,
           "motion_dt_s": 0.00125,
-          "position_m": 2.490984097805697e-11,
-          "attitude_rad": 1.0736905171032596e-11
+          "position_m": 6.811193820741979e-10,
+          "attitude_rad": 4.4112717631555126e-11
         },
         {
           "multiplier": 16,
           "motion_dt_s": 0.000625,
-          "position_m": 2.498294525769094e-11,
-          "attitude_rad": 1.0718242364242974e-11
+          "position_m": 6.757360263051784e-10,
+          "attitude_rad": 4.3770819541039874e-11
         }
       ],
       "frozen_order": [
@@ -86,10 +86,10 @@
         1.0
       ],
       "stage_order": [
-        3.84,
-        0.51,
-        -0.01,
-        -0.0
+        0.58,
+        0.04,
+        0.01,
+        0.01
       ]
     },
     {
@@ -179,20 +179,20 @@
     {
       "mission": "fixed-wing-recovery",
       "dt_s": 0.01,
-      "frozen_vs_stage_position_m": 4.968847014414342,
-      "frozen_vs_stage_attitude_rad": 0.0382362537996512
+      "frozen_vs_stage_position_m": 182.8559361897799,
+      "frozen_vs_stage_attitude_rad": 0.12358144256581156
     },
     {
       "mission": "fixed-wing-recovery",
       "dt_s": 0.05,
-      "frozen_vs_stage_position_m": 80.45226990976985,
-      "frozen_vs_stage_attitude_rad": 0.22498006521859856
+      "frozen_vs_stage_position_m": 198.54449310755948,
+      "frozen_vs_stage_attitude_rad": 0.2909258250955795
     },
     {
       "mission": "fixed-wing-recovery",
       "dt_s": 0.1,
-      "frozen_vs_stage_position_m": 2830.7022234060096,
-      "frozen_vs_stage_attitude_rad": 3.136382349024226
+      "frozen_vs_stage_position_m": 1797.6184114850219,
+      "frozen_vs_stage_attitude_rad": 3.129802265872392
     }
   ],
   "part_c": [
@@ -320,7 +320,7 @@
       "altitude_d": 0.0,
       "dt_s": 0.0025,
       "altitude_error_m": 1.455720367123945,
-      "after_5_s_m": 0.7302171792090348
+      "after_5_s_m": 0.7293216646595511
     }
   ]
 }

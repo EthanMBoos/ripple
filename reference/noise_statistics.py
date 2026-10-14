@@ -4,8 +4,9 @@
     python3 reference/reference_check.py --mission missions/verification/noisy-contacts-noise.xml
     python3 reference/noise_statistics.py runs/reference-checkNNN/00-noisy-contacts-noise
 
-Rust draws sensor noise from independent per-plugin streams, so samples cannot
-match C++ one for one. This checks that the error distributions do. An error is
+The comparison trace already matches the samples one for one (both simulators
+draw keyed random numbers); this second check compares the error
+distributions, independent of how the numbers are drawn. An error is
 a measured contact state (C++'s publication, Rust's reading) minus that
 contact's true state when it was measured (the next tick's logged belief; the
 mission has no own-state sensor, so belief is truth). For position and velocity axes and the attitude error angle, a two-sample

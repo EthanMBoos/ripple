@@ -18,7 +18,7 @@
     <roll>-1.18894</roll><pitch>0.422157</pitch>
     <autonomy speed="27.5314" loop_rate="5">Straight</autonomy>
     <controller loop_rate="20">SimpleAircraftControllerPID</controller>
-    <motion_model turning_radius="44.0711">SimpleAircraft</motion_model>
+    <motion_model max_roll="35.0445">SimpleAircraft</motion_model>
     <visual_model>sphere</visual_model>
   </entity>
   <entity>

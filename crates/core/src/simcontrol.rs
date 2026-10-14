@@ -7,7 +7,7 @@ use anyhow::Result;
 use serde::Serialize;
 
 use crate::{
-    common::{SpatialIndex, Terrain, TruthContacts, random::LegacyRng},
+    common::{SpatialIndex, Terrain, TruthContacts},
     entity::{Entity, EntityDefinition, EntitySnapshot},
     estimator::{Contact, ContactList},
     plugin::{Messages, MetricReport, PluginRegistry, StepTime},
@@ -79,9 +79,11 @@ pub struct Simulation {
     events: Vec<Event>,
     time_s: f64,
     step_count: usize,
+    /// The tick being run: `step_count`, or -1 while the initial population
+    /// is built one step before the start time. Labels random draws.
+    tick: i64,
     termination: Option<TerminationReason>,
     scheduler: Scheduler,
-    rng: LegacyRng,
     generators: Vec<Generator>,
     world: WorldPlugins,
     messages: Messages,
@@ -117,12 +119,12 @@ impl Simulation {
         let world = world.instantiate(config.run.seed);
         let mut simulation = Self {
             time_s: config.run.start_s - config.run.dt_s,
-            rng: LegacyRng::new(config.run.seed),
             config,
             definitions,
             entities: Vec::new(),
             events: Vec::new(),
             step_count: 0,
+            tick: -1,
             termination: None,
             scheduler,
             generators,
@@ -142,6 +144,7 @@ impl Simulation {
             StepTime {
                 time_s: simulation.config.run.start_s,
                 dt_s: simulation.config.run.dt_s,
+                tick: 0,
             },
             &[],
             &simulation.entity_teams,
@@ -158,6 +161,7 @@ impl Simulation {
         simulation.perfect_contacts = perfect_contacts(&snapshot.entities, simulation.time_s);
         simulation.start_entities()?;
         simulation.time_s = simulation.config.run.start_s;
+        simulation.tick = 0;
         Ok(simulation)
     }
 
@@ -260,10 +264,12 @@ impl Simulation {
         let frame = self.snapshot();
         let dt_s = self.config.run.dt_s;
         let time_s = self.time_s;
+        let tick = self.tick;
         if let Some(trace) = &mut self.trace {
             trace.beliefs(time_s, &self.entities)?;
         }
-        self.run_phase(|entity| entity.step_autonomy(StepTime { time_s, dt_s }))?;
+        let time = StepTime { time_s, dt_s, tick };
+        self.run_phase(|entity| entity.step_autonomy(time))?;
 
         // Each substep runs controllers, then motion, so a controller sees the
         // state the previous substep wrote (see docs/REFERENCE_NOTES.md,
@@ -275,6 +281,7 @@ impl Simulation {
             let time = StepTime {
                 time_s: substep_time_s,
                 dt_s: motion_dt_s,
+                tick,
             };
             self.run_phase(|entity| {
                 if substep > 0 {
@@ -296,13 +303,12 @@ impl Simulation {
         let mut nearby = SpatialIndex::build(self.config.spatial_lookup, &self.entities);
         let sensor_contacts = self.snapshot();
         let sensor_truth = TruthContacts::new(&sensor_contacts.entities, &nearby);
-        self.run_phase(|entity| entity.step_sensors(StepTime { time_s, dt_s }, sensor_truth))?;
+        self.run_phase(|entity| entity.step_sensors(time, sensor_truth))?;
         if let Some(trace) = &mut self.trace {
             trace.readings(time_s, &self.entities)?;
         }
         self.apply_interactions(&mut nearby)?;
         nearby.refresh(&self.entities);
-        let time = StepTime { time_s, dt_s };
         let contacts = self.snapshot().entities;
         let mut network_trace = self.trace.as_ref().map(|_| NetworkTrace::default());
         self.world_stop |= self.world.networks(
@@ -340,6 +346,7 @@ impl Simulation {
             return Err(error);
         }
         self.step_count += 1;
+        self.tick = self.step_count as i64;
         // Time is counted, not accumulated: repeated addition of dt drifts in
         // the last digits (0.1 added 299 times is 29.900000000000155).
         self.time_s = self.config.run.start_s + self.step_count as f64 * dt_s;
@@ -392,6 +399,7 @@ impl Simulation {
         let time = StepTime {
             time_s: self.time_s,
             dt_s: self.config.run.dt_s,
+            tick: self.tick,
         };
         let mut failure = None;
         for entity in &mut self.entities {
@@ -414,6 +422,7 @@ impl Simulation {
         let time = StepTime {
             time_s: self.time_s,
             dt_s: self.config.run.dt_s,
+            tick: self.tick,
         };
         // Forces applied last time acted in the motion phase just run.
         for entity in &mut self.entities {

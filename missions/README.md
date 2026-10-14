@@ -41,8 +41,7 @@ WaypointFollower and WaypointBroadcast are small Rust replacements, not ports of
 MotorSchemas or the legacy waypoint composition. Their routes use local ENU
 meters (`x,y,z; x,y,z`), not latitude/longitude. The point example uses
 `max_speed=-1` to follow commanded velocity; a nonnegative SingleIntegrator
-`max_speed` forces that speed magnitude, matching C++ rather than acting as a
-cap. Fixed-wing aircraft cannot stop at a point; their example repeats the
+`max_speed` caps the speed. Fixed-wing aircraft cannot stop at a point; their example repeats the
 route.
 
 The original unsupported demos, including `straight.xml`, remain in sibling

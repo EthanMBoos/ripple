@@ -113,11 +113,11 @@ while let Some(frame) = simulation.step()? {
 - **Deterministic at any worker count.** Output is byte-identical at 1, 2, and
   8 workers and with Rerun on or off. Workers own separate entities, every
   phase joins before the next, and cross-entity reads use snapshots.
-- **Stable randomness.** Each plugin instance draws from its own random stream,
-  keyed by entity and plugin identity (such as `sensor/NoisyContacts:0`), so
-  adding a plugin does not change another's numbers as long as the other's
-  identity is unchanged. Inserting a plugin earlier in a list of the same kind
-  shifts the index, and so the stream, of the ones after it.
+- **Keyed randomness.** Every random number is a function of a label saying
+  what it is for: seed, entity, plugin identity, tick, and the plugin's key
+  (such as a contact's ID and an axis). A number doesn't depend on how many
+  were drawn before it, so two runs on one seed give the same noise on the
+  same measurement. See [Randomness and seeds](../concepts/randomness.md).
 - **Every subscriber has its own queue**, and delivery order follows entity and
   plugin order, never worker timing.
 - **Truth and belief stay separate.** See

@@ -325,7 +325,7 @@ In YAML, the estimators are entity slots like `motion_model`:
 
 ```yaml
 sensors:
-  gps: {plugin: NoisyState, pos_noise_0: [0, 5]}
+  gps: {plugin: NoisyState, position_stddev_m: [5, 5, 1]}
 localization:
   PassThrough:
     inputs: {state: gps}
@@ -339,35 +339,38 @@ source rule above. From Rust, set `EntityGroupConfig::localization` to
 
 ### NoisyState
 
-`NoisyState` ports the legacy own-state noise equations and XML parameters.
-It is a `State` sensor: its startup reading is a sample of the initial state
+`NoisyState` measures the entity's own state with Gaussian errors. It is a
+`State` sensor: its startup reading is a sample of the initial state
 (after the motion model has set it up), and each sample after that is the
 measured post-motion state. With it installed, localization's `PassThrough`
 copies those readings, so autonomy and controllers act on them. It publishes no
 message.
 
-Legacy details retained deliberately:
-
-- Each `pos_noise_0..2`, `vel_noise_0..2`, and `orient_noise_0..2` value is
-  `mean standard_deviation`, in meters, meters/second, and radians respectively.
+- Parameters are a bias (the error's mean) and a standard deviation per axis:
+  `position_bias_m` and `position_stddev_m` (x, y, z), `velocity_bias_mps` and
+  `velocity_stddev_mps`, and `attitude_bias_rad` and `attitude_stddev_rad`
+  (roll, pitch, yaw). Every one defaults to zero, so a sensor with no
+  parameters measures exactly; set only the noise you want.
+- XML keeps its older parameters: `pos_noise_0="mean stddev"` per axis (and
+  `vel_noise_*`, `orient_noise_*`), with defaults of 5 m and 5 m/s
+  horizontally, 1 m and 1 m/s vertically, and no attitude noise.
 - Attitude noise right-multiplies body-axis roll, pitch, and yaw rotations.
 - Angular velocity is reported exactly; there is no rate noise.
-- Samples use the existing Rust per-sensor RNG, keyed by mission seed, entity
-  ID, and sensor instance. Draws interleave position/velocity per axis, followed
-  by roll/pitch/yaw, including zero-noise draws. This is not C++ RNG-sequence
-  parity.
+- Each error is the keyed normal number for `[reading, quantity, axis]`
+  (quantity 0 position, 1 velocity, 2 attitude; reading 1 for the first
+  reading, taken when the entity is created, 0 for every later one). See
+  [Randomness and seeds](../concepts/randomness.md).
 
-Try `missions/noisy-state.xml`. Its two aircraft have independent sensor
-streams. The separate `verification/noisy-state-bias.xml` fixes standard
-deviations at zero to compare the retained equations and feedback against C++
-independently of random-number generation. NoisyPosition remains a distinct Rust
-illustration.
+Try `missions/noisy-state.xml`. Its two aircraft get independent noise (each
+error's label holds its entity). The separate
+`verification/noisy-state-bias.xml` fixes standard deviations at zero to
+check the equations and feedback without random numbers. NoisyPosition remains a distinct Rust illustration.
 
 ### NoisyContacts
 
 `NoisyContacts` measures every other active contact after motion, in entity-ID
-order, using the same `pos_noise_0..2`, `vel_noise_0..2`, and
-`orient_noise_0..2` mean/stddev parameters as NoisyState. It is a `Contacts`
+order, with the same parameters as NoisyState (and the same XML keys and
+defaults). It is a `Contacts`
 sensor: tracking's `PassThrough` copies each sample into known contacts. It has
 no range/FOV filtering, detection probability, or persistent tracks.
 
@@ -432,13 +435,16 @@ Option<AuctionBid> }` / `RESULT_AUCTION_TOPIC`. The topic strings are
 entity plugin. `network_name` defaults to SphereNetwork; unlike C++'s hard-coded
 CommsNetwork alias, it selects a registered network name.
 
-Loss and bids draw from each plugin instance's own stream, derived from the
-mission `<seed>`, the entity ID (0 for world plugins), and a stable plugin
-identity such as `autonomy/AuctionAssign:0`. Changing the mission seed changes
-them, as C++'s shared mission-seeded generator does, but the sequences are not
-C++'s. `AgentContext::random` gives autonomies and controllers their stream,
-`SensorContext::random` gives sensors theirs, and `NetworkContext::route` passes
-the network's stream to its decision function as `|link, random|`.
+Loss and bids are keyed random numbers ([Randomness and
+seeds](../concepts/randomness.md)): labels hold the mission `<seed>`, the
+entity ID (0 for world plugins), the plugin identity (such as
+`autonomy/AuctionAssign:0`, or a network's name), the tick, and the plugin's
+key. A bid is keyed by its auction's auctioneer; a message's loss by the
+sending and receiving entities, the topic, and its sequence. Changing the
+mission seed changes them. `AgentContext::random` gives autonomies and
+controllers their numbers, `SensorContext::random` gives sensors theirs, and
+`NetworkContext::route` passes the network's to its decision function as
+`|link, random|`.
 
 ## Finding nearby agents
 
@@ -547,10 +553,11 @@ deliberately slow subscriber can fill its own queue.
 
 A network implements `step` and calls `context.route` once. Its decision
 function, `|link, random|`, receives a `Transmission` (sender/receiver
-identities, topic, time, and world contacts) and the network's own random
-stream, then returns `Delivery::Drop` or `Delivery::After { delay_s }`.
-Zero delay delivers during the current network phase; positive delay waits
-until a later phase, even if the publisher goes silent. A network can use its
+identities, topic, the message's sequence, time, and world contacts) and the
+network's random numbers, then returns `Delivery::Drop` or
+`Delivery::After { delay_s }`. Zero delay delivers during the current network
+phase; positive delay waits until a later phase, even if the publisher goes
+silent. A network can use its
 own mailbox through `context.messages()`.
 
 A network that can only deliver between plugins of the same entity should call
@@ -560,10 +567,12 @@ That keeps routing linear in the team size; with `route`, a topic every agent
 publishes and every agent subscribes to costs one decision per pair.
 LocalNetwork uses it.
 
-LocalNetwork connects plugins on the same entity; GlobalNetwork connects all
-endpoints. The source's nonnegative `comm_delay` queue semantics and stochastic
-delay are not ported by these built-ins and are rejected explicitly.
-Custom networks have the explicit delay/loss behavior above.
+LocalNetwork connects plugins on the same entity, at once; GlobalNetwork
+connects all endpoints. GlobalNetwork and SphereNetwork take `delay_s`
+(default 0): a message arrives that long after it was sent, at the first tick
+at or after that time, and its receiver sees both times (`sent_at_s`,
+`delivered_at_s`). The older `comm_delay` and `is_stochastic_delay` keys are
+errors; use `delay_s`.
 
 `SensorContext::publish_reading` is not a message: a reading goes only to its
 own entity's estimators, bypassing network policies. Use the message API when

@@ -91,8 +91,7 @@ def wrap_deg(angle):
 
 
 def track(frames, entity_id):
-    # The last frame repeats the final time.
-    return [(f.time_s, f.entities[entity_id]) for f in frames[:-1] if entity_id in f.entities]
+    return [(f.time_s, f.entities[entity_id]) for f in frames if entity_id in f.entities]
 
 
 def part_a(binary, output):

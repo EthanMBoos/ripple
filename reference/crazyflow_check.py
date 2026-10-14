@@ -104,12 +104,11 @@ def compare(variant, ripple_frames, crazyflow_samples):
     errors = dict(position_m=0.0, velocity_mps=0.0, attitude_rad=0.0, angular_velocity_radps=0.0)
     compared = 0
     at = {}
-    for frame in ripple_frames[:-1]:  # the last frame repeats the final time
-        # A frame labeled t holds the state from before the step to t, as in
-        # C++ (docs/REFERENCE_NOTES.md), so it is the state at t - dt.
-        sample = by_time.get(round(frame.time_s - DT_S, 9))
+    for frame in ripple_frames:
+        # A frame labeled t holds the state at t.
+        sample = by_time.get(round(frame.time_s, 9))
         if sample is None:
-            raise ValueError(f"{variant}: no Crazyflow sample at {frame.time_s - DT_S:.3f} s")
+            raise ValueError(f"{variant}: no Crazyflow sample at {frame.time_s:.3f} s")
         values = [*sample["position_m"], *sample["velocity_mps"], *sample["orientation_wxyz"],
                   *sample["angular_velocity_world_radps"]]
         if not all(math.isfinite(value) for value in values):
@@ -124,12 +123,14 @@ def compare(variant, ripple_frames, crazyflow_samples):
             errors["angular_velocity_radps"],
             math.dist(entity.angular_velocity, sample["angular_velocity_world_radps"]))
         for mark in (1.0, 2.0):
-            if abs(frame.time_s - DT_S - mark) < 1e-9:
+            if abs(frame.time_s - mark) < 1e-9:
                 at[f"position_error_at_{mark:g}s_m"] = position
         compared += 1
-    # Every tick must be compared; a short or empty reference cannot pass.
-    if compared != round(END_S / DT_S):
-        raise ValueError(f"{variant}: compared {compared} frames, expected {round(END_S / DT_S)}")
+    # Every state from the start to the end must be compared; a short or empty
+    # reference cannot pass.
+    expected = round(END_S / DT_S) + 1
+    if compared != expected:
+        raise ValueError(f"{variant}: compared {compared} frames, expected {expected}")
     travel = math.dist(ripple_frames[0].entities[next(iter(ripple_frames[0].entities))].position,
                        next(iter(ripple_frames[-1].entities.values())).position)
     return dict(variant=variant, frames_compared=compared, largest=errors, distance_flown_m=travel, **at)

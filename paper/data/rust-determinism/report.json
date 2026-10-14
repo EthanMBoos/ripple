@@ -21,7 +21,7 @@
   "grid50-w2",
   "grid1000-w1"
  ],
- "missions": 41,
+ "missions": 45,
  "missions_differing": 0,
  "results": [
   {
@@ -38,6 +38,12 @@
   },
   {
    "mission": "missions/fixed-wing-6dof.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/multirotor-velocity.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
@@ -127,6 +133,18 @@
    "differences": []
   },
   {
+   "mission": "missions/verification/mpe-simple-spread.yaml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/multirotor-fixes.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
    "mission": "missions/verification/noisy-contacts-bias.xml",
    "collisions": 0,
    "identical": true,
@@ -158,6 +176,12 @@
   },
   {
    "mission": "missions/verification/sphere-network-auction.xml",
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "missions/verification/sphere-network-loss.xml",
    "collisions": 0,
    "identical": true,
    "differences": []
@@ -230,13 +254,13 @@
   },
   {
    "mission": "perf churn-64",
-   "collisions": 7,
+   "collisions": 6,
    "identical": true,
    "differences": []
   },
   {
    "mission": "perf churn-512",
-   "collisions": 153,
+   "collisions": 151,
    "identical": true,
    "differences": []
   },
@@ -248,25 +272,25 @@
   },
   {
    "mission": "perf collision-1024",
-   "collisions": 1,
+   "collisions": 6,
    "identical": true,
    "differences": []
   },
   {
    "mission": "crowded collision, variance 100 m^2, 512 agents",
-   "collisions": 235,
+   "collisions": 234,
    "identical": true,
    "differences": []
   },
   {
    "mission": "crowded collision, variance 400 m^2, 1024 agents",
-   "collisions": 453,
+   "collisions": 459,
    "identical": true,
    "differences": []
   },
   {
    "mission": "crowded collision, variance 2500 m^2, 2048 agents",
-   "collisions": 795,
+   "collisions": 792,
    "identical": true,
    "differences": []
   }

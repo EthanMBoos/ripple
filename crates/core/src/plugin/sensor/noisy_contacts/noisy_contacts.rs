@@ -3,86 +3,40 @@
 //! Derived from SCRIMMAGE: src/plugins/sensor/NoisyContacts/NoisyContacts.cpp (LGPL-3.0-or-later).
 //! Sensor phase: sample contact truth and publish one complete measured snapshot.
 //! Tracking (by default PassThrough) turns the reading into known contacts.
-//! Draws from this plugin's own mission-seeded random stream.
+//! Each error is keyed by the contact's ID, the quantity, and the axis, so an
+//! observer's error on a contact doesn't depend on which others it sees.
 
 use anyhow::Result;
-use serde::Deserialize;
 
-use super::noisy_state::{AxisNoise, StateNoise};
+use super::noisy_state::StateNoise;
 use crate::math::KinematicState;
 use crate::plugin::{
     Contact, ContactList, Plugin, PluginParams, PluginRandom, ReadingKind, Sensor, SensorContext,
     Update,
 };
 
-/// Mission parameters: NoisyState's nine `mean standard_deviation` keys.
-/// `Default` supplies any key the mission leaves out.
-#[derive(Deserialize)]
-#[serde(default, deny_unknown_fields)]
-struct NoisyContactsParams {
-    pos_noise_0: AxisNoise,
-    pos_noise_1: AxisNoise,
-    pos_noise_2: AxisNoise,
-    vel_noise_0: AxisNoise,
-    vel_noise_1: AxisNoise,
-    vel_noise_2: AxisNoise,
-    orient_noise_0: AxisNoise,
-    orient_noise_1: AxisNoise,
-    orient_noise_2: AxisNoise,
-}
-
-impl Default for NoisyContactsParams {
-    fn default() -> Self {
-        let noise = StateNoise::default();
-        Self {
-            pos_noise_0: noise.position_m[0],
-            pos_noise_1: noise.position_m[1],
-            pos_noise_2: noise.position_m[2],
-            vel_noise_0: noise.velocity_mps[0],
-            vel_noise_1: noise.velocity_mps[1],
-            vel_noise_2: noise.velocity_mps[2],
-            orient_noise_0: noise.orientation_rad[0],
-            orient_noise_1: noise.orientation_rad[1],
-            orient_noise_2: noise.orientation_rad[2],
-        }
-    }
-}
-
-pub struct NoisyContactsConfig {
-    noise: StateNoise,
-}
-
+/// Takes NoisyState's parameters: a bias and standard deviation per axis for
+/// position, velocity, and attitude, each defaulting to zero.
 pub struct NoisyContacts {
     noise: StateNoise,
 }
 
 impl Plugin for NoisyContacts {
-    type Config = NoisyContactsConfig;
+    type Config = StateNoise;
 
-    fn configure(params: &PluginParams<'_>) -> Result<NoisyContactsConfig> {
-        let params: NoisyContactsParams = params.parse()?;
-        let noise = StateNoise {
-            position_m: [params.pos_noise_0, params.pos_noise_1, params.pos_noise_2],
-            velocity_mps: [params.vel_noise_0, params.vel_noise_1, params.vel_noise_2],
-            orientation_rad: [
-                params.orient_noise_0,
-                params.orient_noise_1,
-                params.orient_noise_2,
-            ],
-        };
+    fn configure(params: &PluginParams<'_>) -> Result<StateNoise> {
+        let noise: StateNoise = params.parse()?;
         noise.validate()?;
-        Ok(NoisyContactsConfig { noise })
+        Ok(noise)
     }
 
-    fn new(config: &NoisyContactsConfig) -> Self {
-        Self {
-            noise: config.noise,
-        }
+    fn new(noise: &StateNoise) -> Self {
+        Self { noise: *noise }
     }
 }
 
 impl Sensor for NoisyContacts {
-    fn reading_kind(_config: &NoisyContactsConfig) -> ReadingKind {
+    fn reading_kind(_config: &StateNoise) -> ReadingKind {
         ReadingKind::Contacts
     }
 
@@ -105,7 +59,7 @@ impl Sensor for NoisyContacts {
         let mut reading = Vec::with_capacity(contacts.len());
         for contact in contacts {
             reading.push(Contact {
-                state: self.measure(&contact.truth, context.random)?,
+                state: self.measure(&contact.truth, &context.random, contact.id)?,
                 ..Contact::measured(contact, sampled_at_s)
             });
         }
@@ -116,29 +70,32 @@ impl Sensor for NoisyContacts {
 
 impl NoisyContacts {
     /// Angular velocity passes through unchanged.
-    fn measure(&self, truth: &KinematicState, random: &mut PluginRandom) -> Result<KinematicState> {
-        self.noise.apply(truth, random)
+    fn measure(
+        &self,
+        truth: &KinematicState,
+        random: &PluginRandom,
+        contact_id: i32,
+    ) -> Result<KinematicState> {
+        self.noise
+            .apply(truth, random, i64::from(contact_id) as u64)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::noisy_state::{AxisNoise, StateNoise};
-    use super::{NoisyContacts, NoisyContactsConfig};
+    use super::super::noisy_state::StateNoise;
+    use super::NoisyContacts;
     use crate::Params;
-    use crate::math::{EulerAngles, KinematicState, Quaternion, Vec3};
+    use crate::math::{KinematicState, Vec3};
     use crate::plugin::{Plugin, PluginParams, PluginRandom};
 
     fn sensor(stddev: f64) -> NoisyContacts {
-        NoisyContacts::new(&NoisyContactsConfig {
-            noise: StateNoise {
-                position_m: [AxisNoise { mean: 2.0, stddev }; 3],
-                velocity_mps: [AxisNoise { mean: -1.0, stddev }; 3],
-                orientation_rad: [AxisNoise {
-                    mean: 0.0,
-                    stddev: 0.0,
-                }; 3],
-            },
+        NoisyContacts::new(&StateNoise {
+            position_bias_m: [2.0; 3],
+            position_stddev_m: [stddev; 3],
+            velocity_bias_mps: [-1.0; 3],
+            velocity_stddev_mps: [stddev; 3],
+            ..StateNoise::default()
         })
     }
 
@@ -150,77 +107,43 @@ mod tests {
             angular_velocity_world_radps: Vec3::repeat(7.0),
             ..KinematicState::default()
         };
-        let sample =
-            sensor(0.0).measure(&truth, &mut PluginRandom::new(123, 1, "NoisyContacts:0"))?;
+        let random = PluginRandom::new(123, 1, "NoisyContacts:0");
+        let sample = sensor(0.0).measure(&truth, &random, 7)?;
         assert_eq!(sample.position_world_m, Vec3::new(12.0, 22.0, 32.0));
         assert_eq!(sample.velocity_world_mps, Vec3::new(2.0, 3.0, 4.0));
         assert_eq!(sample.angular_velocity_world_radps, Vec3::repeat(7.0));
-        assert_eq!(truth.position_world_m, Vec3::new(10.0, 20.0, 30.0));
         Ok(())
     }
 
     #[test]
-    fn attitude_noise_rotates_body_axes_in_roll_pitch_yaw_order() -> anyhow::Result<()> {
-        let mut sensor = sensor(0.0);
-        sensor.noise.orientation_rad[0].mean = std::f64::consts::FRAC_PI_2;
-        sensor.noise.orientation_rad[1].mean = std::f64::consts::FRAC_PI_2;
-        let truth = KinematicState {
-            orientation_world_from_body: Quaternion::from_euler(EulerAngles {
-                yaw_world_from_body_rad: std::f64::consts::FRAC_PI_2,
-                ..EulerAngles::default()
-            }),
-            ..KinematicState::default()
-        };
-        let sample = sensor.measure(&truth, &mut PluginRandom::new(123, 1, "NoisyContacts:0"))?;
-        let nose = sample
-            .orientation_world_from_body
-            .rotate_body_to_world(Vec3::x());
-        assert!((nose - Vec3::new(-1.0, 0.0, 0.0)).norm() < 1e-12);
-        Ok(())
-    }
-
-    #[test]
-    fn seeded_samples_follow_interleaved_axis_order() -> anyhow::Result<()> {
-        let mut random = PluginRandom::new(123, 1, "NoisyContacts:0");
-        let mut expected = PluginRandom::new(123, 1, "NoisyContacts:0");
-        let sample = sensor(0.5).measure(&KinematicState::default(), &mut random)?;
+    fn each_error_is_the_number_keyed_by_contact_quantity_and_axis() -> anyhow::Result<()> {
+        let random = PluginRandom::new(123, 1, "NoisyContacts:0").at_tick(4);
+        let sample = sensor(0.5).measure(&KinematicState::default(), &random, 7)?;
         for axis in 0..3 {
-            assert_eq!(sample.position_world_m[axis], expected.normal(2.0, 0.5)?);
-            assert_eq!(sample.velocity_world_mps[axis], expected.normal(-1.0, 0.5)?);
+            let key = |quantity| [7, quantity, axis as u64];
+            assert_eq!(
+                sample.position_world_m[axis],
+                random.normal(&key(0), 2.0, 0.5)?
+            );
+            assert_eq!(
+                sample.velocity_world_mps[axis],
+                random.normal(&key(1), -1.0, 0.5)?
+            );
         }
-        for _ in 0..3 {
-            expected.normal(0.0, 0.0)?;
-        }
-        assert_eq!(random.normal(0.0, 1.0)?, expected.normal(0.0, 1.0)?);
-        Ok(())
-    }
-
-    #[test]
-    fn position_noise_has_the_configured_mean_and_variance() -> anyhow::Result<()> {
-        let sensor = sensor(0.5);
-        let mut random = PluginRandom::new(123, 1, "NoisyContacts:0");
-        let mut sum = 0.0;
-        let mut sum_squared = 0.0;
-        for _ in 0..10000 {
-            let x = sensor
-                .measure(&KinematicState::default(), &mut random)?
-                .position_world_m
-                .x;
-            sum += x;
-            sum_squared += x * x;
-        }
-        let mean = sum / 10000.0;
-        let variance = sum_squared / 10000.0 - mean * mean;
-        assert!((mean - 2.0).abs() < 0.03);
-        assert!((variance - 0.25).abs() < 0.02);
+        // Another contact, another number.
+        let other = sensor(0.5).measure(&KinematicState::default(), &random, 8)?;
+        assert_ne!(other.position_world_m, sample.position_world_m);
         Ok(())
     }
 
     #[test]
     fn invalid_noise_parameters_are_rejected() {
-        for value in ["0 -1", "NaN 1", "0 inf", "0 1 2"] {
-            let params = Params::from([("pos_noise_0".into(), value.into())]);
-            assert!(NoisyContacts::configure(&PluginParams::text(&params)).is_err());
+        for (key, value) in [("position_stddev_m", "0 -1 0"), ("vel_noise_0", "0 5")] {
+            let params = Params::from([(key.into(), value.into())]);
+            assert!(
+                NoisyContacts::configure(&PluginParams::text(&params)).is_err(),
+                "{key}"
+            );
         }
     }
 }

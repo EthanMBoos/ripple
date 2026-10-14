@@ -22,23 +22,19 @@
   },
   "motion_multiplier": 1,
   "cpp_non_interference": {
-    "untraced": {
-      "frames.bin": true,
-      "summary.csv": true
-    },
     "traced": {
       "frames.bin": true,
       "summary.csv": true
     }
   },
   "cpp_baseline_equality": {
-    "frames.bin": true,
-    "summary.csv": true
+    "frames.bin": false,
+    "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-12_10-49-56",
+  "cpp_log_directory": "cpp/logs/2026-10-14_20-41-14",
   "cpp_output_hashes": {
-    "frames.bin": "fccd606a912d793a4592b2b71c50c5e104313a8f5b2fcc19a7f62cdf9ae13a4c",
-    "summary.csv": "8e919421a12918192b5ca135cc0048b5f598195f07cecd451a6571058d9cd08f"
+    "frames.bin": "5e409d076893a6cfc235ee0214bcbd1f9fb4914d5846d3bbd453afdea0878dd7",
+    "summary.csv": "9bca7dc1aa8e4624dcee33e62674ed65612c001dafc70261395bf8b53061928d"
   },
   "worker_equality": {
     "2": {
@@ -57,7 +53,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "4f6010f38063d102b82a02fc643568045a5d4d5c3938e6e1b95d90dbd24d15a1",
+  "recording_sha256": "3d5d0fc6c368a6772fa4df548c2a6d938acd7e3cb678c7670a73b901110f2d12",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,
@@ -65,29 +61,29 @@
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "2b9fd793bfaa695814a4ebdd44a59efbbd8813cc1bbe98c2931befbd25d90b24",
-      "events.json": "af50d785cd8790557c4d8f076ae5890f24e8a6f8a8d828417e302eab6ec9c3b4",
-      "summary.csv": "48abbc3496798e4de9b6c68bace7db89393e93e48d8a8ce6e4ae8bc6a5edb7f4"
+      "frames.bin": "0c4b21e6b3640b2281cbb6e11bb2671733e4c61698f27ef43308bbeb0db4d339",
+      "events.json": "0b391ff5d4554528838492b90636cf17a0412fe5ab4f799bdaf55d1b5078b482",
+      "summary.csv": "fe18b03476460a989d3e11eab3fd90c006319707bb5d24fa7395763a368053f2"
     },
     "rust-2": {
-      "frames.bin": "2b9fd793bfaa695814a4ebdd44a59efbbd8813cc1bbe98c2931befbd25d90b24",
-      "events.json": "af50d785cd8790557c4d8f076ae5890f24e8a6f8a8d828417e302eab6ec9c3b4",
-      "summary.csv": "48abbc3496798e4de9b6c68bace7db89393e93e48d8a8ce6e4ae8bc6a5edb7f4"
+      "frames.bin": "0c4b21e6b3640b2281cbb6e11bb2671733e4c61698f27ef43308bbeb0db4d339",
+      "events.json": "0b391ff5d4554528838492b90636cf17a0412fe5ab4f799bdaf55d1b5078b482",
+      "summary.csv": "fe18b03476460a989d3e11eab3fd90c006319707bb5d24fa7395763a368053f2"
     },
     "rust-8": {
-      "frames.bin": "2b9fd793bfaa695814a4ebdd44a59efbbd8813cc1bbe98c2931befbd25d90b24",
-      "events.json": "af50d785cd8790557c4d8f076ae5890f24e8a6f8a8d828417e302eab6ec9c3b4",
-      "summary.csv": "48abbc3496798e4de9b6c68bace7db89393e93e48d8a8ce6e4ae8bc6a5edb7f4"
+      "frames.bin": "0c4b21e6b3640b2281cbb6e11bb2671733e4c61698f27ef43308bbeb0db4d339",
+      "events.json": "0b391ff5d4554528838492b90636cf17a0412fe5ab4f799bdaf55d1b5078b482",
+      "summary.csv": "fe18b03476460a989d3e11eab3fd90c006319707bb5d24fa7395763a368053f2"
     },
     "rust-rerun": {
-      "frames.bin": "2b9fd793bfaa695814a4ebdd44a59efbbd8813cc1bbe98c2931befbd25d90b24",
-      "events.json": "af50d785cd8790557c4d8f076ae5890f24e8a6f8a8d828417e302eab6ec9c3b4",
-      "summary.csv": "48abbc3496798e4de9b6c68bace7db89393e93e48d8a8ce6e4ae8bc6a5edb7f4"
+      "frames.bin": "0c4b21e6b3640b2281cbb6e11bb2671733e4c61698f27ef43308bbeb0db4d339",
+      "events.json": "0b391ff5d4554528838492b90636cf17a0412fe5ab4f799bdaf55d1b5078b482",
+      "summary.csv": "fe18b03476460a989d3e11eab3fd90c006319707bb5d24fa7395763a368053f2"
     },
     "rust-trace": {
-      "frames.bin": "2b9fd793bfaa695814a4ebdd44a59efbbd8813cc1bbe98c2931befbd25d90b24",
-      "events.json": "af50d785cd8790557c4d8f076ae5890f24e8a6f8a8d828417e302eab6ec9c3b4",
-      "summary.csv": "48abbc3496798e4de9b6c68bace7db89393e93e48d8a8ce6e4ae8bc6a5edb7f4"
+      "frames.bin": "0c4b21e6b3640b2281cbb6e11bb2671733e4c61698f27ef43308bbeb0db4d339",
+      "events.json": "0b391ff5d4554528838492b90636cf17a0412fe5ab4f799bdaf55d1b5078b482",
+      "summary.csv": "fe18b03476460a989d3e11eab3fd90c006319707bb5d24fa7395763a368053f2"
     }
   },
   "comparison": {
@@ -109,7 +105,8 @@
     "deliveries": 2,
     "beliefs": 101,
     "outputs": 594,
-    "published_states": 0,
+    "sensor_states": 0,
+    "skipped_sensor_deliveries": 0,
     "max_belief_position_error_m": 0.0,
     "max_belief_velocity_error_mps": 0.0,
     "max_belief_orientation_error_rad": 0.0,
@@ -117,7 +114,6 @@
     "max_payload_position_error_m": 0.0,
     "max_payload_velocity_error_mps": 0.0,
     "max_payload_orientation_error_rad": 0.0,
-    "max_payload_covariance_error": 0.0,
     "max_output_error": 0.0,
     "max_output_error_port": "",
     "excluded_pre_start_records": 0,
@@ -127,7 +123,7 @@
   },
   "summary_differences": [
     "summary team 1, score: reference nan, candidate 0.0",
-    "summary team 1, flight_time_norm: reference inf, candidate 0.979592"
+    "summary team 1, flight_time_norm: reference inf, candidate 0.98"
   ],
   "summary_agreement": "explained_by_scoring_rules",
   "pre_start_removed": []

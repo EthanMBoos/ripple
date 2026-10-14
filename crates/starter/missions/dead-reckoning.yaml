@@ -29,7 +29,7 @@ templates:
       SingleIntegratorControllerSimple:
     motion_model:
       SingleIntegrator:
-        max_speed: 8      # the hidden truth: it moves at 8 m/s whatever it asks
+        max_speed: 8      # the hidden truth: its motors only reach 8 m/s
 
 entities:
   dead_reckoning:
@@ -40,9 +40,7 @@ entities:
       gps:
         plugin: NoisyState
         loop_rate: 0.2    # one fix every 5 s
-        pos_noise_0: [0, 0]
-        pos_noise_1: [0, 0]
-        pos_noise_2: [0, 0]
+        position_stddev_m: [0, 0, 0]   # exact fixes; raise to add GPS noise
     localization:
       DeadReckoning:
         speed_gain: 1.0   # assumes it moves as commanded: 2 m/s too fast

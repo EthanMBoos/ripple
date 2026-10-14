@@ -16,5 +16,6 @@ multirotor | multirotor.xml | Multirotor (4 and 6 rotors)
 single-integrator | verification/single-integrator.xml | SingleIntegrator command paths
 noisy-contacts-bias | verification/noisy-contacts-bias.xml | NoisyContacts bias, attitude, covariance
 sphere-network-auction | verification/sphere-network-auction.xml | SphereNetwork reach, AuctionAssign
+sphere-network-loss | verification/sphere-network-loss.xml | SphereNetwork loss, keyed draws
 collision-boundary | verification/collision-boundary.xml | SimpleCollision range boundary
 multirotor-fixes | verification/multirotor-fixes.xml | Multirotor fixes: initial velocity, rotor tilt, idle

@@ -22,10 +22,6 @@
   },
   "motion_multiplier": 5,
   "cpp_non_interference": {
-    "untraced": {
-      "frames.bin": true,
-      "summary.csv": true
-    },
     "traced": {
       "frames.bin": true,
       "summary.csv": true
@@ -33,12 +29,12 @@
   },
   "cpp_baseline_equality": {
     "frames.bin": false,
-    "summary.csv": true
+    "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-12_10-47-15",
+  "cpp_log_directory": "cpp/logs/2026-10-14_20-38-17",
   "cpp_output_hashes": {
-    "frames.bin": "12f6d4c531af71e99172aa3f3fa0e796a1cc6c35d929e345769de10efe9fffd6",
-    "summary.csv": "3afd78e3811543726fb8215a0f32ae39b714ee5803265129206594fe1e390ea5"
+    "frames.bin": "238e68abcdb430d5620f7c677e7e71079518c7171e8fb84907634af1f60c7d21",
+    "summary.csv": "babb177d945a144f319c2cfbfb9bc0187b5afd68fbeba8c0f14d5ec373845ed9"
   },
   "worker_equality": {
     "2": {
@@ -57,7 +53,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "5288c8ed9b7f00010f53b1aef43285bbee4d2cf561ffaa103e8cb8de21688368",
+  "recording_sha256": "957db67a4697b1ed50b5e9e16d22cd48f34743cdfc75e71fe5335d52cbcdbba1",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,
@@ -65,40 +61,40 @@
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "da5ef1c86d09ca7fafc6e2fd70e7bd8e0da94ba6f9c7b16e0dbf525e746bf2c8",
-      "events.json": "b4f8b7391e8a6efd53e392e9dbbc1bbbba87802ec6b35c585ad4daa8e64ef91e",
-      "summary.csv": "53d090e6ac03fe0a4557f86167d1ca8498a2feb8614ad166dd56305d8229e710"
+      "frames.bin": "9047d08893222eaae4e5cf85c054ed26bd4c8355be665bd6bf95dbb7352e1c33",
+      "events.json": "46511a7889c083b0f2c43640b0575fab05371fae6269973e4e16047cb91fc915",
+      "summary.csv": "f7bbafff43472cf6399073c8c3cd2eeb336b86006b40ece4aa5b4e56d02b2f2b"
     },
     "rust-2": {
-      "frames.bin": "da5ef1c86d09ca7fafc6e2fd70e7bd8e0da94ba6f9c7b16e0dbf525e746bf2c8",
-      "events.json": "b4f8b7391e8a6efd53e392e9dbbc1bbbba87802ec6b35c585ad4daa8e64ef91e",
-      "summary.csv": "53d090e6ac03fe0a4557f86167d1ca8498a2feb8614ad166dd56305d8229e710"
+      "frames.bin": "9047d08893222eaae4e5cf85c054ed26bd4c8355be665bd6bf95dbb7352e1c33",
+      "events.json": "46511a7889c083b0f2c43640b0575fab05371fae6269973e4e16047cb91fc915",
+      "summary.csv": "f7bbafff43472cf6399073c8c3cd2eeb336b86006b40ece4aa5b4e56d02b2f2b"
     },
     "rust-8": {
-      "frames.bin": "da5ef1c86d09ca7fafc6e2fd70e7bd8e0da94ba6f9c7b16e0dbf525e746bf2c8",
-      "events.json": "b4f8b7391e8a6efd53e392e9dbbc1bbbba87802ec6b35c585ad4daa8e64ef91e",
-      "summary.csv": "53d090e6ac03fe0a4557f86167d1ca8498a2feb8614ad166dd56305d8229e710"
+      "frames.bin": "9047d08893222eaae4e5cf85c054ed26bd4c8355be665bd6bf95dbb7352e1c33",
+      "events.json": "46511a7889c083b0f2c43640b0575fab05371fae6269973e4e16047cb91fc915",
+      "summary.csv": "f7bbafff43472cf6399073c8c3cd2eeb336b86006b40ece4aa5b4e56d02b2f2b"
     },
     "rust-rerun": {
-      "frames.bin": "da5ef1c86d09ca7fafc6e2fd70e7bd8e0da94ba6f9c7b16e0dbf525e746bf2c8",
-      "events.json": "b4f8b7391e8a6efd53e392e9dbbc1bbbba87802ec6b35c585ad4daa8e64ef91e",
-      "summary.csv": "53d090e6ac03fe0a4557f86167d1ca8498a2feb8614ad166dd56305d8229e710"
+      "frames.bin": "9047d08893222eaae4e5cf85c054ed26bd4c8355be665bd6bf95dbb7352e1c33",
+      "events.json": "46511a7889c083b0f2c43640b0575fab05371fae6269973e4e16047cb91fc915",
+      "summary.csv": "f7bbafff43472cf6399073c8c3cd2eeb336b86006b40ece4aa5b4e56d02b2f2b"
     },
     "rust-trace": {
-      "frames.bin": "da5ef1c86d09ca7fafc6e2fd70e7bd8e0da94ba6f9c7b16e0dbf525e746bf2c8",
-      "events.json": "b4f8b7391e8a6efd53e392e9dbbc1bbbba87802ec6b35c585ad4daa8e64ef91e",
-      "summary.csv": "53d090e6ac03fe0a4557f86167d1ca8498a2feb8614ad166dd56305d8229e710"
+      "frames.bin": "9047d08893222eaae4e5cf85c054ed26bd4c8355be665bd6bf95dbb7352e1c33",
+      "events.json": "46511a7889c083b0f2c43640b0575fab05371fae6269973e4e16047cb91fc915",
+      "summary.csv": "f7bbafff43472cf6399073c8c3cd2eeb336b86006b40ece4aa5b4e56d02b2f2b"
     }
   },
   "comparison": {
     "passed": true,
     "reference_frames": 31,
     "candidate_frames": 31,
-    "compared_entity_states": 170,
-    "max_position_error_m": 4.7664655742347644e-14,
-    "max_velocity_error_mps": 2.622850518905729e-14,
-    "max_orientation_error_rad": 7.758689273259967e-15,
-    "max_angular_velocity_error_radps": 0.0,
+    "compared_entity_states": 176,
+    "max_position_error_m": 1.4210854715202004e-14,
+    "max_velocity_error_mps": 2.1326606756899636e-14,
+    "max_orientation_error_rad": 1.77631364019466e-15,
+    "max_angular_velocity_error_radps": 7.516065172979137e-15,
     "max_timestamp_error_s": 0.0,
     "mismatch_count": 0,
     "first_mismatches": [],
@@ -107,19 +103,19 @@
   "trace_comparison": {
     "passed": true,
     "deliveries": 7,
-    "beliefs": 170,
-    "outputs": 978,
-    "published_states": 0,
-    "max_belief_position_error_m": 4.7664655742347644e-14,
-    "max_belief_velocity_error_mps": 2.622850518905729e-14,
-    "max_belief_orientation_error_rad": 7.758689273259967e-15,
-    "max_belief_angular_velocity_error_radps": 0.0,
+    "beliefs": 176,
+    "outputs": 1014,
+    "sensor_states": 0,
+    "skipped_sensor_deliveries": 0,
+    "max_belief_position_error_m": 1.4210854715202004e-14,
+    "max_belief_velocity_error_mps": 2.1326606756899636e-14,
+    "max_belief_orientation_error_rad": 1.77631364019466e-15,
+    "max_belief_angular_velocity_error_radps": 7.516065172979137e-15,
     "max_payload_position_error_m": 0.0,
     "max_payload_velocity_error_mps": 0.0,
     "max_payload_orientation_error_rad": 0.0,
-    "max_payload_covariance_error": 0.0,
-    "max_output_error": 1.794120407794253e-13,
-    "max_output_error_port": "SimpleAircraftControllerPID.roll_rate",
+    "max_output_error": 1.7763568394002505e-14,
+    "max_output_error_port": "SimpleAircraftControllerPID.throttle",
     "excluded_pre_start_records": 0,
     "delivery_mismatches": 0,
     "mismatch_count": 0,
@@ -127,7 +123,7 @@
   },
   "summary_differences": [
     "summary team 2, score: reference nan, candidate 0.0",
-    "summary team 2, flight_time_norm: reference inf, candidate 2.482759"
+    "summary team 2, flight_time_norm: reference inf, candidate 2.633333"
   ],
   "summary_agreement": "explained_by_scoring_rules",
   "pre_start_removed": []

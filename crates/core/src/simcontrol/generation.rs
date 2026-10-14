@@ -8,7 +8,6 @@ use anyhow::{Context, Result, ensure};
 #[derive(Clone)]
 pub(crate) struct Generator {
     pub(crate) definition_index: usize,
-    heading_world_deg: f64,
     pub(crate) remaining: usize,
     pub(crate) next_spawn_times_s: Vec<f64>,
     pub(crate) rate_hz: f64,
@@ -27,11 +26,14 @@ struct SpawnRequest {
 
 impl Simulation {
     pub(super) fn generate_entities(&mut self) -> Result<()> {
-        // Requests: which groups are due to spawn this tick.
+        // Requests: which groups are due to spawn this tick. A batch spawns on
+        // the tick nearest its time, so rounding (t + 1/rate landing just
+        // after a tick) cannot delay it a tick.
         let mut due_definitions = Vec::new();
+        let half_tick_s = self.config.run.dt_s / 2.0;
         for generator in &mut self.generators {
             for next_spawn_s in &mut generator.next_spawn_times_s {
-                if self.time_s < *next_spawn_s || generator.remaining == 0 {
+                if self.time_s < *next_spawn_s - half_tick_s || generator.remaining == 0 {
                     continue;
                 }
                 generator.remaining -= 1;
@@ -69,14 +71,9 @@ impl Simulation {
     fn sample_spawn_start(&mut self, definition_index: usize) -> Result<(Vec3, f64)> {
         let spawn = &self.definitions[definition_index].spawn;
         let origin_world_m = spawn.position_world_m;
-        // Known defect: each sampled heading becomes the mean for the next spawn
-        // (a random walk) when the mission has heading variance (docs/TODO.md, milestone A). The walk
-        // lives in generator state, not in the validated configuration.
-        let heading_world_deg = legacy_decimal_roundtrip(self.rng.normal(
-            self.generators[definition_index].heading_world_deg,
-            spawn.heading_variance_deg2.sqrt(),
-        ));
-        self.generators[definition_index].heading_world_deg = heading_world_deg;
+        let heading_world_deg = self
+            .rng
+            .normal(spawn.heading_world_deg, spawn.heading_variance_deg2.sqrt());
         let mut position_world_m = origin_world_m;
 
         let spawn = &self.definitions[definition_index].spawn;
@@ -103,10 +100,7 @@ impl Simulation {
                 "unable to find collision-free spawn position"
             );
         }
-        Ok((
-            position_world_m.map(legacy_decimal_roundtrip),
-            legacy_decimal_roundtrip(heading_world_deg),
-        ))
+        Ok((position_world_m, heading_world_deg))
     }
 
     /// Builds one entity from a request: assigns its ID, adds it, and records
@@ -149,13 +143,6 @@ impl Simulation {
     }
 }
 
-fn legacy_decimal_roundtrip(value: f64) -> f64 {
-    // Known defect: spawn values are rounded to 6 decimals, moving them by up to
-    // a micrometre (docs/TODO.md, milestone A).
-    format!("{value:.6}")
-        .parse()
-        .expect("formatted finite number must parse")
-}
 impl Generator {
     pub(crate) fn new(
         config: &EntityGroupConfig,
@@ -173,7 +160,6 @@ impl Generator {
         ensure!(time_stddev_s >= 0.0, "negative generation variance");
         Ok(Self {
             definition_index,
-            heading_world_deg: config.heading_deg,
             remaining: config.count,
             next_spawn_times_s: vec![first_spawn_s; batch],
             rate_hz,

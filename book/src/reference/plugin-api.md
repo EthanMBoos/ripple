@@ -340,25 +340,18 @@ source rule above. From Rust, set `EntityGroupConfig::localization` to
 ### NoisyState
 
 `NoisyState` ports the legacy own-state noise equations and XML parameters.
-It is a `State` sensor: its startup reading is the initial truth without noise
-(as C++ starts its estimate), and each sample after that is the measured
-post-motion state. With it installed, localization's `PassThrough` copies those
-readings, so autonomy and controllers act on them. It also publishes
-`StateWithCovariance` on `LocalNetwork`, as C++ does. C++ Straight steers by
-that message; Rust Straight steers by belief, which holds the same
-measurement, and subscribes to the message only so deliveries match C++.
-
-Include `<network>LocalNetwork</network>` when using Straight or NoisyState.
-Straight subscribes to local state messages even when no sensor publishes.
-Missing configured networks remain errors; they are not silently created.
+It is a `State` sensor: its startup reading is a sample of the initial state
+(after the motion model has set it up), and each sample after that is the
+measured post-motion state. With it installed, localization's `PassThrough`
+copies those readings, so autonomy and controllers act on them. It publishes no
+message.
 
 Legacy details retained deliberately:
 
 - Each `pos_noise_0..2`, `vel_noise_0..2`, and `orient_noise_0..2` value is
   `mean standard_deviation`, in meters, meters/second, and radians respectively.
 - Attitude noise right-multiplies body-axis roll, pitch, and yaw rotations.
-- The C++ message leaves angular velocity zero and covariance equal to a 3x3
-  identity matrix. That covariance is **not** a calibrated sensor uncertainty.
+- Angular velocity is reported exactly; there is no rate noise.
 - Samples use the existing Rust per-sensor RNG, keyed by mission seed, entity
   ID, and sensor instance. Draws interleave position/velocity per axis, followed
   by roll/pitch/yaw, including zero-noise draws. This is not C++ RNG-sequence
@@ -378,13 +371,9 @@ order, using the same `pos_noise_0..2`, `vel_noise_0..2`, and
 sensor: tracking's `PassThrough` copies each sample into known contacts. It has
 no range/FOV filtering, detection probability, or persistent tracks.
 
-The public `plugin::sensor::ContactsWithCovariances` contains a `contacts`
-vector. Each `ContactWithCovariance` contains `entity: EntityInfo` and
-`measurement: StateWithCovariance`. Identity is retained; the kinematic state is
-measured. Like C++, this sensor preserves target angular velocity and sets
-covariance to **5I**, regardless of configured noise. NoisyState instead uses
-zero angular velocity and identity covariance. Neither is calibrated
-uncertainty.
+Its reading is a `ContactList`: each `Contact` keeps the target's identity
+with a measured kinematic state, and target angular velocity passes through
+exactly. Neither sensor reports a covariance.
 
 An autonomy uses the measured contacts through belief:
 
@@ -396,11 +385,6 @@ for contact in context.contacts.iter() {
 }
 ```
 
-For now the sensor also publishes each sample, including an empty one, on
-`LocalNetwork` under `topic_name` (default `ContactsWithCovariances`, exported
-as `CONTACTS_TOPIC`), only so delivered messages match C++; include
-`<network>LocalNetwork</network>`. Don't build on that message: it bypasses
-tracking and is scheduled for removal.
 Removal clears a target on the next sensor sample after removal, not
 retroactively. Sensor streams use mission seed/entity/instance; C++ uses a
 shared generator and different contact iteration order.

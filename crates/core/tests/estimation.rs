@@ -341,7 +341,6 @@ fn seen(log: &str) -> Vec<Seen> {
 fn perfect_belief_equals_truth_at_every_decision_through_collisions_and_spawns() -> Result<()> {
     let (frames, simulation) = run(population("perfect")?, 1)?;
     let seen = seen("perfect");
-    let dt_s = 0.1;
     assert!(
         simulation
             .events()
@@ -360,16 +359,13 @@ fn perfect_belief_equals_truth_at_every_decision_through_collisions_and_spawns()
     // Each step's frame is the state its decisions ran on.
     let mut checked = 0;
     for frame in &frames {
-        let time_s = frame.time_s - dt_s;
+        let time_s = frame.time_s;
         let existed_before: Vec<_> = seen
             .iter()
             .filter(|entry| entry.time_s < time_s - 1e-9)
             .map(|entry| entry.entity_id)
             .collect();
-        for entry in seen
-            .iter()
-            .filter(|entry| entry.time_s + dt_s == frame.time_s)
-        {
+        for entry in seen.iter().filter(|entry| entry.time_s == frame.time_s) {
             let truth = |id: i32| {
                 frame
                     .entities

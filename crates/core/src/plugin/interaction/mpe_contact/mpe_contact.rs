@@ -1,27 +1,18 @@
 //! MPE's soft push between overlapping agents, for MpeParticle. Rust-only.
 //!
 //! Interaction phase. MPE computes the push from the positions at the start of
-//! a step and adds it to that step's force. A motion model sees only its own
-//! entity, so this does it in two parts: each tick it computes the push from
-//! the positions it remembered last tick (the start of this tick's step) and
-//! adds push * dt to velocity after motion has run. The first call, during
-//! setup, only remembers the starting positions.
+//! a step and adds it to that step's force. Each interaction phase runs after
+//! motion, at the start of the next step, so this computes the push from the
+//! current positions and applies it as a force (`Entity::apply_force`) that
+//! MpeParticle adds to its commanded force in the next motion step. Truth is
+//! not changed here, so a sensor's reading includes every push.
 //!
 //! Source: MPE2 v1.1.1 (commit `147a8e8`), `World.get_collision_force` in
 //! `mpe2/_mpe_utils/core.py`: force = contact_force * delta / dist *
-//! softplus(-(dist - 2 radius) / margin) * margin, equal and opposite.
-//! MPE adds the push into the force before multiplying by dt; adding it
-//! afterwards rounds differently, so velocities can differ from MPE's in the
-//! last bit on steps with contact. Away from contact the push is still
-//! nonzero (softplus never reaches zero) but far too small to change a
-//! velocity. Unit mass, as MpeParticle.
-//!
-//! Limitation: sensors run before interactions, so on a step with contact a
-//! sensor's velocity reading misses that step's push (position is unaffected;
-//! the push moves it from the next step). The default perfect belief is taken
-//! after interactions and is right. A zero-noise NoisyState would differ from
-//! perfect belief on those steps. If that ever matters, move the push into
-//! motion: compute it here for the next step and hand it to MpeParticle.
+//! softplus(-(dist - 2 radius) / margin) * margin, equal and opposite. Pushes
+//! are applied pair by pair in id order, as MPE adds them to its forces.
+//! Away from contact the push is still nonzero (softplus never reaches zero)
+//! but far too small to change a velocity. Unit mass, as MpeParticle.
 
 use std::collections::BTreeMap;
 
@@ -61,9 +52,6 @@ pub struct MpeContact {
     radius_m: f64,
     contact_force: f64,
     contact_margin_m: f64,
-    /// Positions at the start of the current step, by entity id; None before
-    /// setup.
-    previous_m: Option<BTreeMap<i32, Vec3>>,
 }
 
 impl Plugin for MpeContact {
@@ -87,7 +75,6 @@ impl Plugin for MpeContact {
             radius_m: config.radius_m.unwrap_or_default(),
             contact_force: config.contact_force,
             contact_margin_m: config.contact_margin_m,
-            previous_m: None,
         }
     }
 }
@@ -117,30 +104,24 @@ fn log_add_exp_zero(z: f64) -> f64 {
 
 impl Interaction for MpeContact {
     fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
-        let current_m: BTreeMap<i32, Vec3> = context
+        // Entity index by id, so pairs go in id order, as MPE loops over its agents.
+        let agents: BTreeMap<i32, usize> = context
             .entities
             .iter()
-            .filter(|entity| entity.is_active() && self.teams.contains(&entity.team_id()))
-            .map(|entity| (entity.id(), entity.truth().position_world_m))
+            .enumerate()
+            .filter(|(_, entity)| entity.is_active() && self.teams.contains(&entity.team_id()))
+            .map(|(index, entity)| (entity.id(), index))
             .collect();
-        let Some(previous_m) = self.previous_m.replace(current_m) else {
-            return Ok(Update::Applied);
-        };
-
-        // Pairs in id order, as MPE loops over its agents.
-        let mut push_n: BTreeMap<i32, Vec3> = BTreeMap::new();
-        let positions: Vec<(i32, Vec3)> = previous_m.into_iter().collect();
-        for (index, &(a, a_m)) in positions.iter().enumerate() {
-            for &(b, b_m) in &positions[index + 1..] {
-                let force_n = self.push_n(a_m, b_m);
-                *push_n.entry(a).or_insert_with(Vec3::zeros) += force_n;
-                *push_n.entry(b).or_insert_with(Vec3::zeros) -= force_n;
-            }
-        }
-        let dt_s = context.time.dt_s;
-        for entity in context.entities.iter_mut() {
-            if let Some(force_n) = push_n.get(&entity.id()) {
-                entity.truth_mut().velocity_world_mps += force_n * dt_s;
+        let agents: Vec<usize> = agents.into_values().collect();
+        for (pair, &a) in agents.iter().enumerate() {
+            for &b in &agents[pair + 1..] {
+                let entities = &mut *context.entities;
+                let force_n = self.push_n(
+                    entities[a].truth().position_world_m,
+                    entities[b].truth().position_world_m,
+                );
+                entities[a].apply_force(force_n);
+                entities[b].apply_force(-force_n);
             }
         }
         Ok(Update::Applied)

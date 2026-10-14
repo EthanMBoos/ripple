@@ -6,10 +6,9 @@ use ripple_core::plugin::autonomy::{
     AuctionBid, AuctionResult, AuctionStart, BID_AUCTION_TOPIC, RESULT_AUCTION_TOPIC,
     START_AUCTION_TOPIC,
 };
-use ripple_core::plugin::sensor::ContactsWithCovariances;
 use ripple_core::plugin::{
-    AgentContext, Autonomy, Frame, Interaction, InteractionContext, Plugin, PluginIo, PluginParams,
-    PluginRegistry, Port, Ports, Sensor, SensorContext, Unit, Update,
+    AgentContext, Autonomy, ContactList, Frame, Interaction, InteractionContext, Plugin, PluginIo,
+    PluginParams, PluginRegistry, Port, Ports, Sensor, SensorContext, Unit, Update,
 };
 use ripple_core::{Mission, Params, Simulation};
 use serde::Deserialize;
@@ -39,26 +38,16 @@ impl Plugin for ContactFollower {
     }
 }
 
-// TODO(estimation): read `context.contacts` (tracker belief) instead of the
-// NoisyContacts "detected" message, which is being removed. Observer below
-// subscribes to the same message and moves the same way.
+/// Moves at the believed x position of the first contact it knows (tracking's
+/// belief, from NoisyContacts).
 impl Autonomy for ContactFollower {
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
-        context
-            .messages
-            .subscribe::<ContactsWithCovariances>("LocalNetwork", "detected")
-    }
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
-        let messages = context
-            .messages
-            .receive::<ContactsWithCovariances>("LocalNetwork", "detected")?;
         let mut velocity_mps = 0.0;
         if self.follow
             && context.entity.id == 1
-            && let Some(sample) = messages.last()
-            && let Some(contact) = sample.value.contacts.first()
+            && let Some(contact) = context.contacts.iter().next()
         {
-            velocity_mps = contact.measurement.state.position_world_m.x;
+            velocity_mps = contact.state.position_world_m.x;
         }
         io.write("velocity_x", velocity_mps)?;
         Ok(Update::Applied)
@@ -74,7 +63,6 @@ struct AuctionTrace {
 
 /// What the observer has received so far, as its reading.
 struct ObserverReading {
-    contacts: Option<ContactsWithCovariances>,
     trace: AuctionTrace,
 }
 
@@ -82,7 +70,6 @@ struct ObserverReading {
 /// Messages arrive one tick after publication, like any other consumer.
 struct Observer {
     trace: AuctionTrace,
-    contacts: Option<ContactsWithCovariances>,
 }
 
 impl Plugin for Observer {
@@ -93,16 +80,12 @@ impl Plugin for Observer {
     fn new(_: &()) -> Self {
         Self {
             trace: AuctionTrace::default(),
-            contacts: None,
         }
     }
 }
 
 impl Sensor for Observer {
     fn initialize(&mut self, context: &mut SensorContext<'_>) -> Result<()> {
-        context
-            .messages
-            .subscribe::<ContactsWithCovariances>("LocalNetwork", "detected")?;
         context
             .messages
             .subscribe::<AuctionStart>("SphereNetwork", START_AUCTION_TOPIC)?;
@@ -114,13 +97,6 @@ impl Sensor for Observer {
             .subscribe::<AuctionResult>("SphereNetwork", RESULT_AUCTION_TOPIC)
     }
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
-        if let Some(message) = context
-            .messages
-            .receive::<ContactsWithCovariances>("LocalNetwork", "detected")?
-            .pop()
-        {
-            self.contacts = Some((*message.value).clone());
-        }
         for message in context
             .messages
             .receive::<AuctionStart>("SphereNetwork", START_AUCTION_TOPIC)?
@@ -140,7 +116,6 @@ impl Sensor for Observer {
             self.trace.results.push((message.sent_at_s, *message.value));
         }
         context.publish_reading(ObserverReading {
-            contacts: self.contacts.clone(),
             trace: self.trace.clone(),
         })?;
         Ok(Update::Applied)
@@ -201,9 +176,13 @@ fn simulation(workers: usize, overrides: &Params) -> Result<Simulation> {
     Simulation::new(scenario, &registry, workers)
 }
 
-/// The newest contact snapshot this entity has received, if any yet.
-fn contacts(simulation: &Simulation, entity_index: usize) -> Option<&ContactsWithCovariances> {
-    observed(simulation, entity_index).contacts.as_ref()
+/// The newest NoisyContacts reading this entity has, if any yet.
+fn contacts(simulation: &Simulation, entity_index: usize) -> Option<&ContactList> {
+    simulation.entities()[entity_index]
+        .readings()
+        .get::<ContactList>("NoisyContacts:0")
+        .unwrap()
+        .map(|reading| &reading.value)
 }
 
 fn observed(simulation: &Simulation, entity_index: usize) -> &ObserverReading {
@@ -289,13 +268,8 @@ fn contact_feedback_uses_local_measurements_on_the_next_tick_without_changing_be
             entity.truth().position_world_m
         );
         let sample = contacts(&simulation, index).expect("first snapshot delivered");
-        assert_eq!(sample.contacts.len(), 2);
-        assert!(
-            sample
-                .contacts
-                .iter()
-                .all(|contact| contact.entity.id != entity.id())
-        );
+        assert_eq!(sample.len(), 2);
+        assert!(sample.iter().all(|contact| contact.id != entity.id()));
     }
     Ok(())
 }
@@ -312,7 +286,7 @@ fn contacts_include_new_spawns_and_clear_removed_targets() -> Result<()> {
     let mut counts = Vec::new();
     while simulation.step()?.is_some() {
         if let Some(sample) = contacts(&simulation, 0) {
-            counts.push(sample.contacts.len());
+            counts.push(sample.len());
         }
     }
     assert_eq!(counts[0], 0);

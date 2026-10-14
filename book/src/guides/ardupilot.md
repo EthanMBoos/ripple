@@ -264,8 +264,8 @@ motion_model:
   output_min, output_max]`, with optional `throttle`, `elevator`, `aileron`,
   and `rudder` keys. The defaults are ArduPlane's outputs 1-4 on the Rascal's
   throws.
-- **Wind sign:** FixedWing6DOF adds wind to velocity, so `wind_E: 5` on an
-  eastbound aircraft is a headwind. `SitlState` uses the same values to
+- **Wind** is the air's velocity over the ground (ENU), so `wind_E: 5` on an
+  eastbound aircraft is a tailwind. `SitlState` uses the same values to
   compute airspeed.
 
 ## Troubleshooting

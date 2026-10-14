@@ -9,14 +9,11 @@ in MPE2 with random continuous actions (reference/mpe2/rollout.py), replays
 each in Ripple from the same starts with the same forces (MpeParticle,
 MpeContact, SimpleSpread, ForceReplay), and compares every agent's position
 and velocity after every step, and each episode's mean return (the episode
-total only: summary.csv does not hold per-step rewards). The starts are
-MPE2's rounded to 6 decimals, as Ripple's spawn rounds them; the rollout
-gives MPE2 the rounded starts too.
+total only: summary.csv does not hold per-step rewards).
 
-Passes when every position and velocity is within 1e-12 of MPE2's, every
-episode without contact matches bit for bit, and every mean return agrees to
-the 6 decimals of summary.csv. Contact is allowed the last-bit difference
-MpeContact's header describes.
+Passes when every position and velocity matches MPE2's bit for bit, with and
+without contact, and every mean return agrees to the 6 decimals of
+summary.csv.
 
 MPE2 runs in a uv environment with MPE2 (pinned) unless --python names an
 interpreter that has it. Writes OUTPUT/results.json.
@@ -40,9 +37,8 @@ RADIUS_M = 0.15
 # MPE's push is soft: at 2 radii plus d it changes velocity by about
 # 0.01 * exp(-d / 1 mm) m/s per step. Beyond 40 mm that is under 1e-19 m/s,
 # below any velocity's last bit here, so only closer approaches count as
-# contact.
+# contact (reported, not part of the criterion).
 CONTACT_RANGE_M = 2 * RADIUS_M + 0.040
-STATE_TOLERANCE = 1e-12
 RETURN_TOLERANCE = 1e-6  # summary.csv keeps 6 decimals
 
 
@@ -70,8 +66,8 @@ def mean_return(folder):
 
 
 def compare(episode, frames, ripple_return):
-    # Frame k holds the state before step k (docs/REFERENCE_NOTES.md); the
-    # last repeats the final time and holds the state after the last step.
+    # Frame k holds the state at step k, before that step; the last holds the
+    # state after the last step.
     if len(frames) != STEPS + 1:
         raise ValueError(f"seed {episode['seed']}: {len(frames)} frames, expected {STEPS + 1}")
     agents = len(episode["agents"])
@@ -120,19 +116,17 @@ def main(argv=None):
         results.append(compare(episode, read_frames(folder / "ripple/frames.bin"),
                                mean_return(folder / "ripple")))
 
-    without_contact = [r for r in results if not r["contact"]]
     passed = (len(results) == EPISODES
-              and all(r["largest_state_error"] <= STATE_TOLERANCE for r in results)
-              and all(r["bit_identical"] for r in without_contact)
+              and all(r["bit_identical"] for r in results)
               and all(r["return_error"] <= RETURN_TOLERANCE for r in results))
     summary = dict(
         episodes=len(results),
-        episodes_with_contact=len(results) - len(without_contact),
+        episodes_with_contact=sum(r["contact"] for r in results),
         bit_identical=sum(r["bit_identical"] for r in results),
         largest_state_error=max(r["largest_state_error"] for r in results),
         largest_return_error=max(r["return_error"] for r in results))
     report = dict(passed=passed, mpe2=MPE2, mpe2_commit=MPE2_COMMIT, steps=STEPS,
-                  criterion=dict(state=STATE_TOLERANCE, return_=RETURN_TOLERANCE),
+                  criterion=dict(state="bit identical", return_=RETURN_TOLERANCE),
                   summary=summary, results=results, source=source_identity())
     (args.output / "results.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(dict(passed=passed, **summary), indent=2))

@@ -198,31 +198,6 @@ pub(crate) struct Mailbox<'a> {
 #[derive(Default)]
 pub(crate) struct NetworkTrace {
     pub deliveries: Vec<DeliveryRecord>,
-    pub publications: Vec<PublicationRecord>,
-}
-/// A published sensor payload: one state, or one per measured contact.
-pub(crate) struct PublicationRecord {
-    pub time_s: f64,
-    pub topic: String,
-    pub sender: MessageEndpoint,
-    pub states: Vec<(Option<i32>, crate::plugin::sensor::StateWithCovariance)>,
-}
-fn sensor_states(
-    value: &Payload,
-) -> Option<Vec<(Option<i32>, crate::plugin::sensor::StateWithCovariance)>> {
-    use crate::plugin::sensor::{ContactsWithCovariances, StateWithCovariance};
-    if let Some(state) = value.downcast_ref::<StateWithCovariance>() {
-        return Some(vec![(None, state.clone())]);
-    }
-    value
-        .downcast_ref::<ContactsWithCovariances>()
-        .map(|message| {
-            message
-                .contacts
-                .iter()
-                .map(|contact| (Some(contact.entity.id), contact.measurement.clone()))
-                .collect()
-        })
 }
 /// One message reaching one subscriber, for the opt-in comparison trace.
 pub(crate) struct DeliveryRecord {
@@ -310,7 +285,7 @@ impl NetworkContext<'_, '_> {
         // per phase that has messages, so a message visits only its subscribers;
         // within an entity, only its own entity's. Visiting every mailbox for
         // every message made routing grow with the square of the team: with
-        // NoisyState on every aircraft (every Straight subscribes to it), a
+        // NoisyState on every aircraft (every Straight subscribed to its message), a
         // 4,096-agent step took 388 ms, nearly all in routing (macOS `sample`);
         // with the index, 9.7 ms.
         // C++ keeps per-topic subscriber lists but still checks every
@@ -336,16 +311,6 @@ impl NetworkContext<'_, '_> {
             }
         }
         for (sender, publication) in publications {
-            if let Some(trace) = self.trace.as_deref_mut()
-                && let Some(states) = sensor_states(&publication.value)
-            {
-                trace.publications.push(PublicationRecord {
-                    time_s: publication.sent_at_s,
-                    topic: publication.channel.1.clone(),
-                    sender: sender.clone(),
-                    states,
-                });
-            }
             let group = match (within_entity, sender.entity_id) {
                 (false, _) => None,
                 (true, Some(entity_id)) => Some(entity_id),

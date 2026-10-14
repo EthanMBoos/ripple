@@ -16,7 +16,7 @@ These findings come from source, rather than the synthesized guides in the
 | --- | --- |
 | `src/simcontrol/SimControl.cpp`, `run_single_step` / `run_entities` | Generate and log pre-step contacts; autonomy; all controller substeps; all motion substeps; sensors; interactions; networks; metrics; removal/output/time. Controller and motion substeps are not interleaved on this branch; they were until 2025-12, and `benchmarking-edits` restores that (see [Substep order](#substep-order-a-c-regression-fixed-on-the-comparison-branch)). |
 | Same file, network/metrics phases | Metrics can consume interaction messages in the same tick. Delivery is not universally delayed to the next tick. |
-| Same file, `run_logging` / finalization | Pre-step state is labeled `t + dt`; terminal logging repeats the final timestamp with terminal state. |
+| Same file, `run_logging` / finalization | Pre-step state is labeled `t + dt`; terminal logging repeats the final timestamp with terminal state. Both are fixed on `benchmarking-edits` and in Ripple ([core defects](#core-defects-fixed-on-both-sides)). |
 | `src/plugins/network/LocalNetwork/LocalNetwork.cpp` | Reachability requires the same non-null parent entity, not proximity. |
 | `src/plugins/interaction/SimpleCollision/SimpleCollision.cpp` | Collision uses strict distance against `collision_range`, not summed entity/visual radii. Startup rejection is separate. |
 | `src/entity/Entity.cpp` | Truth and belief initially alias; `set_state_belief` detaches belief. Rust keeps belief separate and has estimators own it (see the estimation difference below). |
@@ -69,12 +69,10 @@ Rust lifecycle and delivery rules are in the
   experiments are timed on their own: C++ `SimpleINS` accumulates synthetic
   drift inside a sensor, so it is not an equivalent workload for a
   command-based predictor.
-- **Straight and NoisyState messages.** C++ Straight steers by the newest
-  `StateWithCovariance` message when one arrives. Rust Straight steers by
-  belief, which holds the same measurement at the same time, and subscribes to
-  the message only so deliveries match C++. NoisyState and NoisyContacts still
-  publish their LocalNetwork messages for the same reason; removing them would
-  change delivered-message counts and is left for a separate change.
+- **Straight and the sensor messages.** C++ Straight steers by the newest
+  `StateWithCovariance` message, which holds the same measurement as belief.
+  Rust sensors publish no message (readings go to estimators), and Rust
+  Straight steers by belief.
 
 - **Survivor flight time:** C++ publishes `EntityPresentAtEnd` after its last
   network phase, so metrics credit survivors only until the latest removal. Rust
@@ -148,9 +146,9 @@ Rust lifecycle and delivery rules are in the
   optional winner instead of a negative sentinel. These are not
   sample-for-sample C++ RNG ports.
 
-Source details worth preserving: NoisyContacts copies angular velocity and uses
-5I covariance; NoisyState uses zero angular velocity and identity covariance.
-Both right-multiply attitude errors. SphereNetwork has strict range, inclusive
+Source details worth preserving: both sensors keep the true angular velocity
+(NoisyState did not in unmodified SCRIMMAGE) and right-multiply attitude
+errors. SphereNetwork has strict range, inclusive
 altitude-plane bounds, and same-parent geometry bypass that still draws for
 loss. AuctionAssign includes self-bidding, keeps the first maximum on ties, and
 closes strictly after its deadline. See [plugin
@@ -173,33 +171,114 @@ Simplifications that can stay:
 | AuctionAssign runs only on entity 1 | `auction_assign.rs` | A demo plugin |
 | Degrees to radians as `deg * PI / 180` (`Angles::deg2rad`) | `math.rs` | As correct as `to_radians`; keeps outputs bit-identical |
 
-Defects, each fixed in milestone A of the [roadmap](TODO.md) unless noted:
+SCRIMMAGE's defects were kept until they were fixed on both sides; see [core
+defects](#core-defects-fixed-on-both-sides). One is left, for milestone B of
+the [roadmap](TODO.md):
 
 | Defect | Where | Matters when |
 | --- | --- | --- |
-| NoisyState reports zero angular velocity | `noisy_state.rs` | A controller, filter, or policy reads rates (MultirotorVelocity does) |
-| NoisyState's first reading is the exact truth | `noisy_state.rs` | Always: the first decision is noise-free |
-| SimpleAircraft reports +sin(pitch) climb while integrating -sin(pitch) | `simple_aircraft.rs` | Anything reads its vertical velocity |
-| SimpleAircraft reports zero turn rates | `simple_aircraft.rs` | Anything reads its angular velocity |
-| SimpleAircraft integrates a private state, losing interactions' changes to truth | `simple_aircraft.rs` | An interaction pushes it, or wind acts on it |
-| FixedWing6DOF adds wind to velocity | `fixed_wing_6dof.rs`, `sitl_state.rs` | Any mission sets wind; it must pass the negated wind |
-| A rate-limited plugin receives the phase dt, not the time since it last ran | `entity/plugin_stack.rs` | A plugin with `loop_rate` uses dt (WaypointFollower does) |
-| Each sampled spawn heading becomes the next spawn's mean; spawn values are rounded to 6 decimals (`std::to_string`) | `simcontrol/generation.rs` | A mission has heading variance; rounding moves starts by up to a micrometre |
-| Time accumulates by `+= dt` and is wound back one step at the end | `simcontrol.rs` | Analysis needs exact or unique timestamps |
-| Placeholder covariance: identity (NoisyState), 5I (NoisyContacts) | sensors | A filter reads it (milestone B, the Kalman filter) |
-| NoisyState and NoisyContacts publish a duplicate LocalNetwork message; Straight subscribes and discards both | sensors, `straight.rs` | Never for behavior; only the comparison trace reads them (cleanup) |
+| Neither sensor reports its noise covariance (SCRIMMAGE's messages carry a placeholder, identity or 5I) | sensors | A filter needs it (milestone B, the Kalman filter) |
+
+## Left behind when the comparison is retired
+
+These exist so Ripple and SCRIMMAGE can be compared directly. They are
+awkward but contained, so they stay while the comparison is a check; once the
+comparison has proven what it needs to, they go.
+
+| What | Where | Replaced by |
+| --- | --- | --- |
+| Frames written in SCRIMMAGE's protobuf format (`frames.bin`), the comparison's medium | `crates/core/src/protocol/`, `reference/frames.py` | A plain columnar format, or Rerun recordings only |
+| Spawn spread given as a variance (`position_variance_m2`, `heading_variance_deg2`), in XML and YAML | `entity.rs`, both mission parsers | A standard deviation in metres and degrees, in YAML |
+| The first entities are created one step before the start time (generation runs at start − dt) | `simcontrol.rs` | Generation at the start time |
+| XML-only quirks: `use_variance_all_ents`; PID gains in SCRIMMAGE's order, with the integral band in degrees | `parse/xml_mission.rs`, `common/pid.rs` | Nothing: XML is frozen, so they stay inside its parser until XML support is dropped |
+
+## Core defects fixed on both sides
+
+Each fix states a contract, has a focused test of it that fails on the code
+before the fix (`6d7cae3`, with the new tests copied in), and is made the same
+way on `benchmarking-edits` (one commit; files below), so the C++ comparison
+still agrees. The numbers in "Before" are those failing tests' output.
+
+| Fix | Contract | Before | Test | SCRIMMAGE files |
+| --- | --- | --- | --- | --- |
+| NoisyState angular velocity | With no rate noise, the reading has the true angular velocity | Belief rate 0 while turning; a Crazyflie with a zero-noise NoisyState tumbles (below) | `belief_reports_the_true_angular_velocity` | `NoisyState.cpp` |
+| NoisyState first reading | Sampled like every later one, from the state the motion model set up | First belief exactly truth (bias 3 m read as 0) | `the_first_reading_is_sampled_from_the_starting_state` | `NoisyState.cpp`; `Entity.cpp` initializes sensors after the motion model |
+| SimpleAircraft climb rate | Reported velocity is the change in position | Climbing at 4.3 m/s, reported 0 (or the opposite sign) | `reported_velocity_is_the_change_in_position` | `SimpleAircraft.cpp/.h` |
+| SimpleAircraft turn rates | Reported angular velocity is the change in attitude | 0.67 rad/s turn reported as 0 | `reported_angular_velocity_is_the_change_in_attitude`, `an_angle_held_at_its_limit_reports_no_rate` | same |
+| SimpleAircraft state | A change to position, attitude, or speed carries into the next step (velocity direction follows the nose) | A 50 m push undone the next step | `a_change_to_position_attitude_or_speed_carries_into_the_next_step` | same |
+| FixedWing6DOF wind | Airspeed is velocity minus wind | Flight in wind w at v + w differed from still air by 5.7 m in 2 s | `flight_in_wind_is_flight_in_still_air_carried_by_the_wind`, `airspeed_is_speed_through_the_air` | `FixedWing6DOF.cpp` |
+| Rate-limited plugins | dt is the time since the plugin last ran; it runs once per period from its first tick | 5 Hz at 10 Hz ran at 0, 0.1, 0.3, 0.5 s, each with dt 0.1 | `a_rate_limited_plugin_runs_once_per_period_...`, `loop_rate` unit tests | `EntityPlugin.cpp/.h`, `SimControl.cpp` |
+| Spawn sampling | Every spawn is sampled around the configured start, unrounded | Mean heading of 200 spawns 49.8 degrees for a configured 90 | `every_spawn_is_sampled_around_the_configured_start` | `SimControl.cpp` |
+| Time | Time is start + steps x dt; a frame is labeled with its state's time; every label is unique | Frame 0 labeled 0.1 s; the final label repeated | `time_is_the_step_count_times_dt_...`, `a_spawn_rate_equal_to_the_tick_rate_spawns_every_tick` | `SimControl.cpp/.h` |
+| MpeContact timing | A zero-noise reading is the true state, contact or not | Reading 0.547 m/s against a true 0.447 m/s on a contact step | `a_zero_noise_reading_is_the_true_state_through_mpe_contact` | none (Rust-only; MPE2 is the reference) |
+| Duplicate sensor messages | Readings and decisions unchanged; the unused messages are gone | NoisyState and NoisyContacts published a LocalNetwork copy only Straight received, and discarded | the comparison below | none: in SCRIMMAGE the message is the sensor's output |
+
+Details worth knowing:
+
+- **Limits in SimpleAircraft.** RK4's inner stages carried roll past its
+  limit, so at a 30 degree bank the aircraft turned as if banked up to about
+  36 degrees (12% faster at dt 0.1 s) and the reported attitude overshot. Now
+  a value at a limit stays there while the command pushes outward (within
+  1e-9 rad, which absorbs reading an angle back from the quaternion), and the
+  limits apply after each step too. Without that allowance one-ulp
+  differences between macOS and Linux math libraries decided whether a held
+  bank moved, and `world-networks` diverged at 4.2 s. Initialization also no
+  longer negates the mission's roll, and its initial velocity includes pitch.
+- **SimpleAircraft's roll sign.** SCRIMMAGE kept roll with the opposite sign
+  to the state's (positive banked left, to suit `yaw rate = v / R tan(roll)`),
+  negated it when writing the state but not when reading it, and
+  SimpleAircraftControllerPID's roll mode carried a compensating minus. The
+  model now uses the state's roll (positive banks right and turns right), the
+  turn rate carries the minus, and the controller's heading loop negates its
+  output; `a_positive_roll_rate_banks_right_and_turns_right` checks it. A
+  `roll_rate` command now has the opposite sign; no mission sends one.
+  Trajectories are unchanged, since negation is exact in floating point:
+  `reference/equivalence.py` (42 cases, 1, 2, and 8 workers) found frames,
+  events, and summaries byte-identical. Traces differ in exactly two ways:
+  the traced `roll_rate` output is negated, and a level aircraft's belief
+  quaternion holds 0.0 where it held -0.0 (the old negated zero roll). On
+  `benchmarking-edits` it is a second commit (`SimpleAircraft.cpp/.h`,
+  `SimpleAircraftControllerPID.cpp`); the C++ comparison passes 15 of 15.
+- **Rate and spawn schedules round.** With time counted rather than summed,
+  t + 1/rate can land just after the tick it means. A rate-limited plugin and
+  a spawn batch now run on the tick nearest their due time; without that a
+  10 Hz group in a 10 Hz simulation skipped a spawn at 1.3 s, and a 0.2 Hz
+  sensor ran 0.1 s late.
+- **Missions.** `fixed-wing-6dof.xml` and `reference/inputs/fixed-wing-recovery.xml`
+  now give the wind's physical sign (`wind_E="-3" wind_N="2"`), so they fly
+  exactly as before. In `networks-local-global.xml` the low aircraft's ground
+  hit came only from the exact first reading (a +20 m altitude bias present
+  from the start makes Straight hold its true altitude); it now starts nose
+  down instead.
+- **Trace.** Ripple records each sensor reading; `reference/traces.py` pairs
+  it with SCRIMMAGE's publication of the same measurement and skips that
+  publication's deliveries. Non-interference is now traced against untraced
+  SCRIMMAGE; the comparison branch no longer matches unmodified SCRIMMAGE on
+  any mission (frame labels alone differ), which `cpp_baseline_equality`
+  records.
+- **Crazyflie with NoisyState.** `missions/multirotor-velocity.yaml` with a
+  zero-noise NoisyState (and LocalNetwork, which the old sensor needed), over
+  2-10 s: before, the moving vehicles reached 90-150 degrees of tilt at
+  5 rad/s and ended 15-42 m/s off their commands; after, at most 7.2 degrees
+  and 0.15 rad/s, as with perfect belief (velocity error 0.004 m/s).
+- **Comparisons after.** The C++ matrix (15 missions, against
+  `benchmarking-edits` with these fixes) passes: positions agree to
+  4.9e-12 m, 812 sensor states match, and 722 SCRIMMAGE sensor-message
+  deliveries are skipped as described. MPE2 parity: all 100 episodes
+  bit-identical (56 before; the 44 others were contact episodes). The other
+  checks run in the full suite.
 
 ## Findings from the comparison trace
 
 - C++ Straight subscribes to `ContactsWithCovariances` and stores the map
-  without reading it. Rust Straight subscribes and discards the messages so
-  deliveries match; behavior is unaffected.
+  without reading it, and steers by `StateWithCovariance`, which equals belief.
+  Rust Straight subscribes to neither; the trace skips those deliveries.
 - C++ `VariableIO::connect` replaces a plugin's output index with the next
   plugin's input index. Outputs the next plugin does not read are silently
   dropped, and reading them returns NaN with a warning. The trace records only
   outputs the next plugin reads, in both implementations.
-- C++ logs the final tick twice: before its step and as the terminal frame in
-  `finalize()`. Both traces record both.
+- C++ logged the final tick twice, before its step and as the terminal frame
+  in `finalize()`; with the time fix the terminal frame has its own time.
 
 ## Substep order: a C++ regression, fixed on the comparison branch
 

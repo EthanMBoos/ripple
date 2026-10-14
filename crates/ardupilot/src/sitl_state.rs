@@ -141,9 +141,8 @@ fn sample(
     gravity_mps2: f64,
 ) -> SitlSample {
     let attitude = truth.orientation_world_from_body;
-    // FixedWing6DOF adds wind to velocity, so airspeed uses the same sign; fix
-    // both together (docs/TODO.md, milestone A).
-    let airspeed_mps = (truth.velocity_world_mps + wind_world_mps).norm();
+    // Speed through the air, as FixedWing6DOF flies it.
+    let airspeed_mps = (truth.velocity_world_mps - wind_world_mps).norm();
 
     // Specific force is acceleration minus gravity; gravity points down (-z in ENU).
     let gravity_world_mps2 = Vec3::new(0.0, 0.0, -gravity_mps2);
@@ -256,16 +255,16 @@ mod tests {
     }
 
     #[test]
-    fn airspeed_adds_wind_like_fixed_wing_6dof() {
+    fn airspeed_is_speed_through_the_air() {
         let truth = KinematicState {
             velocity_world_mps: Vec3::new(20.0, 0.0, 0.0),
             ..state(0.0, 0.0, 0.0)
         };
         let calm = sample(&truth, Vec3::zeros(), Vec3::zeros(), 9.81);
         assert!((calm.airspeed_mps - 20.0).abs() < 1e-12);
-        // wind_E = +5 on an eastbound aircraft is a headwind in FixedWing6DOF.
+        // wind_E = +5 on an eastbound aircraft is a tailwind.
         let windy = sample(&truth, Vec3::zeros(), Vec3::new(5.0, 0.0, 0.0), 9.81);
-        assert!((windy.airspeed_mps - 25.0).abs() < 1e-12);
+        assert!((windy.airspeed_mps - 15.0).abs() < 1e-12);
     }
 
     #[test]

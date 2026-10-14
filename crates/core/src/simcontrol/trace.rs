@@ -2,16 +2,11 @@
 //!
 //! The records match the C++ `benchmarking-edits` branch
 //! (`src/common/Trace.cpp`) so `reference/traces.py` can compare them:
-//! message deliveries, published sensor payloads, each entity's belief when
-//! its frame is logged, and autonomy/controller outputs after all controller
-//! substeps. Tracing only reads simulation state, so outputs are identical
-//! with it on or off.
-//!
-//! TODO(estimation): record each sensor's reading (from `publish_reading`) in
-//! place of the LocalNetwork publications that `sensor_states` in
-//! pubsub/messages.rs picks up, so the sensor messages can be removed and the
-//! C++ check still compares measured values. reference/traces.py then pairs
-//! C++ publications with these records and ignores C++'s extra deliveries.
+//! message deliveries, sensor readings, each entity's belief when its frame is
+//! logged, and autonomy/controller outputs after all controller substeps.
+//! A reading record holds what C++ publishes as a sensor message, which
+//! `reference/traces.py` pairs with it. Tracing only reads simulation state, so
+//! outputs are identical with it on or off.
 
 use std::io::Write;
 
@@ -21,7 +16,6 @@ use serde_json::{Value, json};
 use crate::{
     entity::Entity,
     math::{KinematicState, Vec3},
-    plugin::sensor::StateWithCovariance,
     pubsub::messages::{MessageEndpoint, NetworkTrace},
 };
 
@@ -75,22 +69,27 @@ impl Trace {
         Ok(())
     }
 
-    /// Sensor payload publications, then deliveries, from one network phase.
-    pub(crate) fn network(&mut self, network: &NetworkTrace) -> Result<()> {
-        for publication in &network.publications {
-            let states: Vec<Value> = publication
-                .states
-                .iter()
-                .map(|(id, state)| state_record(*id, state))
-                .collect();
-            self.record(json!({
-                "kind": "publication",
-                "t": publication.time_s,
-                "topic": publication.topic,
-                "from": endpoint(&publication.sender),
-                "states": states,
-            }))?;
+    /// Each own-state and contact reading the sensors took this tick.
+    pub(crate) fn readings(&mut self, time_s: f64, entities: &[Entity]) -> Result<()> {
+        for entity in entities {
+            for (sensor, states) in entity.pending_measurements()? {
+                let states: Vec<Value> = states
+                    .into_iter()
+                    .map(|(id, state)| state_record(id, state))
+                    .collect();
+                self.record(json!({
+                    "kind": "reading",
+                    "t": time_s,
+                    "from": endpoint(sensor),
+                    "states": states,
+                }))?;
+            }
         }
+        Ok(())
+    }
+
+    /// Deliveries from one network phase.
+    pub(crate) fn network(&mut self, network: &NetworkTrace) -> Result<()> {
         for delivery in &network.deliveries {
             let mut record = json!({
                 "kind": if delivery.deliver_at_s.is_some() { "scheduled_delivery" } else { "delivery" },
@@ -121,22 +120,14 @@ fn vector(v: Vec3) -> [Value; 3] {
     [number(v.x), number(v.y), number(v.z)]
 }
 
-fn state_record(id: Option<i32>, measurement: &StateWithCovariance) -> Value {
-    let state = &measurement.state;
+fn state_record(id: Option<i32>, state: &KinematicState) -> Value {
     let q = state.orientation_world_from_body;
-    let mut covariance = Vec::new();
-    for row in 0..3 {
-        for column in 0..3 {
-            covariance.push(number(measurement.covariance[(row, column)]));
-        }
-    }
     json!({
         "id": id,
         "p": vector(state.position_world_m),
         "v": vector(state.velocity_world_mps),
         "q": [number(q.w), number(q.x), number(q.y), number(q.z)],
         "w": vector(state.angular_velocity_world_radps),
-        "cov": covariance,
     })
 }
 

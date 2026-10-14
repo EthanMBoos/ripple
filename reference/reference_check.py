@@ -3,13 +3,11 @@
 
 Builds two C++ branches from the sibling checkout: the unmodified baseline
 (Ubuntu-24.04) and the comparison branch (benchmarking-edits), which adds opt-in
-instrumentation, restores interleaved controller/motion substeps, fixes
-AircraftPIDController (its timestep and default altitude gain), and evaluates
-FixedWing6DOF and Multirotor forces at every RK4 stage.
+instrumentation and fixes SCRIMMAGE's documented defects (docs/REFERENCE_NOTES.md),
+among them frame timestamps, so its outputs differ from the baseline's by design.
 Per mission, the instrumented build with tracing must write the same frames and
-summaries as without it, and with motion_multiplier 1 and none of those three
-plugins both must match the baseline (non-interference).
-Otherwise the baseline differs by design and its equality is only recorded. The comparison run adds
+summaries as without it (non-interference); equality with the baseline is only
+recorded. The comparison run adds
 SCRIMMAGE_LIBCXX_SPAWN_RANDOM=1 and is compared with Rust frames, summaries, and
 traces. Requires Python 3.10+, Docker, Cargo, and the
 sibling SCRIMMAGE checkout. No host C++ toolchain is needed.
@@ -270,7 +268,8 @@ def compare_case(cpp_logs, cpp_trace, serial, traced, mission):
     compare_summaries(cpp_logs / "summary.csv", serial / "summary.csv", summary)
     agreement = "agree"
     if summary.mismatch_count:
-        final_s = read_frames(serial / "frames.bin")[-1].time_s - run["dt_s"]
+        # The terminal frame is at the end time, where the metrics report.
+        final_s = read_frames(serial / "frames.bin")[-1].time_s
         rules = [(rule, path) for rule, path in (("cpp", cpp_logs / "summary.csv"),
                                                    ("rust", serial / "summary.csv"))]
         explained = counts_match(cpp_logs / "summary.csv", serial / "summary.csv") and all(
@@ -288,16 +287,6 @@ def motion_multiplier(mission):
     return int(run.get("motion_multiplier", "1")) if run is not None else 1
 
 
-FIXED_PLUGINS = {"AircraftPIDController", "FixedWing6DOF", "Multirotor"}
-
-
-def uses_fixed_plugin(mission):
-    """Whether the mission uses a controller or motion model the comparison branch fixes."""
-    root = ET.parse(mission).getroot()
-    elements = [*root.iter("controller"), *root.iter("motion_model")]
-    return any(element.text and element.text.strip() in FIXED_PLUGINS for element in elements)
-
-
 def check_mission(args, case, mission, directory, images, rust):
     directory.mkdir()
     result = {"case": case, "mission": str(mission), "passed": False}
@@ -305,22 +294,18 @@ def check_mission(args, case, mission, directory, images, rust):
         inputs = directory / "input"
         result["input"] = prepare_mission(mission, inputs)
         effective = inputs / "effective.xml"
-        # Non-interference: instrumentation must not change C++ outputs. The
-        # comparison branch also interleaves substeps, which changes outputs
-        # only when there is more than one, and fixes AircraftPIDController,
-        # FixedWing6DOF, and Multirotor (docs/REFERENCE_NOTES.md).
+        # Non-interference: tracing must not change C++ outputs. The comparison
+        # branch's fixes change them from the baseline's (docs/REFERENCE_NOTES.md),
+        # so baseline equality is recorded, not required.
         baseline = run_cpp(args, images["baseline"], directory / "cpp-baseline", effective, {})
         untraced = run_cpp(args, images["instrumented"], directory / "cpp-untraced",
                            effective, UNTRACED_ENV)
         traced = run_cpp(args, images["instrumented"], directory / "cpp-traced",
                          effective, TRACED_ENV)
-        substeps = motion_multiplier(effective)
-        reference = baseline if substeps == 1 and not uses_fixed_plugin(effective) else untraced
-        result["motion_multiplier"] = substeps
+        result["motion_multiplier"] = motion_multiplier(effective)
         result["cpp_non_interference"] = {
-            variant: {name: sha256(logs / name) == sha256(reference / name)
-                      for name in CPP_OUTPUT_FILES}
-            for variant, logs in (("untraced", untraced), ("traced", traced))
+            "traced": {name: sha256(traced / name) == sha256(untraced / name)
+                       for name in CPP_OUTPUT_FILES}
         }
         result["cpp_baseline_equality"] = {
             name: sha256(untraced / name) == sha256(baseline / name) for name in CPP_OUTPUT_FILES

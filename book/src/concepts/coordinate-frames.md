@@ -122,17 +122,10 @@ You only need these details when reading or modifying the model itself:
 
 | Model | Internal convention |
 | --- | --- |
-| SimpleAircraft | Its private "model roll" has the **opposite sign** of the state's roll. Its model pitch uses the state's sign: positive pitch descends. Its controller inputs (`roll_rate`, `pitch_rate`) are in this model frame. |
+| SimpleAircraft | Uses the state's roll, pitch, and yaw directly. Its `roll_rate` and `pitch_rate` inputs are the rates of those angles: positive roll rate banks right (and the bank turns it right), positive pitch rate lowers the nose. |
 | FixedWing6DOF | Works internally in a **forward-right-down** body frame, the usual aerospace convention. It converts at the boundary by rotating 180° about the x-axis. |
 | Multirotor | Uses the standard forward-left-up body frame; no conversion needed. |
 | SingleIntegrator | Has no attitude dynamics. It points the vehicle along its velocity. |
-
-> [!CAUTION]
-> Some models have known defects. For example, SimpleAircraft reports
-> vertical velocity with the opposite sign of its actual climb or descent.
-> Each case is marked with a "Known defect" comment next to the equation and
-> listed in milestone A of `docs/TODO.md`. Read those comments before trusting
-> a model's output in an experiment.
 
 ## Quick reference
 

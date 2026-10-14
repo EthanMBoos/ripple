@@ -178,18 +178,20 @@ The checker builds two committed branches of `../scrimmage`:
   rotor moments as r x F along each tilted rotor axis, and keeps idle thrust
   at `omega_min` ([reference
   notes](../docs/REFERENCE_NOTES.md#multirotor-three-c-defects-fixed-on-the-comparison-branch)).
-  With neither variable set, `motion_multiplier` 1, and none of those three
-  plugins, the branch behaves exactly like the reference.
+  And it fixes the core defects: time, frame timestamps, spawn sampling,
+  rate-limited plugins, NoisyState, SimpleAircraft, and the wind sign
+  ([reference
+  notes](../docs/REFERENCE_NOTES.md#core-defects-fixed-on-both-sides)).
+  Every mission's frame timestamps change, so no mission's output matches the
+  reference.
 
 ### Criteria
 
 Each mission runs C++ four times. The instrumented build with and without
-tracing must write byte-identical `frames.bin` and `summary.csv`, and with
-`motion_multiplier` 1 and no AircraftPIDController, FixedWing6DOF, or Multirotor
-both must also match the unmodified build (`cpp_non_interference` in
-`result.json`); a difference fails the case. With more substeps or one of those
-plugins the unmodified build differs by design, and `cpp_baseline_equality`
-records it. The fourth run, with tracing and the libc++-compatible spawn stream,
+tracing must write byte-identical `frames.bin` and `summary.csv`
+(`cpp_non_interference` in `result.json`); a difference fails the case. The
+unmodified build differs by design, and `cpp_baseline_equality` records it.
+The fourth run, with tracing and the libc++-compatible spawn stream,
 is the one compared with Rust. Rust runs once more with `--trace`, which must
 leave its frames, events, and summary byte-identical (`trace_equality`).
 
@@ -203,7 +205,7 @@ such as sensor noise, stay on the original engine.
 | Record | When | Compared |
 | --- | --- | --- |
 | `delivery` | A message reaches a subscriber | Per tick, receiver, network, and topic: senders and event entity IDs, in order |
-| `publication` | A plugin publishes a sensor payload | Contact IDs in order; state within frame tolerances; covariance within 1e-9 |
+| `publication` (C++), `reading` (Rust) | A sensor measures own state or contacts; C++ publishes it, Rust hands it to estimators | Paired by tick and sensor: contact IDs in order; state within frame tolerances. C++'s deliveries of the publication are skipped and counted |
 | `belief` | Each entity when its frame is logged | Within frame tolerances |
 | `output` | Each autonomy/controller port after the last substep | Within 1e-8 absolute |
 

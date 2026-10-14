@@ -1,6 +1,6 @@
 //! A unit-mass point pushed by a force, with MPE's damping. Rust-only.
-//! Motion phase. Read with the MpeContact interaction, which adds MPE's push
-//! between overlapping agents.
+//! Motion phase. Read with the MpeContact interaction, which applies MPE's
+//! push between overlapping agents as forces added to the commanded one.
 //!
 //! Fidelity
 //! - Source: the Multi-Agent Particle Environment as Farama's MPE2 v1.1.1
@@ -71,7 +71,11 @@ impl Plugin for MpeParticle {
 
 impl MotionModel for MpeParticle {
     fn step(&mut self, context: &mut MotionContext<'_>, io: &mut PluginIo) -> Result<Update> {
-        let force_n = Vec3::new(io.read("force_x")?, io.read("force_y")?, 0.0);
+        let mut force_n = Vec3::new(io.read("force_x")?, io.read("force_y")?, 0.0);
+        // MPE adds each push to the agent's force in turn.
+        for push_n in context.applied_forces_world_n {
+            force_n = push_n + force_n;
+        }
         let dt_s = context.time.dt_s;
         let state = &mut context.truth;
         state.position_world_m += state.velocity_world_mps * dt_s;
@@ -118,6 +122,7 @@ mod tests {
                 truth: &mut truth,
                 messages: &mut Messages::default(),
                 terrain: None,
+                applied_forces_world_n: &[],
             },
             &mut io,
         )?;

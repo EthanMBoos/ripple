@@ -38,6 +38,7 @@ pub struct EntitySnapshot {
 pub(crate) struct SpawnConfig {
     pub position_world_m: Vec3,
     pub position_variance_world_m2: Vec3,
+    pub heading_world_deg: f64,
     pub heading_variance_deg2: f64,
     pub randomize_every_spawn: bool,
     pub requested_id: Option<i32>,
@@ -69,6 +70,7 @@ impl EntityDefinition {
             spawn: SpawnConfig {
                 position_world_m: config.position_m,
                 position_variance_world_m2: config.position_variance_m2,
+                heading_world_deg: config.heading_deg,
                 heading_variance_deg2: config.heading_variance_deg2,
                 randomize_every_spawn: config.randomize_every_spawn,
                 requested_id: config.id,
@@ -107,6 +109,8 @@ pub struct Entity {
     active: bool,
     /// Estimators and decision plugins have been initialized.
     started: bool,
+    /// Forces from the last interaction phase, for the next motion phase.
+    applied_forces_world_n: Vec<Vec3>,
     plugins: PluginStack,
 }
 
@@ -168,6 +172,7 @@ impl Entity {
             born_s,
             active: true,
             started: false,
+            applied_forces_world_n: Vec::new(),
             plugins,
         })
     }
@@ -192,6 +197,14 @@ impl Entity {
     /// World interactions may change physical state after the motion phase.
     pub fn truth_mut(&mut self) -> &mut KinematicState {
         &mut self.truth
+    }
+    /// An interaction's force on this entity, acting during the next motion
+    /// phase (see `MotionContext::applied_forces_world_n`).
+    pub fn apply_force(&mut self, force_world_n: Vec3) {
+        self.applied_forces_world_n.push(force_world_n);
+    }
+    pub(crate) fn clear_applied_forces(&mut self) {
+        self.applied_forces_world_n.clear();
     }
     pub fn health(&self) -> i32 {
         self.health
@@ -238,6 +251,9 @@ impl Entity {
     pub fn readings(&self) -> &Readings {
         self.plugins.readings()
     }
+    pub(crate) fn pending_measurements(&self) -> Result<Vec<plugin_stack::Measurement<'_>>> {
+        self.plugins.pending_measurements()
+    }
 
     /// Estimators, then decision plugins, from the startup readings and the
     /// population; does nothing once started.
@@ -270,8 +286,13 @@ impl Entity {
     }
 
     pub(crate) fn step_motion(&mut self, time: StepTime, terrain: Option<&Terrain>) -> Result<()> {
-        self.plugins
-            .motion(self.info(), time, &mut self.truth, terrain)
+        self.plugins.motion(
+            self.info(),
+            time,
+            &mut self.truth,
+            &self.applied_forces_world_n,
+            terrain,
+        )
     }
 
     /// Between motion substeps; see `PluginStack::follow_perfect_state`.

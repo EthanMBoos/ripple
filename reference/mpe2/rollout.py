@@ -3,8 +3,7 @@
     python rollout.py SEEDS OUTPUT.json
 
 Run by reference/mpe_parity.py in an environment with MPE2 installed. For
-each seed: reset with that seed, round the starting positions to 6 decimals
-(Ripple's spawn does, as C++ does), then act with continuous actions drawn
+each seed: reset with that seed, then act with continuous actions drawn
 uniformly from [0, 1]^5 by numpy's generator seeded the same way. Records
 the agents' and landmarks' starting positions, the force each agent's action
 became (MPE's `agent.action.u`, after the 5x sensitivity), and after every
@@ -21,8 +20,6 @@ def episode(seed):
     env = simple_spread_v3.parallel_env(continuous_actions=True)
     env.reset(seed=seed)
     world = env.unwrapped.world
-    for entity in world.agents + world.landmarks:
-        entity.state.p_pos = np.array([float(f"{value:.6f}") for value in entity.state.p_pos])
     observations = {a.name: env.unwrapped.observe(a.name) for a in world.agents}
     rng = np.random.default_rng(seed)
     record = dict(

@@ -205,7 +205,6 @@ run:
   seed: 1
 
 networks:
-  LocalNetwork:           # NoisyState also publishes its reading here
   GlobalNetwork:          # WaypointFollower listens here for route changes
 
 templates:

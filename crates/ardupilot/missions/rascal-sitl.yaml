@@ -15,8 +15,8 @@
 # ArduPlane cannot arm while maneuvering and steers the surfaces even disarmed.
 #
 # Wind: set wind_E and wind_N (m/s) on both the sensor and the motion model.
-# FixedWing6DOF adds wind to velocity, so wind_E 5 on an eastbound aircraft is
-# a headwind.
+# They are the air's velocity over the ground, so wind_E 5 on an eastbound
+# aircraft is a tailwind.
 format_version: 1
 name: Rascal SITL
 

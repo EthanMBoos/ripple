@@ -2,7 +2,7 @@
 use crate::estimator::{Inputs, Source};
 use crate::plugin::*;
 use crate::{
-    KinematicState,
+    KinematicState, Vec3,
     common::{Rate, Terrain},
     scenario::EntityGroupConfig,
 };
@@ -439,6 +439,10 @@ fn endpoint(entity_id: i32, plugin: String) -> MessageEndpoint {
     }
 }
 
+/// A sensor's endpoint and its measured states: (contact id, or None for own
+/// state; state).
+pub(crate) type Measurement<'a> = (&'a MessageEndpoint, Vec<(Option<i32>, &'a KinematicState)>);
+
 struct Slot<T: ?Sized> {
     name: String,
     endpoint: MessageEndpoint,
@@ -508,11 +512,14 @@ impl Slot<dyn AgentBehavior> {
         state: &KinematicState,
         contacts: KnownContacts<'_>,
     ) -> Result<Update> {
-        // Known defect: a rate-limited plugin receives the phase dt, not the time
-        // since it last ran; wrong for any plugin that uses dt (docs/TODO.md, milestone A).
-        if !self.rate.due(time.dt_s) {
+        // A rate-limited plugin's dt is the time since it last ran.
+        let Some(elapsed_s) = self.rate.due(time.dt_s) else {
             return Ok(Update::Applied);
-        }
+        };
+        let time = StepTime {
+            dt_s: elapsed_s,
+            ..time
+        };
         self.messages.time_s = time.time_s;
         let mut context = AgentContext {
             entity,
@@ -564,7 +571,7 @@ fn handle_update(update: Update, stop_requested: &mut bool) {
     }
 }
 impl PluginStack {
-    /// Sensors, then motion. Estimators and decision plugins
+    /// Motion, then sensors. Estimators and decision plugins
     /// start later, in `start`, once the whole population exists.
     pub fn initialize(
         &mut self,
@@ -573,7 +580,19 @@ impl PluginStack {
         truth: &mut KinematicState,
         terrain: Option<&Terrain>,
     ) -> Result<()> {
-        // A sensor's startup reading sees the initial truth before motion normalizes it.
+        self.motion.messages.time_s = time.time_s;
+        self.motion
+            .plugin
+            .initialize(&mut MotionContext {
+                entity,
+                time,
+                truth,
+                messages: &mut self.motion.messages,
+                terrain,
+                applied_forces_world_n: &[],
+            })
+            .with_context(|| format!("initialize '{}'", self.motion.name))?;
+        // A sensor's startup reading sees the initial truth as motion set it up.
         for (sensor, (name, kind)) in self.sensors.iter_mut().zip(&self.sensor_readings) {
             sensor.messages.time_s = time.time_s;
             sensor
@@ -591,17 +610,6 @@ impl PluginStack {
                 })
                 .with_context(|| format!("initialize '{}'", sensor.name))?;
         }
-        self.motion.messages.time_s = time.time_s;
-        self.motion
-            .plugin
-            .initialize(&mut MotionContext {
-                entity,
-                time,
-                truth,
-                messages: &mut self.motion.messages,
-                terrain,
-            })
-            .with_context(|| format!("initialize '{}'", self.motion.name))?;
         Ok(())
     }
     /// Sets the first belief from the startup readings and `perfect_contacts` (the
@@ -663,6 +671,32 @@ impl PluginStack {
     }
     pub fn readings(&self) -> &Readings {
         &self.readings
+    }
+    /// Own-state and contact readings taken this tick, not yet delivered, with
+    /// their sensors' endpoints: (contact id, or None for own state; state).
+    /// For the comparison trace.
+    pub(crate) fn pending_measurements(&self) -> Result<Vec<Measurement<'_>>> {
+        let mut measurements = Vec::new();
+        for (slot, (name, kind)) in self.sensors.iter().zip(&self.sensor_readings) {
+            let states = match kind {
+                ReadingKind::State => self
+                    .pending
+                    .get::<KinematicState>(name)?
+                    .map(|reading| vec![(None, &reading.value)]),
+                ReadingKind::Contacts => self.pending.get::<ContactList>(name)?.map(|reading| {
+                    reading
+                        .value
+                        .iter()
+                        .map(|contact| (Some(contact.id), &contact.state))
+                        .collect()
+                }),
+                ReadingKind::Other => None,
+            };
+            if let Some(states) = states {
+                measurements.push((&slot.endpoint, states));
+            }
+        }
+        Ok(measurements)
     }
     /// Autonomy then controller outputs as (plugin, port, value), for the comparison
     /// trace. Like C++ VariableIO after connect(), only ports the next plugin reads.
@@ -738,6 +772,7 @@ impl PluginStack {
         entity: EntityInfo,
         time: StepTime,
         truth: &mut KinematicState,
+        applied_forces_world_n: &[Vec3],
         terrain: Option<&Terrain>,
     ) -> Result<()> {
         let upstream = self
@@ -759,6 +794,7 @@ impl PluginStack {
                     truth,
                     messages: &mut self.motion.messages,
                     terrain,
+                    applied_forces_world_n,
                 },
                 &mut self.motion.io,
             )
@@ -775,7 +811,8 @@ impl PluginStack {
     ) -> Result<()> {
         for (sensor, (name, kind)) in self.sensors.iter_mut().zip(&self.sensor_readings) {
             sensor.messages.time_s = time.time_s;
-            if !sensor.rate.due(time.dt_s) {
+            // A sensor's dt stays the tick's: its reading is taken at the tick's end.
+            if sensor.rate.due(time.dt_s).is_none() {
                 continue;
             }
             let update = sensor

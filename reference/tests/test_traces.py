@@ -66,19 +66,35 @@ class TraceComparisonTests(unittest.TestCase):
         self.assertEqual(result.max_output_error_port, "Straight.desired_speed")
         self.assertEqual(result.mismatch_count, 3)
 
-    def test_published_payloads_compare_ids_values_and_covariance(self):
-        def publication(x=0.0, cov=1.0, ids=(2,)):
+    def test_cpp_publications_pair_with_rust_readings(self):
+        def states(x, ids, cov=None):
             states = [{"id": i, "p": [x, 0, 0], "v": [0, 0, 0], "q": [1, 0, 0, 0],
-                       "w": [0, 0, 0], "cov": [cov, 0, 0, 0, cov, 0, 0, 0, cov]} for i in ids]
+                       "w": [0, 0, 0]} for i in ids]
+            for state in states:
+                if cov is not None:
+                    state["cov"] = [cov, 0, 0, 0, cov, 0, 0, 0, cov]
+            return states
+        sensor = [1, "NoisyContacts0"]
+
+        def publication(x=0.0, ids=(2,)):
             return {"kind": "publication", "t": 0.0, "topic": "ContactsWithCovariances",
-                    "from": [1, "NoisyContacts"], "states": states}
-        reference = self.base() + [publication()]
-        self.assertTrue(traces.compare_traces(reference, self.base() + [publication()]).passed)
-        result = traces.compare_traces(reference, self.base() + [publication(cov=5.0)])
-        self.assertEqual(result.max_payload_covariance_error, 4.0)
-        self.assertFalse(result.passed)
+                    "from": sensor, "states": states(x, ids, cov=5.0)}
+
+        def reading(x=0.0, ids=(2,)):
+            return {"kind": "reading", "t": 0.0, "from": sensor, "states": states(x, ids)}
+        # C++ also delivers its publication to Straight; Rust has no such message.
+        cpp = self.base() + [publication(), delivery(0.0, sensor, [1, "Straight"],
+                                                     topic="ContactsWithCovariances")]
+        result = traces.compare_traces(cpp, self.base() + [reading()])
+        self.assertTrue(result.passed, result.first_mismatches)
+        self.assertEqual((result.sensor_states, result.skipped_sensor_deliveries), (1, 1))
+        moved = traces.compare_traces(cpp, self.base() + [reading(x=0.5)])
+        self.assertEqual(moved.max_payload_position_error_m, 0.5)
+        self.assertFalse(moved.passed)
         self.assertIn("contact IDs differ", traces.compare_traces(
-            reference, self.base() + [publication(ids=(3,))]).first_mismatches[0])
+            cpp, self.base() + [reading(ids=(3,))]).first_mismatches[0])
+        self.assertIn("only in reference", traces.compare_traces(
+            cpp, self.base()).first_mismatches[0])
 
     def test_nonfinite_strings_decode_and_matching_nan_outputs_pass(self):
         self.assertTrue(traces.decode_numbers({"value": "NaN"})["value"] != 0)

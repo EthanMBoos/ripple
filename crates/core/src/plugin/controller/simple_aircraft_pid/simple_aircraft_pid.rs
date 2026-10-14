@@ -1,7 +1,7 @@
 //! Heading, altitude, and airspeed PID loops for SimpleAircraft.
 //!
 //! Derived from SCRIMMAGE: src/plugins/controller/SimpleAircraftControllerPID/SimpleAircraftControllerPID.cpp.
-//! Controller phase: read desired/current state, write throttle and model angular rates.
+//! Controller phase: read desired/current state, write throttle and roll and pitch rates.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;
@@ -98,19 +98,22 @@ impl Controller for SimpleAircraftControllerPid {
         let altitude_world_m = state.position_world_m.z;
         let speed_mps = math::norm(state.velocity_world_mps);
 
-        let roll_rate_model_radps =
-            self.heading_pid
+        // Heading increases counterclockwise, and a right bank (positive roll)
+        // turns clockwise, so a heading short of the goal calls for rolling left.
+        let roll_rate_radps =
+            -self
+                .heading_pid
                 .step(desired_heading_world_rad, heading_world_rad, dt_s);
         let altitude_output =
             self.altitude_pid
                 .step(desired_altitude_world_m, altitude_world_m, dt_s);
-        // SimpleAircraft's positive model pitch points downward.
-        let pitch_rate_model_radps = -altitude_output;
+        // Positive pitch is nose down.
+        let pitch_rate_radps = -altitude_output;
         let throttle = self.speed_pid.step(desired_speed_mps, speed_mps, dt_s);
 
         io.write("throttle", throttle)?;
-        io.write("roll_rate", roll_rate_model_radps)?;
-        io.write("pitch_rate", pitch_rate_model_radps)?;
+        io.write("roll_rate", roll_rate_radps)?;
+        io.write("pitch_rate", pitch_rate_radps)?;
         Ok(Update::Applied)
     }
 }

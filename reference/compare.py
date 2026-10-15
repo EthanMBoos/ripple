@@ -83,7 +83,7 @@ def compare_frames(reference, candidate):
                 continue
             result.compared_entity_states += 1
             if (expected.team_id != actual.team_id
-                    or expected.sub_swarm_id != actual.sub_swarm_id
+                    or expected.group_index != actual.group_index
                     or expected.active != actual.active or expected.kind != actual.kind):
                 result.mismatch(f"frame {index}, entity {entity_id}: contact metadata differs")
             position = distance(expected.position, actual.position)

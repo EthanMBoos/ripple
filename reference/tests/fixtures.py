@@ -15,7 +15,7 @@ _SCENARIO = {
     "networks": [plugin("GlobalNetwork"), plugin("SphereNetwork", "CommsNetwork", range_m=100)],
     "metrics": [plugin("SimpleCollisionMetrics")],
     "entities": [{
-        "label": "blue", "team": 1, "color": [255, 255, 255], "visual_model": "aircraft",
+        "label": "blue", "team": 1, "visual_model": "aircraft",
         "health": 1, "id": None, "count": 64, "spawn": None,
         "position_m": [23.0, 0.0, 200.0], "position_variance_m2": [0.0, 0.0, 0.0],
         "heading_deg": 0.0, "heading_variance_deg2": 0.0, "roll_deg": 0.0, "pitch_deg": 0.0,

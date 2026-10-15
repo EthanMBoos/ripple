@@ -117,7 +117,7 @@ to this before writing the state.
 
 ## Models with their own conventions
 
-Some motion models were ported from C++ with their internal conventions intact.
+Some motion models keep their own conventions internally.
 You only need these details when reading or modifying the model itself:
 
 | Model | Internal convention |

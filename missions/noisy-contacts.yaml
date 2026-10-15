@@ -31,10 +31,8 @@ entities:
   blue:
     template: point_agent
     team: 1
-    color: [70, 130, 255]
     position_m: [0, -5, 0]
   red:
     template: point_agent
     team: 2
-    color: [255, 100, 70]
     position_m: [0, 5, 0]

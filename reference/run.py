@@ -186,7 +186,7 @@ def decode_frames(payloads, descriptions):
             if abs(sum(part * part for part in orientation) - 1.0) >= 1e-8:
                 raise ValueError("orientation is not a unit quaternion")
             entities[entity_id] = Entity(
-                id=entity_id, team_id=team, sub_swarm_id=group,
+                id=entity_id, team_id=team, group_index=group,
                 kind=kind, active=bool(active[-1]) if active else False,
                 position=vector(state, 1, "position"),
                 orientation=orientation,

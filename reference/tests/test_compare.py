@@ -156,7 +156,7 @@ class ComparisonTests(unittest.TestCase):
         actual = frame()
         actual.time_s += 2e-9
         self.assertFalse(compare.compare_frames([frame()], [actual]).passed)
-        for name, value in (("team_id", 3), ("sub_swarm_id", 1), ("kind", 2), ("active", False)):
+        for name, value in (("team_id", 3), ("group_index", 1), ("kind", 2), ("active", False)):
             actual = frame()
             setattr(actual.entities[1], name, value)
             self.assertFalse(compare.compare_frames([frame()], [actual]).passed)

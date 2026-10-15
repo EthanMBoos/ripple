@@ -13,13 +13,12 @@ interactions:
 ```
 
 `missions/terrain-mcmillan.yaml` flies aircraft on waypoint routes through the
-hills around McMillan Airfield (Camp Roberts, California), the site of C++
-SCRIMMAGE's `mcmillan` terrain.
+hills around McMillan Airfield (Camp Roberts, California).
 
 ## Heights and the local frame
 
-Local `z = 0` is the terrain's origin altitude above sea level, like C++
-SCRIMMAGE's `altitude_origin` (300 m for McMillan). So an agent at `z = 100`
+Local `z = 0` is the terrain's origin altitude above sea level (300 m for
+McMillan). So an agent at `z = 100`
 flies 400 m above sea level, and the ground there is `height_at` metres above or
 below `z = 0`. Place agents above the ground: a spawn position below it is
 redrawn within the group's position variance, and with no variance the run
@@ -151,44 +150,11 @@ Terrain here does three separate jobs, kept in separate places:
 - **Display:** the viewer draws the mesh and relief. It never affects the
   simulation.
 
-### What other simulators do
+Four choices follow:
 
-- **C++ SCRIMMAGE** kept terrain out of the simulation. The mission's
-  `<terrain>` was a mesh only the viewer drew, and ground contact meant a flat
-  plane: FixedWing6DOF's spring at `z = 0`, or GroundCollision's height. Its
-  random TerrainGenerator was used by no stock mission (see [reference
-  notes](https://github.com/EthanMBoos/ripple/blob/main/docs/REFERENCE_NOTES.md#terrain-rust-only)).
-- **[JSBSim](https://jsbsim-team.github.io/jsbsim/)** splits the ground into two
-  parts. A [ground
-  callback](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGGroundCallback.html)
-  answers geometry queries: given a location, it returns the height above
-  ground, the contact point, the surface normal, and the surface's velocity. Its
-  [default](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGDefaultGroundCallback.html)
-  is a round Earth at one terrain elevation; a host such as FlightGear supplies
-  real terrain. Separately, [landing
-  gear](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGLGear.html) turns
-  contact into physics: each contact point has a spring and damper, static,
-  sliding, and rolling friction, brakes and steering, and produces forces and
-  moments on the aircraft. `STRUCTURE` contact points on the fuselage and wings
-  push back on the airframe too, with their own friction; JSBSim does not remove
-  the aircraft. Removing it when one touches is this simulator's simpler rule
-  (TerrainCollision's `structure_points_frd_m`).
-- **[MuJoCo](https://mujoco.readthedocs.io/en/stable/computation/index.html)**
-  treats terrain as collision geometry (a [height
-  field](https://mujoco.readthedocs.io/en/stable/XMLreference.html#asset-hfield))
-  and contact as soft constraints, each with a normal and friction directions,
-  solved every step. Its documentation stresses that the timestep and integrator
-  decide whether contact stays stable.
-
-Both separate "where is the ground?" from "what does touching it do?", and
-both show that a believable ground response needs contact points, surface
-normals, friction, moments, and a timestep chosen for contact.
-
-### What we chose, and why
-
-- **One shared ground, like JSBSim's callback.** Collision, the viewer, and
-  later ground reactions all read the same `Terrain`, so they can never
-  disagree about where the ground is. That is also why FixedWing6DOF refuses
+- **One shared ground.** Collision, the viewer, and later ground reactions
+  all read the same `Terrain`, so they can never disagree about where the
+  ground is. That is also why FixedWing6DOF refuses
   its old flat-ground spring when terrain is configured: two definitions of the
   ground would push aircraft up in mid-air over valleys below `z = 0`.
 - **Crash by default.** The research this simulator serves is mostly
@@ -200,17 +166,14 @@ normals, friction, moments, and a timestep chosen for contact.
 - **Not a spring moved to terrain height.** The tempting shortcut is to keep
   FixedWing6DOF's spring and put it at the terrain's height. It would look like
   ground contact, but it pushes straight up at one point: no wheels, no
-  friction, no pitching or rolling moments, and wrong on slopes. The JSBSim
-  comparison shows how much is missing, so contact is modelled with wheels
-  or not at all.
+  friction, no pitching or rolling moments, and wrong on slopes. So contact
+  is modelled with wheels or not at all.
 - **Real contact as its own feature.** Motion models receive the terrain
   (`MotionContext::terrain`), and FixedWing6DOF's [landing gear](#landing-gear)
   reads height and slope there: contact points and their forces and moments,
   JSBSim-style; one shared rule for the ground off the grid
   (`Terrain::ground_height`); crash rules that tell a touchdown from a wingtip
-  strike; and checks that the response is right. It breaks C++ parity for
-  ground contact, which is fine: matching C++ is not evidence that its ground
-  physics is correct, and the comparison missions keep the old spring.
+  strike; and checks that the response is right.
 
 ## Making a terrain
 

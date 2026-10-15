@@ -1,13 +1,8 @@
-# YAML missions
+# YAML missions and templates
 
 Missions are YAML files. Each loads into the typed `ScenarioConfig`, the same
-data a [Rust-built scenario](rust-scenarios.md) fills in.
-
-| | Status |
-| --- | --- |
-| Single missions, plugin parameters, command-line overrides | Implemented |
-| Templates | Implemented |
-| Sweeps (`*.sweep.yaml`), shards, and the Slurm launcher | Implemented (minimal) |
+data a [Rust-built scenario](rust-scenarios.md) fills in. To run one mission
+across seeds and settings, see [Sweeps and results](sweeps.md).
 
 Every mission in
 [missions/](https://github.com/EthanMBoos/ripple/blob/main/missions/README.md)
@@ -57,7 +52,6 @@ metrics: {SimpleCollisionMetrics: {}}
 entities:
   blue:
     team: 1
-    color: [77, 77, 255]
     visual_model: zephyr-blue
     position_m: [-1000, 0, 200]
     position_variance_m2: [20, 20, 10]
@@ -100,8 +94,7 @@ Worker count and the viewer are command-line choices (`--workers`,
 
 | Key | Default | Meaning |
 | --- | --- | --- |
-| `team` | -1 | team number |
-| `color` | `[255, 255, 255]` | retained in the scenario; the viewer currently uses team colors |
+| `team` | -1 | team number; the viewer colors entities by team |
 | `visual_model` | `aircraft` | display model |
 | `health` | 1 | starting health |
 | `id` | assigned | a fixed entity ID |
@@ -175,55 +168,6 @@ Quote a value containing brackets or spaces for the shell:
 `'entities.red.position_m:=[0, 0, 200]'`. A path can also name a whole
 plugin slot
 the group has, replacing its plugins: `'entities.red.autonomy:={Straight: {}}'`.
-
-## Sweeps
-
-A sweep is a separate file ending in `.sweep.yaml`. It names a base mission:
-
-```yaml
-name: waypoints-point-agents
-base_scenario: waypoints-point-agents.yaml   # relative to the sweep file
-seeds: [1, 2]                                # sets run.seed; optional
-parameter_combinations: cartesian            # or zip: lists must be the same length
-parameters:
-  entities.blue.autonomy.WaypointFollower.speed_mps: [3, 5]
-  interactions.WaypointBroadcast.update_at_s: [3, 100]
-```
-
-This is 2 seeds × 2 speeds × 2 update times = 8 cases, numbered so that seeds
-change fastest, then the last path. Each case sets its paths
-exactly as a command-line override does (after template expansion), so a path
-must already exist in the base mission. Case 0 is loaded before any output is
-created, so a misspelled path fails immediately.
-
-```sh
-ripple sweep missions/waypoints-point-agents.sweep.yaml                        # all cases
-ripple sweep missions/waypoints-point-agents.sweep.yaml --shard-index 1 --shard-count 3
-python3 scripts/bulk_run.py local  missions/waypoints-point-agents.sweep.yaml --jobs 4
-python3 scripts/bulk_run.py submit missions/waypoints-point-agents.sweep.yaml --jobs 4 \
-    -- --account=<account> --partition=<partition>
-python3 scripts/bulk_run.py collect sweeps/waypoints-point-agents/run000         # after Slurm
-```
-
-Output goes to `sweeps/<sweep name>/runNNN` under the repository root; running
-the same sweep again makes the next `runNNN`. Each case is one line of
-`results.jsonl`: case ID, seed, parameter values, error, steps, termination,
-and each metrics plugin's per-team values. A shard runs cases `i`, `i + n`,
-`i + 2n`, ...; `bulk_run.py` puts shards in `shard-NNNN/` folders and `collect`
-merges them in case order after checking every case appears exactly once.
-
-To inspect one case, rerun the base mission with the seed and parameter values
-from its `results.jsonl` row:
-
-```sh
-ripple run missions/waypoints-point-agents.yaml run.seed:=1 \
-  entities.blue.autonomy.WaypointFollower.speed_mps:=3 \
-  interactions.WaypointBroadcast.update_at_s:=3
-```
-
-`--case-id` replay, digests, input hashing, summaries, and Slurm job watching
-are not implemented. Cluster setup: `conda env create -f environment.yaml`,
-activate it, and `cargo build --release -p ripple` once on shared storage.
 
 ## Templates
 

@@ -15,7 +15,6 @@ metrics: {SimpleCollisionMetrics: {}}
 entities:
   blue:
     team: 1
-    color: [77, 77, 255]
     visual_model: zephyr-blue
     health: 1
     count: 1
@@ -33,7 +32,6 @@ entities:
 
   red:
     team: 2
-    color: [255, 0, 0]
     visual_model: zephyr-red
     health: 1
     count: 1

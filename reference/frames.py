@@ -16,7 +16,7 @@ import struct
 class Entity:
     id: int
     team_id: int
-    sub_swarm_id: int
+    group_index: int
     kind: int
     active: bool
     position: tuple
@@ -130,7 +130,7 @@ def decode_frame(payload):
         entities[entity_id] = Entity(
             id=entity_id,
             team_id=number(identity, 3, integer=True),
-            sub_swarm_id=number(identity, 2, integer=True),
+            group_index=number(identity, 2, integer=True),
             kind=kind,
             active=bool(active[-1]) if active else False,
             position=vector(state, 1, "position"),

@@ -223,7 +223,6 @@ def mission(scenario):
                 raise ValueError(f"entity {group['label']}: SCRIMMAGE has no {estimator} plugins")
         entity = ET.SubElement(root, "entity")
         element(entity, "team_id", group["team"])
-        element(entity, "color", group["color"])
         element(entity, "visual_model", group["visual_model"])
         element(entity, "health", group["health"])
         if group["id"] is not None:

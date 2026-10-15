@@ -141,7 +141,7 @@ mod tests {
                     entity: EntityInfo {
                         id: 1,
                         team_id: 1,
-                        sub_swarm_id: 0,
+                        group_index: 0,
                     },
                     time: StepTime {
                         time_s: 0.0,

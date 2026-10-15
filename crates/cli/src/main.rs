@@ -5,7 +5,7 @@
 //! are compiled in: each user crate is a dependency of this package and adds
 //! its plugins here.
 //! To add another user crate, add it to crates/cli/Cargo.toml and call its
-//! `register` below (see book/src/guides/user-plugins.md).
+//! `register` below (see book/src/guides/writing-plugins.md).
 use ripple_core::plugin::PluginRegistry;
 
 fn main() -> anyhow::Result<()> {

@@ -1,102 +1,171 @@
-# Selected v1 models
+# Built-in models
 
-Keep a useful student research workflow, not a large compatibility catalog.
-The stock registry covers all nine roles. Other
-compiled Rust models can register through the same interfaces without editing
-the simulation loop. No runtime library loading is planned.
+Every built-in, by type: what it does, its main settings, what it is checked
+against, and its limits. Each one's full parameter list is the parameter
+struct at the top of its source file, under `crates/core/src/plugin/`.
+"The comparison" is the check of Ripple's core against SCRIMMAGE, the C++
+simulator it began as a port of; [How models are checked](checks.md)
+describes it and the other checks.
 
-| Role | Selected now | Later / excluded and why |
-| --- | --- | --- |
-| Autonomy | Straight; Rust-native WaypointFollower; AuctionAssign; Rust-only ForceReplay | ForceReplay repeats a list of forces, one per tick, for MpeParticle tests. More research behaviors when needed. MotorSchemas/nested plugin composition and GraphvizFSM are not prerequisites for navigation. Legacy protobuf spawning and camera windows are excluded. |
-| Controller | SimpleAircraftControllerPID; SingleIntegratorControllerSimple; AircraftPIDController; Rust-only MotorSpeeds, MultirotorVelocityController, and AircraftVelocityController | SimpleAircraft PID roll/glide-slope modes deferred; unsupported modes are errors. MotorSpeeds supplies constant rotor commands for testing. MultirotorVelocityController flies Multirotor from the point agents' velocity command (velocity, attitude, rate, mixing); no position hold or yaw command. See [Flying a multirotor](../guides/multirotor.md). AircraftVelocityController turns the same velocity command into the heading, altitude, and speed that SimpleAircraftControllerPID and AircraftPIDController follow (below). |
-| Motion | SimpleAircraft; SingleIntegrator; FixedWing6DOF; Multirotor; Rust-only MpeParticle | MpeParticle is the Multi-Agent Particle Environment's point (MPE2 v1.1.1): a force-driven unit mass with MPE's per-step damping, for matching learning benchmarks; checked step by step against MPE2 by `reference/mpe_parity.py`. Flight-model limitations are commented beside their equations. FixedWing6DOF has two built-in aircraft and no default: `airframe: a4d` (the A-4D Skyhawk, from Nelson's *Flight Stability and Automatic Control*) and `airframe: rascal` (ArduPilot's JSBSim Rascal), or a mission gives every number. It computes forces and moments at every RK4 stage, where C++ holds them for the whole step; FixedWing6DOF can also have landing gear (Rust-only, after JSBSim; see the Terrain chapter) and `lift_table` and `drag_table` rows against angle of attack that replace its linear lift and zero-lift drag, so the wing stalls (Rust-only; see the ArduPilot chapter); Multirotor has optional RotorS motor lag, rotor drag, and rolling moment and a built-in Crazyflie 2.0 (see [Flying a multirotor](../guides/multirotor.md)); external-force contact and acceleration sensor access are not exposed. JSBSim is an offline verification candidate, not a runtime plugin. |
-| Sensor | NoisyState; NoisyContacts; NoisyPosition (Rust-only teaching example) | NoisyContacts measures every other live entity; no range/FOV, missed detections, or tracker. Cameras and richer sensors are not selected. |
-| Localization, tracking | PassThrough (copies one reading; the default for both) | Filters, dead reckoning, and trackers are research plugins; see [Belief vs truth](../concepts/belief-vs-truth.md). |
-| Interaction | SimpleCollision; GroundCollision; Boundary; Rust-native WaypointBroadcast and TerrainCollision; Rust-only MpeContact | MpeContact is MPE's soft push between overlapping MpeParticle agents. Physics-engine collisions, richer geometry, and games/scoring environments deferred. No integration-specific spawning here. |
-| Network | GlobalNetwork; LocalNetwork; SphereNetwork | SphereNetwork uses direct 3D distance checks and optional altitude-plane filtering; no spatial index. Legacy delay modes remain rejected; compiled networks can use explicit delay/loss. A label with `plugin: SphereNetwork` names an instance, such as `CommsNetwork`. No OpenCL path. |
-| Metrics | SimpleCollisionMetrics, including ground counts; Rust-only SimpleSpread | SimpleSpread scores MPE's `simple_spread`: the benchmark return, collisions, and landmark coverage as separate numbers. Add experiment-specific metrics as ordinary plugins. No generic statistics/service framework. |
+## Autonomy
 
-## Deliberate limits
+- **Straight** flies toward a distant point along its starting heading,
+  holding altitude and speed (`speed_mps`). With
+  `enable_boundary_control`, it turns back toward the centre of a Boundary
+  region when it leaves it. Checked in the comparison.
+- **WaypointFollower** follows a list of points (`waypoints_m`, `speed_mps`,
+  `arrival_radius_m`, `repeat`), or a route that WaypointBroadcast sends. It
+  writes both aircraft commands (heading, altitude, speed) and a velocity
+  command, so it drives point agents, multirotors, and aircraft alike. An
+  aircraft's route should repeat, since a fixed-wing aircraft can't stop at
+  the last point. Arrival is not guaranteed with slow autonomy rates, tight
+  turns, or noisy position; choose sensible speed and radius.
+- **AuctionAssign** is a single-round auction, a messaging example. Entity 1
+  starts it (`auctioneer`), every recipient bids a random number in (0, 10),
+  and after `auction_duration_s` (default 5) the auctioneer publishes the
+  highest bid received. It runs on the network named by `network` (default
+  SphereNetwork). There are no retries, no task execution, and one round at
+  a time; agents hold still. Its payloads and topics (`AuctionStart`,
+  `AuctionBid`, `AuctionResult`) are exported from `plugin::autonomy`.
+  Checked in the comparison.
+- **ConstantVelocity** writes a fixed velocity command (`velocity_mps`), and
+  **ForceReplay** a fixed list of forces, one per tick (`forces_n`). Both are
+  test drivers, not behaviors: ForceReplay is how `reference/mpe_parity.py`
+  feeds MPE2's actions to MpeParticle.
 
-- Boundary publishes one axis-aligned cuboid. Faces are outside, as in C++.
-  Sphere/polyhedron/plane, rotation, and drawing are not implemented; this is
-  a behavioral region, not a physical wall. An autonomy must choose how to respond. Straight keeps its
-  old heading if horizontally coincident with the center instead of normalizing
-  a zero vector.
-- GroundCollision uses a flat `ground_altitude_m` in local meters, optional
-  team filtering, and removal. There is no force response or geodetic
-  altitude.
-  Startup rejection is separately configurable and, like C++, has no team
-  filter.
-- TerrainCollision removes agents that reach the mission's terrain, checking the
-  path moved each step; see [Terrain](../guides/terrain.md).
-- AircraftPIDController takes the same `airframe` and loads the gains and
-  attitude limits tuned for it; without one, the mission gives them all.
-  `a4d`'s altitude derivative gain is 0.002: at its 220 m/s, 0.01 made each
-  altitude correction larger than the motion it reacts to, so a pitch or roll
-  upset grew into swings of hundreds of metres in a 45 s test; at 0.002 they
-  die out ([measurement](https://github.com/EthanMBoos/ripple/blob/main/paper/data/rk4-loads/summary.md),
-  part C). `rascal` flies the same gains, measured adequate on the Rascal at
-  20 m/s (the derivative gain makes no difference there from 0 to 0.02), with
-  ArduPlane's attitude limits: pitch 20 and roll 45 degrees instead of 45 and
-  60, which let an altitude step pitch the Rascal to 48 degrees. Its PIDs use
-  the substep as their timestep.
-- WaypointBroadcast sends an initial route and optionally one timed replacement.
-  WaypointFollower owns a list and current index. No services, route planner, or
-  generic state-machine framework. Initial/updated broadcasts are not latched
-  for future subscribers: late-spawned agents use their configured fallback
-  route until a later message. Boundary has the same one-shot delivery
-  limitation.
-- The waypoint demos update autonomy each tick. Arrival/overshoot behavior with
-  slower autonomy rates, tight aircraft turns, or noisy position at the final
-  point is not a navigation guarantee. Choose sensible speed/radius/turn
-  geometry.
-- SingleIntegrator's `max_speed_mps` caps the speed: a faster command keeps its
-  direction at `max_speed_mps`; negative (the default) means no limit.
-- SimpleAircraft turns as a coordinated turn does, at g tan(bank) / speed, so
-  its turn radius grows with speed squared. Its limits are physical:
-  speeds (`min_speed_mps`, `max_speed_mps`), bank and pitch (`max_roll_deg`,
-  `max_pitch_deg`), their rates, acceleration and deceleration
-  (`max_acceleration_mps2`, `max_deceleration_mps2`), and climb and descent
-  rates (`max_climb_rate_mps`, `max_descent_rate_mps`). `airframe: rascal`
-  loads limits fit to FixedWing6DOF's Rascal (`reference/simple_aircraft_fit.py`
-  fits and checks them), which any key overrides; without it the limits are
-  generic round numbers, not any aircraft. Its `throttle` input asks for
-  throttle / 5 m/s², within the acceleration limits.
-- AircraftVelocityController: put it before SimpleAircraftControllerPID or
-  AircraftPIDController to fly an aircraft from a velocity command. The
-  heading is the command's direction (kept when the command has no horizontal
-  part), the speed its magnitude, and the altitude target moves at its climb
-  rate (staying within `max_altitude_error_m`, default 10 m, of the
-  aircraft). The aircraft's own limits bound speed, climb, and turn; there is
-  no holding mode, so a command it can't fly shows as a shortfall.
-- SimpleAircraftControllerPID's altitude loop is stable only while
-  speed × D × step < 2: with the default D of 0.8 and a 0.1 s step, below
-  25 m/s; faster, pitch flips between its rate limits every step. Use motion
-  substeps (`motion_multiplier: 5` gives 0.02 s and 125 m/s) for faster
-  aircraft, such as the `rascal` profile at full speed.
-- SimpleAircraft is a kinematic stand-in: no claim of a high-fidelity flight
-  model.
-- NoisyState estimates own state, not probabilistic target detection. Rust's
-  independent sensor RNG streams differ from C++; its inherited covariance
-  payload is not calibrated uncertainty. See the [paper's
-  validation](https://github.com/EthanMBoos/ripple/blob/main/paper/README.md).
+## Controllers
 
-ROS and JSBSim integrations are not planned; ArduPlane SITL is optional; see
-[Flying ArduPlane](../guides/ardupilot.md). Terrain is covered in
-[Terrain](../guides/terrain.md).
+- **SimpleAircraftControllerPID** turns desired heading, altitude, and speed
+  into throttle and roll and pitch rates for SimpleAircraft (`heading_pid`,
+  `altitude_pid`, `speed_pid`). Its altitude loop is stable only while speed ×
+  D × step < 2: with the default D of 0.8 and a 0.1 s step, below 25 m/s. For
+  faster aircraft, use substeps (`motion_multiplier: 5` allows 125 m/s).
+- **AircraftPIDController** flies FixedWing6DOF with nested heading/altitude
+  and roll/pitch PID loops. `airframe: a4d` or `rascal` loads gains and
+  attitude limits tuned for that aircraft; without one, the mission gives them
+  all. The `a4d` altitude derivative gain is 0.002, since 0.01 turned upsets
+  into growing swings at 220 m/s. `rascal` uses ArduPlane's attitude limits
+  (pitch 20°, roll 45°). Checked by `rascal_control.py`.
+- **AircraftVelocityController** goes before either aircraft controller and
+  turns a velocity command into heading, speed, and a climbing altitude
+  target (within `max_altitude_error_m`, default 10 m). The aircraft's own
+  limits bound what it can fly; a command it can't fly shows as a shortfall.
+- **MultirotorVelocityController** flies Multirotor from a velocity command:
+  velocity, attitude, body rate, then motor mixing. It carries its own copy of
+  the vehicle's numbers, so they can be set apart from the true vehicle to
+  study model error. No position hold or yaw command. Checked by
+  `multirotor_control.py`; see [Flying a multirotor](../guides/multirotor.md).
+- **SingleIntegratorControllerSimple** passes a velocity command to
+  SingleIntegrator, and **MotorSpeeds** writes constant rotor speeds
+  (`speeds_radps`) for tests.
 
-The plugin audit's selected additions are complete: NoisyContacts and
-SphereNetwork + AuctionAssign. The other proposed ports and the force, dynamics
-telemetry, battery, game, and geometry extensions they motivate are not selected
-backlog. Keep their limitations documented; do not add them for completeness.
-AuctionAssign is a single random-bid messaging demonstration with stationary
-agents, not a task planner. See [plugin contracts](plugin-api.md#noisycontacts)
-for reading types, radio policies, random numbers, and examples.
+## Motion
+
+- **SingleIntegrator** moves at the commanded velocity at once. With
+  `max_speed_mps` set, a faster command keeps its direction at that speed.
+  No mass, forces, or lag. Checked in the comparison.
+- **MpeParticle** is the Multi-Agent Particle Environment's agent (MPE2
+  v1.1.1): a unit mass pushed by a force, with MPE's per-step `damping`. It is
+  valid only at MPE's 0.1 s step with one substep, since the damping is per
+  step. Checked step by step against MPE2 (`mpe_parity.py`).
+- **SimpleAircraft** is a kinematic aircraft: speed, roll, and pitch follow
+  commands within rate and range limits, and it turns as a coordinated turn
+  does, at g tan(bank) / speed. `airframe: rascal` loads limits fit to
+  FixedWing6DOF's Rascal (within 3%, `simple_aircraft_fit.py`); without it the
+  limits are generic round numbers. Its `throttle` input asks for throttle ×
+  5 m/s² of acceleration, within the limits. A stand-in, not a flight model.
+  Checked in the comparison.
+- **FixedWing6DOF** is a rigid-body aircraft under aerodynamic forces from
+  linear stability derivatives, integrated with RK4. Two aircraft are built
+  in: `airframe: a4d` (the A-4D Skyhawk, from Nelson) and `airframe: rascal`
+  (ArduPilot's JSBSim Rascal); any key overrides one value, and without an
+  airframe the mission gives every number. Optional: `lift_table` and
+  `drag_table` so the wing stalls, `landing_gear` (see
+  [Terrain](../guides/terrain.md#landing-gear)), steady `wind_mps`, and a
+  catapult. Not modelled: propeller effects, ground effect, spins, unsteady
+  aerodynamics, engine dynamics, and gusts. Checked in the comparison on both
+  aircraft and for step-size convergence (`rk4_loads.py`).
+  Its parameters are [below](#fixedwing6dof-parameters).
+- **Multirotor** is a rigid-body multirotor with thrust and torque growing
+  with rotor speed squared, RK4, and a built-in Crazyflie 2.0
+  (`airframe: crazyflie2`). Optional RotorS effects: motor lag, rotor drag, and
+  rolling moment. Checked in the comparison and against RotorS's
+  motor code, Crazyflow's dynamics, and the Crazyflie's measured
+  identification; see [Flying a
+  multirotor](../guides/multirotor.md).
+
+## Sensors
+
+- **NoisyState** measures the entity's own state with Gaussian error: a bias
+  and a standard deviation per axis for position (`position_bias_m`,
+  `position_stddev_m`), velocity (`velocity_bias_mps`,
+  `velocity_stddev_mps`), and attitude (`attitude_bias_rad`,
+  `attitude_stddev_rad`, roll, pitch, yaw). All default to zero, so set only
+  the noise you want. Angular velocity is exact. Each error is keyed by the
+  reading, quantity, and axis. Checked in the comparison, sample by
+  sample. Try `missions/noisy-state.yaml`.
+- **NoisyContacts** measures every other live entity, with the same settings.
+  No range or field of view, missed detections, or tracks. Each error is keyed
+  by the contact it measures. Checked in the comparison, sample by sample and
+  by distribution. Try `missions/noisy-contacts.yaml`.
+- **NoisyPosition** measures world position (`bias_m`, `stddev_m`): a small
+  example for writing a sensor.
+
+Neither NoisyState nor NoisyContacts reports a covariance, which a filter
+would need.
+
+## Estimators
+
+**PassThrough** is the default for both localization and tracking. It copies
+the latest reading into belief and has no model of its own, so it adds no
+model error. With the default perfect measurement, belief equals truth at
+every decision.
+
+## Interactions
+
+- **SimpleCollision** destroys both agents of a pair closer than
+  `collision_range_m`, for team and non-team pairs as enabled, and checks
+  spawn positions at startup. Checked in the comparison.
+- **GroundCollision** removes agents at or below a flat `ground_altitude_m`,
+  optionally for one `team`. No force response. Checked in the comparison.
+- **TerrainCollision** removes agents that reach the mission's terrain,
+  checking the path moved each step against the interpolated ground; see
+  [Terrain](../guides/terrain.md).
+- **Boundary** publishes an axis-aligned box (`center_m`, `lengths_m`). It is
+  a region autonomies respond to, not a wall. It publishes once, so agents
+  that spawn later don't receive it. Checked in the comparison.
+- **WaypointBroadcast** publishes a route (`waypoints_m`) and optionally one
+  replacement (`update_waypoints_m` at `update_at_s`). Agents that spawn after
+  a broadcast use their own configured route until the next one.
+- **MpeContact** is MPE's soft push between overlapping MpeParticle agents
+  (`radius_m`, `contact_force`, `contact_margin_m`), applied as a force on the
+  next step. Checked with MpeParticle against MPE2.
+
+## Networks
+
+- **GlobalNetwork** delivers to every subscriber, after `delay_s` (default
+  0). Every mission has one.
+- **LocalNetwork** delivers only between plugins on the same entity.
+- **SphereNetwork** delivers between entities closer than `range_m` (default
+  100 m), using positions after motion. Each delivery succeeds with
+  `transmit_probability` (default 1), drawn per receiving entity, and arrives
+  after `delay_s`. `enable_altitude_split` allows a link only when both ends
+  are on the same side of `split_altitude_m`, within `split_margin_m`. World
+  plugins have no position, so they can't use it; give their traffic to
+  GlobalNetwork. Checked in the comparison, loss included.
+
+## Metrics
+
+- **SimpleCollisionMetrics** counts, per team, entities, flight time, and
+  team, non-team, and ground collisions, and scores them with
+  `flight_time_weight`, `team_collision_weight`, and
+  `non_team_collision_weight`. Checked in the comparison.
+- **SimpleSpread** scores MPE's `simple_spread`: the benchmark return,
+  collisions, and landmark coverage as separate numbers. Checked against
+  MPE2's returns.
 
 ## FixedWing6DOF parameters
 
-Keys follow [Parameter names](../development/rust-style.md#parameter-names).
 `airframe: a4d` or `airframe: rascal` fills every vehicle key; any key the
 mission gives overrides one value. Without an airframe the mission gives them
 all.

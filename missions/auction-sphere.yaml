@@ -28,17 +28,14 @@ entities:
   first:
     template: bidder
     team: 1
-    color: [70, 130, 255]
     position_m: [0, 0, 0]
   second:
     template: bidder
     team: 1
-    color: [70, 130, 255]
     position_m: [50, 0, 0]
   # Outside the auctioneer's range: this agent receives no start and submits
   # no bid.
   out_of_range:
     template: bidder
     team: 2
-    color: [255, 100, 70]
     position_m: [200, 0, 0]

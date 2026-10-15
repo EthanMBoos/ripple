@@ -32,8 +32,7 @@
 //!   effect. Also: separate wing stalls (so no spin), drag from sideslip,
 //!   unsteady aerodynamics (no alpha-dot derivatives),
 //!   engine and propeller dynamics (thrust follows throttle at once),
-//!   compressibility, fuel burn, and gusts. Wind is added to velocity rather
-//!   than subtracted, a quirk kept from the reference.
+//!   compressibility, fuel burn, and gusts.
 //! - To go further: evaluate the Rascal in JSBSim at fixed states and over
 //!   short runs, for a second evaluator of the same aircraft; a propeller
 //!   model from measured data (thrust and torque against advance ratio, as
@@ -431,6 +430,9 @@ impl FixedWing6Dof {
     fn advance_launcher(&mut self, time_s: f64) -> f64 {
         match self.launch {
             LaunchState::Waiting => {
+                // A launch time exactly on a substep boundary can fall on
+                // either side of it by rounding; if that matters, compare
+                // within half a substep, as spawning does within half a tick.
                 if time_s > self.config.launch_at_s {
                     self.launch = LaunchState::Launching { start_s: time_s };
                 }

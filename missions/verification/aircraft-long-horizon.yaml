@@ -15,7 +15,6 @@ metrics: {SimpleCollisionMetrics: {}}
 entities:
   blue:
     team: 1
-    color: [77, 77, 255]
     visual_model: zephyr-blue
     position_m: [-900, 0, 195]
     position_variance_m2: [20, 20, 10]
@@ -27,7 +26,6 @@ entities:
     motion_model: {SimpleAircraft: {}}
   red:
     team: 2
-    color: [255, 0, 0]
     visual_model: zephyr-red
     count: 0
     position_m: [50, 0, 200]

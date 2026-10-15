@@ -522,7 +522,7 @@ mod tests {
             .map(|(index, position_world_m)| EntitySnapshot {
                 id: index as i32 + 1,
                 team_id: 1,
-                sub_swarm_id: 0,
+                group_index: 0,
                 active: index != 3,
                 truth: KinematicState {
                     position_world_m: *position_world_m,

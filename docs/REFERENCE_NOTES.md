@@ -23,7 +23,7 @@ These findings come from source, rather than SCRIMMAGE's documentation
 
 Preserve these observable timing/recording contracts during refactors. Current
 Rust lifecycle and delivery rules are in the
-[plugin reference](../book/src/reference/plugin-api.md#execution-and-lifecycle).
+[How a run works](../book/src/concepts/how-a-run-works.md).
 
 ## Where SCRIMMAGE's code lives in Ripple
 
@@ -228,8 +228,8 @@ Source details worth preserving: both sensors keep the true angular velocity
 errors. SphereNetwork has strict range, inclusive
 altitude-plane bounds, and same-parent geometry bypass that still draws for
 loss. AuctionAssign includes self-bidding, keeps the first maximum on ties, and
-closes strictly after its deadline. See [plugin
-behavior](../book/src/reference/plugin-api.md#noisycontacts).
+closes strictly after its deadline. See [Built-in
+models](../book/src/reference/models.md).
 
 ## Behavior kept from SCRIMMAGE
 
@@ -712,6 +712,36 @@ book chapter lists JSBSim's Rascal values. Without tables the output is
 unchanged: on 2026-10-05 `fixed-wing-6dof.yaml` and `fixed-wing-6dof-rascal.yaml`
 wrote byte-identical frames, summaries, events, and traces before and after each
 table was added.
+
+### How other simulators handle the ground
+
+Moved from the book's Terrain chapter, which keeps only Ripple's choices.
+
+- **[JSBSim](https://jsbsim-team.github.io/jsbsim/)** splits the ground into two
+  parts. A [ground
+  callback](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGGroundCallback.html)
+  answers geometry queries: given a location, it returns the height above
+  ground, the contact point, the surface normal, and the surface's velocity. Its
+  [default](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGDefaultGroundCallback.html)
+  is a round Earth at one terrain elevation; a host such as FlightGear supplies
+  real terrain. Separately, [landing
+  gear](https://jsbsim-team.github.io/jsbsim/classJSBSim_1_1FGLGear.html) turns
+  contact into physics: each contact point has a spring and damper, static,
+  sliding, and rolling friction, brakes and steering, and produces forces and
+  moments on the aircraft. `STRUCTURE` contact points on the fuselage and wings
+  push back on the airframe too, with their own friction; JSBSim does not remove
+  the aircraft. Removing it when one touches is Ripple's simpler rule
+  (TerrainCollision's `structure_points_frd_m`).
+- **[MuJoCo](https://mujoco.readthedocs.io/en/stable/computation/index.html)**
+  treats terrain as collision geometry (a [height
+  field](https://mujoco.readthedocs.io/en/stable/XMLreference.html#asset-hfield))
+  and contact as soft constraints, each with a normal and friction directions,
+  solved every step. Its documentation stresses that the timestep and integrator
+  decide whether contact stays stable.
+
+Both separate "where is the ground?" from "what does touching it do?", and
+both show that a believable ground response needs contact points, surface
+normals, friction, moments, and a timestep chosen for contact.
 
 ## Unported C++ models: check before porting
 

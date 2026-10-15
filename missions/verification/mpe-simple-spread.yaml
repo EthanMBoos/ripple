@@ -24,7 +24,6 @@ metrics:
 entities:
   agent0:
     team: 1
-    color: [90, 90, 215]
     visual_model: sphere
     position_m: [0.273923, -0.460427, 0]
     velocity_mps: [0, 0, 0]
@@ -60,7 +59,6 @@ entities:
 
   agent1:
     team: 1
-    color: [90, 90, 215]
     visual_model: sphere
     position_m: [-0.918053, -0.966945, 0]
     velocity_mps: [0, 0, 0]
@@ -96,7 +94,6 @@ entities:
 
   agent2:
     team: 1
-    color: [90, 90, 215]
     visual_model: sphere
     position_m: [0.62654, 0.825511, 0]
     velocity_mps: [0, 0, 0]
@@ -132,7 +129,6 @@ entities:
 
   landmark0:
     team: 2
-    color: [64, 64, 64]
     visual_model: sphere
     position_m: [0.213272, 0.458993, 0]
     autonomy: {ConstantVelocity: {}}
@@ -140,7 +136,6 @@ entities:
 
   landmark1:
     team: 2
-    color: [64, 64, 64]
     visual_model: sphere
     position_m: [0.08725, 0.870145, 0]
     autonomy: {ConstantVelocity: {}}
@@ -148,7 +143,6 @@ entities:
 
   landmark2:
     team: 2
-    color: [64, 64, 64]
     visual_model: sphere
     position_m: [0.631707, -0.994523, 0]
     autonomy: {ConstantVelocity: {}}

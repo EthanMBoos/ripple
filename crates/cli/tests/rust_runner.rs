@@ -140,7 +140,7 @@ fn repeated_group_labels_keep_distinct_recorded_group_indices() {
     let groups: Vec<_> = frames[0]
         .entities
         .iter()
-        .map(|entity| entity.sub_swarm_id)
+        .map(|entity| entity.group_index)
         .collect();
     assert_eq!(groups, vec![0, 1]);
 }

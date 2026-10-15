@@ -43,7 +43,7 @@ so a typo is an error, not a silently ignored command.
 User plugins live in a crate in the repository, `crates/starter`. The
 `ripple` command is compiled with that crate's plugins, so its missions run
 with `ripple run` and `ripple sweep` like any other (see
-[Writing your own plugins](../guides/user-plugins.md)).
+[Writing plugins](../guides/writing-plugins.md)).
 
 ```text
 crates/starter/
@@ -255,7 +255,6 @@ entities:
   target:
     template: aircraft
     team: 1
-    color: [77, 77, 255]
     position_m: [0, 0, 200]
     heading_deg: 0
     autonomy:
@@ -265,7 +264,6 @@ entities:
   chaser:
     template: aircraft
     team: 2
-    color: [255, 0, 0]
     position_m: [-300, 150, 220]
     heading_deg: 0
     autonomy:

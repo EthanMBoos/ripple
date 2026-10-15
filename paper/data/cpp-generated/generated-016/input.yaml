@@ -1,0 +1,135 @@
+{
+ "format_version": 1,
+ "name": "generated-016",
+ "run": {
+  "end_s": 10,
+  "dt_s": 0.1,
+  "motion_multiplier": 5,
+  "seed": 1922008926
+ },
+ "interactions": {},
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 1,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    -397.141,
+    257.776,
+    245.856
+   ],
+   "position_variance_m2": [
+    25,
+    25,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "spawn": {
+    "rate_hz": 3.66467,
+    "batch_size": 1,
+    "start_s": 0.22856,
+    "time_stddev_s": 0.05
+   },
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      4.12523,
+      -1.76714,
+      -1.47919
+     ],
+     "loop_rate": 0
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": 7.169
+    }
+   }
+  },
+  "group1": {
+   "team": 2,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    334.446,
+    9.36564,
+    289.173
+   ],
+   "position_variance_m2": [
+    25,
+    25,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      -2.64631,
+      -0.589019,
+      -0.64642
+     ],
+     "loop_rate": 10
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": 2.993
+    }
+   }
+  },
+  "group2": {
+   "team": 2,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    34.7632,
+    -441.838,
+    165.201
+   ],
+   "position_variance_m2": [
+    0,
+    0,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "spawn": {
+    "rate_hz": 0.947728,
+    "batch_size": 1,
+    "start_s": 0.698349,
+    "time_stddev_s": 0
+   },
+   "heading_deg": 118.45,
+   "roll_deg": -4.49969,
+   "pitch_deg": -1.9675,
+   "autonomy": {
+    "Straight": {
+     "speed": 24.5289,
+     "loop_rate": 0
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 0
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 34.0815
+    }
+   }
+  }
+ }
+}

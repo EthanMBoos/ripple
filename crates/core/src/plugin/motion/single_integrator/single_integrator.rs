@@ -3,7 +3,7 @@
 //!
 //! Fidelity
 //! - Source: a kinematic point: velocity is whatever was commanded, at once.
-//! - Validated against: SCRIMMAGE's SingleIntegrator (`verification/single-integrator.xml`).
+//! - Validated against: SCRIMMAGE's SingleIntegrator (`verification/single-integrator.yaml`).
 //! - Valid range: any speed; it is an idealization, not a vehicle.
 //! - Not modeled: mass, forces, acceleration limits, and any lag between
 //!   command and motion. The attitude only follows the velocity's direction.

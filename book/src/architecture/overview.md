@@ -11,7 +11,7 @@ belief](information-flow.md)).
 ## The big picture
 
 ```text
-  mission.xml / mission.yaml / Rust scenario API
+     mission.yaml / Rust scenario API
                      │
                      ▼
             ┌──────────────────┐      plugin names and typed

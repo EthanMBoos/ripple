@@ -1,10 +1,11 @@
 {
   "case": "multirotor-fixes",
-  "mission": "<checkout>/missions/verification/multirotor-fixes.xml",
+  "mission": "<checkout>/missions/verification/multirotor-fixes.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "8149ee1e7007f24d75c2ce3b6e02e88b53db41db7025dd03ccbe8c4bb1148de8",
-    "effective_sha256": "68f75bdc9dd40ca12f9100e3fadc2af5d6efade66156f726911731e4106f48ea",
+    "input_sha256": "8b65d317e56cf9c2d64f23d9684564ab1911c8966e0c1dd1102e8bdbf7a6b1cd",
+    "xml_sha256": "3814a935dc552f02f18d771d4885fd28739671e8012b5335323ffc6d4aa90841",
+    "effective_sha256": "c34aa9212e55bab93940b852d750f9922e92b40a10d7c6246278c6a04e2ce592",
     "run_overrides": {
       "enable_gui": "false",
       "network_gui": "false",
@@ -31,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-14_20-39-30",
+  "cpp_log_directory": "cpp/logs/2026-10-15_06-55-01",
   "cpp_output_hashes": {
     "frames.bin": "e36c88b041af0c04a7e87e462ccc68ce24c3ecccf05cf2ff2bdecdac5ee34c21",
     "summary.csv": "180ffa148660433044882c93750718d0b19cb6eb04968c66ec3b3fd309c27aa7"
@@ -53,7 +54,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "9d8ed09739e36313ddaf56c5e226d979792bfcfaef2c038c364f8f27b87fa1a2",
+  "recording_sha256": "788792e3a8a7e2f7a069ea80099e2dd7faf3a212b4dc5dcbef6b1a56df447a85",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

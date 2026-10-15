@@ -80,8 +80,8 @@ zeros must leave every output byte-identical.
 
 Shape a model so measured data arrives as values, not new code:
 
-- Geometry is vectors. A multirotor rotor is an offset and a tilt, so any
-  layout is a `rotor_config` row.
+- Geometry is vectors. A multirotor rotor is a position and a tilt, so any
+  layout is a list of `rotors`.
 - Aerodynamic curves use the table-or-linear pattern: `lift_table` and
   `drag_table` replace the linear lift and drag when a mission gives them,
   read with `interpolate_clamped`. A measured curve for another coefficient

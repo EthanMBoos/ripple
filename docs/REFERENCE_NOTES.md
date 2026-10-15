@@ -25,29 +25,44 @@ Preserve these observable timing/recording contracts during refactors. Current
 Rust lifecycle and delivery rules are in the
 [plugin reference](../book/src/reference/plugin-api.md#execution-and-lifecycle).
 
-## Mission compatibility
+## Missions are YAML
 
-- `<network name="CommsNetwork">SphereNetwork</network>` names a network
-  instance, as upstream `missions/auction_assign.xml` does. Rust honors the
-  attribute; the default name is the plugin name. Networks run in name order,
-  like C++'s map.
+Ripple reads only YAML. SCRIMMAGE reads only XML, so the comparison writes
+SCRIMMAGE's mission from the scenario a Ripple run records in its
+`manifest.json` (`reference/scrimmage_xml.py`): Ripple runs the YAML first,
+then SCRIMMAGE runs the written XML.
 
-- C++ can replace an inherited motion model. Rust's XML reader concatenates
-  inherited and local declarations, then rejects the second model. It also does
-  not retain entity `tag` values as spawn-template identities. XML is frozen;
-  use YAML's whole-slot replacement for new missions.
-- The original `straight_cpu_mul.xml` misspells `motion_multipler`. Keep the
-  fixture unchanged; `verification/aircraft-substeps-spawning.xml` tests real
-  substeps.
-- `RIPPLE_PLUGIN_PATH` discovers optional XML defaults overlays, not code
-  (C++ reads `SCRIMMAGE_PLUGIN_PATH`; the separate name keeps a C++ install's
-  overlays from changing Ripple's defaults). `RIPPLE_MISSION_PATH` likewise
-  replaces `SCRIMMAGE_MISSION_PATH`. YAML configuration does not depend on
-  these overlays.
-- Rust/YAML position variance defaults to zero; XML retains its legacy default
-  of `[100, 100, 0]` m². The XML reader translates positive scalar `speed` into
-  world-X velocity when the velocity vector is zero. Native scenarios specify
-  `velocity_mps` directly. Spawn sampling is shared afterward.
+- **What is written.** Every entity value, since the two simulators' entity
+  defaults differ (SCRIMMAGE spreads spawns over 100 m² unless told
+  otherwise). Plugin parameters only as the mission gives them, so a compared
+  mission writes out any whose default differs (as
+  `reference/inputs/fixed-wing-recovery.yaml` does for its altitude gains).
+  NoisyState and NoisyContacts noise as SCRIMMAGE's `pos_noise_*`,
+  `vel_noise_*`, and `orient_noise_*` keys, every axis written (SCRIMMAGE's own
+  default is 5 m and 5 m/s of noise). A network's YAML label becomes its
+  `name`; networks run in name order on both sides. Lists are written
+  space-separated, the one form every compared plugin reads. A compared
+  mission uses the default estimators and no terrain, which XML cannot name.
+- **One reader for both.** SCRIMMAGE's input now comes through Ripple's YAML
+  loading, so a loading error would reach both simulators rather than show up
+  as a difference. The loader is derived from the scenario types, and rejects
+  unknown keys. Before Ripple's XML reader was removed, every mission's YAML
+  form was proven to set up the same simulation as its XML and to write
+  byte-identical frames, events, and summaries (`ripple compare`, also
+  removed): the 21 missions, the three `reference/inputs/`, the three test
+  fixtures under every override their tests use, the 100 generated scenarios,
+  and the speed workloads. The XML written from each YAML mission was read back
+  by the XML reader and proven the same way. The matrix then passed 15 of 15
+  on the written XML, largest position difference 4.93e-12 m, as before.
+- **Two missions changed shape, not output.** `aircraft-multiplier-typo` is
+  gone: it ran SCRIMMAGE's `straight_cpu_mul.xml`, whose misspelled
+  `motion_multipler` both simulators ignored, which a YAML mission cannot
+  express; its YAML form is `aircraft-long-horizon`. In
+  `verification/collision-boundary.yaml` the closing agents have one
+  ConstantVelocity rather than a stationary one followed by a moving one, since
+  a template's slot is replaced, not appended to; frames, events, and summary
+  are byte-identical. SCRIMMAGE's own test missions are in its
+  `test/test_missions/`.
 
 ## Intentional differences from C++
 
@@ -76,7 +91,7 @@ Rust lifecycle and delivery rules are in the
 
 - **Survivor flight time:** C++ publishes `EntityPresentAtEnd` after its last
   network phase, so metrics credit survivors only until the latest removal. Rust
-  credits them until report time. In `networks-local-global.xml`, surviving
+  credits them until report time. In `networks-local-global.yaml`, surviving
   teams report 29.9 s instead of 0.4 s. Frames are unaffected; flight-time
   summary columns differ. See the regression in
   [SimpleCollisionMetrics](../crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs).
@@ -85,17 +100,18 @@ Rust lifecycle and delivery rules are in the
   `flight_time_norm` is infinite and `score` NaN. Rust reports every team with a
   generated entity using the same normalization as other teams; `flight_time`
   and collision counts match. Seen in
-  `verification/aircraft-substeps-scheduled.xml`.
+  `verification/aircraft-substeps-scheduled.yaml`.
 - **FixedWing6DOF inertia:** C++'s bundled slug-unit default silently overrides
-  a supplied SI matrix. Rust accepts either `inertia_matrix_slug_ft_sq` or
-  `inertia_matrix`, rejects both together, and uses the named airframe's if
-  neither is supplied.
+  a supplied SI matrix. Rust accepts either `inertia_slug_ft2` or
+  `inertia_kgm2` (three rows; the comparison writes them as C++'s
+  `inertia_matrix_slug_ft_sq` and `inertia_matrix`), rejects both together,
+  and uses the named airframe's if neither is supplied.
 - **FixedWing6DOF elevator drag key:** C++ reads `C_D_delta_elevator_` (with a
   trailing underscore), but every bundled parameter file writes
   `C_D_delta_elevator`, so C++ always uses the 0.01 default. That is harmless
   for the A-4D default (its file also says 0.01), but the Rascal file's 0.03 is
   never used. Rust reads the same underscore key and rejects the plain name, so
-  a value is never silently ignored. `missions/fixed-wing-6dof-rascal.xml`
+  a value is never silently ignored. `missions/fixed-wing-6dof-rascal.yaml`
   leaves the key out and flies with 0.01, like C++.
 - **PID gain strings:** C++ `PID::init` splits gains on commas only and needs
   exactly four values; a space-separated string such as `"0.5 0 0.1 9"` logs
@@ -121,7 +137,7 @@ Rust lifecycle and delivery rules are in the
   rad of actual pitch change, so a pitch upset grows into an altitude and
   heading oscillation. One FixedWing6DOF, 45 s of `Straight` flight at 1000 m
   after a 5 degree roll and 3 degree pitch upset, 0.01 s ticks
-  (`reference/inputs/aircraft-pid-upset.xml`): with no substeps (C++ and Rust
+  (`reference/inputs/aircraft-pid-upset.yaml`): with no substeps (C++ and Rust
   identical) the altitude wandered 285 m and the heading 42 degrees; with 5
   substeps, Rust's timing gave 66 m, and C++'s, whose derivative is 5 times
   weaker, peaked at 1.4 m. With no substeps and the altitude D lowered to
@@ -188,9 +204,10 @@ comparison has proven what it needs to, they go.
 | What | Where | Replaced by |
 | --- | --- | --- |
 | Frames written in SCRIMMAGE's protobuf format (`frames.bin`), the comparison's medium | `crates/core/src/protocol/`, `reference/frames.py` | A plain columnar format, or Rerun recordings only |
-| Spawn spread given as a variance (`position_variance_m2`, `heading_variance_deg2`), in XML and YAML | `entity.rs`, both mission parsers | A standard deviation in metres and degrees, in YAML |
+| Spawn spread given as a variance (`position_variance_m2`, `heading_variance_deg2`) | `entity.rs`, `scenario.rs` | A standard deviation in metres and degrees |
 | The first entities are created one step before the start time (generation runs at start − dt) | `simcontrol.rs` | Generation at the start time |
-| XML-only quirks: `use_variance_all_ents`; PID gains in SCRIMMAGE's order, with the integral band in degrees | `parse/xml_mission.rs`, `common/pid.rs` | Nothing: XML is frozen, so they stay inside its parser until XML support is dropped |
+| SCRIMMAGE's mission shapes: `randomize_every_spawn` (its `use_variance_all_ents`); PID gains in its order, with the integral band in degrees | `simcontrol/generation.rs`, `common/pid.rs` | Named gains and one spawn rule |
+| SCRIMMAGE's XML, written from a run's recorded scenario | `reference/scrimmage_xml.py`, `reference/scenario.py` | Nothing |
 
 ## Core defects fixed on both sides
 
@@ -244,9 +261,9 @@ Details worth knowing:
   a spawn batch now run on the tick nearest their due time; without that a
   10 Hz group in a 10 Hz simulation skipped a spawn at 1.3 s, and a 0.2 Hz
   sensor ran 0.1 s late.
-- **Missions.** `fixed-wing-6dof.xml` and `reference/inputs/fixed-wing-recovery.xml`
+- **Missions.** `fixed-wing-6dof.yaml` and `reference/inputs/fixed-wing-recovery.yaml`
   now give the wind's physical sign (`wind_E="-3" wind_N="2"`), so they fly
-  exactly as before. In `networks-local-global.xml` the low aircraft's ground
+  exactly as before. In `networks-local-global.yaml` the low aircraft's ground
   hit came only from the exact first reading (a +20 m altitude bias present
   from the start makes Straight hold its true altitude); it now starts nose
   down instead.
@@ -306,9 +323,9 @@ Details worth knowing:
   cruise: SimpleAircraft keeps its speed in a climb or dive (it has no energy
   model), where the Rascal slows to 17.4 m/s climbing and speeds up to
   32 m/s descending.
-- **XML noise.** `<sensor>NoisyState</sensor>` in XML still measures with 5 m
-  of horizontal noise, as SCRIMMAGE does; the XML reader turns
-  `pos_noise_*`, `vel_noise_*`, and `orient_noise_*` into the named fields.
+- **SCRIMMAGE's noise keys.** The comparison writes the named fields as
+  `pos_noise_*`, `vel_noise_*`, and `orient_noise_*`, every axis given, since a
+  SCRIMMAGE sensor without them measures with 5 m of horizontal noise.
 - **SCRIMMAGE's message delay** (not ported; Ripple's engine delays
   correctly). `comm_delay` works on every network but: queued messages are
   released only inside the per-publisher loop when that topic has new
@@ -421,7 +438,7 @@ vehicle number; environment and option keys keep their defaults.
 AircraftPIDController takes the same `airframe` for its gains and limits.
 
 - **Missions that flew the default** name `airframe="a4d"` on the motion model
-  and the controller (`fixed-wing-6dof.xml`, `reference/inputs/`, generated
+  and the controller (`fixed-wing-6dof.yaml`, `reference/inputs/`, generated
   scenarios). C++ ignores the key, so the C++ comparison is unchanged: on
   2026-10-12 `fixed-wing-a4` and `fixed-wing-rascal` agreed to 6.9e-13 m and
   2.3e-13 m, as before.
@@ -435,9 +452,16 @@ AircraftPIDController takes the same `airframe` for its gains and limits.
   sign treatment differ too); elevator limits +-0.30 rad (JSBSim's elevator
   moves -0.35 to +0.30; aileron and rudder +-0.35 match). These are inherited
   modeling choices, kept because they are what has been flown. Its thrust
-  range (0 to 25 N) has no JSBSim counterpart. The SITL missions flew these
-  radian limits; `fixed-wing-6dof-rascal.xml` keeps C++'s +-1 limits as
-  overrides.
+  range (0 to 25 N) has no JSBSim counterpart. Every mission flies these
+  radian limits. C++'s `FixedWing6DOF-Rascal.xml` sets every surface limit to
+  +-1 ("use normalized actuators for rascal model", `2cab6d1190`, 2018), but
+  FixedWing6DOF never converts a normalized command: it multiplies the clamped
+  deflection straight into per-radian coefficients, so +-1 is +-1 rad, about
+  3x the real travel. `fixed-wing-6dof-rascal.yaml` kept those limits until
+  2026-10-14; with the radian limits its level and glide aircraft fly
+  identical paths and its upset aircraft differs by at most 2.89 m. The
+  comparison writes the Rascal's numbers out for C++, which has no airframe
+  profiles (`reference/scrimmage_xml.py`).
 - **AircraftPIDController's `rascal` settings** are `a4d`'s gains with
   ArduPlane's attitude limits (`ROLL_LIMIT_DEG` 45, `PITCH_MAX` 20,
   `ArduPlane/config.h` at `ccdfd945aefb`). Measured on the Rascal at 20 m/s
@@ -451,7 +475,7 @@ AircraftPIDController takes the same `airframe` for its gains and limits.
   the same step in 3.4 s at 23 degrees. Unmodified C++ (D 0.01) flies the same
   upsets as well as Ripple with no substeps; with 5 substeps it ends 53 to 60
   degrees off heading at D 0.01 and at 0.002 alike, so its substep defects,
-  not the gain, matter there. `fixed-wing-6dof-rascal.xml` keeps the 45/60
+  not the gain, matter there. `fixed-wing-6dof-rascal.yaml` keeps the 45/60
   limits as overrides.
 - **Outputs unchanged.** Before and after (2026-10-12): all 31 missions under
   `missions/` and `reference/inputs/` wrote byte-identical frames,
@@ -468,14 +492,15 @@ attribution line it needs as a derived work.
 
 - **Kept:** the model's structure (rigid body, thrust and reaction torque
   with rotor speed squared, commands clamped to [omega_min, omega_max]), the
-  optional quadratic body drag (`c_D`), the `rotor_config` row format, and
-  the `motor_0...` input ports, so C++ missions run unchanged.
+  optional quadratic body drag (`c_D`), each rotor's direction, hub position,
+  and tilt (C++'s `rotor_config` rows, now the `rotors` list, written back as
+  rows for the comparison), and the `motor_0...` input ports.
 - **Fixed:** RK4 loads (above) and three further defects (below), on both
   sides.
 - **Not kept:** C++'s default vehicle. Ripple has no default vehicle and one
   built-in, the Crazyflie 2.0; any other must be given in full. The C++
-  comparison missions (`multirotor.xml` and its YAML twin,
-  `verification/multirotor-fixes.xml`) write C++'s numbers out; their
+  comparison missions (`multirotor.yaml`,
+  `verification/multirotor-fixes.yaml`) write C++'s numbers out; their
   comments call them illustrative test values. Also not exposed: the C++
   external-force input, teleport, acceleration output, and private CSV and
   shape drawing (`write_csv` and `show_shapes` are rejected).
@@ -524,13 +549,13 @@ before fixing. Rust (`plugin/motion/multirotor/`) and `benchmarking-edits`
   c w² there, with no jump. There is no "off"; set omega_min to 0 for motors
   that stop (the Crazyflie does).
 
-`missions/multirotor.xml` triggers none of these (no initial velocity, flat
+`missions/multirotor.yaml` triggers none of these (no initial velocity, flat
 untilted rotors, motors above idle): before and after the fixes its frames
 differ by at most 6e-12 m and 7e-12 m/s, rounding. The fixture
-`verification/multirotor-fixes.xml` reaches all three (a starting velocity,
+`verification/multirotor-fixes.yaml` reaches all three (a starting velocity,
 tilted and raised rotors, idle motors). Before the C++ fix it separated C++
 from Rust at the first step on every vehicle; with it, the two agree to
-3.7e-13 m (and `multirotor.xml` to 4.9e-12 m). Unmodified C++ keeps the
+3.7e-13 m (and `multirotor.yaml` to 4.9e-12 m). Unmodified C++ keeps the
 defects, so `reference_check.py` only records Multirotor missions' baseline
 equality, as for the RK4 loads. The C++ commit leaves the `Uw`, `Vw`, `Ww`
 states in the vector but no longer reads them.
@@ -605,8 +630,7 @@ VTK mesh and texture (`data/gui/terrain/<name>/`) that only the viewer drew,
 plus BulletCollision when `enable_terrain` was set (off by default, commented
 out in `straight.xml`). The TerrainGenerator interaction published a random
 height map that the AltitudeAboveTerrain sensor read, but no stock mission used
-either. Rust ignores the XML `<terrain>` tag (XML is frozen); YAML missions name
-a terrain header instead (`common/terrain.rs`, book chapter "Terrain"), which
+either. YAML missions name a terrain header instead (`common/terrain.rs`, book chapter "Terrain"), which
 world plugins read and TerrainCollision uses. Like C++'s `altitude_origin`,
 local `z = 0` is the terrain's origin altitude. There is nothing in C++ to
 compare it with.
@@ -624,7 +648,7 @@ stalls, and its zero-lift drag is `C_D0 + C_D_alpha * |alpha|`. Tables of
 linearly and held at their ends like a JSBSim `<table>`; induced and elevator
 drag are unchanged. They are opt-in: no mission sets them, and the ArduPilot
 book chapter lists JSBSim's Rascal values. Without tables the output is
-unchanged: on 2026-10-05 `fixed-wing-6dof.xml` and `fixed-wing-6dof-rascal.xml`
+unchanged: on 2026-10-05 `fixed-wing-6dof.yaml` and `fixed-wing-6dof-rascal.yaml`
 wrote byte-identical frames, summaries, events, and traces before and after each
 table was added.
 

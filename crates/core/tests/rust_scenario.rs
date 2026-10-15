@@ -82,7 +82,27 @@ fn rust_and_yaml_setups_match_with_scheduled_spawns_across_workers() -> Result<(
         &core.join("../.."),
         &Params::new(),
     )?;
-    assert!(scenario()?.setup_differences(&yaml.scenario)?.is_empty());
+    // The same setup, field for field; only the YAML file names its groups,
+    // and YAML may write 5 where Rust has 5.0.
+    fn numbers_as_floats(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::Number(number) => {
+                *value = serde_json::json!(number.as_f64());
+            }
+            serde_json::Value::Array(items) => items.iter_mut().for_each(numbers_as_floats),
+            serde_json::Value::Object(fields) => fields.values_mut().for_each(numbers_as_floats),
+            _ => {}
+        }
+    }
+    let setup = |config: &ScenarioConfig| -> Result<serde_json::Value> {
+        let mut value = serde_json::to_value(config)?;
+        for group in value["entities"].as_array_mut().into_iter().flatten() {
+            group["label"] = serde_json::Value::Null;
+        }
+        numbers_as_floats(&mut value);
+        Ok(value)
+    };
+    assert_eq!(setup(&scenario()?)?, setup(&yaml.scenario)?);
     let expected = outputs(yaml.scenario, 1)?;
     for workers in [1, 2, 8] {
         assert_eq!(expected, outputs(scenario()?, workers)?);

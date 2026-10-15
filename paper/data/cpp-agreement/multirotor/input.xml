@@ -1,44 +1,105 @@
-<?xml version="1.0"?>
-<!-- Open-loop physics checks, not an autopilot demo. MotorSpeeds supplies rad/s.
-     821.5838362577492 rad/s balances the 1.5 kg quad's weight.
-     Straight speed="0" is only a placeholder autonomy; MotorSpeeds reads no inputs.
-     The vehicle numbers are illustrative test values, not a real aircraft. -->
-<runscript name="Multirotor open-loop flight">
-  <run start="0" end="4" dt="0.001" enable_gui="false" start_paused="false" time_warp="0" />
-  <seed>12345</seed><end_condition>time</end_condition><output_type>all</output_type>
-  <network>LocalNetwork</network><network>GlobalNetwork</network>
+<?xml version='1.0' encoding='utf-8'?>
+<runscript name="mission">
+  <run start="0.0" end="4.0" dt="0.001" motion_multiplier="1" enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+  <seed>12345</seed>
+  <end_condition>time</end_condition>
+  <network>LocalNetwork</network>
+  <network>GlobalNetwork</network>
   <metrics>SimpleCollisionMetrics</metrics>
-  <!-- Level hover. -->
   <entity>
-    <count>1</count><team_id>1</team_id>
-    <x>-10</x><y>-10</y><z>30</z><heading>0</heading>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>-10.0</x>
+    <variance_x>100.0</variance_x>
+    <vx>0.0</vx>
+    <y>-10.0</y>
+    <variance_y>100.0</variance_y>
+    <vy>0.0</vy>
+    <z>30.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy speed="0">Straight</autonomy>
     <controller speeds="821.5838362577492 821.5838362577492 821.5838362577492 821.5838362577492">MotorSpeeds</controller>
-    <motion_model mass="1.5" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" c_D="0.058" c_T="5.45e-6" c_Q="2.284e-7" omega_min="346.41" omega_max="1200" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model><visual_model>sphere</visual_model>
+    <motion_model c_D="0.058" c_Q="2.284e-07" c_T="5.45e-06" mass="1.5" omega_max="1200" omega_min="346.41" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model>
   </entity>
-  <!-- Tilted thrust translates the vehicle; no stabilizer levels it. -->
   <entity>
-    <count>1</count><team_id>2</team_id>
-    <x>10</x><y>-10</y><z>30</z><heading>45</heading><roll>5</roll><pitch>8</pitch>
+    <team_id>2</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>10.0</x>
+    <variance_x>100.0</variance_x>
+    <vx>0.0</vx>
+    <y>-10.0</y>
+    <variance_y>100.0</variance_y>
+    <vy>0.0</vy>
+    <z>30.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>45.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>5.0</roll>
+    <pitch>8.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy speed="0">Straight</autonomy>
     <controller speeds="821.5838362577492 821.5838362577492 821.5838362577492 821.5838362577492">MotorSpeeds</controller>
-    <motion_model mass="1.5" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" c_D="0.058" c_T="5.45e-6" c_Q="2.284e-7" omega_min="346.41" omega_max="1200" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model><visual_model>sphere</visual_model>
+    <motion_model c_D="0.058" c_Q="2.284e-07" c_T="5.45e-06" mass="1.5" omega_max="1200" omega_min="346.41" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model>
   </entity>
-  <!-- Slightly unequal motors exercise roll, pitch, yaw and body/world rates. -->
   <entity>
-    <count>1</count><team_id>3</team_id>
-    <x>-10</x><y>10</y><z>30</z><heading>90</heading><roll>3</roll>
+    <team_id>3</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>-10.0</x>
+    <variance_x>100.0</variance_x>
+    <vx>0.0</vx>
+    <y>10.0</y>
+    <variance_y>100.0</variance_y>
+    <vy>0.0</vy>
+    <z>30.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>90.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>3.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy speed="0">Straight</autonomy>
     <controller speeds="820 821 823 822">MotorSpeeds</controller>
-    <motion_model mass="1.5" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" c_D="0.058" c_T="5.45e-6" c_Q="2.284e-7" omega_min="346.41" omega_max="1200" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model><visual_model>sphere</visual_model>
+    <motion_model c_D="0.058" c_Q="2.284e-07" c_T="5.45e-06" mass="1.5" omega_max="1200" omega_min="346.41" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model>
   </entity>
-  <!-- Six rotors demonstrate configured channel names, not a quad-only engine. -->
   <entity>
-    <count>1</count><team_id>4</team_id>
-    <x>10</x><y>10</y><z>30</z><heading>180</heading>
+    <team_id>4</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>10.0</x>
+    <variance_x>100.0</variance_x>
+    <vx>0.0</vx>
+    <y>10.0</y>
+    <variance_y>100.0</variance_y>
+    <vy>0.0</vy>
+    <z>30.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>180.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy speed="0">Straight</autonomy>
     <controller speeds="680 680 680 680 680 680">MotorSpeeds</controller>
-    <motion_model mass="1.5" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" c_D="0.058" c_T="5.45e-6" c_Q="2.284e-7" omega_min="346.41" omega_max="1200" rotor_config="[CW 0.2 0 0 0 0 0] [CCW 0.1 0.17320508075688773 0 0 0 0] [CW -0.1 0.17320508075688773 0 0 0 0] [CCW -0.2 0 0 0 0 0] [CW -0.1 -0.17320508075688773 0 0 0 0] [CCW 0.1 -0.17320508075688773 0 0 0 0]">Multirotor</motion_model>
-    <visual_model>sphere</visual_model>
+    <motion_model c_D="0.058" c_Q="2.284e-07" c_T="5.45e-06" mass="1.5" omega_max="1200" omega_min="346.41" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" rotor_config="[CW 0.2 0 0 0 0 0] [CCW 0.1 0.17320508075688773 0 0 0 0] [CW -0.1 0.17320508075688773 0 0 0 0] [CCW -0.2 0 0 0 0 0] [CW -0.1 -0.17320508075688773 0 0 0 0] [CCW 0.1 -0.17320508075688773 0 0 0 0]">Multirotor</motion_model>
   </entity>
 </runscript>

@@ -11,7 +11,12 @@ fn every_shipped_mission_runs_identically_with_recording_on_and_off() {
             let path = entry.unwrap().path();
             if path.is_dir() {
                 directories.push(path);
-            } else if path.extension().is_some_and(|extension| extension == "xml") {
+            } else if path
+                .extension()
+                .is_some_and(|extension| extension == "yaml")
+                && !path.to_string_lossy().ends_with(".sweep.yaml")
+                && !path.to_string_lossy().ends_with(".terrain.yaml")
+            {
                 missions.push(path);
             }
         }
@@ -54,7 +59,7 @@ fn every_shipped_mission_runs_identically_with_recording_on_and_off() {
 fn cli_allocates_runs_and_accepts_explicit_output_without_changing_results() {
     let temp = tempfile::tempdir().unwrap();
     let mission =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("../core/tests/fixtures/plugin_defaults.xml");
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../core/tests/fixtures/plugin_defaults.yaml");
     for output in [None, None, Some("custom/nested/run"), Some("named")] {
         let mut command = Command::new(env!("CARGO_BIN_EXE_ripple"));
         command
@@ -98,24 +103,25 @@ fn cli_allocates_runs_and_accepts_explicit_output_without_changing_results() {
 #[test]
 fn failed_runs_still_write_outputs_and_record_the_error() {
     let temp = tempfile::tempdir().unwrap();
-    let mission = temp.path().join("mission.xml");
+    let mission = temp.path().join("mission.yaml");
     // A point moving at 1.7e308 m/s leaves the range of f64 within a few steps.
     fs::write(
         &mission,
-        r#"<?xml version="1.0"?>
-<runscript name="Overflow">
-  <run start="0" end="3" dt="0.1" enable_gui="false" />
-  <seed>1</seed>
-  <metrics>SimpleCollisionMetrics</metrics>
-  <entity>
-    <team_id>1</team_id><count>1</count><x>0</x><y>0</y><z>0</z>
-    <variance_x>0</variance_x><variance_y>0</variance_y>
-    <autonomy velocity="1.7e308 0 0">ConstantVelocity</autonomy>
-    <controller>SingleIntegratorControllerSimple</controller>
-    <motion_model>SingleIntegrator</motion_model>
-  </entity>
-</runscript>
-"#,
+        "format_version: 1
+name: overflow
+run: {end_s: 3, dt_s: 0.1, seed: 1}
+metrics:
+  SimpleCollisionMetrics:
+entities:
+  point:
+    team: 1
+    autonomy:
+      ConstantVelocity: {velocity: [1.7e308, 0, 0]}
+    controller:
+      SingleIntegratorControllerSimple:
+    motion_model:
+      SingleIntegrator:
+",
     )
     .unwrap();
     let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
@@ -148,7 +154,7 @@ fn invalid_missions_do_not_allocate_run_directories() {
     let temp = tempfile::tempdir().unwrap();
     let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
         .current_dir(temp.path())
-        .args(["run", "missing-mission.xml", "--no-rerun", "--root"])
+        .args(["run", "missing-mission.yaml", "--no-rerun", "--root"])
         .arg(temp.path())
         .output()
         .unwrap();
@@ -160,13 +166,13 @@ fn invalid_missions_do_not_allocate_run_directories() {
 fn unavailable_sensor_reports_its_category_before_creating_a_run() {
     let temp = tempfile::tempdir().unwrap();
     let fixture =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("../core/tests/fixtures/plugin_defaults.xml");
-    let xml = fs::read_to_string(fixture).unwrap();
-    let mission = temp.path().join("mission.xml");
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../core/tests/fixtures/plugin_defaults.yaml");
+    let text = fs::read_to_string(fixture).unwrap();
+    let mission = temp.path().join("mission.yaml");
 
     // A missing name and a real plugin name registered in the wrong category (motion).
     for name in ["RayTrace", "SimpleAircraft"] {
-        fs::write(&mission, xml.replace("NoisyPosition", name)).unwrap();
+        fs::write(&mission, text.replace("NoisyPosition", name)).unwrap();
         let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
             .current_dir(temp.path())
             .arg("run")
@@ -178,9 +184,7 @@ fn unavailable_sensor_reports_its_category_before_creating_a_run() {
             .unwrap();
         assert!(!result.status.success());
         let error = String::from_utf8_lossy(&result.stderr);
-        let expected = format!(
-            "Mission requests sensor '{name}', but it isn't registered in this executable."
-        );
+        let expected = format!("unregistered Sensor plugin '{name}'");
         assert!(error.contains(&expected), "{error}");
         assert!(!temp.path().join("runs").exists());
     }

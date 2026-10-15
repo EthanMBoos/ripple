@@ -160,19 +160,22 @@ impl Interaction for RemoveContacts {
     }
 }
 
+/// One override per agent for a field all three share, such as
+/// `autonomy.AuctionAssign.auction_duration_s`.
+fn every_agent(field: &str, value: &str) -> Vec<(String, String)> {
+    ["first", "second", "third"]
+        .map(|agent| (format!("entities.{agent}.{field}"), value.to_owned()))
+        .to_vec()
+}
+
 fn simulation(workers: usize, overrides: &Params) -> Result<Simulation> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mut registry = PluginRegistry::with_builtins();
     registry.register_autonomy::<ContactFollower>("ContactFollower")?;
     registry.register_sensor::<Observer>("Observer")?;
     registry.register_interaction::<RemoveContacts>("RemoveContacts")?;
-    let scenario = Mission::load_with_registry(
-        &root.join("crates/core/tests/fixtures/perception_communication.xml"),
-        &root,
-        overrides,
-        &registry,
-    )?
-    .scenario;
+    let path = root.join("crates/core/tests/fixtures/perception_communication.yaml");
+    let scenario = Mission::load(&path, &root, overrides)?.scenario;
     Simulation::new(scenario, &registry, workers)
 }
 
@@ -235,7 +238,10 @@ fn auction_selects_highest_received_bid_and_excludes_out_of_range_agent() -> Res
 
 #[test]
 fn complete_loss_drops_even_same_entity_auction_traffic() -> Result<()> {
-    let mut simulation = simulation(2, &Params::from([("probability".into(), "0".into())]))?;
+    let mut simulation = simulation(
+        2,
+        &Params::from([("networks.SphereNetwork.prob_transmit".into(), "0".into())]),
+    )?;
     while simulation.step()?.is_some() {}
     for index in 0..3 {
         assert_eq!(trace(&simulation, index), &AuctionTrace::default());
@@ -245,7 +251,8 @@ fn complete_loss_drops_even_same_entity_auction_traffic() -> Result<()> {
 
 #[test]
 fn an_auction_can_close_without_a_bid_and_does_not_reopen_for_late_bids() -> Result<()> {
-    let mut simulation = simulation(2, &Params::from([("duration".into(), "0".into())]))?;
+    let overrides = every_agent("autonomy.AuctionAssign.auction_duration_s", "0");
+    let mut simulation = simulation(2, &overrides.into_iter().collect())?;
     while simulation.step()?.is_some() {}
     let first = trace(&simulation, 0);
     assert_eq!(first.results, vec![(0.25, AuctionResult { winner: None })]);
@@ -256,7 +263,8 @@ fn an_auction_can_close_without_a_bid_and_does_not_reopen_for_late_bids() -> Res
 #[test]
 fn contact_feedback_uses_local_measurements_on_the_next_tick_without_changing_belief() -> Result<()>
 {
-    let mut simulation = simulation(8, &Params::from([("follow".into(), "true".into())]))?;
+    let overrides = every_agent("autonomy.ContactFollower.follow", "true");
+    let mut simulation = simulation(8, &overrides.into_iter().collect())?;
     simulation.step()?;
     assert_eq!(simulation.entities()[0].truth().position_world_m.x, 0.0);
     simulation.step()?;
@@ -279,8 +287,9 @@ fn contacts_include_new_spawns_and_clear_removed_targets() -> Result<()> {
     let mut simulation = simulation(
         2,
         &Params::from([
-            ("spawn_at".into(), "0.5".into()),
-            ("remove_at".into(), "1".into()),
+            ("entities.second.spawn.start_s".into(), "0.5".into()),
+            ("entities.third.spawn.start_s".into(), "0.5".into()),
+            ("interactions.RemoveContacts.remove_at_s".into(), "1".into()),
         ]),
     )?;
     let mut counts = Vec::new();
@@ -301,11 +310,16 @@ fn contacts_include_new_spawns_and_clear_removed_targets() -> Result<()> {
 fn observation_history(workers: usize, seed: u32, probability: f64) -> Result<String> {
     let mut simulation = simulation(
         workers,
-        &Params::from([
-            ("seed".into(), seed.to_string()),
-            ("probability".into(), probability.to_string()),
-            ("noise".into(), "2 0.5".into()),
-        ]),
+        &every_agent("sensors.NoisyContacts.position_stddev_m", "[0.5, 0, 0]")
+            .into_iter()
+            .chain([
+                ("run.seed".into(), seed.to_string()),
+                (
+                    "networks.SphereNetwork.prob_transmit".into(),
+                    probability.to_string(),
+                ),
+            ])
+            .collect(),
     )?;
     let mut history = String::new();
     while simulation.step()?.is_some() {

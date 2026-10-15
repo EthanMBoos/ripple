@@ -1,0 +1,148 @@
+{
+ "format_version": 1,
+ "name": "generated-062",
+ "run": {
+  "end_s": 5,
+  "dt_s": 0.1,
+  "motion_multiplier": 5,
+  "seed": 1025380440
+ },
+ "interactions": {
+  "SimpleCollision": {
+   "collision_range": 13.5916
+  }
+ },
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 3,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    282.62,
+    -59.8503,
+    131.027
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "randomize_every_spawn": true,
+   "heading_deg": 98.9032,
+   "roll_deg": 0.68862,
+   "pitch_deg": 1.65975,
+   "autonomy": {
+    "Straight": {
+     "speed": 19.2855,
+     "loop_rate": 5
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 0
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 39.9681
+    }
+   }
+  },
+  "group1": {
+   "team": 1,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    378.005,
+    160.278,
+    223.58
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "heading_deg": -157.867,
+   "roll_deg": 4.98815,
+   "pitch_deg": -0.41557,
+   "autonomy": {
+    "Straight": {
+     "speed": 23.2258,
+     "loop_rate": 10
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 20
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 36.5582
+    }
+   },
+   "sensors": {
+    "NoisyState": {
+     "position_bias_m": [
+      -0.360915,
+      -0.58267,
+      -0.309022
+     ],
+     "velocity_bias_mps": [
+      0.331712,
+      0.00217231,
+      -0.39843
+     ],
+     "attitude_bias_rad": [
+      -0.0489735,
+      0.0161089,
+      -0.0351791
+     ]
+    }
+   }
+  },
+  "group2": {
+   "team": 3,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    213.007,
+    -298.201,
+    273.491
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "loop_rate": 10
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  }
+ }
+}

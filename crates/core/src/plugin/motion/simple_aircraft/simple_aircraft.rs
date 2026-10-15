@@ -39,8 +39,7 @@ const GRAVITY_MPS2: f64 = 9.81;
 
 /// Mission parameters, in the mission file's units. `airframe` loads a named
 /// aircraft's limits, which any key overrides; without it, a key left out
-/// takes the generic value. The angle keys keep their XML names and
-/// degrees.
+/// takes the generic value. The angle keys are in degrees.
 #[derive(Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct SimpleAircraftParams {
@@ -485,12 +484,11 @@ impl AircraftState {
 mod tests {
     use super::{AircraftControl, AircraftState, Plugin, PluginParams, SimpleAircraft};
     use super::{MotionModel, aircraft_derivative};
-    use crate::Params;
     use crate::math::{EulerAngles, KinematicState, Quaternion, Vec3};
     use crate::plugin::{EntityInfo, Messages, MotionContext, PluginIo, StepTime};
 
     fn aircraft() -> anyhow::Result<SimpleAircraft> {
-        let config = SimpleAircraft::configure(&PluginParams::text(&Params::new()))?;
+        let config = SimpleAircraft::configure(&PluginParams::yaml("{}"))?;
         Ok(SimpleAircraft::new(&config))
     }
 
@@ -586,8 +584,7 @@ mod tests {
 
     #[test]
     fn level_uncontrolled_aircraft_moves_forward_at_constant_speed() -> anyhow::Result<()> {
-        let params = Params::new();
-        let config = SimpleAircraft::configure(&PluginParams::text(&params))?;
+        let config = SimpleAircraft::configure(&PluginParams::yaml("{}"))?;
         let state = AircraftState {
             speed_mps: 20.0,
             ..AircraftState::default()

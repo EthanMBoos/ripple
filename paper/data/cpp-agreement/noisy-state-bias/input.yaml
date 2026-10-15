@@ -1,0 +1,31 @@
+# Deterministic NoisyState equation/feedback fixture, not stochastic RNG parity.
+# Every distribution has zero standard deviation; nonzero means exercise feedback.
+format_version: 1
+name: NoisyState deterministic feedback
+
+run:
+  end_s: 3
+  dt_s: 0.1
+  seed: 12345
+
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+entities:
+  aircraft:
+    team: 1
+    visual_model: sphere
+    position_m: [10, 20, 200]
+    position_variance_m2: [0, 0, 0]
+    heading_deg: 30
+    velocity_mps: [20, 0, 0]
+    autonomy:
+      Straight:
+        speed: 20
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+    sensors:
+      NoisyState:            # biases only; every standard deviation is 0
+        position_bias_m: [1, -2, 3]
+        velocity_bias_mps: [0.2, -0.1, 0.3]
+        attitude_bias_rad: [0.01, 0.02, -0.03]

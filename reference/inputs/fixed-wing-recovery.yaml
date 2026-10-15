@@ -1,0 +1,35 @@
+# A gentle pitch loop recovering from a roll and pitch upset in wind. The
+# altitude gains are written out because the external reference has a
+# different default; reference/rk4_loads.py flies this in both.
+format_version: 1
+name: fixed-wing-recovery
+
+run:
+  end_s: 30
+  dt_s: 0.01
+  seed: 12345
+
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+
+entities:
+  a4:
+    team: 2
+    position_m: [200, -1000, 1100]
+    velocity_mps: [0, 222, 0]
+    heading_deg: 90
+    roll_deg: 20
+    pitch_deg: 8
+    visual_model: sphere
+    autonomy:
+      Straight:
+        speed: 220
+    controller:
+      AircraftPIDController:
+        airframe: a4d
+        pitch_pid: [0.5, 0, 0.1, 9]
+        altitude_pid: [0.1, 0.0001, 0.002, 10]
+    motion_model:
+      FixedWing6DOF:
+        airframe: a4d
+        wind_E: -3
+        wind_N: 2

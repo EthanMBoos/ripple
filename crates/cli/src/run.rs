@@ -41,8 +41,7 @@ pub(crate) struct RunOptions {
     /// Also write trace.jsonl, the C++ comparison trace (see reference/README.md).
     #[arg(long)]
     trace: bool,
-    /// Mission overrides: XML substitutions (`count:=20`) or YAML dotted paths
-    /// (`entities.red.count:=20`).
+    /// Mission overrides: dotted paths and YAML values (`entities.red.count:=20`).
     overrides: Vec<String>,
 }
 pub(crate) fn run(
@@ -60,7 +59,7 @@ pub(crate) fn run(
         ensure!(!name.is_empty(), "override name must not be empty");
         overrides.insert(name.to_owned(), value.to_owned());
     }
-    let mission = Mission::load_with_registry(&options.mission, root, &overrides, registry)?;
+    let mission = Mission::load(&options.mission, root, &overrides)?;
     let name = options
         .mission
         .file_stem()

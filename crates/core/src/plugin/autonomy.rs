@@ -1,4 +1,4 @@
-//! Autonomy implementations selected by mission XML.
+//! Autonomy implementations selected by missions.
 #[path = "autonomy/straight/straight.rs"]
 mod straight;
 pub use straight::Straight;

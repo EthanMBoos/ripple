@@ -125,6 +125,7 @@ resolved from this checkout, so the suite runs the same from any directory name.
 | --- | --- |
 | `suite.py`, `project.py`, `retain.py` | The runner, names and paths, and evidence copying |
 | `reference_check.py` | Compares Rust with C++ on `missions.txt` (or `--mission`, `--mission-dir`) |
+| `scrimmage_xml.py`, `scenario.py` | C++'s XML mission from the scenario a Rust run recorded; recorded scenarios back to YAML missions |
 | `compare.py`, `frames.py`, `traces.py`, `metrics_model.py` | Compare two saved runs; read frames and traces; model the two scoring rules |
 | `determinism.py`, `equivalence.py` | Rust against itself: variants of one build, or two builds |
 | `generate_scenarios.py`, `divergence.py`, `sensitivity.py`, `noise_statistics.py`, `platform_check.py` | Release checks described [below](#the-scripts-behind-the-release-checks) |
@@ -279,22 +280,21 @@ The matrix is [missions.txt](missions.txt):
 
 | Case | Mission | Coverage |
 | --- | --- | --- |
-| `aircraft-collision` | `straight-no-gui.xml` | Opposing aircraft, collision and removal |
-| `aircraft-long-horizon` | `test_missions/straight_cpu.xml` | Longer single-aircraft run |
-| `aircraft-multiplier-typo` | `test_missions/straight_cpu_mul.xml` | Original mission including its `motion_multipler` typo |
-| `substeps-random-spawn` | `verification/aircraft-substeps-spawning.xml` | Actual five-substep execution, rates, randomized state, and scheduled spawning, with keyed spawn draws |
-| `substeps-scheduled-spawn` | `verification/aircraft-substeps-scheduled.xml` | The same substeps and rates with two zero-variance spawn schedules; deterministic on either engine |
-| `noisy-state-bias` | `verification/noisy-state-bias.xml` | NoisyState deterministic bias/attitude equations and belief feedback, without stochastic sequence differences |
-| `world-networks` | `networks-local-global.xml` | Boundary response over GlobalNetwork, local own-state feedback, ground removal and metrics |
-| `fixed-wing-a4` | `fixed-wing-6dof.xml` | Aerodynamic flight, tilted/northbound attitude, nonzero rates and wind |
-| `fixed-wing-rascal` | `fixed-wing-6dof-rascal.xml` | The Rascal's parameters, an upset, and a glide |
-| `multirotor` | `multirotor.xml` | Quad hover, tilted flight, unequal motor speeds and a six-rotor configuration |
-| `multirotor-fixes` | `verification/multirotor-fixes.xml` | The three Multirotor fixes: starting velocity, tilted and raised rotors, idle motors |
-| `single-integrator` | `verification/single-integrator.xml` | SingleIntegrator direct, normalized, zero, and vertical commands from `ConstantVelocity` |
-| `noisy-contacts-bias` | `verification/noisy-contacts-bias.xml` | NoisyContacts biases, attitude order, and covariance through published payloads |
-| `sphere-network-auction` | `verification/sphere-network-auction.xml` | SphereNetwork reach inside, at, and beyond range through AuctionAssign messages on `CommsNetwork` |
-| `sphere-network-loss` | `verification/sphere-network-loss.xml` | SphereNetwork loss at `prob_transmit` 0.5, keyed draw for draw, through the same auction |
-| `collision-boundary` | `verification/collision-boundary.xml` | SimpleCollision strict range at the boundary, and in-run opposing and same-team collisions |
+| `aircraft-collision` | `straight-no-gui.yaml` | Opposing aircraft, collision and removal |
+| `aircraft-long-horizon` | `verification/aircraft-long-horizon.yaml` | Longer single-aircraft run |
+| `substeps-random-spawn` | `verification/aircraft-substeps-spawning.yaml` | Actual five-substep execution, rates, randomized state, and scheduled spawning, with keyed spawn draws |
+| `substeps-scheduled-spawn` | `verification/aircraft-substeps-scheduled.yaml` | The same substeps and rates with two zero-variance spawn schedules; deterministic on either engine |
+| `noisy-state-bias` | `verification/noisy-state-bias.yaml` | NoisyState deterministic bias/attitude equations and belief feedback, without stochastic sequence differences |
+| `world-networks` | `networks-local-global.yaml` | Boundary response over GlobalNetwork, local own-state feedback, ground removal and metrics |
+| `fixed-wing-a4` | `fixed-wing-6dof.yaml` | Aerodynamic flight, tilted/northbound attitude, nonzero rates and wind |
+| `fixed-wing-rascal` | `fixed-wing-6dof-rascal.yaml` | The Rascal's parameters, an upset, and a glide |
+| `multirotor` | `multirotor.yaml` | Quad hover, tilted flight, unequal motor speeds and a six-rotor configuration |
+| `multirotor-fixes` | `verification/multirotor-fixes.yaml` | The three Multirotor fixes: starting velocity, tilted and raised rotors, idle motors |
+| `single-integrator` | `verification/single-integrator.yaml` | SingleIntegrator direct, normalized, zero, and vertical commands from `ConstantVelocity` |
+| `noisy-contacts-bias` | `verification/noisy-contacts-bias.yaml` | NoisyContacts biases, attitude order, and covariance through published payloads |
+| `sphere-network-auction` | `verification/sphere-network-auction.yaml` | SphereNetwork reach inside, at, and beyond range through AuctionAssign messages on `CommsNetwork` |
+| `sphere-network-loss` | `verification/sphere-network-loss.yaml` | SphereNetwork loss at `prob_transmit` 0.5, keyed draw for draw, through the same auction |
+| `collision-boundary` | `verification/collision-boundary.yaml` | SimpleCollision strict range at the boundary, and in-run opposing and same-team collisions |
 
 Case folders and reports use the case ID, so a mission file can move without
 changing what the evidence calls it. Missions given with `--mission` or
@@ -304,10 +304,10 @@ Each case runs C++ headless and single-threaded. Rust runs with 1, 2, and 8
 workers without Rerun, plus an eight-worker headless Rerun recording.
 
 For just the Multirotor port, run
-`python3 reference/reference_check.py --mission missions/multirotor.xml
---mission missions/verification/multirotor-fixes.xml` and `cargo test -p
-ripple-core multirotor`. `multirotor.xml` covers the quad open loop and
-reaches none of the three Multirotor fixes; `multirotor-fixes.xml` reaches all
+`python3 reference/reference_check.py --mission missions/multirotor.yaml
+--mission missions/verification/multirotor-fixes.yaml` and `cargo test -p
+ripple-core multirotor`. `multirotor.yaml` covers the quad open loop and
+reaches none of the three Multirotor fixes; `multirotor-fixes.yaml` reaches all
 three. The Rust-only motor and rotor effects, the Crazyflie preset, and
 MultirotorVelocityController have no C++ counterpart; they are checked against
 RotorS, Förster's data, and Crazyflow (`rotors_motor.py`,
@@ -329,14 +329,16 @@ RotorS, Förster's data, and Crazyflow (`rotors_motor.py`,
   outputs as above. Headless recording is not a native-viewer playback or
   screenshot test; use `AGENTS.md` for visual QA.
 
-`--mission path/to/mission.xml` can be repeated to replace the default matrix.
-Additional missions must use plugins included in this build and have expanded
-XML: XIncludes are rejected explicitly. The script saves the input and effective
-C++ mission, with all headless/logging overrides recorded. It does not change
-physics, seeds, rates, parameter defaults, or the multiplier typo.
+`--mission path/to/mission.yaml` can be repeated to replace the default matrix.
+Additional missions must use plugins included in both builds, the default
+estimators, and no terrain. Each case saves its inputs in `input/`: the YAML
+mission (`input.yaml`), the C++ mission written from the scenario Ripple's run
+recorded (`input.xml`, by [scrimmage_xml.py](scrimmage_xml.py)), and that
+mission with the headless/logging overrides (`effective.xml`), all recorded.
+It does not change physics, seeds, rates, or parameter defaults.
 
 The build also includes NoisyState. Its deterministic bias/attitude fixture can
-be checked with `--mission missions/verification/noisy-state-bias.xml`. Noisy
+be checked with `--mission missions/verification/noisy-state-bias.yaml`. Noisy
 missions draw keyed random numbers on both sides, so they compare sample for
 sample too; keep any stochastic mismatch report rather than loosening a
 tolerance.
@@ -382,7 +384,7 @@ The unmodified Linux build draws spawns from libstdc++'s default engine
 variate first), so it diverges on randomized spawning; the suite records that
 comparison and expects it to fail. The comparison run uses keyed draws instead
 of changing seeds or tolerances. The zero-variance twin
-`verification/aircraft-substeps-scheduled.xml` stays in the matrix as a check
+`verification/aircraft-substeps-scheduled.yaml` stays in the matrix as a check
 that does not rely on them.
 
 Recorded outcomes are the release evidence under `paper/data/`, described in
@@ -405,7 +407,7 @@ the [paper README](../paper/README.md).
 - `sensitivity.py --check CHECK --output DIR` plants one-line defects in a copy
   of the Rust source and reports which comparison layer detects each.
 - `noise_statistics.py CASE` compares NoisyContacts error distributions
-  (two-sample Kolmogorov-Smirnov) for `verification/noisy-contacts-noise.xml`,
+  (two-sample Kolmogorov-Smirnov) for `verification/noisy-contacts-noise.yaml`,
   a second check beside the sample-for-sample comparison.
 
 The archive has no `.git` directory, so upstream's optional Git metadata

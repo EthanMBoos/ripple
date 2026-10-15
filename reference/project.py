@@ -80,7 +80,7 @@ def missions(root=ROOT):
     ArduPilot missions need SITL in Docker and are run by their own study.
     """
     found = [path for path in sorted((root / "missions").rglob("*"))
-             if path.suffix in (".xml", ".yaml")
+             if path.suffix == ".yaml"
              and not path.name.endswith((".sweep.yaml", ".terrain.yaml"))]
     found += [path for path in sorted((root / "crates").glob("*/missions/*.yaml"))
               if not path.name.endswith(".sweep.yaml") and path.parts[-3] != "ardupilot"]

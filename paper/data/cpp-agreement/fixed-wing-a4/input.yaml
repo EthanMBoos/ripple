@@ -1,0 +1,46 @@
+# FixedWing6DOF: level and tilted aircraft, different headings, and nonzero ENU
+# wind on the second aircraft. No controller substeps.
+format_version: 1
+name: fixed-wing-6dof
+
+run:
+  end_s: 10
+  dt_s: 0.01
+  seed: 12345
+
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  a4:
+    visual_model: sphere
+    autonomy:
+      Straight:
+        speed: 220
+    controller:
+      AircraftPIDController:
+        airframe: a4d
+    motion_model:
+      FixedWing6DOF:
+        airframe: a4d
+
+entities:
+  level:
+    template: a4
+    team: 1
+    position_m: [-1000, -150, 1000]
+    velocity_mps: [222, 0, 0]
+    heading_deg: 0
+  tilted_in_wind:
+    template: a4
+    team: 2
+    position_m: [200, -1000, 1100]
+    velocity_mps: [0, 222, 0]
+    heading_deg: 90
+    roll_deg: 3
+    pitch_deg: 2
+    motion_model:
+      FixedWing6DOF:
+        airframe: a4d
+        wind_E: -3
+        wind_N: 2

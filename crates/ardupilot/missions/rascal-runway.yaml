@@ -35,11 +35,8 @@ interactions:
   TerrainCollision:
     # The propeller (from JSBSim's Rascal) and the wingtips (half the span).
     structure_points_frd_m: [[0.899, 0.0, 0.102], [0.0, -1.35, 0.0], [0.0, 1.35, 0.0]]
-networks:
-  LocalNetwork:
-  GlobalNetwork:
-metrics:
-  SimpleCollisionMetrics:
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
 
 entities:
   rascal:

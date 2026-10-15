@@ -395,11 +395,11 @@ from one release run of \texttt{reference/suite.py}, retained in
 \toprule
 Component & Checked against & Result \\
 \midrule
-Simulation core & SCRIMMAGE: 16 missions, 100 generated scenarios, every
+Simulation core & SCRIMMAGE: 15 missions, 100 generated scenarios, every
   message delivery, plugin output, and noise sample & Agree to
   $2.8\times10^{-11}$~m at worst; 12 of 12 planted porting bugs caught \\
 Determinism & The same missions at 1, 2, and 8 workers, recording on and off &
-  Byte-identical on 45 missions \\
+  Byte-identical on 39 missions \\
 Benchmark point agents & MPE2 v1.1.1 \texttt{simple\_spread\_v3}: 100 episodes
   replayed with the same forces & All 100 bit-identical, 49 with contact;
   returns within $5\times10^{-7}$ \\
@@ -682,7 +682,7 @@ following the selected venue's policy.}
 \label{app:self}
 
 Output is byte-identical across 1, 2, and 8 workers, with and without
-recording and tracing, and whether a scenario comes from XML, YAML, or Rust;
+recording and tracing, and whether a scenario comes from a YAML file or Rust;
 across Linux/amd64 and macOS/arm64, events and summaries are identical and
 trajectories differ by at most $2.4\times10^{-12}$~m. Spatial queries from a
 grid and message routing by subscriber make a 4{,}096-agent step 2.4 and 40

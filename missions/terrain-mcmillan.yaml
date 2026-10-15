@@ -19,18 +19,14 @@ terrain: terrain/mcmillan.terrain.yaml
 interactions:
   TerrainCollision:
     clearance_m: 5
-networks:
-  GlobalNetwork:
-  LocalNetwork:
+networks: {GlobalNetwork: {}, LocalNetwork: {}}
 
 templates:
   aircraft:
     team: 1
     visual_model: zephyr-blue
-    controller:
-      SimpleAircraftControllerPID:
-    motion_model:
-      SimpleAircraft:
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
 
 entities:
   # Runs east and back along the valley, 70 m up.

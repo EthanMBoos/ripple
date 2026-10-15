@@ -1,4 +1,4 @@
-//! Motion implementations selected by mission XML.
+//! Motion implementations selected by missions.
 #[path = "motion/fixed_wing_6dof/fixed_wing_6dof.rs"]
 mod fixed_wing_6dof;
 pub use fixed_wing_6dof::FixedWing6Dof;
@@ -6,7 +6,7 @@ pub(crate) use fixed_wing_6dof::FixedWingAirframe;
 #[path = "motion/multirotor/multirotor.rs"]
 mod multirotor;
 pub use multirotor::Multirotor;
-pub(crate) use multirotor::{Airframe, AirframeName, AirframeOverrides};
+pub(crate) use multirotor::{Airframe, AirframeName, AirframeOverrides, RotorParams};
 #[path = "motion/simple_aircraft/simple_aircraft.rs"]
 mod simple_aircraft;
 pub use simple_aircraft::SimpleAircraft;

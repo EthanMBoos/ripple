@@ -1,0 +1,58 @@
+# NoisyContacts noise. Each error is keyed by the contact, quantity, and axis,
+# so external verification that draws the same keys compares the measured
+# contacts sample for sample, and their error distributions again with
+# reference/noise_statistics.py.
+format_version: 1
+name: noisy-contacts-noise
+
+run:
+  end_s: 30
+  dt_s: 0.1
+  seed: 23
+
+networks:
+  GlobalNetwork:
+  LocalNetwork:
+metrics:
+  SimpleCollisionMetrics:
+
+templates:
+  aircraft:
+    visual_model: sphere
+    autonomy:
+      Straight:
+        speed: 22
+    controller:
+      SimpleAircraftControllerPID:
+    motion_model:
+      SimpleAircraft:
+    sensors:
+      NoisyContacts:
+        position_bias_m: [1, -2, 0.5]
+        position_stddev_m: [5, 5, 1]
+        velocity_bias_mps: [0, 0.3, 0]
+        velocity_stddev_mps: [5, 5, 1]
+        attitude_bias_rad: [0, 0, 0.1]
+        attitude_stddev_rad: [0.05, 0.05, 0.1]
+
+entities:
+  blue_a:
+    template: aircraft
+    team: 1
+    position_m: [0, 0, 200]
+    heading_deg: 0
+  blue_b:
+    template: aircraft
+    team: 1
+    position_m: [100, 50, 210]
+    heading_deg: 90
+  red_a:
+    template: aircraft
+    team: 2
+    position_m: [400, -80, 190]
+    heading_deg: 200
+  red_b:
+    template: aircraft
+    team: 2
+    position_m: [-300, 200, 220]
+    heading_deg: -45

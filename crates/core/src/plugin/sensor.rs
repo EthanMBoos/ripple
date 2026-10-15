@@ -1,4 +1,4 @@
-//! Sensor implementations selected by mission XML.
+//! Sensor implementations selected by missions.
 #[path = "sensor/noisy_position/noisy_position.rs"]
 mod noisy_position;
 pub use noisy_position::NoisyPosition;

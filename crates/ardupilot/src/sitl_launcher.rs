@@ -3,7 +3,7 @@
 //!
 //! `ripple run` calls [`SitlLauncher::start`] with the resolved mission once
 //! the run's output directory exists, so the containers always match the
-//! mission: XML or YAML, templates and overrides included. Each aircraft gets
+//! mission, templates and overrides included. Each aircraft gets
 //! the image `ripple-arduplane` (built from `docker/`), its
 //! bridge's port, a system id (1, 2, ... in mission order), the run's rate,
 //! and its own folder `<run>/sitl/<port>/` holding SITL's files and

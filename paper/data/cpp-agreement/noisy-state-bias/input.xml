@@ -1,20 +1,34 @@
-<?xml version="1.0"?>
-<!-- Deterministic NoisyState equation/feedback fixture, not stochastic RNG parity.
-     Every distribution has zero standard deviation; nonzero means exercise feedback. -->
-<runscript name="NoisyState deterministic feedback">
-  <run start="0" end="3" dt="0.1" enable_gui="false" start_paused="false" time_warp="0" />
-  <seed>12345</seed><end_condition>time</end_condition><output_type>all</output_type>
-  <network>LocalNetwork</network><network>GlobalNetwork</network>
+<?xml version='1.0' encoding='utf-8'?>
+<runscript name="mission">
+  <run start="0.0" end="3.0" dt="0.1" motion_multiplier="1" enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+  <seed>12345</seed>
+  <end_condition>time</end_condition>
+  <network>LocalNetwork</network>
+  <network>GlobalNetwork</network>
   <metrics>SimpleCollisionMetrics</metrics>
   <entity>
-    <count>1</count><team_id>1</team_id>
-    <x>10</x><y>20</y><z>200</z><speed>20</speed><heading>30</heading>
-    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>10.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>20.0</vx>
+    <y>20.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>200.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>30.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy speed="20">Straight</autonomy>
     <controller>SimpleAircraftControllerPID</controller>
-    <motion_model>SimpleAircraft</motion_model><visual_model>sphere</visual_model>
-    <sensor pos_noise_0="1 0" pos_noise_1="-2 0" pos_noise_2="3 0"
-            vel_noise_0="0.2 0" vel_noise_1="-0.1 0" vel_noise_2="0.3 0"
-            orient_noise_0="0.01 0" orient_noise_1="0.02 0" orient_noise_2="-0.03 0">NoisyState</sensor>
+    <sensor pos_noise_0="1 0" pos_noise_1="-2 0" pos_noise_2="3 0" vel_noise_0="0.2 0" vel_noise_1="-0.1 0" vel_noise_2="0.3 0" orient_noise_0="0.01 0" orient_noise_1="0.02 0" orient_noise_2="-0.03 0">NoisyState</sensor>
+    <motion_model>SimpleAircraft</motion_model>
   </entity>
 </runscript>

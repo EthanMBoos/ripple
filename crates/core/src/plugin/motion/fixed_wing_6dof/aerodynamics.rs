@@ -8,7 +8,7 @@ use crate::math::Vec3;
 use super::Control;
 use super::airframe::Vehicle;
 
-/// Coefficient names deliberately match the aircraft equations and XML keys.
+/// Coefficient names deliberately match the aircraft equations and mission keys.
 #[derive(Clone)]
 pub(super) struct Aerodynamics {
     c_d0: f64,

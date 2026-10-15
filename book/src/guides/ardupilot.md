@@ -72,7 +72,7 @@ mission has loaded, and stops them all when the run ends, fails, or is
 interrupted with Ctrl-C
 ([sitl_launcher.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/ardupilot/src/sitl_launcher.rs)).
 It reads the resolved mission, so templates and overrides apply, and the
-containers always match it. `ripple sweep` and `compare` start no SITL. Each run
+containers always match it. `ripple sweep` starts no SITL. Each run
 writes `runs/<mission>/runNNN/` as usual, plus `sitl/<port>/` inside it: one
 folder per SITL, holding
 

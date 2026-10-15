@@ -1,32 +1,153 @@
-<?xml version="1.0"?>
-<!-- Added verification fixture: SphereNetwork reachability through the upstream
-     AuctionAssign messages on a network named CommsNetwork, as in upstream
-     missions/auction_assign.xml. Stationary agents: in range, exactly at the
-     100 m range along x and in 3D, just inside, and out of range. Deliveries are
-     compared in the comparison trace; random bid values are not. network_name
-     is a Rust AuctionAssign parameter (C++ hard-codes CommsNetwork and ignores it). -->
-<runscript name="SphereNetwork reachability through an auction">
-  <run start="0" end="7" dt="0.1"
-       enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+<?xml version='1.0' encoding='utf-8'?>
+<runscript name="mission">
+  <run start="0.0" end="7.0" dt="0.1" motion_multiplier="1" enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
   <seed>5</seed>
   <end_condition>time</end_condition>
-  <output_type>all</output_type>
-  <create_latest_dir>false</create_latest_dir>
   <network>GlobalNetwork</network>
-  <network name="CommsNetwork" range="100" prob_transmit="1">SphereNetwork</network>
+  <network prob_transmit="1" range="100" name="CommsNetwork">SphereNetwork</network>
   <metrics>SimpleCollisionMetrics</metrics>
-  <entity_common name="bidder">
-    <team_id>1</team_id><count>1</count><heading>0</heading>
-    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+  <entity>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>0.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>0.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy network_name="CommsNetwork">AuctionAssign</autonomy>
     <controller>SingleIntegratorControllerSimple</controller>
     <motion_model>SingleIntegrator</motion_model>
+  </entity>
+  <entity>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
     <visual_model>sphere</visual_model>
-  </entity_common>
-  <entity entity_common="bidder"><x>0</x><y>0</y><z>0</z></entity>
-  <entity entity_common="bidder"><x>50</x><y>0</y><z>0</z></entity>
-  <entity entity_common="bidder"><x>100</x><y>0</y><z>0</z></entity>
-  <entity entity_common="bidder"><x>60</x><y>0</y><z>80</z></entity>
-  <entity entity_common="bidder"><x>99.999</x><y>0</y><z>0</z></entity>
-  <entity entity_common="bidder"><x>200</x><y>0</y><z>0</z></entity>
+    <health>1</health>
+    <count>1</count>
+    <x>50.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>0.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy network_name="CommsNetwork">AuctionAssign</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
+    <motion_model>SingleIntegrator</motion_model>
+  </entity>
+  <entity>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>100.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>0.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy network_name="CommsNetwork">AuctionAssign</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
+    <motion_model>SingleIntegrator</motion_model>
+  </entity>
+  <entity>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>60.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>80.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy network_name="CommsNetwork">AuctionAssign</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
+    <motion_model>SingleIntegrator</motion_model>
+  </entity>
+  <entity>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>99.999</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>0.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy network_name="CommsNetwork">AuctionAssign</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
+    <motion_model>SingleIntegrator</motion_model>
+  </entity>
+  <entity>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>200.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>0.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy network_name="CommsNetwork">AuctionAssign</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
+    <motion_model>SingleIntegrator</motion_model>
+  </entity>
 </runscript>

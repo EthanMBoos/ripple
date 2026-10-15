@@ -1,0 +1,43 @@
+# A longer aircraft run with randomized starts: one blue aircraft for 200 s.
+# The red group is defined but spawns no one (count 0).
+format_version: 1
+name: aircraft-long-horizon
+
+run:
+  end_s: 200
+  dt_s: 0.1
+  seed: 2147483648
+end_conditions: [time, all_dead]
+
+networks: {GlobalNetwork: {}, LocalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+entities:
+  blue:
+    team: 1
+    color: [77, 77, 255]
+    visual_model: zephyr-blue
+    position_m: [-900, 0, 195]
+    position_variance_m2: [20, 20, 10]
+    heading_deg: 0
+    autonomy:
+      Straight:
+        show_text_label: true
+        generate_entities: false
+        enable_boundary_control: true
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+  red:
+    team: 2
+    color: [255, 0, 0]
+    visual_model: zephyr-red
+    count: 0
+    position_m: [50, 0, 200]
+    position_variance_m2: [20, 20, 20]
+    heading_deg: 180
+    autonomy:
+      Straight:
+        speed: 21
+        enable_boundary_control: true
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}

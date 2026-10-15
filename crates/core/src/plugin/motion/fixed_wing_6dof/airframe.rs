@@ -9,7 +9,7 @@ use anyhow::Result;
 use nalgebra::Matrix3;
 use serde::Deserialize;
 
-use super::parse_inertia_text;
+use super::inertia;
 
 /// A built-in aircraft.
 #[derive(Clone, Copy, Debug, Deserialize)]
@@ -83,7 +83,14 @@ impl FixedWingAirframe {
 fn a4d() -> Result<Vehicle> {
     Ok(Vehicle {
         mass_kg: 7973.2467,
-        inertia_kgm2: parse_inertia_text("[8090 0 1300] [0 25900 0] [1300 0 29200]", true)?,
+        inertia_kgm2: inertia(
+            [
+                [8090.0, 0.0, 1300.0],
+                [0.0, 25900.0, 0.0],
+                [1300.0, 0.0, 29200.0],
+            ],
+            true,
+        )?,
         span_m: 8.382,
         area_m2: 24.1548,
         chord_m: 3.29184,
@@ -145,7 +152,7 @@ fn a4d() -> Result<Vehicle> {
 fn rascal() -> Result<Vehicle> {
     Ok(Vehicle {
         mass_kg: 5.91,
-        inertia_kgm2: parse_inertia_text("[1.95 0 0] [0 1.55 0] [0 0 1.91]", true)?,
+        inertia_kgm2: inertia([[1.95, 0.0, 0.0], [0.0, 1.55, 0.0], [0.0, 0.0, 1.91]], true)?,
         span_m: 2.70,
         area_m2: 0.982,
         chord_m: 0.351,

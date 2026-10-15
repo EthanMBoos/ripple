@@ -180,7 +180,7 @@ def run_long(context):
 
 def run_noise(context):
     context.check_cpp("cpp-noise", "--mission",
-                      ROOT / "missions/verification/noisy-contacts-noise.xml")
+                      ROOT / "missions/verification/noisy-contacts-noise.yaml")
     case_folder = context.out / "cpp-noise/noisy-contacts-noise"
     case = read(case_folder / "result.json")
     # Keyed draws make the measured contacts agree sample for sample; the KS

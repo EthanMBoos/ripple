@@ -53,7 +53,7 @@ actual code rather than a second set of templates to keep synchronized:
 | Category | What belongs in its update | Regression coverage |
 | --- | --- | --- |
 | Autonomy | Read belief (own state and known contacts), calculate desired commands, write ports. | Straight configuration test; aircraft missions; plugin contract test. |
-| Controller | Read desired/current state, run owned control loops, write actuator commands. | Named XML gain mapping and PID equation tests; aircraft missions. |
+| Controller | Read desired/current state, run owned control loops, write actuator commands. | Named gain mapping and PID equation tests; aircraft missions. |
 | MotionModel | Read actuator commands, integrate owned model state, update mutable truth. | Level-flight equation test; aircraft and substep missions. |
 | Sensor | Read committed truth, construct a measurement, apply effects, publish a reading. | NoisyPosition zero-noise/bias and fixed-seed draw-order tests; sensor visibility contract. |
 | Localization | Predict own state (optionally from commands), correct with readings, write belief. | PassThrough; estimation contract tests; plugin contract test (a custom localizer). |
@@ -76,10 +76,9 @@ stop-requesting update.
 
 Straight uses a named configuration struct. LocalNetwork and GlobalNetwork are
 stateless and use `Config = ()`; configuration still rejects unsupported delay
-modes. Call `configure` and pass its result to `new`. The controller parses
-legacy `[P, I, D, integral band]` XML values into named `PidGains`; angular PID
-updates still use radians and convert the legacy degree-valued band once at
-construction.
+modes. Call `configure` and pass its result to `new`. The controller reads
+`[P, I, D, integral band]` gains into named `PidGains`; angular PID updates use
+radians and convert the degree-valued band once at construction.
 
 Downstream plugins can import `Pid`, `PidGains`, `EulerAngles`, `Quaternion`,
 `Vec3`, and `rk4` directly from `ripple_core`. Use `Quaternion::from_euler`
@@ -111,11 +110,11 @@ The steps here are for adding a stock plugin.
 [builtins.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin_manager/builtins.rs)
 shows every registration category. Missions select the registered names:
 
-```xml
-<entity_interaction>SimpleCollision</entity_interaction>
-<network>GlobalNetwork</network>
-<metrics>SimpleCollisionMetrics</metrics>
-<!-- Autonomy, controller, motion_model, and sensor belong inside entity. -->
+```yaml
+interactions: {SimpleCollision: {}}
+networks: {GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+# Autonomy, controller, motion_model, and sensors belong in an entity group.
 ```
 
 Start with `PluginRegistry::with_builtins()` and add your project types.
@@ -163,8 +162,7 @@ in this repo.
 ## Parameters and defaults
 
 Each plugin declares its mission parameters as a struct. Serde fills it from the
-mission's values (XML text or YAML), and `Default` supplies every key the
-mission leaves out:
+mission's values, and `Default` supplies every key the mission leaves out:
 
 ```rust,ignore
 #[derive(Deserialize)]
@@ -189,10 +187,8 @@ fn configure(params: &PluginParams<'_>) -> Result<SphereNetworkConfig> {
 }
 ```
 
-- Numbers must be finite. In XML, booleans are `true`, `false`, `1`, or `0`, and
-  lists (`Vec` or a fixed array) are separated by commas or whitespace, so
-  `"1, 0.01, 2, 9"` fills `[f64; 4]` and `PidGains`. YAML uses its own
-  booleans and lists (`[1, 0.01, 2, 9]`).
+- Values are YAML, and numbers must be finite: `[1, 0.01, 2, 9]` fills
+  `[f64; 4]` and `PidGains`.
 - `deny_unknown_fields` makes a misspelled or unsupported key an error that
   names the key, instead of silently using the default.
 - A C++ option that Rust does not implement stays a named field with a comment,
@@ -205,12 +201,8 @@ fn configure(params: &PluginParams<'_>) -> Result<SphereNetworkConfig> {
 - A plugin with no parameters uses `Config = ()`; `params.parse()` still
   rejects any key the mission gives it. `loop_rate` is read by the framework.
 
-Values are resolved in this order, first match wins: an attribute on the mission
-tag, a `param_common` group the tag references, a `PluginName.xml` overlay found
-on `RIPPLE_PLUGIN_PATH`, then `Default`. Overlays are optional: a lab can use
-one to change a default for every mission without editing code. Their
-`<library>` element is ignored, and any other key must be one the plugin
-declares.
+A value in the mission wins; `Default` supplies the rest. A value shared by
+several groups goes in a [template](../guides/yaml-missions.md#templates).
 
 The C++ plugins' XML defaults became these `Default` impls. Plugins are linked
 as Rust code; runtime shared-library loading is intentionally out of scope.
@@ -333,8 +325,7 @@ tracking:
   PassThrough:          # inputs left out: the one contact sensor, or perfect
 ```
 
-XML cannot name estimators; its entities use `PassThrough` for both with the
-source rule above. From Rust, set `EntityGroupConfig::localization` to
+From Rust, set `EntityGroupConfig::localization` to
 `PluginConfig::new("DeadReckoning").input("fix", "gps")`.
 
 ### NoisyState
@@ -351,9 +342,6 @@ message.
   `velocity_stddev_mps`, and `attitude_bias_rad` and `attitude_stddev_rad`
   (roll, pitch, yaw). Every one defaults to zero, so a sensor with no
   parameters measures exactly; set only the noise you want.
-- XML keeps its older parameters: `pos_noise_0="mean stddev"` per axis (and
-  `vel_noise_*`, `orient_noise_*`), with defaults of 5 m and 5 m/s
-  horizontally, 1 m and 1 m/s vertically, and no attitude noise.
 - Attitude noise right-multiplies body-axis roll, pitch, and yaw rotations.
 - Angular velocity is reported exactly; there is no rate noise.
 - Each error is the keyed normal number for `[reading, quantity, axis]`
@@ -361,16 +349,15 @@ message.
   reading, taken when the entity is created, 0 for every later one). See
   [Randomness and seeds](../concepts/randomness.md).
 
-Try `missions/noisy-state.xml`. Its two aircraft get independent noise (each
+Try `missions/noisy-state.yaml`. Its two aircraft get independent noise (each
 error's label holds its entity). The separate
-`verification/noisy-state-bias.xml` fixes standard deviations at zero to
+`verification/noisy-state-bias.yaml` fixes standard deviations at zero to
 check the equations and feedback without random numbers. NoisyPosition remains a distinct Rust illustration.
 
 ### NoisyContacts
 
 `NoisyContacts` measures every other active contact after motion, in entity-ID
-order, with the same parameters as NoisyState (and the same XML keys and
-defaults). It is a `Contacts`
+order, with the same parameters and defaults as NoisyState. It is a `Contacts`
 sensor: tracking's `PassThrough` copies each sample into known contacts. It has
 no range/FOV filtering, detection probability, or persistent tracks.
 
@@ -389,10 +376,10 @@ for contact in context.contacts.iter() {
 ```
 
 Removal clears a target on the next sensor sample after removal, not
-retroactively. Sensor streams use mission seed/entity/instance; C++ uses a
-shared generator and different contact iteration order.
+retroactively. Each error is keyed by the contact it measures (see [Randomness
+and seeds](../concepts/randomness.md)).
 
-Try `missions/noisy-contacts.xml`. Its route follower does not consume contacts;
+Try `missions/noisy-contacts.yaml`. Its route follower does not consume contacts;
 the public-plugin contract tests include a consumer that drives from measured
 positions and checks next-tick feedback, spawn/removal, and worker determinism.
 Neither measurements nor auction messages are automatically saved in stock
@@ -646,6 +633,5 @@ excluded. Learned policies are planned as an optional training bridge and
 frozen-policy plugin
 ([Roadmap](https://github.com/EthanMBoos/ripple/blob/main/docs/TODO.md)). ROS
 and JSBSim integrations are not planned; ArduPlane SITL is optional ([Flying
-ArduPlane](../guides/ardupilot.md)). XML/template coverage is partial. YAML
-missions, templates, and sweeps work; typed runtime spawn requests are not
-implemented.
+ArduPlane](../guides/ardupilot.md)). YAML missions, templates, and sweeps work;
+typed runtime spawn requests are not implemented.

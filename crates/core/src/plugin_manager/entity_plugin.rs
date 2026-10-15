@@ -1,44 +1,54 @@
 //! Shared plugin lifecycle, configuration, and execution contexts.
 //! Category-specific interfaces live in the corresponding framework modules.
 use crate::{
-    KinematicState, Params,
+    KinematicState,
     common::{PluginRandom, Ports, Terrain, TruthContacts},
     estimator::KnownContacts,
     pubsub::Messages,
-    scenario::{PluginConfig, PluginValues},
+    scenario::PluginConfig,
 };
 use anyhow::Result;
 use serde::de::DeserializeOwned;
-use std::collections::BTreeMap;
+use serde_yaml_ng::{Mapping, Value};
+use std::{borrow::Cow, collections::BTreeMap};
 
 /// A plugin's mission parameters, as its mission file gave them.
 pub struct PluginParams<'a> {
-    values: Values<'a>,
+    values: Cow<'a, Mapping>,
     pub(crate) loop_rate_hz: f64,
-}
-enum Values<'a> {
-    Text(&'a Params),
-    Yaml(&'a serde_yaml_ng::Mapping),
 }
 impl<'a> PluginParams<'a> {
     /// A plugin's parameters from a resolved mission; tools that read a
     /// mission, such as the ArduPilot SITL launcher, pass them to `configure`.
     pub fn new(config: &'a PluginConfig) -> Self {
-        let values = match &config.params {
-            PluginValues::Text(params) => Values::Text(params),
-            PluginValues::Yaml(params) => Values::Yaml(params),
-        };
         Self {
-            values,
+            values: Cow::Borrowed(&config.params),
             loop_rate_hz: config.loop_rate_hz,
         }
     }
 
-    /// XML-style text values, for unit tests of a single plugin.
+    /// Parameters written as YAML, for unit tests of a single plugin.
     #[cfg(test)]
-    pub(crate) fn text(params: &'a Params) -> Self {
-        Self {
-            values: Values::Text(params),
+    pub(crate) fn yaml(text: &str) -> PluginParams<'static> {
+        PluginParams {
+            values: Cow::Owned(serde_yaml_ng::from_str(text).expect("test parameters are a map")),
+            loop_rate_hz: 0.0,
+        }
+    }
+
+    /// (key, YAML value) pairs, for unit tests: `("mass", "1.5")`,
+    /// `("airframe", "crazyflie2")`, `("speeds", "[800, 800]")`.
+    #[cfg(test)]
+    pub(crate) fn pairs(pairs: &[(&str, &str)]) -> PluginParams<'static> {
+        let values = pairs
+            .iter()
+            .map(|(key, text)| {
+                let value = serde_yaml_ng::from_str(text).expect("test values are YAML");
+                (Value::from(*key), value)
+            })
+            .collect();
+        PluginParams {
+            values: Cow::Owned(values),
             loop_rate_hz: 0.0,
         }
     }
@@ -47,24 +57,23 @@ impl<'a> PluginParams<'a> {
     /// `#[serde(default, deny_unknown_fields)]` so omitted keys take its `Default`
     /// and a misspelled key is an error instead of being silently ignored.
     pub fn parse<T: DeserializeOwned>(&self) -> Result<T> {
-        match self.values {
-            Values::Text(params) => crate::parse::deserialize(params),
-            // No values: the same as an XML tag without attributes. This also
-            // covers plugins whose config is `()`, which YAML cannot express.
-            Values::Yaml(params) if params.is_empty() => crate::parse::deserialize(&Params::new()),
-            // Going through text makes serde_yaml name the key in a type error. Its
-            // line numbers would refer to that text, not the mission file, so drop them.
-            Values::Yaml(params) => serde_yaml_ng::from_str(&serde_yaml_ng::to_string(params)?)
-                .map_err(|error| {
-                    let message = error.to_string();
-                    let message = message.split(" at line ").next().unwrap_or(&message);
-                    if message.contains("expected unit") {
-                        anyhow::anyhow!("this plugin takes no parameters")
-                    } else {
-                        anyhow::anyhow!("{message}")
-                    }
-                }),
+        if self.values.is_empty() {
+            // No values also fits a plugin whose config is `()`, which a map cannot express.
+            return serde_yaml_ng::from_value(Value::Null)
+                .or_else(|_| serde_yaml_ng::from_value(Value::Mapping(Mapping::new())))
+                .map_err(|error| anyhow::anyhow!("{error}"));
         }
+        // Going through text makes serde_yaml name the key in a type error. Its
+        // line numbers would refer to that text, not the mission file, so drop them.
+        serde_yaml_ng::from_str(&serde_yaml_ng::to_string(&*self.values)?).map_err(|error| {
+            let message = error.to_string();
+            let message = message.split(" at line ").next().unwrap_or(&message);
+            if message.contains("expected unit") {
+                anyhow::anyhow!("this plugin takes no parameters")
+            } else {
+                anyhow::anyhow!("{message}")
+            }
+        })
     }
 }
 

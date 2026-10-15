@@ -1,10 +1,11 @@
 {
   "case": "substeps-random-spawn",
-  "mission": "<checkout>/missions/verification/aircraft-substeps-spawning.xml",
+  "mission": "<checkout>/missions/verification/aircraft-substeps-spawning.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "0a41528b63317a3290de6a73d79c29b53e1aef240fea9cfb4db5270e7b571b1c",
-    "effective_sha256": "f28226691b1f9edbf1d3f444d0feceb190087daad248f3e8eafcca1ecc0cd5b7",
+    "input_sha256": "f8ff4c0bd8b5bc08517bfc33e0ce2416d8ec85e30fdb4d75bd30be358ec8d576",
+    "xml_sha256": "9a69de9a74b36b182f48fd813ee198fccdcc82ff8dca98dd6813f13dbf611408",
+    "effective_sha256": "04a1ae0fd935fcea2e737d38af81f605a7d09111558dd841f1215ed4d5a380c4",
     "run_overrides": {
       "enable_gui": "false",
       "network_gui": "false",
@@ -31,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-14_20-38-15",
+  "cpp_log_directory": "cpp/logs/2026-10-15_06-53-43",
   "cpp_output_hashes": {
     "frames.bin": "0604cdff277ccead47055496f23d87eac5f433b30cc00f4daacf9a73d4c2f096",
     "summary.csv": "95c0678548759ec6f4d1501648b949dc524f528791bd6eb6320d0f2c986d5835"
@@ -53,7 +54,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "b2d750d0fa231331b54d4ca13c05b28f5c793ac19a7465fb4fc70012682bd673",
+  "recording_sha256": "08724f7e3d2157d15fb8297c447ee0f12c3a2e3405791626e567a2c39a11ef2c",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

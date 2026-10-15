@@ -245,18 +245,4 @@ impl PluginRegistry {
             }),
         )
     }
-    pub(crate) fn contains_in_category(&self, category: &str, name: &str) -> bool {
-        match category {
-            "autonomy" => self.autonomies.compilers.contains_key(name),
-            "controller" => self.controllers.compilers.contains_key(name),
-            "motion_model" => self.motion.compilers.contains_key(name),
-            "sensor" => self.sensors.compilers.contains_key(name),
-            "localization" => self.localization.compilers.contains_key(name),
-            "tracking" => self.tracking.compilers.contains_key(name),
-            "entity_interaction" => self.interactions.compilers.contains_key(name),
-            "network" => self.networks.compilers.contains_key(name),
-            "metrics" => self.metrics.compilers.contains_key(name),
-            _ => false,
-        }
-    }
 }

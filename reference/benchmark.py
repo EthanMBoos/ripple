@@ -47,9 +47,11 @@ from types import SimpleNamespace
 import xml.etree.ElementTree as ET
 
 from compare import compare_runs
-from perf import HEADER, WORKLOADS
+from perf import WORKLOADS, workload, write_mission
 from project import IMAGE_PREFIX, ROOT, sha256, source_identity
 from reference_check import INSTRUMENTED_BRANCH, build_reference, capture, run_logged, write_json
+import scenario as missions
+import scrimmage_xml
 
 COUNTS = {"motion": (64, 256, 1024), "substeps": (64, 256, 1024),
           "sensing": (32, 64, 128), "churn": (64, 256, 1024), "collision": (256, 1024, 2048)}
@@ -60,11 +62,16 @@ RUST_FILES = ("frames.bin", "summary.csv", "events.json")
 RANDOM = {"churn", "sensing", "collision"}  # random spawns; noisy state that Straight steers by
 
 
+CLI = "/usr/local/bin/ripple"
+
+
 def mission(name, agents, directory, variant, one_step=False):
-    """The perf.py workload with C++ logging and threading set for one run."""
-    _, _, fields = WORKLOADS[name]
-    fields = {**fields, "end": 0.1} if one_step else fields
-    root = ET.fromstring(HEADER.format(name=name, agents=agents, **fields))
+    """The perf.py workload: YAML for Rust, or XML with C++ logging and threading set."""
+    changes = {"end": 0.1} if one_step else {}
+    path = write_mission(directory / "mission.yaml", workload(name, agents, **changes))
+    if variant.startswith("rust"):
+        return path
+    root = scrimmage_xml.mission(missions.loaded(CLI, path, directory / "loaded"))
     settings = {"log_dir": directory / "logs", "create_latest_dir": "false",
                 "display_progress": "false", "output_type": "all", "no_bin_logging": "false",
                 "multi_threaded": "true" if variant == "cpp-8" else "false"}
@@ -85,7 +92,7 @@ def run(variant, mission_path, directory):
     else:
         command = ["/usr/local/bin/ripple-benchmark", mission_path, ROOT,
                    directory / "rust", variant.split("-")[1]]
-        environment = {**os.environ, "RIPPLE_PLUGIN_PATH": ""}  # Rust uses its bundled defaults.
+        environment = os.environ.copy()
     peak = directory / "peak-kb.txt"
     command = ["/usr/bin/time", "-f", "%M", "-o", peak] + command
     with (directory / "console.log").open("w") as console:

@@ -1,4 +1,4 @@
-//! Controller implementations selected by mission XML.
+//! Controller implementations selected by missions.
 #[path = "controller/aircraft_pid/aircraft_pid.rs"]
 mod aircraft_pid;
 pub use aircraft_pid::AircraftPidController;

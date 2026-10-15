@@ -125,16 +125,15 @@ impl Controller for SimpleAircraftControllerPid {
     }
 }
 
-/// The positional XML format ends here; controller code uses named gains.
+/// A mission gives gains as [P, I, D, integral band]; controller code uses named gains.
 #[cfg(test)]
 mod tests {
     use super::{Plugin, PluginParams, SimpleAircraftControllerPid};
-    use crate::Params;
 
     #[test]
-    fn xml_gains_retain_the_legacy_order_and_heading_band_units() -> anyhow::Result<()> {
-        let params = Params::from([("heading_pid".into(), "2,3,4,9".into())]);
-        let config = SimpleAircraftControllerPid::configure(&PluginParams::text(&params))?;
+    fn gains_are_p_i_d_then_the_integral_band() -> anyhow::Result<()> {
+        let params = PluginParams::yaml("heading_pid: [2, 3, 4, 9]");
+        let config = SimpleAircraftControllerPid::configure(&params)?;
         assert!((config.heading_gains.proportional - 2.0).abs() < 1e-12);
         assert!((config.heading_gains.integral - 3.0).abs() < 1e-12);
         assert!((config.heading_gains.derivative - 4.0).abs() < 1e-12);

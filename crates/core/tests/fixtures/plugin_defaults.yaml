@@ -1,0 +1,38 @@
+# Plugin defaults and mission values: the first aircraft leaves every plugin
+# value to its default; the second sets some.
+format_version: 1
+name: plugin-defaults
+
+run:
+  end_s: 0.3
+  dt_s: 0.1
+  seed: 12345
+
+interactions: {SimpleCollision: {}}
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+entities:
+  defaults:
+    team: 1
+    position_m: [0, 0, 100]
+    position_variance_m2: [100, 100, 0]
+    autonomy: {Straight: {}}
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+    sensors: {NoisyPosition: {}}
+  values:
+    team: 2
+    position_m: [100, 0, 100]
+    position_variance_m2: [100, 100, 0]
+    autonomy:
+      Straight:
+        speed: 26
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model:
+      SimpleAircraft:
+        max_roll: 23
+        min_velocity: 16
+    sensors:
+      NoisyPosition:
+        stddev_m: 0

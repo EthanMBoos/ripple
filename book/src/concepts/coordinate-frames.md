@@ -42,7 +42,7 @@ let heading_world_rad = offset_world_m.y.atan2(offset_world_m.x);
 > Coming from GPS or aviation, where 0° is north and 90° is east, you must convert:
 > `enu_heading = 90° - compass_heading`.
 
-Mission XML uses **degrees** for `heading`, `roll`, and `pitch`. Rust code uses
+Missions use **degrees** for `heading_deg`, `roll_deg`, and `pitch_deg`. Rust code uses
 **radians** everywhere.
 
 ## The body frame: forward-left-up
@@ -134,5 +134,5 @@ You only need these details when reading or modifying the model itself:
 - **Body axes:** forward, left, up.
 - **Positive pitch:** nose **down**.
 - **Positive roll:** right wing down.
-- **Mission XML:** degrees. **Rust:** radians.
+- **Missions:** degrees. **Rust:** radians.
 - **Velocities and angular velocities in the state:** world frame.

@@ -230,22 +230,19 @@ impl Controller for AircraftPidController {
 #[cfg(test)]
 mod tests {
     use super::AircraftPidController;
+    use crate::KinematicState;
     use crate::plugin::{
         AgentContext, Controller, EntityInfo, KnownContacts, Messages, Plugin, PluginIo,
         PluginParams, PluginRandom, StepTime,
     };
-    use crate::{KinematicState, Params};
 
     #[test]
     fn pid_integral_and_derivative_use_the_supplied_substep_interval() -> anyhow::Result<()> {
         // Five 0.02-second updates cover one 0.1-second mission tick.
         // With constant speed error 1, I grows by 0.02 each update; D is
         // 0.01 / 0.02 = 0.5 on the first update and zero thereafter.
-        let params = Params::from([
-            ("airframe".into(), "a4d".into()),
-            ("speed_pid".into(), "0,1,0.01,10".into()),
-        ]);
-        let config = AircraftPidController::configure(&PluginParams::text(&params))?;
+        let params = PluginParams::yaml("{airframe: a4d, speed_pid: [0, 1, 0.01, 10]}");
+        let config = AircraftPidController::configure(&params)?;
         let mut controller = AircraftPidController::new(&config);
         let mut io = PluginIo::new(&AircraftPidController::ports(&config));
         io.receive(
@@ -286,17 +283,14 @@ mod tests {
     #[test]
     fn the_rascal_flies_the_a4d_gains_with_arduplane_limits() -> anyhow::Result<()> {
         let configure = |airframe: &str| {
-            AircraftPidController::configure(&PluginParams::text(&Params::from([(
-                "airframe".into(),
-                airframe.into(),
-            )])))
+            AircraftPidController::configure(&PluginParams::yaml(&format!("airframe: {airframe}")))
         };
         let a4d = configure("a4d")?;
         let rascal = configure("rascal")?;
         assert_eq!((a4d.max_pitch_deg, a4d.max_roll_deg), (45.0, 60.0));
         assert_eq!((rascal.max_pitch_deg, rascal.max_roll_deg), (20.0, 45.0));
         assert_eq!(rascal.altitude.derivative, a4d.altitude.derivative);
-        let error = AircraftPidController::configure(&PluginParams::text(&Params::new()))
+        let error = AircraftPidController::configure(&PluginParams::yaml("{}"))
             .err()
             .expect("no airframe and no gains");
         assert!(error.to_string().contains("without `airframe`"), "{error}");

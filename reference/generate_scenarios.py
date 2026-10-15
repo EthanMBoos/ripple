@@ -9,64 +9,60 @@ families (SimpleAircraft, SingleIntegrator, FixedWing6DOF), start states, update
 rates, spawn schedules and positional variance, sensor biases (zero noise), and
 interactions (SimpleCollision, GroundCollision, Boundary). Every choice is
 comparable: spawn draws are keyed on both sides (SCRIMMAGE_KEYED_RANDOM=1),
-sensor noise is zero, and FixedWing6DOF runs without substeps, where unmodified C++'s
-AircraftPIDController uses the wrong timestep (the comparison branch fixes it). Standard library only; the same seed
+sensor noise is zero, and FixedWing6DOF runs without substeps. Missions are
+YAML, written as JSON (which YAML reads). Standard library only; the same seed
 always writes the same files.
 """
 
 import argparse
+import json
 from pathlib import Path
 import random
 
 
 def fmt(value):
-    return f"{value:.6g}"
+    """Six significant digits, so missions stay short to read."""
+    return float(f"{value:.6g}")
 
 
-def vector(values):
-    return " ".join(fmt(value) for value in values)
+def sensor_bias(rng):
+    """Nonzero biases with zero standard deviation: deterministic equations only."""
+    scale = {"position_bias_m": 2.0, "velocity_bias_mps": 0.5, "attitude_bias_rad": 0.05}
+    return {key: [fmt(rng.uniform(-1, 1) * size) for _ in range(3)] for key, size in scale.items()}
 
 
-def sensor_bias(rng, name):
-    """Nonzero means with zero standard deviation: deterministic equations only."""
-    keys = [f"{kind}_noise_{axis}" for kind in ("pos", "vel", "orient") for axis in range(3)]
-    scale = {"pos": 2.0, "vel": 0.5, "orient": 0.05}
-    attributes = " ".join(
-        f'{key}="{fmt(rng.uniform(-1, 1) * scale[key.split("_")[0]])} 0"' for key in keys)
-    return f"<sensor {attributes}>{name}</sensor>"
-
-
-def aircraft_block(rng, fixed_wing):
+def aircraft_group(rng, fixed_wing):
     speed = rng.uniform(150, 250) if fixed_wing else rng.uniform(15, 30)
-    heading = rng.uniform(-180, 180)
-    lines = [f"<heading>{fmt(heading)}</heading>",
-             f"<roll>{fmt(rng.uniform(-5, 5))}</roll><pitch>{fmt(rng.uniform(-3, 3))}</pitch>",
-             f'<autonomy speed="{fmt(speed)}" loop_rate="{rng.choice([0, 5, 10])}">Straight</autonomy>']
+    group = {"heading_deg": fmt(rng.uniform(-180, 180)),
+             "roll_deg": fmt(rng.uniform(-5, 5)), "pitch_deg": fmt(rng.uniform(-3, 3)),
+             "autonomy": {"Straight": {"speed": fmt(speed), "loop_rate": rng.choice([0, 5, 10])}}}
     if fixed_wing:
-        lines += [f"<vx>{fmt(speed)}</vx>",  # FixedWing6DOF needs airspeed at start.
-                  '<controller airframe="a4d">AircraftPIDController</controller>',
-                  f'<motion_model airframe="a4d" wind_E="{fmt(rng.uniform(-3, 3))}" '
-                  f'wind_N="{fmt(rng.uniform(-3, 3))}">FixedWing6DOF</motion_model>']
+        group["velocity_mps"] = [fmt(speed), 0, 0]  # FixedWing6DOF needs airspeed at start.
+        group["controller"] = {"AircraftPIDController": {"airframe": "a4d"}}
+        group["motion_model"] = {"FixedWing6DOF": {
+            "airframe": "a4d", "wind_E": fmt(rng.uniform(-3, 3)), "wind_N": fmt(rng.uniform(-3, 3))}}
     else:
-        lines += [f'<controller loop_rate="{rng.choice([0, 20, 50])}">SimpleAircraftControllerPID</controller>',
-                  f'<motion_model max_roll="{fmt(rng.uniform(20, 45))}">SimpleAircraft</motion_model>']
+        group["controller"] = {"SimpleAircraftControllerPID": {"loop_rate": rng.choice([0, 20, 50])}}
+        group["motion_model"] = {"SimpleAircraft": {"max_roll": fmt(rng.uniform(20, 45))}}
         if rng.random() < 0.4:
-            lines.append(sensor_bias(rng, rng.choice(["NoisyState", "NoisyContacts"])))
-    return lines
+            sensor = rng.choice(["NoisyState", "NoisyContacts"])
+            group["sensors"] = {sensor: sensor_bias(rng)}
+    return group
 
 
-def point_block(rng):
+def point_group(rng):
     velocity = [rng.uniform(-10, 10), rng.uniform(-10, 10), rng.uniform(-2, 2)]
     if rng.random() < 0.1:
         velocity = [0, 0, 0]
     max_speed = rng.choice([-1, -1, round(rng.uniform(1, 12), 3)])
-    return [f'<autonomy velocity="{vector(velocity)}" loop_rate="{rng.choice([0, 2, 10])}">'
-            "ConstantVelocity</autonomy>",
-            "<controller>SingleIntegratorControllerSimple</controller>",
-            f'<motion_model max_speed="{fmt(max_speed)}">SingleIntegrator</motion_model>']
+    return {"autonomy": {"ConstantVelocity": {"velocity": [fmt(value) for value in velocity],
+                                              "loop_rate": rng.choice([0, 2, 10])}},
+            "controller": {"SingleIntegratorControllerSimple": None},
+            "motion_model": {"SingleIntegrator": {"max_speed": fmt(max_speed)}}}
 
 
 def mission(rng, index, horizon=None):
+    """Scenario `index` as a YAML mission, written as JSON (which YAML reads)."""
     fixed_wing = rng.random() < 0.2
     dt = 0.01 if fixed_wing else rng.choice([0.05, 0.1])
     multiplier = 1 if fixed_wing else rng.choice([1, 1, 2, 5])
@@ -74,26 +70,23 @@ def mission(rng, index, horizon=None):
     if horizon is not None:
         # Fixed-wing steps are 0.01 s; cap them at 10,000 steps.
         end = min(horizon, 100) if fixed_wing else horizon
-    lines = ['<?xml version="1.0"?>',
-             f"<!-- Generated by reference/generate_scenarios.py, scenario {index}. -->",
-             f'<runscript name="generated-{index:03}">',
-             f'  <run start="0" end="{end}" dt="{dt}" motion_multiplier="{multiplier}" '
-             'enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />',
-             f"  <seed>{rng.randrange(1, 2**31 - 1)}</seed>",
-             "  <end_condition>time</end_condition>",
-             "  <network>GlobalNetwork</network><network>LocalNetwork</network>",
-             "  <metrics>SimpleCollisionMetrics</metrics>"]
+    result = {"format_version": 1, "name": f"generated-{index:03}",
+              "run": {"end_s": end, "dt_s": dt, "motion_multiplier": multiplier,
+                      "seed": rng.randrange(1, 2**31 - 1)},
+              "interactions": {},
+              "networks": {"GlobalNetwork": None, "LocalNetwork": None},
+              "metrics": {"SimpleCollisionMetrics": None},
+              "entities": {}}
+    interactions = result["interactions"]
     collisions = rng.random() < 0.5
     if collisions:
-        lines.append(f'  <entity_interaction collision_range="{fmt(rng.uniform(1, 20))}">'
-                     "SimpleCollision</entity_interaction>")
+        interactions["SimpleCollision"] = {"collision_range": fmt(rng.uniform(1, 20))}
     if rng.random() < 0.3:
         # Below every start altitude, so startup placement never fails.
-        lines.append(f'  <entity_interaction ground_collision_z="{fmt(rng.uniform(0, 90))}">'
-                     "GroundCollision</entity_interaction>")
+        interactions["GroundCollision"] = {"ground_collision_z": fmt(rng.uniform(0, 90))}
     if not fixed_wing and rng.random() < 0.3:
-        lines.append('  <entity_interaction center="0 0 200" lengths="800 800 400" '
-                     'show_boundary="false">Boundary</entity_interaction>')
+        interactions["Boundary"] = {"center": [0, 0, 200], "lengths": [800, 800, 400],
+                                    "show_boundary": False}
     for block in range(rng.randint(1, 4)):
         count = rng.randint(1, 3)
         position = [rng.uniform(-500, 500), rng.uniform(-500, 500),
@@ -102,25 +95,20 @@ def mission(rng, index, horizon=None):
         if collisions:
             # Entities sharing a start need variance for collision-free placement.
             variance = [max(value, 400) for value in variance[:2]] + [0]
-        lines += ["  <entity>",
-                  f"    <team_id>{rng.randint(1, 3)}</team_id><count>{count}</count>",
-                  f"    <x>{fmt(position[0])}</x><y>{fmt(position[1])}</y><z>{fmt(position[2])}</z>",
-                  f"    <variance_x>{variance[0]}</variance_x><variance_y>{variance[1]}</variance_y>"
-                  f"<variance_z>0</variance_z>",
-                  f"    <variance_heading>{rng.choice([0, 0, 25])}</variance_heading>"]
+        group = {"team": rng.randint(1, 3), "count": count, "visual_model": "sphere",
+                 "position_m": [fmt(value) for value in position],
+                 "position_variance_m2": variance,
+                 "heading_variance_deg2": rng.choice([0, 0, 25])}
         if rng.random() < 0.3:
-            lines.append("    <use_variance_all_ents>true</use_variance_all_ents>")
+            group["randomize_every_spawn"] = True
         if rng.random() < 0.35:
-            lines += [f"    <generate_rate>{fmt(rng.uniform(0.5, 4))}</generate_rate>",
-                      f"    <generate_count>{rng.randint(1, 2)}</generate_count>",
-                      f"    <generate_start_time>{fmt(rng.uniform(0, 1))}</generate_start_time>",
-                      f"    <generate_time_variance>{rng.choice([0, 0.05])}</generate_time_variance>"]
+            group["spawn"] = {"rate_hz": fmt(rng.uniform(0.5, 4)), "batch_size": rng.randint(1, 2),
+                              "start_s": fmt(rng.uniform(0, 1)),
+                              "time_stddev_s": rng.choice([0, 0.05])}
         family = "fixed_wing" if fixed_wing else rng.choice(["aircraft", "point"])
-        body = point_block(rng) if family == "point" else aircraft_block(rng, fixed_wing)
-        lines += [f"    {line}" for line in body]
-        lines += ["    <visual_model>sphere</visual_model>", "  </entity>"]
-    lines.append("</runscript>")
-    return "\n".join(lines) + "\n"
+        group.update(point_group(rng) if family == "point" else aircraft_group(rng, fixed_wing))
+        result["entities"][f"group{block}"] = group
+    return result
 
 
 def main(argv=None):
@@ -135,7 +123,8 @@ def main(argv=None):
     args.output.mkdir(parents=True)
     rng = random.Random(args.seed)
     for index in range(args.count):
-        (args.output / f"generated-{index:03}.xml").write_text(mission(rng, index, args.horizon))
+        text = json.dumps(mission(rng, index, args.horizon), indent=1)
+        (args.output / f"generated-{index:03}.yaml").write_text(text + "\n")
     print(f"wrote {args.count} missions to {args.output}")
 
 

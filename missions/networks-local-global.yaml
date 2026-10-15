@@ -1,0 +1,57 @@
+# Boundary is shared globally; each aircraft's state observation stays local.
+# The low aircraft starts nose down (positive pitch) and hits the ground.
+format_version: 1
+name: networks-local-global
+
+run:
+  end_s: 30
+  dt_s: 0.1
+  seed: 12345
+
+interactions:
+  Boundary:
+    center: [0, 0, 200]
+    lengths: [600, 600, 400]
+    show_boundary: false
+  GroundCollision:
+    team: all
+  SimpleCollision:
+    collision_range: 2
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  aircraft:
+    visual_model: sphere
+    velocity_mps: [20, 0, 0]
+    autonomy:
+      Straight:
+        speed: 20
+        enable_boundary_control: true
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+    sensors: {NoisyState: {}}
+
+entities:
+  blue:
+    template: aircraft
+    team: 1
+    color: [70, 130, 255]
+    position_m: [250, 0, 200]
+    heading_deg: 0
+  red:
+    template: aircraft
+    team: 2
+    color: [255, 100, 70]
+    position_m: [-250, 0, 200]
+    heading_deg: 180
+  low:
+    template: aircraft
+    team: 3
+    color: [240, 210, 60]
+    position_m: [0, -100, 1]
+    heading_deg: 0
+    pitch_deg: 20
+    autonomy:
+      Straight:
+        speed: 20

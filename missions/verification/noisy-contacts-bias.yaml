@@ -1,0 +1,48 @@
+# NoisyContacts equations without randomness: zero standard deviations with
+# nonzero biases isolate the bias terms, the roll-pitch-yaw right
+# multiplication of attitude errors, the copied angular velocity, and the 5I
+# covariance. Checked through published messages in the comparison trace;
+# nothing consumes them.
+format_version: 1
+name: noisy-contacts-bias
+
+run:
+  end_s: 3
+  dt_s: 0.1
+  seed: 11
+
+networks: {GlobalNetwork: {}, LocalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  aircraft:
+    visual_model: sphere
+    autonomy:
+      Straight:
+        speed: 22
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+    sensors:
+      NoisyContacts:
+        position_bias_m: [1.5, -2, 0.5]
+        velocity_bias_mps: [0.25, -0.5, 0.1]
+        attitude_bias_rad: [0.02, -0.03, 0.05]
+
+entities:
+  first:
+    template: aircraft
+    team: 1
+    position_m: [0, 0, 200]
+    heading_deg: 0
+  rolled:
+    template: aircraft
+    team: 1
+    position_m: [100, 50, 210]
+    heading_deg: 90
+    roll_deg: 5
+  pitched:
+    template: aircraft
+    team: 2
+    position_m: [400, -80, 190]
+    heading_deg: 200
+    pitch_deg: 3

@@ -85,7 +85,6 @@ impl NoisyContacts {
 mod tests {
     use super::super::noisy_state::StateNoise;
     use super::NoisyContacts;
-    use crate::Params;
     use crate::math::{KinematicState, Vec3};
     use crate::plugin::{Plugin, PluginParams, PluginRandom};
 
@@ -138,11 +137,10 @@ mod tests {
 
     #[test]
     fn invalid_noise_parameters_are_rejected() {
-        for (key, value) in [("position_stddev_m", "0 -1 0"), ("vel_noise_0", "0 5")] {
-            let params = Params::from([(key.into(), value.into())]);
+        for params in ["position_stddev_m: [0, -1, 0]", "vel_noise_0: [0, 5]"] {
             assert!(
-                NoisyContacts::configure(&PluginParams::text(&params)).is_err(),
-                "{key}"
+                NoisyContacts::configure(&PluginParams::yaml(params)).is_err(),
+                "{params}"
             );
         }
     }

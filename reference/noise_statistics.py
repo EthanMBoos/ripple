@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compare C++ and Rust NoisyContacts noise distributions from comparison traces.
 
-    python3 reference/reference_check.py --mission missions/verification/noisy-contacts-noise.xml
+    python3 reference/reference_check.py --mission missions/verification/noisy-contacts-noise.yaml
     python3 reference/noise_statistics.py runs/reference-checkNNN/00-noisy-contacts-noise
 
 The comparison trace already matches the samples one for one (both simulators

@@ -30,7 +30,7 @@ IMAGE = f"{IMAGE_PREFIX}-platform"
 def missions(extra):
     found = project.missions()
     if extra:
-        found += sorted(extra.glob("*.xml"))
+        found += sorted(extra.glob("*.yaml"))
     return found
 
 
@@ -38,7 +38,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--output", type=Path, required=True, help="new directory")
-    parser.add_argument("--mission-dir", type=Path, help="additional *.xml missions")
+    parser.add_argument("--mission-dir", type=Path, help="additional *.yaml missions")
     args = parser.parse_args(argv)
     output = args.output.resolve()
     output.mkdir(parents=True)

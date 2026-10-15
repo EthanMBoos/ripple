@@ -145,12 +145,10 @@ impl Autonomy for Straight {
 #[cfg(test)]
 mod tests {
     use super::{Plugin, PluginParams, Straight};
-    use crate::Params;
 
     #[test]
     fn configured_speed_is_copied_into_independent_autonomy_instances() -> anyhow::Result<()> {
-        let params = Params::from([("speed".into(), "24".into())]);
-        let config = Straight::configure(&PluginParams::text(&params))?;
+        let config = Straight::configure(&PluginParams::yaml("speed: 24"))?;
         let mut first = Straight::new(&config);
         let second = Straight::new(&config);
         first.goal_world_m.x = 100.0;

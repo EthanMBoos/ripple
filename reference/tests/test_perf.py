@@ -1,7 +1,6 @@
 import contextlib
 import io
 import unittest
-import xml.etree.ElementTree as ET
 
 import perf
 
@@ -51,9 +50,12 @@ class PerfTests(unittest.TestCase):
             perf.WORKLOADS["motion"] = original
         self.assertEqual(perf.workloads_hash(), before)
 
-    def test_workload_missions_are_valid_xml(self):
-        for name, (_, sizes, fields) in perf.WORKLOADS.items():
-            ET.fromstring(perf.HEADER.format(name=name, agents=sizes[0], **fields))
+    def test_workloads_are_missions_that_change_only_what_is_asked(self):
+        for name, (_, sizes, _) in perf.WORKLOADS.items():
+            mission = perf.workload(name, sizes[0])
+            self.assertEqual(mission["entities"]["aircraft"]["count"], sizes[0])
+            self.assertEqual(perf.workload(name, sizes[0], end=0.1),
+                             {**mission, "run": {**mission["run"], "end_s": 0.1}})
 
 
 if __name__ == "__main__":

@@ -15,18 +15,21 @@ differs from Rust's only with more than one substep, and every multi-substep
 case here has constant controls.
 
 Part A, integration accuracy with constant controls: Multirotor
-(missions/multirotor.xml, constant motor speeds) and FixedWing6DOF with every
-controller gain zero (inputs/fixed-wing-open-loop.xml), at motion multipliers 1
+(missions/multirotor.yaml, constant motor speeds) and FixedWing6DOF with every
+controller gain zero (inputs/fixed-wing-open-loop.yaml), at motion multipliers 1
 to 16, against stage loads at multiplier 1024. With constant controls the
 substep count changes only the integration step.
 
-Part B, a controlled flight at practical steps: inputs/fixed-wing-recovery.xml
+Part B, a controlled flight at practical steps: inputs/fixed-wing-recovery.yaml
 at outer steps of 0.01, 0.05, and 0.1 s with one substep, frozen against stage.
 
-Part C, the altitude gain: inputs/aircraft-pid-upset.xml (the default A-4, 45 s
+Part C, the altitude gain: inputs/aircraft-pid-upset.yaml (the default A-4, 45 s
 at 1000 m after a 5 degree roll and 3 degree pitch upset) with altitude D 0.01
 (upstream's default), 0.002 (this project's), and 0, at 0.01 s and two
 halvings: the largest altitude error over the run and after the first 5 s.
+
+Each variant edits the scenario Ripple recorded for its mission; Ripple runs it
+as YAML, and C++ as XML written from it (scrimmage_xml.py).
 """
 
 import argparse
@@ -35,20 +38,20 @@ import math
 from pathlib import Path
 import sys
 from types import SimpleNamespace
-import xml.etree.ElementTree as ET
 
 from compare import distance, orientation_distance_rad
 from frames import read_frames
 from project import ROOT, build_cli, source_identity
 from reference_check import BASELINE_BRANCH, build_reference, prepare_mission, run_cpp, run_logged
+import scenario as missions
 
 INPUTS = ROOT / "reference/inputs"
 MULTIPLIERS = [1, 2, 4, 8, 16]
 REFERENCE_MULTIPLIER = 1024
-PART_A = [("multirotor", ROOT / "missions/multirotor.xml", 0.01),
-          ("fixed-wing-open-loop", INPUTS / "fixed-wing-open-loop.xml", 0.05)]
-PART_B = [("fixed-wing-recovery", INPUTS / "fixed-wing-recovery.xml", dt) for dt in (0.01, 0.05, 0.1)]
-UPSET = INPUTS / "aircraft-pid-upset.xml"
+PART_A = [("multirotor", ROOT / "missions/multirotor.yaml", 0.01),
+          ("fixed-wing-open-loop", INPUTS / "fixed-wing-open-loop.yaml", 0.05)]
+PART_B = [("fixed-wing-recovery", INPUTS / "fixed-wing-recovery.yaml", dt) for dt in (0.01, 0.05, 0.1)]
+UPSET = INPUTS / "aircraft-pid-upset.yaml"
 UPSET_GAINS = [0.01, 0.002, 0.0]
 UPSET_STEPS_S = [0.01, 0.005, 0.0025]
 UPSET_ALTITUDE_M = 1000.0
@@ -60,29 +63,40 @@ class Runner:
     def __init__(self, output, rust, image, settings):
         self.output, self.rust, self.image, self.settings = output, rust, image, settings
         self.count = 0
+        self.scenarios = {}
+
+    def run_rust(self, mission, folder):
+        run_logged([self.rust, "run", mission, "--root", ROOT, "--output", folder / "rust",
+                    "--workers", "1", "--no-rerun"], folder / "rust.log",
+                   timeout=self.settings.timeout)
+        return folder / "rust"
+
+    def scenario(self, mission):
+        """The scenario Ripple records for `mission`, from one run of it."""
+        if mission not in self.scenarios:
+            folder = self.output / f"base-{mission.stem}"
+            folder.mkdir()
+            self.scenarios[mission] = missions.recorded(self.run_rust(mission, folder))
+        return json.loads(json.dumps(self.scenarios[mission]))  # a copy to edit
 
     def frames(self, mission, loads, dt_s=None, multiplier=None, altitude_d=None):
-        tree = ET.parse(mission)
-        run = tree.getroot().find("run")
+        scenario = self.scenario(mission)
         if dt_s is not None:
-            run.set("dt", repr(dt_s))
+            scenario["run"]["dt_s"] = dt_s
         if multiplier is not None:
-            run.set("motion_multiplier", str(multiplier))
+            scenario["run"]["motion_multiplier"] = multiplier
         if altitude_d is not None:
-            tree.getroot().find("entity/controller").set(
-                "altitude_pid", f"0.1, 0.0001, {altitude_d!r}, 10")
+            scenario["entities"][0]["controller"][0]["params"]["altitude_pid"] = [
+                0.1, 0.0001, altitude_d, 10]
         self.count += 1
         folder = self.output / f"{self.count:03}-{mission.stem}-{loads}"
-        folder.mkdir()
-        edited = folder / "mission.xml"
-        tree.write(edited, encoding="utf-8", xml_declaration=True)
+        inputs = folder / "input"
+        inputs.mkdir(parents=True)
+        edited = missions.write(inputs / "input.yaml", missions.as_yaml(scenario))
         if loads == "stage":
-            run_logged([self.rust, "run", edited, "--root", ROOT, "--output", folder / "rust",
-                        "--workers", "1", "--no-rerun"], folder / "rust.log",
-                       timeout=self.settings.timeout)
-            return read_frames(folder / "rust/frames.bin")
-        prepare_mission(edited, folder / "input")
-        logs = run_cpp(self.settings, self.image, folder / "cpp", folder / "input/effective.xml", {})
+            return read_frames(self.run_rust(edited, folder) / "frames.bin")
+        prepare_mission(inputs, scenario)
+        logs = run_cpp(self.settings, self.image, folder / "cpp", inputs / "effective.xml", {})
         return read_frames(logs / "frames.bin")
 
 

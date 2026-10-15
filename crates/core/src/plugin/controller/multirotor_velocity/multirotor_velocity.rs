@@ -29,7 +29,7 @@ use nalgebra::{DMatrix, Matrix3, UnitQuaternion};
 use serde::Deserialize;
 
 use crate::math::{self, Vec3};
-use crate::plugin::motion::{Airframe, AirframeName, AirframeOverrides};
+use crate::plugin::motion::{Airframe, AirframeName, AirframeOverrides, RotorParams};
 use crate::plugin::{
     AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
@@ -48,7 +48,7 @@ struct MultirotorVelocityParams {
     mass_kg: Option<f64>,
     #[serde(rename = "gravity_magnitude")]
     gravity_mps2: Option<f64>,
-    inertia_matrix: Option<String>,
+    inertia_kgm2: Option<[[f64; 3]; 3]>,
     #[serde(rename = "c_T")]
     thrust_coefficient: Option<f64>,
     #[serde(rename = "c_Q")]
@@ -57,7 +57,7 @@ struct MultirotorVelocityParams {
     omega_min_radps: Option<f64>,
     #[serde(rename = "omega_max")]
     omega_max_radps: Option<f64>,
-    rotor_config: Option<String>,
+    rotors: Option<Vec<RotorParams>>,
     /// Velocity proportional gain, 1/s.
     #[serde(rename = "velocity_p")]
     velocity_gain_per_s: Option<f64>,
@@ -137,12 +137,12 @@ impl Plugin for MultirotorVelocityController {
             AirframeOverrides {
                 mass_kg: params.mass_kg,
                 gravity_mps2: params.gravity_mps2,
-                inertia_matrix: params.inertia_matrix,
+                inertia_kgm2: params.inertia_kgm2,
                 thrust_coefficient: params.thrust_coefficient,
                 torque_coefficient: params.torque_coefficient,
                 omega_min_radps: params.omega_min_radps,
                 omega_max_radps: params.omega_max_radps,
-                rotor_config: params.rotor_config,
+                rotors: params.rotors,
             },
         )?;
         ensure!(
@@ -353,28 +353,26 @@ mod tests {
     use nalgebra::{Matrix3, Rotation3};
 
     use super::{MultirotorVelocityController, desired_attitude, vee};
-    use crate::Params;
     use crate::math::Vec3;
     use crate::plugin::{Plugin, PluginParams};
 
     fn configure(params: &[(&str, &str)]) -> Result<super::MultirotorVelocityConfig> {
-        let params: Params = params
-            .iter()
-            .map(|(key, value)| (key.to_string(), value.to_string()))
-            .collect();
-        MultirotorVelocityController::configure(&PluginParams::text(&params))
+        MultirotorVelocityController::configure(&PluginParams::pairs(params))
     }
 
     /// A vehicle given in full, with this rotor layout.
-    fn custom_quad(rotor_config: &str) -> Vec<(&str, &str)> {
+    fn custom_quad(rotors: &str) -> Vec<(&str, &str)> {
         vec![
             ("mass", "1.5"),
-            ("inertia_matrix", "[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]"),
+            (
+                "inertia_kgm2",
+                "[[0.0122, 0, 0], [0, 0.0122, 0], [0, 0, 0.0244]]",
+            ),
             ("c_T", "5.45e-6"),
             ("c_Q", "2.284e-7"),
             ("omega_min", "0"),
             ("omega_max", "1200"),
-            ("rotor_config", rotor_config),
+            ("rotors", rotors),
         ]
     }
 
@@ -385,8 +383,8 @@ mod tests {
     #[test]
     fn allocation_splits_hover_thrust_evenly_and_maps_moments_back() -> Result<()> {
         let custom = custom_quad(
-            "[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] \
-                                  [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]",
+            "[{direction: ccw, position_m: [0, -0.175, 0]}, {direction: ccw, position_m: [0, 0.175, 0]}, \
+             {direction: cw, position_m: [0.175, 0, 0]}, {direction: cw, position_m: [-0.175, 0, 0]}]",
         );
         for vehicle in [vec![("airframe", "crazyflie2")], custom] {
             let config = configure(&vehicle)?;
@@ -441,7 +439,9 @@ mod tests {
     #[test]
     fn rotors_that_cannot_yaw_are_rejected() {
         // Two coaxial-looking rotors on one axis cannot make all four axes.
-        let result = configure(&custom_quad("[CW 0.1 0 0 0 0 0] [CCW -0.1 0 0 0 0 0]"));
+        let result = configure(&custom_quad(
+            "[{direction: cw, position_m: [0.1, 0, 0]}, {direction: ccw, position_m: [-0.1, 0, 0]}]",
+        ));
         assert!(result.is_err());
     }
 }

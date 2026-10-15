@@ -3,7 +3,7 @@
 Write your plugins in a user crate in this repository, such as
 [crates/starter](https://github.com/EthanMBoos/ripple/tree/main/crates/starter).
 The one `ripple` command includes them, so your missions use `ripple run`,
-`sweep`, `compare`, `replay`, and `scripts/bulk_run.py` exactly as the stock
+`sweep`, `replay`, and `scripts/bulk_run.py` exactly as the stock
 missions do. To update, `git pull` and rebuild: `cargo run` rebuilds
 automatically, but `bulk_run.py` uses the existing release binary, so run `cargo
 build --release` first.
@@ -16,8 +16,8 @@ crates/starter     user plugins, missions, and tests (edit here, or add crates l
 
 ## Why plugins are compiled in
 
-C++ SCRIMMAGE builds plugins into shared libraries that `ripple` finds at
-runtime on `RIPPLE_PLUGIN_PATH`. This project deliberately does not load plugins
+C++ SCRIMMAGE builds plugins into shared libraries that it loads at runtime.
+This project deliberately does not load plugins
 at runtime (see
 [Roadmap](https://github.com/EthanMBoos/ripple/blob/main/docs/TODO.md));
 `ripple` is compiled with them instead. The **registry** is the table from the

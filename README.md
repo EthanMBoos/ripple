@@ -32,7 +32,7 @@ With Rust installed, from the repository root:
 
 ```sh
 cargo install --path crates/cli --locked
-ripple run missions/straight-no-gui.xml --headless
+ripple run missions/straight-no-gui.yaml --headless
 ripple replay runs/straight-no-gui/run000
 ```
 
@@ -45,8 +45,8 @@ saved in the recording.
 
 Other missions to try:
 
-- `missions/waypoints-point-agents.xml`: the smallest navigation example.
-- `missions/networks-local-global.xml`: aircraft, sensors, and messaging.
+- `missions/waypoints-point-agents.yaml`: the smallest navigation example.
+- `missions/networks-local-global.yaml`: aircraft, sensors, and messaging.
 - `ripple sweep missions/waypoints-point-agents.sweep.yaml`: a parameter sweep.
 
 ## Next steps

@@ -1,10 +1,11 @@
 {
   "case": "collision-boundary",
-  "mission": "<checkout>/missions/verification/collision-boundary.xml",
+  "mission": "<checkout>/missions/verification/collision-boundary.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "f8cc9f5a4853346293173220290927b889d9af75c5296061e9d1a07a57331817",
-    "effective_sha256": "445dd984d65eff3c7d90b61bf741be3493c4d7b0473fe2f99fc97c69be5ab5ee",
+    "input_sha256": "20fa18b132c10197ba99a038fd97776af1aaf5e1944e9ecfa46c74bf6edd29eb",
+    "xml_sha256": "6faf2f80a4ee88972c5183a06d5fa15faa195775254ff44450edd50151fda278",
+    "effective_sha256": "9a8fcf35fbb05da7224912d73a52238b28e2098f9be3253e04dc7042d98fb8ec",
     "run_overrides": {
       "enable_gui": "false",
       "network_gui": "false",
@@ -31,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": true
   },
-  "cpp_log_directory": "cpp/logs/2026-10-14_20-39-22",
+  "cpp_log_directory": "cpp/logs/2026-10-15_06-54-52",
   "cpp_output_hashes": {
     "frames.bin": "bdbe0e0925f08e7d65ceed1630836ccfeabe520e9e3209516dedffc9165890b0",
     "summary.csv": "19c27bfff4e0869bf2d34fa0dc356db8bd7f742fc9572d104c8ad7499c7f891a"
@@ -53,7 +54,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "c7bccbf88196876891b189b4d1e4bb1b5702b46665ecee7f5c55b4e4571ec823",
+  "recording_sha256": "9aebebfdbf87ccef259337f8c1951cebe0909bba9a62e529365590f29d8feb6e",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,
@@ -104,7 +105,7 @@
     "passed": true,
     "deliveries": 14,
     "beliefs": 108,
-    "outputs": 660,
+    "outputs": 624,
     "sensor_states": 0,
     "skipped_sensor_deliveries": 0,
     "max_belief_position_error_m": 0.0,

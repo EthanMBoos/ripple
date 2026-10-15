@@ -161,7 +161,7 @@ mod tests {
     use crate::plugin::{
         MessageEndpoint, Plugin, PluginParams, StepTime, Transmission, TruthContacts,
     };
-    use crate::{EntityKind, EntitySnapshot, KinematicState, Params, Vec3};
+    use crate::{EntityKind, EntitySnapshot, KinematicState, Vec3};
 
     fn reachable(
         network: &SphereNetwork,
@@ -206,8 +206,8 @@ mod tests {
 
     #[test]
     fn range_is_three_dimensional_and_uses_each_current_snapshot() -> anyhow::Result<()> {
-        let params = Params::from([("range".into(), "5".into())]);
-        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams::text(&params))?);
+        let network =
+            SphereNetwork::new(&SphereNetwork::configure(&PluginParams::yaml("range: 5"))?);
         for (position, expected) in [
             (Vec3::new(3.0, 0.0, 3.999), true),
             (Vec3::new(3.0, 0.0, 4.0), false),
@@ -229,12 +229,10 @@ mod tests {
     #[test]
     fn altitude_plane_includes_epsilon_boundaries_and_same_parent_bypasses_geometry()
     -> anyhow::Result<()> {
-        let params = Params::from([
-            ("filter_comms_plane".into(), "true".into()),
-            ("comms_boundary_altitude".into(), "10".into()),
-            ("comms_boundary_epsilon".into(), "1".into()),
-        ]);
-        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams::text(&params))?);
+        let params = PluginParams::yaml(
+            "{filter_comms_plane: true, comms_boundary_altitude: 10, comms_boundary_epsilon: 1}",
+        );
+        let network = SphereNetwork::new(&SphereNetwork::configure(&params)?);
         for (z1, z2, expected) in [
             (8.0, 12.0, false),
             (9.0, 12.0, true),
@@ -262,20 +260,19 @@ mod tests {
 
     #[test]
     fn invalid_range_probability_delay_and_old_delay_keys_are_rejected() {
-        for (key, value) in [
-            ("range", "-1"),
-            ("range", "NaN"),
-            ("prob_transmit", "1.1"),
-            ("prob_transmit", "-0.1"),
-            ("comms_boundary_epsilon", "-1"),
-            ("delay_s", "-1"),
-            ("comm_delay", "0"),
-            ("is_stochastic_delay", "true"),
+        for params in [
+            "range: -1",
+            "range: .nan",
+            "prob_transmit: 1.1",
+            "prob_transmit: -0.1",
+            "comms_boundary_epsilon: -1",
+            "delay_s: -1",
+            "comm_delay: 0",
+            "is_stochastic_delay: true",
         ] {
-            let params = Params::from([(key.into(), value.into())]);
             assert!(
-                SphereNetwork::configure(&PluginParams::text(&params)).is_err(),
-                "{key}={value}"
+                SphereNetwork::configure(&PluginParams::yaml(params)).is_err(),
+                "{params}"
             );
         }
     }

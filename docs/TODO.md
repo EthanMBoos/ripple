@@ -1,8 +1,9 @@
 # Roadmap
 
-What's left to build, in order: YAML as the only mission format, the disturbance
-models, then the learning study. The interfaces that got in the way of the study
-are fixed ([reference
+What's left to build, in order: one name per plugin parameter, the
+disturbance models, then the learning study. Missions are YAML only
+([reference notes](REFERENCE_NOTES.md#missions-are-yaml)). The interfaces
+that got in the way of the study are fixed ([reference
 notes](REFERENCE_NOTES.md#interfaces-fixed-for-the-study)). The study itself
 (question, tasks, predictions, protocol) is in the
 [paper](../paper/manuscript/main.tex); sources and version details are in
@@ -10,58 +11,35 @@ notes](REFERENCE_NOTES.md#interfaces-fixed-for-the-study)). The study itself
 C++ SCRIMMAGE are in [reference notes](REFERENCE_NOTES.md). Keep the
 [checks](../reference/README.md) passing after any simulation change.
 
-## YAML only
+## One name per parameter
 
-Ripple's missions are YAML, but 21 files under `missions/` are still XML,
-kept because the SCRIMMAGE comparison runs the same file in both simulators
-and SCRIMMAGE reads only XML. Move the comparison to YAML and remove the XML
-reader.
+Plugin parameters still take SCRIMMAGE's spellings in missions, renamed onto
+clear Rust fields with `#[serde(rename = "...")]`: FixedWing6DOF's
+`surface_area_of_wing` is `area_m2` in the code, and its `C_LP` (a rolling
+moment, though SCRIMMAGE writes it like lift) is `c_roll_p`. Give each
+parameter one name, the field's, with its unit.
 
-1. **A YAML-to-SCRIMMAGE-XML writer** in `reference/` (Python). Every value is
-   written explicitly, since XML's defaults differ from YAML's (spawn variance
-   100 m² against 0, noise 5 m against none): positions, variances, heading,
-   velocity, spawn schedules, networks and their names, and each plugin's
-   parameters under its XML name and format (`pos_noise_0="mean stddev"`, PID
-   gains in SCRIMMAGE's order, waypoints as `"x,y,z; x,y,z"`, matrices and
-   rotor configurations as bracketed text). `reference_check.py` runs Ripple
-   on the YAML and SCRIMMAGE on the written XML.
-2. **Convert every XML mission** (`missions/`, 21 files; the test fixtures
-   `perception_communication`, `plugin_contracts`, `plugin_defaults`; the
-   three in `reference/inputs/`) to YAML, each proven to run identically with
-   `ripple compare` before its XML is deleted. Four already have YAML forms.
-   Templates replace `entity_common` and `param_common`; overrides replace
-   `${name=default}`; `randomize_every_spawn` replaces
-   `use_variance_all_ents`.
-3. **The generated missions.** `perf.py`'s workloads (an XML template),
-   `generate_scenarios.py`, `divergence.py`'s nudges, `benchmark.py`,
-   `message_benchmark.py`, and `rk4_loads.py` write or edit XML; they write
-   YAML instead. A changed workload definition needs a new speed baseline:
-   accept it only after the old and new workloads give byte-identical output
-   and the same times.
-4. **Proof.** The C++ matrix, the generated scenarios, and the long runs pass
-   unchanged on the written XML; `reference/equivalence.py` finds every
-   output byte-identical before and after.
-5. **Remove.** `parse/xml.rs` and `parse/xml_mission.rs` (675 lines), the
-   text-value branch of plugin parameters (`PluginValues::Text`, the text
-   deserializer in `parse/params.rs`), the XML-only conversions (noise keys,
-   scalar `speed`, the 100 m² default, `use_variance_all_ents`), plugin
-   overlays (`RIPPLE_PLUGIN_PATH`, `RIPPLE_MISSION_PATH`), `ripple compare`'s
-   XML-to-YAML purpose, the rule that a `.yaml` beside a `.xml` runs
-   identically, and the XML tests. The 39 unit tests that configure a plugin
-   from text (`PluginParams::text`) take YAML values instead.
-6. **Keep.** Every contract test that came from a past defect (time as steps
-   x dt, spawn sampling, rate-limited dt, the coordinated turn, keyed noise,
-   zero-noise readings, and the rest in the reference notes): they describe
-   correct behavior, not SCRIMMAGE's. Keep the comparison plumbing while the
-   comparison is a check (`frames.bin` in SCRIMMAGE's protobuf format, the
-   trace); the reference notes list it under "Left behind when the
-   comparison is retired". Retained evidence keeps its `input.xml` files as
-   records of what ran.
-7. **Elsewhere.** SCRIMMAGE's verbatim missions (`test_missions/`, with the
-   `motion_multipler` typo) and the C++ test drivers in `reference/fixtures/`
-   can live on `benchmarking-edits` instead of here. Rewrite the book's XML
-   passages (the YAML guide, plugin API reference, missions README) and
-   `AGENTS.md`'s XML rules.
+1. **Mission keys are the field names.** Remove every rename in the built-in
+   plugins (`crates/core/src/plugin/`), so `wing_span` becomes `span_m`,
+   `max_roll` `max_roll_deg`, `range` `range_m`, `speed` `speed_mps`, and the
+   coefficients `c_roll_p` and the like. Make the odd ones consistent:
+   SimpleAircraftControllerPID's `alt_pid` and `vel_pid` beside
+   AircraftPIDController's `altitude_pid` and `speed_pid`,
+   SimpleCollisionMetrics' `flight_time_w`, SimpleCollision's
+   `init_alt_deconflict`, Boundary's `type`, the networks' `comms_boundary_*`.
+2. **Delete the reject-only fields.** About fifteen fields exist only to
+   reject a SCRIMMAGE option with a message (`write_csv`, `show_shapes`,
+   `generate_entities`, `use_roll`, `comm_delay`, `show_boundary`, ...);
+   `deny_unknown_fields` already rejects an unknown key by name.
+3. **SCRIMMAGE's names live in the comparison only.**
+   `reference/scrimmage_xml.py` gets one rename table per compared plugin, so
+   the XML it writes is unchanged.
+4. **Rename everywhere else:** missions, test fixtures and tests, the
+   generated scenarios and other scripts that write missions, and the book's
+   parameter tables.
+5. **Proof.** Every mission writes byte-identical frames, events, and
+   summaries before and after (with the old missions on the old build); the
+   XML written for SCRIMMAGE is identical; the matrix passes unchanged.
 
 ## Disturbance models
 

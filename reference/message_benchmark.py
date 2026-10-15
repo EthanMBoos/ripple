@@ -36,30 +36,30 @@ import xml.etree.ElementTree as ET
 
 import native
 import perf
-from project import ROOT, build_runner
+from project import ROOT, build_cli, build_runner
+import scenario as missions
+import scrimmage_xml
 
 AGENTS = (128, 512, 2048, 4096)
 PROFILED_AGENTS = 2048
 END_S = 10  # 100 steps
-NOISY_STATE = "    <sensor>NoisyState</sensor>"
-# Ripple's stand-in for NoisyState's message and Straight's subscription.
-RUST_MESSAGES = ("    <sensor>StateBroadcast</sensor>\n"
-                 "    <autonomy>StateListener</autonomy>")
+NOISY_STATE = {"NoisyState": perf.NOISE_5_5_1}
 VARIANTS = ("cpp", "rust")
 
 
-def sensors_for(variant, sensors):
-    """The entity's extra elements: Rust adds the message pair wherever NoisyState is."""
-    if variant == "rust" and sensors:
-        return sensors + "\n" + RUST_MESSAGES
-    return sensors
-
-
-def mission(directory, agents, sensors, end_s):
-    """perf.py's aircraft mission, with C++ logging set so both simulators write frames."""
+def mission(cli, directory, variant, agents, sensors, end_s):
+    """perf.py's aircraft mission. Rust adds its stand-in for NoisyState's message
+    and Straight's subscription; C++ gets XML, with logging set so it writes frames."""
     directory.mkdir(parents=True)
-    fields = {**perf.WORKLOADS["motion"][2], "end": end_s, "sensors": sensors}
-    root = ET.fromstring(perf.HEADER.format(name="messages", agents=agents, **fields))
+    extra = {}
+    if variant == "rust" and sensors:
+        sensors = {**sensors, "StateBroadcast": None}
+        extra = {"autonomy": {"StateListener": None}}
+    path = perf.write_mission(directory / "mission.yaml", perf.workload(
+        "motion", agents, end=end_s, sensors=sensors, **extra))
+    if variant == "rust":
+        return path
+    root = scrimmage_xml.mission(missions.loaded(cli, path, directory / "loaded"))
     for key, value in {"log_dir": directory / "logs", "create_latest_dir": "false",
                        "display_progress": "false", "output_type": "all",
                        "no_bin_logging": "false", "multi_threaded": "false"}.items():
@@ -84,10 +84,9 @@ def wall_seconds(variant, runner, path, output):
     return time.perf_counter() - started
 
 
-def profile(variant, runner, directory, agents, profiles):
+def profile(cli, variant, runner, directory, agents, profiles):
     """Save `sample`'s top-of-stack summary for three seconds of stepping."""
-    path = mission(directory / f"profile-{variant}", agents, sensors_for(variant, NOISY_STATE),
-                   120)
+    path = mission(cli, directory / f"profile-{variant}", variant, agents, NOISY_STATE, 120)
     arguments, environment = command(variant, runner, path, directory / f"profile-{variant}/rust")
     process = subprocess.Popen([str(part) for part in arguments], env=environment,
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -115,16 +114,17 @@ def main(argv=None):
     with (output / "cpp-build.log").open("w") as log:
         native.ensure_build(log)
     runner = build_runner()
+    cli = build_cli()
     scratch = output / "scratch"
     cases = []
     for agents in AGENTS:
-        for label, sensors in (("without messages", ""), ("NoisyState", NOISY_STATE)):
+        for label, sensors in (("without messages", {}), ("NoisyState", NOISY_STATE)):
             directory = scratch / f"{agents}-{'state' if sensors else 'plain'}"
             paths = {variant: {
-                "full": mission(directory / variant / "full", agents,
-                                sensors_for(variant, sensors), END_S),
-                "one": mission(directory / variant / "one-step", agents,
-                               sensors_for(variant, sensors), 0.1),
+                "full": mission(cli, directory / variant / "full", variant, agents, sensors,
+                                END_S),
+                "one": mission(cli, directory / variant / "one-step", variant, agents, sensors,
+                               0.1),
             } for variant in VARIANTS}
             samples = {variant: {"full": [], "one": []} for variant in VARIANTS}
             for repeat in range(args.repeats + 1):
@@ -152,7 +152,7 @@ def main(argv=None):
         profiles = output / "profiles"
         profiles.mkdir()
         for variant in VARIANTS:
-            profile(variant, runner, scratch, PROFILED_AGENTS, profiles)
+            profile(cli, variant, runner, scratch, PROFILED_AGENTS, profiles)
     shutil.rmtree(scratch, ignore_errors=True)
     (output / "timings.json").write_text(json.dumps({
         "provenance": native.provenance(), "repeats": args.repeats, "steps": round(END_S / 0.1),

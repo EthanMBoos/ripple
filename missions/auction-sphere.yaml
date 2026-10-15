@@ -1,0 +1,44 @@
+# One auction over a spherical radio network. The auction's messages and winner
+# are not written to events.json, the summary, or Rerun yet; in the viewer this
+# is three stationary agents. The contract tests in
+# crates/core/tests/support/perception_communication.rs check the outcome.
+format_version: 1
+name: auction-sphere
+
+run:
+  end_s: 7
+  dt_s: 0.1
+  seed: 12345
+
+networks:
+  SphereNetwork:
+    range: 100
+    prob_transmit: 1
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  bidder:
+    visual_model: sphere
+    heading_deg: 0
+    autonomy: {AuctionAssign: {}}
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}
+
+entities:
+  first:
+    template: bidder
+    team: 1
+    color: [70, 130, 255]
+    position_m: [0, 0, 0]
+  second:
+    template: bidder
+    team: 1
+    color: [70, 130, 255]
+    position_m: [50, 0, 0]
+  # Outside the auctioneer's range: this agent receives no start and submits
+  # no bid.
+  out_of_range:
+    template: bidder
+    team: 2
+    color: [255, 100, 70]
+    position_m: [200, 0, 0]

@@ -56,8 +56,7 @@ entities:
           - [1.5643766522407532, 0.696774423122406]
           - [1.6398605704307556, 2.989182472229004]
           - [-0.5419713258743286, -0.9174583107233047]
-    motion_model:
-      MpeParticle:
+    motion_model: {MpeParticle: {}}
 
   agent1:
     team: 1
@@ -93,8 +92,7 @@ entities:
           - [-1.1620604991912842, 1.676470935344696]
           - [2.1897633373737335, -2.7983585000038147]
           - [-1.9442996382713318, -4.340278506278992]
-    motion_model:
-      MpeParticle:
+    motion_model: {MpeParticle: {}}
 
   agent2:
     team: 1
@@ -130,35 +128,28 @@ entities:
           - [0.018785297870635986, -0.17353177070617676]
           - [0.9259513020515442, -0.5139947682619095]
           - [-0.8117415755987167, -0.5252549052238464]
-    motion_model:
-      MpeParticle:
+    motion_model: {MpeParticle: {}}
 
   landmark0:
     team: 2
     color: [64, 64, 64]
     visual_model: sphere
     position_m: [0.213272, 0.458993, 0]
-    autonomy:
-      ConstantVelocity:
-    motion_model:
-      SingleIntegrator:
+    autonomy: {ConstantVelocity: {}}
+    motion_model: {SingleIntegrator: {}}
 
   landmark1:
     team: 2
     color: [64, 64, 64]
     visual_model: sphere
     position_m: [0.08725, 0.870145, 0]
-    autonomy:
-      ConstantVelocity:
-    motion_model:
-      SingleIntegrator:
+    autonomy: {ConstantVelocity: {}}
+    motion_model: {SingleIntegrator: {}}
 
   landmark2:
     team: 2
     color: [64, 64, 64]
     visual_model: sphere
     position_m: [0.631707, -0.994523, 0]
-    autonomy:
-      ConstantVelocity:
-    motion_model:
-      SingleIntegrator:
+    autonomy: {ConstantVelocity: {}}
+    motion_model: {SingleIntegrator: {}}

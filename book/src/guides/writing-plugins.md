@@ -95,7 +95,8 @@ Then make two edits:
    pub use my_plugin::MyPlugin;
    ```
 
-2. **Register a name** in `crates/core/src/plugin_manager/builtins.rs`:
+2. **Register a name** in `register_builtins` in
+   `crates/core/src/plugin/registry.rs`:
 
    ```rust,ignore
    registry.register_motion::<motion::MyPlugin>("MyPlugin")?;

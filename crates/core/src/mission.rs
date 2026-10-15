@@ -1,17 +1,48 @@
-//! Reads native YAML missions into the public scenario types.
-//! Templates and overrides are expanded before deserializing the scenario.
+//! Mission files: finding a YAML mission, expanding its templates and
+//! overrides, and reading it into the public scenario types.
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Deserializer, de::Error};
 use serde_yaml_ng::{Mapping, Value};
 use std::{
+    collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
 };
 
-use super::{Mission, Params};
 use crate::scenario::{EntityGroupConfig, PluginConfig, ScenarioConfig};
 
-pub(super) fn load(path: &Path, overrides: &Params) -> Result<Mission> {
+/// Mission overrides: a dotted path such as `entities.red.count` and its new
+/// value, written as YAML (`20`, `[1, 2, 0]`).
+pub type Params = BTreeMap<String, String>;
+
+/// A loaded scenario and the defaults supplied by its mission file.
+pub struct Mission {
+    pub scenario: ScenarioConfig,
+    pub workers: usize,
+    pub viewer: bool,
+    pub source: PathBuf,
+}
+
+impl Mission {
+    /// Reads a YAML mission, found at `path` or under `root`'s `missions/`.
+    pub fn load(path: &Path, root: &Path, overrides: &Params) -> Result<Self> {
+        let found = [path.to_path_buf(), root.join("missions").join(path)]
+            .into_iter()
+            .find(|candidate| candidate.is_file())
+            .with_context(|| format!("mission not found: {}", path.display()))?;
+        ensure!(
+            matches!(
+                found.extension().and_then(|extension| extension.to_str()),
+                Some("yaml" | "yml")
+            ),
+            "missions are YAML files (.yaml): {}",
+            found.display()
+        );
+        load(&found, overrides)
+    }
+}
+
+fn load(path: &Path, overrides: &Params) -> Result<Mission> {
     let text = fs::read_to_string(path).with_context(|| format!("read {}", path.display()))?;
     parse(&text, path.canonicalize()?, overrides)
         .with_context(|| format!("mission {}", path.display()))

@@ -56,10 +56,12 @@ URLs are exempt.
 
 ## Code rules
 
-- Organize around the C++ names (`simcontrol`, `entity`, `parse`, `math`,
-  `common`, `plugin_manager`, `pubsub`) and the plugin categories: Autonomy,
+- Organize around the subsystems (`simulation`, `entity`, `mission`, `math`,
+  `common`, `plugin`, `pubsub`) and the plugin categories: Autonomy,
   Controller, MotionModel, Sensor, Interaction, Network, Metrics, plus the
-  Rust-only estimators (Localization and Tracking, in `estimator.rs`).
+  Rust-only estimators (Localization and Tracking). `plugin.rs` holds the
+  shared API, `plugin/<category>.rs` each interface and its built-ins, and
+  `plugin/registry.rs` the registrations.
 - Each built-in lives in `plugin/<category>/<plugin>/<plugin>.rs`. Parameters
   are a `#[derive(Deserialize)]` struct with `#[serde(default,
   deny_unknown_fields)]` whose `Default` holds the mission defaults; `configure`

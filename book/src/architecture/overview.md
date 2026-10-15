@@ -86,11 +86,11 @@ engine hands each plugin a context for its phase
 | Type | File (under `crates/core/src/`) | Role |
 | --- | --- | --- |
 | `ScenarioConfig` | `scenario.rs` | The typed experiment: run settings, entity groups, world plugins |
-| `Simulation` | `simcontrol.rs` | Owns entities and world plugins; `step()` runs one tick |
+| `Simulation` | `simulation.rs` | Owns entities and world plugins; `step()` runs one tick |
 | `Entity` | `entity.rs` | Identity, truth, health, and its `PluginStack` |
 | `PluginStack` | `entity/plugin_stack.rs` | The entity's plugin instances, readings, and belief |
-| `Contact`, `ContactList` | `estimator.rs` | A tracked contact, and the shared list trackers write |
-| `Scheduler` | `simcontrol/scheduler.rs` | Runs an entity phase across workers and joins it |
+| `Contact`, `ContactList` | `plugin/estimator.rs` | A tracked contact, and the shared list trackers write |
+| `Scheduler` | `simulation/scheduler.rs` | Runs an entity phase across workers and joins it |
 | `KinematicState` | `math/state.rs` | Position, velocity, orientation, angular velocity (ENU world frame) |
 | `EntitySnapshot` | `entity.rs` | A read-only copy of one entity for cross-entity reads |
 | `Messages` | `pubsub/messages.rs` | A plugin's own outbox, subscriptions, and inbox |

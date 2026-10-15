@@ -19,53 +19,22 @@ SCRIMMAGE, list everything each change touches, settle the decisions, then
 prove it (byte-identical outputs, or the same numbers after a stated
 relabeling). Breaking old missions and outputs is fine. Networks stay as they
 are: GlobalNetwork is already added when a mission leaves it out
-(`simcontrol/world_plugins.rs`), missions declare LocalNetwork only when
+(`simulation/world_plugins.rs`), missions declare LocalNetwork only when
 needed, and GlobalNetwork's `delay_s` is a setting the disturbance sweeps use.
 LocalNetwork's name hides that it delivers only within one entity; rename it
 if a better name comes up.
 
-1. **Layout**, as two byte-identical commits.
-   - **First:** rename `simcontrol.rs` and `simcontrol/` (SCRIMMAGE's
-     SimControl) to `simulation.rs` and `simulation/`; the struct is already
-     `Simulation`. Split `step_inner` (about 100 lines, every phase inline)
-     into one function per phase, in the same order, so it reads like the
-     book's phase table. The loop itself stays: its phase order is the
-     standard sense-plan-act cycle, and rate-limited plugins and frame times
-     are already correct. Named phases are only a start for the learning
-     study's external stepping, which also needs a defined observation and
-     action boundary and controller timing (see Learned policies). Also:
-     `common/variable_io.rs` (SCRIMMAGE's VariableIO; it holds `Port`,
-     `Ports`, `PluginIo`) to `ports.rs`; `entity_interaction.rs` to
-     `interaction.rs`; `parse/mission.rs` and `parse/yaml_mission.rs` into one
-     file (the split dates from two formats). Update `AGENTS.md` ("Organize
-     around the C++ names") and the style guide ("keep the existing
-     C++-familiar directories").
-   - **Second:** everything about plugins under `plugin/`, one file per
-     category. Today a category is split three ways: its trait at the crate
-     root (`autonomy.rs`, `controller.rs`, `motion.rs`, `sensor.rs`,
-     `metrics.rs`, `entity_interaction.rs`, `estimator.rs`, and
-     `pubsub/network.rs`), its built-ins in `plugin/<category>.rs`, and the
-     shared `Plugin` trait and contexts in `plugin_manager/entity_plugin.rs`
-     (SCRIMMAGE's PluginManager and EntityPlugin; world plugins use it too).
-     After: `plugin.rs` holds the shared API (`Plugin`, `PluginParams`,
-     `StepTime`, `EntityInfo`, `Update`, `AgentContext`, `WorldContext`);
-     `plugin/<category>.rs` holds each category's trait, context, and
-     built-ins (`NetworkContext` stays in `pubsub`, re-exported);
-     `plugin/registry.rs` holds `PluginRegistry`, `Catalog`, `CompiledPlugin`,
-     and the built-in list; `supported_options.rs` becomes the plugin tests.
-     `plugin_manager/` and the root trait files go. `ripple_core::plugin::*`
-     exports the same names, so the user crates do not change; about 12
-     internal `use` lines do.
-2. **Small fixes.** Rename `sub_swarm_id`, the index of the mission group an
+1. **Small fixes.** Rename `sub_swarm_id`, the index of the mission group an
    entity came from, to `group_index`, the record's name for it; nothing in
    the simulation reads it. Drop the mission `color` key (9 missions set it):
-   the viewer colors by team and never reads it. FixedWing6DOF's module comment calls wind "added rather
-   than subtracted, a quirk", but the code subtracts. Check `simcontrol.rs`'s
-   "legacy missions can create entities one step before the start time".
-   Compute substep time as `time_s + i * dt_s / N`, anchored to the tick's
-   time, instead of adding the substep each time (SCRIMMAGE's way, still in
-   `step_inner`); a separate commit from the layout, since it can move a
-   time-threshold event by one substep, compared before and after.
+   the viewer colors by team and never reads it. FixedWing6DOF's module
+   comment calls wind "added rather than subtracted, a quirk", but the code
+   subtracts. Check `simulation.rs`'s "legacy missions can create entities one
+   step before the start time". Compute substep time as `time_s + i * dt_s /
+   N`, anchored to the tick's time, instead of adding the substep each time
+   (SCRIMMAGE's way, still in `controllers_and_motion`), in its own commit,
+   since it can move a time-threshold event by one substep, compared before
+   and after.
 
 ## The book
 

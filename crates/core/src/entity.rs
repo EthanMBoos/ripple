@@ -9,8 +9,8 @@ use serde::Serialize;
 use crate::{
     common::Terrain,
     entity::plugin_stack::{CompiledStack, PluginStack},
-    estimator::{Contact, ContactList},
     math::{EulerAngles, KinematicState, Quaternion, Vec3},
+    plugin::estimator::{Contact, ContactList},
     plugin::{EntityInfo, PluginRegistry, Readings, StepTime},
     scenario::EntityGroupConfig,
 };

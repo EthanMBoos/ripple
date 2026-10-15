@@ -1,4 +1,18 @@
-//! Autonomy implementations selected by missions.
+//! Autonomy: the plugin interface and the built-in algorithms.
+use crate::{
+    plugin::{AgentContext, Plugin, Update},
+    ports::PluginIo,
+};
+use anyhow::Result;
+
+pub trait Autonomy: Plugin {
+    fn initialize(&mut self, _context: &mut AgentContext<'_>) -> Result<()> {
+        Ok(())
+    }
+    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update>;
+}
+
+// Built-ins selected by missions.
 #[path = "autonomy/straight/straight.rs"]
 mod straight;
 pub use straight::Straight;

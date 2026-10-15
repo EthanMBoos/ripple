@@ -24,34 +24,7 @@ needed, and GlobalNetwork's `delay_s` is a setting the disturbance sweeps use.
 LocalNetwork's name hides that it delivers only within one entity; rename it
 if a better name comes up.
 
-1. **Metric outputs.** The parameter-name scheme, applied to outputs, plus
-   three of SCRIMMAGE's summary choices (`simcontrol/summary.rs`):
-   - **Names.** SimpleCollisionMetrics: `non_team_coll`, `team_coll`,
-     `ground_coll` to `non_team_collisions`, `team_collisions`,
-     `ground_collisions`; `flight_time` to `flight_time_s`;
-     `flight_time_norm` to `flight_time_fraction`. End conditions:
-     `all_dead` to `no_entities`, `one_team` to `one_team_left`.
-     SimpleSpread's names (`return`, `collisions`, `occupied_landmarks`,
-     `landmark_distance`) are MPE's and stay, though `landmark_distance` is in
-     metres.
-   - **Precision.** Every value is written with 6 decimals (`{value:.6}`).
-     Write full precision. SCRIMMAGE's CSV keeps 6, so the comparison checks
-     values within a tolerance, not by relabeling columns.
-   - **Missing values.** A metric with no value for a team is written as 0,
-     indistinguishable from a real zero, in `summary.csv` and in sweep output
-     (`sweep.rs`). Leave it out: an unset field in the MCAP, an empty cell in
-     a CSV.
-   - **`score`.** The summary's `score` sums every metric plugin's team score,
-     so SimpleSpread's return and SimpleCollisionMetrics' weighted score add
-     into a meaningless number when both run. Drop the combined score; each
-     metric reports its own, under the metric's name (`sweep.rs` already reads
-     each plugin's score).
-   - **Readers.** `reference/compare.py` checks the summary against
-     SCRIMMAGE's `summary.csv`, so the comparison tooling needs a column table
-     like `KEYS` in `scrimmage_xml.py`. About a dozen reference scripts,
-     `sweep.rs`, and three book pages read the summary. The summary is an MCAP
-     channel; update these readers with the metric names.
-2. **Layout**, as two byte-identical commits.
+1. **Layout**, as two byte-identical commits.
    - **First:** rename `simcontrol.rs` and `simcontrol/` (SCRIMMAGE's
      SimControl) to `simulation.rs` and `simulation/`; the struct is already
      `Simulation`. Split `step_inner` (about 100 lines, every phase inline)
@@ -83,7 +56,7 @@ if a better name comes up.
      `plugin_manager/` and the root trait files go. `ripple_core::plugin::*`
      exports the same names, so the user crates do not change; about 12
      internal `use` lines do.
-3. **Small fixes.** Rename `sub_swarm_id`, the index of the mission group an
+2. **Small fixes.** Rename `sub_swarm_id`, the index of the mission group an
    entity came from, to `group_index`, the record's name for it; nothing in
    the simulation reads it. Drop the mission `color` key (9 missions set it):
    the viewer colors by team and never reads it. FixedWing6DOF's module comment calls wind "added rather
@@ -102,8 +75,6 @@ explaining to a newcomer: short, plain, the key idea and why, with an example.
 Exhaustive detail is left to the code, and a reader who wants the long version
 can ask an LLM about the repo. Cut duplication (the phase order is told about
 three times, plugin authoring four) and listings the code already states.
-Do it after the metric output changes (Remove SCRIMMAGE's shape, item 1),
-since three new pages describe outputs.
 
 - **Keep:** both tutorials, tightened only where they repeat; coordinate
   frames; belief vs truth; randomness; YAML missions; Rust scenarios;
@@ -174,8 +145,7 @@ Decide first how trained policies run in Ripple: exported into an autonomy
 plugin, or driven from Python. For the second, stop the tick at the decision
 point (observations out, actions in), as Isaac Lab's `ManagerBasedRLEnv` and
 Gymnasium's `step(actions)` do, with `motion_multiplier` as their
-`decimation`; autonomy plugins become one way to fill the actions. Decide this
-together with the metric output changes (Remove SCRIMMAGE's shape, item 1).
+`decimation`; autonomy plugins become one way to fill the actions.
 
 1. **Classical baseline on MPE2.**
    - Hungarian autonomy, re-solved every tick from each agent's own belief;

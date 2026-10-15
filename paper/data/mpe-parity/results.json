@@ -5,14 +5,14 @@
   "steps": 25,
   "criterion": {
     "state": "bit identical",
-    "return_": 1e-06
+    "return_": 1e-12
   },
   "summary": {
     "episodes": 100,
     "episodes_with_contact": 49,
     "bit_identical": 100,
     "largest_state_error": 0.0,
-    "largest_return_error": 4.985075960917129e-07
+    "largest_return_error": 1.4210854715202004e-14
   },
   "results": [
     {
@@ -21,8 +21,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -31.103892705664805,
-      "ripple_return": -31.103893,
-      "return_error": 2.9433519443955447e-07
+      "ripple_return": -31.1038927056648,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 1,
@@ -30,8 +30,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -31.925485172625937,
-      "ripple_return": -31.925485,
-      "return_error": 1.7262593843270224e-07
+      "ripple_return": -31.925485172625937,
+      "return_error": 0.0
     },
     {
       "seed": 2,
@@ -39,8 +39,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -23.58619909958451,
-      "ripple_return": -23.586199,
-      "return_error": 9.958450775116034e-08
+      "ripple_return": -23.58619909958451,
+      "return_error": 0.0
     },
     {
       "seed": 3,
@@ -48,8 +48,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -29.369446684511328,
-      "ripple_return": -29.369447,
-      "return_error": 3.1548867340802644e-07
+      "ripple_return": -29.36944668451132,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 4,
@@ -57,8 +57,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -11.033275172454923,
-      "ripple_return": -11.033275,
-      "return_error": 1.7245492323070266e-07
+      "ripple_return": -11.033275172454927,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 5,
@@ -66,8 +66,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -29.900927882465272,
-      "ripple_return": -29.900928,
-      "return_error": 1.1753472861641967e-07
+      "ripple_return": -29.900927882465272,
+      "return_error": 0.0
     },
     {
       "seed": 6,
@@ -75,8 +75,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -25.77234595357407,
-      "ripple_return": -25.772346,
-      "return_error": 4.642592799086742e-08
+      "ripple_return": -25.772345953574064,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 7,
@@ -84,8 +84,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -28.375060269154044,
-      "ripple_return": -28.37506,
-      "return_error": 2.6915404305327684e-07
+      "ripple_return": -28.375060269154034,
+      "return_error": 1.0658141036401503e-14
     },
     {
       "seed": 8,
@@ -93,8 +93,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -31.91421296348663,
-      "ripple_return": -31.914213,
-      "return_error": 3.651337010524003e-08
+      "ripple_return": -31.91421296348663,
+      "return_error": 0.0
     },
     {
       "seed": 9,
@@ -102,8 +102,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -38.98654276108924,
-      "ripple_return": -38.986543,
-      "return_error": 2.389107578437688e-07
+      "ripple_return": -38.98654276108925,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 10,
@@ -111,8 +111,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -38.91391461776686,
-      "ripple_return": -38.913915,
-      "return_error": 3.822331464675699e-07
+      "ripple_return": -38.91391461776686,
+      "return_error": 0.0
     },
     {
       "seed": 11,
@@ -120,8 +120,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -38.37670764850757,
-      "ripple_return": -38.376708,
-      "return_error": 3.514924316050383e-07
+      "ripple_return": -38.37670764850757,
+      "return_error": 0.0
     },
     {
       "seed": 12,
@@ -129,8 +129,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -35.55184562702953,
-      "ripple_return": -35.551846,
-      "return_error": 3.729704687316371e-07
+      "ripple_return": -35.55184562702953,
+      "return_error": 0.0
     },
     {
       "seed": 13,
@@ -138,8 +138,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -15.961207517620275,
-      "ripple_return": -15.961208,
-      "return_error": 4.823797237207827e-07
+      "ripple_return": -15.961207517620279,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 14,
@@ -147,8 +147,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -16.884305644338685,
-      "ripple_return": -16.884306,
-      "return_error": 3.5566131373343524e-07
+      "ripple_return": -16.884305644338685,
+      "return_error": 0.0
     },
     {
       "seed": 15,
@@ -156,8 +156,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -15.45419020307821,
-      "ripple_return": -15.45419,
-      "return_error": 2.0307821024800887e-07
+      "ripple_return": -15.454190203078207,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 16,
@@ -165,8 +165,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -34.79237024586574,
-      "ripple_return": -34.79237,
-      "return_error": 2.458657419879273e-07
+      "ripple_return": -34.79237024586574,
+      "return_error": 0.0
     },
     {
       "seed": 17,
@@ -174,8 +174,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -21.36301697868457,
-      "ripple_return": -21.363017,
-      "return_error": 2.1315429421520093e-08
+      "ripple_return": -21.363016978684566,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 18,
@@ -183,8 +183,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -15.820283344138057,
-      "ripple_return": -15.820283,
-      "return_error": 3.4413805671817954e-07
+      "ripple_return": -15.82028334413806,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 19,
@@ -192,8 +192,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -32.964858936899105,
-      "ripple_return": -32.964859,
-      "return_error": 6.310089162298027e-08
+      "ripple_return": -32.96485893689911,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 20,
@@ -201,8 +201,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -23.734954815508726,
-      "ripple_return": -23.734955,
-      "return_error": 1.8449127381359176e-07
+      "ripple_return": -23.734954815508726,
+      "return_error": 0.0
     },
     {
       "seed": 21,
@@ -210,8 +210,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -24.718300233529522,
-      "ripple_return": -24.7183,
-      "return_error": 2.3352952283062223e-07
+      "ripple_return": -24.71830023352952,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 22,
@@ -219,8 +219,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -25.347901715841207,
-      "ripple_return": -25.347902,
-      "return_error": 2.8415879427257096e-07
+      "ripple_return": -25.347901715841207,
+      "return_error": 0.0
     },
     {
       "seed": 23,
@@ -228,8 +228,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -14.180599704788632,
-      "ripple_return": -14.1806,
-      "return_error": 2.9521136823973393e-07
+      "ripple_return": -14.180599704788634,
+      "return_error": 1.7763568394002505e-15
     },
     {
       "seed": 24,
@@ -237,8 +237,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -29.528609299727027,
-      "ripple_return": -29.528609,
-      "return_error": 2.997270271976049e-07
+      "ripple_return": -29.528609299727027,
+      "return_error": 0.0
     },
     {
       "seed": 25,
@@ -246,8 +246,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -39.1084204931555,
-      "ripple_return": -39.10842,
-      "return_error": 4.931554968834462e-07
+      "ripple_return": -39.108420493155485,
+      "return_error": 1.4210854715202004e-14
     },
     {
       "seed": 26,
@@ -255,8 +255,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -14.135854460744563,
-      "ripple_return": -14.135854,
-      "return_error": 4.607445625026685e-07
+      "ripple_return": -14.135854460744563,
+      "return_error": 0.0
     },
     {
       "seed": 27,
@@ -264,8 +264,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -27.44584408191052,
-      "ripple_return": -27.445844,
-      "return_error": 8.191051747985512e-08
+      "ripple_return": -27.44584408191052,
+      "return_error": 0.0
     },
     {
       "seed": 28,
@@ -273,8 +273,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -22.08025282657256,
-      "ripple_return": -22.080253,
-      "return_error": 1.73427437744067e-07
+      "ripple_return": -22.08025282657256,
+      "return_error": 0.0
     },
     {
       "seed": 29,
@@ -282,8 +282,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -20.24803435743251,
-      "ripple_return": -20.248034,
-      "return_error": 3.574325084798602e-07
+      "ripple_return": -20.248034357432513,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 30,
@@ -291,8 +291,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -20.170382911056976,
-      "ripple_return": -20.170383,
-      "return_error": 8.894302538919874e-08
+      "ripple_return": -20.17038291105698,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 31,
@@ -300,8 +300,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -32.14777027757922,
-      "ripple_return": -32.14777,
-      "return_error": 2.7757921827742393e-07
+      "ripple_return": -32.14777027757923,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 32,
@@ -309,8 +309,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -34.59555647864919,
-      "ripple_return": -34.595556,
-      "return_error": 4.786491913932878e-07
+      "ripple_return": -34.59555647864919,
+      "return_error": 0.0
     },
     {
       "seed": 33,
@@ -318,8 +318,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -21.86704234817347,
-      "ripple_return": -21.867042,
-      "return_error": 3.4817346872273447e-07
+      "ripple_return": -21.867042348173474,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 34,
@@ -327,8 +327,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -21.771824987508214,
-      "ripple_return": -21.771825,
-      "return_error": 1.2491785383872411e-08
+      "ripple_return": -21.77182498750822,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 35,
@@ -336,8 +336,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -32.001431631576175,
-      "ripple_return": -32.001432,
-      "return_error": 3.684238265577733e-07
+      "ripple_return": -32.001431631576175,
+      "return_error": 0.0
     },
     {
       "seed": 36,
@@ -345,8 +345,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -21.21514661514679,
-      "ripple_return": -21.215147,
-      "return_error": 3.848532124095527e-07
+      "ripple_return": -21.21514661514679,
+      "return_error": 0.0
     },
     {
       "seed": 37,
@@ -354,8 +354,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -31.82789867801851,
-      "ripple_return": -31.827899,
-      "return_error": 3.219814885824235e-07
+      "ripple_return": -31.82789867801851,
+      "return_error": 0.0
     },
     {
       "seed": 38,
@@ -363,8 +363,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -22.441224789464233,
-      "ripple_return": -22.441225,
-      "return_error": 2.1053576659824103e-07
+      "ripple_return": -22.441224789464233,
+      "return_error": 0.0
     },
     {
       "seed": 39,
@@ -372,8 +372,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -23.565242439686944,
-      "ripple_return": -23.565242,
-      "return_error": 4.396869428546779e-07
+      "ripple_return": -23.565242439686944,
+      "return_error": 0.0
     },
     {
       "seed": 40,
@@ -381,8 +381,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -41.70597880060946,
-      "ripple_return": -41.705979,
-      "return_error": 1.9939054141104862e-07
+      "ripple_return": -41.70597880060946,
+      "return_error": 0.0
     },
     {
       "seed": 41,
@@ -390,8 +390,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -20.86843228875685,
-      "ripple_return": -20.868432,
-      "return_error": 2.8875685131879436e-07
+      "ripple_return": -20.868432288756853,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 42,
@@ -399,8 +399,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -27.045173706931568,
-      "ripple_return": -27.045174,
-      "return_error": 2.93068431744814e-07
+      "ripple_return": -27.045173706931568,
+      "return_error": 0.0
     },
     {
       "seed": 43,
@@ -408,8 +408,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -28.190559139620277,
-      "ripple_return": -28.190559,
-      "return_error": 1.3962027622937967e-07
+      "ripple_return": -28.190559139620273,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 44,
@@ -417,8 +417,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -34.45683540848186,
-      "ripple_return": -34.456835,
-      "return_error": 4.0848185989261765e-07
+      "ripple_return": -34.45683540848186,
+      "return_error": 0.0
     },
     {
       "seed": 45,
@@ -426,8 +426,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -11.857662541109095,
-      "ripple_return": -11.857663,
-      "return_error": 4.588909057190449e-07
+      "ripple_return": -11.857662541109095,
+      "return_error": 0.0
     },
     {
       "seed": 46,
@@ -435,8 +435,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -35.1292079136025,
-      "ripple_return": -35.129208,
-      "return_error": 8.639749893291082e-08
+      "ripple_return": -35.12920791360251,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 47,
@@ -444,8 +444,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -21.628946254115153,
-      "ripple_return": -21.628946,
-      "return_error": 2.541151538082431e-07
+      "ripple_return": -21.628946254115153,
+      "return_error": 0.0
     },
     {
       "seed": 48,
@@ -453,8 +453,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -35.25475736440949,
-      "ripple_return": -35.254757,
-      "return_error": 3.644094945798315e-07
+      "ripple_return": -35.25475736440949,
+      "return_error": 0.0
     },
     {
       "seed": 49,
@@ -462,8 +462,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -20.697853899425358,
-      "ripple_return": -20.697854,
-      "return_error": 1.0057464194801469e-07
+      "ripple_return": -20.69785389942535,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 50,
@@ -471,8 +471,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -35.69838525720876,
-      "ripple_return": -35.698385,
-      "return_error": 2.5720876095647327e-07
+      "ripple_return": -35.69838525720876,
+      "return_error": 0.0
     },
     {
       "seed": 51,
@@ -480,8 +480,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -28.502976836304413,
-      "ripple_return": -28.502977,
-      "return_error": 1.6369558863971179e-07
+      "ripple_return": -28.502976836304416,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 52,
@@ -489,8 +489,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -16.79320424635503,
-      "ripple_return": -16.793204,
-      "return_error": 2.4635503237391276e-07
+      "ripple_return": -16.793204246355028,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 53,
@@ -498,8 +498,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -37.15089843874804,
-      "ripple_return": -37.150898,
-      "return_error": 4.3874803878907187e-07
+      "ripple_return": -37.15089843874804,
+      "return_error": 0.0
     },
     {
       "seed": 54,
@@ -507,8 +507,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -47.025125961782855,
-      "ripple_return": -47.025126,
-      "return_error": 3.8217145004182385e-08
+      "ripple_return": -47.02512596178286,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 55,
@@ -516,8 +516,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -11.520092685365325,
-      "ripple_return": -11.520093,
-      "return_error": 3.146346738702732e-07
+      "ripple_return": -11.520092685365325,
+      "return_error": 0.0
     },
     {
       "seed": 56,
@@ -525,8 +525,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -20.287148050085772,
-      "ripple_return": -20.287148,
-      "return_error": 5.008577375065215e-08
+      "ripple_return": -20.287148050085772,
+      "return_error": 0.0
     },
     {
       "seed": 57,
@@ -534,8 +534,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -24.592022012805717,
-      "ripple_return": -24.592022,
-      "return_error": 1.2805717375385939e-08
+      "ripple_return": -24.592022012805728,
+      "return_error": 1.0658141036401503e-14
     },
     {
       "seed": 58,
@@ -543,8 +543,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -21.64929123249522,
-      "ripple_return": -21.649291,
-      "return_error": 2.3249521774459936e-07
+      "ripple_return": -21.64929123249522,
+      "return_error": 0.0
     },
     {
       "seed": 59,
@@ -552,8 +552,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -22.59014510536802,
-      "ripple_return": -22.590145,
-      "return_error": 1.0536802008687118e-07
+      "ripple_return": -22.59014510536802,
+      "return_error": 0.0
     },
     {
       "seed": 60,
@@ -561,8 +561,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -30.929151114603382,
-      "ripple_return": -30.929151,
-      "return_error": 1.146033810073277e-07
+      "ripple_return": -30.92915111460339,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 61,
@@ -570,8 +570,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -21.902952985060193,
-      "ripple_return": -21.902953,
-      "return_error": 1.4939807613245648e-08
+      "ripple_return": -21.902952985060185,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 62,
@@ -579,8 +579,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -9.874470277624372,
-      "ripple_return": -9.87447,
-      "return_error": 2.7762437149192465e-07
+      "ripple_return": -9.874470277624372,
+      "return_error": 0.0
     },
     {
       "seed": 63,
@@ -588,8 +588,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -19.838397679755047,
-      "ripple_return": -19.838398,
-      "return_error": 3.202449541106489e-07
+      "ripple_return": -19.838397679755047,
+      "return_error": 0.0
     },
     {
       "seed": 64,
@@ -597,8 +597,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -21.788030249945155,
-      "ripple_return": -21.78803,
-      "return_error": 2.4994515612775103e-07
+      "ripple_return": -21.788030249945155,
+      "return_error": 0.0
     },
     {
       "seed": 65,
@@ -606,8 +606,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -17.53689186057206,
-      "ripple_return": -17.536892,
-      "return_error": 1.3942794296895045e-07
+      "ripple_return": -17.536891860572062,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 66,
@@ -615,8 +615,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -16.351377791010112,
-      "ripple_return": -16.351378,
-      "return_error": 2.0898988850603928e-07
+      "ripple_return": -16.351377791010112,
+      "return_error": 0.0
     },
     {
       "seed": 67,
@@ -624,8 +624,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -25.963915384276532,
-      "ripple_return": -25.963915,
-      "return_error": 3.8427653237249615e-07
+      "ripple_return": -25.963915384276532,
+      "return_error": 0.0
     },
     {
       "seed": 68,
@@ -633,8 +633,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -34.09445395098919,
-      "ripple_return": -34.094454,
-      "return_error": 4.901080785657541e-08
+      "ripple_return": -34.09445395098919,
+      "return_error": 0.0
     },
     {
       "seed": 69,
@@ -642,8 +642,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -20.870811358368645,
-      "ripple_return": -20.870811,
-      "return_error": 3.5836864498151044e-07
+      "ripple_return": -20.870811358368652,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 70,
@@ -651,8 +651,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -37.637929567586866,
-      "ripple_return": -37.63793,
-      "return_error": 4.324131310795565e-07
+      "ripple_return": -37.637929567586866,
+      "return_error": 0.0
     },
     {
       "seed": 71,
@@ -660,8 +660,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -14.418657767469242,
-      "ripple_return": -14.418658,
-      "return_error": 2.3253075909224208e-07
+      "ripple_return": -14.418657767469247,
+      "return_error": 5.329070518200751e-15
     },
     {
       "seed": 72,
@@ -669,8 +669,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -31.372441363036913,
-      "ripple_return": -31.372441,
-      "return_error": 3.63036914308168e-07
+      "ripple_return": -31.372441363036916,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 73,
@@ -678,8 +678,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -32.908731512873864,
-      "ripple_return": -32.908732,
-      "return_error": 4.871261367611623e-07
+      "ripple_return": -32.908731512873864,
+      "return_error": 0.0
     },
     {
       "seed": 74,
@@ -687,8 +687,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -28.379395935019588,
-      "ripple_return": -28.379396,
-      "return_error": 6.498041216218553e-08
+      "ripple_return": -28.379395935019588,
+      "return_error": 0.0
     },
     {
       "seed": 75,
@@ -696,8 +696,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -26.990070246650546,
-      "ripple_return": -26.99007,
-      "return_error": 2.466505470977154e-07
+      "ripple_return": -26.990070246650546,
+      "return_error": 0.0
     },
     {
       "seed": 76,
@@ -705,8 +705,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -14.237437317394333,
-      "ripple_return": -14.237437,
-      "return_error": 3.173943330381235e-07
+      "ripple_return": -14.237437317394333,
+      "return_error": 0.0
     },
     {
       "seed": 77,
@@ -714,8 +714,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -23.236563606257885,
-      "ripple_return": -23.236564,
-      "return_error": 3.937421162447663e-07
+      "ripple_return": -23.23656360625789,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 78,
@@ -723,8 +723,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -21.909314800008392,
-      "ripple_return": -21.909315,
-      "return_error": 1.9999160727479648e-07
+      "ripple_return": -21.909314800008392,
+      "return_error": 0.0
     },
     {
       "seed": 79,
@@ -732,8 +732,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -26.10235031041921,
-      "ripple_return": -26.10235,
-      "return_error": 3.104192103364767e-07
+      "ripple_return": -26.10235031041921,
+      "return_error": 0.0
     },
     {
       "seed": 80,
@@ -741,8 +741,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -21.57435628541163,
-      "ripple_return": -21.574356,
-      "return_error": 2.8541162677697685e-07
+      "ripple_return": -21.574356285411625,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 81,
@@ -750,8 +750,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -12.27863991416251,
-      "ripple_return": -12.27864,
-      "return_error": 8.583749000479202e-08
+      "ripple_return": -12.27863991416251,
+      "return_error": 0.0
     },
     {
       "seed": 82,
@@ -759,8 +759,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -44.87115542820965,
-      "ripple_return": -44.871155,
-      "return_error": 4.28209645519928e-07
+      "ripple_return": -44.87115542820965,
+      "return_error": 0.0
     },
     {
       "seed": 83,
@@ -768,8 +768,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -20.689619679195417,
-      "ripple_return": -20.68962,
-      "return_error": 3.208045846747609e-07
+      "ripple_return": -20.68961967919542,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 84,
@@ -777,8 +777,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -27.865232512742434,
-      "ripple_return": -27.865233,
-      "return_error": 4.872575658509959e-07
+      "ripple_return": -27.865232512742434,
+      "return_error": 0.0
     },
     {
       "seed": 85,
@@ -786,8 +786,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -18.589527022297236,
-      "ripple_return": -18.589527,
-      "return_error": 2.2297236057511327e-08
+      "ripple_return": -18.589527022297236,
+      "return_error": 0.0
     },
     {
       "seed": 86,
@@ -795,8 +795,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -23.053684729787193,
-      "ripple_return": -23.053685,
-      "return_error": 2.7021280857297825e-07
+      "ripple_return": -23.053684729787193,
+      "return_error": 0.0
     },
     {
       "seed": 87,
@@ -804,8 +804,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -33.087820102708086,
-      "ripple_return": -33.08782,
-      "return_error": 1.0270808559198485e-07
+      "ripple_return": -33.087820102708086,
+      "return_error": 0.0
     },
     {
       "seed": 88,
@@ -813,8 +813,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -26.21072744393959,
-      "ripple_return": -26.210727,
-      "return_error": 4.439395908661936e-07
+      "ripple_return": -26.210727443939593,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 89,
@@ -822,8 +822,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -22.022251351529615,
-      "ripple_return": -22.022251,
-      "return_error": 3.515296143064006e-07
+      "ripple_return": -22.022251351529615,
+      "return_error": 0.0
     },
     {
       "seed": 90,
@@ -831,8 +831,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -24.569243946841407,
-      "ripple_return": -24.569244,
-      "return_error": 5.315859397114764e-08
+      "ripple_return": -24.5692439468414,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 91,
@@ -840,8 +840,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -14.04124021844603,
-      "ripple_return": -14.04124,
-      "return_error": 2.1844602926535117e-07
+      "ripple_return": -14.04124021844603,
+      "return_error": 0.0
     },
     {
       "seed": 92,
@@ -849,8 +849,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -20.729143819521127,
-      "ripple_return": -20.729144,
-      "return_error": 1.8047887451189126e-07
+      "ripple_return": -20.729143819521127,
+      "return_error": 0.0
     },
     {
       "seed": 93,
@@ -858,8 +858,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -22.250133498507598,
-      "ripple_return": -22.250133,
-      "return_error": 4.985075960917129e-07
+      "ripple_return": -22.250133498507594,
+      "return_error": 3.552713678800501e-15
     },
     {
       "seed": 94,
@@ -867,8 +867,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -17.236698146054433,
-      "ripple_return": -17.236698,
-      "return_error": 1.4605443254822603e-07
+      "ripple_return": -17.236698146054433,
+      "return_error": 0.0
     },
     {
       "seed": 95,
@@ -876,8 +876,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -22.481114657305355,
-      "ripple_return": -22.481115,
-      "return_error": 3.426946442175449e-07
+      "ripple_return": -22.481114657305355,
+      "return_error": 0.0
     },
     {
       "seed": 96,
@@ -885,8 +885,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -32.95044477159493,
-      "ripple_return": -32.950445,
-      "return_error": 2.28405070856752e-07
+      "ripple_return": -32.95044477159494,
+      "return_error": 7.105427357601002e-15
     },
     {
       "seed": 97,
@@ -894,8 +894,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -37.89895064677091,
-      "ripple_return": -37.898951,
-      "return_error": 3.5322908331636427e-07
+      "ripple_return": -37.89895064677091,
+      "return_error": 0.0
     },
     {
       "seed": 98,
@@ -903,8 +903,8 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -43.26024018433284,
-      "ripple_return": -43.26024,
-      "return_error": 1.843328334416583e-07
+      "ripple_return": -43.26024018433284,
+      "return_error": 0.0
     },
     {
       "seed": 99,
@@ -912,14 +912,14 @@
       "bit_identical": true,
       "largest_state_error": 0.0,
       "mpe2_return": -16.3953546185416,
-      "ripple_return": -16.395355,
-      "return_error": 3.814583990902065e-07
+      "ripple_return": -16.3953546185416,
+      "return_error": 0.0
     }
   ],
   "source": {
-    "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+    "source_sha256": "57b8c436b6bce59e31428b00d4fea99e51c40828b4b103b8cab636118ba2fccb",
     "files": {
-      "Cargo.lock": "4d0b8535d22f973857946d6858665af27cef2280359831bc73260e8ec2c144d5",
+      "Cargo.lock": "e5e639c116fd4b0483d72409944e52840535e66ab5f382a391123038ca66e1e6",
       "Cargo.toml": "b7430d23ebcbd252b8cf6681c100a040dd13a0d4c14d534d38f8ddf48c12b1d1",
       "crates/ardupilot/Cargo.toml": "3ee6ecdefffc3167129509dfe190473627bee812727e218a2bc2576a67336817",
       "crates/ardupilot/missions/rascal-runway.yaml": "79e82c214696d1aaa0c2a0515adca196726ed5512d21d8849b2740fc017829b9",
@@ -929,42 +929,44 @@
       "crates/ardupilot/src/json_sitl.rs": "ed21b6fbaf8de7de6b9bec12e3c4c67c5fb29c0685967661de62f816b826a85f",
       "crates/ardupilot/src/lib.rs": "3a908025d815f45689a648bc6c0f09a62e1eafc592309769630ffd2639884371",
       "crates/ardupilot/src/sitl_launcher.rs": "f473003f97d9f2f8184ae2993b78f8443d889b4c557660e607a9cc3d726b7307",
-      "crates/ardupilot/src/sitl_state.rs": "dfc68e6f2cc90680dc0db7901af6b0584899ac6c0c4c8db601b59d5993900582",
+      "crates/ardupilot/src/sitl_state.rs": "77574d1b88f27cba7b026ac6bca7aca50d375112f3f4a837ba90999ba43023bc",
       "crates/ardupilot/tests/lockstep.rs": "a11f492de1b88cb263d2722c7ea003284e1c369d5de5329b43584315e45cc826",
-      "crates/cli/Cargo.toml": "75ad04823bcf1191bb9cc8f25714848ca06dc6feb15ab8d3cddd7e93f28f8d7b",
-      "crates/cli/src/lib.rs": "3ea415a75c1905d4b7dea58cadc88de61c3c61d5de765f171e0bae6c988367fd",
+      "crates/cli/Cargo.toml": "79b168a3a235c236be5bc27cd78aa12633ef23de68dde9bd5971e3fdcac15aeb",
+      "crates/cli/src/lib.rs": "45085adfbf30762f92ae6fe3ee25e4a1f58adb0c78f8dd6c7a3a1dd252e90071",
       "crates/cli/src/main.rs": "79116d4e6511b747c2f7abc752956109a4daf7942a1edb95c5fea1aa1d625e0b",
-      "crates/cli/src/replay.rs": "9fef635fc5d3e047967ba64f5785e69e5d9c9b7739880e19730ff5221465bb93",
+      "crates/cli/src/replay.rs": "1b059a324e9037fceb4563786adc4af24b7eb4ac14caf598d6561b64dba4e61e",
       "crates/cli/src/run/output/tests.rs": "6f96857399dde983b6309bf5d82efd54ab37e722bf07f1d56c2b526de0eb15a5",
       "crates/cli/src/run/output.rs": "7c15d767bd163ccdcbdd6776301bf0e000e8253884aeb2b5b988ec2891179bd6",
-      "crates/cli/src/run.rs": "ae2eba3a7fd36ab9886a530dfe6e6ff46d7377fe82217938ccd8e61c4a62c3dc",
-      "crates/cli/src/sweep.rs": "c86f844bb3d902957a30bdbd6690ae3e30c3445d7620779472e55d88de7477ab",
+      "crates/cli/src/run.rs": "989fa9e0f09b1da19bf71135e9cc383337bf58a80c0d2e7d2cc46bd093ed2ac4",
+      "crates/cli/src/sweep.rs": "a5ef3aa739c3e1142ce0854361635e3c437e34d18a3cf76aa6cf9147a90ba0b1",
       "crates/cli/src/viewer/blueprint.rs": "7b7bf379c812638f567f29ab6b5d5c69b3bd169abf566087c2e2a43d23981765",
       "crates/cli/src/viewer/map.rs": "23afe901c794da7de7b7fe2929caef63ea7651df67ba8f6a3dd2c09307a8580c",
       "crates/cli/src/viewer/terrain.rs": "ff610b4a5d2596027245648ff7e18aa35c8abc77cdbac1c9c9af53cf4bbb5271",
       "crates/cli/src/viewer/trails.rs": "455d923ab02fdf9f1b5baab0efa226bc3208d932080131e9feba564211e238ac",
-      "crates/cli/src/viewer.rs": "01ce8d37e34c81342cdce225ddec11d69892551d57811ca65659b29d8f54f336",
-      "crates/cli/tests/replay.rs": "c800cc2f402fc433a9534cab8db59fef603a770989da2c62005b18d7a05e1425",
-      "crates/cli/tests/run_output.rs": "d80d59ea6aaf0c5ea01e5c5e909654115cae48cb4ca9cfd13622489ec4a94ee1",
-      "crates/cli/tests/rust_runner.rs": "7aaa0fe4dcddcf47a9ed8c2177be23c04e51daf298891d9aae8a3e5d1fcc6cbd",
-      "crates/cli/tests/sweep.rs": "73dc98699b2f869fe7d5fd7c0f9b7db5cb76d7dd3aa38e202e317e8f2c5c1485",
-      "crates/core/Cargo.toml": "4b2ae35bdeba11ac26239f7b1c0b04375de1e4c6b6f6c9d2c90b99684e0737a2",
+      "crates/cli/src/viewer.rs": "cb52eaf9f114050920127d73ee18652a9eff52d19e41b79a91d6378524a90749",
+      "crates/cli/tests/replay.rs": "cdd1cf9b3dc9e7ee8d7696e1179f767d72f4d16adde793c31a1a560b31762c74",
+      "crates/cli/tests/run_output.rs": "6073698a1b0a60509b94bb869bbc6da8e93c536b6b681ff4a37b02b86fefcc81",
+      "crates/cli/tests/rust_runner.rs": "4ae0c461db2c0100c9ddab2396c94412d41df71b91811fe60558a7264ba1f67f",
+      "crates/cli/tests/sweep.rs": "ef74f0ac78965bfdc99b3f7e0ec9fca39afa2108dd52f9329675dd2333e3c0be",
+      "crates/core/Cargo.toml": "c29e58d065704f9c38752289f6a2c14c457c8ba5f6783844e44a6f144a930218",
+      "crates/core/proto/record.desc": "6870195cf42c840426a23f1086539f5666d8fbaf04c128cef9c76d33a6939fb3",
+      "crates/core/proto/record.proto": "2c0228fe3e5e25f5512b8e58917f88195ac494848e2e3e2c7d2659846cdd96e0",
       "crates/core/src/autonomy.rs": "5f58a92927843f1b0a79088f9bbcaddae0c51f6fd4e1496cafdac0085c662d85",
       "crates/core/src/common/loop_rate.rs": "2fbbd6d825835ace27e084be67ec69cdccf5a16491635aeb80d83740a3c2c725",
       "crates/core/src/common/pid.rs": "3cdc9b9e6ff7cdcd1abccd6ed0fc281fdabf6e3978f50b010e030bbcecf6278f",
       "crates/core/src/common/plugin_random.rs": "6f186e0fe4721caeed825693c1d0a179e3e31bf20d4acbca738be2af68afe32b",
       "crates/core/src/common/random.rs": "894116ee00f663cbb255d748c617153dad99117ae672ed860ed158d4ebdac787",
-      "crates/core/src/common/spatial.rs": "03da8d0451b3df1e3cb1ec18069a9d3cc6653c0c1bbe316af6284bf91f9dad63",
+      "crates/core/src/common/spatial.rs": "46d41f0b86998e47689ed29dc3f70c04b4b481da176b5c86f7bfe41a91c1c480",
       "crates/core/src/common/terrain.rs": "1f913f0426d81ccbeedd5cc15772ee6ed17618c19600c29923aabad666ba7ecd",
       "crates/core/src/common/variable_io.rs": "d820cf1491dd36caee346dbdeebbf47666fefa3d2cf60233e785ee7ad7fb90b6",
-      "crates/core/src/common/waypoints.rs": "6cefe438340ce9103ae2ee2c7d28b024b827fada04fcf2322b980315e4d650e1",
+      "crates/core/src/common/waypoints.rs": "45d2dadad192d8568af02287ca19f7349db70922048f1d8be92a6532f9b0724f",
       "crates/core/src/common.rs": "149297a8e93463dff5bc3ba3916490182c5f57bcc445dd0ff5c76e0b58e286d2",
       "crates/core/src/controller.rs": "0070e93e5883f515aea749f8a54f23b12a93124c3923a92bddbd8814dd35c11a",
-      "crates/core/src/entity/plugin_stack.rs": "920850a2b8b7967384bb798f515564b95b377892c446d57004f8521bfc2129a2",
-      "crates/core/src/entity.rs": "b84d8b051812d3549597dc1958f3803573dec1d97ec326e87e6f8026e41e69c4",
+      "crates/core/src/entity/plugin_stack.rs": "1374ee7e7853b8b72689aed1d71944e6baf04c09cc804a82184dcaf169ba15f6",
+      "crates/core/src/entity.rs": "e31bb8a4b7d0f36d16b11cfed1e4481b2b768eb655413daa7cf97eb89564e05b",
       "crates/core/src/entity_interaction.rs": "9dda8a479c75b3a2b85fa83f1b6b2633c6e6da538d9bb9f1989d9a48ae59b590",
-      "crates/core/src/estimator.rs": "826f8eff1dfb7f8083adf24f857079a9c95b6fe7772e5a01ab7c8a931a7475ff",
-      "crates/core/src/lib.rs": "fb85cbd9f72cc3eaf794a45e1941d032826fe3791d2c7ae248b3bb2ebed4c8c2",
+      "crates/core/src/estimator.rs": "717a07b2bda6a74aa5c338e7aba4e1a27c3da5269df00e49b17d92a7a56e281e",
+      "crates/core/src/lib.rs": "3c2b7da87d70f0597005e159b9e4f56a6cc2d9757ef8cb40015ad328800c2e31",
       "crates/core/src/math/angles.rs": "9628498ed1c135b0b28f6d241bd2d0656e430b57cfb7bcaef27203dae3d396a1",
       "crates/core/src/math/integration.rs": "4162597badb6f8f44dcbc1581df8f7e35806625357898a0e01f6c4ee277f2045",
       "crates/core/src/math/quaternion.rs": "9999467b5b279dd4980256b51e4079cc329f115422c7dd0ef908e2966213f905",
@@ -976,7 +978,7 @@
       "crates/core/src/parse/mission.rs": "17afe3a24196d65a4a49a824e630bfa1f9978ab57bff2bca316e3ee64e1a0331",
       "crates/core/src/parse/yaml_mission.rs": "3f40af8a3626f6b51b4d08212f0c110a2c7fc5ae260884bae5843adae8232876",
       "crates/core/src/parse.rs": "bffe48c5977b5571315baf72e50e3e610ea1ca9bf86cb14eea0dfecb9e865087",
-      "crates/core/src/plugin/autonomy/auction_assign/auction_assign.rs": "9905b5cfe7474ea84c58771b1ffede770d90622828924035ef343f024477c33b",
+      "crates/core/src/plugin/autonomy/auction_assign/auction_assign.rs": "9a78e345fc936589743b5189962e5e16d1dc997e49630225917c4f645ad45c8f",
       "crates/core/src/plugin/autonomy/constant_velocity/constant_velocity.rs": "409a40d6b424d8beee0ca1647076f092306890df433545cffe6bb07e7eba3827",
       "crates/core/src/plugin/autonomy/force_replay/force_replay.rs": "6e65058a8369175689ca6b915c9142ff1ae41b4faf396232d995e9d01a22e6c3",
       "crates/core/src/plugin/autonomy/straight/straight.rs": "5a46ba284d9746433263515e1e9d1564c8b5064eaf913c7c6881a54e8e780bf8",
@@ -991,14 +993,14 @@
       "crates/core/src/plugin/controller.rs": "72b6ea0b6112e017d98715233e4404d825598d0b2963c3c0c66fc223594e7e5e",
       "crates/core/src/plugin/estimator/pass_through/pass_through.rs": "0e046c069cfe65ead884ae6a77aad8d9c0aff7dcb36bcc5ff2a16f81c025c197",
       "crates/core/src/plugin/estimator.rs": "963c4290402e7c857428a0ce93d409d8048c407a675a557a155d4b49f27109da",
-      "crates/core/src/plugin/interaction/boundary/boundary.rs": "5d259dc52c725791cd988ae9988f707fd11a9264c253d1edd0bcf12d5871a640",
+      "crates/core/src/plugin/interaction/boundary/boundary.rs": "bda52e2892de86399ff2f527dc02016a9d8a4ff6c2a5ce80a454bed9c7bb9239",
       "crates/core/src/plugin/interaction/ground_collision/ground_collision.rs": "a4e4648b5b60f4d65493fba362c0ca428b8511fdd2b58f408bc6dbecca7ad56c",
       "crates/core/src/plugin/interaction/mpe_contact/mpe_contact.rs": "8a0cf589a5d2ee3aeaacb9adda9b4c63f86948a6394bd825ec29ead1ab29695f",
       "crates/core/src/plugin/interaction/simple_collision/simple_collision.rs": "90a25d27e92ebbf8a18e05f400d370877e3e1bfdcc05dffc8e84f3f1ded14c4a",
       "crates/core/src/plugin/interaction/terrain_collision/terrain_collision.rs": "dd8e9ca80620ceabbe1b742da0553a82ff5380637bafcf773bdd0ac2cf12e883",
       "crates/core/src/plugin/interaction/waypoint_broadcast/waypoint_broadcast.rs": "bc62b9b9f87cb884c2a467fffec0d285413955de44c5befb85fb2a31b3c5b535",
       "crates/core/src/plugin/interaction.rs": "bd680a2e0200308e79870a465e23a58687e26a665f79afc531e1f6b2a742e641",
-      "crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs": "48e72b1f6983df9d27b3e83ac452b2cc0e45a458bf821b96fe0bf9cd4ca8499c",
+      "crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs": "cc249e2e1b9e91227c1a3d066140eb9981497aae767075d04d093a952ce7c630",
       "crates/core/src/plugin/metrics/simple_spread/simple_spread.rs": "1c3a831278b5debc1e5977a90d66307fa31fa4a70a01281fa04bba600594fed1",
       "crates/core/src/plugin/metrics.rs": "0819d11e2b5d2d011c56284d8bedd34fe116ba7f4b95e96145d2aa0c5d4dd5cd",
       "crates/core/src/plugin/motion/fixed_wing_6dof/aerodynamics.rs": "42525e765bee678a4ff3e7d8fcf9b7cb10bee0eaa3f25a91139766ae9bd5b87a",
@@ -1016,7 +1018,7 @@
       "crates/core/src/plugin/motion.rs": "6449a3707a3f66542e38b4786922ad84e2dde697b17ea5960fdd02271ee454d2",
       "crates/core/src/plugin/network/global_network/global_network.rs": "e90f02c373617f9ba4e3c1806d675f72f9b0ec0d816a614a371deaf766eb0f26",
       "crates/core/src/plugin/network/local_network/local_network.rs": "786ff609416547a3ba0de82fc79395d83e8ba6a9dd7927b66582355f9f29378e",
-      "crates/core/src/plugin/network/sphere_network/sphere_network.rs": "bfeb0bdabc27fde2bc5d8fee778c10dc3e586dccbc9a74c5b2a204b6a634a48f",
+      "crates/core/src/plugin/network/sphere_network/sphere_network.rs": "8000badefb7c8dfd96381df7b2460f0b61503f1cb3fa2f8410294f7b17bdbdf8",
       "crates/core/src/plugin/network.rs": "e8e87a29b0ebe92f97327a011477fdcd9c848baa539fb7714f4b7d5f27a7e883",
       "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs": "90ffe6b20fd49267c8c95ee1d9ec25a6a2298b57e07db34102e61bb8cb18f882",
       "crates/core/src/plugin/sensor/noisy_position/noisy_position.rs": "ab687d7f6d5167a4adfca1ed922b9f9a394507e10c31faab062f9008e40e1723",
@@ -1028,21 +1030,18 @@
       "crates/core/src/plugin_manager/registry.rs": "a4a4b11eed6f32f6eda7e76fe93a401e51e030c4831b45d893529b52f97b9f4f",
       "crates/core/src/plugin_manager/supported_options.rs": "9c86c3365d24c369b33c023707f0c9cc69e4f06f27441f75e1b307ff7567c47e",
       "crates/core/src/plugin_manager.rs": "52536023b89ca1dbd2ea03af253783a6fa9ad9c481f6904de62ccf0aa0ed5741",
-      "crates/core/src/protocol/frame.rs": "f5d22dd737bd0422d144d194eff896b26878a07def488965c1f25b8908e40c2c",
-      "crates/core/src/protocol/wire.rs": "2fa24ec1a3496d19cb7add20c03a9dcd5f96afbf6c31c454810e63cca913521b",
-      "crates/core/src/protocol.rs": "f9f5a77b5d602a590974ac7f3b3e82072a71f6ab4efb55e46b36f2eaa5d07ae1",
-      "crates/core/src/pubsub/messages.rs": "f6f8425d4de246c15326e46bcf4298dd8c8e953b2aa7c667ba17c0d90eb143ca",
+      "crates/core/src/pubsub/messages.rs": "58763b53265fb92173af733c6e1fb4502d601e9f3ea14887a60f06cf9da9f1f9",
       "crates/core/src/pubsub/network.rs": "bff93acc61471e93e13211376c2f692a9045c13f1385c815b5f2ca05f093903c",
       "crates/core/src/pubsub.rs": "dd30c5af83b6016b2b3b61a4a61fda73430e2faced019f92693b4330032844bd",
-      "crates/core/src/scenario.rs": "63eb646de8bee99df36ebd829175a90576ee7c4f3697daa207bf178faff96f11",
+      "crates/core/src/record.rs": "25d26f7e82fc57fe661a4be20ad37b28aa30c87945e7d23dcd078615c2c9f039",
+      "crates/core/src/scenario.rs": "fe07366c4739bfc17ff93149c017e8402f62ffa7d933767c5bf19d2d19cc7ab6",
       "crates/core/src/sensor/readings.rs": "301668467260e133fb739c9667eb50de5f03cb5a695d308410f8a611cc9e3545",
       "crates/core/src/sensor.rs": "bb3c4b41802634f5f8ef57fbc477bdbb7175ef7db4906981c7e3b6e8b48db7bd",
       "crates/core/src/simcontrol/generation.rs": "c691db27f5c39e7e749c51420a590a610ca048cbd2cba117ac8fe2ed258e7617",
       "crates/core/src/simcontrol/scheduler.rs": "548073ec1e897ec6f19148b74f1d96499d432a6e5f5893e88ea5b319f7328325",
-      "crates/core/src/simcontrol/summary.rs": "ebc1ea53e57f750fc358a45ee675a45ddf1282e835fb47b5fadf99e009623d7d",
-      "crates/core/src/simcontrol/trace.rs": "01e0602789db1a28581bad5548139f505cc97d3bb3dbeacb6a68794b8872c260",
+      "crates/core/src/simcontrol/trace.rs": "ab76298543f10e13ab32ccf0ce930d289ca60be2cce04102f9de816e57c52253",
       "crates/core/src/simcontrol/world_plugins.rs": "f2ecd7fd5593783981f1134c2a2bc86e2d02449dca536fcae75848b72b191a99",
-      "crates/core/src/simcontrol.rs": "188603862ad6a5b7168518e570240d2702bdc442fb90638850101dc8763a0d0c",
+      "crates/core/src/simcontrol.rs": "7a14599a48b36c6fe887c19f675b0993de0ee632059cdcdf310cc5e2e5a2ca04",
       "crates/core/tests/aircraft_velocity.rs": "e4b1456a00b46e2030dc19c5bbebd3710b9237b1db039580e227b57ddf18bfd4",
       "crates/core/tests/core_contracts.rs": "058bdbe5183c20318553ecf31d357d66cc6078076b599bf970de2a1af0ec9ed3",
       "crates/core/tests/estimation.rs": "008dff5e96bc06be473467bf5f9ccbd230e231eea520d86d844d322af7d6b62d",
@@ -1054,14 +1053,14 @@
       "crates/core/tests/math_helpers.rs": "509a99be11774c49bb374160ba707b9d8153ad60ba5383b33bad4828815f2d2e",
       "crates/core/tests/navigation.rs": "956fb995096ae9eddd709228fd10500a4579594e55c449224942586105e030ab",
       "crates/core/tests/noisy_state.rs": "7964e0008f00b74193283642f474a5bd4f91fe39b64e571d6f33ed4ce6ea7598",
-      "crates/core/tests/plugin_contracts.rs": "9baedb5e815d59c358119569c2395b5812949bd86e706754f1a06e18738bd38e",
-      "crates/core/tests/rust_scenario.rs": "9a57798652f6d8301942e589c6c4b8da2a599bb51818c8075e1e90337d44e469",
-      "crates/core/tests/simulation_regression.rs": "1c941c625a838783f3d953705582e8f9c6079d13f96be0e9ad8ed170a7561a06",
+      "crates/core/tests/plugin_contracts.rs": "630d1ffdfdfc971b4a80db89b2cde483ce8134a43d37b112937e0d5fc59ed847",
+      "crates/core/tests/rust_scenario.rs": "532d29ee42b694907bbe00b7f41726655af616f7912b5bfcf909734b218a50f8",
+      "crates/core/tests/simulation_regression.rs": "6579a0d2a9d639ff729cf963e005889d67c2856a346b4a060075bb5a8459cef5",
       "crates/core/tests/spatial_lookup.rs": "20e259ca84df089fa935af0430037f991c43dece1381a36889ab4b8980d7d867",
       "crates/core/tests/support/autonomy.rs": "6bf8e985d7b8985991e8d51c46e4fbcd1838fcf3d4d90908472da11aefc1fb04",
       "crates/core/tests/support/controller.rs": "f27c374881b1b4e7b87538888f28c68674d716e6c64e4555720a53c157fb5888",
       "crates/core/tests/support/estimator.rs": "e06e14b0b86d65f7036745b53a668892db5d869d6d12b7a9cce59840a4b673ec",
-      "crates/core/tests/support/interaction.rs": "7d7a12cab8d55471e4b16959968d21a38b6fdaa15607d605ba22ae54fe50b822",
+      "crates/core/tests/support/interaction.rs": "8aeb5bca011bad76a8ac4ca5766dd039db66d394edeb57e792b68da9a558a059",
       "crates/core/tests/support/lifecycle.rs": "df1a589ace43288aa8b2e47de68d77bfd5a3c397ce1037b0b93bc719f31e5ec7",
       "crates/core/tests/support/metrics.rs": "55213bd74c2de26ddaf8dbfbeb06605253ac2cdff021178dc6d56c362948006b",
       "crates/core/tests/support/motion.rs": "5f36253a496451372da80cc2caf1e35fb6ef6a1792909b866fcf73dfe2e6d546",
@@ -1070,17 +1069,17 @@
       "crates/core/tests/support/plugin_fixtures.rs": "6cbe136f36a3e5db690277ad02b2a500bee916fe5f9ed20c681f03d3a24df8b9",
       "crates/core/tests/support/sensor.rs": "e4c991443c02fbbdb3fd9eec1b05095b17ceea3a9fdfbcce8b155f2c488ab134",
       "crates/core/tests/terrain.rs": "04b8cb9fb1c2480009cf228283bf95ce960ec7bfcf6af7c65c7e6f263a539afd",
-      "crates/core/tests/world_models.rs": "1044fb7012e6d469fecff681ff2a92d95147d3be9d546b7cfb4d9d2db79fb6f1",
+      "crates/core/tests/world_models.rs": "954c118e21ad2bd19cb7471390b90771839e5dfb25ae87f02ff9718804285e49",
       "crates/starter/Cargo.toml": "17e4b035021f63405e81a5dcf4bc60ef9fded6e4c93ab03471fcd12928ae0244",
       "crates/starter/missions/dead-reckoning.yaml": "2b73281ad3b0886e818de8c085e80eb4167b21d2b01a3c4cb02f0b14c1f95e8c",
-      "crates/starter/missions/follow-nearest.sweep.yaml": "f92bb2b912f09369bd16ee7e176fe9d2b726c2ade7edc0e2fca3483413c69f50",
-      "crates/starter/missions/follow-nearest.yaml": "dab16e551dd7606479e61c882b696667c9a110760fe5bceeaf42ef50abe2288b",
+      "crates/starter/missions/follow-nearest.sweep.yaml": "abb4b75686bd642eebc1837f0aa7b55c7acca4432c9014f85a3a13da5502bb32",
+      "crates/starter/missions/follow-nearest.yaml": "e50ac228b3de5795e3433a54f6e8e1cb0b22c8a476dc1d0041ccfc50bb3c656b",
       "crates/starter/src/dead_reckoning.rs": "b3194c9ed0743cb5d01ddac85d7aad2ea3915dec19c0f01de23419dbc449326e",
       "crates/starter/src/follow_nearest.rs": "ae79fbd9985379098775b9c7cd96fcd54b88fffb82a56f9cdc2ded4e70b4179f",
       "crates/starter/src/lib.rs": "85e565441948827702a760d74a0f6463cb560069cf6620d6d115d42c6ee4f708",
       "crates/starter/tests/dead_reckoning.rs": "1b53597e072afddb7b33b677119377eedcf61eaaca8b3802bb1950563b23c45b",
       "crates/starter/tests/follow_nearest.rs": "02cf60041b19d7ab95c3587721729a2b35e79b733b030ba6b79a6f5af5e0b3d5",
-      "reference/benchmark_runner.rs": "656394cad3b64f2e5204a6b8f58e95b295847e99873d6ee9d61a8b5f874c74eb"
+      "reference/benchmark_runner.rs": "6240905cd0674940e11875df24c213a1ca54e71d2e2854945bb6b16f52c28ac2"
     }
   }
 }

@@ -48,7 +48,7 @@ fn run_mission_with_trace(
 
     Ok(MissionOutput {
         frames,
-        summary: simulation.summary_csv(),
+        summary: format!("{:?}", simulation.metric_reports()),
         events: serde_json::to_string(simulation.events())?,
     })
 }

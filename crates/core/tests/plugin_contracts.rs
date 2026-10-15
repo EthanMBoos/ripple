@@ -123,15 +123,20 @@ fn interaction_messages_reach_both_metrics_in_the_same_tick() -> Result<()> {
         assert_eq!(report.teams[&1].values["samples"], 2.0);
         assert_eq!(report.teams[&1].values["steps"], 1.0);
     }
+    let names: Vec<String> = simulation
+        .metric_reports()
+        .into_iter()
+        .map(|(name, _)| name)
+        .collect();
     assert!(
-        simulation
-            .summary_csv()
-            .contains("PopulationMetrics:0/samples")
+        names
+            .iter()
+            .any(|name| name.ends_with("PopulationMetrics:0"))
     );
     assert!(
-        simulation
-            .summary_csv()
-            .contains("PopulationMetrics:1/samples")
+        names
+            .iter()
+            .any(|name| name.ends_with("PopulationMetrics:1"))
     );
     Ok(())
 }

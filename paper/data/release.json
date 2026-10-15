@@ -197,7 +197,7 @@
       "passed": true,
       "note": "",
       "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "source_sha256": "57b8c436b6bce59e31428b00d4fea99e51c40828b4b103b8cab636118ba2fccb",
       "evidence": "paper/data/mpe-parity/"
     },
     "stall-landing": {

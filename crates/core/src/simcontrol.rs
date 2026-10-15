@@ -19,7 +19,6 @@ use crate::{
 
 pub(crate) mod generation;
 mod scheduler;
-mod summary;
 mod trace;
 pub(crate) mod world_plugins;
 
@@ -60,8 +59,8 @@ pub struct Event {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 pub enum TerminationReason {
     TimeLimit,
-    AllEntitiesDead,
-    OneTeamRemaining,
+    NoEntities,
+    OneTeamLeft,
     ExternalRequest,
     PluginRequestedStop,
     PluginFailure,
@@ -364,15 +363,15 @@ impl Simulation {
             return Some(TerminationReason::TimeLimit);
         }
         if self.entities.is_empty()
-            && (self.end_conditions.all_dead || self.end_conditions.one_team)
+            && (self.end_conditions.no_entities || self.end_conditions.one_team_left)
         {
-            return Some(TerminationReason::AllEntitiesDead);
+            return Some(TerminationReason::NoEntities);
         }
-        if self.end_conditions.one_team {
+        if self.end_conditions.one_team_left {
             let remaining_teams: BTreeSet<_> =
                 self.entities.iter().map(|entity| entity.team_id).collect();
             if remaining_teams.len() == 1 {
-                return Some(TerminationReason::OneTeamRemaining);
+                return Some(TerminationReason::OneTeamLeft);
             }
         }
         None

@@ -111,11 +111,11 @@ impl Metrics for SimpleCollisionMetrics {
         let mut report = MetricReport {
             headers: [
                 "entity_count",
-                "flight_time",
-                "flight_time_norm",
-                "non_team_coll",
-                "team_coll",
-                "ground_coll",
+                "flight_time_s",
+                "flight_time_fraction",
+                "non_team_collisions",
+                "team_collisions",
+                "ground_collisions",
             ]
             .map(str::to_owned)
             .to_vec(),
@@ -165,11 +165,14 @@ impl Metrics for SimpleCollisionMetrics {
                     score,
                     values: BTreeMap::from([
                         ("entity_count".into(), entity_count as f64),
-                        ("flight_time".into(), flight_time_s),
-                        ("flight_time_norm".into(), normalized_flight_time),
-                        ("non_team_coll".into(), opposing_team_collisions as f64),
-                        ("team_coll".into(), same_team_collisions as f64),
-                        ("ground_coll".into(), ground_collisions as f64),
+                        ("flight_time_s".into(), flight_time_s),
+                        ("flight_time_fraction".into(), normalized_flight_time),
+                        (
+                            "non_team_collisions".into(),
+                            opposing_team_collisions as f64,
+                        ),
+                        ("team_collisions".into(), same_team_collisions as f64),
+                        ("ground_collisions".into(), ground_collisions as f64),
                     ]),
                 },
             );
@@ -229,10 +232,10 @@ mod tests {
         let first_team = &report.teams[&1];
         let second_team = &report.teams[&2];
         assert!((first_team.values["entity_count"] - 2.0).abs() < 1e-12);
-        assert!((first_team.values["flight_time"] - 4.0).abs() < 1e-12);
+        assert!((first_team.values["flight_time_s"] - 4.0).abs() < 1e-12);
         assert!((first_team.score - (4.0 / 3.0 + 3.0 + 2.0)).abs() < 1e-12);
         assert!((second_team.values["entity_count"] - 1.0).abs() < 1e-12);
-        assert!((second_team.values["flight_time"] - 1.0).abs() < 1e-12);
+        assert!((second_team.values["flight_time_s"] - 1.0).abs() < 1e-12);
         assert!((second_team.score - 1.0 / 3.0).abs() < 1e-12);
     }
 
@@ -262,9 +265,9 @@ mod tests {
             ),
         ]);
         let report = metrics.report(30.0);
-        assert!((report.teams[&1].values["flight_time"] - 30.0).abs() < 1e-12);
-        assert!((report.teams[&1].values["flight_time_norm"] - 1.0).abs() < 1e-12);
-        assert!((report.teams[&2].values["flight_time"] - 0.4).abs() < 1e-12);
+        assert!((report.teams[&1].values["flight_time_s"] - 30.0).abs() < 1e-12);
+        assert!((report.teams[&1].values["flight_time_fraction"] - 1.0).abs() < 1e-12);
+        assert!((report.teams[&2].values["flight_time_s"] - 0.4).abs() < 1e-12);
     }
 
     #[test]
@@ -292,7 +295,7 @@ mod tests {
             ),
         ]);
         let report = metrics.report(4.0);
-        assert!((report.teams[&2].values["flight_time"] - 3.0).abs() < 1e-12);
+        assert!((report.teams[&2].values["flight_time_s"] - 3.0).abs() < 1e-12);
         assert!((report.teams[&2].score - 0.75).abs() < 1e-12);
     }
 }

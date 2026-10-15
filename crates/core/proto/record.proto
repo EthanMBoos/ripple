@@ -48,7 +48,25 @@ message Event {
   repeated int32 entity_ids = 3;
 }
 
-// The metric redesign in the next roadmap item replaces the CSV payload.
+// One metric plugin's result for one team. `values` holds only the columns
+// the plugin set for that team, in column order.
+message MetricValue {
+  string name = 1;
+  double value = 2;
+}
+
+message TeamMetrics {
+  int32 team_id = 1;
+  double score = 2;
+  repeated MetricValue values = 3;
+}
+
+message MetricReport {
+  string plugin = 1;
+  repeated string columns = 2;
+  repeated TeamMetrics teams = 3;
+}
+
 message Summary {
-  string csv = 1;
+  repeated MetricReport metrics = 1;
 }

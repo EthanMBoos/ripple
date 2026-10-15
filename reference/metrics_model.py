@@ -24,10 +24,7 @@ counting survivors at the report time; every team with a generated entity is
 scored normally. Standard library only.
 """
 
-import csv
-import io
 import math
-from pathlib import Path
 import xml.etree.ElementTree as ET
 
 METRICS = "SimpleCollisionMetrics"
@@ -151,17 +148,12 @@ def divide(numerator, denominator):
 
 
 def read_summary(path):
-    path = Path(path)
-    if path.suffix == ".mcap" or path.is_dir():
-        from run import read_run
-        stream = io.StringIO(read_run(path).summary)
-    else:
-        stream = path.open(newline="")
-    with stream:
-        rows = list(csv.reader(stream))
-    if rows[0] != COLUMNS:
-        raise ValueError(f"{path}: unexpected summary columns {rows[0]}")
-    return {int(row[0]): [float(value) for value in row[1:]] for row in rows[1:]}
+    """{team: values} in COLUMNS order, from a summary.csv or a Ripple run."""
+    from compare import read_summary as read_table
+    header, teams = read_table(path)
+    if header != COLUMNS:
+        raise ValueError(f"{path}: unexpected summary columns {header}")
+    return teams
 
 
 # Columns neither rule changes (indices after team_id).
@@ -177,7 +169,8 @@ def counts_match(cpp_summary, rust_summary):
 
 
 def matches(predicted, summary_path, tolerance=1e-6):
-    """True when a prediction equals a summary.csv (six decimals, nan/inf exact)."""
+    """True when a prediction equals a summary (within the six decimals C++
+    prints; nan/inf exact)."""
     actual = read_summary(summary_path)
     if actual.keys() != predicted.keys():
         return False

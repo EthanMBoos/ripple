@@ -4,8 +4,9 @@ The writer compresses MCAP chunks with zstd: `compression.zstd` is in the
 standard library from Python 3.14; older versions need `pip install
 backports.zstd`, which provides the same module. This reader handles the record
 types Ripple writes and decodes Ripple's protobuf messages into the same Frame and
-Entity objects used for SCRIMMAGE comparisons. It keeps each channel's payload
-bytes so determinism and equivalence can compare them directly.
+Entity objects used for SCRIMMAGE comparisons, and the summary into each metric
+plugin's per-team results. It keeps each channel's payload bytes so determinism
+and equivalence can compare them directly.
 """
 
 from dataclasses import dataclass
@@ -30,7 +31,12 @@ TRACE_TOPICS = ("/beliefs", "/readings", "/deliveries", "/outputs")
 class Run:
     frames: list
     events: list
-    summary: str
+    # {plugin: {team_id: {"score": ..., column: value}}}, as in a sweep's
+    # results.jsonl; a column the plugin set no value for is absent.
+    metrics: dict
+    # {plugin: [column, ...]}: each plugin's declared columns, in order,
+    # including any no team has a value for.
+    metric_columns: dict
     scenario: dict
     traces: list
     metadata: dict
@@ -206,6 +212,37 @@ def decode_events(payloads):
     return result
 
 
+def metric_number(item, field):
+    # Metrics may be NaN or infinite (a zero flight window), unlike frames.
+    raw = values(item, field, 1)
+    return struct.unpack("<d", raw[-1])[0] if raw else 0.0
+
+
+def decode_summary(payload):
+    metrics, columns = {}, {}
+    for raw in values(fields(payload), 1, 2):
+        report = fields(raw)
+        plugin, teams = text_field(report, 1), {}
+        names = [name.decode("utf-8") for name in values(report, 2, 2)]
+        for team_raw in values(report, 3, 2):
+            team = fields(team_raw)
+            team_id = number(team, 1, integer=True)
+            if team_id in teams:
+                raise ValueError(f"{plugin}: duplicate summary team {team_id}")
+            row = {"score": metric_number(team, 2)}
+            for value_raw in values(team, 3, 2):
+                value = fields(value_raw)
+                name = text_field(value, 1)
+                if name not in names or name in row:
+                    raise ValueError(f"{plugin}: undeclared or repeated column {name}")
+                row[name] = metric_number(value, 2)
+            teams[team_id] = row
+        if plugin in metrics:
+            raise ValueError(f"duplicate summary plugin {plugin}")
+        metrics[plugin], columns[plugin] = teams, names
+    return metrics, columns
+
+
 def decode_trace(payload):
     return json.loads(payload)
 
@@ -228,5 +265,5 @@ def read_run(path):
         traces.append(decode_trace(payload))
     return Run(decode_frames(channels.get("/frames", []), descriptions),
                decode_events(channels.get("/events", [])),
-               text_field(fields(summary[0]), 1), scenario, traces,
+               *decode_summary(summary[0]), scenario, traces,
                metadata.get("ripple.result", {}), channels)

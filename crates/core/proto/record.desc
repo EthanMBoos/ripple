@@ -1,5 +1,5 @@
 
-´
+ø	
 record.protoripple.record"3
 Vector3
 x (Rx
@@ -35,6 +35,17 @@ groupLabel!
 time_s (RtimeS
 kind (	Rkind
 
-entity_ids (R	entityIds"
-Summary
-csv (	Rcsvbproto3
+entity_ids (R	entityIds"7
+MetricValue
+name (	Rname
+value (Rvalue"p
+TeamMetrics
+team_id (RteamId
+score (Rscore2
+values (2.ripple.record.MetricValueRvalues"r
+MetricReport
+plugin (	Rplugin
+columns (	Rcolumns0
+teams (2.ripple.record.TeamMetricsRteams"@
+Summary5
+metrics (2.ripple.record.MetricReportRmetricsbproto3

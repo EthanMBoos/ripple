@@ -48,7 +48,7 @@ run:
   end_s: 100
   dt_s: 0.1
   seed: 2147483648
-end_conditions: [time, all_dead]
+end_conditions: [time, no_entities]
 
 interactions: {SimpleCollision: {}}
 networks: {LocalNetwork: {}, GlobalNetwork: {}}
@@ -82,7 +82,7 @@ entities:
 | `run.seed` | 2147483648 | keys every random number |
 | `run.motion_multiplier` | 1 | controller and motion substeps per step |
 | `run.viewer` | false | open the viewer by default |
-| `end_conditions` | `[time]` | any of `time`, `all_dead`, `one_team`, or `none` |
+| `end_conditions` | `[time]` | any of `time`, `no_entities`, `one_team_left`, or `none` |
 | `spatial_lookup` | `{method: scan}` | how range queries are answered |
 | `terrain` | none | a terrain header ([Terrain](terrain.md)) |
 | `interactions`, `networks`, `metrics` | empty | world plugins |

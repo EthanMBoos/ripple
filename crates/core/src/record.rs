@@ -137,9 +137,37 @@ struct Event {
 }
 
 #[derive(Clone, PartialEq, Message)]
-struct Summary {
+struct MetricValue {
     #[prost(string, tag = "1")]
-    csv: String,
+    name: String,
+    #[prost(double, tag = "2")]
+    value: f64,
+}
+
+#[derive(Clone, PartialEq, Message)]
+struct TeamMetrics {
+    #[prost(int32, tag = "1")]
+    team_id: i32,
+    #[prost(double, tag = "2")]
+    score: f64,
+    #[prost(message, repeated, tag = "3")]
+    values: Vec<MetricValue>,
+}
+
+#[derive(Clone, PartialEq, Message)]
+struct MetricReport {
+    #[prost(string, tag = "1")]
+    plugin: String,
+    #[prost(string, repeated, tag = "2")]
+    columns: Vec<String>,
+    #[prost(message, repeated, tag = "3")]
+    teams: Vec<TeamMetrics>,
+}
+
+#[derive(Clone, PartialEq, Message)]
+struct Summary {
+    #[prost(message, repeated, tag = "1")]
+    metrics: Vec<MetricReport>,
 }
 
 /// A single run's channels. The first frame containing an entity supplies its
@@ -313,8 +341,38 @@ impl RunWriter {
         self.frame(frame)
     }
 
-    fn summary(&mut self, time_s: f64, csv: String) -> Result<()> {
-        self.message("/summary", time_s, &Summary { csv }.encode_to_vec())
+    /// Each metric plugin's own score and columns; a column a team has no
+    /// value for is left out, not written as zero.
+    fn summary(&mut self, simulation: &Simulation) -> Result<()> {
+        let metrics = simulation
+            .metric_reports()
+            .into_iter()
+            .map(|(plugin, report)| MetricReport {
+                teams: report
+                    .teams
+                    .iter()
+                    .map(|(&team_id, team)| TeamMetrics {
+                        team_id,
+                        score: team.score,
+                        values: report
+                            .headers
+                            .iter()
+                            .filter_map(|name| {
+                                let value = *team.values.get(name)?;
+                                Some(MetricValue {
+                                    name: name.clone(),
+                                    value,
+                                })
+                            })
+                            .collect(),
+                    })
+                    .collect(),
+                plugin,
+                columns: report.headers,
+            })
+            .collect();
+        let summary = Summary { metrics };
+        self.message("/summary", simulation.time_s(), &summary.encode_to_vec())
     }
 
     /// Optional observations use MCAP's native JSON message encoding.
@@ -335,7 +393,7 @@ impl RunWriter {
         error: Option<&anyhow::Error>,
     ) -> Result<()> {
         self.new_events(simulation.events())?;
-        self.summary(simulation.time_s(), simulation.summary_csv())?;
+        self.summary(simulation)?;
         let mut metadata = BTreeMap::from([("steps".into(), simulation.step_count().to_string())]);
         if let Some(reason) = simulation.termination() {
             metadata.insert("termination".into(), format!("{reason:?}"));

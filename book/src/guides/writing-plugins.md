@@ -1,26 +1,52 @@
 # Writing plugins
 
-This guide covers what is common to all plugin types. It assumes you have
-done [Your first autonomy plugin](../tutorial/first-autonomy.md). The
-[plugin API reference](../reference/plugin-api.md) covers parameters, state,
-messages, and lifecycle in detail.
+This guide covers what every plugin type has in common. It assumes you have
+done [Your first autonomy plugin](../tutorial/first-autonomy.md). The [plugin
+API reference](../reference/plugin-api.md) lists each trait and context.
+
+## Where your plugins live
+
+Write plugins in a user crate in this repository, such as
+[crates/starter](https://github.com/EthanMBoos/ripple/tree/main/crates/starter).
+Plugins are compiled into the one `ripple` command rather than loaded at run
+time, so your missions use `ripple run`, `sweep`, and `replay` exactly as the
+stock missions do. The command builds a *registry*, the table from the names
+missions use to Rust types, in
+[crates/cli/src/main.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/cli/src/main.rs):
+
+```rust,ignore
+let mut registry = PluginRegistry::with_builtins();   // stock plugins
+starter::register(&mut registry)?;                    // your plugins
+ripple_cli::main(registry, repo_root)                 // run, sweep, replay
+```
+
+Changing a plugin means rebuilding; `cargo run -- ...` does that for you.
+
+The starter holds the two tutorials' plugins, `FollowNearest` and
+`DeadReckoning`, with their missions, a sweep, and tests:
+
+```sh
+cargo run -- run crates/starter/missions/follow-nearest.yaml --headless
+cargo run -- replay runs/follow-nearest/run000
+cargo test -p starter
+```
 
 ## The plugin types
 
-| Type | Trait | Runs for | Gets | Built-in to copy |
-| --- | --- | --- | --- | --- |
-| Autonomy | `Autonomy` | Each entity | Own belief, contacts, messages, random numbers; writes ports | [Straight](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs) |
-| Controller | `Controller` | Each entity | Same as autonomy; reads and writes ports | [SimpleAircraftControllerPID](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
-| Motion model | `MotionModel` | Each entity | Mutable truth; reads ports | [SimpleAircraft](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
-| Sensor | `Sensor` | Each entity | Read-only truth, contacts, random numbers; publishes readings | [NoisyPosition](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) |
-| Localization | `Localization` | Each entity | Readings, messages, the commands motion read; writes own-state belief | [PassThrough](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
-| Tracking | `Tracking` | Each entity | Readings, messages, localization's pose; writes known contacts | [PassThrough](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
-| Interaction | `Interaction` | Whole world | All entities, mutable; emits events | [GroundCollision](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/interaction/ground_collision/ground_collision.rs) |
-| Network | `Network` | Whole world | Every message, random numbers; decides delivery | [LocalNetwork](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/network/local_network/local_network.rs) |
-| Metrics | `Metrics` | Whole world | Events and messages; reports team scores | [SimpleCollisionMetrics](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
+| Type | Trait | Gets | Built-in to copy |
+| --- | --- | --- | --- |
+| Autonomy | `Autonomy` | Own belief, contacts, messages, random numbers; writes ports | [Straight](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/autonomy/straight/straight.rs) |
+| Controller | `Controller` | The same; reads and writes ports | [SimpleAircraftControllerPID](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
+| Motion model | `MotionModel` | Mutable truth; reads ports | [SimpleAircraft](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
+| Sensor | `Sensor` | Read-only truth, contacts, random numbers; publishes readings | [NoisyPosition](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) |
+| Localization | `Localization` | Readings, messages, the commands motion read; writes own-state belief | [PassThrough](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
+| Tracking | `Tracking` | Readings, messages, localization's pose; writes known contacts | [PassThrough](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
+| Interaction | `Interaction` | Every entity, mutable; emits events | [GroundCollision](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/interaction/ground_collision/ground_collision.rs) |
+| Network | `Network` | Every message, random numbers; decides delivery | [LocalNetwork](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/network/local_network/local_network.rs) |
+| Metrics | `Metrics` | Events, messages, truth; reports team scores | [SimpleCollisionMetrics](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
 
-Start by copying the built-in for your type. They all follow the same layout.
-A motion model also starts with a fidelity header saying where its equations
+Start by copying the built-in for your type; they all follow the same layout.
+A motion model also opens with a fidelity header saying where its equations
 and numbers come from; see [Adding a measured-data vehicle
 model](measured-vehicle-models.md).
 
@@ -35,9 +61,9 @@ pub struct MyPlugin { /* per-entity state that persists between ticks */ }
 
 impl Plugin for MyPlugin {
     type Config = MyConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<MyConfig> { /* params.parse() + validate */ }
+    fn configure(params: &PluginParams<'_>) -> Result<MyConfig> { /* parse, validate */ }
     fn new(config: &MyConfig) -> Self { /* fresh state for one instance */ }
-    fn ports(config: &MyConfig) -> Ports { /* inputs/outputs, if any */ }
+    fn ports(config: &MyConfig) -> Ports { /* inputs and outputs, if any */ }
 }
 
 impl Autonomy for MyPlugin {           // or Controller, MotionModel, Sensor, ...
@@ -47,66 +73,21 @@ impl Autonomy for MyPlugin {           // or Controller, MotionModel, Sensor, ..
 ```
 
 - **Configuration is separate from state.** `configure` runs once per mission
-  and should reject bad values with a clear error. `new` runs once per plugin
-  instance: each vehicle gets its own state.
-- **The context is borrowed, not stored.** The simulator hands you a short-lived
-  context each call. Keep only your own configuration and state in the struct.
-- **No threads, locks, or shared state.** The simulator runs entities in
-  parallel for you. Your plugin is ordinary single-threaded Rust.
-- **Write `step` in three stages**: read inputs, calculate, write outputs. Name
-  every physical quantity with its unit and frame (`distance_m`,
-  `heading_world_rad`). See [Coordinate
+  and rejects bad values with a clear error. `new` runs once per instance, so
+  each vehicle gets its own state.
+- **The context is borrowed, not stored.** Each call gets a short-lived
+  context. Keep only your own configuration and state in the struct.
+- **No threads, locks, or shared state.** The engine runs entities in
+  parallel for you; your plugin is ordinary single-threaded Rust.
+- **Write `step` in three stages:** read inputs, calculate, write outputs.
+  Name every physical quantity with its unit and frame (`distance_m`,
+  `heading_world_rad`); see [Coordinate
   frames](../concepts/coordinate-frames.md).
-
-## Files and registration
-
-Write your plugins in a user crate such as `crates/starter` (see [Your first
-autonomy plugin](../tutorial/first-autonomy.md) and
-[Writing your own plugins](user-plugins.md)):
-one file per plugin under `src/`, a `mod` line in `src/lib.rs`, and one line
-in its `register()`:
-
-```rust,ignore
-registry.register_motion::<MyPlugin>("MyPlugin")?;
-```
-
-Use `register_autonomy`, `register_controller`, `register_motion`,
-`register_sensor`, `register_interaction`, `register_network`, or
-`register_metrics` to match the type. Missions refer to the registered name.
-
-### Adding a stock plugin to the simulator
-
-Only when a plugin should ship with Ripple itself does it go in the
-simulator's source. Each stock plugin gets its own folder:
-
-```text
-crates/core/src/plugin/<type>/<my_plugin>/
-    my_plugin.rs
-```
-
-Then make two edits:
-
-1. **Load the module** in the type's file, such as
-   `crates/core/src/plugin/motion.rs`. Entries are alphabetical:
-
-   ```rust,ignore
-   #[path = "motion/my_plugin/my_plugin.rs"]
-   mod my_plugin;
-   pub use my_plugin::MyPlugin;
-   ```
-
-2. **Register a name** in `register_builtins` in
-   `crates/core/src/plugin/registry.rs`:
-
-   ```rust,ignore
-   registry.register_motion::<motion::MyPlugin>("MyPlugin")?;
-   ```
-
-   with the `register_*` call that matches the type.
 
 ## Parameters and defaults
 
-Declare the parameters as a struct, and let serde fill it:
+Serde fills the parameter struct from the mission, and `Default` supplies
+every key the mission leaves out:
 
 ```rust,ignore
 #[derive(Deserialize)]
@@ -128,20 +109,40 @@ fn configure(params: &PluginParams<'_>) -> Result<StraightConfig> {
 }
 ```
 
-A parameter's value is the mission's, under the plugin (`Straight: {speed_mps:
-30}`), or else the struct's `Default`. The field's name is the key, with its
-unit, so there is one name ([Parameter
-names](../development/rust-style.md#parameter-names)). Values are ordinary YAML:
-`speed_mps: 25`, `center_m: [0, 0, 200]`,
-`heading_pid: {kp: 1, ki: 0.01, kd: 2, integrate_within_deg: 9}`; numbers must
-be finite. A bad value is an error that
-names the key, and so is a key the struct doesn't have: a typo never silently
-gives you the default.
+- The field name is the mission key, with its unit, so each parameter has one
+  name ([Parameter names](../development/rust-style.md#parameter-names)).
+- Values are ordinary YAML: `speed_mps: 25`, `center_m: [0, 0, 200]`,
+  `heading_pid: {kp: 1, ki: 0.01, kd: 2, integrate_within_deg: 9}`. Numbers
+  must be finite.
+- `deny_unknown_fields` makes a misspelled key an error that names it, so a
+  typo never silently gives you the default. An option the plugin doesn't
+  implement simply isn't a field.
+- When the runtime needs derived values (radians, an inverse inertia), parse
+  a private `...Params` struct and build the config from it, as SimpleAircraft
+  and Multirotor do.
+- A plugin with no parameters uses `Config = ()`; `params.parse()` still
+  rejects any key the mission gives it. The engine reads `loop_rate_hz` itself.
+
+## Register it
+
+Put each plugin in its own file under `crates/starter/src/`, add a `mod`
+line to `src/lib.rs`, and register it in `register()` under the name missions
+will use:
+
+```rust,ignore
+registry.register_sensor::<MySensor>("MySensor")?;
+```
+
+Use the call for its type: `register_autonomy`, `register_controller`,
+`register_motion`, `register_sensor`, `register_localization`,
+`register_tracking`, `register_interaction`, `register_network`, or
+`register_metrics`. Registering a name already used in the same category is an
+error at startup, so nothing is silently replaced.
 
 ## Ports: the control chain
 
-Autonomy, controllers, and motion models pass commands to each other through
-named ports:
+Autonomy, controllers, and motion models pass commands down a chain of named
+ports:
 
 ```text
 autonomy outputs -> controller inputs, controller outputs -> motion model inputs
@@ -156,17 +157,15 @@ Ports::default()
 ```
 
 Read and write them in `step` with `io.read("desired_speed")?` and
-`io.write("throttle", value)?`. The simulator checks that every input is
-connected to an output with the same name, unit, and frame *before* the
-mission runs.
-
-Port names can come from configuration. The Multirotor, for example, declares
-one input per rotor: `Port::new(format!("motor_{index}"), ...)`.
+`io.write("throttle", value)?`. Before the mission runs, the engine checks that
+every input is connected to an output with the same name, unit, and frame.
+Port names can come from configuration: Multirotor declares one input per
+rotor, `Port::new(format!("motor_{index}"), ...)`.
 
 ## Messages
 
-For anything that isn't a direct command down the control chain, plugins publish
-and subscribe to typed messages on a named network:
+For anything that isn't a command down the chain, publish and subscribe to
+typed messages on a named network:
 
 ```rust,ignore
 // In initialize: subscribe once.
@@ -175,67 +174,87 @@ context.messages.subscribe::<BoundaryRegion>("GlobalNetwork", "Boundary")?;
 // In step: publish ...
 context.messages.publish("GlobalNetwork", "Boundary", region)?;
 
-// ... and receive everything delivered since your last step.
+// ... and receive everything delivered to you since your last step.
 for message in context.messages.receive::<BoundaryRegion>("GlobalNetwork", "Boundary")? {
     self.boundary = Some(*message.value);
 }
 ```
 
-- **GlobalNetwork** reaches every plugin in the simulation. The simulator also
-  publishes events such as `EntityGenerated` and `NonTeamCollision` on it.
-- **LocalNetwork** only reaches plugins on the *same* entity. A vehicle's own
-  sensor data goes to its estimators as readings, not as messages.
-- Messages are delivered in the network phase, after the publisher runs.
-  An autonomy sees a sensor's message on its next tick.
-- The mission must list every network you use:
-  `<network>LocalNetwork</network>`. An unlisted network is an error.
-
-## The order of one tick
-
-```text
-generate new entities
--> all autonomies
--> for each substep: controllers, then motion
--> sensors
--> interactions
--> networks deliver messages
--> estimation (localization, then tracking) updates belief
--> metrics
--> remove dead entities, record the frame, advance time
-```
-
-Each phase finishes for **every** entity before the next one starts. So
-everything in one phase sees the same consistent state of the world, whatever
-order the entities happen to run in. Results are identical whether you run with
-1 worker or 8.
+GlobalNetwork reaches every plugin, and the engine publishes events such as
+`EntityGenerated` and `NonTeamCollision` on it. Any other network must be
+listed in the mission. An autonomy reads a message on the tick after it was
+sent; [How a run works](../concepts/how-a-run-works.md#messages) explains the
+timing.
 
 ## Returning from `step`
 
 - `Ok(Update::Applied)`: normal.
-- `Ok(Update::Stop)`: ask to end the simulation. The current tick still
-  finishes.
+- `Ok(Update::Stop)`: ask to end the run. The current tick still finishes.
 - `Err(...)`: something went wrong, such as an invalid state or a nonfinite
-  number. The simulation stops and the error names your plugin. Use
+  number. The run stops and the error names your plugin. Use
   `ensure!(condition, "message")` for these checks.
+
+## When an autonomy grows
+
+Most research happens in autonomy, and its `step` can turn into one long
+mixture of mission logic, navigation, and special cases. The plugin is what
+the mission selects, but it doesn't have to be the smallest unit of code:
+give it ordinary fields for parts with their own job and state (a mission
+phase, a navigator), and have `step` call them. Those parts need no
+registration or messages between them. Extract one when it owns a distinct
+responsibility, not for every short calculation. World rules, such as
+boundaries and collisions, belong in interactions, not in every autonomy.
 
 ## Testing
 
-Two kinds of tests work well:
-
-- **Unit tests** in a `#[cfg(test)] mod tests` block at the bottom of your
+- **Unit tests** go in a `#[cfg(test)] mod tests` block at the bottom of the
   plugin file. Call `configure`, `new`, and your equations directly with
-  hand-picked inputs. For example: "at zero noise, the measurement equals truth
-  plus bias".
-- **Mission tests** in your crate's `tests/` folder, such as
-  `crates/starter/tests/`. Build the registry `ripple` uses (stock plugins
-  plus your crate's `register`), load a mission, run it to the end, and check
-  the events or scores. The [tutorial](../tutorial/first-autonomy.md#6-test-it)
-  shows one. Stock plugins keep theirs in `crates/core/tests/`.
+  hand-picked inputs: "at zero noise, the measurement equals truth plus
+  bias".
+- **Mission tests** go in your crate's `tests/` folder. Build the registry
+  `ripple` uses, load a mission, run it to the end, and check the events or
+  scores; the [tutorial](../tutorial/first-autonomy.md#6-test-it) shows one.
 
-Before submitting a change, run the same checks as the project:
+Before submitting a change, run the project's checks:
 
 ```sh
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 ```
+
+## Another user crate
+
+Copy `crates/starter` to `crates/my-lab` and rename the package in its
+`Cargo.toml`. Remove the copied `FollowNearest` and `DeadReckoning` (files,
+`mod` lines, registrations, missions, and tests), since the starter already
+registers those names. Then:
+
+1. add it to the workspace `members` in the root `Cargo.toml`;
+2. add `my-lab = { path = "../my-lab" }` to `crates/cli/Cargo.toml`, and call
+   `my_lab::register(&mut registry)?;` in `crates/cli/src/main.rs`.
+
+## A plugin that ships with Ripple
+
+Only a plugin meant for everyone goes in the simulator's own source. It gets
+its own folder, `crates/core/src/plugin/<type>/<my_plugin>/my_plugin.rs`,
+and two edits:
+
+1. **Load the module** in the type's file, such as
+   `crates/core/src/plugin/motion.rs`, in alphabetical order:
+
+   ```rust,ignore
+   #[path = "motion/my_plugin/my_plugin.rs"]
+   mod my_plugin;
+   pub use my_plugin::MyPlugin;
+   ```
+
+2. **Register a name** in `register_builtins` in
+   `crates/core/src/plugin/registry.rs`:
+
+   ```rust,ignore
+   registry.register_motion::<motion::MyPlugin>("MyPlugin")?;
+   ```
+
+Its tests go beside it and in `crates/core/tests/`, and it needs a section in
+[Built-in models](../reference/models.md).

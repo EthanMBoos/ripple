@@ -9,38 +9,35 @@
 
 # Concepts
 
+- [How a run works](concepts/how-a-run-works.md)
 - [Coordinate frames](concepts/coordinate-frames.md)
 - [Belief vs truth](concepts/belief-vs-truth.md)
 - [Randomness and seeds](concepts/randomness.md)
 
-# Architecture
-
-- [Overview](architecture/overview.md)
-- [The tick](architecture/tick.md)
-- [Truth, measurements, and belief](architecture/information-flow.md)
-- [Messages](architecture/messages.md)
-
 # Guides
 
-- [User plugins and the starter crate](guides/user-plugins.md)
-- [YAML missions, templates, and sweeps](guides/yaml-missions.md)
+- [Writing plugins](guides/writing-plugins.md)
+- [YAML missions and templates](guides/yaml-missions.md)
+- [Sweeps and results](guides/sweeps.md)
 - [Run records](guides/run-records.md)
-- [Terrain](guides/terrain.md)
-- [Flying ArduPlane (SITL)](guides/ardupilot.md)
+- [Disturbances](guides/disturbances.md)
 - [Flying a multirotor](guides/multirotor.md)
 - [Adding a measured-data vehicle model](guides/measured-vehicle-models.md)
 - [Building a scenario in Rust](guides/rust-scenarios.md)
-- [Writing plugins](guides/writing-plugins.md)
-- [Organizing larger autonomies](guides/autonomy-composition.md)
 
 # Reference
 
-- [Plugin API and lifecycle](reference/plugin-api.md)
+- [Plugin API](reference/plugin-api.md)
 - [Built-in models](reference/models.md)
+- [How models are checked](reference/checks.md)
+
+# Optional
+
+- [Terrain](guides/terrain.md)
+- [Flying ArduPlane (SITL)](guides/ardupilot.md)
 
 # Development
 
 - [Source map](development/source-layout.md)
 - [Rust style](development/rust-style.md)
-- [Visual checks with Rerun](development/visual-qa.md)
 - [Editing this book](development/documentation.md)

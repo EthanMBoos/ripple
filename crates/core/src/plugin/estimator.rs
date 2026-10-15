@@ -23,7 +23,7 @@ use crate::{
 pub struct Contact {
     pub id: i32,
     pub team_id: i32,
-    pub sub_swarm_id: i32,
+    pub group_index: i32,
     pub state: KinematicState,
     /// When the reading behind this estimate was taken.
     pub sampled_at_s: f64,
@@ -33,7 +33,7 @@ impl Contact {
         Self {
             id: snapshot.id,
             team_id: snapshot.team_id,
-            sub_swarm_id: snapshot.sub_swarm_id,
+            group_index: snapshot.group_index,
             state: snapshot.truth.clone(),
             sampled_at_s,
         }
@@ -243,7 +243,7 @@ mod tests {
         let contact = |id: i32, x_m: f64| Contact {
             id,
             team_id: 1,
-            sub_swarm_id: 0,
+            group_index: 0,
             state: KinematicState {
                 position_world_m: Vec3::new(x_m, 0.0, 0.0),
                 ..KinematicState::default()

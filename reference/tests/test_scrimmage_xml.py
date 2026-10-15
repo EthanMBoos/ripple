@@ -11,8 +11,7 @@ class ScrimmageXmlTests(unittest.TestCase):
         # SCRIMMAGE's own defaults (variance 100 m²) must never apply.
         for tag, value in [("team_id", "1"), ("count", "64"), ("x", "23.0"),
                            ("variance_x", "0.0"), ("variance_y", "0.0"), ("vx", "0.0"),
-                           ("heading", "0.0"), ("use_variance_all_ents", "false"),
-                           ("color", "255 255 255")]:
+                           ("heading", "0.0"), ("use_variance_all_ents", "false")]:
             self.assertEqual(entity.findtext(tag), value, tag)
         self.assertIsNone(entity.find("generate_rate"))
 

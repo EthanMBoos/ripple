@@ -34,8 +34,8 @@ out of the default build.
 Read the relevant book chapters: [Rust
 style](book/src/development/rust-style.md), [source
 map](book/src/development/source-layout.md), [plugin
-API](book/src/reference/plugin-api.md), [user
-plugins](book/src/guides/user-plugins.md), [YAML
+API](book/src/reference/plugin-api.md), [writing
+plugins](book/src/guides/writing-plugins.md), [YAML
 missions](book/src/guides/yaml-missions.md). SCRIMMAGE's own documentation is
 in `../scrimmage/docs/source`; record differences in `docs/REFERENCE_NOTES.md`.
 
@@ -134,7 +134,7 @@ renames must pass `reference/equivalence.py OLD NEW` (byte-identical outputs).
 ## Visualization
 
 Dashboard or visualization changes need screenshots; follow
-[Visual checks with Rerun](book/src/development/visual-qa.md).
+[Visual checks with Rerun](docs/VISUAL_QA.md).
 
 ## Workspace safety
 

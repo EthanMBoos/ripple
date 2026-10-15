@@ -213,6 +213,14 @@ impl Viewer {
     }
 }
 
+/// The color for a team's entities and trails: blue for teams 1, 4, 7, ...,
+/// red for 2, 5, 8, ..., and green for 0, 3, 6, .... With only three colors,
+/// four or more teams share them (teams 0 and 3 are both green). Missions do
+/// not set colors: color is a display choice, so it stays out of the scenario
+/// a run records. To tell more teams apart, replace the match with a longer
+/// palette indexed by `team_id.rem_euclid(palette.len())`, its neighbours far
+/// apart in hue (a colorblind-safe set of eight, such as Okabe-Ito). To pick a
+/// team's color by hand, add a viewer option, not a mission key.
 pub(super) fn team_color(team_id: i32) -> [u8; 3] {
     match team_id.rem_euclid(3) {
         1 => [77, 140, 255],

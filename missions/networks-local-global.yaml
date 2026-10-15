@@ -35,19 +35,16 @@ entities:
   blue:
     template: aircraft
     team: 1
-    color: [70, 130, 255]
     position_m: [250, 0, 200]
     heading_deg: 0
   red:
     template: aircraft
     team: 2
-    color: [255, 100, 70]
     position_m: [-250, 0, 200]
     heading_deg: 180
   low:
     template: aircraft
     team: 3
-    color: [240, 210, 60]
     position_m: [0, -100, 1]
     heading_deg: 0
     pitch_deg: 20

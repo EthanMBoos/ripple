@@ -32,10 +32,8 @@ entities:
   blue:
     template: aircraft
     team: 1
-    color: [70, 130, 255]
     position_m: [0, -60, 200]
   red:
     template: aircraft
     team: 2
-    color: [255, 100, 70]
     position_m: [0, 60, 200]

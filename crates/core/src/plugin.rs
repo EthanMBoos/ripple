@@ -131,7 +131,8 @@ pub struct StepTime {
 pub struct EntityInfo {
     pub id: i32,
     pub team_id: i32,
-    pub sub_swarm_id: i32,
+    /// Index of the mission entity group this entity came from.
+    pub group_index: i32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

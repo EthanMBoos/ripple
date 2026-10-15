@@ -49,7 +49,7 @@ that holds files.
 
 Each plugin folder holds its implementation, including its parameter struct and
 defaults. Each named category file uses a small `#[path]` declaration to load
-its plugins; see [plugin authoring](../reference/plugin-api.md#add-a-plugin).
+its plugins; see [Writing plugins](../guides/writing-plugins.md#a-plugin-that-ships-with-ripple).
 The category files contain module wiring and re-exports, while model code lives
 in named files. Test models use `tests/support/plugin_fixtures.rs` and adjacent
 category files, loaded by `tests/plugin_contracts.rs`; they are not extra Cargo
@@ -124,7 +124,7 @@ registry supports [Rust-built scenarios](../guides/rust-scenarios.md).
    CLI owns run directories and Rerun through `crates/cli/src/viewer/` and
    `viewer.rs`; the viewer does not own simulation time or physics.
 
-See [Plugin API reference](../reference/plugin-api.md) for authoring and phase
-semantics, and
+See [Writing plugins](../guides/writing-plugins.md) for authoring, [How a run
+works](../concepts/how-a-run-works.md) for the phases, and
 [Roadmap](https://github.com/EthanMBoos/ripple/blob/main/docs/TODO.md) for
 remaining implementation work and intentional breaks.

@@ -1,7 +1,7 @@
 # Flying ArduPlane (SITL)
 
 The optional `ardupilot` crate lets real ArduPlane firmware fly FixedWing6DOF
-aircraft in a SCRIMMAGE mission. Each aircraft gets its own ArduPilot SITL
+aircraft in a Ripple mission. Each aircraft gets its own ArduPilot SITL
 (software in the loop) running in a Docker container. You can fly one aircraft
 or many, in LOITER, AUTO, GUIDED, or TAKEOFF, with wind.
 
@@ -11,29 +11,30 @@ Two programs share each aircraft:
 
 | | Owns |
 | --- | --- |
-| **SCRIMMAGE** | The world: time, physics (FixedWing6DOF), other entities, interactions, metrics, Rerun. Also sensing that ArduPilot doesn't do, such as other aircraft (`NoisyContacts`). |
+| **Ripple** | The world: time, physics (FixedWing6DOF), other entities, interactions, metrics, Rerun. Also sensing that ArduPilot doesn't do, such as other aircraft (`NoisyContacts`). |
 | **ArduPlane** | The aircraft's flight controller. Its sensors (IMU, GPS, barometer, compass, airspeed) are simulated from the true state it is sent; its EKF estimates the state; its control loops and flight modes fly. |
 
-Each SCRIMMAGE tick:
+Each Ripple tick:
 
 1. The aircraft's true state goes to its SITL.
 2. ArduPlane runs one step and answers with servo outputs (PWM).
-3. SCRIMMAGE applies them to the control surfaces and throttle.
+3. Ripple applies them to the control surfaces and throttle.
 
-This is **lockstep**. SCRIMMAGE advances only when every aircraft's SITL has
+This is **lockstep**. Ripple advances only when every aircraft's SITL has
 answered, so all aircraft share one clock, and ArduPlane's clock follows
-SCRIMMAGE's. Three things follow from that:
+Ripple's. Three things follow from that:
 
 - **A slow SITL slows the whole run.** A dead one fails it after 10 s with "no
   new frame from ArduPilot SITL".
 - **Repeatability depends on ArduPilot too,** so it is not guaranteed as it is
-  for other SCRIMMAGE runs. In practice the lockstep exchange makes runs
+  for other Ripple runs. In practice the lockstep exchange makes runs
   repeat: three runs of `rascal-runway.yaml` on one machine (2026-10-05) wrote
   byte-identical frames, events, and summaries. Check before relying on it
   across machines or ArduPilot versions.
 - **Sensor noise belongs to ArduPilot.** SITL is sent the true state on
   purpose. Don't put `NoisyState` on an ArduPilot aircraft; set ArduPilot's
-  `SIM_` sensor-noise parameters instead (see [Parameters](#parameters)).
+  `SIM_` sensor-noise parameters instead, through `ardupilot_params` (see
+  [Quick start](#quick-start)).
 
 ## Quick start
 
@@ -61,8 +62,8 @@ $S run $M/rascal-sitl.yaml --headless run.end_s:=180 "entities.rascal.$B.goto_m:
 $S run $M/rascal-sitl.yaml --headless run.end_s:=120 \
     "entities.rascal.position_m:=[0,0,0]" entities.rascal.$B.mode:=TAKEOFF
 
-# Wind: 6 m/s from the north side (see "Wind" below for the sign); the sensor
-# and the motion model both take it
+# Wind: 6 m/s from the south, so the air moves north (see "Wind" below for the
+# sign); the sensor and the motion model both take it
 $S run $M/rascal-sitl.yaml --headless run.end_s:=150 \
     entities.rascal.sensors.SitlState.wind_mps.1:=6 entities.rascal.motion_model.FixedWing6DOF.wind_mps.1:=6
 ```
@@ -114,7 +115,7 @@ terrain's origin, or McMillan Airfield without terrain.
 Not supported:
 
 - **ArduPilot aircraft spawned mid-run.** The containers start before the run.
-- **Changing GUIDED targets during a run,** for example from a SCRIMMAGE
+- **Changing GUIDED targets during a run,** for example from a Ripple
   autonomy.
 - **A ground station on the host.** MAVLink stays inside each container.
 

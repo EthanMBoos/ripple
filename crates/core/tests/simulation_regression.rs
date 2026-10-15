@@ -137,7 +137,7 @@ fn contacts_retain_their_mission_entity_block_id() -> Result<()> {
     let block_ids: Vec<_> = initial
         .entities
         .iter()
-        .map(|entity| (entity.id, entity.sub_swarm_id))
+        .map(|entity| (entity.id, entity.group_index))
         .collect();
     assert_eq!(block_ids, vec![(1, 0), (2, 1)]);
     Ok(())

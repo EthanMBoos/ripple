@@ -18,7 +18,8 @@ use crate::{
 #[derive(Clone, Debug, Serialize)]
 pub struct EntitySnapshot {
     pub id: i32,
-    pub sub_swarm_id: i32,
+    /// Index of the mission entity group this entity came from.
+    pub group_index: i32,
     pub team_id: i32,
     pub truth: KinematicState,
     pub active: bool,
@@ -75,7 +76,7 @@ impl EntityDefinition {
 
 pub struct Entity {
     pub(crate) id: i32,
-    sub_swarm_id: i32,
+    group_index: i32,
     pub(crate) team_id: i32,
     pub(crate) truth: KinematicState,
     pub(crate) health: i32,
@@ -94,7 +95,7 @@ impl Entity {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         id: i32,
-        sub_swarm_id: i32,
+        group_index: i32,
         definition: &EntityDefinition,
         position_world_m: Vec3,
         heading_world_deg: f64,
@@ -118,7 +119,7 @@ impl Entity {
                 EntityInfo {
                     id,
                     team_id: definition.team_id,
-                    sub_swarm_id,
+                    group_index,
                 },
                 time,
                 &mut truth,
@@ -134,7 +135,7 @@ impl Entity {
 
         Ok(Self {
             id,
-            sub_swarm_id,
+            group_index,
             team_id: definition.team_id,
             truth,
             health: definition.initial_health,
@@ -202,7 +203,7 @@ impl Entity {
         EntityInfo {
             id: self.id,
             team_id: self.team_id,
-            sub_swarm_id: self.sub_swarm_id,
+            group_index: self.group_index,
         }
     }
 
@@ -289,7 +290,7 @@ impl Entity {
     pub(crate) fn snapshot(&self) -> EntitySnapshot {
         EntitySnapshot {
             id: self.id,
-            sub_swarm_id: self.sub_swarm_id,
+            group_index: self.group_index,
             team_id: self.team_id,
             truth: self.truth.clone(),
             active: self.active,

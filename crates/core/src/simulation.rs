@@ -148,7 +148,9 @@ impl Simulation {
             &simulation.entity_teams,
             simulation.terrain.as_ref(),
         )?;
-        // Legacy missions can create entities one step before the start time.
+        // Setup pass, labeled one step before the start (tick -1): build every
+        // group due at startup, then run the interactions once, so starting
+        // overlaps and collisions are settled before the first tick runs.
         simulation.generate_entities()?;
         let mut nearby =
             SpatialIndex::build(simulation.config.spatial_lookup, &simulation.entities);

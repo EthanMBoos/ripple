@@ -1,7 +1,7 @@
 # User plugins. The stock `ripple` command registers this crate's plugins
 # (crates/cli/src/main.rs), so its missions run with `ripple run` and
 # `ripple sweep` like any other. To add another crate like this one, see
-# book/src/guides/user-plugins.md.
+# book/src/guides/writing-plugins.md.
 [package]
 name = "starter"
 version.workspace = true

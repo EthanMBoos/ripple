@@ -287,7 +287,7 @@ impl RunWriter {
     fn frame(&mut self, frame: &SimulationFrame) -> Result<()> {
         for entity in &frame.entities {
             if self.descriptions.insert(entity.id) {
-                let group_index = usize::try_from(entity.sub_swarm_id)
+                let group_index = usize::try_from(entity.group_index)
                     .context("entity group index is negative")?;
                 let group = self
                     .groups
@@ -548,7 +548,7 @@ fn frames_from_bytes(bytes: &[u8], scenario: &serde_json::Value) -> Result<Vec<S
                     );
                     entities.push(EntitySnapshot {
                         id: entity.id,
-                        sub_swarm_id: i32::try_from(group_index)?,
+                        group_index: i32::try_from(group_index)?,
                         team_id: description.team_id,
                         truth: state(entity.truth)?,
                         active: entity.active,

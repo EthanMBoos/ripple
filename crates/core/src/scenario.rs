@@ -168,7 +168,6 @@ pub struct EntityGroupConfig {
     #[serde(skip_deserializing)]
     pub label: String,
     pub team: i32,
-    pub color: [u8; 3],
     pub visual_model: String,
     pub health: i32,
     pub id: Option<i32>,
@@ -203,7 +202,6 @@ impl Default for EntityGroupConfig {
         Self {
             label: String::new(),
             team: -1,
-            color: [255, 255, 255],
             visual_model: "aircraft".into(),
             health: 1,
             id: None,

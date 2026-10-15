@@ -227,7 +227,6 @@ entities:
   dead_reckoning:
     template: robot
     team: 1
-    color: [70, 130, 255]
     sensors:
       gps:
         plugin: NoisyState
@@ -240,7 +239,6 @@ entities:
   perfect:
     template: robot
     team: 2
-    color: [160, 160, 160]
 ```
 
 - The fix comes from the stock `NoisyState` sensor, named `gps`. Its noise

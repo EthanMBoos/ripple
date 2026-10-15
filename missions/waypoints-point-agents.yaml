@@ -17,7 +17,6 @@ metrics: {SimpleCollisionMetrics: {}}
 entities:
   blue:
     team: 1
-    color: [70, 130, 255]
     visual_model: sphere
     position_m: [0, -2, 0]
     position_variance_m2: [0, 0, 0]
@@ -31,7 +30,6 @@ entities:
 
   red:
     team: 2
-    color: [255, 100, 70]
     visual_model: sphere
     position_m: [0, 2, 0]
     position_variance_m2: [0, 0, 0]

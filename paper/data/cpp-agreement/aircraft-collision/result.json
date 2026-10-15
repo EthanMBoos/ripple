@@ -1,10 +1,11 @@
 {
   "case": "aircraft-collision",
-  "mission": "<checkout>/missions/straight-no-gui.xml",
+  "mission": "<checkout>/missions/straight-no-gui.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "9185396c0dd450eb39bb1721b595043eac856616df5879b8c516cee1a5472f18",
-    "effective_sha256": "bf95a35930c3887b7419698c66d3c1be846ab84500df2ab71d13bbcf81bfb4b7",
+    "input_sha256": "9215d896f46994b770fff99c65245d44cc97a5af56c786700762b253ad169d0e",
+    "xml_sha256": "ea19355f1740bb992107c8b82f96ca65627ad8b77641f96240b577f51a2906cb",
+    "effective_sha256": "5997b9dd8acdfd715cb297aa5ff133aeff60f4c53220815e30fbde6963b3faf2",
     "run_overrides": {
       "enable_gui": "false",
       "network_gui": "false",
@@ -31,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": true
   },
-  "cpp_log_directory": "cpp/logs/2026-10-14_20-38-03",
+  "cpp_log_directory": "cpp/logs/2026-10-15_06-53-37",
   "cpp_output_hashes": {
     "frames.bin": "d7f625d106ab5a07645c489d52b413a8a0fc8bb0721af3833a6c694e8422f18a",
     "summary.csv": "8e11d04f706509ae731986d61806ca86f1c3d33c8c8f618cb58c0600c3ca7705"
@@ -53,7 +54,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "7cb15dbe9963034ed19a1b16fd3fc7071452f58307077dcfdcc800b8dffd399f",
+  "recording_sha256": "d82a7d959ed508e81666f8d8b379fbc09cd477eed25973f5620549da7fb4da28",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

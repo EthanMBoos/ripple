@@ -57,14 +57,20 @@ fn run_mission_with_trace(
     })
 }
 
-/// Every XML mission under `missions/`, as paths relative to that folder.
-fn xml_missions() -> Result<Vec<String>> {
+/// Every mission under `missions/` (not sweeps or terrain headers), as paths
+/// relative to that folder.
+fn missions() -> Result<Vec<String>> {
     fn collect(directory: &std::path::Path, found: &mut Vec<PathBuf>) -> Result<()> {
         for entry in std::fs::read_dir(directory)? {
             let path = entry?.path();
             if path.is_dir() {
                 collect(&path, found)?;
-            } else if path.extension().is_some_and(|extension| extension == "xml") {
+            } else if path
+                .extension()
+                .is_some_and(|extension| extension == "yaml")
+                && !path.to_string_lossy().ends_with(".sweep.yaml")
+                && !path.to_string_lossy().ends_with(".terrain.yaml")
+            {
                 found.push(path);
             }
         }
@@ -89,10 +95,10 @@ fn xml_missions() -> Result<Vec<String>> {
 #[test]
 fn comparison_trace_does_not_change_mission_output() -> Result<()> {
     for mission in [
-        "networks-local-global.xml",
-        "verification/aircraft-substeps-scheduled.xml",
-        "verification/noisy-contacts-bias.xml",
-        "verification/sphere-network-auction.xml",
+        "networks-local-global.yaml",
+        "verification/aircraft-substeps-scheduled.yaml",
+        "verification/noisy-contacts-bias.yaml",
+        "verification/sphere-network-auction.yaml",
     ] {
         let trace = SharedBuffer::default();
         let traced = run_mission_with_trace(mission, 2, Some(trace.clone()))?;
@@ -107,7 +113,7 @@ fn comparison_trace_does_not_change_mission_output() -> Result<()> {
 
 #[test]
 fn mission_output_is_independent_of_worker_count() -> Result<()> {
-    for mission in xml_missions()? {
+    for mission in missions()? {
         let mission = mission.as_str();
         let serial = run_mission(mission, 1)?;
         for threads in [2, 8] {
@@ -125,7 +131,7 @@ fn mission_output_is_independent_of_worker_count() -> Result<()> {
 fn contacts_retain_their_mission_entity_block_id() -> Result<()> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mission = Mission::load(
-        &root.join("missions/straight-no-gui.xml"),
+        &root.join("missions/straight-no-gui.yaml"),
         &root,
         &Params::new(),
     )?;

@@ -1,0 +1,53 @@
+# Zero-variance twin of aircraft-substeps-spawning.yaml: substeps, loop rates,
+# and scheduled spawning without randomized state.
+format_version: 1
+name: aircraft-substeps-scheduled
+
+run:
+  end_s: 3
+  dt_s: 0.1
+  motion_multiplier: 5
+  seed: 12345
+
+networks: {GlobalNetwork: {}, LocalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+entities:
+  blue:
+    team: 1
+    count: 4
+    spawn:
+      rate_hz: 2
+      batch_size: 1
+    position_m: [10, 20, 200]
+    heading_deg: 30
+    roll_deg: 5
+    pitch_deg: 3
+    randomize_every_spawn: true
+    visual_model: sphere
+    autonomy:
+      Straight:
+        speed: 24
+        loop_rate: 5
+    controller:
+      SimpleAircraftControllerPID:
+        loop_rate: 20
+    motion_model: {SimpleAircraft: {}}
+  red:
+    team: 2
+    count: 3
+    spawn:
+      rate_hz: 4
+      batch_size: 2
+      start_s: 0.35
+    position_m: [-300, 150, 220]
+    heading_deg: -45
+    visual_model: sphere
+    autonomy:
+      Straight:
+        speed: 18
+        loop_rate: 10
+    controller:
+      SimpleAircraftControllerPID:
+        loop_rate: 50
+    motion_model: {SimpleAircraft: {}}

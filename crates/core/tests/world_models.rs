@@ -6,7 +6,7 @@ use ripple_core::{EventKind, Mission, Params, Simulation};
 fn run(overrides: Params) -> Result<Simulation> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mission = Mission::load(
-        &root.join("missions/networks-local-global.xml"),
+        &root.join("missions/networks-local-global.yaml"),
         &root,
         &overrides,
     )?;
@@ -22,7 +22,10 @@ fn run(overrides: Params) -> Result<Simulation> {
 #[test]
 fn global_boundary_changes_both_aircraft_paths_and_ground_hits_reach_metrics() -> Result<()> {
     let bounded = run(Params::new())?;
-    let straight = run(Params::from([("boundary_control".into(), "false".into())]))?;
+    let straight = run(Params::from(["blue", "red"].map(|group| {
+        let path = format!("entities.{group}.autonomy.Straight.enable_boundary_control");
+        (path, "false".to_string())
+    })))?;
     assert_eq!(bounded.entities().len(), 2);
     for (bounded, straight) in bounded.entities().iter().zip(straight.entities()) {
         assert!(
@@ -52,7 +55,10 @@ fn global_boundary_changes_both_aircraft_paths_and_ground_hits_reach_metrics() -
 
 #[test]
 fn ground_collision_respects_team_filter() -> Result<()> {
-    let simulation = run(Params::from([("ground_team".into(), "1".into())]))?;
+    let simulation = run(Params::from([(
+        "interactions.GroundCollision.team".into(),
+        "'1'".into(),
+    )]))?;
     assert_eq!(simulation.entities().len(), 3);
     assert!(
         !simulation

@@ -3,11 +3,12 @@
   "cases": [
     {
       "case": "aircraft-collision",
-      "mission": "<checkout>/missions/straight-no-gui.xml",
+      "mission": "<checkout>/missions/straight-no-gui.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "9185396c0dd450eb39bb1721b595043eac856616df5879b8c516cee1a5472f18",
-        "effective_sha256": "bf95a35930c3887b7419698c66d3c1be846ab84500df2ab71d13bbcf81bfb4b7",
+        "input_sha256": "9215d896f46994b770fff99c65245d44cc97a5af56c786700762b253ad169d0e",
+        "xml_sha256": "ea19355f1740bb992107c8b82f96ca65627ad8b77641f96240b577f51a2906cb",
+        "effective_sha256": "5997b9dd8acdfd715cb297aa5ff133aeff60f4c53220815e30fbde6963b3faf2",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -34,7 +35,7 @@
         "frames.bin": false,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-38-03",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-53-37",
       "cpp_output_hashes": {
         "frames.bin": "d7f625d106ab5a07645c489d52b413a8a0fc8bb0721af3833a6c694e8422f18a",
         "summary.csv": "8e11d04f706509ae731986d61806ca86f1c3d33c8c8f618cb58c0600c3ca7705"
@@ -56,7 +57,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "7cb15dbe9963034ed19a1b16fd3fc7071452f58307077dcfdcc800b8dffd399f",
+      "recording_sha256": "d82a7d959ed508e81666f8d8b379fbc09cd477eed25973f5620549da7fb4da28",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -130,11 +131,12 @@
     },
     {
       "case": "aircraft-long-horizon",
-      "mission": "<checkout>/missions/test_missions/straight_cpu.xml",
+      "mission": "<checkout>/missions/verification/aircraft-long-horizon.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "6a24e0333e5cbaf0e73fbf36a8ef7062a43d4fdd9b6b840a571cc79308c37714",
-        "effective_sha256": "7ea57e8405e6a7be205b4285d75dbc0ae4dcba4f4e0c62aec275499641ae4f91",
+        "input_sha256": "c3a0d50f9640079b21d080c1f268ec5debf0d13aa0955aa28a25a758b32e5302",
+        "xml_sha256": "5344f926f0b38c67534bc289095c87ef358731d1b21af0573f2ef6c1224d448d",
+        "effective_sha256": "c6b9114e233dee8b5a19a5074b3ff854433b833c8a6779bfc05f7cce615eb029",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -161,7 +163,7 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-38-07",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-53-40",
       "cpp_output_hashes": {
         "frames.bin": "0bd815906401d7c60d771188107c29abbb96dd9ba79eb951ce9178f2d6dfe638",
         "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
@@ -183,134 +185,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "156714a1473443ebed886de58a2de76d7b8e3b9f9f7ca66f0aa12597a019c083",
-      "trace_equality": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true
-      },
-      "rust_output_hashes": {
-        "rust-1": {
-          "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
-          "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
-          "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
-        },
-        "rust-2": {
-          "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
-          "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
-          "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
-        },
-        "rust-8": {
-          "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
-          "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
-          "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
-        },
-        "rust-rerun": {
-          "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
-          "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
-          "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
-        },
-        "rust-trace": {
-          "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
-          "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
-          "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
-        }
-      },
-      "comparison": {
-        "passed": true,
-        "reference_frames": 2001,
-        "candidate_frames": 2001,
-        "compared_entity_states": 2001,
-        "max_position_error_m": 0.0,
-        "max_velocity_error_mps": 0.0,
-        "max_orientation_error_rad": 0.0,
-        "max_angular_velocity_error_radps": 0.0,
-        "max_timestamp_error_s": 0.0,
-        "mismatch_count": 0,
-        "first_mismatches": [],
-        "direct_event_stream_compared": false
-      },
-      "trace_comparison": {
-        "passed": true,
-        "deliveries": 1,
-        "beliefs": 2001,
-        "outputs": 12000,
-        "sensor_states": 0,
-        "skipped_sensor_deliveries": 0,
-        "max_belief_position_error_m": 0.0,
-        "max_belief_velocity_error_mps": 0.0,
-        "max_belief_orientation_error_rad": 0.0,
-        "max_belief_angular_velocity_error_radps": 0.0,
-        "max_payload_position_error_m": 0.0,
-        "max_payload_velocity_error_mps": 0.0,
-        "max_payload_orientation_error_rad": 0.0,
-        "max_output_error": 0.0,
-        "max_output_error_port": "",
-        "excluded_pre_start_records": 0,
-        "delivery_mismatches": 0,
-        "mismatch_count": 0,
-        "first_mismatches": []
-      },
-      "summary_differences": [],
-      "summary_agreement": "agree",
-      "pre_start_removed": []
-    },
-    {
-      "case": "aircraft-multiplier-typo",
-      "mission": "<checkout>/missions/test_missions/straight_cpu_mul.xml",
-      "passed": true,
-      "input": {
-        "input_sha256": "2890424b0da3eaa83d4e41f3114c6b1b3070b2760df36f3273a2e603a0ef1652",
-        "effective_sha256": "a59cf5fb2d2bc43ea2de30d6ca59bfdedb6ecd9f93027c5e699da2b602d4024f",
-        "run_overrides": {
-          "enable_gui": "false",
-          "network_gui": "false",
-          "start_paused": "false",
-          "time_warp": "0"
-        },
-        "root_overrides": {
-          "log_dir": "/run/logs",
-          "create_latest_dir": "false",
-          "multi_threaded": "false",
-          "display_progress": "false",
-          "output_type": "all",
-          "no_bin_logging": "false"
-        }
-      },
-      "motion_multiplier": 1,
-      "cpp_non_interference": {
-        "traced": {
-          "frames.bin": true,
-          "summary.csv": true
-        }
-      },
-      "cpp_baseline_equality": {
-        "frames.bin": false,
-        "summary.csv": false
-      },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-38-11",
-      "cpp_output_hashes": {
-        "frames.bin": "0bd815906401d7c60d771188107c29abbb96dd9ba79eb951ce9178f2d6dfe638",
-        "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
-      },
-      "worker_equality": {
-        "2": {
-          "frames.bin": true,
-          "events.json": true,
-          "summary.csv": true
-        },
-        "8": {
-          "frames.bin": true,
-          "events.json": true,
-          "summary.csv": true
-        }
-      },
-      "recording_equality": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true
-      },
-      "recording_sha256": "32a8c8c565a86aaa45fd39a921b537a473dcb7ecb6025f07230dbfbb0393c711",
+      "recording_sha256": "241264e4142b360d801ab48be782ae7c1b7e92ce08593546443227e51b4d8aa8",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -384,11 +259,12 @@
     },
     {
       "case": "substeps-random-spawn",
-      "mission": "<checkout>/missions/verification/aircraft-substeps-spawning.xml",
+      "mission": "<checkout>/missions/verification/aircraft-substeps-spawning.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "0a41528b63317a3290de6a73d79c29b53e1aef240fea9cfb4db5270e7b571b1c",
-        "effective_sha256": "f28226691b1f9edbf1d3f444d0feceb190087daad248f3e8eafcca1ecc0cd5b7",
+        "input_sha256": "f8ff4c0bd8b5bc08517bfc33e0ce2416d8ec85e30fdb4d75bd30be358ec8d576",
+        "xml_sha256": "9a69de9a74b36b182f48fd813ee198fccdcc82ff8dca98dd6813f13dbf611408",
+        "effective_sha256": "04a1ae0fd935fcea2e737d38af81f605a7d09111558dd841f1215ed4d5a380c4",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -415,7 +291,7 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-38-15",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-53-43",
       "cpp_output_hashes": {
         "frames.bin": "0604cdff277ccead47055496f23d87eac5f433b30cc00f4daacf9a73d4c2f096",
         "summary.csv": "95c0678548759ec6f4d1501648b949dc524f528791bd6eb6320d0f2c986d5835"
@@ -437,7 +313,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "b2d750d0fa231331b54d4ca13c05b28f5c793ac19a7465fb4fc70012682bd673",
+      "recording_sha256": "08724f7e3d2157d15fb8297c447ee0f12c3a2e3405791626e567a2c39a11ef2c",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -511,11 +387,12 @@
     },
     {
       "case": "substeps-scheduled-spawn",
-      "mission": "<checkout>/missions/verification/aircraft-substeps-scheduled.xml",
+      "mission": "<checkout>/missions/verification/aircraft-substeps-scheduled.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "1136f233191890581311a015b868964ed18b798aaffb68dc83441ebad5b4cdb5",
-        "effective_sha256": "594b95d1f66668f0c277fa727401019a6db19b73c36ba3c3967e117b0f6f0041",
+        "input_sha256": "89bcb4ec4f3fc2586f2761dece8742fbf597fc9a50c138b391dc7064db5acb30",
+        "xml_sha256": "246ac8c79dead3d6ce0e4b28a28fb605fa7b7a66324a3e82ab4907c82af78a7a",
+        "effective_sha256": "2a93a0f74e61f7728698e1612d6071df86c05cace91e4b80d0cdb21adb8c4f28",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -542,7 +419,7 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-38-17",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-53-46",
       "cpp_output_hashes": {
         "frames.bin": "238e68abcdb430d5620f7c677e7e71079518c7171e8fb84907634af1f60c7d21",
         "summary.csv": "babb177d945a144f319c2cfbfb9bc0187b5afd68fbeba8c0f14d5ec373845ed9"
@@ -564,7 +441,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "957db67a4697b1ed50b5e9e16d22cd48f34743cdfc75e71fe5335d52cbcdbba1",
+      "recording_sha256": "5e566c469b9ee4b72f43edf0bfc094d05f0c5805c5042c768a2f2842dab1cffa",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -641,11 +518,12 @@
     },
     {
       "case": "noisy-state-bias",
-      "mission": "<checkout>/missions/verification/noisy-state-bias.xml",
+      "mission": "<checkout>/missions/verification/noisy-state-bias.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "62eecf89cd36ad56d5bffb5e442958d2217bbb23b24135c0446780465a2faa23",
-        "effective_sha256": "7eaa594344e9da95072888dba2ad77b9ce653d7793b072ad20813eee0d562af4",
+        "input_sha256": "3edf763215623dbcc2f1efb1096521148de4a67e337cb15d8a49568778d6aecc",
+        "xml_sha256": "db502494237cf7045ea490f24c45682325d93a459c013d8d8ce03d9db0fc93b0",
+        "effective_sha256": "15e06c3fed66cb800508bf83a20d5c7577739f03fcda7cf50ff50d959b6e7a67",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -672,7 +550,7 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-38-20",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-53-48",
       "cpp_output_hashes": {
         "frames.bin": "bf0b40147071c27a155e285311b7dea94a35d6f2232795e20fea6c0a679e8e56",
         "summary.csv": "6e432e6daa5b7215d2d6f6066600225c552668e1254a5f078aee2844a0553790"
@@ -694,7 +572,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "c8282177e1d36f1208ad7ead15d5eb25c13d8c641ea4bcbc86a8cc6b1b301ff2",
+      "recording_sha256": "99d79cd8c456bc554c70164429274f35e45e9a0d10ff164b8944255566c69107",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -768,11 +646,12 @@
     },
     {
       "case": "world-networks",
-      "mission": "<checkout>/missions/networks-local-global.xml",
+      "mission": "<checkout>/missions/networks-local-global.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "cd968b8baca6e954314af98963394ee053fed009249742ab92c26f23a762be9d",
-        "effective_sha256": "a87b93a0ca387c8e6061489312510a6da805fbf0fca68e268010d5ddd7308172",
+        "input_sha256": "3c000337aa46a32ea11b70b046066263e72f9c32c63e6fd379890bbad4559ac2",
+        "xml_sha256": "7c56fa09633c81056c323dd4544652e298e06a0a96db91a46f0bd643b5ec56ff",
+        "effective_sha256": "2109f598b0b05fcd1199fb9666375eee83b16ceed8b1ecd6187a08fc246d2334",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -799,7 +678,7 @@
         "frames.bin": false,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-38-23",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-53-51",
       "cpp_output_hashes": {
         "frames.bin": "c7e6f13bffb892f90c295b1a5a543181fb0dd1ab00605fb36c4cd913c16a6ed2",
         "summary.csv": "d2cb188c2b9e0a182224ec52187cc5fc01dd833c7343f24f86211527e6ccb549"
@@ -821,7 +700,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "ad0c838aa74ad77456df6945bcd13da4161fbb49032673575e5f77df79ff7b5d",
+      "recording_sha256": "542290ddd219ce121de302e43281af08df5f307771b498fbcce17c38c97b89e7",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -899,11 +778,12 @@
     },
     {
       "case": "fixed-wing-a4",
-      "mission": "<checkout>/missions/fixed-wing-6dof.xml",
+      "mission": "<checkout>/missions/fixed-wing-6dof.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "42d75ed8f03708a3777d87226cc95a6da92fd2108dbeeaa3328e4109d711d1e1",
-        "effective_sha256": "ba3796fcb1078d761313404c56dc2fdb470140a35fcccc8ccce459759234bc77",
+        "input_sha256": "44ab0c70bda600d1d60b51c8a3f2518b8e43ce3a475ea376f0cf5159151d0ef9",
+        "xml_sha256": "7060e43e9391754d183c900bb9fe98ded7db8e5a9aaf6b570259c55aaadf7006",
+        "effective_sha256": "7540d18af8adfa2a62155c2a719aba8d19e6d550cb4b23e5311363fbeadb7ca5",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -930,7 +810,7 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-38-26",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-53-55",
       "cpp_output_hashes": {
         "frames.bin": "4d9108cdf1302112f09c4f285e281a948b114d8a921ac9be3b3f2087bb5b2469",
         "summary.csv": "63ab66b50b669faae85cb8ba2c786f8f315386fc8f758130148eb979e980d67d"
@@ -952,7 +832,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "27c2740d3fbe1002f218d7b46e8beb96465f3516ed560f66f1f3be2aeb3dec60",
+      "recording_sha256": "71aedb419450e2ce012022ff2dd6acd87841aa7d33b849942dc183f3a3450864",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1026,11 +906,12 @@
     },
     {
       "case": "fixed-wing-rascal",
-      "mission": "<checkout>/missions/fixed-wing-6dof-rascal.xml",
+      "mission": "<checkout>/missions/fixed-wing-6dof-rascal.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "262a6a20bc184ed268e6e8561fa09400d78aafd9e01577ef13bfc896e0795cf3",
-        "effective_sha256": "6544609e13e59df08f5db5f41e757fb5f5ca88949b9dec2a0401dd4348c9d5a9",
+        "input_sha256": "26ba4bd1e160b1e92807c86aa62d07b09de259504856d40b4a64de69558599c6",
+        "xml_sha256": "c9ca5796ecd2e4db315fcc77ad5a49d79a1d71bcefab0c87fbc18727d3255933",
+        "effective_sha256": "31a3b3e972bfb1d35d08e4652f9f4e225166088c333e974885cbd43ab3a74ca6",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -1057,9 +938,9 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-38-30",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-54-02",
       "cpp_output_hashes": {
-        "frames.bin": "b8e61c33a7ad21a8786848b81aecfbcb42590562023e7bf7c81dfa54dd04aeaf",
+        "frames.bin": "a03a4787d647093e8a1972a74f7112e9a82a31f6c06fb9d6d8a8bcd47f89c64d",
         "summary.csv": "c6fd86bfd0f66c37749d267e6888b1b3a9f8d984030a2c9b0fbdd70dc1004ba3"
       },
       "worker_equality": {
@@ -1079,7 +960,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "376b532a60e7319f95cb594dc8dd553b2272bc60e230925a6d3be80068532bfa",
+      "recording_sha256": "5ee8e81481af6e579f322179b873173fd99f824a6069db25cb4cc16fce98cbed",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1087,27 +968,27 @@
       },
       "rust_output_hashes": {
         "rust-1": {
-          "frames.bin": "437c1a9358ff8214de66eabdaa7e31c1a46a4eb316c4c63c6e3608662c9652d3",
+          "frames.bin": "c8232dbd424c4e31e943007971990fac499b2f10b142659240aadd27c9113924",
           "events.json": "4fdc1bac16237ed253d3fadf803eec3291e9aae49046c6486e4720218f857b6c",
           "summary.csv": "c6fd86bfd0f66c37749d267e6888b1b3a9f8d984030a2c9b0fbdd70dc1004ba3"
         },
         "rust-2": {
-          "frames.bin": "437c1a9358ff8214de66eabdaa7e31c1a46a4eb316c4c63c6e3608662c9652d3",
+          "frames.bin": "c8232dbd424c4e31e943007971990fac499b2f10b142659240aadd27c9113924",
           "events.json": "4fdc1bac16237ed253d3fadf803eec3291e9aae49046c6486e4720218f857b6c",
           "summary.csv": "c6fd86bfd0f66c37749d267e6888b1b3a9f8d984030a2c9b0fbdd70dc1004ba3"
         },
         "rust-8": {
-          "frames.bin": "437c1a9358ff8214de66eabdaa7e31c1a46a4eb316c4c63c6e3608662c9652d3",
+          "frames.bin": "c8232dbd424c4e31e943007971990fac499b2f10b142659240aadd27c9113924",
           "events.json": "4fdc1bac16237ed253d3fadf803eec3291e9aae49046c6486e4720218f857b6c",
           "summary.csv": "c6fd86bfd0f66c37749d267e6888b1b3a9f8d984030a2c9b0fbdd70dc1004ba3"
         },
         "rust-rerun": {
-          "frames.bin": "437c1a9358ff8214de66eabdaa7e31c1a46a4eb316c4c63c6e3608662c9652d3",
+          "frames.bin": "c8232dbd424c4e31e943007971990fac499b2f10b142659240aadd27c9113924",
           "events.json": "4fdc1bac16237ed253d3fadf803eec3291e9aae49046c6486e4720218f857b6c",
           "summary.csv": "c6fd86bfd0f66c37749d267e6888b1b3a9f8d984030a2c9b0fbdd70dc1004ba3"
         },
         "rust-trace": {
-          "frames.bin": "437c1a9358ff8214de66eabdaa7e31c1a46a4eb316c4c63c6e3608662c9652d3",
+          "frames.bin": "c8232dbd424c4e31e943007971990fac499b2f10b142659240aadd27c9113924",
           "events.json": "4fdc1bac16237ed253d3fadf803eec3291e9aae49046c6486e4720218f857b6c",
           "summary.csv": "c6fd86bfd0f66c37749d267e6888b1b3a9f8d984030a2c9b0fbdd70dc1004ba3"
         }
@@ -1117,7 +998,7 @@
         "reference_frames": 6001,
         "candidate_frames": 6001,
         "compared_entity_states": 18003,
-        "max_position_error_m": 2.3437142008433856e-13,
+        "max_position_error_m": 2.31335954426011e-13,
         "max_velocity_error_mps": 7.291263946742188e-14,
         "max_orientation_error_rad": 3.995718686478078e-15,
         "max_angular_velocity_error_radps": 2.0888625302129676e-14,
@@ -1133,14 +1014,14 @@
         "outputs": 126000,
         "sensor_states": 0,
         "skipped_sensor_deliveries": 0,
-        "max_belief_position_error_m": 2.3437142008433856e-13,
+        "max_belief_position_error_m": 2.31335954426011e-13,
         "max_belief_velocity_error_mps": 7.291263946742188e-14,
         "max_belief_orientation_error_rad": 3.995718686478078e-15,
         "max_belief_angular_velocity_error_radps": 2.0888625302129676e-14,
         "max_payload_position_error_m": 0.0,
         "max_payload_velocity_error_mps": 0.0,
         "max_payload_orientation_error_rad": 0.0,
-        "max_output_error": 8.092203122866959e-14,
+        "max_output_error": 8.082641035423343e-14,
         "max_output_error_port": "AircraftPIDController.aileron",
         "excluded_pre_start_records": 0,
         "delivery_mismatches": 0,
@@ -1153,11 +1034,12 @@
     },
     {
       "case": "multirotor",
-      "mission": "<checkout>/missions/multirotor.xml",
+      "mission": "<checkout>/missions/multirotor.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "a69f6e26e77d1ff9a460d6fd23773a5f594eee51a30fca2d088da6c3bf1aa1da",
-        "effective_sha256": "91369b54d30c263a910ce46a2d6ffcf53ffd49187a6af13206ce5ad248770662",
+        "input_sha256": "c715be71934c22d151f53d1fa22eb48b2b29353ab7889d2e8688557b46278107",
+        "xml_sha256": "e4bd153d4f715ed8c32356ac14e4de0fff545b378527ebae1305d9eefb4e7553",
+        "effective_sha256": "1f3ceaca1ce9c404e9bf9fb055315d4356c39c21f7cb97a70efce3ed5c373d92",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -1184,7 +1066,7 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-38-57",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-54-29",
       "cpp_output_hashes": {
         "frames.bin": "2b9bc21b79260a1bc18e2e473a8c9b2743acaa4ac64750df066738d6cf2eb16b",
         "summary.csv": "c5750d24bf8cd9cd7acb1354a6d525934e6ed23a4c2264d45a66c12cc15357d4"
@@ -1206,7 +1088,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "af5c4f85a3fe7694702b5f0ff15fff945f121f00519fc29b225d840ab96e8b59",
+      "recording_sha256": "25cce14da6e588e8106198c38d7d46452315ba39176b56d6b498a8fabea61193",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1280,11 +1162,12 @@
     },
     {
       "case": "single-integrator",
-      "mission": "<checkout>/missions/verification/single-integrator.xml",
+      "mission": "<checkout>/missions/verification/single-integrator.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "8eacdf25eacd566bef5d16287016dc439e27b981b0c7a693683b02419fab5186",
-        "effective_sha256": "76c709e0f7ff97fe4ce4eedb6792f99673719921f2604ea88afed5d77316ece5",
+        "input_sha256": "5384cb4f66599830890bc08ccdc12e781ac46cd59ba6920e3d3bc4e82aed72db",
+        "xml_sha256": "01efbe4ba2d6e2f1c46a7dd69e9bb5bb8ddc6de54c2360a171f481928b14d748",
+        "effective_sha256": "989ff9b112b6be24b42f8a6bcdb35aae9b0350baa43dcde77e6bed9434c3730c",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -1311,7 +1194,7 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-39-12",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-54-42",
       "cpp_output_hashes": {
         "frames.bin": "cbccf172168965e35e19976cce451b287adbb4a5e9c32941ee8e297266510f7b",
         "summary.csv": "484e8c1f011b610b8e1b1b30e03dade2e8054dd89433fe751caed55302932289"
@@ -1333,7 +1216,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "8628be3302e283599468bc6b5d64c30fbb287f28afa35ee78d35304f26b5a6fa",
+      "recording_sha256": "70dd8b8fb76408053b76055e8840b6b9e73f0348d9716b96af5329271993a1cf",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1407,11 +1290,12 @@
     },
     {
       "case": "noisy-contacts-bias",
-      "mission": "<checkout>/missions/verification/noisy-contacts-bias.xml",
+      "mission": "<checkout>/missions/verification/noisy-contacts-bias.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "80a68d13d26be5f5050f40008e70f54052033728105daa88372b63ee890cf7e7",
-        "effective_sha256": "53169ed934a924324e8026afb0b7e0316527b6740fb531ca6bc27658f743ed6e",
+        "input_sha256": "7fc4acde003e7fe942a76ddab7e43b19a480e359e6a2ac44c4a64176a5aa171a",
+        "xml_sha256": "c6d4ce9bcb0d69bd8e08fbf2ea9bedc0a46ab2618bb49001dd95b14c5dedacf9",
+        "effective_sha256": "aaaebe491981f6e31343b1ae05bc7b282e99474ebe8bca558bbbf83f65a41120",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -1438,7 +1322,7 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-39-15",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-54-45",
       "cpp_output_hashes": {
         "frames.bin": "c4a96c47cf69a9b2aae74263b822ea979ded7c9b889e2c96251c44885d3bda62",
         "summary.csv": "ec027f334920590b12d510e3b4a9c7284b6bdeffe45fe1e95568938ec7bdc0fc"
@@ -1460,7 +1344,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "3b0445d6dbdb09cdf8b72e291acac1af5a629406e6f6ba37527830eaecd9351f",
+      "recording_sha256": "dc7062bd8f477f69d7ab15d53571e9c06ab3f3960eb7c2a8c80ddf8557959ed8",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1534,11 +1418,12 @@
     },
     {
       "case": "sphere-network-auction",
-      "mission": "<checkout>/missions/verification/sphere-network-auction.xml",
+      "mission": "<checkout>/missions/verification/sphere-network-auction.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "b2fcd1fc8327ec8f858170d1b479df6e527bf6ae94940a6ee93a453ebf360870",
-        "effective_sha256": "a4f3a069dfae7244514ef4cb27ef556033ed4529f351ffd97453257ad6e65af3",
+        "input_sha256": "5ea885bc580e4513c9ae64a96890589c853f259152f9e8fc07a631d45c2a2469",
+        "xml_sha256": "63fe2c46251e33883969a70ccbb53a166f4d8f54b714c7d2c2dcf1d0c92e7f17",
+        "effective_sha256": "87d84ba23f1bee93d199a1f85d4bb88b11bd21a043c098b55ed0fe326ac9a96b",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -1565,7 +1450,7 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-39-17",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-54-47",
       "cpp_output_hashes": {
         "frames.bin": "a1e79a394467933d2a8f254b3b2017fdd5f02965dc36b21d0c635efa4309f45b",
         "summary.csv": "5e17ab66d76ac75c1cf4f357ed1c4e2734d320e475e2eeb538592dd592f758ad"
@@ -1587,7 +1472,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "8f3481cd1c2f1b449208ee3552625028f4a940b0e30a268a049e378233ede2e4",
+      "recording_sha256": "fc0f86b71890b29ebfab987d78eaa03e24124940cf56831e98ac5fe33471819d",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1661,11 +1546,12 @@
     },
     {
       "case": "sphere-network-loss",
-      "mission": "<checkout>/missions/verification/sphere-network-loss.xml",
+      "mission": "<checkout>/missions/verification/sphere-network-loss.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "546eb308bab14925270a2dabfb56ab8dd99569db2431545b8445a0f7b548ba90",
-        "effective_sha256": "107bbd36e939779f31af9807effba804498d0519532f56b813e943fc73e76108",
+        "input_sha256": "c2657c351ed58626320c9fe0ba26b1f13f1a5af0211e14ec14904faf1af36d90",
+        "xml_sha256": "1e3b9a951f0cc53b2886289e7cfeaa07f4a8419336eebf6fbd3d1bf4454dbdf1",
+        "effective_sha256": "a87b344f5aecd943de284c623a27edfbef958ea49662f831d03c7a2e63e8dc1d",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -1692,7 +1578,7 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-39-20",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-54-50",
       "cpp_output_hashes": {
         "frames.bin": "3af84658670779642abbe781251b863d7258da67413fcfcf8ddc83177e200985",
         "summary.csv": "4a5b842355f0e07ad5475b435d856f7e2bd767fec124e5fbc98343be388757eb"
@@ -1714,7 +1600,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "d57eeb7ab5521bd5990a17b8ef17bab96bf9440bbbf884f8520fbe0c153683c9",
+      "recording_sha256": "8e7f29550fd16a559e7e70ba62a826384ccde1fef4a385d9fede78467990f4d6",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1788,11 +1674,12 @@
     },
     {
       "case": "collision-boundary",
-      "mission": "<checkout>/missions/verification/collision-boundary.xml",
+      "mission": "<checkout>/missions/verification/collision-boundary.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "f8cc9f5a4853346293173220290927b889d9af75c5296061e9d1a07a57331817",
-        "effective_sha256": "445dd984d65eff3c7d90b61bf741be3493c4d7b0473fe2f99fc97c69be5ab5ee",
+        "input_sha256": "20fa18b132c10197ba99a038fd97776af1aaf5e1944e9ecfa46c74bf6edd29eb",
+        "xml_sha256": "6faf2f80a4ee88972c5183a06d5fa15faa195775254ff44450edd50151fda278",
+        "effective_sha256": "9a8fcf35fbb05da7224912d73a52238b28e2098f9be3253e04dc7042d98fb8ec",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -1819,7 +1706,7 @@
         "frames.bin": false,
         "summary.csv": true
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-39-22",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-54-52",
       "cpp_output_hashes": {
         "frames.bin": "bdbe0e0925f08e7d65ceed1630836ccfeabe520e9e3209516dedffc9165890b0",
         "summary.csv": "19c27bfff4e0869bf2d34fa0dc356db8bd7f742fc9572d104c8ad7499c7f891a"
@@ -1841,7 +1728,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "c7bccbf88196876891b189b4d1e4bb1b5702b46665ecee7f5c55b4e4571ec823",
+      "recording_sha256": "9aebebfdbf87ccef259337f8c1951cebe0909bba9a62e529365590f29d8feb6e",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -1892,7 +1779,7 @@
         "passed": true,
         "deliveries": 14,
         "beliefs": 108,
-        "outputs": 660,
+        "outputs": 624,
         "sensor_states": 0,
         "skipped_sensor_deliveries": 0,
         "max_belief_position_error_m": 0.0,
@@ -1920,11 +1807,12 @@
     },
     {
       "case": "multirotor-fixes",
-      "mission": "<checkout>/missions/verification/multirotor-fixes.xml",
+      "mission": "<checkout>/missions/verification/multirotor-fixes.yaml",
       "passed": true,
       "input": {
-        "input_sha256": "8149ee1e7007f24d75c2ce3b6e02e88b53db41db7025dd03ccbe8c4bb1148de8",
-        "effective_sha256": "68f75bdc9dd40ca12f9100e3fadc2af5d6efade66156f726911731e4106f48ea",
+        "input_sha256": "8b65d317e56cf9c2d64f23d9684564ab1911c8966e0c1dd1102e8bdbf7a6b1cd",
+        "xml_sha256": "3814a935dc552f02f18d771d4885fd28739671e8012b5335323ffc6d4aa90841",
+        "effective_sha256": "c34aa9212e55bab93940b852d750f9922e92b40a10d7c6246278c6a04e2ce592",
         "run_overrides": {
           "enable_gui": "false",
           "network_gui": "false",
@@ -1951,7 +1839,7 @@
         "frames.bin": false,
         "summary.csv": false
       },
-      "cpp_log_directory": "cpp/logs/2026-10-14_20-39-30",
+      "cpp_log_directory": "cpp/logs/2026-10-15_06-55-01",
       "cpp_output_hashes": {
         "frames.bin": "e36c88b041af0c04a7e87e462ccc68ce24c3ecccf05cf2ff2bdecdac5ee34c21",
         "summary.csv": "180ffa148660433044882c93750718d0b19cb6eb04968c66ec3b3fd309c27aa7"
@@ -1973,7 +1861,7 @@
         "events.json": true,
         "summary.csv": true
       },
-      "recording_sha256": "9d8ed09739e36313ddaf56c5e226d979792bfcfaef2c038c364f8f27b87fa1a2",
+      "recording_sha256": "788792e3a8a7e2f7a069ea80099e2dd7faf3a212b4dc5dcbef6b1a56df447a85",
       "trace_equality": {
         "frames.bin": true,
         "events.json": true,
@@ -2059,13 +1947,13 @@
   "cpp_baseline": {
     "branch": "Ubuntu-24.04",
     "commit": "4bdf41fb06facaea358d478d9a07aa4d77fcac27",
-    "source_checkout": "/Users/ethanboos/Documents/GitHub/scrimmage",
+    "source_checkout": "/Users/ethanboos/GitHub/scrimmage",
     "source_policy": "committed local branch snapshot; no worktree edits",
     "source_archive_sha256": "09db71eeedd4f239249d47465774c65d7ee55f680a66c2316a0b71c61e71c2b1",
     "dependency_dockerfile_sha256": "a2a8aa72201d52858c918dc698d2b87d3780455b2d6afa424a1955e2b82eacfb",
     "dependency_image": "sha256:f8029c1bcc357a32cf2e1b1a31f080ab50042073e57770f9928a97ee9e030826",
     "build_dockerfile_sha256": "0a31489e9ab140ba42db56ad547379311358ab48913510be0949832d4ff3775b",
-    "image": "sha256:aa441c0668a80a22dcd56e799e62611edc1e906eb8f2a54c411ab65aa6e46d7a",
+    "image": "sha256:e0be30a91cca2cbf35399f5599682156be5a2b5aab35ae512573d02ac58a66dc",
     "image_tag": "ripple-reference:4bdf41fb06fa",
     "platform": "linux/amd64",
     "fixture_sha256": {
@@ -2079,13 +1967,13 @@
   "cpp": {
     "branch": "benchmarking-edits",
     "commit": "6b136c137bd3b9a111ee660fd12bf55c8ececc63",
-    "source_checkout": "/Users/ethanboos/Documents/GitHub/scrimmage",
+    "source_checkout": "/Users/ethanboos/GitHub/scrimmage",
     "source_policy": "committed local branch snapshot; no worktree edits",
     "source_archive_sha256": "47605743bae6b1007d01a9a93c27900fba3303adb691261e379a0399d09668ff",
     "dependency_dockerfile_sha256": "a2a8aa72201d52858c918dc698d2b87d3780455b2d6afa424a1955e2b82eacfb",
     "dependency_image": "sha256:f8029c1bcc357a32cf2e1b1a31f080ab50042073e57770f9928a97ee9e030826",
     "build_dockerfile_sha256": "0a31489e9ab140ba42db56ad547379311358ab48913510be0949832d4ff3775b",
-    "image": "sha256:837954395992d5958a3c368a25d9b879fe04860e57d4a87a3937ca0ee21ed15b",
+    "image": "sha256:c72c58a6b5c7006a54ed7556f97957e227e9a1408794bae835b49b167f28fb7a",
     "image_tag": "ripple-reference:6b136c137bd3",
     "platform": "linux/amd64",
     "fixture_sha256": {
@@ -2098,51 +1986,50 @@
   },
   "rust": {
     "binary": "<checkout>/target/debug/ripple",
-    "binary_sha256": "f39e4163ffcf1789adde1248aaa30e4790999194f16493237539b008b4f0a6af",
+    "binary_sha256": "e6c0fe6d5905249f039d9252e8d6c4a6b51fc5dbd624c6dc36872b9130215974",
     "compiler": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)\nbinary: rustc\ncommit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea\ncommit-date: 2026-08-18\nhost: aarch64-apple-darwin\nrelease: 1.98.0\nLLVM version: 22.1.8",
     "host": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
-    "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+    "source_sha256": "eddcfe312f03a067c75cc2ed5c516e267eaf673d063c040a56bb3fa4d3598d84",
     "source_hashes": {
-      "Cargo.lock": "466fc79f09b6e17366f756142e9e6b47f93ef861e048bc9a2162909d2e413198",
-      "Cargo.toml": "dc97a67a861bb9d5c0623911b18af67dae8ac206133ddf34f097b98fe9772c93",
+      "Cargo.lock": "4d0b8535d22f973857946d6858665af27cef2280359831bc73260e8ec2c144d5",
+      "Cargo.toml": "b7430d23ebcbd252b8cf6681c100a040dd13a0d4c14d534d38f8ddf48c12b1d1",
       "crates/ardupilot/Cargo.toml": "3ee6ecdefffc3167129509dfe190473627bee812727e218a2bc2576a67336817",
-      "crates/ardupilot/missions/rascal-runway.yaml": "df282c555122495a5c09cb49e0370f6f333bb7ec2f694abaceeb6fc89ed1ba89",
-      "crates/ardupilot/missions/rascal-sitl-pair.yaml": "4ee1785ead80f84c8ee0321edf7c1c9f7875edf7eafce8e4204f18475d350d98",
-      "crates/ardupilot/missions/rascal-sitl.yaml": "3bfa8f8d256520247abdceb2ab48324ae9985e6021b54705470c2c73257d51c9",
+      "crates/ardupilot/missions/rascal-runway.yaml": "e55d8a861cbdf3bc5805977b5d2474e0adac0565b3c02724e4bccec2434e2975",
+      "crates/ardupilot/missions/rascal-sitl-pair.yaml": "25088902bf558dbc483eaa7d8a59c0aaa71cac1b62793d07f5d31461df04ea25",
+      "crates/ardupilot/missions/rascal-sitl.yaml": "107b75e202033fc39054e91f39a00f9202f9af924210b3c298c3aaf65591ef64",
       "crates/ardupilot/src/ardupilot_bridge.rs": "709fdbd3ed0c02b63245431b06344a02ca5f24a629ba066cdac169ac9841bc33",
       "crates/ardupilot/src/json_sitl.rs": "ed21b6fbaf8de7de6b9bec12e3c4c67c5fb29c0685967661de62f816b826a85f",
       "crates/ardupilot/src/lib.rs": "3a908025d815f45689a648bc6c0f09a62e1eafc592309769630ffd2639884371",
-      "crates/ardupilot/src/sitl_launcher.rs": "8f206241d0aea5476ef1507e1f9ac2a2a05951a7b42cdee95dfac145983083dd",
+      "crates/ardupilot/src/sitl_launcher.rs": "948d6018f0036b40488c5993e5dfb6f3e0f96d409428055534a095e8a0542074",
       "crates/ardupilot/src/sitl_state.rs": "beb6414861fe4016a987fb207638684e9d9f4594442890d27eb1eea49ffb0a8b",
-      "crates/ardupilot/tests/lockstep.rs": "6ce32cf873a9b3fcdc709e265aa15bf9e18499f3019c235824ac447437002008",
+      "crates/ardupilot/tests/lockstep.rs": "290ac6b4ad36f2a816f3206f64daa93d19f518eea6ba5dc91e364e5dbbad19ea",
       "crates/cli/Cargo.toml": "75ad04823bcf1191bb9cc8f25714848ca06dc6feb15ab8d3cddd7e93f28f8d7b",
-      "crates/cli/src/compare.rs": "85ba7e321eb5388665d6954a5aa85f2042cbb4d6bd84546f892d9025c55f7c07",
-      "crates/cli/src/lib.rs": "229ae7b9ed7a322c1c54e09b76f188437ad7544bad155399e54cbf8f0c22204f",
+      "crates/cli/src/lib.rs": "3ea415a75c1905d4b7dea58cadc88de61c3c61d5de765f171e0bae6c988367fd",
       "crates/cli/src/main.rs": "79116d4e6511b747c2f7abc752956109a4daf7942a1edb95c5fea1aa1d625e0b",
       "crates/cli/src/replay.rs": "9fef635fc5d3e047967ba64f5785e69e5d9c9b7739880e19730ff5221465bb93",
       "crates/cli/src/run/output/tests.rs": "6f96857399dde983b6309bf5d82efd54ab37e722bf07f1d56c2b526de0eb15a5",
       "crates/cli/src/run/output.rs": "7c15d767bd163ccdcbdd6776301bf0e000e8253884aeb2b5b988ec2891179bd6",
-      "crates/cli/src/run.rs": "f110672c42a1a723a0db5d7c6eed78c4e2072cb7274763538444b64af7ca72c4",
-      "crates/cli/src/sweep.rs": "5d57cc7a4a09862ff1d777724b718e3ef50e977e0563cd2b96fae069bab301c5",
+      "crates/cli/src/run.rs": "ae2eba3a7fd36ab9886a530dfe6e6ff46d7377fe82217938ccd8e61c4a62c3dc",
+      "crates/cli/src/sweep.rs": "c86f844bb3d902957a30bdbd6690ae3e30c3445d7620779472e55d88de7477ab",
       "crates/cli/src/viewer/blueprint.rs": "7b7bf379c812638f567f29ab6b5d5c69b3bd169abf566087c2e2a43d23981765",
       "crates/cli/src/viewer/map.rs": "23afe901c794da7de7b7fe2929caef63ea7651df67ba8f6a3dd2c09307a8580c",
       "crates/cli/src/viewer/terrain.rs": "ff610b4a5d2596027245648ff7e18aa35c8abc77cdbac1c9c9af53cf4bbb5271",
       "crates/cli/src/viewer/trails.rs": "455d923ab02fdf9f1b5baab0efa226bc3208d932080131e9feba564211e238ac",
       "crates/cli/src/viewer.rs": "01ce8d37e34c81342cdce225ddec11d69892551d57811ca65659b29d8f54f336",
       "crates/cli/tests/replay.rs": "c800cc2f402fc433a9534cab8db59fef603a770989da2c62005b18d7a05e1425",
-      "crates/cli/tests/run_output.rs": "f91248a1474bafdfa78aec5cf2d0f00cc51690ed02473ea3f8093c8cffcee90b",
+      "crates/cli/tests/run_output.rs": "7dfd799bee7d10830da9d528449250f05fdc17051097c89bbc66effa34fb992e",
       "crates/cli/tests/rust_runner.rs": "8bc68fc9f56db2cc11a91c8fd3f06b568aa0c1efdfa1cfbcd3cafe0d91b326ce",
       "crates/cli/tests/sweep.rs": "48e756f94ecfb5d72cb1060828dddbe64984d39cd88a40bbee05d7988064d8f0",
-      "crates/core/Cargo.toml": "b36aeb604ebbbe1ff81f2635ea7ee5d7137f40e4b130cbce7959914f57e1b5a0",
+      "crates/core/Cargo.toml": "4b2ae35bdeba11ac26239f7b1c0b04375de1e4c6b6f6c9d2c90b99684e0737a2",
       "crates/core/src/autonomy.rs": "5f58a92927843f1b0a79088f9bbcaddae0c51f6fd4e1496cafdac0085c662d85",
       "crates/core/src/common/loop_rate.rs": "61837bb50b01e75c14b24a74d8079df73ece0522b55f1c9856cc6a33f54dd6d8",
-      "crates/core/src/common/pid.rs": "cd00c47d336fc75c0a3326007492bff23628ecbfd69a258fc76493ce29be05de",
+      "crates/core/src/common/pid.rs": "9fd91df073e8f5aeec6b03d0a93f61a0289e05ae2bcc0d3f554cc61feec2bdd7",
       "crates/core/src/common/plugin_random.rs": "6f186e0fe4721caeed825693c1d0a179e3e31bf20d4acbca738be2af68afe32b",
       "crates/core/src/common/random.rs": "894116ee00f663cbb255d748c617153dad99117ae672ed860ed158d4ebdac787",
       "crates/core/src/common/spatial.rs": "03da8d0451b3df1e3cb1ec18069a9d3cc6653c0c1bbe316af6284bf91f9dad63",
       "crates/core/src/common/terrain.rs": "1f913f0426d81ccbeedd5cc15772ee6ed17618c19600c29923aabad666ba7ecd",
       "crates/core/src/common/variable_io.rs": "d820cf1491dd36caee346dbdeebbf47666fefa3d2cf60233e785ee7ad7fb90b6",
-      "crates/core/src/common/waypoints.rs": "0893b2a26b26d3186f7600cf86b9dc16eb12ff47ec73285ff4423c779e18408b",
+      "crates/core/src/common/waypoints.rs": "6cefe438340ce9103ae2ee2c7d28b024b827fada04fcf2322b980315e4d650e1",
       "crates/core/src/common.rs": "3a36f927d1c1a690ab8307e39c8373fe127067757b13565cae95648ff1e670d5",
       "crates/core/src/controller.rs": "0070e93e5883f515aea749f8a54f23b12a93124c3923a92bddbd8814dd35c11a",
       "crates/core/src/entity/plugin_stack.rs": "0087044f4c7a7efd19bde7c947a4d63341fb7ccdee8fd7b876a9a93481e0f045",
@@ -2158,25 +2045,22 @@
       "crates/core/src/math.rs": "0a74e7033374c35de9c61be0b467d291f30fc9a28fd98e8d95f2b93088797a9c",
       "crates/core/src/metrics.rs": "67941058cef10b6853966d77d80bac2174957c940c9171ba9f17b91b439d9e54",
       "crates/core/src/motion.rs": "31964250cc9ab42451bf5b4c4938b95fb4580a1ea05fe4760972ea0a458115f9",
-      "crates/core/src/parse/mission.rs": "dd3db5670fd7a4cd7a7131ed7ee29e3f34affe6c5c00e05efb48037b9f4626b3",
-      "crates/core/src/parse/params.rs": "e3c557f28b8551adcaf53224c9f7b51a2906d37e98010dea2bec5d3b971dd43b",
-      "crates/core/src/parse/xml.rs": "da6e5a82ace1508df34bcaf3dca8ac0404a5f2570f730c3a2e21c8ba752c0148",
-      "crates/core/src/parse/xml_mission.rs": "849496757e8b43dade496e016dbfea1b41bb8c03a5ef53488868bc60412a8b46",
-      "crates/core/src/parse/yaml_mission.rs": "3a0d99a79bbf01fe81d48f4786d91847b9b595059320b82a1b32411d6cce8554",
-      "crates/core/src/parse.rs": "91740d01bbeed15e5f3c4a4df93e823b6ca231dbdaa0c18be65c3f3fdfa72a31",
+      "crates/core/src/parse/mission.rs": "17afe3a24196d65a4a49a824e630bfa1f9978ab57bff2bca316e3ee64e1a0331",
+      "crates/core/src/parse/yaml_mission.rs": "ff5aa315d078ff0279ea8b6b7931807a66c5fb95022cf313fd75edfa771092c3",
+      "crates/core/src/parse.rs": "bffe48c5977b5571315baf72e50e3e610ea1ca9bf86cb14eea0dfecb9e865087",
       "crates/core/src/plugin/autonomy/auction_assign/auction_assign.rs": "cf6a311ad86fede59e20c7330fb52b7192d0ef2367ada642f703aef558565b2a",
       "crates/core/src/plugin/autonomy/constant_velocity/constant_velocity.rs": "7b20e27b24fa6f6463e6e98d3e06bf62836581e4d74cb369e56ce754f8b8bd96",
       "crates/core/src/plugin/autonomy/force_replay/force_replay.rs": "ca5e280b1f825535ae9b8f63ed27931eb35b98fe5a2057b9a4538bb840390903",
-      "crates/core/src/plugin/autonomy/straight/straight.rs": "877e0261cf2cf066042d5db1f17a79cb9601807b8f44f039a45843e78c9cc081",
+      "crates/core/src/plugin/autonomy/straight/straight.rs": "5df4ecf50cc7f7d58045f3eaec731c0dfd29d52bce243682786eff3de3d8f43b",
       "crates/core/src/plugin/autonomy/waypoint_follower/waypoint_follower.rs": "3f1ecefd8f8fcc1c04b661220baf48a6694d503d8037a9af1daa99d467a36d1f",
-      "crates/core/src/plugin/autonomy.rs": "5c1fecc2d0f106a9a09afbf90b78593293cb761a889a644dd9c62c4ada33def5",
-      "crates/core/src/plugin/controller/aircraft_pid/aircraft_pid.rs": "094e87245ddb6ad98c04e9c91b0099d1820aefa406e7f322b1a0a09944a7e799",
+      "crates/core/src/plugin/autonomy.rs": "ab942ec1147c10c484754cf06979890b66b1b79e0a03313c1b960769d6d6d493",
+      "crates/core/src/plugin/controller/aircraft_pid/aircraft_pid.rs": "f0bf2177388b838e7ed68a8d6ca3559334e432a9291e2629c124a1f33a802587",
       "crates/core/src/plugin/controller/aircraft_velocity/aircraft_velocity.rs": "a35885a4957c23ea2f5fae8de27d5b8c4ad191e327fe7596acda9757f6446073",
       "crates/core/src/plugin/controller/motor_speeds/motor_speeds.rs": "7c07959ea0f55c4b371f4676910492c0cb0f63a54e74dfb0bad4bc2dcb0461ae",
-      "crates/core/src/plugin/controller/multirotor_velocity/multirotor_velocity.rs": "a9aa6edb8968cac9d8bf01395cba946ce2820f4bf9813a2229682ee2a931eebd",
-      "crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs": "32144f3ca05a321d964969e0af643c6932fdd5fb515d76c9a8a8d9c79cd72a30",
+      "crates/core/src/plugin/controller/multirotor_velocity/multirotor_velocity.rs": "5d958822370f806a6e93c0169364a20a2482e579bbdc31e34a844b87ebb84202",
+      "crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs": "2ff3e153294c886d4e2f9eaf95724dc02e99df30db7553822c3a4d224d8a048e",
       "crates/core/src/plugin/controller/single_integrator_simple/single_integrator_simple.rs": "413b9b98d9f0d09609d44fe120d91abb2e61506ed148475c47f74440dc0983b4",
-      "crates/core/src/plugin/controller.rs": "c98a9416e92a90b34517f80be90433a20e1defe2772c8c1bb6c7c465ea2a7552",
+      "crates/core/src/plugin/controller.rs": "72b6ea0b6112e017d98715233e4404d825598d0b2963c3c0c66fc223594e7e5e",
       "crates/core/src/plugin/estimator/pass_through/pass_through.rs": "0e046c069cfe65ead884ae6a77aad8d9c0aff7dcb36bcc5ff2a16f81c025c197",
       "crates/core/src/plugin/estimator.rs": "963c4290402e7c857428a0ce93d409d8048c407a675a557a155d4b49f27109da",
       "crates/core/src/plugin/interaction/boundary/boundary.rs": "83495a1c99cd8ffe4af1774eb492c3f8a864a7318e0ec066ccaa6f4be2bb3150",
@@ -2189,40 +2073,40 @@
       "crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs": "e7b6187ed4f62fa9d199b71bd2137aaa22308106a871433e5f1f9174c212377a",
       "crates/core/src/plugin/metrics/simple_spread/simple_spread.rs": "1c3a831278b5debc1e5977a90d66307fa31fa4a70a01281fa04bba600594fed1",
       "crates/core/src/plugin/metrics.rs": "0819d11e2b5d2d011c56284d8bedd34fe116ba7f4b95e96145d2aa0c5d4dd5cd",
-      "crates/core/src/plugin/motion/fixed_wing_6dof/aerodynamics.rs": "a996180faac503aaf8f35e7f99857e7f4ac0c29910a2082ed2586ff366f4e087",
-      "crates/core/src/plugin/motion/fixed_wing_6dof/airframe.rs": "4f5793cccb564c5a049f691ab5b88087fe73f9cd84decb7cc671490edc1300b9",
+      "crates/core/src/plugin/motion/fixed_wing_6dof/aerodynamics.rs": "ef3dfdf529276c2380d3fe134f4d014128dc8b541c48d36c6fca8efbbfe38870",
+      "crates/core/src/plugin/motion/fixed_wing_6dof/airframe.rs": "93603f9b7310d6d47dfd2b6df14f850038ce0be236b8830253f49261d0a82b2f",
       "crates/core/src/plugin/motion/fixed_wing_6dof/dynamics.rs": "79ba9b4a08eff0651e87dbc34fb9fac56191cd6469f27fd6934324c86f4e16b9",
-      "crates/core/src/plugin/motion/fixed_wing_6dof/fixed_wing_6dof.rs": "02b65e02fdd59fbf2a9216c270ee1050786ed1a3ee4acfe28ad9d293549c9211",
+      "crates/core/src/plugin/motion/fixed_wing_6dof/fixed_wing_6dof.rs": "f27a977016909b12686636248698e2634b74f57b0701d28ec42f7cf7edd6497a",
       "crates/core/src/plugin/motion/fixed_wing_6dof/landing_gear.rs": "ed8b4f1fc1df1e729d49183a94cf00c43e5c550f01e81b5e4dfe1860263b315b",
       "crates/core/src/plugin/motion/mpe_particle/mpe_particle.rs": "cf8d8d8a458a578cfe4f9257af0047f1865ad12d62772971c7b05b016b107e8a",
-      "crates/core/src/plugin/motion/multirotor/airframe.rs": "25ccb730f28ce032e55f46be8d4e1be5bf4db5f7c7393bacfc6ed498e8ea3204",
+      "crates/core/src/plugin/motion/multirotor/airframe.rs": "bcf63f1092c3e84219f8a089e4bbfaeb508c06170ac4cc2559264c0f5db0bb5e",
       "crates/core/src/plugin/motion/multirotor/dynamics.rs": "21b7036b4547de549e48638bc8af3b917f407d10182c7e837ef5d380cc352daa",
-      "crates/core/src/plugin/motion/multirotor/multirotor.rs": "4e5262671cbdee1b3d78c96eb57383f9144503924e7c1164c36287628c27d35e",
+      "crates/core/src/plugin/motion/multirotor/multirotor.rs": "cf60aea21f29b3fb2306dad0bab427639a7c4c992a078dd2ad51e5fb9137988f",
       "crates/core/src/plugin/motion/multirotor/rotor.rs": "3ecf623515591df65ad3e3d87a53876ca226ca93ee73afdb05a60177d2800cd5",
-      "crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs": "4b6fff256a3665b0c06f8069476d3330d5eeac7b53cca99681199bf4cbe767df",
-      "crates/core/src/plugin/motion/single_integrator/single_integrator.rs": "d2f829b88947e9a966e9210a1477122250ee37f20b65824847a323acc768c1da",
-      "crates/core/src/plugin/motion.rs": "4591a78bad316cd8cc074a009701df5119f81dd30eaa485faef52b97df4a01b5",
-      "crates/core/src/plugin/network/global_network/global_network.rs": "06cf4cc03b7d04c866b592d67ac1ef3e562e3b5ae43c6f086a7152f4a83b07cf",
-      "crates/core/src/plugin/network/local_network/local_network.rs": "84bf402e131abf172d9015fb26309a4eb664fa265476d75ea2d9c90c44d177e6",
-      "crates/core/src/plugin/network/sphere_network/sphere_network.rs": "26d510dbd4dce3b2df72e5b748dbb360964e3888e4e5b916a24cbb2b3a091aae",
+      "crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs": "690b06fe79141c46b1bd0e0f0ad6d11bf51031a1ebbbafb5ff01b62f284c51f0",
+      "crates/core/src/plugin/motion/single_integrator/single_integrator.rs": "baaa32d5222c5ca7a05f839602cbd78964f8dd0860c79917d71b9ed1c75f8a83",
+      "crates/core/src/plugin/motion.rs": "6449a3707a3f66542e38b4786922ad84e2dde697b17ea5960fdd02271ee454d2",
+      "crates/core/src/plugin/network/global_network/global_network.rs": "e90f02c373617f9ba4e3c1806d675f72f9b0ec0d816a614a371deaf766eb0f26",
+      "crates/core/src/plugin/network/local_network/local_network.rs": "786ff609416547a3ba0de82fc79395d83e8ba6a9dd7927b66582355f9f29378e",
+      "crates/core/src/plugin/network/sphere_network/sphere_network.rs": "0ee0450bbf6c8f325bbbb6a4cdb36e013ae025010a5c6a2ebe9f927f49781d82",
       "crates/core/src/plugin/network.rs": "e8e87a29b0ebe92f97327a011477fdcd9c848baa539fb7714f4b7d5f27a7e883",
-      "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs": "9a5466a78389298c23eb6c51e4f3e2d323e6fedd6e8d7be9d6484bc3af60f255",
+      "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs": "90ffe6b20fd49267c8c95ee1d9ec25a6a2298b57e07db34102e61bb8cb18f882",
       "crates/core/src/plugin/sensor/noisy_position/noisy_position.rs": "a6f70ca6600b9ff27be35e7916d34a0f176f1472e7e5638c842129325e6e8e81",
-      "crates/core/src/plugin/sensor/noisy_state/noisy_state.rs": "0fa670d98e7fc4a9999c3703b1926abd4ba46f4108c78e5a6d270372629fbb2e",
-      "crates/core/src/plugin/sensor.rs": "db79d9ad6bfef7f1262d8b92e6dab4224764b85de672289c8c9898590c963a8f",
+      "crates/core/src/plugin/sensor/noisy_state/noisy_state.rs": "33d564fefea59635c06766e09d03dd3ccb5ad59af0bbf90fed27e633f0df26ee",
+      "crates/core/src/plugin/sensor.rs": "21af20babcbefe5d5cec505605d8051993baf10f27f0365fdb3bd83c4562e5be",
       "crates/core/src/plugin.rs": "d908e542e95518d8a38430e290b8d02353b46fe1fd0b1fef2c64aebb5cf9e107",
       "crates/core/src/plugin_manager/builtins.rs": "d74a9e2f2d4954920654c43e1dc971545e95d3a41aa0006bb7e44acfe049bebd",
-      "crates/core/src/plugin_manager/entity_plugin.rs": "1822856e79266c2fbd5435f4f2340de7a9d415b5adbd59f50232e7804f8a7cab",
-      "crates/core/src/plugin_manager/registry.rs": "897008cb24f14753d0b720662cd6706ba4d713a7fc5b883c98f209d8b144cd92",
-      "crates/core/src/plugin_manager/supported_options.rs": "063012180e1b28b1969ca50283a1d1dfd4dd902e8504045e6effef18218f650f",
+      "crates/core/src/plugin_manager/entity_plugin.rs": "017a2fc2b87480b74187d1cd2a2a9203c81df890dd237d33959cb1f876b34e12",
+      "crates/core/src/plugin_manager/registry.rs": "a4a4b11eed6f32f6eda7e76fe93a401e51e030c4831b45d893529b52f97b9f4f",
+      "crates/core/src/plugin_manager/supported_options.rs": "b4ff7646b0f8514ef374fe6b2e39dabb246e3e8c62079205d87332970f1f3868",
       "crates/core/src/plugin_manager.rs": "52536023b89ca1dbd2ea03af253783a6fa9ad9c481f6904de62ccf0aa0ed5741",
       "crates/core/src/protocol/frame.rs": "f5d22dd737bd0422d144d194eff896b26878a07def488965c1f25b8908e40c2c",
       "crates/core/src/protocol/wire.rs": "2fa24ec1a3496d19cb7add20c03a9dcd5f96afbf6c31c454810e63cca913521b",
       "crates/core/src/protocol.rs": "f9f5a77b5d602a590974ac7f3b3e82072a71f6ab4efb55e46b36f2eaa5d07ae1",
-      "crates/core/src/pubsub/messages.rs": "9872c1b8a73482f56329537ced6172e503f47c8c655bd3e328a8031575d722d7",
+      "crates/core/src/pubsub/messages.rs": "f6f8425d4de246c15326e46bcf4298dd8c8e953b2aa7c667ba17c0d90eb143ca",
       "crates/core/src/pubsub/network.rs": "bff93acc61471e93e13211376c2f692a9045c13f1385c815b5f2ca05f093903c",
       "crates/core/src/pubsub.rs": "dd30c5af83b6016b2b3b61a4a61fda73430e2faced019f92693b4330032844bd",
-      "crates/core/src/scenario.rs": "1d4221396f294043dbabf3a08a1d452dc1850aa252dc49704f64512e135f79a6",
+      "crates/core/src/scenario.rs": "88c52984fde0c359c088df3aa4ed6f38809e9ff40fc3030f124dc155557c3c9c",
       "crates/core/src/sensor/readings.rs": "301668467260e133fb739c9667eb50de5f03cb5a695d308410f8a611cc9e3545",
       "crates/core/src/sensor.rs": "bb3c4b41802634f5f8ef57fbc477bdbb7175ef7db4906981c7e3b6e8b48db7bd",
       "crates/core/src/simcontrol/generation.rs": "c691db27f5c39e7e749c51420a590a610ca048cbd2cba117ac8fe2ed258e7617",
@@ -2232,45 +2116,43 @@
       "crates/core/src/simcontrol/world_plugins.rs": "f2ecd7fd5593783981f1134c2a2bc86e2d02449dca536fcae75848b72b191a99",
       "crates/core/src/simcontrol.rs": "188603862ad6a5b7168518e570240d2702bdc442fb90638850101dc8763a0d0c",
       "crates/core/tests/aircraft_velocity.rs": "3f4ded21186b013f17d8b09c228bb4b53ddf73080771438879b76def8a7c97ef",
-      "crates/core/tests/core_contracts.rs": "bbea4285917b7003b319e2b3d79efa598089076a6f604b025ee5317d3c0ed876",
+      "crates/core/tests/core_contracts.rs": "803d78cafdfdadf74b21038150e1180daba891ce61bbac1f095f3c8031ab25db",
       "crates/core/tests/estimation.rs": "7aa04d7bd0e5a0af87916800e85f226f2be96643f309a4c6898d7d2eeecd546b",
-      "crates/core/tests/fixtures/perception_communication.xml": "9b1d705a188eb81f83a7ccedec47d7f671fa4de00bf56a701694c337c220254b",
-      "crates/core/tests/fixtures/plugin_contracts.xml": "ace7b8bed57e8db064e957fdedc567e388acc3c289510b1f3a3cd86ca0e7b939",
-      "crates/core/tests/fixtures/plugin_defaults.xml": "0ca63e5fe30043d4ddeddab3f6fbaba452cd65802f15de01de8334bb92dc65cb",
-      "crates/core/tests/fixtures/plugin_overlay/SimpleAircraft.xml": "13fdcf4cbf725aa39ec714c9f7b3ea689a16116a3290e5a8049d56796071cd11",
-      "crates/core/tests/fixtures/rust_scenario.yaml": "1eea32677bba4453c474fe0c9d0cafa2a553c82749105cf30b172e7a33d6c2c8",
+      "crates/core/tests/fixtures/perception_communication.yaml": "008a4c97787354abdf5b5b1db28dd5729c286c0a7cbbcc7c7cc9265f30d91cb4",
+      "crates/core/tests/fixtures/plugin_contracts.yaml": "532a04a14ade20d32214c23e9eea501c174d2b075ba7b109663d5e1d9711e3c1",
+      "crates/core/tests/fixtures/plugin_defaults.yaml": "750a5d4060932d307a1d4dc7365a3450c15a87650f71b3b4ab49a6223536ae1f",
+      "crates/core/tests/fixtures/rust_scenario.yaml": "ba146d8b698ad272a0b6714dd91bb9353ef21f01081ee9e382736d2150f94d39",
       "crates/core/tests/landing_gear.rs": "db95f0ae13faac393f52dbedd108c7179aaad0d5168598a446c75b4859730f2f",
       "crates/core/tests/math_helpers.rs": "8486180d524907f1bf0935bfc3c15368f07daf3c282b7e6a20e9656aff3f0d58",
-      "crates/core/tests/navigation.rs": "0a4a57daca4dd6133d272ab08127c2d28b9794f666500abd7953cfae6bc1f375",
-      "crates/core/tests/noisy_state.rs": "67746efa0faa529c08c24291e0a54c9dd26b1c40dbaac9e9844a4a147cdc272f",
-      "crates/core/tests/plugin_contracts.rs": "e1b3266cec49808aa2a8e089a7df50bb3ce68e0b94f0b61aebd6cf314205c802",
-      "crates/core/tests/rust_scenario.rs": "5cac7fc4fad911d1aee90e851eef5a27789bf9b42d8218e36e731df877ef1867",
-      "crates/core/tests/simulation_regression.rs": "b01d3c6df41140c0804973972f97fdcf6f53787c16d68acc4029de9e62a05afd",
+      "crates/core/tests/navigation.rs": "956fb995096ae9eddd709228fd10500a4579594e55c449224942586105e030ab",
+      "crates/core/tests/noisy_state.rs": "c3b79ff9253c5c473a047e66d96d165159b9b4160659d69b49b4f6f08de05522",
+      "crates/core/tests/plugin_contracts.rs": "9baedb5e815d59c358119569c2395b5812949bd86e706754f1a06e18738bd38e",
+      "crates/core/tests/rust_scenario.rs": "f509bad727ca0c0cfaf26986876d67701bc0dc8f05d910bd5b04ac18d8d14889",
+      "crates/core/tests/simulation_regression.rs": "1c941c625a838783f3d953705582e8f9c6079d13f96be0e9ad8ed170a7561a06",
       "crates/core/tests/spatial_lookup.rs": "4fefe94d918b820564f28648109f68c563354317d5425877516f09c3216ce9ba",
       "crates/core/tests/support/autonomy.rs": "6bf8e985d7b8985991e8d51c46e4fbcd1838fcf3d4d90908472da11aefc1fb04",
       "crates/core/tests/support/controller.rs": "f27c374881b1b4e7b87538888f28c68674d716e6c64e4555720a53c157fb5888",
       "crates/core/tests/support/estimator.rs": "e06e14b0b86d65f7036745b53a668892db5d869d6d12b7a9cce59840a4b673ec",
       "crates/core/tests/support/interaction.rs": "7d7a12cab8d55471e4b16959968d21a38b6fdaa15607d605ba22ae54fe50b822",
-      "crates/core/tests/support/lifecycle.rs": "3cb55326bc40f125afa3f09d0f8c3a572fd65c59955ed158b29d5f9457fb7fa2",
+      "crates/core/tests/support/lifecycle.rs": "df1a589ace43288aa8b2e47de68d77bfd5a3c397ce1037b0b93bc719f31e5ec7",
       "crates/core/tests/support/metrics.rs": "55213bd74c2de26ddaf8dbfbeb06605253ac2cdff021178dc6d56c362948006b",
       "crates/core/tests/support/motion.rs": "5f36253a496451372da80cc2caf1e35fb6ef6a1792909b866fcf73dfe2e6d546",
       "crates/core/tests/support/network.rs": "df45918eef4eceab7f477bbd0090663b013c9d20191b72e43e79d4a60581a526",
-      "crates/core/tests/support/perception_communication.rs": "161a22720284a430bad85591b8ab255568e87d9631c5016b3984d19f31bee25f",
-      "crates/core/tests/support/plugin_fixtures.rs": "97eefc3ba7ffa4b2ebdf1ba96b670847de38656fb678db43627306bd64a76678",
+      "crates/core/tests/support/perception_communication.rs": "c9c432979173f151dc25492c15dc62293bd443f362ded379524d149b06ba068c",
+      "crates/core/tests/support/plugin_fixtures.rs": "6cbe136f36a3e5db690277ad02b2a500bee916fe5f9ed20c681f03d3a24df8b9",
       "crates/core/tests/support/sensor.rs": "e4c991443c02fbbdb3fd9eec1b05095b17ceea3a9fdfbcce8b155f2c488ab134",
       "crates/core/tests/terrain.rs": "1bd3ce19c3f5f9320de4a3fe04e82c5942581039ec12a0e72a4e4ad5665d34e1",
-      "crates/core/tests/world_models.rs": "73cf9f6743153172afc651a6322fec364d34f163022fba6aac0414d75cf5eb58",
-      "crates/core/tests/yaml_missions.rs": "f7b8253c5b0cc77c86c45e627fe3f31d496256ec852791b82e20ffa991c740b5",
+      "crates/core/tests/world_models.rs": "1044fb7012e6d469fecff681ff2a92d95147d3be9d546b7cfb4d9d2db79fb6f1",
       "crates/starter/Cargo.toml": "17e4b035021f63405e81a5dcf4bc60ef9fded6e4c93ab03471fcd12928ae0244",
-      "crates/starter/missions/dead-reckoning.yaml": "259f6a191916d09d943080935326443de1f8b482979dccc3aebcc0ff76625860",
+      "crates/starter/missions/dead-reckoning.yaml": "a2aeb389ede64fe7e74fcfbfc13029ddd0b9b989dc5f9450d17650a0ee57b228",
       "crates/starter/missions/follow-nearest.sweep.yaml": "65d580969f371843cbda10065fe6b9fb00699d9938f788e4a652687dca68a522",
-      "crates/starter/missions/follow-nearest.yaml": "c10d014a1565265e8d99c4d9ecf649f03a9886c717346db6ea42e8a00af08dc5",
+      "crates/starter/missions/follow-nearest.yaml": "ae6811709c5080f38620ca3bc2c03b63347e2fa478cbb07be1fd94b661ad5c8f",
       "crates/starter/src/dead_reckoning.rs": "b3194c9ed0743cb5d01ddac85d7aad2ea3915dec19c0f01de23419dbc449326e",
       "crates/starter/src/follow_nearest.rs": "17ff28988bc8be6cff3b2ad72eecaa08cee9baa61b7fd3c7c6c477059242b372",
       "crates/starter/src/lib.rs": "85e565441948827702a760d74a0f6463cb560069cf6620d6d115d42c6ee4f708",
-      "crates/starter/tests/dead_reckoning.rs": "f3e51bc3365b3bb07462eb52f35581eb8c0cc472a8024873cb741954f6cc194d",
-      "crates/starter/tests/follow_nearest.rs": "436d290adf2817f7fe5d51a591a2302c1fc1e4a59884ab49ad085f2d9b08d30e",
-      "reference/benchmark_runner.rs": "539c83035334586b4fbab94a5cb7f34bebcd2729297c1d1ee84d5d2ee6d0cf90"
+      "crates/starter/tests/dead_reckoning.rs": "1b53597e072afddb7b33b677119377eedcf61eaaca8b3802bb1950563b23c45b",
+      "crates/starter/tests/follow_nearest.rs": "02cf60041b19d7ab95c3587721729a2b35e79b733b030ba6b79a6f5af5e0b3d5",
+      "reference/benchmark_runner.rs": "656394cad3b64f2e5204a6b8f58e95b295847e99873d6ee9d61a8b5f874c74eb"
     }
   }
 }

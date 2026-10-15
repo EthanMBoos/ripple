@@ -1,0 +1,50 @@
+# SphereNetwork reachability through AuctionAssign's messages on a network
+# named CommsNetwork. Stationary agents: in range, exactly at the 100 m range
+# along x and in 3D, just inside, and out of range. Deliveries are compared in
+# the comparison trace; random bid values are not.
+format_version: 1
+name: sphere-network-auction
+
+run:
+  end_s: 7
+  dt_s: 0.1
+  seed: 5
+
+networks:
+  GlobalNetwork:
+  CommsNetwork:
+    plugin: SphereNetwork
+    range: 100
+    prob_transmit: 1
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  bidder:
+    team: 1
+    visual_model: sphere
+    heading_deg: 0
+    autonomy:
+      AuctionAssign:
+        network_name: CommsNetwork
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}
+
+entities:
+  origin:
+    template: bidder
+    position_m: [0, 0, 0]
+  in_range:
+    template: bidder
+    position_m: [50, 0, 0]
+  at_range_x:
+    template: bidder
+    position_m: [100, 0, 0]
+  at_range_3d:
+    template: bidder
+    position_m: [60, 0, 80]
+  just_inside:
+    template: bidder
+    position_m: [99.999, 0, 0]
+  out_of_range:
+    template: bidder
+    position_m: [200, 0, 0]

@@ -1,0 +1,143 @@
+{
+ "format_version": 1,
+ "name": "generated-023",
+ "run": {
+  "end_s": 10,
+  "dt_s": 0.05,
+  "motion_multiplier": 1,
+  "seed": 231685063
+ },
+ "interactions": {
+  "SimpleCollision": {
+   "collision_range": 17.4691
+  }
+ },
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 2,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    108.838,
+    -462.398,
+    112.693
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "randomize_every_spawn": true,
+   "heading_deg": -118.66,
+   "roll_deg": 4.36192,
+   "pitch_deg": -1.39623,
+   "autonomy": {
+    "Straight": {
+     "speed": 16.1237,
+     "loop_rate": 0
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 0
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 27.0607
+    }
+   }
+  },
+  "group1": {
+   "team": 1,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    -265.148,
+    -401.174,
+    244.341
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "randomize_every_spawn": true,
+   "spawn": {
+    "rate_hz": 3.74025,
+    "batch_size": 1,
+    "start_s": 0.0352517,
+    "time_stddev_s": 0.05
+   },
+   "heading_deg": -66.4283,
+   "roll_deg": 2.4978,
+   "pitch_deg": 2.32122,
+   "autonomy": {
+    "Straight": {
+     "speed": 15.4306,
+     "loop_rate": 0
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 50
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 34.7088
+    }
+   }
+  },
+  "group2": {
+   "team": 3,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    -75.4206,
+    473.05,
+    139.485
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "randomize_every_spawn": true,
+   "spawn": {
+    "rate_hz": 1.18706,
+    "batch_size": 1,
+    "start_s": 0.361306,
+    "time_stddev_s": 0.05
+   },
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      8.54118,
+      2.28992,
+      -0.58128
+     ],
+     "loop_rate": 2
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  }
+ }
+}

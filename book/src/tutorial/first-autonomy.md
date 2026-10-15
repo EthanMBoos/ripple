@@ -242,20 +242,15 @@ run:
   seed: 1
 end_conditions: [time, one_team]
 
-interactions:
-  SimpleCollision:
-networks:
-  GlobalNetwork:          # Straight listens on it for a boundary
-metrics:
-  SimpleCollisionMetrics:
+interactions: {SimpleCollision: {}}
+networks: {GlobalNetwork: {}}   # Straight listens on it for a boundary
+metrics: {SimpleCollisionMetrics: {}}
 
 templates:
   aircraft:
     visual_model: aircraft
-    controller:
-      SimpleAircraftControllerPID:
-    motion_model:
-      SimpleAircraft:
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
 
 entities:
   target:
@@ -335,11 +330,10 @@ fn chaser_catches_the_target() -> Result<()> {
     let crate_folder = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut registry = PluginRegistry::with_builtins();
     starter::register(&mut registry)?;
-    let mission = Mission::load_with_registry(
+    let mission = Mission::load(
         &crate_folder.join("missions/follow-nearest.yaml"),
         crate_folder,
         &Params::new(),
-        &registry,
     )?;
     let mut simulation = Simulation::new(mission.scenario, &registry, 1)?;
     while simulation.step()?.is_some() {}
@@ -363,7 +357,7 @@ This is a *mission-level* test. Instead of checking one function, it runs the
 whole simulation and checks the outcome. It catches problems that only show up
 when plugins work together, such as a wrong sign in a heading.
 The test builds the same registry as `ripple` (stock plugins plus
-`starter::register`), and `load_with_registry` loads the mission with it.
+`starter::register`) and runs the mission with it.
 
 > [!NOTE]
 > The `1` in `Simulation::new(..., 1)` is the worker count. Results are identical

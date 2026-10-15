@@ -1,0 +1,29 @@
+format_version: 1
+name: aircraft-pid-upset
+
+run:
+  end_s: 45
+  dt_s: 0.01
+  seed: 12345
+
+networks: {GlobalNetwork: {}, LocalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+entities:
+  a4:
+    team: 1
+    position_m: [0, 0, 1000]
+    velocity_mps: [192.26, 111, 0]
+    heading_deg: 30
+    roll_deg: 5
+    pitch_deg: 3
+    visual_model: sphere
+    autonomy:
+      Straight:
+        speed: 220
+    controller:
+      AircraftPIDController:
+        airframe: a4d
+    motion_model:
+      FixedWing6DOF:
+        airframe: a4d

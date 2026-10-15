@@ -1,0 +1,131 @@
+{
+ "format_version": 1,
+ "name": "generated-002",
+ "run": {
+  "end_s": 1000.0,
+  "dt_s": 0.1,
+  "motion_multiplier": 5,
+  "seed": 856800515
+ },
+ "interactions": {
+  "SimpleCollision": {
+   "collision_range": 10.1489
+  },
+  "Boundary": {
+   "center": [
+    0,
+    0,
+    200
+   ],
+   "lengths": [
+    800,
+    800,
+    400
+   ],
+   "show_boundary": false
+  }
+ },
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 3,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    -337.697,
+    -159.946,
+    110.515
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "heading_deg": 41.0648,
+   "roll_deg": -3.5145,
+   "pitch_deg": -1.48645,
+   "autonomy": {
+    "Straight": {
+     "speed": 28.115,
+     "loop_rate": 5
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 50
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 29.1041
+    }
+   },
+   "sensors": {
+    "NoisyContacts": {
+     "position_bias_m": [
+      1.97241,
+      -0.136042,
+      -0.0646614
+     ],
+     "velocity_bias_mps": [
+      -0.414115,
+      -0.397812,
+      -0.157364
+     ],
+     "attitude_bias_rad": [
+      -0.0235243,
+      0.0328855,
+      -0.0338561
+     ]
+    }
+   }
+  },
+  "group1": {
+   "team": 3,
+   "count": 1,
+   "visual_model": "sphere",
+   "position_m": [
+    -294.785,
+    452.021,
+    172.35
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "spawn": {
+    "rate_hz": 1.78345,
+    "batch_size": 1,
+    "start_s": 0.355696,
+    "time_stddev_s": 0
+   },
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      2.72884,
+      2.26456,
+      1.1536
+     ],
+     "loop_rate": 2
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,56 @@
+# Measured contact feedback and radio auction contracts: three agents on
+# SphereNetwork; the last is out of range.
+format_version: 1
+name: perception-communication
+
+run:
+  end_s: 2
+  dt_s: 0.25
+  seed: 12345
+
+interactions:
+  RemoveContacts:
+    remove_at_s: 100
+networks:
+  LocalNetwork:
+  SphereNetwork:
+    range: 100
+    prob_transmit: 1
+
+templates:
+  agent:
+    heading_deg: 0
+    autonomy:
+      AuctionAssign:
+        auction_duration_s: 0.5
+      ContactFollower:
+        follow: false
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}
+    sensors:
+      NoisyContacts:
+        position_bias_m: [2, 0, 0]
+        position_stddev_m: [0, 0, 0]
+      Observer:
+
+entities:
+  first:
+    template: agent
+    team: 1
+    position_m: [0, 0, 0]
+  second:
+    template: agent
+    team: 2
+    position_m: [50, 0, 0]
+    spawn:
+      rate_hz: 1
+      batch_size: 1
+      start_s: 0
+  third:
+    template: agent
+    team: 3
+    position_m: [200, 0, 0]
+    spawn:
+      rate_hz: 1
+      batch_size: 1
+      start_s: 0

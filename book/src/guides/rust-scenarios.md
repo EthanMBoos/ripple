@@ -2,7 +2,7 @@
 
 A `ScenarioConfig` describes the experiment. A `PluginRegistry` supplies its
 available behaviors. `Simulation::new` validates the description and constructs
-the running simulation. XML and YAML mission readers produce the same scenario.
+the running simulation. A YAML mission is read into the same scenario.
 
 Use Rust when you want loops or calculations to generate a setup. Keep scenario
 functions in your workspace research crate alongside your plugins.
@@ -85,7 +85,7 @@ missions](yaml-missions.md).
 use ripple_core::{Mission, Params, Simulation};
 
 // Either load a mission or call your Rust setup function.
-let mission = Mission::load_with_registry(path, root, &Params::new(), &registry)?;
+let mission = Mission::load(path, root, &Params::new())?;
 let mut simulation = Simulation::new(mission.scenario, &registry, 8)?;
 while let Some(frame) = simulation.step()? {
     // Inspect state or collect experiment-specific output.

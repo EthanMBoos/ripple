@@ -11,7 +11,7 @@ pub struct PidGains {
     pub proportional: f64,
     pub integral: f64,
     pub derivative: f64,
-    /// Error units for linear loops; degrees at the XML boundary for angular loops.
+    /// Error units for linear loops; degrees, as missions give it, for angular loops.
     pub integral_band: f64,
 }
 
@@ -42,7 +42,7 @@ impl Pid {
         Self::new(gains, false)
     }
 
-    /// Convert the legacy integral band from degrees; updates use radians.
+    /// Convert the integral band from degrees; updates use radians.
     pub fn angular(gains: PidGains) -> Self {
         Self::new(gains, true)
     }

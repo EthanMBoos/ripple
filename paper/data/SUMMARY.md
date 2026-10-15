@@ -10,8 +10,8 @@ Every check of `reference/suite.py` in this release, on 3 different sources (`re
 | --- | --- | --- | --- |
 | `speed-regression` | Rust speed and memory have not regressed | reference/perf_baseline.json, accepted on the same machine and toolchain | passed; no workload slower than the baseline |
 | `rust-tests` | Rust unit, integration, and mission regression tests; formatting; lints; tests of these checking tools | expected values in the tests | passed |
-| `rust-determinism` | worker counts, recording, tracing, and spatial lookup method change no output | the one-worker run | passed; 45 missions, 0 differing |
-| `cpp-agreement` | behaviour matches C++ SCRIMMAGE on the curated missions (reference/missions.txt) | C++ SCRIMMAGE in Docker: the unmodified and comparison branches | passed; 16 of 16 pass |
+| `rust-determinism` | worker counts, recording, tracing, and spatial lookup method change no output | the one-worker run | passed; 39 missions, 0 differing |
+| `cpp-agreement` | behaviour matches C++ SCRIMMAGE on the curated missions (reference/missions.txt) | C++ SCRIMMAGE in Docker: the unmodified and comparison branches | passed; 15 of 15 pass |
 | `cpp-generated` | agreement over 100 random scenarios (seed 1) | C++ SCRIMMAGE | passed; 100 of 100 pass |
 | `cpp-long` | agreement over ten 1,000 s scenarios (seed 7), and whether late divergence is the port or the dynamics | C++ SCRIMMAGE; Rust after one-ulp nudges | passed; 10 of 10 agree throughout |
 | `cpp-noise` | sensor noise matches sample for sample, and by distribution | C++ SCRIMMAGE NoisyContacts samples | passed; samples agree; distributions agree |
@@ -38,7 +38,6 @@ Each curated mission (`reference/missions.txt`) against the comparison branch. L
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `aircraft-collision` | SimpleAircraft, PID, collision, removal | 976 | 0 | 0 | 0 | 5 | 0 | 5856 | 0 | match |
 | `aircraft-long-horizon` | SimpleAircraft, PID, long horizon | 2001 | 0 | 0 | 0 | 1 | 0 | 12000 | 0 | match |
-| `aircraft-multiplier-typo` | as above; upstream multiplier typo | 2001 | 0 | 0 | 0 | 1 | 0 | 12000 | 0 | match |
 | `substeps-random-spawn` | substeps, rates, randomized spawning | 95 | 7.0e-14 | 1.2e-12 | 7.4e-14 | 4 | 0 | 546 | 8.1e-13 | match |
 | `substeps-scheduled-spawn` | substeps, rates, two spawn schedules | 176 | 1.4e-14 | 2.1e-14 | 1.8e-15 | 7 | 0 | 1014 | 1.8e-14 | match (summary explained by the scoring rule) |
 | `noisy-state-bias` | NoisyState bias, belief feedback | 31 | 7.1e-15 | 1.0e-14 | 2.3e-15 | 1 | 30 | 180 | 3.6e-14 | match |
@@ -50,7 +49,7 @@ Each curated mission (`reference/missions.txt`) against the comparison branch. L
 | `noisy-contacts-bias` | NoisyContacts bias, attitude, covariance | 93 | 0 | 1.2e-14 | 1.3e-15 | 3 | 180 | 540 | 9.1e-15 | match |
 | `sphere-network-auction` | SphereNetwork reach, AuctionAssign | 426 | 0 | 0 | 0 | 22 | 0 | 2520 | 0 | match |
 | `sphere-network-loss` | SphereNetwork loss, keyed draws | 568 | 0 | 0 | 0 | 27 | 0 | 3360 | 0 | match |
-| `collision-boundary` | SimpleCollision range boundary | 108 | 0 | 0 | 0 | 14 | 0 | 660 | 0 | match (summary explained by the scoring rule) |
+| `collision-boundary` | SimpleCollision range boundary | 108 | 0 | 0 | 0 | 14 | 0 | 624 | 0 | match (summary explained by the scoring rule) |
 | `multirotor-fixes` | Multirotor fixes: initial velocity, rotor tilt, idle | 6003 | 3.7e-13 | 3.6e-13 | 2.8e-14 | 3 | 0 | 24000 | 0 | match |
 
 ## Generated scenarios
@@ -112,9 +111,9 @@ The 3,600 measured states agree one for one, to 1.3e-13 m. NoisyContacts error d
 | Defect | Missions | Detected by |
 | --- | --- | --- |
 | controller substeps receive the full step dt | 2 | frames, trace |
-| frame timestamp labels the time after the step | 16 | frames, summary |
+| frame timestamp labels the time after the step | 15 | frames, summary |
 | rate-limited plugins receive the tick's dt | 2 | frames, trace |
-| network delivers one tick late | 16 | summary, trace |
+| network delivers one tick late | 15 | summary, trace |
 | SphereNetwork range becomes inclusive | 1 | trace |
 | SimpleCollision range becomes inclusive | 1 | frames, summary, trace |
 | sensor attitude errors applied in yaw-pitch-roll order | 2 | frames, trace |

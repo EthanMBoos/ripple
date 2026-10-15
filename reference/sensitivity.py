@@ -104,7 +104,7 @@ def evaluate(binary, cases, output):
         mission = result.get("case", case.name)
         run = output / case.name
         completed = subprocess.run([
-            binary, "run", case / "input/input.xml", "--root", ROOT, "--output", run,
+            binary, "run", case / "input/input.yaml", "--root", ROOT, "--output", run,
             "--workers", "1", "--no-rerun", "--trace",
         ], capture_output=True, text=True)
         if completed.returncode:

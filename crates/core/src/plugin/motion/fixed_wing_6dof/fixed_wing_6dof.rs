@@ -15,7 +15,7 @@
 //!   numbers come from `airframe.rs`: the A-4D (Nelson) or the Rascal
 //!   (ArduPilot's JSBSim Rascal), or a mission gives them in full.
 //! - Validated against: SCRIMMAGE's FixedWing6DOF on both aircraft
-//!   (`fixed-wing-6dof.xml`, `fixed-wing-6dof-rascal.xml`); step-size
+//!   (`fixed-wing-6dof.yaml`, `fixed-wing-6dof-rascal.yaml`); step-size
 //!   convergence (`reference/rk4_loads.py`); the landing gear's resting
 //!   height, drops, slopes, friction stops, and convergence
 //!   (`crates/core/tests/landing_gear.rs`); and closed-loop flight by
@@ -77,10 +77,10 @@ struct FixedWingParams {
     mass_kg: Option<f64>,
     #[serde(rename = "gravity_magnitude")]
     gravity_mps2: f64,
-    /// Three bracketed rows, in slug·ft² or SI. Give at most one; with neither,
-    /// the airframe's applies.
-    inertia_matrix_slug_ft_sq: Option<String>,
-    inertia_matrix: Option<String>,
+    /// Three rows, in slug·ft² or SI. Give at most one; with neither, the
+    /// airframe's applies.
+    inertia_slug_ft2: Option<[[f64; 3]; 3]>,
+    inertia_kgm2: Option<[[f64; 3]; 3]>,
     #[serde(rename = "air_density")]
     density_kgpm3: f64,
     #[serde(rename = "wing_span")]
@@ -209,8 +209,8 @@ impl Default for FixedWingParams {
             airframe: None,
             mass_kg: None,
             gravity_mps2: 9.81,
-            inertia_matrix_slug_ft_sq: None,
-            inertia_matrix: None,
+            inertia_slug_ft2: None,
+            inertia_kgm2: None,
             density_kgpm3: 1.225,
             span_m: None,
             area_m2: None,
@@ -669,12 +669,12 @@ fn vehicle(params: &FixedWingParams) -> Result<Vehicle> {
             )
         })
     };
-    let inertia_kgm2 = match (&params.inertia_matrix_slug_ft_sq, &params.inertia_matrix) {
+    let inertia_kgm2 = match (params.inertia_slug_ft2, params.inertia_kgm2) {
         (Some(_), Some(_)) => {
-            bail!("FixedWing6DOF takes inertia_matrix_slug_ft_sq or inertia_matrix, not both")
+            bail!("FixedWing6DOF takes inertia_slug_ft2 or inertia_kgm2, not both")
         }
-        (Some(text), None) => parse_inertia_text(text, true)?,
-        (None, Some(text)) => parse_inertia_text(text, false)?,
+        (Some(rows), None) => inertia(rows, true)?,
+        (None, Some(rows)) => inertia(rows, false)?,
         (None, None) => preset.map(|vehicle| vehicle.inertia_kgm2).context(
             "FixedWing6DOF: without `airframe`, the mission must give an inertia matrix",
         )?,
@@ -802,23 +802,14 @@ fn vehicle(params: &FixedWingParams) -> Result<Vehicle> {
     })
 }
 
-/// Three bracketed rows, in slug ft^2 (`slug_ft_sq`) or kg m^2.
-fn parse_inertia_text(text: &str, slug_ft_sq: bool) -> Result<Matrix3<f64>> {
-    let factor = if slug_ft_sq { SLUG_FT_SQ_TO_KGM2 } else { 1.0 };
-    let text = text.replace(['[', ']'], " ");
-    let mut values = Vec::new();
-    for value in text.split_whitespace() {
-        values.push(
-            value
-                .parse::<f64>()
-                .context("invalid FixedWing6DOF inertia value")?
-                * factor,
-        );
-    }
-    ensure!(
-        values.len() == 9 && values.iter().all(|value| value.is_finite()),
-        "FixedWing6DOF inertia requires nine finite values"
-    );
+/// Three rows, in slug ft^2 (`slug_ft2`) or kg m^2, as kg m^2.
+fn inertia(rows: [[f64; 3]; 3], slug_ft2: bool) -> Result<Matrix3<f64>> {
+    let factor = if slug_ft2 { SLUG_FT_SQ_TO_KGM2 } else { 1.0 };
+    let values: Vec<f64> = rows
+        .as_flattened()
+        .iter()
+        .map(|value| value * factor)
+        .collect();
     let inertia = Matrix3::from_row_slice(&values);
     ensure!(
         (inertia - inertia.transpose()).norm() < 1e-9 && inertia.cholesky().is_some(),
@@ -831,7 +822,7 @@ fn parse_inertia_text(text: &str, slug_ft_sq: bool) -> Result<Matrix3<f64>> {
 mod tests {
     use super::{Control, FixedWing6Dof};
     use crate::{
-        KinematicState, Params,
+        KinematicState,
         plugin::{Plugin, PluginParams},
     };
     use nalgebra::{Matrix3, Vector3};
@@ -842,15 +833,11 @@ mod tests {
         // w feels exactly the air an aircraft at v feels in still air.
         let wind_mps = Vector3::new(-3.0, 2.0, 0.5);
         let aircraft = |wind: Vector3<f64>| -> anyhow::Result<FixedWing6Dof> {
-            let params = Params::from([
-                ("airframe".into(), "a4d".into()),
-                ("wind_E".into(), wind.x.to_string()),
-                ("wind_N".into(), wind.y.to_string()),
-                ("wind_U".into(), wind.z.to_string()),
-            ]);
-            Ok(FixedWing6Dof::new(&FixedWing6Dof::configure(
-                &PluginParams::text(&params),
-            )?))
+            let params = PluginParams::yaml(&format!(
+                "{{airframe: a4d, wind_E: {:?}, wind_N: {:?}, wind_U: {:?}}}",
+                wind.x, wind.y, wind.z
+            ));
+            Ok(FixedWing6Dof::new(&FixedWing6Dof::configure(&params)?))
         };
         let (mut still, mut windy) = (aircraft(Vector3::zeros())?, aircraft(wind_mps)?);
         let start = KinematicState {
@@ -891,12 +878,8 @@ mod tests {
 
     #[test]
     fn throttle_scaling_clamps_like_cpp_utilities_scale() -> anyhow::Result<()> {
-        let params = Params::from([
-            ("airframe".into(), "a4d".into()),
-            ("thrust_min".into(), "-36000".into()),
-            ("thrust_max".into(), "36000".into()),
-        ]);
-        let config = FixedWing6Dof::configure(&PluginParams::text(&params))?;
+        let params = PluginParams::yaml("{airframe: a4d, thrust_min: -36000, thrust_max: 36000}");
+        let config = FixedWing6Dof::configure(&params)?;
         for (input, expected_n) in [
             (-2.0, -36000.0),
             (-1.0, -36000.0),
@@ -912,30 +895,24 @@ mod tests {
 
     #[test]
     fn either_inertia_unit_takes_effect_but_not_both() -> anyhow::Result<()> {
-        let slug = "[8090 0 1300] [0 25900 0] [1300 0 29200]";
-        let a4d = || -> Params { Params::from([("airframe".into(), "a4d".into())]) };
-        let profile = FixedWing6Dof::configure(&PluginParams::text(&a4d()))?;
-        let mut params = a4d();
-        params.insert("inertia_matrix_slug_ft_sq".into(), slug.into());
-        let explicit = FixedWing6Dof::configure(&PluginParams::text(&params))?;
+        let slug = "inertia_slug_ft2: [[8090, 0, 1300], [0, 25900, 0], [1300, 0, 29200]]";
+        let si = "inertia_kgm2: [[2, 0, 0], [0, 3, 0], [0, 0, 4]]";
+        let configure = |extra: &str| {
+            FixedWing6Dof::configure(&PluginParams::yaml(&format!("airframe: a4d\n{extra}")))
+        };
+        let profile = configure("")?;
+        let explicit = configure(slug)?;
         assert_eq!(profile.inertia_kgm2, explicit.inertia_kgm2);
 
-        let si = "[2 0 0] [0 3 0] [0 0 4]";
-        let mut params = a4d();
-        params.insert("inertia_matrix".into(), si.into());
-        let config = FixedWing6Dof::configure(&PluginParams::text(&params))?;
+        let config = configure(si)?;
         assert_eq!(
             config.inertia_kgm2,
             Matrix3::from_diagonal(&Vector3::new(2.0, 3.0, 4.0))
         );
 
-        let mut params = a4d();
-        params.insert("inertia_matrix".into(), "[1 2 3] [4 5 6]".into());
-        assert!(FixedWing6Dof::configure(&PluginParams::text(&params)).is_err());
-        let mut params = a4d();
-        params.insert("inertia_matrix".into(), si.into());
-        params.insert("inertia_matrix_slug_ft_sq".into(), slug.into());
-        assert!(FixedWing6Dof::configure(&PluginParams::text(&params)).is_err());
+        assert!(configure("inertia_kgm2: [[1, 2, 3], [4, 5, 6]]").is_err());
+        assert!(configure("inertia_kgm2: [[1, 2, 3], [2, 1, 0], [3, 0, 1]]").is_err());
+        assert!(configure(&format!("{si}\n{slug}")).is_err());
         Ok(())
     }
 
@@ -943,12 +920,8 @@ mod tests {
     fn a_named_airframe_with_an_override_equals_the_same_aircraft_written_out() -> anyhow::Result<()>
     {
         // The Rascal in full, every vehicle key, with C_MQ changed.
-        let full: Params = [
+        let full = [
             ("mass", "5.91"),
-            (
-                "inertia_matrix_slug_ft_sq",
-                "[1.95 0 0] [0 1.55 0] [0 0 1.91]",
-            ),
             ("wing_span", "2.70"),
             ("surface_area_of_wing", "0.982"),
             ("chord_length", "0.351"),
@@ -984,33 +957,30 @@ mod tests {
             ("C_NR", "-0.15"),
             ("C_N_delta_aileron", "-0.03"),
             ("C_N_delta_rudder", "-0.05"),
-        ]
-        .into_iter()
-        .map(|(key, value)| (key.to_string(), value.to_string()))
-        .collect();
-        let named = Params::from([
-            ("airframe".into(), "rascal".into()),
-            ("C_MQ".into(), "-10".into()),
-        ]);
-        let resolve = |params: &Params| -> anyhow::Result<_> {
-            super::vehicle(&PluginParams::text(params).parse()?)
+        ];
+        let resolve = |text: &str| -> anyhow::Result<_> {
+            super::vehicle(&PluginParams::yaml(text).parse()?)
         };
-        let from_name = resolve(&named)?;
+        let full: String = full
+            .iter()
+            .map(|(key, value)| format!("{key}: {value}\n"))
+            .chain(["inertia_slug_ft2: [[1.95, 0, 0], [0, 1.55, 0], [0, 0, 1.91]]".into()])
+            .collect();
+        let from_name = resolve("{airframe: rascal, C_MQ: -10}")?;
         assert_eq!(from_name, resolve(&full)?);
         assert_eq!(from_name.c_mq, -10.0);
         // Without the override, the profile's own value.
-        let plain = resolve(&Params::from([("airframe".into(), "rascal".into())]))?;
+        let plain = resolve("airframe: rascal")?;
         assert_eq!(plain.c_mq, -12.0);
         Ok(())
     }
 
     #[test]
     fn without_an_airframe_every_vehicle_number_is_required() {
-        let error = FixedWing6Dof::configure(&PluginParams::text(&Params::new()))
+        let error = FixedWing6Dof::configure(&PluginParams::yaml("{}"))
             .err()
             .expect("no airframe and no numbers");
         assert!(error.to_string().contains("without `airframe`"), "{error}");
-        let params = Params::from([("airframe".into(), "cessna".into())]);
-        assert!(FixedWing6Dof::configure(&PluginParams::text(&params)).is_err());
+        assert!(FixedWing6Dof::configure(&PluginParams::yaml("airframe: cessna")).is_err());
     }
 }

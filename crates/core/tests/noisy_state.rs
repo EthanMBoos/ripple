@@ -5,13 +5,19 @@ use ripple_core::{Mission, Params, Simulation};
 
 fn simulation(altitude_bias: f64, sensor_rate: f64) -> Result<Simulation> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let overrides = Params::from([
-        ("position_sigma".into(), "0".into()),
-        ("velocity_sigma".into(), "0".into()),
-        ("altitude_bias".into(), altitude_bias.to_string()),
-        ("sensor_rate".into(), sensor_rate.to_string()),
-    ]);
-    let mission = Mission::load(&root.join("missions/noisy-state.xml"), &root, &overrides)?;
+    let mut overrides = Params::new();
+    for group in ["blue", "red"] {
+        let sensor = format!("entities.{group}.sensors.NoisyState");
+        for (field, value) in [
+            ("position_stddev_m", "[0, 0, 0]".to_string()),
+            ("velocity_stddev_mps", "[0, 0, 0]".to_string()),
+            ("position_bias_m", format!("[0, 0, {altitude_bias}]")),
+            ("loop_rate", sensor_rate.to_string()),
+        ] {
+            overrides.insert(format!("{sensor}.{field}"), value);
+        }
+    }
+    let mission = Mission::load(&root.join("missions/noisy-state.yaml"), &root, &overrides)?;
     Simulation::new(
         mission.scenario,
         &ripple_core::plugin::PluginRegistry::with_builtins(),
@@ -131,7 +137,7 @@ fn slower_sensor_holds_owned_belief_while_truth_keeps_moving() -> Result<()> {
 fn no_sensor_gives_perfect_belief() -> Result<()> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mission = Mission::load(
-        &root.join("missions/straight-no-gui.xml"),
+        &root.join("missions/straight-no-gui.yaml"),
         &root,
         &Params::new(),
     )?;

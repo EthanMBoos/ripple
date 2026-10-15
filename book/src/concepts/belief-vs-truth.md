@@ -53,15 +53,17 @@ sensor, each tick:
 2. adds Gaussian noise to position, velocity, and attitude,
 3. publishes the result as its reading (`context.publish_reading`).
 
-Add it to an entity in a mission:
+Add it to an entity in a mission, with the noise you want:
 
-```xml
-<sensor>NoisyState</sensor>
+```yaml
+sensors:
+  NoisyState:
+    position_stddev_m: [2, 2, 1]
 ```
 
 Localization's `PassThrough` now copies that reading instead of the perfect
 one, so the vehicle's autonomy and controller act on the noisy state while
-collisions and scoring still use the truth. Try `missions/noisy-state.xml` to
+collisions and scoring still use the truth. Try `missions/noisy-state.yaml` to
 see the difference. `NoisyContacts` does the same for other vehicles, through
 tracking.
 

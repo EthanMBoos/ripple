@@ -17,7 +17,7 @@
   "max_position_difference_m": 2.3678883310186693e-12,
   "cases": [
     {
-      "mission": "missions_auction-sphere.xml",
+      "mission": "missions_auction-sphere.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": true,
@@ -28,7 +28,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_auction-sphere.xml",
+      "mission": "missions_auction-sphere.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": true,
@@ -39,7 +39,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_fixed-wing-6dof-rascal.xml",
+      "mission": "missions_fixed-wing-6dof-rascal.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -50,7 +50,7 @@
       "max_position_difference_m": 7.105427357601002e-15
     },
     {
-      "mission": "missions_fixed-wing-6dof-rascal.xml",
+      "mission": "missions_fixed-wing-6dof-rascal.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -61,7 +61,7 @@
       "max_position_difference_m": 7.105427357601002e-15
     },
     {
-      "mission": "missions_fixed-wing-6dof.xml",
+      "mission": "missions_fixed-wing-6dof.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -72,7 +72,7 @@
       "max_position_difference_m": 2.3678883310186693e-12
     },
     {
-      "mission": "missions_fixed-wing-6dof.xml",
+      "mission": "missions_fixed-wing-6dof.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -105,28 +105,6 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_multirotor.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "missions_multirotor.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
       "mission": "missions_multirotor.yaml",
       "workers": 1,
       "identical": {
@@ -149,7 +127,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_networks-local-global.xml",
+      "mission": "missions_networks-local-global.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -160,7 +138,7 @@
       "max_position_difference_m": 8.003626044415298e-13
     },
     {
-      "mission": "missions_networks-local-global.xml",
+      "mission": "missions_networks-local-global.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -171,7 +149,7 @@
       "max_position_difference_m": 8.003626044415298e-13
     },
     {
-      "mission": "missions_noisy-contacts.xml",
+      "mission": "missions_noisy-contacts.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -182,7 +160,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_noisy-contacts.xml",
+      "mission": "missions_noisy-contacts.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -193,7 +171,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_noisy-state.xml",
+      "mission": "missions_noisy-state.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -204,7 +182,7 @@
       "max_position_difference_m": 1.1368683772161603e-12
     },
     {
-      "mission": "missions_noisy-state.xml",
+      "mission": "missions_noisy-state.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -213,28 +191,6 @@
         "trace.jsonl": false
       },
       "max_position_difference_m": 1.1368683772161603e-12
-    },
-    {
-      "mission": "missions_straight-no-gui.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "missions_straight-no-gui.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
     },
     {
       "mission": "missions_straight-no-gui.yaml",
@@ -281,7 +237,7 @@
       "max_position_difference_m": 1.6435515470676547e-12
     },
     {
-      "mission": "missions_test_missions_straight_cpu.xml",
+      "mission": "missions_verification_aircraft-long-horizon.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": true,
@@ -292,7 +248,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_test_missions_straight_cpu.xml",
+      "mission": "missions_verification_aircraft-long-horizon.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": true,
@@ -303,51 +259,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_test_missions_straight_cpu_mul.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "missions_test_missions_straight_cpu_mul.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "missions_test_missions_straight_cpu_threaded.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "missions_test_missions_straight_cpu_threaded.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": true,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": true
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "missions_verification_aircraft-substeps-scheduled.xml",
+      "mission": "missions_verification_aircraft-substeps-scheduled.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -358,7 +270,7 @@
       "max_position_difference_m": 3.552713678800501e-15
     },
     {
-      "mission": "missions_verification_aircraft-substeps-scheduled.xml",
+      "mission": "missions_verification_aircraft-substeps-scheduled.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -369,7 +281,7 @@
       "max_position_difference_m": 3.552713678800501e-15
     },
     {
-      "mission": "missions_verification_aircraft-substeps-spawning.xml",
+      "mission": "missions_verification_aircraft-substeps-spawning.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -380,7 +292,7 @@
       "max_position_difference_m": 6.23498720201505e-14
     },
     {
-      "mission": "missions_verification_aircraft-substeps-spawning.xml",
+      "mission": "missions_verification_aircraft-substeps-spawning.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -391,7 +303,7 @@
       "max_position_difference_m": 6.23498720201505e-14
     },
     {
-      "mission": "missions_verification_collision-boundary.xml",
+      "mission": "missions_verification_collision-boundary.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": true,
@@ -402,7 +314,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_verification_collision-boundary.xml",
+      "mission": "missions_verification_collision-boundary.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": true,
@@ -435,7 +347,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_verification_multirotor-fixes.xml",
+      "mission": "missions_verification_multirotor-fixes.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": true,
@@ -446,7 +358,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_verification_multirotor-fixes.xml",
+      "mission": "missions_verification_multirotor-fixes.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": true,
@@ -457,7 +369,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_verification_noisy-contacts-bias.xml",
+      "mission": "missions_verification_noisy-contacts-bias.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -468,7 +380,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_verification_noisy-contacts-bias.xml",
+      "mission": "missions_verification_noisy-contacts-bias.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -479,7 +391,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_verification_noisy-contacts-noise.xml",
+      "mission": "missions_verification_noisy-contacts-noise.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -490,7 +402,7 @@
       "max_position_difference_m": 1.2710574864626038e-13
     },
     {
-      "mission": "missions_verification_noisy-contacts-noise.xml",
+      "mission": "missions_verification_noisy-contacts-noise.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -499,28 +411,6 @@
         "trace.jsonl": false
       },
       "max_position_difference_m": 1.2710574864626038e-13
-    },
-    {
-      "mission": "missions_verification_noisy-state-bias.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 7.105427357601002e-15
-    },
-    {
-      "mission": "missions_verification_noisy-state-bias.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 7.105427357601002e-15
     },
     {
       "mission": "missions_verification_noisy-state-bias.yaml",
@@ -545,7 +435,7 @@
       "max_position_difference_m": 7.105427357601002e-15
     },
     {
-      "mission": "missions_verification_single-integrator.xml",
+      "mission": "missions_verification_single-integrator.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": true,
@@ -556,7 +446,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_verification_single-integrator.xml",
+      "mission": "missions_verification_single-integrator.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": true,
@@ -567,7 +457,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_verification_sphere-network-auction.xml",
+      "mission": "missions_verification_sphere-network-auction.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": true,
@@ -578,7 +468,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_verification_sphere-network-auction.xml",
+      "mission": "missions_verification_sphere-network-auction.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": true,
@@ -589,7 +479,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_verification_sphere-network-loss.xml",
+      "mission": "missions_verification_sphere-network-loss.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": true,
@@ -600,7 +490,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_verification_sphere-network-loss.xml",
+      "mission": "missions_verification_sphere-network-loss.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": true,
@@ -611,7 +501,7 @@
       "max_position_difference_m": 0.0
     },
     {
-      "mission": "missions_waypoints-aircraft.xml",
+      "mission": "missions_waypoints-aircraft.yaml",
       "workers": 1,
       "identical": {
         "frames.bin": false,
@@ -622,7 +512,7 @@
       "max_position_difference_m": 7.652779469160725e-13
     },
     {
-      "mission": "missions_waypoints-aircraft.xml",
+      "mission": "missions_waypoints-aircraft.yaml",
       "workers": 8,
       "identical": {
         "frames.bin": false,
@@ -631,28 +521,6 @@
         "trace.jsonl": false
       },
       "max_position_difference_m": 7.652779469160725e-13
-    },
-    {
-      "mission": "missions_waypoints-point-agents.xml",
-      "workers": 1,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
-    },
-    {
-      "mission": "missions_waypoints-point-agents.xml",
-      "workers": 8,
-      "identical": {
-        "frames.bin": false,
-        "events.json": true,
-        "summary.csv": true,
-        "trace.jsonl": false
-      },
-      "max_position_difference_m": 0.0
     },
     {
       "mission": "missions_waypoints-point-agents.yaml",

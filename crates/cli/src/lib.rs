@@ -2,14 +2,13 @@
 //!
 //! `src/main.rs` builds the plugin registry (the stock plugins plus the user
 //! plugin crates in this workspace, such as crates/starter) and hands it to
-//! [`main`]. Every command (`run`, `sweep`, `compare`) uses that registry, so
+//! [`main`]. Every command (`run`, `sweep`) uses that registry, so
 //! user plugins work everywhere stock plugins do. See book/src/guides/user-plugins.md.
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use ripple_core::plugin::PluginRegistry;
 use std::path::{Path, PathBuf};
 
-mod compare;
 mod replay;
 mod run;
 mod sweep;
@@ -32,8 +31,6 @@ struct Cli {
 enum Command {
     /// Run a mission, recording frames, metrics, and Rerun data.
     Run(run::RunOptions),
-    /// Check that two missions (such as an XML file and its YAML form) run identically.
-    Compare(compare::CompareOptions),
     /// Run a YAML mission across seeds and parameter values (a `*.sweep.yaml`), whole or one shard.
     Sweep(sweep::SweepOptions),
     /// Open a saved Rerun recording without rerunning the mission.
@@ -60,7 +57,6 @@ pub fn main(registry: PluginRegistry, project_root: impl AsRef<Path>) -> Result<
     let project_root = project_root.as_path();
     match Cli::parse().command {
         Command::Run(options) => run::run(options, &registry, project_root)?,
-        Command::Compare(options) => compare::compare(options, &registry, project_root)?,
         Command::Sweep(options) => sweep::sweep(options, &registry, project_root)?,
         Command::Replay { path, draw_trails } => replay::replay(&path, draw_trails)?,
     }

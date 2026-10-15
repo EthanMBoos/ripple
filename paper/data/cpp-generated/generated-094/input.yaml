@@ -1,0 +1,101 @@
+{
+ "format_version": 1,
+ "name": "generated-094",
+ "run": {
+  "end_s": 3,
+  "dt_s": 0.1,
+  "motion_multiplier": 1,
+  "seed": 1795217456
+ },
+ "interactions": {},
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 2,
+   "count": 1,
+   "visual_model": "sphere",
+   "position_m": [
+    341.163,
+    -366.541,
+    165.543
+   ],
+   "position_variance_m2": [
+    0,
+    0,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "spawn": {
+    "rate_hz": 2.95066,
+    "batch_size": 1,
+    "start_s": 0.717187,
+    "time_stddev_s": 0
+   },
+   "heading_deg": 2.14162,
+   "roll_deg": -3.07783,
+   "pitch_deg": 0.892541,
+   "autonomy": {
+    "Straight": {
+     "speed": 19.9541,
+     "loop_rate": 5
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 0
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 28.1564
+    }
+   }
+  },
+  "group1": {
+   "team": 3,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    -230.553,
+    -497.381,
+    227.533
+   ],
+   "position_variance_m2": [
+    25,
+    100,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "spawn": {
+    "rate_hz": 0.971844,
+    "batch_size": 2,
+    "start_s": 0.606999,
+    "time_stddev_s": 0
+   },
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      -6.16969,
+      -0.613505,
+      1.07068
+     ],
+     "loop_rate": 2
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  }
+ }
+}

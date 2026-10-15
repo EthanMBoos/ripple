@@ -1,0 +1,37 @@
+# Substeps, loop rates, randomized spawn state, and scheduled spawning.
+format_version: 1
+name: aircraft-substeps-spawning
+
+run:
+  end_s: 3
+  dt_s: 0.1
+  motion_multiplier: 5
+  seed: 12345
+
+networks: {GlobalNetwork: {}, LocalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+entities:
+  blue:
+    team: 1
+    count: 4
+    spawn:
+      rate_hz: 2
+      batch_size: 1
+      time_stddev_s: 0.02
+    position_m: [10, 20, 200]
+    position_variance_m2: [4, 4, 1]
+    heading_deg: 30
+    heading_variance_deg2: 9
+    roll_deg: 5
+    pitch_deg: 3
+    randomize_every_spawn: true
+    visual_model: sphere
+    autonomy:
+      Straight:
+        speed: 24
+        loop_rate: 5
+    controller:
+      SimpleAircraftControllerPID:
+        loop_rate: 20
+    motion_model: {SimpleAircraft: {}}

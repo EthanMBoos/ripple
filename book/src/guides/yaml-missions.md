@@ -1,31 +1,28 @@
 # YAML missions
 
-YAML is the native mission format; XML stays supported for single runs. Both
-load into the same typed `ScenarioConfig`, so the simulation cannot tell which
-file it came from. See
-[Roadmap](https://github.com/EthanMBoos/ripple/blob/main/docs/TODO.md) for the
-plan.
+Missions are YAML files. Each loads into the typed `ScenarioConfig`, the same
+data a [Rust-built scenario](rust-scenarios.md) fills in.
 
 | | Status |
 | --- | --- |
 | Single missions, plugin parameters, command-line overrides | Implemented |
-| `ripple compare a.xml b.yaml` | Implemented |
 | Templates | Implemented |
 | Sweeps (`*.sweep.yaml`), shards, and the Slurm launcher | Implemented (minimal) |
 
-Paired examples, each checked against its XML by
-`crates/core/tests/yaml_missions.rs`:
-[straight-no-gui](https://github.com/EthanMBoos/ripple/blob/main/missions/straight-no-gui.yaml),
-[multirotor](https://github.com/EthanMBoos/ripple/blob/main/missions/multirotor.yaml),
-[waypoints-point-agents](https://github.com/EthanMBoos/ripple/blob/main/missions/waypoints-point-agents.yaml),
+Every mission in
+[missions/](https://github.com/EthanMBoos/ripple/blob/main/missions/README.md)
+is an example; start with
+[straight-no-gui](https://github.com/EthanMBoos/ripple/blob/main/missions/straight-no-gui.yaml)
 and
-[verification/noisy-state-bias](https://github.com/EthanMBoos/ripple/blob/main/missions/verification/noisy-state-bias.yaml).
+[multirotor](https://github.com/EthanMBoos/ripple/blob/main/missions/multirotor.yaml).
 
 ## Rules
 
 - Unknown keys are errors everywhere, including plugin parameters.
-- Block style: one key per line. A plugin key with nothing after it
-  (`SimpleAircraft:`) means "this plugin, all defaults".
+- A plugin with `{}` (or nothing) after it means "this plugin, all
+  defaults". A slot whose plugins all take defaults fits on one line:
+  `networks: {LocalNetwork: {}, GlobalNetwork: {}}`. Give a plugin with values
+  its own block.
 - Values are real YAML types: `25`, `true`, `[1, 0.01, 2, 9]`. No comma strings.
 - Non-finite numbers (`.inf`, `.nan`) are rejected, with the path to the value.
 - Field names carry units (`end_s`, `heading_deg`). Plugin parameters are the
@@ -34,14 +31,11 @@ and
   `entities.red.autonomy.Straight.speed` names one value. Labels must be
   non-empty and contain no dots. Errors name the label: `entity red: ...`.
 - **Key order matters.** Entities spawn and get IDs in file order, and
-  plugins in a slot run in file order, as XML tag order does. YAML itself
-  calls maps unordered, so do not let a tool sort the keys.
-- Only fields Rust uses are accepted. XML's GUI and C++ logging tags
-  (`stream_port`, `grid_size`, `terrain`, `log_dir`, and so on) have no YAML
-  form.
+  plugins in a slot run in file order. YAML itself calls maps unordered, so do
+  not let a tool sort the keys.
 - No anchors or interpolation. Custom tags (`!name value`) are errors.
-- `RIPPLE_PLUGIN_PATH` overlays apply to XML only; a YAML mission's values
-  are all in the file, so results do not depend on an environment variable.
+- A mission's values are all in the file, so results do not depend on an
+  environment variable.
 
 ## A mission
 
@@ -55,13 +49,9 @@ run:
   seed: 2147483648
 end_conditions: [time, all_dead]
 
-interactions:
-  SimpleCollision:
-networks:
-  LocalNetwork:
-  GlobalNetwork:
-metrics:
-  SimpleCollisionMetrics:
+interactions: {SimpleCollision: {}}
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
 
 entities:
   blue:
@@ -77,62 +67,59 @@ entities:
     autonomy:
       Straight:
         speed: 25
-    controller:
-      SimpleAircraftControllerPID:
-    motion_model:
-      SimpleAircraft:
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
 ```
 
 ### Top level
 
-| Key | Default | XML equivalent |
+| Key | Default | Meaning |
 | --- | --- | --- |
-| `format_version` | required, `1` | none |
-| `name` | required | `<runscript name>` |
-| `run.start_s`, `run.end_s`, `run.dt_s` | 0, 100, 0.1 | `<run start end dt>` |
-| `run.seed` | 2147483648 | `<seed>` |
-| `run.motion_multiplier` | 1 | `<run motion_multiplier>` |
-| `run.viewer` | false | `<run enable_gui>` |
-| `end_conditions` | `[time]` | `<end_condition>time, all_dead</end_condition>` |
-| `spatial_lookup` | `{method: scan}` | none; XML always scans |
-| `interactions`, `networks`, `metrics` | empty | `<entity_interaction>`, `<network>`, `<metrics>` |
-| `entities` | required | `<entity>` blocks |
+| `format_version` | required, `1` | the file format |
+| `name` | required | a name for people; runs are named by the file |
+| `run.start_s`, `run.end_s`, `run.dt_s` | 0, 100, 0.1 | time span and step |
+| `run.seed` | 2147483648 | keys every random number |
+| `run.motion_multiplier` | 1 | controller and motion substeps per step |
+| `run.viewer` | false | open the viewer by default |
+| `end_conditions` | `[time]` | any of `time`, `all_dead`, `one_team`, or `none` |
+| `spatial_lookup` | `{method: scan}` | how range queries are answered |
+| `terrain` | none | a terrain header ([Terrain](terrain.md)) |
+| `interactions`, `networks`, `metrics` | empty | world plugins |
+| `entities` | required | entity groups |
 
 `spatial_lookup: {method: grid, cell_width_m: 5}` answers "who is within range?"
 with a grid instead of testing every agent. Results are identical; only speed
 changes. See [Finding nearby
 agents](../reference/plugin-api.md#finding-nearby-agents).
 
-Worker count, pacing, and the viewer are command-line choices (`--workers`,
-`--headless`); XML's `multi_threaded`, `time_warp`, and `start_paused` have no
-YAML form.
+Worker count and the viewer are command-line choices (`--workers`,
+`--headless`); runs are not paced to wall-clock time.
 
 ### Entity
 
-| Key | Default | XML equivalent |
+| Key | Default | Meaning |
 | --- | --- | --- |
-| `team` | -1 | `team_id` |
-| `color` | `[255, 255, 255]` | `color` |
-| `visual_model` | `aircraft` | `visual_model` |
-| `health` | 1 | `health` |
-| `id` | assigned | `id` |
-| `count` | 1 | `count`: entities in total |
-| `position_m` | `[0, 0, 0]` | `x`, `y`, `z` |
-| `position_variance_m2` | `[0, 0, 0]` | `variance_x`, `variance_y`, `variance_z` (variances, m²) |
-| `heading_deg`, `roll_deg`, `pitch_deg` | 0 | `heading`, `roll`, `pitch` |
-| `heading_variance_deg2` | 0 | `variance_heading` |
-| `velocity_mps` | `[0, 0, 0]` | `vx`, `vy`, `vz` |
-| `randomize_every_spawn` | false | `use_variance_all_ents` |
-| `spawn.rate_hz` | required in `spawn` | `generate_rate` (`"1 / 2"` becomes `0.5`) |
-| `spawn.batch_size` | required in `spawn` | `generate_count` |
-| `spawn.start_s` | 0 | `generate_start_time` |
-| `spawn.time_stddev_s` | 0 | `generate_time_variance` (C++ uses it as a standard deviation) |
-| `autonomy`, `controller`, `sensors` | empty | `<autonomy>`, `<controller>`, `<sensor>` |
-| `motion_model` | exactly one | `<motion_model>` |
-| `localization`, `tracking` | `PassThrough` | none: XML always uses `PassThrough` |
+| `team` | -1 | team number |
+| `color` | `[255, 255, 255]` | display color |
+| `visual_model` | `aircraft` | display model |
+| `health` | 1 | starting health |
+| `id` | assigned | a fixed entity ID |
+| `count` | 1 | entities in total |
+| `position_m` | `[0, 0, 0]` | start position |
+| `position_variance_m2` | `[0, 0, 0]` | spread of start positions (variances, m²) |
+| `heading_deg`, `roll_deg`, `pitch_deg` | 0 | start attitude |
+| `heading_variance_deg2` | 0 | spread of start headings |
+| `velocity_mps` | `[0, 0, 0]` | start velocity |
+| `randomize_every_spawn` | false | draw every start position from the spread; otherwise only when `position_m` is already taken |
+| `spawn.rate_hz` | required in `spawn` | batches per second |
+| `spawn.batch_size` | required in `spawn` | entities per batch |
+| `spawn.start_s` | 0 | first batch time |
+| `spawn.time_stddev_s` | 0 | spread of batch times |
+| `autonomy`, `controller`, `sensors` | empty | entity plugins |
+| `motion_model` | exactly one | the vehicle model |
+| `localization`, `tracking` | `PassThrough` | estimators ([Belief vs truth](../concepts/belief-vs-truth.md)) |
 
-Positions and velocities use the local ENU world frame. Use `velocity_mps` for
-initial velocity; XML scalar `speed` is translated by the XML reader.
+Positions and velocities use the local ENU world frame.
 
 Without `spawn`, all `count` entities spawn at the start. With it,
 `batch_size` spawn every `1 / rate_hz` seconds until `count` have spawned.
@@ -169,13 +156,12 @@ An input left out takes the entity's one sensor of that kind, or the perfect
 measurement when it has none. See [Belief vs
 truth](../concepts/belief-vs-truth.md).
 
-Waypoints are a list of points: `waypoints: [[10, 0, 0], [10, 10, 0]]`. The XML
-string form `"10,0,0;10,10,0"` is also accepted.
+Waypoints are a list of points: `waypoints: [[10, 0, 0], [10, 10, 0]]`.
 
 ## Command-line overrides
 
-XML fills `${name=default}` placeholders from trailing `name:=value` arguments.
-For YAML, the same arguments take a dotted path, as a sweep will:
+Trailing `path:=value` arguments change a value for one run. The path is
+dotted, as in a sweep, and the value is YAML:
 
 ```sh
 ripple run missions/straight-no-gui.yaml entities.red.heading_deg:=170 run.seed:=7
@@ -185,28 +171,12 @@ Every part of the path must already exist (after template expansion), so a
 typo is an error rather than a new key. To override a plugin parameter, write
 it in the file or template first; a bare `Straight:` has no `speed` to replace.
 Quote a value containing brackets or spaces for the shell:
-`'entities.red.color:=[255, 0, 0]'`.
-
-## Checking a YAML mission against its XML
-
-```sh
-ripple compare missions/straight-no-gui.xml missions/straight-no-gui.yaml
-```
-
-It first lists any setup differences by path (`entities.1.heading_deg: 180.0 vs
-170.0`), matching entities and plugins by position and ignoring labels, the file
-path, and pacing, viewer, and worker settings. Then it runs both, one step at a
-time, and stops at the first frame that differs; events and the summary must
-match too. It takes `--max-steps` like `run`.
-
-Plugin parameter values are checked only through those outputs, since XML holds
-them as text. A value that no recorded output reflects (such as a sensor's noise
-when nothing uses its readings) can differ without `compare` noticing.
+`'entities.red.color:=[255, 0, 0]'`. A path can also name a whole plugin slot
+the group has, replacing its plugins: `'entities.red.autonomy:={Straight: {}}'`.
 
 ## Sweeps
 
-A sweep is a separate file ending in `.sweep.yaml`. It names a base mission,
-which must be YAML:
+A sweep is a separate file ending in `.sweep.yaml`. It names a base mission:
 
 ```yaml
 name: waypoints-point-agents
@@ -258,9 +228,8 @@ and `cargo build --release -p ripple` once on shared storage.
 A template is a named set of entity fields. A group names one with
 `template:`, and its own keys replace the template's. The replacement is
 whole: a group's `controller` replaces the template's entire `controller`
-slot, and a group's `spawn` replaces the template's whole `spawn`. Templates
-replace XML's `entity_common` and `param_common`, and unlike XML, a group can
-replace an inherited motion model.
+slot, and a group's `spawn` replaces the template's whole `spawn`, so a group
+can replace an inherited motion model.
 
 ```yaml
 templates:
@@ -272,8 +241,7 @@ templates:
     controller:
       MotorSpeeds:
         speeds: [821.58, 821.58, 821.58, 821.58]
-    motion_model:
-      Multirotor:
+    motion_model: {Multirotor: {}}
 
 entities:
   level_hover:

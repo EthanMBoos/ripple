@@ -35,12 +35,26 @@ pub(crate) enum AirframeName {
 pub(crate) struct AirframeOverrides {
     pub mass_kg: Option<f64>,
     pub gravity_mps2: Option<f64>,
-    pub inertia_matrix: Option<String>,
+    pub inertia_kgm2: Option<[[f64; 3]; 3]>,
     pub thrust_coefficient: Option<f64>,
     pub torque_coefficient: Option<f64>,
     pub omega_min_radps: Option<f64>,
     pub omega_max_radps: Option<f64>,
-    pub rotor_config: Option<String>,
+    pub rotors: Option<Vec<RotorParams>>,
+}
+
+/// One rotor as a mission gives it, such as
+/// `{direction: ccw, position_m: [0, 0.175, 0]}`.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct RotorParams {
+    pub direction: Direction,
+    /// Hub offset from the center of mass, body forward/left/up.
+    pub position_m: [f64; 3],
+    /// The thrust axis's tilt from body +z, as roll, pitch, and yaw (a
+    /// rotation like an entity's attitude); untilted when left out.
+    #[serde(default)]
+    pub tilt_deg: [f64; 3],
 }
 
 #[derive(Clone, Debug)]
@@ -69,9 +83,12 @@ pub(crate) struct Rotor {
     pub thrust_axis_body: Vec3,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+/// Spin direction seen from above: `cw` or `ccw`.
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize)]
 pub(crate) enum Direction {
+    #[serde(rename = "cw")]
     Clockwise,
+    #[serde(rename = "ccw")]
     Counterclockwise,
 }
 
@@ -92,12 +109,12 @@ impl Airframe {
             Some(AirframeName::Crazyflie2) => crazyflie2(),
             None => return Self::from_keys(overrides),
         };
-        let inertia_kgm2 = match overrides.inertia_matrix {
-            Some(text) => parse_inertia(&text)?,
+        let inertia_kgm2 = match overrides.inertia_kgm2 {
+            Some(rows) => inertia(rows)?,
             None => preset.inertia_kgm2,
         };
-        let rotors = match overrides.rotor_config {
-            Some(text) => parse_rotors(&text)?,
+        let rotors = match overrides.rotors {
+            Some(params) => rotors(&params)?,
             None => preset.rotors,
         };
         let airframe = Self {
@@ -128,16 +145,12 @@ impl Airframe {
         let airframe = Self {
             mass_kg: keys.mass_kg.with_context(|| missing("mass"))?,
             gravity_mps2: keys.gravity_mps2.unwrap_or(9.81),
-            inertia_kgm2: parse_inertia(
-                &keys
-                    .inertia_matrix
-                    .with_context(|| missing("inertia_matrix"))?,
-            )?,
+            inertia_kgm2: inertia(keys.inertia_kgm2.with_context(|| missing("inertia_kgm2"))?)?,
             thrust_coefficient: keys.thrust_coefficient.with_context(|| missing("c_T"))?,
             torque_coefficient: keys.torque_coefficient.with_context(|| missing("c_Q"))?,
             omega_min_radps: keys.omega_min_radps.with_context(|| missing("omega_min"))?,
             omega_max_radps: keys.omega_max_radps.with_context(|| missing("omega_max"))?,
-            rotors: parse_rotors(&keys.rotor_config.with_context(|| missing("rotor_config"))?)?,
+            rotors: rotors(&keys.rotors.with_context(|| missing("rotors"))?)?,
         };
         airframe.check()
     }
@@ -185,10 +198,11 @@ fn crazyflie2() -> Airframe {
     // not say which pair spins which way (Fig. 3.1 only that diagonal
     // pairs match); mirroring it flips only the sign of yaw.
     let arm_m = 0.092 / 2.0;
-    let rotor_config = format!(
-        "[CW {arm_m} 0 0 0 0 0] [CCW 0 {arm_m} 0 0 0 0] \
-         [CW -{arm_m} 0 0 0 0 0] [CCW 0 -{arm_m} 0 0 0 0]"
-    );
+    let rotor = |direction, position_m| RotorParams {
+        direction,
+        position_m,
+        tilt_deg: [0.0; 3],
+    };
     Airframe {
         mass_kg,
         gravity_mps2,
@@ -203,7 +217,13 @@ fn crazyflie2() -> Airframe {
         // Commands below 1000 stop the motor (Sec. 3.3.2).
         omega_min_radps: 0.0,
         omega_max_radps,
-        rotors: parse_rotors(&rotor_config).expect("the Crazyflie rotor_config parses"),
+        rotors: rotors(&[
+            rotor(Direction::Clockwise, [arm_m, 0.0, 0.0]),
+            rotor(Direction::Counterclockwise, [0.0, arm_m, 0.0]),
+            rotor(Direction::Clockwise, [-arm_m, 0.0, 0.0]),
+            rotor(Direction::Counterclockwise, [0.0, -arm_m, 0.0]),
+        ])
+        .expect("the Crazyflie's rotors are valid"),
     }
 }
 
@@ -225,10 +245,9 @@ fn forster_command_for_thrust(thrust_n: f64) -> f64 {
     (-b + (b * b - 4.0 * a * c).sqrt()) / (2.0 * a)
 }
 
-pub(crate) fn parse_inertia(text: &str) -> Result<Matrix3<f64>> {
-    let values = numbers(&text.replace(['[', ']'], " "))?;
-    ensure!(values.len() == 9, "Multirotor inertia requires nine values");
-    let inertia_kgm2 = Matrix3::from_row_slice(&values);
+/// Three rows, kg m^2.
+pub(crate) fn inertia(rows: [[f64; 3]; 3]) -> Result<Matrix3<f64>> {
+    let inertia_kgm2 = Matrix3::from_row_slice(rows.as_flattened());
     ensure!(
         (inertia_kgm2 - inertia_kgm2.transpose()).norm() < 1e-9
             && inertia_kgm2.cholesky().is_some(),
@@ -237,54 +256,27 @@ pub(crate) fn parse_inertia(text: &str) -> Result<Matrix3<f64>> {
     Ok(inertia_kgm2)
 }
 
-/// `[direction x y z roll pitch yaw]` rows: the hub offset in body
-/// forward/left/up metres and the rotor's tilt in degrees (a rotation of body
-/// +z, like an entity's attitude).
-pub(crate) fn parse_rotors(mut text: &str) -> Result<Vec<Rotor>> {
+/// Rotor i reads (or a controller writes) port motor_i.
+pub(crate) fn rotors(params: &[RotorParams]) -> Result<Vec<Rotor>> {
+    ensure!(!params.is_empty(), "Multirotor requires at least one rotor");
     let mut rotors = Vec::new();
-    while !text.trim().is_empty() {
-        text = text
-            .trim()
-            .strip_prefix('[')
-            .context("rotor_config requires bracketed rows")?;
-        let (row, rest) = text.split_once(']').context("rotor_config is missing ]")?;
-        let (direction, values) = row
-            .trim()
-            .split_once(char::is_whitespace)
-            .context("rotor row requires direction and six numbers")?;
-        let direction = match direction {
-            "CW" => Direction::Clockwise,
-            "CCW" => Direction::Counterclockwise,
-            _ => anyhow::bail!("rotor direction must be CW or CCW"),
-        };
-        let values = numbers(values)?;
-        ensure!(values.len() == 6, "rotor row requires x y z roll pitch yaw");
+    for (index, rotor) in params.iter().enumerate() {
+        let [x, y, z] = rotor.position_m;
+        let [roll, pitch, yaw] = rotor.tilt_deg;
         // The rotor pushes along body +z turned by its tilt.
         let tilt = Quaternion::from_euler(EulerAngles {
-            roll_world_from_body_rad: math::deg_to_rad(values[3]),
-            pitch_world_from_body_rad: math::deg_to_rad(values[4]),
-            yaw_world_from_body_rad: math::deg_to_rad(values[5]),
+            roll_world_from_body_rad: math::deg_to_rad(roll),
+            pitch_world_from_body_rad: math::deg_to_rad(pitch),
+            yaw_world_from_body_rad: math::deg_to_rad(yaw),
         });
         rotors.push(Rotor {
-            port: format!("motor_{}", rotors.len()),
-            direction,
-            offset_body_m: Vec3::new(values[0], values[1], values[2]),
+            port: format!("motor_{index}"),
+            direction: rotor.direction,
+            offset_body_m: Vec3::new(x, y, z),
             thrust_axis_body: tilt.rotate_body_to_world(Vec3::new(0.0, 0.0, 1.0)),
         });
-        text = rest;
     }
-    ensure!(!rotors.is_empty(), "Multirotor requires at least one rotor");
     Ok(rotors)
-}
-
-fn numbers(text: &str) -> Result<Vec<f64>> {
-    let mut values = Vec::new();
-    for value in text.split_whitespace() {
-        let value: f64 = value.parse().context("invalid Multirotor numeric value")?;
-        ensure!(value.is_finite(), "Multirotor values must be finite");
-        values.push(value);
-    }
-    Ok(values)
 }
 
 #[cfg(test)]
@@ -292,8 +284,8 @@ mod tests {
     use anyhow::Result;
 
     use super::{
-        Airframe, AirframeName, AirframeOverrides, crazyflie2, forster_speed_radps,
-        forster_thrust_n, parse_rotors,
+        Airframe, AirframeName, AirframeOverrides, Direction, RotorParams, crazyflie2,
+        forster_speed_radps, forster_thrust_n, rotors,
     };
     use crate::math::Vec3;
 
@@ -372,12 +364,23 @@ mod tests {
     fn a_vehicle_without_a_preset_must_give_every_number() -> Result<()> {
         let keys = || AirframeOverrides {
             mass_kg: Some(1.0),
-            inertia_matrix: Some("[0.01 0 0] [0 0.01 0] [0 0 0.02]".into()),
+            inertia_kgm2: Some([[0.01, 0.0, 0.0], [0.0, 0.01, 0.0], [0.0, 0.0, 0.02]]),
             thrust_coefficient: Some(1e-5),
             torque_coefficient: Some(1e-7),
             omega_min_radps: Some(0.0),
             omega_max_radps: Some(1000.0),
-            rotor_config: Some("[CW 0.2 0 0 0 0 0] [CCW 0 0.2 0 0 0 0]".into()),
+            rotors: Some(vec![
+                RotorParams {
+                    direction: Direction::Clockwise,
+                    position_m: [0.2, 0.0, 0.0],
+                    tilt_deg: [0.0; 3],
+                },
+                RotorParams {
+                    direction: Direction::Counterclockwise,
+                    position_m: [0.0, 0.2, 0.0],
+                    tilt_deg: [0.0; 3],
+                },
+            ]),
             ..AirframeOverrides::default()
         };
         let airframe = Airframe::new(None, keys())?;
@@ -396,7 +399,18 @@ mod tests {
 
     #[test]
     fn tilted_rotor_axis_follows_its_roll_pitch_yaw() -> Result<()> {
-        let rotors = parse_rotors("[CW 0.1 0 0.2 0 90 0] [CCW 0 0.1 0 30 0 45]")?;
+        let rotors = rotors(&[
+            RotorParams {
+                direction: Direction::Clockwise,
+                position_m: [0.1, 0.0, 0.2],
+                tilt_deg: [0.0, 90.0, 0.0],
+            },
+            RotorParams {
+                direction: Direction::Counterclockwise,
+                position_m: [0.0, 0.1, 0.0],
+                tilt_deg: [30.0, 0.0, 45.0],
+            },
+        ])?;
         assert!((rotors[0].thrust_axis_body - Vec3::new(1.0, 0.0, 0.0)).norm() < 1e-15);
         // Roll 30 degrees tips +z toward -y; yaw 45 degrees then turns that
         // about body z, as for an entity's attitude.
@@ -407,8 +421,13 @@ mod tests {
             3_f64.sqrt() * half,
         );
         assert!((rotors[1].thrust_axis_body - expected).norm() < 1e-12);
-        for invalid in ["", "[bad 0 0 0 0 0 0]", "[CW 0 0]", "[CW NaN 0 0 0 0 0]"] {
-            assert!(parse_rotors(invalid).is_err());
+        assert!(super::rotors(&[]).is_err());
+        for invalid in [
+            "[{direction: up, position_m: [0, 0, 0]}]",
+            "[{direction: cw, position_m: [0, 0]}]",
+            "[{direction: cw, position: [0, 0, 0]}]",
+        ] {
+            assert!(serde_yaml_ng::from_str::<Vec<RotorParams>>(invalid).is_err());
         }
         Ok(())
     }

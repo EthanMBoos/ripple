@@ -3,10 +3,9 @@
 Ripple is a deterministic multi-agent robotics simulator in Rust for research
 and teaching, built to be easy to read, modify, and learn from. Every agent acts
 on its own belief rather than the true state, and runs are byte-identical at any
-worker count. It grew out of [SCRIMMAGE](https://github.com/gtri/scrimmage) and
-reads its mission files.
+worker count. It grew out of [SCRIMMAGE](https://github.com/gtri/scrimmage).
 
-You describe a scenario in a YAML or XML mission file: which vehicles exist,
+You describe a scenario in a YAML mission file: which vehicles exist,
 what software runs on each one, and how the world behaves. The simulator steps
 every vehicle forward in time, records what happened, and shows it in the
 [Rerun](https://rerun.io) viewer.
@@ -26,7 +25,7 @@ cargo install --path crates/cli --locked
 Run a mission with two teams of aircraft flying toward each other:
 
 ```sh
-ripple run missions/straight-no-gui.xml --headless
+ripple run missions/straight-no-gui.yaml --headless
 ```
 
 Each run is saved in a new folder under the repository:

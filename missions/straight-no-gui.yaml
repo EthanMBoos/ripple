@@ -1,4 +1,3 @@
-# The YAML form of straight-no-gui.xml; both produce identical output.
 format_version: 1
 name: straight-no-gui
 
@@ -9,13 +8,9 @@ run:
   seed: 2147483648
 end_conditions: [time, all_dead]
 
-interactions:
-  SimpleCollision:
-networks:
-  LocalNetwork:
-  GlobalNetwork:
-metrics:
-  SimpleCollisionMetrics:
+interactions: {SimpleCollision: {}}
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
 
 entities:
   blue:
@@ -32,12 +27,9 @@ entities:
       batch_size: 2
       start_s: 0
       time_stddev_s: 0
-    autonomy:
-      Straight:
-    controller:
-      SimpleAircraftControllerPID:
-    motion_model:
-      SimpleAircraft:
+    autonomy: {Straight: {}}
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
 
   red:
     team: 2
@@ -53,9 +45,6 @@ entities:
       batch_size: 2
       start_s: 0
       time_stddev_s: 0.1
-    autonomy:
-      Straight:
-    controller:
-      SimpleAircraftControllerPID:
-    motion_model:
-      SimpleAircraft:
+    autonomy: {Straight: {}}
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}

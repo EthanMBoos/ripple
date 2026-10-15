@@ -1,15 +1,21 @@
 """Benchmark missions set C++ threading per variant, and Rust must agree with itself."""
+import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
+import benchmark
 from benchmark import case_passed, mission
+from tests.fixtures import scenario
 
 
-def root_for(name, variant, one_step=False):
-    with tempfile.TemporaryDirectory() as directory:
-        return ET.parse(mission(name, 64, Path(directory), variant, one_step)).getroot()
+def root_for(name, variant):
+    """The C++ mission, with Ripple's loading (in the container) replaced by a fixture."""
+    with tempfile.TemporaryDirectory() as directory, \
+            patch.object(benchmark.missions, "loaded", return_value=scenario()):
+        return ET.parse(mission(name, 64, Path(directory), variant)).getroot()
 
 
 class BenchmarkMissionTests(unittest.TestCase):
@@ -18,16 +24,19 @@ class BenchmarkMissionTests(unittest.TestCase):
         self.assertEqual(root.findtext("multi_threaded"), "false")
         self.assertEqual(root.find("run").get("enable_gui"), "false")
         self.assertEqual(root.find("run").get("time_warp"), "0")
-        self.assertEqual(root.find("entity").findtext("count"), "64")
+        self.assertEqual(root.findtext("log_dir").rsplit("/", 1)[-1], "logs")
 
     def test_threaded_cpp_asks_for_eight_threads(self):
         node = root_for("sensing", "cpp-8").find("multi_threaded")
         self.assertEqual((node.text, node.get("num_threads")), ("true", "8"))
 
-    def test_one_step_run_keeps_the_mission(self):
-        full, short = root_for("churn", "rust-1"), root_for("churn", "rust-1", one_step=True)
-        self.assertEqual(short.find("run").get("end"), "0.1")
-        self.assertEqual(ET.tostring(full.find("entity")), ET.tostring(short.find("entity")))
+    def test_rust_reads_the_workload_and_one_step_changes_only_the_end(self):
+        with tempfile.TemporaryDirectory() as directory:
+            full = json.loads(mission("churn", 64, Path(directory), "rust-1").read_text())
+        with tempfile.TemporaryDirectory() as directory:
+            short = json.loads(mission("churn", 64, Path(directory), "rust-1", True).read_text())
+        self.assertEqual(short["run"]["end_s"], 0.1)
+        self.assertEqual(full, {**short, "run": {**short["run"], "end_s": 200}})
 
 
 class BenchmarkPassTests(unittest.TestCase):

@@ -1,9 +1,15 @@
 //! Mission file discovery and file-specific execution defaults.
-use anyhow::{Context, Result};
-use std::path::{Path, PathBuf};
+use anyhow::{Context, Result, ensure};
+use std::{
+    collections::BTreeMap,
+    path::{Path, PathBuf},
+};
 
-use super::Params;
-use crate::{plugin::PluginRegistry, scenario::ScenarioConfig};
+use crate::scenario::ScenarioConfig;
+
+/// Mission overrides: a dotted path such as `entities.red.count` and its new
+/// value, written as YAML (`20`, `[1, 2, 0]`).
+pub type Params = BTreeMap<String, String>;
 
 /// A loaded scenario and the defaults supplied by its mission file.
 pub struct Mission {
@@ -14,28 +20,20 @@ pub struct Mission {
 }
 
 impl Mission {
+    /// Reads a YAML mission, found at `path` or under `root`'s `missions/`.
     pub fn load(path: &Path, root: &Path, overrides: &Params) -> Result<Self> {
-        Self::load_with_registry(path, root, overrides, &PluginRegistry::with_builtins())
-    }
-
-    pub fn load_with_registry(
-        path: &Path,
-        root: &Path,
-        overrides: &Params,
-        registry: &PluginRegistry,
-    ) -> Result<Self> {
-        let mut candidates = vec![path.to_path_buf()];
-        if let Some(paths) = std::env::var_os("RIPPLE_MISSION_PATH") {
-            candidates.extend(std::env::split_paths(&paths).map(|directory| directory.join(path)));
-        }
-        candidates.push(root.join("missions").join(path));
-        let path = candidates
-            .iter()
+        let found = [path.to_path_buf(), root.join("missions").join(path)]
+            .into_iter()
             .find(|candidate| candidate.is_file())
             .with_context(|| format!("mission not found: {}", path.display()))?;
-        match path.extension().and_then(|extension| extension.to_str()) {
-            Some("yaml" | "yml") => super::yaml_mission::load(path, overrides),
-            _ => super::xml_mission::load(path, overrides, registry),
-        }
+        ensure!(
+            matches!(
+                found.extension().and_then(|extension| extension.to_str()),
+                Some("yaml" | "yml")
+            ),
+            "missions are YAML files (.yaml): {}",
+            found.display()
+        );
+        super::yaml_mission::load(&found, overrides)
     }
 }

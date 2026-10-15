@@ -3,19 +3,18 @@
 # The case ID names the case in reports and retained evidence; keep it stable
 # when a file moves. Add a mission here when it exercises a C++-compared model
 # (see README.md).
-aircraft-collision | straight-no-gui.xml | SimpleAircraft, PID, collision, removal
-aircraft-long-horizon | test_missions/straight_cpu.xml | SimpleAircraft, PID, long horizon
-aircraft-multiplier-typo | test_missions/straight_cpu_mul.xml | as above; upstream multiplier typo
-substeps-random-spawn | verification/aircraft-substeps-spawning.xml | substeps, rates, randomized spawning
-substeps-scheduled-spawn | verification/aircraft-substeps-scheduled.xml | substeps, rates, two spawn schedules
-noisy-state-bias | verification/noisy-state-bias.xml | NoisyState bias, belief feedback
-world-networks | networks-local-global.xml | Boundary, GroundCollision, networks
-fixed-wing-a4 | fixed-wing-6dof.xml | FixedWing6DOF, AircraftPID, wind
-fixed-wing-rascal | fixed-wing-6dof-rascal.xml | FixedWing6DOF Rascal, upset, glide
-multirotor | multirotor.xml | Multirotor (4 and 6 rotors)
-single-integrator | verification/single-integrator.xml | SingleIntegrator command paths
-noisy-contacts-bias | verification/noisy-contacts-bias.xml | NoisyContacts bias, attitude, covariance
-sphere-network-auction | verification/sphere-network-auction.xml | SphereNetwork reach, AuctionAssign
-sphere-network-loss | verification/sphere-network-loss.xml | SphereNetwork loss, keyed draws
-collision-boundary | verification/collision-boundary.xml | SimpleCollision range boundary
-multirotor-fixes | verification/multirotor-fixes.xml | Multirotor fixes: initial velocity, rotor tilt, idle
+aircraft-collision | straight-no-gui.yaml | SimpleAircraft, PID, collision, removal
+aircraft-long-horizon | verification/aircraft-long-horizon.yaml | SimpleAircraft, PID, long horizon
+substeps-random-spawn | verification/aircraft-substeps-spawning.yaml | substeps, rates, randomized spawning
+substeps-scheduled-spawn | verification/aircraft-substeps-scheduled.yaml | substeps, rates, two spawn schedules
+noisy-state-bias | verification/noisy-state-bias.yaml | NoisyState bias, belief feedback
+world-networks | networks-local-global.yaml | Boundary, GroundCollision, networks
+fixed-wing-a4 | fixed-wing-6dof.yaml | FixedWing6DOF, AircraftPID, wind
+fixed-wing-rascal | fixed-wing-6dof-rascal.yaml | FixedWing6DOF Rascal, upset, glide
+multirotor | multirotor.yaml | Multirotor (4 and 6 rotors)
+single-integrator | verification/single-integrator.yaml | SingleIntegrator command paths
+noisy-contacts-bias | verification/noisy-contacts-bias.yaml | NoisyContacts bias, attitude, covariance
+sphere-network-auction | verification/sphere-network-auction.yaml | SphereNetwork reach, AuctionAssign
+sphere-network-loss | verification/sphere-network-loss.yaml | SphereNetwork loss, keyed draws
+collision-boundary | verification/collision-boundary.yaml | SimpleCollision range boundary
+multirotor-fixes | verification/multirotor-fixes.yaml | Multirotor fixes: initial velocity, rotor tilt, idle

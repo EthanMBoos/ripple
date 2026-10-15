@@ -1,16 +1,15 @@
 //! Typed local-ENU route shared by the waypoint publisher and autonomy.
 
-use anyhow::{Context, Result, ensure};
+use anyhow::{Result, ensure};
 use serde::Deserialize;
 
 use crate::Vec3;
 
 pub const WAYPOINT_TOPIC: &str = "Waypoints";
 
-/// Deserializes from XML text such as `"0,0,200; 100,0,200"`, or from a YAML
-/// list of points such as `[[0, 0, 200], [100, 0, 200]]`.
+/// Deserializes from a list of points such as `[[0, 0, 200], [100, 0, 200]]`.
 #[derive(Clone, Debug, Deserialize)]
-#[serde(try_from = "WaypointInput")]
+#[serde(try_from = "Vec<[f64; 3]>")]
 pub struct WaypointList {
     pub positions_world_m: Vec<Vec3>,
 }
@@ -36,48 +35,15 @@ impl WaypointList {
         );
         Ok(())
     }
+}
 
-    /// Mission syntax: "x,y,z; x,y,z". This is not the legacy GPS waypoint format.
-    pub(crate) fn parse(text: &str) -> Result<Self> {
-        let mut positions_world_m = Vec::new();
-        for point in text.split(';') {
-            let coordinates = point
-                .split(|c: char| c == ',' || c.is_whitespace())
-                .filter(|value| !value.is_empty())
-                .map(str::parse::<f64>)
-                .collect::<std::result::Result<Vec<_>, _>>()
-                .context("waypoint requires numeric x,y,z coordinates")?;
-            ensure!(
-                coordinates.len() == 3,
-                "waypoint requires exactly three local ENU coordinates"
-            );
-            positions_world_m.push(Vec3::new(coordinates[0], coordinates[1], coordinates[2]));
-        }
-        let list = Self { positions_world_m };
+impl TryFrom<Vec<[f64; 3]>> for WaypointList {
+    type Error = anyhow::Error;
+    fn try_from(points: Vec<[f64; 3]>) -> Result<Self> {
+        let list = Self {
+            positions_world_m: points.into_iter().map(Vec3::from).collect(),
+        };
         list.validate()?;
         Ok(list)
-    }
-}
-
-#[derive(Deserialize)]
-#[serde(untagged)]
-enum WaypointInput {
-    Text(String),
-    Points(Vec<[f64; 3]>),
-}
-
-impl TryFrom<WaypointInput> for WaypointList {
-    type Error = anyhow::Error;
-    fn try_from(input: WaypointInput) -> Result<Self> {
-        match input {
-            WaypointInput::Text(text) => Self::parse(&text),
-            WaypointInput::Points(points) => {
-                let list = Self {
-                    positions_world_m: points.into_iter().map(Vec3::from).collect(),
-                };
-                list.validate()?;
-                Ok(list)
-            }
-        }
     }
 }

@@ -7,7 +7,7 @@
   },
   "stage": {
     "implementation": "this checkout",
-    "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0"
+    "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803"
   },
   "part_a": [
     {
@@ -179,20 +179,20 @@
     {
       "mission": "fixed-wing-recovery",
       "dt_s": 0.01,
-      "frozen_vs_stage_position_m": 182.8559361897799,
-      "frozen_vs_stage_attitude_rad": 0.12358144256581156
+      "frozen_vs_stage_position_m": 4457.458931008762,
+      "frozen_vs_stage_attitude_rad": 1.5688351900087079
     },
     {
       "mission": "fixed-wing-recovery",
       "dt_s": 0.05,
-      "frozen_vs_stage_position_m": 198.54449310755948,
-      "frozen_vs_stage_attitude_rad": 0.2909258250955795
+      "frozen_vs_stage_position_m": 4399.5922362850115,
+      "frozen_vs_stage_attitude_rad": 1.5662254565164624
     },
     {
       "mission": "fixed-wing-recovery",
       "dt_s": 0.1,
-      "frozen_vs_stage_position_m": 1797.6184114850219,
-      "frozen_vs_stage_attitude_rad": 3.129802265872392
+      "frozen_vs_stage_position_m": 3440.8827383091066,
+      "frozen_vs_stage_attitude_rad": 3.129291380480273
     }
   ],
   "part_c": [
@@ -200,64 +200,64 @@
       "loads": "frozen",
       "altitude_d": 0.01,
       "dt_s": 0.01,
-      "altitude_error_m": 285.10973398719227,
-      "after_5_s_m": 285.10973398719227
+      "altitude_error_m": 558.2866423191972,
+      "after_5_s_m": 558.2866423191972
     },
     {
       "loads": "frozen",
       "altitude_d": 0.01,
       "dt_s": 0.005,
-      "altitude_error_m": 13.31478169398929,
-      "after_5_s_m": 13.31478169398929
+      "altitude_error_m": 558.4626330165381,
+      "after_5_s_m": 558.4626330165381
     },
     {
       "loads": "frozen",
       "altitude_d": 0.01,
       "dt_s": 0.0025,
-      "altitude_error_m": 67.84613846085324,
-      "after_5_s_m": 67.84613846085324
+      "altitude_error_m": 558.49744807971,
+      "after_5_s_m": 558.49744807971
     },
     {
       "loads": "frozen",
       "altitude_d": 0.002,
       "dt_s": 0.01,
-      "altitude_error_m": 1.4140432886400731,
-      "after_5_s_m": 0.6327324816420514
+      "altitude_error_m": 558.2866423191972,
+      "after_5_s_m": 558.2866423191972
     },
     {
       "loads": "frozen",
       "altitude_d": 0.002,
       "dt_s": 0.005,
-      "altitude_error_m": 1.3785595644749264,
-      "after_5_s_m": 0.6147623913212783
+      "altitude_error_m": 558.4626330165381,
+      "after_5_s_m": 558.4626330165381
     },
     {
       "loads": "frozen",
       "altitude_d": 0.002,
       "dt_s": 0.0025,
-      "altitude_error_m": 1.3616247404472688,
-      "after_5_s_m": 0.6109590255547346
+      "altitude_error_m": 558.49744807971,
+      "after_5_s_m": 558.49744807971
     },
     {
       "loads": "frozen",
       "altitude_d": 0.0,
       "dt_s": 0.01,
-      "altitude_error_m": 1.5055089072362762,
-      "after_5_s_m": 0.7917148607814397
+      "altitude_error_m": 558.2866423191972,
+      "after_5_s_m": 558.2866423191972
     },
     {
       "loads": "frozen",
       "altitude_d": 0.0,
       "dt_s": 0.005,
-      "altitude_error_m": 1.4757331875636055,
-      "after_5_s_m": 0.7585774901330069
+      "altitude_error_m": 558.4626330165381,
+      "after_5_s_m": 558.4626330165381
     },
     {
       "loads": "frozen",
       "altitude_d": 0.0,
       "dt_s": 0.0025,
-      "altitude_error_m": 1.4614893007202454,
-      "after_5_s_m": 0.7453819488835052
+      "altitude_error_m": 558.49744807971,
+      "after_5_s_m": 558.49744807971
     },
     {
       "loads": "stage",

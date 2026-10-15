@@ -8,7 +8,6 @@ use serde_yaml_ng::{Mapping, Value};
 use crate::{
     entity::EntityDefinition,
     math::Vec3,
-    parse::Params,
     plugin::PluginRegistry,
     simcontrol::{generation::Generator, world_plugins::CompiledWorld},
 };
@@ -68,14 +67,6 @@ impl TryFrom<Vec<String>> for EndConditions {
     }
 }
 
-/// XML keeps text conversions at the parameter boundary; native setup uses values.
-#[derive(Clone, Debug, Serialize)]
-#[serde(untagged)]
-pub(crate) enum PluginValues {
-    Text(Params),
-    Yaml(Mapping),
-}
-
 /// A registered behavior and its parameters, configured once for independent instances.
 #[derive(Clone, Debug, Serialize)]
 pub struct PluginConfig {
@@ -88,7 +79,7 @@ pub struct PluginConfig {
     /// (or `perfect`). Loading fills in the inputs a mission leaves out.
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub inputs: BTreeMap<String, String>,
-    pub(crate) params: PluginValues,
+    pub(crate) params: Mapping,
 }
 
 impl PluginConfig {
@@ -98,7 +89,7 @@ impl PluginConfig {
             instance: None,
             loop_rate_hz: 0.0,
             inputs: BTreeMap::new(),
-            params: PluginValues::Yaml(Mapping::new()),
+            params: Mapping::new(),
         }
     }
 
@@ -115,7 +106,7 @@ impl PluginConfig {
         let Value::Mapping(params) = values else {
             bail!("plugin parameters must be a map");
         };
-        self.params = PluginValues::Yaml(params);
+        self.params = params;
         Ok(self)
     }
 
@@ -124,10 +115,8 @@ impl PluginConfig {
             self.loop_rate_hz.is_finite() && self.loop_rate_hz >= 0.0,
             "loop_rate must be finite and nonnegative"
         );
-        if let PluginValues::Yaml(params) = &self.params {
-            for value in params.values() {
-                check_values(value)?;
-            }
+        for value in self.params.values() {
+            check_values(value)?;
         }
         Ok(())
     }
@@ -340,14 +329,6 @@ impl ScenarioConfig {
             end_conditions,
         })
     }
-
-    /// Compare experiment structure; plugin values are compared by running both
-    /// scenarios because XML keeps text where native setup keeps typed values.
-    pub fn setup_differences(&self, other: &Self) -> Result<Vec<String>> {
-        let mut found = Vec::new();
-        json_differences("", &outline(self)?, &outline(other)?, &mut found);
-        Ok(found)
-    }
 }
 
 impl EntityGroupConfig {
@@ -389,65 +370,5 @@ impl EntityGroupConfig {
             );
         }
         Ok(())
-    }
-}
-
-fn outline(config: &ScenarioConfig) -> Result<serde_json::Value> {
-    let mut value = serde_json::to_value(config)?;
-    if let Some(entities) = value["entities"].as_array_mut() {
-        for entity in entities {
-            entity["label"] = serde_json::Value::Null;
-        }
-    }
-    strip_plugin_params(&mut value);
-    Ok(value)
-}
-
-fn strip_plugin_params(value: &mut serde_json::Value) {
-    match value {
-        serde_json::Value::Object(fields) => {
-            // Only a plugin config has a loop rate.
-            if fields.contains_key("loop_rate_hz") {
-                fields.remove("params");
-            }
-            fields.values_mut().for_each(strip_plugin_params);
-        }
-        serde_json::Value::Array(items) => items.iter_mut().for_each(strip_plugin_params),
-        _ => {}
-    }
-}
-
-fn json_differences(
-    path: &str,
-    first: &serde_json::Value,
-    second: &serde_json::Value,
-    found: &mut Vec<String>,
-) {
-    use serde_json::Value;
-    let child = |key: &str| {
-        if path.is_empty() {
-            key.to_owned()
-        } else {
-            format!("{path}.{key}")
-        }
-    };
-    match (first, second) {
-        (Value::Object(a), Value::Object(b)) => {
-            let missing = Value::Null;
-            for key in a.keys().chain(b.keys().filter(|key| !a.contains_key(*key))) {
-                let (x, y) = (
-                    a.get(key).unwrap_or(&missing),
-                    b.get(key).unwrap_or(&missing),
-                );
-                json_differences(&child(key), x, y, found);
-            }
-        }
-        (Value::Array(a), Value::Array(b)) if a.len() == b.len() => {
-            for (index, (x, y)) in a.iter().zip(b).enumerate() {
-                json_differences(&child(&index.to_string()), x, y, found);
-            }
-        }
-        (a, b) if a != b => found.push(format!("{path}: {a} vs {b}")),
-        _ => {}
     }
 }

@@ -1,0 +1,35 @@
+# Constant controls: every AircraftPIDController gain is zero, so surfaces and
+# throttle stay at zero and only the motion model's integration varies.
+# thrust_min is 0 so that zero throttle means no thrust: a glider.
+format_version: 1
+name: fixed-wing-open-loop
+
+run:
+  end_s: 60
+  dt_s: 0.05
+  seed: 12345
+
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+
+entities:
+  glider:
+    team: 1
+    position_m: [-1000, -150, 1000]
+    velocity_mps: [222, 0, 0]
+    heading_deg: 0
+    visual_model: sphere
+    autonomy:
+      Straight:
+        speed: 220
+    controller:
+      AircraftPIDController:
+        airframe: a4d
+        heading_pid: [0, 0, 0, 45]
+        altitude_pid: [0, 0, 0, 10]
+        speed_pid: [0, 0, 0, 10]
+        pitch_pid: [0, 0, 0, 9]
+        roll_pid: [0, 0, 0, 9]
+    motion_model:
+      FixedWing6DOF:
+        airframe: a4d
+        thrust_min: 0

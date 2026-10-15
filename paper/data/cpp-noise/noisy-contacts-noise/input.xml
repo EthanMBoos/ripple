@@ -1,31 +1,109 @@
-<?xml version="1.0"?>
-<!-- Added verification fixture: NoisyContacts noise. Each error is keyed by
-     the contact, quantity, and axis, so external verification that draws the
-     same keys compares the measured contacts sample for sample, and their
-     error distributions again with reference/noise_statistics.py. -->
-<runscript name="NoisyContacts noise distributions">
-  <run start="0" end="30" dt="0.1"
-       enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+<?xml version='1.0' encoding='utf-8'?>
+<runscript name="mission">
+  <run start="0.0" end="30.0" dt="0.1" motion_multiplier="1" enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
   <seed>23</seed>
   <end_condition>time</end_condition>
-  <output_type>all</output_type>
-  <create_latest_dir>false</create_latest_dir>
   <network>GlobalNetwork</network>
   <network>LocalNetwork</network>
   <metrics>SimpleCollisionMetrics</metrics>
-  <entity_common name="aircraft">
+  <entity>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
     <count>1</count>
-    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <x>0.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>200.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy speed="22">Straight</autonomy>
     <controller>SimpleAircraftControllerPID</controller>
+    <sensor pos_noise_0="1 5" pos_noise_1="-2 5" pos_noise_2="0.5 1" vel_noise_0="0 5" vel_noise_1="0.3 5" vel_noise_2="0 1" orient_noise_0="0 0.05" orient_noise_1="0 0.05" orient_noise_2="0.1 0.1">NoisyContacts</sensor>
     <motion_model>SimpleAircraft</motion_model>
-    <sensor pos_noise_0="1 5" pos_noise_1="-2 5" pos_noise_2="0.5 1"
-            vel_noise_0="0 5" vel_noise_1="0.3 5" vel_noise_2="0 1"
-            orient_noise_0="0 0.05" orient_noise_1="0 0.05" orient_noise_2="0.1 0.1">NoisyContacts</sensor>
+  </entity>
+  <entity>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
     <visual_model>sphere</visual_model>
-  </entity_common>
-  <entity entity_common="aircraft"><team_id>1</team_id><x>0</x><y>0</y><z>200</z><heading>0</heading></entity>
-  <entity entity_common="aircraft"><team_id>1</team_id><x>100</x><y>50</y><z>210</z><heading>90</heading></entity>
-  <entity entity_common="aircraft"><team_id>2</team_id><x>400</x><y>-80</y><z>190</z><heading>200</heading></entity>
-  <entity entity_common="aircraft"><team_id>2</team_id><x>-300</x><y>200</y><z>220</z><heading>-45</heading></entity>
+    <health>1</health>
+    <count>1</count>
+    <x>100.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>50.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>210.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>90.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy speed="22">Straight</autonomy>
+    <controller>SimpleAircraftControllerPID</controller>
+    <sensor pos_noise_0="1 5" pos_noise_1="-2 5" pos_noise_2="0.5 1" vel_noise_0="0 5" vel_noise_1="0.3 5" vel_noise_2="0 1" orient_noise_0="0 0.05" orient_noise_1="0 0.05" orient_noise_2="0.1 0.1">NoisyContacts</sensor>
+    <motion_model>SimpleAircraft</motion_model>
+  </entity>
+  <entity>
+    <team_id>2</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>400.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>-80.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>190.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>200.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy speed="22">Straight</autonomy>
+    <controller>SimpleAircraftControllerPID</controller>
+    <sensor pos_noise_0="1 5" pos_noise_1="-2 5" pos_noise_2="0.5 1" vel_noise_0="0 5" vel_noise_1="0.3 5" vel_noise_2="0 1" orient_noise_0="0 0.05" orient_noise_1="0 0.05" orient_noise_2="0.1 0.1">NoisyContacts</sensor>
+    <motion_model>SimpleAircraft</motion_model>
+  </entity>
+  <entity>
+    <team_id>2</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>-300.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>200.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>220.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>-45.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy speed="22">Straight</autonomy>
+    <controller>SimpleAircraftControllerPID</controller>
+    <sensor pos_noise_0="1 5" pos_noise_1="-2 5" pos_noise_2="0.5 1" vel_noise_0="0 5" vel_noise_1="0.3 5" vel_noise_2="0 1" orient_noise_0="0 0.05" orient_noise_1="0 0.05" orient_noise_2="0.1 0.1">NoisyContacts</sensor>
+    <motion_model>SimpleAircraft</motion_model>
+  </entity>
 </runscript>

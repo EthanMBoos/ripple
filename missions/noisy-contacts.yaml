@@ -1,0 +1,40 @@
+# Measured contacts along a shared route. Nothing here consumes the
+# measurements, and they are not recorded in run outputs or Rerun yet; this is
+# a regression input. See the contract tests for a consumer.
+format_version: 1
+name: noisy-contacts
+
+run:
+  end_s: 8
+  dt_s: 0.1
+  seed: 12345
+
+networks: {LocalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  point_agent:
+    visual_model: sphere
+    heading_deg: 0
+    autonomy:
+      WaypointFollower:
+        waypoints: [[30, 0, 0], [30, 20, 0]]
+        speed: 5
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}
+    sensors:
+      NoisyContacts:
+        position_stddev_m: [5, 5, 1]
+        velocity_stddev_mps: [5, 5, 1]
+
+entities:
+  blue:
+    template: point_agent
+    team: 1
+    color: [70, 130, 255]
+    position_m: [0, -5, 0]
+  red:
+    template: point_agent
+    team: 2
+    color: [255, 100, 70]
+    position_m: [0, 5, 0]

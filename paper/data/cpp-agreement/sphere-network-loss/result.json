@@ -1,10 +1,11 @@
 {
   "case": "sphere-network-loss",
-  "mission": "<checkout>/missions/verification/sphere-network-loss.xml",
+  "mission": "<checkout>/missions/verification/sphere-network-loss.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "546eb308bab14925270a2dabfb56ab8dd99569db2431545b8445a0f7b548ba90",
-    "effective_sha256": "107bbd36e939779f31af9807effba804498d0519532f56b813e943fc73e76108",
+    "input_sha256": "c2657c351ed58626320c9fe0ba26b1f13f1a5af0211e14ec14904faf1af36d90",
+    "xml_sha256": "1e3b9a951f0cc53b2886289e7cfeaa07f4a8419336eebf6fbd3d1bf4454dbdf1",
+    "effective_sha256": "a87b344f5aecd943de284c623a27edfbef958ea49662f831d03c7a2e63e8dc1d",
     "run_overrides": {
       "enable_gui": "false",
       "network_gui": "false",
@@ -31,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-14_20-39-20",
+  "cpp_log_directory": "cpp/logs/2026-10-15_06-54-50",
   "cpp_output_hashes": {
     "frames.bin": "3af84658670779642abbe781251b863d7258da67413fcfcf8ddc83177e200985",
     "summary.csv": "4a5b842355f0e07ad5475b435d856f7e2bd767fec124e5fbc98343be388757eb"
@@ -53,7 +54,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "d57eeb7ab5521bd5990a17b8ef17bab96bf9440bbbf884f8520fbe0c153683c9",
+  "recording_sha256": "8e7f29550fd16a559e7e70ba62a826384ccde1fef4a385d9fede78467990f4d6",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

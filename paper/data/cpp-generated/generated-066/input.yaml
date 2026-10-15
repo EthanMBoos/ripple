@@ -1,0 +1,139 @@
+{
+ "format_version": 1,
+ "name": "generated-066",
+ "run": {
+  "end_s": 5,
+  "dt_s": 0.05,
+  "motion_multiplier": 5,
+  "seed": 1983303789
+ },
+ "interactions": {
+  "GroundCollision": {
+   "ground_collision_z": 41.4476
+  }
+ },
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 3,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    473.716,
+    -422.339,
+    127.022
+   ],
+   "position_variance_m2": [
+    0,
+    0,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "heading_deg": -117.072,
+   "roll_deg": 2.02322,
+   "pitch_deg": -0.452172,
+   "autonomy": {
+    "Straight": {
+     "speed": 26.5322,
+     "loop_rate": 0
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 0
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 28.9017
+    }
+   }
+  },
+  "group1": {
+   "team": 2,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    184.686,
+    223.33,
+    174.001
+   ],
+   "position_variance_m2": [
+    25,
+    100,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "spawn": {
+    "rate_hz": 3.59921,
+    "batch_size": 2,
+    "start_s": 0.151511,
+    "time_stddev_s": 0
+   },
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      -4.99184,
+      7.97037,
+      -0.988558
+     ],
+     "loop_rate": 2
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  },
+  "group2": {
+   "team": 1,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    305.396,
+    -155.345,
+    126.279
+   ],
+   "position_variance_m2": [
+    0,
+    100,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "spawn": {
+    "rate_hz": 2.43677,
+    "batch_size": 2,
+    "start_s": 0.169961,
+    "time_stddev_s": 0.05
+   },
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      -3.91277,
+      -5.58455,
+      -1.95983
+     ],
+     "loop_rate": 2
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  }
+ }
+}

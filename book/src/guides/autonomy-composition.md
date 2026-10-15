@@ -56,7 +56,7 @@ fn step(
 }
 ```
 
-The helper structs do not need plugin registration, XML files, pub/sub between
+The helper structs do not need plugin registration, mission entries, pub/sub between
 each other, or engine scheduling. Ordinary calls and borrowed inputs are enough.
 Their mutable state belongs to this agent, so the engine can still schedule the
 whole autonomy as one entity-local update.

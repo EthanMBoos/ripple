@@ -1,0 +1,153 @@
+{
+ "format_version": 1,
+ "name": "generated-037",
+ "run": {
+  "end_s": 3,
+  "dt_s": 0.01,
+  "motion_multiplier": 1,
+  "seed": 1279922316
+ },
+ "interactions": {
+  "SimpleCollision": {
+   "collision_range": 18.7288
+  },
+  "GroundCollision": {
+   "ground_collision_z": 54.9827
+  }
+ },
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 3,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    -78.0866,
+    340.511,
+    827.158
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "heading_deg": 4.19031,
+   "roll_deg": -3.51788,
+   "pitch_deg": -1.92661,
+   "autonomy": {
+    "Straight": {
+     "speed": 244.073,
+     "loop_rate": 0
+    }
+   },
+   "velocity_mps": [
+    244.073,
+    0,
+    0
+   ],
+   "controller": {
+    "AircraftPIDController": {
+     "airframe": "a4d"
+    }
+   },
+   "motion_model": {
+    "FixedWing6DOF": {
+     "airframe": "a4d",
+     "wind_E": -1.62325,
+     "wind_N": 2.65417
+    }
+   }
+  },
+  "group1": {
+   "team": 1,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    -432.993,
+    -53.5457,
+    1125.66
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "heading_deg": -8.06359,
+   "roll_deg": 2.32269,
+   "pitch_deg": 2.57841,
+   "autonomy": {
+    "Straight": {
+     "speed": 188.144,
+     "loop_rate": 10
+    }
+   },
+   "velocity_mps": [
+    188.144,
+    0,
+    0
+   ],
+   "controller": {
+    "AircraftPIDController": {
+     "airframe": "a4d"
+    }
+   },
+   "motion_model": {
+    "FixedWing6DOF": {
+     "airframe": "a4d",
+     "wind_E": -2.98898,
+     "wind_N": -1.12688
+    }
+   }
+  },
+  "group2": {
+   "team": 3,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    -208.834,
+    477.609,
+    883.419
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "heading_deg": -171.249,
+   "roll_deg": -2.68395,
+   "pitch_deg": -0.0407168,
+   "autonomy": {
+    "Straight": {
+     "speed": 203.53,
+     "loop_rate": 0
+    }
+   },
+   "velocity_mps": [
+    203.53,
+    0,
+    0
+   ],
+   "controller": {
+    "AircraftPIDController": {
+     "airframe": "a4d"
+    }
+   },
+   "motion_model": {
+    "FixedWing6DOF": {
+     "airframe": "a4d",
+     "wind_E": 2.31676,
+     "wind_N": 1.20767
+    }
+   }
+  }
+ }
+}

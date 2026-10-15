@@ -46,13 +46,12 @@ def cases(scratch):
         if "grid_cell_m" in fields:
             continue  # the same mission as `collision`; grids are checked below
         for agents in sizes:
-            path = scratch / f"perf-{name}-{agents}.xml"
-            path.write_text(perf.HEADER.format(name=name, agents=agents, **fields))
+            path = perf.write_mission(scratch / f"perf-{name}-{agents}.yaml",
+                                      perf.workload(name, agents))
             found.append((f"perf {name}-{agents}", path, True))
     for variance, agents in CROWDED:
-        fields = {**perf.WORKLOADS["collision"][2], "variance": variance}
-        path = scratch / f"crowded-{variance}-{agents}.xml"
-        path.write_text(perf.HEADER.format(name="crowded", agents=agents, **fields))
+        path = perf.write_mission(scratch / f"crowded-{variance}-{agents}.yaml",
+                                  perf.workload("collision", agents, variance=variance))
         found.append((f"crowded collision, variance {variance} m^2, {agents} agents", path, True))
     return found
 

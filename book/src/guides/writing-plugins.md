@@ -128,19 +128,11 @@ fn configure(params: &PluginParams<'_>) -> Result<StraightConfig> {
 }
 ```
 
-A parameter's value comes from the first of these that sets it:
-
-1. an attribute on the mission tag: `<autonomy speed="30">Straight</autonomy>`,
-2. a `param_common` group the tag references,
-3. an optional `Straight.xml` overlay file on `RIPPLE_PLUGIN_PATH`,
-4. the struct's `Default`.
-
-In a YAML mission the values are ordinary YAML: `speed: 25`, `gains: [1, 0, 2,
-9]`. In XML every value is text: numbers must be finite, booleans are
-`true`/`false` (or `1`/`0`), and lists such as `"1 2 3"` or `"1, 2, 3"` fill a
-`Vec` or a fixed array like `[f64; 3]`. The same struct reads either. A bad
-value is an error that names the key, and so is a key the struct doesn't have: a
-typo never silently gives you the default.
+A parameter's value is the mission's, under the plugin (`Straight: {speed:
+30}`), or else the struct's `Default`. Values are ordinary YAML: `speed: 25`,
+`gains: [1, 0, 2, 9]`; numbers must be finite. A bad value is an error that
+names the key, and so is a key the struct doesn't have: a typo never silently
+gives you the default.
 
 ## Ports: the control chain
 

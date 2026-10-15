@@ -39,7 +39,7 @@ def copy_files(run, output, names):
 
 
 def copy_reference_check(check, output, extra=()):
-    """report.json and, per case, its result, both summaries, and its input mission."""
+    """report.json and, per case, its result, both summaries, and its input missions."""
     output.mkdir(parents=True)
     copy_files(check, output, ["report.json"])
     for result in sorted(Path(check).glob("*/result.json")):
@@ -47,7 +47,10 @@ def copy_reference_check(check, output, extra=()):
         case.mkdir()
         shutil.copyfile(result, case / "result.json")
         sanitize(case / "result.json", check)
-        shutil.copyfile(result.parent / "input/input.xml", case / "input.xml")
+        # The mission both ran: Ripple's YAML and the XML written from it for C++.
+        for name in ("input.yaml", "input.xml"):
+            if (result.parent / "input" / name).is_file():
+                shutil.copyfile(result.parent / "input" / name, case / name)
         summaries = list((result.parent / "cpp/logs").glob("*/summary.csv"))
         if summaries:
             shutil.copyfile(summaries[0], case / "cpp-summary.csv")

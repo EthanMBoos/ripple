@@ -13,11 +13,10 @@ fn run(overrides: &[(&str, &str)]) -> Result<Vec<(f64, f64, f64)>> {
     for (name, value) in overrides {
         params.insert(name.to_string(), value.to_string());
     }
-    let mission = Mission::load_with_registry(
+    let mission = Mission::load(
         &crate_folder.join("missions/dead-reckoning.yaml"),
         crate_folder,
         &params,
-        &registry,
     )?;
     let mut simulation = Simulation::new(mission.scenario, &registry, 1)?;
     let mut ticks = Vec::new();

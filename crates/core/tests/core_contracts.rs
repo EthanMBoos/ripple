@@ -54,7 +54,7 @@ fn run(name: &str, yaml: &str) -> Result<(Vec<SimulationFrame>, Simulation)> {
     let mut registry = PluginRegistry::with_builtins();
     registry.register_autonomy::<ClockLog>("ClockLog")?;
     registry.register_motion::<Still>("Still")?;
-    let mission = Mission::load_with_registry(&path, &root, &Params::new(), &registry);
+    let mission = Mission::load(&path, &root, &Params::new());
     std::fs::remove_file(&path)?;
     let mut simulation = Simulation::new(mission?.scenario, &registry, 1)?;
     let mut frames = Vec::new();
@@ -223,7 +223,7 @@ fn contact_errors(
     std::fs::write(&path, yaml)?;
     let mut registry = PluginRegistry::with_builtins();
     registry.register_motion::<Still>("Still")?;
-    let mission = Mission::load_with_registry(&path, &root, &Params::new(), &registry);
+    let mission = Mission::load(&path, &root, &Params::new());
     std::fs::remove_file(&path)?;
     let mut simulation = Simulation::new(mission?.scenario, &registry, 1)?;
     let mut errors = std::collections::BTreeMap::new();

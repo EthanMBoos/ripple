@@ -9,11 +9,10 @@ fn chaser_catches_the_target() -> Result<()> {
     let crate_folder = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut registry = PluginRegistry::with_builtins();
     starter::register(&mut registry)?;
-    let mission = Mission::load_with_registry(
+    let mission = Mission::load(
         &crate_folder.join("missions/follow-nearest.yaml"),
         crate_folder,
         &Params::new(),
-        &registry,
     )?;
     let mut simulation = Simulation::new(mission.scenario, &registry, 1)?;
     while simulation.step()?.is_some() {}

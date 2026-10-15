@@ -1,49 +1,81 @@
-<?xml version="1.0"?>
-<!-- Added verification fixture for the three Multirotor fixes Rust shares with
-     the C++ comparison branch (docs/REFERENCE_NOTES.md), none of which
-     multirotor.xml exercises. MotorSpeeds (reference/fixtures/ for C++)
-     supplies constant rad/s; no stabilizer. Distinct fixed starts.
-     - carried: starts moving (vx, vy, vz), so body velocity must come from
-       the entity state; unfixed C++ reports the velocity but does not move.
-     - tilted: rotors tilted and raised or lowered, so moments must be r x F
-       along each rotor's axis; unfixed C++ ignores the tilt and uses |r|.
-     - idle: every motor commanded below omega_min, so each must keep its idle
-       thrust; unfixed C++ drops thrust (but not yaw torque) there.
-     821.5838362577492 rad/s balances the 1.5 kg quad's weight.
-     The vehicle numbers on each motion_model are C++ SCRIMMAGE's Multirotor.xml
-     defaults. They have no source (see airframe.rs) and are here only so the
-     C++ comparison flies the same vehicle in both; Ripple has no built-in copy.
-     -->
-<runscript name="Multirotor fixes">
-  <run start="0" end="2" dt="0.001" enable_gui="false" network_gui="false"
-       start_paused="false" time_warp="0" />
+<?xml version='1.0' encoding='utf-8'?>
+<runscript name="mission">
+  <run start="0.0" end="2.0" dt="0.001" motion_multiplier="1" enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
   <seed>12345</seed>
   <end_condition>time</end_condition>
-  <output_type>all</output_type>
-  <create_latest_dir>false</create_latest_dir>
   <network>LocalNetwork</network>
   <network>GlobalNetwork</network>
   <metrics>SimpleCollisionMetrics</metrics>
-  <entity_common name="quad">
-    <count>1</count>
-    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
-    <autonomy speed="0">Straight</autonomy>
+  <entity>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
     <visual_model>sphere</visual_model>
-  </entity_common>
-  <entity entity_common="quad">
-    <team_id>1</team_id><x>0</x><y>0</y><z>30</z><heading>30</heading>
-    <vx>3</vx><vy>-1</vy><vz>0.5</vz>
+    <health>1</health>
+    <count>1</count>
+    <x>0.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>3.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>-1.0</vy>
+    <z>30.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.5</vz>
+    <heading>30.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy speed="0">Straight</autonomy>
     <controller speeds="821.5838362577492 821.5838362577492 821.5838362577492 821.5838362577492">MotorSpeeds</controller>
-    <motion_model mass="1.5" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" c_D="0.058" c_T="5.45e-6" c_Q="2.284e-7" omega_min="346.41" omega_max="1200" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model>
+    <motion_model c_D="0.058" c_Q="2.284e-07" c_T="5.45e-06" mass="1.5" omega_max="1200" omega_min="346.41" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model>
   </entity>
-  <entity entity_common="quad">
-    <team_id>2</team_id><x>20</x><y>0</y><z>30</z><heading>0</heading>
+  <entity>
+    <team_id>2</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>20.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>30.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy speed="0">Straight</autonomy>
     <controller speeds="821.5838362577492 821.5838362577492 821.5838362577492 821.5838362577492">MotorSpeeds</controller>
-    <motion_model mass="1.5" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" c_D="0.058" c_T="5.45e-6" c_Q="2.284e-7" omega_min="346.41" omega_max="1200" rotor_config="[CCW 0 -0.175 0.03 10 0 0] [CCW 0 0.175 0.03 -8 0 0] [CW 0.175 0 -0.02 0 5 0] [CW -0.175 0 -0.02 0 -6 20]">Multirotor</motion_model>
+    <motion_model c_D="0.058" c_Q="2.284e-07" c_T="5.45e-06" mass="1.5" omega_max="1200" omega_min="346.41" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" rotor_config="[CCW 0 -0.175 0.03 10 0 0] [CCW 0 0.175 0.03 -8 0 0] [CW 0.175 0 -0.02 0 5 0] [CW -0.175 0 -0.02 0 -6 20]">Multirotor</motion_model>
   </entity>
-  <entity entity_common="quad">
-    <team_id>3</team_id><x>40</x><y>0</y><z>30</z><heading>0</heading>
+  <entity>
+    <team_id>3</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>40.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>30.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy speed="0">Straight</autonomy>
     <controller speeds="0 0 0 0">MotorSpeeds</controller>
-    <motion_model mass="1.5" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" c_D="0.058" c_T="5.45e-6" c_Q="2.284e-7" omega_min="346.41" omega_max="1200" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model>
+    <motion_model c_D="0.058" c_Q="2.284e-07" c_T="5.45e-06" mass="1.5" omega_max="1200" omega_min="346.41" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model>
   </entity>
 </runscript>

@@ -1,89 +1,81 @@
-<?xml version="1.0"?>
-<!-- FixedWing6DOF with C++'s FixedWing6DOF-Rascal.xml parameters (the Rascal 110
-     RC plane, taken from ArduPilot's JSBSim Rascal): the airframe planned for
-     ArduPlane SITL. Values are copied from C++ as-is, except C_D_delta_elevator,
-     which C++ never reads (it reads C_D_delta_elevator_) and Rust rejects; without
-     it both use the 0.01 default.
-     Known limits: no stall behavior, so keep to moderate-angle flight around
-     20 m/s; thrust_max 25 N has no source in the JSBSim model. The +-1
-     "normalized" surface limits (C++ commit 2cab6d119) allow about 3x the real
-     deflection, because the coefficients are per radian; a SITL mission should
-     use C++'s earlier radian limits (elevator +-0.30, aileron and rudder +-0.35).
-     See book/src/guides/ardupilot.md.
-     Aircraft: PID from a level start, PID recovering from a roll/pitch upset, and
-     a hands-off glide (all gains zero, so zero throttle and neutral surfaces).
-     The PID aircraft keep attitude limits of 45 and 60 degrees, wider than the
-     Rascal profile's 20 and 45. -->
-<runscript name="FixedWing6DOF Rascal">
-  <run start="0" end="60" dt="0.01" enable_gui="false" start_paused="false" time_warp="0" />
-  <seed>12345</seed><end_condition>time</end_condition><output_type>all</output_type>
-  <network>LocalNetwork</network><network>GlobalNetwork</network>
+<?xml version='1.0' encoding='utf-8'?>
+<runscript name="mission">
+  <run start="0.0" end="60.0" dt="0.01" motion_multiplier="1" enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+  <seed>12345</seed>
+  <end_condition>time</end_condition>
+  <network>LocalNetwork</network>
+  <network>GlobalNetwork</network>
   <metrics>SimpleCollisionMetrics</metrics>
-
   <entity>
-    <!-- level -->
-    <count>1</count><team_id>1</team_id>
-    <x>0</x><y>0</y><z>200</z>
-    <vx>20</vx><vy>0</vy><vz>0</vz><heading>0</heading>
-    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>0.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>20.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>200.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy speed="20">Straight</autonomy>
     <controller airframe="rascal" max_pitch="45" max_roll="60">AircraftPIDController</controller>
-    <motion_model airframe="rascal" gravity_magnitude="9.81" air_density="1.2250"
-        inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]"
-        thrust_min="0.0" thrust_max="25.0"
-        delta_elevator_min="-1" delta_elevator_max="1" delta_aileron_min="-1" delta_aileron_max="1"
-        delta_rudder_min="-1" delta_rudder_max="1"
-        mass="5.91" wing_span="2.70" surface_area_of_wing="0.982" chord_length="0.351"
-        C_D0="0.028" C_D_alpha="0.0"
-        C_L0="0.25" C_L_alpha="5" C_LQ="0.0" C_L_alpha_dot="0.0" C_L_delta_elevator="0.2"
-        C_Y_beta="-1.0" C_Y_delta_rudder="0.0"
-        C_L_beta="-0.1" C_LP="-0.4" C_LR="0.15" C_L_delta_aileron="0.13" C_L_delta_rudder="0.01"
-        C_M0="0.0" C_MQ="-12.0" C_M_alpha="-0.5" C_M_alpha_dot="-7.0" C_M_delta_elevator="-0.5"
-        C_N_beta="0.12" C_NP="0.0" C_NR="-0.15" C_N_delta_aileron="-0.03" C_N_delta_rudder="-0.05">FixedWing6DOF</motion_model>
-    <visual_model>sphere</visual_model>
+    <motion_model gravity_magnitude="9.81" air_density="1.225" inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]" thrust_min="0.0" thrust_max="25.0" delta_elevator_min="-0.3" delta_elevator_max="0.3" delta_aileron_min="-0.35" delta_aileron_max="0.35" delta_rudder_min="-0.35" delta_rudder_max="0.35" mass="5.91" wing_span="2.7" surface_area_of_wing="0.982" chord_length="0.351" C_D0="0.028" C_D_alpha="0.0" C_L0="0.25" C_L_alpha="5" C_LQ="0.0" C_L_alpha_dot="0.0" C_L_delta_elevator="0.2" C_Y_beta="-1.0" C_Y_delta_rudder="0.0" C_L_beta="-0.1" C_LP="-0.4" C_LR="0.15" C_L_delta_aileron="0.13" C_L_delta_rudder="0.01" C_M0="0.0" C_MQ="-12.0" C_M_alpha="-0.5" C_M_alpha_dot="-7.0" C_M_delta_elevator="-0.5" C_N_beta="0.12" C_NP="0.0" C_NR="-0.15" C_N_delta_aileron="-0.03" C_N_delta_rudder="-0.05" airframe="rascal">FixedWing6DOF</motion_model>
   </entity>
   <entity>
-    <!-- upset -->
-    <count>1</count><team_id>2</team_id>
-    <x>0</x><y>300</y><z>200</z>
-    <vx>20</vx><vy>0</vy><vz>0</vz><heading>0</heading><roll>60</roll><pitch>30</pitch>
-    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
+    <team_id>2</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>0.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>20.0</vx>
+    <y>300.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>200.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>60.0</roll>
+    <pitch>30.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy speed="20">Straight</autonomy>
     <controller airframe="rascal" max_pitch="45" max_roll="60">AircraftPIDController</controller>
-    <motion_model airframe="rascal" gravity_magnitude="9.81" air_density="1.2250"
-        inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]"
-        thrust_min="0.0" thrust_max="25.0"
-        delta_elevator_min="-1" delta_elevator_max="1" delta_aileron_min="-1" delta_aileron_max="1"
-        delta_rudder_min="-1" delta_rudder_max="1"
-        mass="5.91" wing_span="2.70" surface_area_of_wing="0.982" chord_length="0.351"
-        C_D0="0.028" C_D_alpha="0.0"
-        C_L0="0.25" C_L_alpha="5" C_LQ="0.0" C_L_alpha_dot="0.0" C_L_delta_elevator="0.2"
-        C_Y_beta="-1.0" C_Y_delta_rudder="0.0"
-        C_L_beta="-0.1" C_LP="-0.4" C_LR="0.15" C_L_delta_aileron="0.13" C_L_delta_rudder="0.01"
-        C_M0="0.0" C_MQ="-12.0" C_M_alpha="-0.5" C_M_alpha_dot="-7.0" C_M_delta_elevator="-0.5"
-        C_N_beta="0.12" C_NP="0.0" C_NR="-0.15" C_N_delta_aileron="-0.03" C_N_delta_rudder="-0.05">FixedWing6DOF</motion_model>
-    <visual_model>sphere</visual_model>
+    <motion_model gravity_magnitude="9.81" air_density="1.225" inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]" thrust_min="0.0" thrust_max="25.0" delta_elevator_min="-0.3" delta_elevator_max="0.3" delta_aileron_min="-0.35" delta_aileron_max="0.35" delta_rudder_min="-0.35" delta_rudder_max="0.35" mass="5.91" wing_span="2.7" surface_area_of_wing="0.982" chord_length="0.351" C_D0="0.028" C_D_alpha="0.0" C_L0="0.25" C_L_alpha="5" C_LQ="0.0" C_L_alpha_dot="0.0" C_L_delta_elevator="0.2" C_Y_beta="-1.0" C_Y_delta_rudder="0.0" C_L_beta="-0.1" C_LP="-0.4" C_LR="0.15" C_L_delta_aileron="0.13" C_L_delta_rudder="0.01" C_M0="0.0" C_MQ="-12.0" C_M_alpha="-0.5" C_M_alpha_dot="-7.0" C_M_delta_elevator="-0.5" C_N_beta="0.12" C_NP="0.0" C_NR="-0.15" C_N_delta_aileron="-0.03" C_N_delta_rudder="-0.05" airframe="rascal">FixedWing6DOF</motion_model>
   </entity>
   <entity>
-    <!-- glide -->
-    <count>1</count><team_id>3</team_id>
-    <x>0</x><y>600</y><z>200</z>
-    <vx>20</vx><vy>0</vy><vz>0</vz><heading>0</heading>
-    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
-    <autonomy speed="20">Straight</autonomy>
-    <controller airframe="rascal" heading_pid="0,0,0,0" altitude_pid="0,0,0,0" speed_pid="0,0,0,0" pitch_pid="0,0,0,0" roll_pid="0,0,0,0">AircraftPIDController</controller>
-    <motion_model airframe="rascal" gravity_magnitude="9.81" air_density="1.2250"
-        inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]"
-        thrust_min="0.0" thrust_max="25.0"
-        delta_elevator_min="-1" delta_elevator_max="1" delta_aileron_min="-1" delta_aileron_max="1"
-        delta_rudder_min="-1" delta_rudder_max="1"
-        mass="5.91" wing_span="2.70" surface_area_of_wing="0.982" chord_length="0.351"
-        C_D0="0.028" C_D_alpha="0.0"
-        C_L0="0.25" C_L_alpha="5" C_LQ="0.0" C_L_alpha_dot="0.0" C_L_delta_elevator="0.2"
-        C_Y_beta="-1.0" C_Y_delta_rudder="0.0"
-        C_L_beta="-0.1" C_LP="-0.4" C_LR="0.15" C_L_delta_aileron="0.13" C_L_delta_rudder="0.01"
-        C_M0="0.0" C_MQ="-12.0" C_M_alpha="-0.5" C_M_alpha_dot="-7.0" C_M_delta_elevator="-0.5"
-        C_N_beta="0.12" C_NP="0.0" C_NR="-0.15" C_N_delta_aileron="-0.03" C_N_delta_rudder="-0.05">FixedWing6DOF</motion_model>
+    <team_id>3</team_id>
+    <color>255 255 255</color>
     <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>0.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>20.0</vx>
+    <y>600.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>200.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy speed="20">Straight</autonomy>
+    <controller airframe="rascal" altitude_pid="0 0 0 0" heading_pid="0 0 0 0" pitch_pid="0 0 0 0" roll_pid="0 0 0 0" speed_pid="0 0 0 0">AircraftPIDController</controller>
+    <motion_model gravity_magnitude="9.81" air_density="1.225" inertia_matrix_slug_ft_sq="[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]" thrust_min="0.0" thrust_max="25.0" delta_elevator_min="-0.3" delta_elevator_max="0.3" delta_aileron_min="-0.35" delta_aileron_max="0.35" delta_rudder_min="-0.35" delta_rudder_max="0.35" mass="5.91" wing_span="2.7" surface_area_of_wing="0.982" chord_length="0.351" C_D0="0.028" C_D_alpha="0.0" C_L0="0.25" C_L_alpha="5" C_LQ="0.0" C_L_alpha_dot="0.0" C_L_delta_elevator="0.2" C_Y_beta="-1.0" C_Y_delta_rudder="0.0" C_L_beta="-0.1" C_LP="-0.4" C_LR="0.15" C_L_delta_aileron="0.13" C_L_delta_rudder="0.01" C_M0="0.0" C_MQ="-12.0" C_M_alpha="-0.5" C_M_alpha_dot="-7.0" C_M_delta_elevator="-0.5" C_N_beta="0.12" C_NP="0.0" C_NR="-0.15" C_N_delta_aileron="-0.03" C_N_delta_rudder="-0.05" airframe="rascal">FixedWing6DOF</motion_model>
   </entity>
 </runscript>

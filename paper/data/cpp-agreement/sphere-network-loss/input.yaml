@@ -1,0 +1,58 @@
+# SphereNetwork loss, compared draw for draw. Eight stationary agents within
+# range run AuctionAssign on CommsNetwork with prob_transmit 0.5, so about half
+# the start and bid messages are lost. Each loss draw is keyed by the sending
+# and receiving entities, the topic, and the message's sequence, so external
+# verification that draws the same keys must deliver exactly the same
+# messages; random bid values are not compared.
+format_version: 1
+name: sphere-network-loss
+
+run:
+  end_s: 7
+  dt_s: 0.1
+  seed: 11
+
+networks:
+  GlobalNetwork:
+  CommsNetwork:
+    plugin: SphereNetwork
+    range: 100
+    prob_transmit: 0.5
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  bidder:
+    team: 1
+    visual_model: sphere
+    heading_deg: 0
+    autonomy:
+      AuctionAssign:
+        network_name: CommsNetwork
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}
+
+entities:
+  a:
+    template: bidder
+    position_m: [0, 0, 0]
+  b:
+    template: bidder
+    position_m: [10, 0, 0]
+  c:
+    template: bidder
+    position_m: [20, 0, 0]
+  d:
+    template: bidder
+    position_m: [30, 0, 0]
+  e:
+    template: bidder
+    position_m: [0, 10, 0]
+  f:
+    template: bidder
+    position_m: [0, 20, 0]
+  g:
+    template: bidder
+    position_m: [0, 30, 0]
+  h:
+    template: bidder
+    position_m: [10, 10, 0]

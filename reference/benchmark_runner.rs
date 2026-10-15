@@ -72,12 +72,7 @@ fn main() -> Result<()> {
     let mut registry = PluginRegistry::with_builtins();
     registry.register_sensor::<StateBroadcast>("StateBroadcast")?;
     registry.register_autonomy::<StateListener>("StateListener")?;
-    let mut config = Mission::load_with_registry(
-        Path::new(&args[1]),
-        Path::new(&args[2]),
-        &Params::new(),
-        &registry,
-    )?;
+    let mut config = Mission::load(Path::new(&args[1]), Path::new(&args[2]), &Params::new())?;
     if let Some(cell_width_m) = args.get(5) {
         config.scenario.spatial_lookup = SpatialLookup::Grid {
             cell_width_m: cell_width_m.parse()?,

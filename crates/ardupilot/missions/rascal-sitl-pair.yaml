@@ -10,11 +10,8 @@ run:
   dt_s: 0.0025
   seed: 1
 
-networks:
-  LocalNetwork:
-  GlobalNetwork:
-metrics:
-  SimpleCollisionMetrics:
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
 
 templates:
   rascal:

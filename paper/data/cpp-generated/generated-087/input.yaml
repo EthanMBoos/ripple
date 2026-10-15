@@ -1,0 +1,145 @@
+{
+ "format_version": 1,
+ "name": "generated-087",
+ "run": {
+  "end_s": 3,
+  "dt_s": 0.05,
+  "motion_multiplier": 2,
+  "seed": 1220117464
+ },
+ "interactions": {},
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 2,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    -237.625,
+    -378.472,
+    157.883
+   ],
+   "position_variance_m2": [
+    0,
+    0,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "heading_deg": 65.5081,
+   "roll_deg": 2.67937,
+   "pitch_deg": -0.966622,
+   "autonomy": {
+    "Straight": {
+     "speed": 18.8069,
+     "loop_rate": 5
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 20
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 22.6087
+    }
+   },
+   "sensors": {
+    "NoisyContacts": {
+     "position_bias_m": [
+      -0.703789,
+      -0.372731,
+      -1.67499
+     ],
+     "velocity_bias_mps": [
+      0.0822694,
+      0.475151,
+      -0.06552
+     ],
+     "attitude_bias_rad": [
+      -0.0105941,
+      0.00708264,
+      0.0270935
+     ]
+    }
+   }
+  },
+  "group1": {
+   "team": 1,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    117.425,
+    -371.996,
+    271.52
+   ],
+   "position_variance_m2": [
+    100,
+    0,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "heading_deg": 114.79,
+   "roll_deg": -1.73406,
+   "pitch_deg": 1.81679,
+   "autonomy": {
+    "Straight": {
+     "speed": 20.1894,
+     "loop_rate": 10
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 50
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 44.0214
+    }
+   }
+  },
+  "group2": {
+   "team": 2,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    488.606,
+    161.44,
+    283.923
+   ],
+   "position_variance_m2": [
+    25,
+    100,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "randomize_every_spawn": true,
+   "heading_deg": -7.35651,
+   "roll_deg": 0.934036,
+   "pitch_deg": 2.74856,
+   "autonomy": {
+    "Straight": {
+     "speed": 22.9367,
+     "loop_rate": 0
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 20
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 23.001
+    }
+   }
+  }
+ }
+}

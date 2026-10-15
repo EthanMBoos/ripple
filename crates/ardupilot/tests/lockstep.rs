@@ -129,11 +129,10 @@ fn simulation(
             (format!("{entity}.velocity_mps"), "[20, 0, 0]".into()),
         ]);
     }
-    let mission = Mission::load_with_registry(
+    let mission = Mission::load(
         &crate_folder.join("missions").join(mission),
         crate_folder,
         &params,
-        &registry,
     )?;
     Simulation::new(mission.scenario, &registry, workers)
 }

@@ -1,0 +1,55 @@
+{
+ "format_version": 1,
+ "name": "generated-010",
+ "run": {
+  "end_s": 10,
+  "dt_s": 0.05,
+  "motion_multiplier": 2,
+  "seed": 886159182
+ },
+ "interactions": {},
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 1,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    -232.905,
+    110.663,
+    294.472
+   ],
+   "position_variance_m2": [
+    0,
+    25,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "randomize_every_spawn": true,
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      7.04329,
+      -8.94377,
+      -1.63513
+     ],
+     "loop_rate": 0
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  }
+ }
+}

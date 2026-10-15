@@ -34,6 +34,7 @@ import sys
 import tempfile
 
 from project import ROOT, build_runner
+from scenario import write as write_mission
 
 BASELINE = ROOT / "reference/perf_baseline.json"
 # DEVNOTE: identical code, timed in three sessions on an M2 Pro (2026-10-12),
@@ -42,65 +43,70 @@ BASELINE = ROOT / "reference/perf_baseline.json"
 # own min-max range. A 5% threshold failed on that noise; 10% does not.
 NOISE = 0.10
 
-HEADER = """<?xml version="1.0"?>
-<runscript name="perf-{name}">
-  <run start="0" end="{end}" dt="0.1" motion_multiplier="{multiplier}"
-       enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
-  <seed>1</seed><end_condition>time</end_condition>
-  <network>GlobalNetwork</network><network>LocalNetwork</network>
-  <metrics>SimpleCollisionMetrics</metrics>
-{world}
-  <entity>
-    <team_id>1</team_id><count>{agents}</count>
-    <x>0</x><y>0</y><z>200</z>
-    <variance_x>{variance}</variance_x><variance_y>{variance}</variance_y><variance_z>0</variance_z>
-    <use_variance_all_ents>true</use_variance_all_ents>
-{spawn}
-    <autonomy speed="20">Straight</autonomy>
-    <controller loop_rate="{controller_rate}">SimpleAircraftControllerPID</controller>
-    <motion_model>SimpleAircraft</motion_model>
-{sensors}
-  </entity>
-</runscript>
-"""
 
+def mission(agents, end, multiplier=1, controller_rate=0, variance=0, interactions=None,
+            spawn=None, sensors=None, autonomy=None):
+    """A YAML mission (written as JSON, which YAML reads) of `agents` aircraft
+    flying straight at 200 m, every one with its own random start."""
+    aircraft = {"team": 1, "count": agents, "position_m": [0, 0, 200],
+                "position_variance_m2": [variance, variance, 0],
+                "randomize_every_spawn": True}
+    if spawn:
+        aircraft["spawn"] = spawn
+    aircraft.update({
+        "autonomy": {"Straight": {"speed": 20}, **(autonomy or {})},
+        "controller": {"SimpleAircraftControllerPID": {"loop_rate": controller_rate}},
+        "motion_model": {"SimpleAircraft": None},
+        "sensors": sensors or {},
+    })
+    return {"format_version": 1, "name": "perf",
+            "run": {"end_s": end, "dt_s": 0.1, "motion_multiplier": multiplier, "seed": 1},
+            "interactions": interactions or {},
+            "networks": {"GlobalNetwork": None, "LocalNetwork": None},
+            "metrics": {"SimpleCollisionMetrics": None},
+            "entities": {"aircraft": aircraft}}
+
+
+COLLISION = {"SimpleCollision": {"collision_range": 5}}
+NOISE_5_5_1 = {"position_stddev_m": [5, 5, 1], "velocity_stddev_mps": [5, 5, 1]}
 # name: (description, agent counts, mission fields). Changing a workload makes
 # the accepted baseline incomparable, so perf.py stops comparing until a new
 # baseline is accepted.
 WORKLOADS = {
-    "motion": ("aircraft flying straight", (64, 512), dict(
-        end=200, multiplier=1, controller_rate=0, variance=0, world="", spawn="", sensors="")),
+    "motion": ("aircraft flying straight", (64, 512), dict(end=200)),
     "substeps": ("ten controller and motion substeps per step", (64, 512), dict(
-        end=60, multiplier=10, controller_rate=0, variance=0, world="", spawn="", sensors="")),
+        end=60, multiplier=10)),
     "sensing": ("own-state and contact sensors on every aircraft", (32, 128), dict(
-        end=60, multiplier=1, controller_rate=0, variance=0, world="",
-        spawn="", sensors="    <sensor>NoisyState</sensor>\n    <sensor>NoisyContacts</sensor>")),
+        end=60, sensors={"NoisyState": NOISE_5_5_1, "NoisyContacts": NOISE_5_5_1})),
     # Churn spreads its agents so collisions happen; the others above start together.
     "churn": ("scheduled spawning with collision removal", (64, 512), dict(
-        end=200, multiplier=1, controller_rate=0, variance=2500,
-        world='  <entity_interaction collision_range="5">SimpleCollision</entity_interaction>\n'
-              # Aircraft hold 200 m, so this ground check costs time but never removes.
-              '  <entity_interaction ground_collision_z="150">GroundCollision</entity_interaction>',
-        spawn="    <generate_rate>20</generate_rate><generate_count>4</generate_count>\n"
-              "    <generate_start_time>0</generate_start_time>", sensors="")),
+        end=200, variance=2500,
+        # Aircraft hold 200 m, so this ground check costs time but never removes.
+        interactions={**COLLISION, "GroundCollision": {"ground_collision_z": 150}},
+        spawn={"rate_hz": 20, "batch_size": 4})),
     # Aircraft spread over about a kilometre, so few collide and the population
     # stays nearly constant: this measures the every-pair collision check itself.
     "collision": ("pairwise collision checks among active aircraft", (256, 1024), dict(
-        end=20, multiplier=1, controller_rate=0, variance=1_000_000,
-        world='  <entity_interaction collision_range="5">SimpleCollision</entity_interaction>',
-        spawn="", sensors="")),
+        end=20, variance=1_000_000, interactions=COLLISION)),
     # The same mission, with spatial queries answered by a grid of 5 m cells
     # (`grid_cell_m`, passed to the runner) instead of a scan. Output is identical.
     "collision-grid": ("collision with a 5 m spatial grid", (256, 1024), dict(
-        end=20, multiplier=1, controller_rate=0, variance=1_000_000,
-        world='  <entity_interaction collision_range="5">SimpleCollision</entity_interaction>',
-        spawn="", sensors="", grid_cell_m=5)),
+        end=20, variance=1_000_000, interactions=COLLISION, grid_cell_m=5)),
 }
+
 WORKERS = (1, 8)
 
 
+def workload(name, agents, **changes):
+    """WORKLOADS[name] at `agents` aircraft as a mission, with any fields changed."""
+    fields = {**WORKLOADS[name][2], **changes}
+    fields.pop("grid_cell_m", None)  # a runner option, not part of the mission
+    return mission(agents, **fields)
+
+
 def workloads_hash():
-    definition = json.dumps([HEADER, WORKLOADS, WORKERS], sort_keys=True)
+    missions = {name: workload(name, 1) for name in WORKLOADS}
+    definition = json.dumps([missions, WORKLOADS, WORKERS], sort_keys=True)
     return hashlib.sha256(definition.encode()).hexdigest()[:16]
 
 
@@ -123,14 +129,13 @@ def measure(runner, repeats, quick, scratch):
     results = {}
     for name, (_, sizes, fields) in WORKLOADS.items():
         for agents in sizes[:1] if quick else sizes:
-            mission = scratch / f"{name}-{agents}.xml"
-            mission.write_text(HEADER.format(name=name, agents=agents, **fields))
+            path = write_mission(scratch / f"{name}-{agents}.yaml", workload(name, agents))
             for workers in WORKERS:
                 key = f"{name}-{agents}-w{workers}"
                 times, memory = [], 0.0
                 for repeat in range(repeats + 1):  # the first run is a warm-up
                     seconds, steps, peak_mb = run_once(
-                        runner, mission, scratch / f"{key}-{repeat}", workers,
+                        runner, path, scratch / f"{key}-{repeat}", workers,
                         fields.get("grid_cell_m"))
                     if repeat:
                         times.append(seconds)

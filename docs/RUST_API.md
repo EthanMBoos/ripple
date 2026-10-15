@@ -10,7 +10,6 @@ The experiment has four parts:
 | Shared runner | Output directories, recordings, manifests, and run limits. |
 
 ```text
-XML reader  --+
 YAML reader --+--> ScenarioConfig --> validate/build --> Simulation
 Rust setup  --+                           ^
                                    PluginRegistry
@@ -55,6 +54,8 @@ definitions own defaults while the readers handle file syntax.
 - Serialized scenarios are normalized manifest data. They are not a promise of
   reloadable YAML: mission syntax has labeled maps, templates, and an envelope.
   A small reader adapter is clearer than forcing both representations to match.
+  The checking scripts turn a record back into a mission themselves
+  (`reference/scenario.py`).
 - `run_scenario` in the existing CLI library shares output and recording code
   between file-based and Rust-built runs. Scenario-building functions can live
   in a workspace research crate and be called by the CLI. YAML remains the
@@ -68,14 +69,12 @@ explicitly; an empty group default does not silently choose physics. Shared
 construction validates finite physical fields, schedules, plugin names and
 rates, parameter values, and port connections before execution.
 
-XML scalar `speed` is translated to world-X velocity in its reader. YAML uses
-`velocity_mps`; the existing noisy-state-bias fixture was converted explicitly.
-The multirotor and starter YAML templates now declare their previous nonzero
-position variance. These fixture edits preserve their recorded behavior.
+Initial velocity is `velocity_mps`, in the world frame. The multirotor and
+starter YAML templates declare their nonzero position variance.
 
 The seven plugin traits, phase ordering, spawn RNG, heading random walk,
 six-decimal rounding, and frame timestamps are unchanged by this refactor.
-Those runtime quirks have not moved into the XML reader. Removing heading drift
+Removing heading drift
 or rounding is a separate deliberate behavior change; neither is necessary for
 reproducible sweeps.
 

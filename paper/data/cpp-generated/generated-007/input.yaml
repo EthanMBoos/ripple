@@ -1,0 +1,168 @@
+{
+ "format_version": 1,
+ "name": "generated-007",
+ "run": {
+  "end_s": 5,
+  "dt_s": 0.1,
+  "motion_multiplier": 1,
+  "seed": 2018628405
+ },
+ "interactions": {
+  "Boundary": {
+   "center": [
+    0,
+    0,
+    200
+   ],
+   "lengths": [
+    800,
+    800,
+    400
+   ],
+   "show_boundary": false
+  }
+ },
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 3,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    -373.67,
+    408.885,
+    291.885
+   ],
+   "position_variance_m2": [
+    0,
+    100,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "spawn": {
+    "rate_hz": 1.53416,
+    "batch_size": 1,
+    "start_s": 0.37885,
+    "time_stddev_s": 0
+   },
+   "heading_deg": 28.4697,
+   "roll_deg": -4.69192,
+   "pitch_deg": 2.83855,
+   "autonomy": {
+    "Straight": {
+     "speed": 22.9254,
+     "loop_rate": 0
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 20
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 25.1651
+    }
+   },
+   "sensors": {
+    "NoisyState": {
+     "position_bias_m": [
+      -0.907097,
+      0.342952,
+      -0.996471
+     ],
+     "velocity_bias_mps": [
+      0.183527,
+      0.291091,
+      0.308655
+     ],
+     "attitude_bias_rad": [
+      0.0473616,
+      0.0045377,
+      -0.000919072
+     ]
+    }
+   }
+  },
+  "group1": {
+   "team": 1,
+   "count": 1,
+   "visual_model": "sphere",
+   "position_m": [
+    269.067,
+    70.5446,
+    176.651
+   ],
+   "position_variance_m2": [
+    25,
+    0,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "spawn": {
+    "rate_hz": 1.53744,
+    "batch_size": 1,
+    "start_s": 0.0751836,
+    "time_stddev_s": 0.05
+   },
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      -1.25662,
+      3.54526,
+      1.03444
+     ],
+     "loop_rate": 2
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": 2.363
+    }
+   }
+  },
+  "group2": {
+   "team": 3,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    -195.201,
+    -100.597,
+    256.617
+   ],
+   "position_variance_m2": [
+    100,
+    0,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      2.71066,
+      4.44576,
+      0.95426
+     ],
+     "loop_rate": 10
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  }
+ }
+}

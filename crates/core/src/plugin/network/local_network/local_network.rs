@@ -32,13 +32,11 @@ impl Network for LocalNetwork {
 #[cfg(test)]
 mod tests {
     use super::{LocalNetwork, Plugin, PluginParams};
-    use crate::Params;
 
     #[test]
     fn delay_keys_are_errors() {
-        for (key, value) in [("comm_delay", "1"), ("is_stochastic_delay", "true")] {
-            let params = Params::from([(key.into(), value.into())]);
-            assert!(LocalNetwork::configure(&PluginParams::text(&params)).is_err());
+        for params in ["comm_delay: 1", "is_stochastic_delay: true"] {
+            assert!(LocalNetwork::configure(&PluginParams::yaml(params)).is_err());
         }
     }
 }

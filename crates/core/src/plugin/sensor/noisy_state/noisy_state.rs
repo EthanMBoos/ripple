@@ -158,7 +158,6 @@ impl StateNoise {
 #[cfg(test)]
 mod tests {
     use super::{FIRST_READING, NoisyState, SENSOR_PHASE_READING, StateNoise};
-    use crate::Params;
     use crate::math::{EulerAngles, KinematicState, Quaternion, Vec3};
     use crate::plugin::{Plugin, PluginParams, PluginRandom};
 
@@ -178,8 +177,7 @@ mod tests {
 
     #[test]
     fn without_parameters_there_is_no_noise() -> anyhow::Result<()> {
-        let params = Params::new();
-        let sensor = NoisyState::new(&NoisyState::configure(&PluginParams::text(&params))?);
+        let sensor = NoisyState::new(&NoisyState::configure(&PluginParams::yaml("{}"))?);
         let truth = KinematicState {
             position_world_m: Vec3::new(10.0, 20.0, 30.0),
             velocity_world_mps: Vec3::new(3.0, 4.0, 5.0),
@@ -293,17 +291,15 @@ mod tests {
 
     #[test]
     fn invalid_noise_parameters_are_rejected() {
-        for (key, value) in [
-            ("position_stddev_m", "0 -1 0"),
-            ("velocity_bias_mps", "NaN 0 0"),
-            ("attitude_stddev_rad", "0 inf 0"),
-            ("position_bias_m", "0 1"),
-            ("pos_noise_0", "0 5"),
+        // Non-finite values never reach a plugin: loading a mission rejects them.
+        for params in [
+            "position_stddev_m: [0, -1, 0]",
+            "position_bias_m: [0, 1]",
+            "pos_noise_0: [0, 5]",
         ] {
-            let params = Params::from([(key.into(), value.into())]);
             assert!(
-                NoisyState::configure(&PluginParams::text(&params)).is_err(),
-                "{key}"
+                NoisyState::configure(&PluginParams::yaml(params)).is_err(),
+                "{params}"
             );
         }
     }

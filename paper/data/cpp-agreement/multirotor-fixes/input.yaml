@@ -1,0 +1,78 @@
+# Three Multirotor contracts that multirotor.yaml does not exercise.
+# MotorSpeeds supplies constant rad/s; no stabilizer. Distinct fixed starts.
+# - carried: starts moving, so body velocity must come from the entity state.
+# - tilted: rotors tilted and raised or lowered, so moments must be r x F
+#   along each rotor's axis.
+# - idle: every motor commanded below omega_min, so each must keep its idle
+#   thrust.
+# 821.5838362577492 rad/s balances the 1.5 kg quad's weight. The vehicle
+# numbers have no source (see airframe.rs); they are illustrative test values,
+# not a real aircraft.
+format_version: 1
+name: multirotor-fixes
+
+run:
+  end_s: 2
+  dt_s: 0.001
+  seed: 12345
+
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  quad:
+    visual_model: sphere
+    position_m: [0, 0, 30]
+    heading_deg: 0
+    autonomy:
+      Straight:
+        speed: 0
+    controller:
+      MotorSpeeds:
+        speeds: [821.5838362577492, 821.5838362577492, 821.5838362577492, 821.5838362577492]
+    motion_model:
+      Multirotor:
+        mass: 1.5
+        inertia_kgm2: [[0.0122, 0, 0], [0, 0.0122, 0], [0, 0, 0.0244]]
+        c_D: 0.058
+        c_T: 5.45e-6
+        c_Q: 2.284e-7
+        omega_min: 346.41
+        omega_max: 1200
+        rotors:
+          - {direction: ccw, position_m: [0, -0.175, 0]}
+          - {direction: ccw, position_m: [0, 0.175, 0]}
+          - {direction: cw, position_m: [0.175, 0, 0]}
+          - {direction: cw, position_m: [-0.175, 0, 0]}
+
+entities:
+  carried:
+    template: quad
+    team: 1
+    heading_deg: 30
+    velocity_mps: [3, -1, 0.5]
+  tilted:
+    template: quad
+    team: 2
+    position_m: [20, 0, 30]
+    motion_model:
+      Multirotor:
+        mass: 1.5
+        inertia_kgm2: [[0.0122, 0, 0], [0, 0.0122, 0], [0, 0, 0.0244]]
+        c_D: 0.058
+        c_T: 5.45e-6
+        c_Q: 2.284e-7
+        omega_min: 346.41
+        omega_max: 1200
+        rotors:
+          - {direction: ccw, position_m: [0, -0.175, 0.03], tilt_deg: [10, 0, 0]}
+          - {direction: ccw, position_m: [0, 0.175, 0.03], tilt_deg: [-8, 0, 0]}
+          - {direction: cw, position_m: [0.175, 0, -0.02], tilt_deg: [0, 5, 0]}
+          - {direction: cw, position_m: [-0.175, 0, -0.02], tilt_deg: [0, -6, 20]}
+  idle:
+    template: quad
+    team: 3
+    position_m: [40, 0, 30]
+    controller:
+      MotorSpeeds:
+        speeds: [0, 0, 0, 0]

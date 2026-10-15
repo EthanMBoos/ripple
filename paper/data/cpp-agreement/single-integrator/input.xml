@@ -1,50 +1,129 @@
-<?xml version="1.0"?>
-<!-- Added verification fixture. ConstantVelocity (a test driver present in both
-     implementations; reference/fixtures/ for C++) feeds the unmodified
-     SingleIntegratorControllerSimple and SingleIntegrator. The five agents cover
-     direct velocity (max_speed < 0), a command faster than max_speed with a
-     vertical component (capped), a zero command with max_speed >= 0 (NaN
-     guard), a heading in another quadrant, and a command slower than max_speed
-     (used as commanded). Distinct fixed starts; no randomized state. -->
-<runscript name="SingleIntegrator command paths">
-  <run start="0" end="5" dt="0.1" motion_multiplier="2"
-       enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+<?xml version='1.0' encoding='utf-8'?>
+<runscript name="mission">
+  <run start="0.0" end="5.0" dt="0.1" motion_multiplier="2" enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
   <seed>7</seed>
   <end_condition>time</end_condition>
-  <output_type>all</output_type>
-  <create_latest_dir>false</create_latest_dir>
   <network>GlobalNetwork</network>
   <network>LocalNetwork</network>
   <metrics>SimpleCollisionMetrics</metrics>
-  <entity_common name="point">
-    <count>1</count><heading>0</heading>
-    <variance_x>0</variance_x><variance_y>0</variance_y><variance_z>0</variance_z>
-    <controller>SingleIntegratorControllerSimple</controller>
+  <entity>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
     <visual_model>sphere</visual_model>
-  </entity_common>
-  <entity entity_common="point">
-    <team_id>1</team_id><x>0</x><y>0</y><z>10</z>
+    <health>1</health>
+    <count>1</count>
+    <x>0.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>10.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy velocity="3 4 0">ConstantVelocity</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
     <motion_model max_speed="-1">SingleIntegrator</motion_model>
   </entity>
-  <entity entity_common="point">
-    <team_id>1</team_id><x>100</x><y>0</y><z>10</z>
+  <entity>
+    <team_id>1</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>100.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>10.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy velocity="3 4 12">ConstantVelocity</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
     <motion_model max_speed="5">SingleIntegrator</motion_model>
   </entity>
-  <entity entity_common="point">
-    <team_id>2</team_id><x>200</x><y>0</y><z>10</z>
+  <entity>
+    <team_id>2</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>200.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>10.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy velocity="0 0 0">ConstantVelocity</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
     <motion_model max_speed="2">SingleIntegrator</motion_model>
   </entity>
-  <entity entity_common="point">
-    <team_id>2</team_id><x>300</x><y>0</y><z>10</z>
-    <autonomy velocity="-2 1 -1" loop_rate="2">ConstantVelocity</autonomy>
+  <entity>
+    <team_id>2</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>300.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>10.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy velocity="-2 1 -1" loop_rate="2.0">ConstantVelocity</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
     <motion_model max_speed="-1">SingleIntegrator</motion_model>
   </entity>
-  <entity entity_common="point">
-    <team_id>2</team_id><x>400</x><y>0</y><z>10</z>
+  <entity>
+    <team_id>2</team_id>
+    <color>255 255 255</color>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>400.0</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>10.0</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy velocity="1 0.5 0">ConstantVelocity</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
     <motion_model max_speed="5">SingleIntegrator</motion_model>
   </entity>
 </runscript>

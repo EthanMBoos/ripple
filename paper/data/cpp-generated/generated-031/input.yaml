@@ -1,0 +1,163 @@
+{
+ "format_version": 1,
+ "name": "generated-031",
+ "run": {
+  "end_s": 5,
+  "dt_s": 0.1,
+  "motion_multiplier": 1,
+  "seed": 766351883
+ },
+ "interactions": {},
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 1,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    -349.951,
+    -18.8613,
+    239.567
+   ],
+   "position_variance_m2": [
+    0,
+    0,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "randomize_every_spawn": true,
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      1.39957,
+      3.99183,
+      1.66812
+     ],
+     "loop_rate": 2
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  },
+  "group1": {
+   "team": 3,
+   "count": 1,
+   "visual_model": "sphere",
+   "position_m": [
+    -113.993,
+    224.462,
+    266.144
+   ],
+   "position_variance_m2": [
+    100,
+    0,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      6.43217,
+      -1.24448,
+      0.750744
+     ],
+     "loop_rate": 2
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  },
+  "group2": {
+   "team": 3,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    -304.768,
+    -365.345,
+    286.089
+   ],
+   "position_variance_m2": [
+    0,
+    25,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "spawn": {
+    "rate_hz": 2.21646,
+    "batch_size": 1,
+    "start_s": 0.575951,
+    "time_stddev_s": 0
+   },
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      3.0886,
+      0.190826,
+      1.95031
+     ],
+     "loop_rate": 0
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  },
+  "group3": {
+   "team": 3,
+   "count": 1,
+   "visual_model": "sphere",
+   "position_m": [
+    -170.056,
+    -319.521,
+    282.355
+   ],
+   "position_variance_m2": [
+    25,
+    0,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "autonomy": {
+    "ConstantVelocity": {
+     "velocity": [
+      -6.60444,
+      2.31207,
+      1.82067
+     ],
+     "loop_rate": 10
+    }
+   },
+   "controller": {
+    "SingleIntegratorControllerSimple": null
+   },
+   "motion_model": {
+    "SingleIntegrator": {
+     "max_speed": -1.0
+    }
+   }
+  }
+ }
+}

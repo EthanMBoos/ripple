@@ -23,11 +23,11 @@ import json
 import math
 from pathlib import Path
 import subprocess
-import xml.etree.ElementTree as ET
 
 from compare import POSITION_TOLERANCE_M, distance
 from frames import read_frames
 from project import ROOT, build_cli
+import scenario as missions
 GAIN_NUDGE = 1e-12
 # Default [P, I, D, integral band] per loop, from each Rust controller
 # (crates/core/src/plugin/controller/; AircraftPIDController's are its `a4d`
@@ -49,29 +49,29 @@ PID_DEFAULTS = {
 }
 
 
-def nudged(mission, output):
-    tree = ET.parse(mission)
-    for roll in tree.getroot().iter("roll"):
-        roll.text = repr(math.nextafter(float(roll.text), math.inf))
-    for motion in tree.getroot().iter("motion_model"):
-        if "max_roll" in motion.attrib:
-            bank = float(motion.get("max_roll"))
-            motion.set("max_roll", repr(math.nextafter(bank, math.inf)))
-    for controller in tree.getroot().iter("controller"):
-        for loop, default in PID_DEFAULTS.get((controller.text or "").strip(), {}).items():
-            text = controller.get(loop)
-            gains = ([float(value) for value in text.replace(",", " ").strip("[] ").split()]
-                     if text else list(default))
-            gains[0] *= 1 + GAIN_NUDGE
-            controller.set(loop, ",".join(repr(value) for value in gains))
-    for autonomy in tree.getroot().iter("autonomy"):
-        if "speed" in autonomy.attrib:
-            autonomy.set("speed", repr(math.nextafter(float(autonomy.get("speed")), math.inf)))
-        if "velocity" in autonomy.attrib:
-            first, *rest = autonomy.get("velocity").split()
-            autonomy.set("velocity", " ".join([repr(math.nextafter(float(first), math.inf)),
-                                               *rest]))
-    tree.write(output, encoding="utf-8", xml_declaration=True)
+def up(value):
+    return math.nextafter(value, math.inf)
+
+
+def nudged(scenario):
+    """The scenario a run recorded (its manifest's), nudged in place."""
+    for group in scenario["entities"]:
+        group["roll_deg"] = up(group["roll_deg"])
+        motion = group["motion_model"]["params"]
+        if "max_roll" in motion:
+            motion["max_roll"] = up(motion["max_roll"])
+        for controller in group["controller"]:
+            for loop, default in PID_DEFAULTS.get(controller["name"], {}).items():
+                gains = list(controller["params"].get(loop, default))
+                gains[0] *= 1 + GAIN_NUDGE
+                controller["params"][loop] = gains
+        for autonomy in group["autonomy"]:
+            params = autonomy["params"]
+            if "speed" in params:
+                params["speed"] = up(params["speed"])
+            if "velocity" in params:
+                params["velocity"] = [up(params["velocity"][0]), *params["velocity"][1:]]
+    return scenario
 
 
 def growth(reference, candidate):
@@ -101,8 +101,8 @@ def main(argv=None):
     for result in sorted(args.check.glob("*/result.json")):
         case = result.parent
         info = json.loads(result.read_text())
-        mission = args.output / f"{case.name}.xml"
-        nudged(case / "input/input.xml", mission)
+        mission = missions.write(args.output / f"{case.name}.yaml",
+                                 missions.as_yaml(nudged(missions.recorded(case / "rust-1"))))
         run = args.output / case.name
         subprocess.run([binary, "run", mission, "--root", ROOT, "--output", run,
                         "--workers", "1", "--no-rerun"], check=True, capture_output=True)

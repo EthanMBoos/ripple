@@ -1,0 +1,130 @@
+{
+ "format_version": 1,
+ "name": "generated-085",
+ "run": {
+  "end_s": 5,
+  "dt_s": 0.05,
+  "motion_multiplier": 2,
+  "seed": 714996340
+ },
+ "interactions": {
+  "SimpleCollision": {
+   "collision_range": 3.42526
+  },
+  "GroundCollision": {
+   "ground_collision_z": 88.5237
+  },
+  "Boundary": {
+   "center": [
+    0,
+    0,
+    200
+   ],
+   "lengths": [
+    800,
+    800,
+    400
+   ],
+   "show_boundary": false
+  }
+ },
+ "networks": {
+  "GlobalNetwork": null,
+  "LocalNetwork": null
+ },
+ "metrics": {
+  "SimpleCollisionMetrics": null
+ },
+ "entities": {
+  "group0": {
+   "team": 1,
+   "count": 2,
+   "visual_model": "sphere",
+   "position_m": [
+    -300.893,
+    -127.535,
+    162.233
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 25,
+   "randomize_every_spawn": true,
+   "heading_deg": -129.282,
+   "roll_deg": 1.59746,
+   "pitch_deg": 0.0777828,
+   "autonomy": {
+    "Straight": {
+     "speed": 15.4745,
+     "loop_rate": 0
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 0
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 42.4582
+    }
+   }
+  },
+  "group1": {
+   "team": 3,
+   "count": 3,
+   "visual_model": "sphere",
+   "position_m": [
+    275.746,
+    40.0745,
+    286.53
+   ],
+   "position_variance_m2": [
+    400,
+    400,
+    0
+   ],
+   "heading_variance_deg2": 0,
+   "heading_deg": -141.723,
+   "roll_deg": -1.9996,
+   "pitch_deg": 1.67926,
+   "autonomy": {
+    "Straight": {
+     "speed": 23.4749,
+     "loop_rate": 0
+    }
+   },
+   "controller": {
+    "SimpleAircraftControllerPID": {
+     "loop_rate": 0
+    }
+   },
+   "motion_model": {
+    "SimpleAircraft": {
+     "max_roll": 25.1396
+    }
+   },
+   "sensors": {
+    "NoisyContacts": {
+     "position_bias_m": [
+      1.01332,
+      1.55912,
+      0.532049
+     ],
+     "velocity_bias_mps": [
+      0.32671,
+      -0.268888,
+      0.142139
+     ],
+     "attitude_bias_rad": [
+      -0.00121682,
+      0.0190077,
+      0.0406096
+     ]
+    }
+   }
+  }
+ }
+}

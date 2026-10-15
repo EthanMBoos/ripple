@@ -9,8 +9,10 @@ Per mission, the instrumented build with tracing must write the same frames and
 summaries as without it (non-interference); equality with the baseline is only
 recorded. The comparison run adds
 SCRIMMAGE_KEYED_RANDOM=1, so C++ draws Ripple's keyed random numbers, and is
-compared with Rust frames, summaries, and traces. Requires Python 3.10+, Docker, Cargo, and the
-sibling SCRIMMAGE checkout. No host C++ toolchain is needed.
+compared with Rust frames, summaries, and traces. Missions are YAML: Ripple runs
+each first, and SCRIMMAGE's XML is written from the scenario that run records
+(scrimmage_xml.py). Requires Python 3.10+, Docker, Cargo, and the sibling
+SCRIMMAGE checkout. No host C++ toolchain is needed.
 """
 
 import argparse
@@ -29,6 +31,7 @@ from compare import Comparison, compare_frames, compare_summaries
 from metrics_model import counts_match, matches, predict, weights
 from frames import read_frames
 from project import IMAGE_PREFIX, ROOT, RUNS, allocate, build_cli, sha256, source_identity
+import scrimmage_xml
 from traces import compare_traces, read_trace
 
 
@@ -94,19 +97,12 @@ def allocate_output(explicit):
     return explicit
 
 
-def prepare_mission(mission, cpp):
-    """Keep physical inputs unchanged; force the C++ reference headless/serial."""
-    cpp.mkdir()
-    shutil.copyfile(mission, cpp / "input.xml")
-    tree = ET.parse(mission)
+def prepare_mission(inputs, scenario):
+    """Write SCRIMMAGE's mission (input.xml), then force it headless and serial."""
+    scrimmage_xml.write(scenario, inputs / "input.xml")
+    tree = ET.parse(inputs / "input.xml")
     root = tree.getroot()
-    if root.tag != "runscript":
-        raise ValueError("expected a runscript mission")
-    if any(node.tag.rsplit("}", 1)[-1] == "include" for node in root.iter()):
-        raise ValueError("reference_check requires an expanded mission (XIncludes unsupported)")
     run = root.find("run")
-    if run is None:
-        raise ValueError("mission has no run element")
     run_overrides = {
         "enable_gui": "false", "network_gui": "false",
         "start_paused": "false", "time_warp": "0",
@@ -124,10 +120,11 @@ def prepare_mission(mission, cpp):
             nodes = [ET.SubElement(root, key)]
         for node in nodes:
             node.text = value
-    effective = cpp / "effective.xml"
+    effective = inputs / "effective.xml"
     tree.write(effective, encoding="utf-8", xml_declaration=True)
     return {
-        "input_sha256": sha256(cpp / "input.xml"),
+        "input_sha256": sha256(inputs / "input.yaml"),
+        "xml_sha256": sha256(inputs / "input.xml"),
         "effective_sha256": sha256(effective),
         "run_overrides": run_overrides, "root_overrides": root_overrides,
     }
@@ -281,18 +278,24 @@ def compare_case(cpp_logs, cpp_trace, serial, traced, mission):
             "summary_agreement": agreement, "pre_start_removed": removed}
 
 
-def motion_multiplier(mission):
-    """The mission's substeps per tick (the misspelled attribute is ignored, as in C++)."""
-    run = ET.parse(mission).getroot().find("run")
-    return int(run.get("motion_multiplier", "1")) if run is not None else 1
-
-
 def check_mission(args, case, mission, directory, images, rust):
     directory.mkdir()
     result = {"case": case, "mission": str(mission), "passed": False}
     try:
         inputs = directory / "input"
-        result["input"] = prepare_mission(mission, inputs)
+        inputs.mkdir()
+        shutil.copyfile(mission, inputs / "input.yaml")
+        # Rust runs first: its manifest records the scenario SCRIMMAGE's XML is
+        # written from. Both simulators read the saved input; neither rewrites it.
+        for workers in (1, 2, 8):
+            run_logged([
+                rust, "run", inputs / "input.yaml", "--root", ROOT,
+                "--output", directory / f"rust-{workers}",
+                "--workers", workers, "--no-rerun",
+            ], directory / f"rust-{workers}.log", timeout=args.timeout)
+        serial = directory / "rust-1"
+        scenario = json.loads((serial / "manifest.json").read_text())["scenario"]
+        result["input"] = prepare_mission(inputs, scenario)
         effective = inputs / "effective.xml"
         # Non-interference: tracing must not change C++ outputs. The comparison
         # branch's fixes change them from the baseline's (docs/REFERENCE_NOTES.md),
@@ -302,7 +305,7 @@ def check_mission(args, case, mission, directory, images, rust):
                            effective, UNTRACED_ENV)
         traced = run_cpp(args, images["instrumented"], directory / "cpp-traced",
                          effective, TRACED_ENV)
-        result["motion_multiplier"] = motion_multiplier(effective)
+        result["motion_multiplier"] = scenario["run"]["motion_multiplier"]
         result["cpp_non_interference"] = {
             "traced": {name: sha256(traced / name) == sha256(untraced / name)
                        for name in CPP_OUTPUT_FILES}
@@ -316,19 +319,11 @@ def check_mission(args, case, mission, directory, images, rust):
         result["cpp_output_hashes"] = {
             name: sha256(cpp_logs / name) for name in CPP_OUTPUT_FILES
         }
-        # Use the saved input for Rust too; neither simulator may rewrite it.
-        for workers in (1, 2, 8):
-            run_logged([
-                rust, "run", inputs / "input.xml", "--root", ROOT,
-                "--output", directory / f"rust-{workers}",
-                "--workers", workers, "--no-rerun",
-            ], directory / f"rust-{workers}.log", timeout=args.timeout)
-        serial = directory / "rust-1"
         result["worker_equality"] = {
             str(workers): same_outputs(serial, directory / f"rust-{workers}") for workers in (2, 8)
         }
         run_logged([
-            rust, "run", inputs / "input.xml", "--root", ROOT,
+            rust, "run", inputs / "input.yaml", "--root", ROOT,
             "--output", directory / "rust-rerun", "--workers", "8", "--headless",
         ], directory / "rust-rerun.log", timeout=args.timeout)
         result["recording_equality"] = same_outputs(serial, directory / "rust-rerun")
@@ -337,7 +332,7 @@ def check_mission(args, case, mission, directory, images, rust):
             raise RuntimeError("headless Rerun run did not produce a nonempty recording")
         result["recording_sha256"] = sha256(recording)
         run_logged([
-            rust, "run", inputs / "input.xml", "--root", ROOT,
+            rust, "run", inputs / "input.yaml", "--root", ROOT,
             "--output", directory / "rust-trace", "--workers", "1", "--no-rerun", "--trace",
         ], directory / "rust-trace.log", timeout=args.timeout)
         result["trace_equality"] = same_outputs(serial, directory / "rust-trace")
@@ -381,9 +376,9 @@ def main(argv=None):
                         help="opt-in instrumentation branch used for comparison")
     parser.add_argument("--output", type=Path, help="new check directory (default: runs/reference-checkNNN)")
     parser.add_argument("--mission", type=Path, action="append",
-                        help="repeat to replace the default mission matrix; requires expanded XML")
+                        help="repeat to replace the default mission matrix (YAML)")
     parser.add_argument("--mission-dir", type=Path,
-                        help="add every *.xml in a directory, e.g. from generate_scenarios.py")
+                        help="add every *.yaml in a directory, e.g. from generate_scenarios.py")
     parser.add_argument("--jobs", type=positive_int, default=4, help="parallel C++ compilation jobs")
     parser.add_argument("--timeout", type=positive_int, default=120, help="per-run timeout in seconds")
     parser.add_argument("--build-timeout", type=positive_int, default=3600, help="per-build timeout in seconds")
@@ -392,9 +387,9 @@ def main(argv=None):
     # Cases are named by ID: missions.txt's, or the file name for other missions.
     missions = [(path.stem, path) for path in args.mission or []]
     if args.mission_dir:
-        found = sorted(args.mission_dir.glob("*.xml"))
+        found = sorted(args.mission_dir.glob("*.yaml"))
         if not found:
-            parser.error(f"no *.xml missions in {args.mission_dir}")
+            parser.error(f"no *.yaml missions in {args.mission_dir}")
         missions += [(path.stem, path) for path in found]
     missions = missions or [(case, ROOT / "missions" / path)
                             for case, path, _ in comparison_missions()]

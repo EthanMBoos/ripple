@@ -107,12 +107,13 @@ fn initialization_failure_step_failure_and_removal_close_each_plugin_once() -> R
         for action in ["fail_init", "fail_step", "normal", "stop"] {
             CLOSED.store(0, Ordering::SeqCst);
             let overrides = Params::from([
-                ("sensor".into(), "LifecycleSensor".into()),
-                ("sensor_key".into(), "action".into()),
-                ("sensor_value".into(), action.into()),
-                ("interaction".into(), "RemoveEntities".into()),
+                (
+                    "entities.agents.sensors".into(),
+                    format!("{{LifecycleSensor: {{action: {action}}}}}"),
+                ),
+                ("interactions".into(), "{RemoveEntities: {}}".into()),
             ]);
-            let scenario = plugin_fixtures::scenario(&overrides, &registry)?;
+            let scenario = plugin_fixtures::scenario(&overrides)?;
             let result = Simulation::new(scenario, &registry, workers);
             if action == "fail_init" {
                 let error = result.err().expect("initialization must fail");

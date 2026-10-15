@@ -44,9 +44,19 @@ Crazyflies through velocity steps and an upset.
 ## The vehicle
 
 A mission either names the built-in measured vehicle with `airframe:
-crazyflie2`, or gives every vehicle number itself: `mass`, `inertia_matrix`,
-`c_T`, `c_Q`, `omega_min`, `omega_max`, and `rotor_config`
-(`gravity_magnitude` defaults to 9.81). There is no default vehicle, so no
+crazyflie2`, or gives every vehicle number itself: `mass`, `inertia_kgm2`,
+`c_T`, `c_Q`, `omega_min`, `omega_max`, and `rotors`
+(`gravity_magnitude` defaults to 9.81). Inertia is three rows; each rotor
+gives its spin direction, hub position, and, if tilted, its tilt:
+
+```yaml
+inertia_kgm2: [[0.0122, 0, 0], [0, 0.0122, 0], [0, 0, 0.0244]]
+rotors:
+  - {direction: ccw, position_m: [0, -0.175, 0]}
+  - {direction: cw, position_m: [0.175, 0, 0], tilt_deg: [0, 5, 0]}
+```
+
+Rotor `i` reads the motor command on port `motor_i`. There is no default vehicle, so no
 mission flies unsourced numbers by accident. With `airframe` set, any of
 those keys overrides one value. The airframe never switches on an optional
 effect, and body drag `c_D` is zero unless the mission sets it.

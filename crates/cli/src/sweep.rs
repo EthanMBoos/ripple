@@ -134,12 +134,6 @@ pub(crate) fn sweep(
         .parent()
         .unwrap_or_else(|| Path::new("."))
         .join(&spec.base_scenario);
-    ensure!(
-        base.extension()
-            .is_some_and(|extension| extension == "yaml"),
-        "base_scenario must be a YAML mission; XML missions cannot be swept"
-    );
-
     // Case numbering: case i uses seed i % seeds and value combination
     // i / seeds, so every seed runs with each combination before the next one.
     let seed_count = spec.seeds.len().max(1);
@@ -155,7 +149,7 @@ pub(crate) fn sweep(
 
     // Check file syntax and override paths before creating output. Scenario
     // validation happens per case, so a bad configuration is recorded in its row.
-    load_case(&spec, &base, root, registry, 0)
+    load_case(&spec, &base, root, 0)
         .context("the first case does not load; check the sweep paths")?;
 
     let output = crate::run::output::create_directory(
@@ -251,13 +245,7 @@ fn case_inputs(spec: &SweepFile, index: usize) -> (Option<u32>, BTreeMap<String,
 
 /// Loads the base mission with this case's values, applied exactly like
 /// command-line overrides (after template expansion, every path must exist).
-fn load_case(
-    spec: &SweepFile,
-    base: &Path,
-    root: &Path,
-    registry: &PluginRegistry,
-    index: usize,
-) -> Result<ScenarioConfig> {
+fn load_case(spec: &SweepFile, base: &Path, root: &Path, index: usize) -> Result<ScenarioConfig> {
     let (seed, parameters) = case_inputs(spec, index);
     let mut overrides = Params::new();
     for (path, value) in parameters {
@@ -266,7 +254,7 @@ fn load_case(
     if let Some(seed) = seed {
         overrides.insert("run.seed".into(), seed.to_string());
     }
-    Ok(Mission::load_with_registry(base, root, &overrides, registry)?.scenario)
+    Ok(Mission::load(base, root, &overrides)?.scenario)
 }
 
 fn run_case(
@@ -288,7 +276,7 @@ fn run_case(
         metrics: BTreeMap::new(),
     };
     let result = (|| -> Result<()> {
-        let config = load_case(spec, base, root, registry, index)?;
+        let config = load_case(spec, base, root, index)?;
         row.seed = config.run.seed;
         // One worker per case: Slurm gives each shard one CPU.
         let mut simulation = Simulation::new(config, registry, 1)?;

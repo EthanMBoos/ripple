@@ -436,12 +436,9 @@ impl NetworkContext<'_, '_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        Params,
-        plugin::{
-            Network, Plugin, PluginParams,
-            network::{GlobalNetwork, LocalNetwork},
-        },
+    use crate::plugin::{
+        Network, Plugin, PluginParams,
+        network::{GlobalNetwork, LocalNetwork},
     };
 
     struct TestMailboxes {
@@ -521,10 +518,9 @@ mod tests {
 
     #[test]
     fn local_network_is_same_entity_and_global_network_is_not() -> Result<()> {
-        let params = Params::new();
-        let mut local = LocalNetwork::new(&LocalNetwork::configure(&PluginParams::text(&params))?);
-        let mut global =
-            GlobalNetwork::new(&GlobalNetwork::configure(&PluginParams::text(&params))?);
+        let params = PluginParams::yaml("{}");
+        let mut local = LocalNetwork::new(&LocalNetwork::configure(&params)?);
+        let mut global = GlobalNetwork::new(&GlobalNetwork::configure(&params)?);
         let mut mailboxes = TestMailboxes::new()?;
         mailboxes.sender.publish("test", "sample", 42_i32)?;
         mailboxes.phase(0.0, |context| Network::step(&mut local, context))?;
@@ -556,10 +552,9 @@ mod tests {
     #[test]
     fn local_network_delivers_nothing_a_world_plugin_publishes() -> Result<()> {
         // The network's own mailbox has no entity, like every world plugin.
-        let params = Params::new();
-        let mut local = LocalNetwork::new(&LocalNetwork::configure(&PluginParams::text(&params))?);
-        let mut global =
-            GlobalNetwork::new(&GlobalNetwork::configure(&PluginParams::text(&params))?);
+        let params = PluginParams::yaml("{}");
+        let mut local = LocalNetwork::new(&LocalNetwork::configure(&params)?);
+        let mut global = GlobalNetwork::new(&GlobalNetwork::configure(&params)?);
         let mut mailboxes = TestMailboxes::new()?;
         mailboxes.phase(0.0, |context| {
             context.messages().publish("test", "sample", 7_i32)?;
@@ -600,9 +595,8 @@ mod tests {
 
     #[test]
     fn global_network_delay_arrives_at_the_first_tick_at_or_after_it() -> Result<()> {
-        let params = Params::from([("delay_s".into(), "0.25".into())]);
-        let mut global =
-            GlobalNetwork::new(&GlobalNetwork::configure(&PluginParams::text(&params))?);
+        let params = PluginParams::yaml("delay_s: 0.25");
+        let mut global = GlobalNetwork::new(&GlobalNetwork::configure(&params)?);
         let mut mailboxes = TestMailboxes::new()?;
         mailboxes.sender.publish("test", "sample", 5_i32)?;
         for time_s in [0.0, 0.1, 0.2] {

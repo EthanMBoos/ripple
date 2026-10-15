@@ -9,7 +9,7 @@ use std::{
 };
 
 use super::{Mission, Params};
-use crate::scenario::{EntityGroupConfig, PluginConfig, PluginValues, ScenarioConfig};
+use crate::scenario::{EntityGroupConfig, PluginConfig, ScenarioConfig};
 
 pub(super) fn load(path: &Path, overrides: &Params) -> Result<Mission> {
     let text = fs::read_to_string(path).with_context(|| format!("read {}", path.display()))?;
@@ -143,7 +143,7 @@ fn plugin_configs(slot: Mapping) -> Result<Vec<PluginConfig>> {
             instance,
             loop_rate_hz,
             inputs: Default::default(),
-            params: PluginValues::Yaml(params),
+            params,
         });
     }
     Ok(configs)
@@ -465,10 +465,7 @@ entities:
         assert_eq!((blue.team, blue.heading_deg), (1, 90.0));
         assert_eq!((red.team, red.heading_deg), (2, 90.0));
         // Red's own `autonomy` replaced the template's, parameters and all.
-        let PluginValues::Yaml(params) = &red.autonomy[0].params else {
-            panic!("YAML plugins hold YAML values");
-        };
-        assert!(params.is_empty());
+        assert!(red.autonomy[0].params.is_empty());
         mission.resolve(&PluginRegistry::with_builtins())?;
         Ok(())
     }
@@ -479,10 +476,10 @@ entities:
             TEMPLATED,
             &[("entities.blue.autonomy.Straight.speed", "30")],
         )?;
-        let PluginValues::Yaml(params) = &mission.entities[0].autonomy[0].params else {
-            panic!("YAML plugins hold YAML values");
-        };
-        assert_eq!(params["speed"], Value::from(30));
+        assert_eq!(
+            mission.entities[0].autonomy[0].params["speed"],
+            Value::from(30)
+        );
         let message = error(TEMPLATED, &[("templates.aircraft.team", "3")]);
         assert!(
             message.contains("field `templates` does not exist"),

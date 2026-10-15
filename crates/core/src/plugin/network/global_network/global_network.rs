@@ -50,19 +50,13 @@ impl Network for GlobalNetwork {
 #[cfg(test)]
 mod tests {
     use super::{GlobalNetwork, Plugin, PluginParams};
-    use crate::Params;
 
     #[test]
     fn negative_delays_and_old_delay_keys_are_errors() {
-        for (key, value) in [
-            ("delay_s", "-1"),
-            ("comm_delay", "1"),
-            ("is_stochastic_delay", "true"),
-        ] {
-            let params = Params::from([(key.into(), value.into())]);
+        for params in ["delay_s: -1", "comm_delay: 1", "is_stochastic_delay: true"] {
             assert!(
-                GlobalNetwork::configure(&PluginParams::text(&params)).is_err(),
-                "{key}"
+                GlobalNetwork::configure(&PluginParams::yaml(params)).is_err(),
+                "{params}"
             );
         }
     }

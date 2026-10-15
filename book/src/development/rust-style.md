@@ -102,7 +102,7 @@ Cargo integration-test targets. See [Source map](source-layout.md).
 
 Prefer named configurations even for a single physical parameter, such as
 `StraightConfig { speed_mps }`. Use `()` when there really is no configuration.
-Convert positional legacy XML arrays into named fields at the parsing boundary;
+Convert positional mission arrays into named fields at the parsing boundary;
 the PID controller uses `PidGains`, not unexplained array indices. Preserve
 mission keys, defaults, units, and validation behavior during readability work.
 

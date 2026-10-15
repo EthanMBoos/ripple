@@ -21,23 +21,23 @@
   "grid50-w2",
   "grid1000-w1"
  ],
- "missions": 45,
+ "missions": 39,
  "missions_differing": 0,
  "results": [
   {
-   "mission": "missions/auction-sphere.xml",
+   "mission": "missions/auction-sphere.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/fixed-wing-6dof-rascal.xml",
+   "mission": "missions/fixed-wing-6dof-rascal.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/fixed-wing-6dof.xml",
+   "mission": "missions/fixed-wing-6dof.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
@@ -49,38 +49,26 @@
    "differences": []
   },
   {
-   "mission": "missions/multirotor.xml",
-   "collisions": 0,
-   "identical": true,
-   "differences": []
-  },
-  {
    "mission": "missions/multirotor.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/networks-local-global.xml",
+   "mission": "missions/networks-local-global.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/noisy-contacts.xml",
+   "mission": "missions/noisy-contacts.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/noisy-state.xml",
+   "mission": "missions/noisy-state.yaml",
    "collisions": 0,
-   "identical": true,
-   "differences": []
-  },
-  {
-   "mission": "missions/straight-no-gui.xml",
-   "collisions": 1,
    "identical": true,
    "differences": []
   },
@@ -97,37 +85,25 @@
    "differences": []
   },
   {
-   "mission": "missions/test_missions/straight_cpu.xml",
+   "mission": "missions/verification/aircraft-long-horizon.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/test_missions/straight_cpu_mul.xml",
+   "mission": "missions/verification/aircraft-substeps-scheduled.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/test_missions/straight_cpu_threaded.xml",
+   "mission": "missions/verification/aircraft-substeps-spawning.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/verification/aircraft-substeps-scheduled.xml",
-   "collisions": 0,
-   "identical": true,
-   "differences": []
-  },
-  {
-   "mission": "missions/verification/aircraft-substeps-spawning.xml",
-   "collisions": 0,
-   "identical": true,
-   "differences": []
-  },
-  {
-   "mission": "missions/verification/collision-boundary.xml",
+   "mission": "missions/verification/collision-boundary.yaml",
    "collisions": 2,
    "identical": true,
    "differences": []
@@ -139,25 +115,19 @@
    "differences": []
   },
   {
-   "mission": "missions/verification/multirotor-fixes.xml",
+   "mission": "missions/verification/multirotor-fixes.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/verification/noisy-contacts-bias.xml",
+   "mission": "missions/verification/noisy-contacts-bias.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/verification/noisy-contacts-noise.xml",
-   "collisions": 0,
-   "identical": true,
-   "differences": []
-  },
-  {
-   "mission": "missions/verification/noisy-state-bias.xml",
+   "mission": "missions/verification/noisy-contacts-noise.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
@@ -169,31 +139,25 @@
    "differences": []
   },
   {
-   "mission": "missions/verification/single-integrator.xml",
+   "mission": "missions/verification/single-integrator.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/verification/sphere-network-auction.xml",
+   "mission": "missions/verification/sphere-network-auction.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/verification/sphere-network-loss.xml",
+   "mission": "missions/verification/sphere-network-loss.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/waypoints-aircraft.xml",
-   "collisions": 0,
-   "identical": true,
-   "differences": []
-  },
-  {
-   "mission": "missions/waypoints-point-agents.xml",
+   "mission": "missions/waypoints-aircraft.yaml",
    "collisions": 0,
    "identical": true,
    "differences": []

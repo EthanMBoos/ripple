@@ -22,6 +22,8 @@ FROM ${REFERENCE_IMAGE} AS benchmark
 # benchmark.py deletes earlier images with this label after each build.
 LABEL ripple-benchmark=1
 COPY --from=build /usr/local/bin/ripple-benchmark /usr/local/bin/ripple-benchmark
+# benchmark.py loads each mission with ripple to write SCRIMMAGE's XML.
+COPY --from=build /usr/local/bin/ripple /usr/local/bin/ripple
 COPY --from=build /rust-compiler.txt /rust-compiler.txt
 # GNU time reports each simulator's own peak memory; a Python parent would inflate it.
 RUN apt-get update && apt-get install -y --no-install-recommends time && rm -rf /var/lib/apt/lists/*

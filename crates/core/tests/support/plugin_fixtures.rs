@@ -25,21 +25,12 @@ pub(super) fn registry() -> Result<PluginRegistry> {
     registry.register_metrics::<metrics::PopulationMetrics>("PopulationMetrics")?;
     Ok(registry)
 }
-pub(super) fn scenario(
-    overrides: &Params,
-    registry: &PluginRegistry,
-) -> Result<ripple_core::ScenarioConfig> {
+pub(super) fn scenario(overrides: &Params) -> Result<ripple_core::ScenarioConfig> {
     let core = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let root = core.join("../..");
-    let mut scenario = Mission::load_with_registry(
-        &core.join("tests/fixtures/plugin_contracts.xml"),
-        &root,
-        overrides,
-        registry,
-    )?
-    .scenario;
-    // XML cannot choose an estimator. With the position sensor, localize from its
-    // fixes so a biased sensor gives a wrong belief; other test sensors keep the default.
+    let path = core.join("tests/fixtures/plugin_contracts.yaml");
+    let mut scenario = Mission::load(&path, &core.join("../.."), overrides)?.scenario;
+    // With the position sensor, localize from its fixes so a biased sensor gives
+    // a wrong belief; other test sensors keep the default estimator.
     let entity = &mut scenario.entities[0];
     if entity.sensors[0].name == "PositionSensor" {
         entity.localization =
@@ -48,8 +39,7 @@ pub(super) fn scenario(
     Ok(scenario)
 }
 pub(super) fn simulate(workers: usize, overrides: &Params) -> Result<Simulation> {
-    let mut simulation =
-        Simulation::new(scenario(overrides, &registry()?)?, &registry()?, workers)?;
+    let mut simulation = Simulation::new(scenario(overrides)?, &registry()?, workers)?;
     while simulation.step()?.is_some() {}
     Ok(simulation)
 }

@@ -7,6 +7,7 @@ from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 import reference_check as check
+from tests.fixtures import scenario
 
 
 class ReferenceCheckTests(unittest.TestCase):
@@ -30,39 +31,25 @@ class ReferenceCheckTests(unittest.TestCase):
             self.assertTrue((check.ROOT / "missions" / path).is_file(), path)
             self.assertTrue(label)
 
-    def test_headless_overrides_preserve_physics_seed_and_multiplier_typo(self):
+    def test_cpp_input_is_written_from_the_scenario_and_forced_headless_and_serial(self):
         with tempfile.TemporaryDirectory() as directory:
-            directory = Path(directory)
-            mission = directory / "mission.xml"
-            mission.write_text('''<runscript>
-              <run dt="0.1" end="200" motion_multipler="5" enable_gui="true" />
-              <seed>12345</seed><multi_threaded num_threads="8">true</multi_threaded>
-              <entity><x>23</x><autonomy speed="27">Straight</autonomy></entity>
-            </runscript>''')
-            original = mission.read_bytes()
-            metadata = check.prepare_mission(mission, directory / "cpp")
-            root = ET.parse(directory / "cpp/effective.xml").getroot()
+            inputs = Path(directory)
+            (inputs / "input.yaml").write_text("the mission Ripple ran")
+            metadata = check.prepare_mission(inputs, scenario())
+            root = ET.parse(inputs / "effective.xml").getroot()
             self.assertEqual(root.find("run").get("enable_gui"), "false")
             self.assertEqual(root.find("run").get("network_gui"), "false")
-            self.assertEqual(root.find("run").get("motion_multipler"), "5")
-            self.assertIsNone(root.find("run").get("motion_multiplier"))
+            self.assertEqual(root.find("run").get("motion_multiplier"), "1")
             self.assertEqual(root.findtext("seed"), "12345")
-            self.assertEqual(root.findtext("entity/x"), "23")
+            self.assertEqual(root.findtext("entity/x"), "23.0")
             self.assertEqual(root.find("entity/autonomy").get("speed"), "27")
             self.assertEqual(root.findtext("multi_threaded"), "false")
             self.assertEqual(root.findtext("log_dir"), "/run/logs")
             self.assertEqual(root.findtext("create_latest_dir"), "false")
-            self.assertEqual(mission.read_bytes(), original)
-            self.assertEqual(metadata["input_sha256"], check.sha256(mission))
-
-    def test_includes_fail_explicitly(self):
-        with tempfile.TemporaryDirectory() as directory:
-            directory = Path(directory)
-            mission = directory / "mission.xml"
-            mission.write_text('<runscript xmlns:xi="http://www.w3.org/2001/XInclude">'
-                               '<run/><xi:include href="other.xml"/></runscript>')
-            with self.assertRaisesRegex(ValueError, "XIncludes unsupported"):
-                check.prepare_mission(mission, directory / "cpp")
+            # input.xml is what was written; only effective.xml carries the overrides.
+            self.assertIsNone(ET.parse(inputs / "input.xml").getroot().find("log_dir"))
+            self.assertEqual(metadata["input_sha256"], check.sha256(inputs / "input.yaml"))
+            self.assertEqual(metadata["xml_sha256"], check.sha256(inputs / "input.xml"))
 
     def test_missing_output_is_not_a_successful_comparison(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -86,8 +73,8 @@ class ReferenceCheckTests(unittest.TestCase):
     def test_build_failure_writes_a_failed_report(self):
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
-            mission = directory / "mission.xml"
-            mission.write_text("<runscript><run/></runscript>")
+            mission = directory / "mission.yaml"
+            mission.write_text("format_version: 1")
             output = directory / "check"
             with patch.object(check, "capture", return_value="docker-test"), \
                  patch.object(check, "build_reference", side_effect=RuntimeError("build failed")):
@@ -115,6 +102,7 @@ class ReferenceCheckTests(unittest.TestCase):
                 target.mkdir()
                 for name in check.OUTPUT_FILES:
                     (target / name).write_text("identical Rust output")
+                (target / "manifest.json").write_text(json.dumps({"scenario": scenario()}))
                 if "--headless" in command:
                     (target / "recording.rrd").write_bytes(b"recording fixture")
             return 0
@@ -123,8 +111,8 @@ class ReferenceCheckTests(unittest.TestCase):
 
     def run_case(self, temporary, fake_run, comparison):
         directory = Path(temporary) / "case"
-        mission = Path(temporary) / "mission.xml"
-        mission.write_text("<runscript><run/></runscript>")
+        mission = Path(temporary) / "mission.yaml"
+        mission.write_text("format_version: 1")
         images = {"baseline": "baseline-image", "instrumented": "instrumented-image"}
         with patch.object(check, "run_logged", side_effect=fake_run), \
              patch.object(check, "compare_case", return_value=comparison), \
@@ -171,9 +159,9 @@ class ReferenceCheckTests(unittest.TestCase):
 
     def test_failed_case_does_not_skip_the_rest_of_the_matrix(self):
         with tempfile.TemporaryDirectory() as temporary:
-            missions = [Path(temporary) / name for name in ("first.xml", "second.xml")]
+            missions = [Path(temporary) / name for name in ("first.yaml", "second.yaml")]
             for mission in missions:
-                mission.write_text("<runscript><run/></runscript>")
+                mission.write_text("format_version: 1")
             output = Path(temporary) / "check"
             cases = [{"passed": False}, {"passed": True}]
             with patch.object(check, "capture", return_value="docker-test"), \

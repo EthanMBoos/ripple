@@ -28,7 +28,6 @@ FILES = ("frames.bin", "events.json", "summary.csv", "trace.jsonl")
 WORKERS = (1, 2, 8)
 # Manifest keys that describe provenance, not results: the mission's absolute path.
 METADATA = ("source",)
-NOISY_STATE = "    <sensor>NoisyState</sensor>"
 
 
 def cases(scratch):
@@ -38,12 +37,11 @@ def cases(scratch):
         if "grid_cell_m" in fields:
             continue  # the same mission as `collision`; the grid is a runner option
         for agents in sizes:
-            path = scratch / f"perf-{name}-{agents}.xml"
-            path.write_text(perf.HEADER.format(name=name, agents=agents, **fields))
+            path = perf.write_mission(scratch / f"perf-{name}-{agents}.yaml",
+                                      perf.workload(name, agents))
             found.append((f"perf {name}-{agents}", path))
-    fields = {**perf.WORKLOADS["motion"][2], "end": 10, "sensors": NOISY_STATE}
-    path = scratch / "noisy-state-512.xml"
-    path.write_text(perf.HEADER.format(name="messages", agents=512, **fields))
+    path = perf.write_mission(scratch / "noisy-state-512.yaml", perf.workload(
+        "motion", 512, end=10, sensors={"NoisyState": perf.NOISE_5_5_1}))
     found.append(("NoisyState on 512 aircraft", path))
     return found
 

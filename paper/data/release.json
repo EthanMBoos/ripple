@@ -17,7 +17,7 @@
       "passed": true,
       "note": "",
       "date": "2026-10-14",
-      "source_sha256": "7e79f04ac61a85f3b89c881be7ad00dc72a54c69a1aea14ea6b160da0d0364d7",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": null
     },
     "rust-determinism": {
@@ -25,9 +25,9 @@
       "reference": "the one-worker run",
       "criterion": "byte-identical frames, events, and summaries on every mission and workload",
       "passed": true,
-      "note": "45 missions, 0 differing",
+      "note": "39 missions, 0 differing",
       "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/rust-determinism/"
     },
     "cpp-agreement": {
@@ -35,9 +35,9 @@
       "reference": "C++ SCRIMMAGE in Docker: the unmodified and comparison branches",
       "criterion": "states within tolerance, identical deliveries, summaries equal or explained, C++ instrumentation and Rust variants byte-identical",
       "passed": true,
-      "note": "16 of 16 pass",
-      "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "note": "15 of 15 pass",
+      "date": "2026-10-15",
+      "source_sha256": "eddcfe312f03a067c75cc2ed5c516e267eaf673d063c040a56bb3fa4d3598d84",
       "evidence": "paper/data/cpp-agreement/"
     },
     "cpp-generated": {
@@ -47,7 +47,7 @@
       "passed": true,
       "note": "100 of 100 pass",
       "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/cpp-generated/"
     },
     "cpp-long": {
@@ -57,7 +57,7 @@
       "passed": true,
       "note": "10 of 10 agree throughout",
       "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/cpp-long/"
     },
     "cpp-noise": {
@@ -67,7 +67,7 @@
       "passed": true,
       "note": "samples agree; distributions agree",
       "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/cpp-noise/"
     },
     "checker-sensitivity": {
@@ -76,8 +76,8 @@
       "criterion": "an unmodified control passes; every planted bug is caught",
       "passed": true,
       "note": "12 of 12 planted bugs caught",
-      "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "date": "2026-10-15",
+      "source_sha256": "eddcfe312f03a067c75cc2ed5c516e267eaf673d063c040a56bb3fa4d3598d84",
       "evidence": "paper/data/checker-sensitivity/"
     },
     "rust-platform": {
@@ -87,7 +87,7 @@
       "passed": true,
       "note": "largest position difference 2.3678883310186693e-12 m",
       "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/rust-platform/"
     },
     "speed-cpp-container": {
@@ -137,7 +137,7 @@
       "passed": true,
       "note": "",
       "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/rk4-loads/"
     },
     "multirotor-control": {
@@ -147,7 +147,7 @@
       "passed": true,
       "note": "",
       "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/multirotor-control/"
     },
     "rascal-control": {
@@ -157,7 +157,7 @@
       "passed": true,
       "note": "",
       "date": "2026-10-14",
-      "source_sha256": "7e79f04ac61a85f3b89c881be7ad00dc72a54c69a1aea14ea6b160da0d0364d7",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/rascal-control/"
     },
     "simple-aircraft-fit": {
@@ -167,7 +167,7 @@
       "passed": true,
       "note": "",
       "date": "2026-10-14",
-      "source_sha256": "7e79f04ac61a85f3b89c881be7ad00dc72a54c69a1aea14ea6b160da0d0364d7",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/simple-aircraft-fit/"
     },
     "rotors-motor": {
@@ -177,7 +177,7 @@
       "passed": true,
       "note": "",
       "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/rotors-motor/"
     },
     "crazyflow-crazyflie": {
@@ -187,7 +187,7 @@
       "passed": true,
       "note": "",
       "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/crazyflow-crazyflie/"
     },
     "mpe-parity": {
@@ -197,7 +197,7 @@
       "passed": true,
       "note": "",
       "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/mpe-parity/"
     },
     "stall-landing": {
@@ -207,7 +207,7 @@
       "passed": true,
       "note": "",
       "date": "2026-10-14",
-      "source_sha256": "06bceec01f95a8fd85432039baaf4b56bfd3d5e28791ea32eae53f119eed45c0",
+      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
       "evidence": "paper/data/stall-landing/"
     }
   },
@@ -217,13 +217,13 @@
       "cpp_baseline": {
         "branch": "Ubuntu-24.04",
         "commit": "4bdf41fb06facaea358d478d9a07aa4d77fcac27",
-        "image": "sha256:aa441c0668a80a22dcd56e799e62611edc1e906eb8f2a54c411ab65aa6e46d7a",
+        "image": "sha256:e0be30a91cca2cbf35399f5599682156be5a2b5aab35ae512573d02ac58a66dc",
         "platform": "linux/amd64"
       },
       "cpp": {
         "branch": "benchmarking-edits",
         "commit": "6b136c137bd3b9a111ee660fd12bf55c8ececc63",
-        "image": "sha256:837954395992d5958a3c368a25d9b879fe04860e57d4a87a3937ca0ee21ed15b",
+        "image": "sha256:c72c58a6b5c7006a54ed7556f97957e227e9a1408794bae835b49b167f28fb7a",
         "platform": "linux/amd64"
       }
     }

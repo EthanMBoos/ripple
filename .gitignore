@@ -1,8 +1,7 @@
 /target/
-/runs
-/runs.nosync/
+/runs/
 /sweeps/
-/.DS_Store
+.DS_Store
 __pycache__/
 /book/book/
 /paper/data/.campaign-staging/

@@ -47,11 +47,9 @@ CASES = {
 }
 
 
-def mission_text(agents, variance, range_m, collide):
-    fields = {**perf.WORKLOADS["collision"][2], "variance": variance}
-    fields["world"] = (f'  <entity_interaction collision_range="{range_m}">SimpleCollision'
-                       '</entity_interaction>') if collide else ""
-    return perf.HEADER.format(name="spatial", agents=agents, **fields)
+def mission(agents, variance, range_m, collide):
+    interactions = {"SimpleCollision": {"collision_range": range_m}} if collide else {}
+    return perf.workload("collision", agents, variance=variance, interactions=interactions)
 
 
 def run(runner, mission, output, grid):
@@ -86,9 +84,9 @@ def main(argv=None):
     scratch = output / "scratch"
     scratch.mkdir()
     for name, (agents, variance, range_m, variants) in CASES.items():
-        missions = {collide: scratch / f"{name}-{collide}.xml" for collide in (True, False)}
-        for collide, path in missions.items():
-            path.write_text(mission_text(agents, variance, range_m, collide))
+        missions = {collide: perf.write_mission(scratch / f"{name}-{collide}.yaml",
+                                                mission(agents, variance, range_m, collide))
+                    for collide in (True, False)}
         samples = {str(variant): [] for variant in variants}
         case = {"agents": agents, "position_variance_m2": variance,
                 "collision_range_m": range_m, "variants": {}}

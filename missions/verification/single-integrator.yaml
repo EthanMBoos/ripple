@@ -1,0 +1,76 @@
+# ConstantVelocity, a test driver, feeds SingleIntegratorControllerSimple and
+# SingleIntegrator. The five agents cover direct velocity (max_speed < 0), a
+# command faster than max_speed with a vertical component (capped), a zero
+# command with max_speed >= 0 (NaN guard), a heading in another quadrant, and a
+# command slower than max_speed (used as commanded). Distinct fixed starts; no
+# randomized state.
+format_version: 1
+name: single-integrator
+
+run:
+  end_s: 5
+  dt_s: 0.1
+  motion_multiplier: 2
+  seed: 7
+
+networks: {GlobalNetwork: {}, LocalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  point:
+    visual_model: sphere
+    heading_deg: 0
+    controller: {SingleIntegratorControllerSimple: {}}
+
+entities:
+  direct:
+    template: point
+    team: 1
+    position_m: [0, 0, 10]
+    autonomy:
+      ConstantVelocity:
+        velocity: [3, 4, 0]
+    motion_model:
+      SingleIntegrator:
+        max_speed: -1
+  capped:
+    template: point
+    team: 1
+    position_m: [100, 0, 10]
+    autonomy:
+      ConstantVelocity:
+        velocity: [3, 4, 12]
+    motion_model:
+      SingleIntegrator:
+        max_speed: 5
+  zero:
+    template: point
+    team: 2
+    position_m: [200, 0, 10]
+    autonomy:
+      ConstantVelocity:
+        velocity: [0, 0, 0]
+    motion_model:
+      SingleIntegrator:
+        max_speed: 2
+  other_quadrant:
+    template: point
+    team: 2
+    position_m: [300, 0, 10]
+    autonomy:
+      ConstantVelocity:
+        velocity: [-2, 1, -1]
+        loop_rate: 2
+    motion_model:
+      SingleIntegrator:
+        max_speed: -1
+  slow:
+    template: point
+    team: 2
+    position_m: [400, 0, 10]
+    autonomy:
+      ConstantVelocity:
+        velocity: [1, 0.5, 0]
+    motion_model:
+      SingleIntegrator:
+        max_speed: 5

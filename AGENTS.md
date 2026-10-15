@@ -25,9 +25,9 @@ out of the default build.
   `docs/REFERENCE_NOTES.md`).
 - User research plugins live in workspace user crates such as `crates/starter`,
   registered in `crates/cli/src/main.rs`; keep the starter building and tested.
-- XML and YAML missions share one typed `ScenarioConfig`; XML is frozen, only
-  YAML gets templates and sweeps. A `.yaml` beside a `.xml` must run
-  identically.
+- Missions are YAML, read into the typed `ScenarioConfig`. The SCRIMMAGE
+  comparison writes SCRIMMAGE's XML from the scenario a Ripple run records
+  (`reference/scrimmage_xml.py`); Ripple itself reads no XML.
 
 ## Read before changing code
 
@@ -103,7 +103,7 @@ python3 -m unittest discover -s reference -p 'test_*.py'   # after checker edits
 ```
 
 The executable is `ripple` (package `ripple`); use `cargo run -p ripple --bin
-ripple -- run missions/straight-no-gui.xml --headless`. Runs go to
+ripple -- run missions/straight-no-gui.yaml --headless`. Runs go to
 `runs/<mission>/runNNN`; never overwrite a previous run. Checking scripts take
 names and paths from `reference/project.py`.
 
@@ -126,8 +126,9 @@ renames must pass `reference/equivalence.py OLD NEW` (byte-identical outputs).
   code goes on `benchmarking-edits` too, so the two still agree; record it in
   `docs/REFERENCE_NOTES.md`. Never accept a slower
   performance baseline or retain failing evidence to make a check pass.
-- The CPU-multiplier mission's `motion_multipler` typo is upstream's; don't fix
-  it.
+- A compared mission uses the default estimators and no terrain, and writes out
+  any plugin value whose default differs between the two (SCRIMMAGE's XML gets
+  only what the mission gives; see `reference/scrimmage_xml.py`).
 
 ## Visualization
 

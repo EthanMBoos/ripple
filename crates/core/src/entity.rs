@@ -15,22 +15,12 @@ use crate::{
     scenario::EntityGroupConfig,
 };
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
-pub enum EntityKind {
-    Aircraft,
-    Quadrotor,
-    Sphere,
-    Mesh,
-    Unknown,
-}
-
 #[derive(Clone, Debug, Serialize)]
 pub struct EntitySnapshot {
     pub id: i32,
     pub sub_swarm_id: i32,
     pub team_id: i32,
     pub truth: KinematicState,
-    pub kind: EntityKind,
     pub active: bool,
 }
 
@@ -51,21 +41,11 @@ pub(crate) struct EntityDefinition {
     initial_health: i32,
     initial_velocity_world_mps: Vec3,
     initial_attitude: EulerAngles,
-    color: [u8; 3],
-    visual_model: String,
-    contact_type: EntityKind,
     plugins: CompiledStack,
 }
 
 impl EntityDefinition {
     pub(crate) fn parse(config: &EntityGroupConfig, registry: &PluginRegistry) -> Result<Self> {
-        let contact_type = match config.visual_model.to_lowercase().as_str() {
-            "sphere" => EntityKind::Sphere,
-            "aircraft" => EntityKind::Aircraft,
-            "quadrotor" => EntityKind::Quadrotor,
-            _ => EntityKind::Mesh,
-        };
-
         Ok(Self {
             spawn: SpawnConfig {
                 position_world_m: config.position_m,
@@ -83,9 +63,6 @@ impl EntityDefinition {
                 pitch_world_from_body_rad: crate::math::deg_to_rad(config.pitch_deg),
                 yaw_world_from_body_rad: 0.0,
             },
-            color: config.color,
-            visual_model: config.visual_model.clone(),
-            contact_type,
             plugins: CompiledStack::compile(config, registry)?,
         })
     }
@@ -102,9 +79,6 @@ pub struct Entity {
     pub(crate) team_id: i32,
     pub(crate) truth: KinematicState,
     pub(crate) health: i32,
-    color: [u8; 3],
-    visual_model: String,
-    contact_type: EntityKind,
     /// The time and tick the entity was created, with a zero dt.
     born: StepTime,
     active: bool,
@@ -164,9 +138,6 @@ impl Entity {
             team_id: definition.team_id,
             truth,
             health: definition.initial_health,
-            color: definition.color,
-            visual_model: definition.visual_model.clone(),
-            contact_type: definition.contact_type,
             born,
             active: true,
             started: false,
@@ -215,12 +186,6 @@ impl Entity {
         mailboxes: &mut Vec<crate::pubsub::messages::Mailbox<'a>>,
     ) {
         self.plugins.mailboxes(mailboxes);
-    }
-    pub fn color(&self) -> [u8; 3] {
-        self.color
-    }
-    pub fn visual_model(&self) -> &str {
-        &self.visual_model
     }
     pub fn is_active(&self) -> bool {
         self.active
@@ -327,7 +292,6 @@ impl Entity {
             sub_swarm_id: self.sub_swarm_id,
             team_id: self.team_id,
             truth: self.truth.clone(),
-            kind: self.contact_type,
             active: self.active,
         }
     }

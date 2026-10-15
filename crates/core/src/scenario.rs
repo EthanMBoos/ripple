@@ -333,6 +333,7 @@ impl ScenarioConfig {
 
 impl EntityGroupConfig {
     fn validate(&self) -> Result<()> {
+        ensure!(self.health > 0, "entity health must be positive");
         ensure!(
             !self.motion_model.name.trim().is_empty(),
             "entity requires one motion_model"

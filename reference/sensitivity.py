@@ -105,7 +105,7 @@ def evaluate(binary, cases, output):
         run = output / case.name
         completed = subprocess.run([
             binary, "run", case / "input/input.yaml", "--root", ROOT, "--output", run,
-            "--workers", "1", "--no-rerun", "--trace",
+            "--workers", "1", "--headless", "--trace",
         ], capture_output=True, text=True)
         if completed.returncode:
             findings[mission] = ["run failed: " + completed.stderr.strip()[-200:]]

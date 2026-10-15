@@ -96,9 +96,9 @@ def roll_pitch_yaw_deg(q):
 def fly(binary, output, rung):
     path = output / f"{rung}.yaml"
     path.write_text(mission(rung))
-    subprocess.run([binary, "run", path, "--root", ROOT, "--output", output / rung, "--no-rerun"],
+    subprocess.run([binary, "run", path, "--root", ROOT, "--output", output / rung, "--headless"],
                    check=True, capture_output=True)
-    frames = read_frames(output / rung / "frames.bin")
+    frames = read_frames(output / rung / "run.mcap")
     tracks = {}
     for index, (name, (*_, end_s)) in enumerate(MANEUVERS.items(), start=1):
         tracks[name] = [(f.time_s, f.entities[index]) for f in frames

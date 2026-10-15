@@ -6,7 +6,7 @@
 Builds the ripple CLI natively (here, macOS/arm64) and in a linux/amd64
 container (the cli target of reference/rust.Dockerfile), runs every curated mission (and any
 --mission-dir missions) at 1 and 8 workers with the comparison trace, and
-compares frames.bin, events.json, summary.csv, and trace.jsonl byte for byte.
+compares MCAP channel payloads and result metadata byte for byte.
 Different CPU architectures, operating systems, and math libraries can change
 floating-point results; this shows whether they do for this code. Standard
 library only; needs Docker and Cargo.
@@ -21,9 +21,11 @@ from pathlib import Path
 from compare import compare_frames
 from frames import read_frames
 import project
-from project import IMAGE_PREFIX, ROOT, build_cli, sha256
+from project import IMAGE_PREFIX, ROOT, build_cli
+from run import read_run
 
-FILES = ("frames.bin", "events.json", "summary.csv", "trace.jsonl")
+CHANNELS = ("/entities", "/frames", "/events", "/summary",
+            "/beliefs", "/readings", "/deliveries", "/outputs")
 IMAGE = f"{IMAGE_PREFIX}-platform"
 
 
@@ -63,7 +65,7 @@ def main(argv=None):
         name = str(mission.relative_to(ROOT) if in_repo else mission.name).replace("/", "_")
         for workers in (1, 8):
             label = f"{name}-w{workers}"
-            common = ["--no-rerun", "--trace", "--workers", str(workers)]
+            common = ["--headless", "--trace", "--workers", str(workers)]
             subprocess.run([native, "run", mission, "--root", ROOT, "--output",
                             output / "native" / label, *common],
                            check=True, capture_output=True)
@@ -71,13 +73,17 @@ def main(argv=None):
                             "linux/amd64", *mount, IMAGE, "run", container_path, "--root",
                             "/work", "--output", f"/out/linux/{label}", *common],
                            check=True, capture_output=True)
-            equal = {file: sha256(output / "native" / label / file)
-                     == sha256(output / "linux" / label / file) for file in FILES}
+            native_run = read_run(output / "native" / label)
+            linux_run = read_run(output / "linux" / label)
+            equal = {topic: native_run.channels.get(topic, []) == linux_run.channels.get(topic, [])
+                     for topic in CHANNELS}
+            equal["metadata"] = (native_run.scenario == linux_run.scenario
+                                 and native_run.metadata == linux_run.metadata)
             difference = 0.0
-            if not equal["frames.bin"]:
+            if not equal["/frames"]:
                 difference = compare_frames(
-                    read_frames(output / "native" / label / "frames.bin"),
-                    read_frames(output / "linux" / label / "frames.bin")).max_position_error_m
+                    read_frames(output / "native" / label / "run.mcap"),
+                    read_frames(output / "linux" / label / "run.mcap")).max_position_error_m
             cases.append({"mission": name, "workers": workers, "identical": equal,
                           "max_position_difference_m": difference})
             print(f"{'SAME' if all(equal.values()) else 'DIFF'} {label}", flush=True)
@@ -86,7 +92,7 @@ def main(argv=None):
         "native": {"platform": platform.platform(), "compiler": subprocess.check_output(
             ["rustc", "--version", "--verbose"], text=True)},
         "linux": {"platform": "linux/amd64 (Docker)", "compiler": linux_compiler},
-        "files": list(FILES),
+        "channels": list(CHANNELS),
         "identical": all(all(case["identical"].values()) for case in cases),
         "max_position_difference_m": max(case["max_position_difference_m"] for case in cases),
         "cases": cases,

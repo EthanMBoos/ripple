@@ -1,8 +1,9 @@
 //! A world interaction: keep every entity above a floor and publish the resulting population.
 use anyhow::Result;
 use ripple_core::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize)]
 pub struct Population {
     pub entity_count: usize,
 }

@@ -1,3 +1,4 @@
+use ripple_core::record;
 use std::{fs, path::Path, process::Command};
 
 #[test]
@@ -26,7 +27,7 @@ fn every_shipped_mission_runs_identically_with_recording_on_and_off() {
     for (index, mission) in missions.iter().enumerate() {
         let baseline = temp.path().join(format!("{index}-plain"));
         let recorded = temp.path().join(format!("{index}-recorded"));
-        for (output, mode) in [(&baseline, "--no-rerun"), (&recorded, "--headless")] {
+        for (output, mode) in [(&baseline, "--headless"), (&recorded, "--export-rrd")] {
             let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
                 .current_dir(&root)
                 .arg("run")
@@ -43,14 +44,13 @@ fn every_shipped_mission_runs_identically_with_recording_on_and_off() {
                 String::from_utf8_lossy(&result.stderr)
             );
         }
-        for file in ["frames.bin", "events.json", "summary.csv"] {
-            assert_eq!(
-                fs::read(baseline.join(file)).unwrap(),
-                fs::read(recorded.join(file)).unwrap(),
-                "{}: {file}",
-                mission.display()
-            );
-        }
+        assert_eq!(
+            fs::read(baseline.join("run.mcap")).unwrap(),
+            fs::read(recorded.join("run.mcap")).unwrap(),
+            "{}",
+            mission.display()
+        );
+        assert!(!baseline.join("recording.rrd").exists());
         assert!(fs::metadata(recorded.join("recording.rrd")).unwrap().len() > 0);
     }
 }
@@ -66,7 +66,7 @@ fn cli_allocates_runs_and_accepts_explicit_output_without_changing_results() {
             .current_dir(temp.path())
             .arg("run")
             .arg(&mission)
-            .arg("--no-rerun")
+            .arg("--headless")
             .arg("--root")
             .arg(temp.path());
         if let Some(output) = output {
@@ -79,7 +79,7 @@ fn cli_allocates_runs_and_accepts_explicit_output_without_changing_results() {
             String::from_utf8_lossy(&result.stderr)
         );
     }
-    for file in ["frames.bin", "events.json", "summary.csv", "manifest.json"] {
+    for file in ["run.mcap"] {
         // Automatic runs are grouped by mission file name under <root>/runs.
         let first = fs::read(temp.path().join("runs/plugin_defaults/run000").join(file)).unwrap();
         for directory in ["runs/plugin_defaults/run001", "custom/nested/run", "named"] {
@@ -93,7 +93,7 @@ fn cli_allocates_runs_and_accepts_explicit_output_without_changing_results() {
         .current_dir(temp.path())
         .arg("run")
         .arg(mission)
-        .args(["--no-rerun", "--output", "runs/plugin_defaults/run000"])
+        .args(["--headless", "--output", "runs/plugin_defaults/run000"])
         .output()
         .unwrap();
     assert!(!result.status.success());
@@ -128,24 +128,21 @@ entities:
         .current_dir(temp.path())
         .arg("run")
         .arg(&mission)
-        .args(["--no-rerun", "--output", "failed"])
+        .args(["--headless", "--output", "failed"])
         .output()
         .unwrap();
     assert!(!result.status.success());
     let error = String::from_utf8_lossy(&result.stderr);
     assert!(error.contains("nonfinite position"), "{error}");
     let output = temp.path().join("failed");
-    for file in ["frames.bin", "events.json", "summary.csv", "manifest.json"] {
-        assert!(output.join(file).exists(), "{file}");
-    }
-    let manifest: serde_json::Value =
-        serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
-    assert_eq!(manifest["termination"], "PluginFailure");
+    assert!(output.join("run.mcap").exists());
+    let result = record::read_result(&output.join("run.mcap")).unwrap();
+    assert_eq!(result["termination"], "PluginFailure");
+    assert!(result["error"].contains("nonfinite position"));
     assert!(
-        manifest["error"]
-            .as_str()
+        !record::read_frames(&output.join("run.mcap"))
             .unwrap()
-            .contains("nonfinite position")
+            .is_empty()
     );
 }
 
@@ -154,7 +151,7 @@ fn invalid_missions_do_not_allocate_run_directories() {
     let temp = tempfile::tempdir().unwrap();
     let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
         .current_dir(temp.path())
-        .args(["run", "missing-mission.yaml", "--no-rerun", "--root"])
+        .args(["run", "missing-mission.yaml", "--headless", "--root"])
         .arg(temp.path())
         .output()
         .unwrap();
@@ -177,7 +174,7 @@ fn unavailable_sensor_reports_its_category_before_creating_a_run() {
             .current_dir(temp.path())
             .arg("run")
             .arg(&mission)
-            .arg("--no-rerun")
+            .arg("--headless")
             .arg("--root")
             .arg(temp.path())
             .output()

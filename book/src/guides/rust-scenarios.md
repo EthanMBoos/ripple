@@ -68,9 +68,9 @@ let output = run_scenario(my_lab::ring()?, &registry, RunSettings {
 ```
 
 `registry` includes the stock models and your workspace plugins. The runner
-allocates `runs/ring/runNNN` under `root` and writes frames, events, summaries,
-a manifest, and a Rerun recording. Set `viewer: true` to launch Rerun,
-`recording: false` to disable recording, or `output: Some(path)` to use a new
+allocates `runs/ring/runNNN` under `root` and writes a `run.mcap` with frames,
+events, summaries, and the resolved scenario. Set `viewer: true` to launch Rerun,
+`export_rrd: true` to save the recording, or `output: Some(path)` to use a new
 explicit output directory. Invalid configurations fail before output allocation.
 
 The CLI already depends on your plugin crate; keep this call in the CLI rather

@@ -111,7 +111,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         result = compare_noise(read_trace(args.case / "cpp/trace.jsonl"),
-                               read_trace(args.case / "rust-trace/trace.jsonl"))
+                               read_trace(args.case / "rust-trace/run.mcap"))
     except (OSError, ValueError, KeyError) as error:
         print(f"noise comparison error: {error}", file=sys.stderr)
         return 2

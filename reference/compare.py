@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Compare saved SCRIMMAGE runs (frames.bin and summary.csv), without a build.
+"""Compare a SCRIMMAGE run with a Ripple MCAP run, without a build.
 
-Python 3.10+, standard library only. Exit 0 for a match, 1 for a mismatch,
-or 2 for invalid input/I/O errors. Existing reports are never overwritten.
+Python 3.10+ (`backports.zstd` before 3.14). Exit 0 for a match, 1 for a
+mismatch, or 2 for invalid input/I/O errors. Existing reports are never
+overwritten.
 """
 
 import argparse
 import csv
+import io
 from dataclasses import asdict, dataclass, field
 import json
 import math
@@ -105,8 +107,16 @@ def compare_frames(reference, candidate):
     return result
 
 
-def read_summary(path):
-    with Path(path).open(newline="", encoding="utf-8") as stream:
+def read_summary(path, text=None):
+    path = Path(path)
+    if text is not None:
+        stream = io.StringIO(text)
+    elif path.suffix == ".mcap" or path.is_dir():
+        from run import read_run
+        stream = io.StringIO(read_run(path).summary)
+    else:
+        stream = path.open(newline="", encoding="utf-8")
+    with stream:
         rows = csv.reader(stream, strict=True)
         header = next(rows, [])
         if not header or header[0] != "team_id":
@@ -125,9 +135,9 @@ def read_summary(path):
     return header, teams
 
 
-def compare_summaries(reference, candidate, result):
+def compare_summaries(reference, candidate, result, candidate_text=None):
     expected_header, expected_teams = read_summary(reference)
-    actual_header, actual_teams = read_summary(candidate)
+    actual_header, actual_teams = read_summary(candidate, candidate_text)
     if expected_header != actual_header or expected_teams.keys() != actual_teams.keys():
         result.mismatch("summary columns or team IDs differ")
         return
@@ -141,9 +151,12 @@ def compare_summaries(reference, candidate, result):
 
 def compare_runs(reference, candidate):
     reference, candidate = Path(reference), Path(candidate)
+    from run import read_run
+    ripple = read_run(candidate)
     result = compare_frames(read_frames(reference / "frames.bin"),
-                            read_frames(candidate / "frames.bin"))
-    compare_summaries(reference / "summary.csv", candidate / "summary.csv", result)
+                            ripple.frames)
+    compare_summaries(reference / "summary.csv", candidate / "run.mcap", result,
+                      ripple.summary)
     result.passed = result.mismatch_count == 0
     return result
 

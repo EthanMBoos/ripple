@@ -17,6 +17,7 @@ SCRIMMAGE checkout. No host C++ toolchain is needed.
 
 import argparse
 from dataclasses import asdict
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -31,6 +32,7 @@ from compare import Comparison, compare_frames, compare_summaries
 from metrics_model import counts_match, matches, predict, weights
 from frames import read_frames
 from project import IMAGE_PREFIX, ROOT, RUNS, allocate, build_cli, sha256, source_identity
+from run import read_run
 import scrimmage_xml
 from traces import compare_traces, read_trace
 
@@ -57,7 +59,7 @@ def comparison_missions():
     return missions
 
 
-OUTPUT_FILES = ("frames.bin", "events.json", "summary.csv")
+OUTPUT_CHANNELS = ("/entities", "/frames", "/events", "/summary")
 
 
 def write_json(path, value):
@@ -131,7 +133,11 @@ def prepare_mission(inputs, scenario):
 
 
 def same_outputs(left, right):
-    return {name: sha256(left / name) == sha256(right / name) for name in OUTPUT_FILES}
+    left, right = read_run(left), read_run(right)
+    equal = {topic: left.channels.get(topic, []) == right.channels.get(topic, [])
+             for topic in OUTPUT_CHANNELS}
+    equal["metadata"] = left.scenario == right.scenario and left.metadata == right.metadata
+    return equal
 
 
 def edit(text, old, new):
@@ -247,29 +253,31 @@ def compare_case(cpp_logs, cpp_trace, serial, traced, mission):
     """Frames, summary, and traces of a C++ comparison run versus Rust.
 
     `serial` supplies Rust frames and summary, `traced` its trace, events, and
-    manifest (the same run may serve both). A summary that differs must be
-    explained by the documented scoring differences: identical counts, and Rust's
+    scenario metadata (the same run may serve both). A summary that differs
+    must be explained by the documented scoring differences: identical counts,
+    and Rust's
     metrics messages reproduce the C++ summary under the C++ rule and the Rust
     summary under the Rust rule (metrics_model.py). Nothing is masked.
     """
-    frames = compare_frames(read_frames(cpp_logs / "frames.bin"), read_frames(serial / "frames.bin"))
+    frames = compare_frames(read_frames(cpp_logs / "frames.bin"), read_frames(serial / "run.mcap"))
     frames.passed = frames.mismatch_count == 0
-    run = json.loads((traced / "manifest.json").read_text())["scenario"]["run"]
-    events = json.loads((traced / "events.json").read_text())
+    traced_run = read_run(traced)
+    run = traced_run.scenario["run"]
+    events = traced_run.events
     removed = [event["entity_ids"][0] for event in events
                if event["kind"] == "EntityRemoved" and event["time_s"] < run["start_s"] - 1e-9]
-    rust_trace = read_trace(traced / "trace.jsonl")
+    rust_trace = read_trace(traced / "run.mcap")
     trace = compare_traces(read_trace(cpp_trace), rust_trace, removed,
                            run["start_s"])
     summary = Comparison()
-    compare_summaries(cpp_logs / "summary.csv", serial / "summary.csv", summary)
+    compare_summaries(cpp_logs / "summary.csv", serial / "run.mcap", summary)
     agreement = "agree"
     if summary.mismatch_count:
         # The terminal frame is at the end time, where the metrics report.
-        final_s = read_frames(serial / "frames.bin")[-1].time_s
+        final_s = read_frames(serial / "run.mcap")[-1].time_s
         rules = [(rule, path) for rule, path in (("cpp", cpp_logs / "summary.csv"),
-                                                   ("rust", serial / "summary.csv"))]
-        explained = counts_match(cpp_logs / "summary.csv", serial / "summary.csv") and all(
+                                                   ("rust", serial / "run.mcap"))]
+        explained = counts_match(cpp_logs / "summary.csv", serial / "run.mcap") and all(
             matches(predict(rust_trace, run["start_s"], final_s, weights(mission), rule), path)
             for rule, path in rules)
         agreement = "explained_by_scoring_rules" if explained else "unexplained"
@@ -285,16 +293,16 @@ def check_mission(args, case, mission, directory, images, rust):
         inputs = directory / "input"
         inputs.mkdir()
         shutil.copyfile(mission, inputs / "input.yaml")
-        # Rust runs first: its manifest records the scenario SCRIMMAGE's XML is
+        # Ripple runs first: its MCAP records the scenario SCRIMMAGE's XML is
         # written from. Both simulators read the saved input; neither rewrites it.
         for workers in (1, 2, 8):
             run_logged([
                 rust, "run", inputs / "input.yaml", "--root", ROOT,
                 "--output", directory / f"rust-{workers}",
-                "--workers", workers, "--no-rerun",
+                "--workers", workers, "--headless",
             ], directory / f"rust-{workers}.log", timeout=args.timeout)
         serial = directory / "rust-1"
-        scenario = json.loads((serial / "manifest.json").read_text())["scenario"]
+        scenario = read_run(serial).scenario
         result["input"] = prepare_mission(inputs, scenario)
         effective = inputs / "effective.xml"
         # Non-interference: tracing must not change C++ outputs. The comparison
@@ -325,6 +333,7 @@ def check_mission(args, case, mission, directory, images, rust):
         run_logged([
             rust, "run", inputs / "input.yaml", "--root", ROOT,
             "--output", directory / "rust-rerun", "--workers", "8", "--headless",
+            "--export-rrd",
         ], directory / "rust-rerun.log", timeout=args.timeout)
         result["recording_equality"] = same_outputs(serial, directory / "rust-rerun")
         recording = directory / "rust-rerun/recording.rrd"
@@ -333,13 +342,16 @@ def check_mission(args, case, mission, directory, images, rust):
         result["recording_sha256"] = sha256(recording)
         run_logged([
             rust, "run", inputs / "input.yaml", "--root", ROOT,
-            "--output", directory / "rust-trace", "--workers", "1", "--no-rerun", "--trace",
+            "--output", directory / "rust-trace", "--workers", "1", "--headless", "--trace",
         ], directory / "rust-trace.log", timeout=args.timeout)
         result["trace_equality"] = same_outputs(serial, directory / "rust-trace")
-        result["rust_output_hashes"] = {
-            variant: {name: sha256(directory / variant / name) for name in OUTPUT_FILES}
-            for variant in ("rust-1", "rust-2", "rust-8", "rust-rerun", "rust-trace")
-        }
+        result["rust_output_hashes"] = {}
+        for variant in ("rust-1", "rust-2", "rust-8", "rust-rerun", "rust-trace"):
+            channels = read_run(directory / variant).channels
+            result["rust_output_hashes"][variant] = {
+                topic: hashlib.sha256(b"".join(channels.get(topic, []))).hexdigest()
+                for topic in OUTPUT_CHANNELS
+            }
         comparison = compare_case(cpp_logs, directory / "cpp/trace.jsonl", serial,
                                   directory / "rust-trace", inputs / "input.xml")
         result.update(comparison)

@@ -24,7 +24,7 @@ check failed. Every script also runs on its own; its docstring says how.
 | ID | Set | What it checks | Against | Passes when |
 | --- | --- | --- | --- | --- |
 | `rust-tests` | quick | `cargo test`, `fmt`, `clippy`, and these tools' tests | expected values | all pass |
-| `rust-determinism` | quick | 1, 2, 8 workers, recording, tracing, scan and grid lookup (`determinism.py`) | the one-worker run | byte-identical on every mission |
+| `rust-determinism` | quick | 1, 2, 8 workers, recording, tracing on shipped missions and a small generated contact case, scan and grid lookup (`determinism.py`) | the one-worker run | byte-identical on every mission and workload |
 | `cpp-agreement` | quick | the curated matrix ([missions.txt](missions.txt), `reference_check.py`) | C++ in Docker | see [Criteria](#criteria) |
 | `speed-regression` | quick | Rust speed and memory (`perf.py`), first, on an idle machine | the accepted baseline | no workload slower beyond noise |
 | `cpp-generated` | release | 100 random scenarios, seed 1 | C++ | all pass |
@@ -107,12 +107,13 @@ unchanged:
 python3 reference/equivalence.py OLD_EXECUTABLE NEW_EXECUTABLE
 ```
 
-Build the old executable from any trusted source (for example an exported copy
-of the previous release) and the new one from this checkout. Every mission,
-perf.py's workloads, and a message-heavy mission run at 1, 2, and 8 workers with
-the comparison trace; frames, events, summaries, and traces must be identical,
-and so must manifests except the documented metadata keys (`source`, the
-mission's path), each of which is reported. The report goes to
+Build both MCAP-writing executables from trusted sources. Every mission,
+perf.py's workloads, and a message-heavy mission run at 1, 2, and 8 workers.
+Shipped missions and a small generated contact case use the trace; large
+generated workloads omit it because recording every agent's contacts at every
+tick makes enormous files. Entity,
+frame, event, summary, and recorded trace channel payloads must be identical,
+as must the recorded scenario and result metadata. The report goes to
 `runs/equivalenceNNN/`; it is development evidence, not release evidence.
 
 Names and paths live in one place, [project.py](project.py): the package and
@@ -147,10 +148,10 @@ git -C ../scrimmage fetch origin Ubuntu-24.04:Ubuntu-24.04 benchmarking-edits:be
 ```
 
 The checker builds from these committed branches, never from uncommitted files.
-Requires Python 3.10+, a running Docker engine, and Rust/Cargo. No native C++
-build is needed except for the native timings. The first build downloads a
-large dependency image and compiles C++; later checks reuse Docker's build
-cache. Allow several GB of disk space.
+Requires Python 3.10+ (`backports.zstd` before 3.14), a running Docker engine,
+and Rust/Cargo. No native C++ build is needed except for the native timings.
+The first build downloads a large dependency image and compiles C++; later
+checks reuse Docker's build cache. Allow several GB of disk space.
 
 `reference_check.py` alone writes `runs/reference-checkNNN`. Use `--output
 path/to/new-check`, `--source path/to/scrimmage`, or `--jobs 4` to override
@@ -198,7 +199,8 @@ tracing must write byte-identical `frames.bin` and `summary.csv`
 unmodified build differs by design, and `cpp_baseline_equality` records it.
 The fourth run, with tracing and keyed random numbers, is the one compared
 with Rust. Rust runs once more with `--trace`, which must
-leave its frames, events, and summary byte-identical (`trace_equality`).
+leave its `/entities`, `/frames`, `/events`, and `/summary` payloads
+byte-identical (`trace_equality`).
 
 Keyed draws make randomized spawns, sensor noise, and network loss the same
 numbers on both sides. AuctionAssign's bids stay on C++'s shared engine; bids
@@ -346,14 +348,16 @@ tolerance.
 ## Compare saved runs
 
 Comparison is development tooling, not a simulator subcommand. It needs only
-Python 3.10+ (standard library); no Docker, Cargo, Rerun, or Python packages:
+Python 3.14+ (standard library), or 3.10+ with `backports.zstd` to read the
+compressed `run.mcap`; no Docker, Cargo, or Rerun:
 
 ```sh
 python3 reference/compare.py path/to/cpp-run path/to/rust-run \
   --report runs/comparison.json
 ```
 
-Both directories must contain `frames.bin` and `summary.csv`. JSON is printed
+The SCRIMMAGE directory needs `frames.bin` and `summary.csv`; the Ripple
+directory needs `run.mcap`. JSON is printed
 to stdout; `--report` also saves it, including mismatches, to a new file. Parent
 directories are created automatically; existing reports are never overwritten.
 Exit codes are 0 for a match, 1 for a mismatch, and 2 for invalid inputs or I/O

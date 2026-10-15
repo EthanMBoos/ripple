@@ -30,10 +30,11 @@ it rather than changing global approvals or installing another viewer.
 
 Store recordings, screenshots, and a short `REPORT.md` under ignored
 `runs/visual-qa/<review>/`, one new folder per review. Launch a separate
-headless viewer on a free port:
+headless viewer on a free port. First make an RRD export in a new review folder:
 
 ```sh
-rerun runs/straight-no-gui/run000/recording.rrd --headless --window-size 1920x1200 --bind 127.0.0.1 --port 9878
+ripple run missions/straight-no-gui.yaml --headless --export-rrd --output runs/visual-qa/<review>
+rerun runs/visual-qa/<review>/recording.rrd --headless --window-size 1920x1200 --bind 127.0.0.1 --port 9878
 ```
 
 Headless Rerun still needs a graphics adapter; it is not the C++ GUI.

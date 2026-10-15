@@ -675,7 +675,7 @@ impl PluginStack {
     }
     /// Own-state and contact readings taken this tick, not yet delivered, with
     /// their sensors' endpoints: (contact id, or None for own state; state).
-    /// For the comparison trace.
+    /// For the optional observation trace.
     pub(crate) fn pending_measurements(&self) -> Result<Vec<Measurement<'_>>> {
         let mut measurements = Vec::new();
         for (slot, (name, kind)) in self.sensors.iter().zip(&self.sensor_readings) {

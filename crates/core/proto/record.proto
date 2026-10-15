@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package ripple.record;
+
+// All positions and velocities use the local ENU world frame.
+message Vector3 {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+message Quaternion {
+  double w = 1;
+  double x = 2;
+  double y = 3;
+  double z = 4;
+}
+
+message State {
+  Vector3 position_world_m = 1;
+  Quaternion orientation_world_from_body = 2;
+  Vector3 velocity_world_mps = 3;
+  Vector3 angular_velocity_world_radps = 4;
+}
+
+message EntityDescription {
+  int32 id = 1;
+  int32 team_id = 2;
+  uint32 group_index = 3;
+  string group_label = 4;
+  string visual_model = 5;
+}
+
+message EntityState {
+  int32 id = 1;
+  State truth = 2;
+  bool active = 3;
+}
+
+message Frame {
+  double time_s = 1;
+  repeated EntityState entities = 2;
+}
+
+message Event {
+  double time_s = 1;
+  string kind = 2;
+  repeated int32 entity_ids = 3;
+}
+
+// The metric redesign in the next roadmap item replaces the CSV payload.
+message Summary {
+  string csv = 1;
+}

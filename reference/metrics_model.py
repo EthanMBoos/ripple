@@ -25,6 +25,7 @@ scored normally. Standard library only.
 """
 
 import csv
+import io
 import math
 from pathlib import Path
 import xml.etree.ElementTree as ET
@@ -150,7 +151,13 @@ def divide(numerator, denominator):
 
 
 def read_summary(path):
-    with Path(path).open(newline="") as stream:
+    path = Path(path)
+    if path.suffix == ".mcap" or path.is_dir():
+        from run import read_run
+        stream = io.StringIO(read_run(path).summary)
+    else:
+        stream = path.open(newline="")
+    with stream:
         rows = list(csv.reader(stream))
     if rows[0] != COLUMNS:
         raise ValueError(f"{path}: unexpected summary columns {rows[0]}")

@@ -152,8 +152,8 @@ def main(argv=None):
         folder.mkdir()
         (folder / "mission.yaml").write_text(mission(drag))
         subprocess.run([binary, "run", folder / "mission.yaml", "--root", ROOT, "--output",
-                        folder / "ripple", "--no-rerun"], check=True, capture_output=True)
-        ripple_frames = read_frames(folder / "ripple/frames.bin")
+                        folder / "ripple", "--headless"], check=True, capture_output=True)
+        ripple_frames = read_frames(folder / "ripple/run.mcap")
 
         speed_sum_radps = sum(COMMANDS_RADPS)
         drag_matrix = [[0.0] * 3 for _ in range(3)]

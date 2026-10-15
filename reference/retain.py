@@ -10,6 +10,7 @@ from pathlib import Path
 import shutil
 
 from project import ROOT
+from run import read_run
 
 
 def sanitize(path, run):
@@ -54,7 +55,7 @@ def copy_reference_check(check, output, extra=()):
         summaries = list((result.parent / "cpp/logs").glob("*/summary.csv"))
         if summaries:
             shutil.copyfile(summaries[0], case / "cpp-summary.csv")
-            shutil.copyfile(result.parent / "rust-1/summary.csv", case / "rust-summary.csv")
+            (case / "rust-summary.csv").write_text(read_run(result.parent / "rust-1").summary)
     for path in extra:
         copy_files(Path(path).parent, output, [Path(path).name])
         sanitize(output / Path(path).name, check)

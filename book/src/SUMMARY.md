@@ -24,6 +24,7 @@
 
 - [User plugins and the starter crate](guides/user-plugins.md)
 - [YAML missions, templates, and sweeps](guides/yaml-missions.md)
+- [Run records](guides/run-records.md)
 - [Terrain](guides/terrain.md)
 - [Flying ArduPlane (SITL)](guides/ardupilot.md)
 - [Flying a multirotor](guides/multirotor.md)

@@ -283,7 +283,7 @@ A few things to notice:
 - `SimpleCollision` removes two vehicles that come within 2 m of each other, and
   `SimpleCollisionMetrics` scores it.
 - `GlobalNetwork` is listed because `Straight` listens on it for a boundary.
-  Leaving it out is an error.
+  Ripple also adds it when a mission leaves it out.
 
 The full mission format is in
 [YAML missions](../guides/yaml-missions.md).
@@ -305,13 +305,24 @@ Use the run folder that the first command prints.
 > it, so use `cargo run` while developing.
 
 The red chaser turns toward the blue target, descends to its altitude, and
-closes in. At about 32 s they
-collide and both are removed. The run folder's `events.json` shows it:
+closes in. At about 32 s they collide and both are removed. The `/events`
+channel in `run.mcap` shows it. From the repository root, use the Python reader
+described in [Run records](../guides/run-records.md#read-it-from-python):
+
+```sh
+PYTHONPATH=reference python3 - <<'PY'
+from run import read_run
+
+for event in read_run("runs/follow-nearest/run000").events:
+    if event["kind"] in ("NonTeamCollision", "EntityRemoved"):
+        print(event)
+PY
+```
 
 ```text
-NonTeamCollision  at 32.0 s  entities [1, 2]
-EntityRemoved     at 32.0 s  entity 1
-EntityRemoved     at 32.0 s  entity 2
+{'time_s': 32.0, 'kind': 'NonTeamCollision', 'entity_ids': [1, 2]}
+{'time_s': 32.0, 'kind': 'EntityRemoved', 'entity_ids': [1]}
+{'time_s': 32.0, 'kind': 'EntityRemoved', 'entity_ids': [2]}
 ```
 
 ## 6. Test it

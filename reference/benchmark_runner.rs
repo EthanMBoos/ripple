@@ -6,16 +6,11 @@
 //! It also registers StateBroadcast and StateListener, a message pair that only
 //! reference/message_benchmark.py uses.
 
-use std::{
-    env, fs,
-    io::{BufWriter, Write},
-    path::Path,
-    time::Instant,
-};
+use std::{env, fs, path::Path, time::Instant};
 
 use anyhow::{Result, ensure};
 use ripple_core::plugin::*;
-use ripple_core::{KinematicState, Mission, Params, Simulation, SpatialLookup, write_frame};
+use ripple_core::{KinematicState, Mission, Params, Simulation, SpatialLookup, record::RunWriter};
 
 const NETWORK: &str = "LocalNetwork";
 const TOPIC: &str = "StateWithCovariance";
@@ -83,16 +78,11 @@ fn main() -> Result<()> {
     let started = Instant::now();
     let output = Path::new(&args[3]);
     fs::create_dir(output)?;
-    let mut frames = BufWriter::new(fs::File::create_new(output.join("frames.bin"))?);
+    let mut record = RunWriter::create(&output.join("run.mcap"), &simulation, false)?;
     while let Some(frame) = simulation.step()? {
-        write_frame(&mut frames, &frame)?;
+        record.step_frame(&simulation, &frame)?;
     }
-    frames.flush()?;
-    fs::write(output.join("summary.csv"), simulation.summary_csv())?;
-    fs::write(
-        output.join("events.json"),
-        serde_json::to_vec(simulation.events())?,
-    )?;
+    record.finish_run(&simulation, None)?;
     let run_s = started.elapsed().as_secs_f64();
     println!(
         "{}",

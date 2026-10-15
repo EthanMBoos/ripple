@@ -1,4 +1,5 @@
 use ripple_cli::{RunSettings, run_scenario};
+use ripple_core::record;
 use ripple_core::{EntityGroupConfig, PluginConfig, ScenarioConfig, Vec3, plugin::PluginRegistry};
 use std::{fs, process::Command};
 
@@ -27,7 +28,7 @@ fn scenario() -> ScenarioConfig {
 }
 
 #[test]
-fn rust_and_file_runs_share_outputs_recording_and_manifest_settings() {
+fn rust_and_file_runs_share_record_and_export_settings() {
     let temp = tempfile::tempdir().unwrap();
     let mission = temp.path().join("plane.yaml");
     fs::write(
@@ -56,7 +57,7 @@ entities:
                 root: temp.path().to_owned(),
                 name: name.clone(),
                 workers,
-                recording,
+                export_rrd: recording,
                 ..RunSettings::default()
             },
         )
@@ -70,10 +71,11 @@ entities:
             .arg(&file_output)
             .arg("--workers")
             .arg(workers.to_string())
-            .arg(if recording {
-                "--headless"
+            .arg("--headless")
+            .args(if recording {
+                vec!["--export-rrd"]
             } else {
-                "--no-rerun"
+                vec![]
             })
             .output()
             .unwrap();
@@ -82,27 +84,17 @@ entities:
             "{}",
             String::from_utf8_lossy(&result.stderr)
         );
-        for file in ["frames.bin", "events.json", "summary.csv"] {
-            assert_eq!(
-                fs::read(output.join(file)).unwrap(),
-                fs::read(file_output.join(file)).unwrap(),
-                "{file}"
-            );
-        }
-        assert_eq!(output.join("recording.rrd").exists(), recording);
-        let manifest: serde_json::Value =
-            serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
-        assert_eq!(manifest["scenario"]["run"]["seed"], 7);
-        assert_eq!(manifest["worker_count"], workers);
-        assert_eq!(manifest["rerun_recording"], recording);
-        assert_eq!(manifest["viewer"], false);
-        assert!(manifest["source"].is_null());
-        let file_manifest: serde_json::Value =
-            serde_json::from_slice(&fs::read(file_output.join("manifest.json")).unwrap()).unwrap();
-        assert_eq!(manifest["scenario"], file_manifest["scenario"]);
         assert_eq!(
-            file_manifest["source"],
-            mission.canonicalize().unwrap().to_string_lossy().as_ref()
+            fs::read(output.join("run.mcap")).unwrap(),
+            fs::read(file_output.join("run.mcap")).unwrap()
+        );
+        assert_eq!(output.join("recording.rrd").exists(), recording);
+        let saved = record::read_scenario(&output.join("run.mcap")).unwrap();
+        assert_eq!(saved["run"]["seed"], 7);
+        assert!(
+            !record::read_result(&output.join("run.mcap"))
+                .unwrap()
+                .contains_key("error")
         );
     }
 }
@@ -115,7 +107,7 @@ fn invalid_rust_setup_does_not_create_outputs() {
         let mut scenario = scenario();
         let mut settings = RunSettings {
             root: temp.path().to_owned(),
-            recording: false,
+            export_rrd: false,
             ..RunSettings::default()
         };
         match invalid {
@@ -126,4 +118,29 @@ fn invalid_rust_setup_does_not_create_outputs() {
         assert!(run_scenario(scenario, &registry, settings).is_err());
         assert!(!temp.path().join("runs").exists());
     }
+}
+
+#[test]
+fn repeated_group_labels_keep_distinct_recorded_group_indices() {
+    let temp = tempfile::tempdir().unwrap();
+    let mut config = scenario();
+    let mut second = config.entities[0].clone();
+    second.position_m = Vec3::new(100.0, 0.0, 100.0);
+    config.entities.push(second);
+    let output = run_scenario(
+        config,
+        &PluginRegistry::with_builtins(),
+        RunSettings {
+            root: temp.path().to_owned(),
+            ..RunSettings::default()
+        },
+    )
+    .unwrap();
+    let frames = record::read_frames(&output.join("run.mcap")).unwrap();
+    let groups: Vec<_> = frames[0]
+        .entities
+        .iter()
+        .map(|entity| entity.sub_swarm_id)
+        .collect();
+    assert_eq!(groups, vec![0, 1]);
 }

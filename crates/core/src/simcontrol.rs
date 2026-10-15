@@ -1,7 +1,6 @@
 //! Fixed-step orchestration with explicit phase boundaries.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::io::Write;
 
 use anyhow::Result;
 use serde::Serialize;
@@ -23,6 +22,8 @@ mod scheduler;
 mod summary;
 mod trace;
 pub(crate) mod world_plugins;
+
+pub use trace::TraceSink;
 
 use generation::Generator;
 
@@ -92,7 +93,6 @@ pub struct Simulation {
     used_ids: BTreeSet<i32>,
     end_conditions: EndConditions,
     finished: bool,
-    trace: Option<Trace>,
     /// The latest perfect contact measurement: every entity present after the
     /// last interactions. New entities start from it.
     perfect_contacts: ContactList,
@@ -135,7 +135,6 @@ impl Simulation {
             used_ids: BTreeSet::from([0]),
             end_conditions,
             finished: false,
-            trace: None,
             perfect_contacts: ContactList::from([]),
             terrain,
         };
@@ -195,16 +194,6 @@ impl Simulation {
         self.termination
     }
 
-    /// Write the C++ comparison trace (see `simcontrol/trace.rs`) to `out`.
-    /// Tracing only reads state; simulation outputs are unchanged.
-    pub fn enable_trace(&mut self, out: Box<dyn Write + Send>) {
-        self.trace = Some(Trace::new(out));
-    }
-
-    pub fn flush_trace(&mut self) -> Result<()> {
-        self.trace.as_mut().map_or(Ok(()), Trace::flush)
-    }
-
     fn run_phase(&mut self, update: impl Fn(&mut Entity) -> Result<()> + Sync) -> Result<()> {
         let result = self.scheduler.run_phase(&mut self.entities, |entity| {
             if entity.is_active() {
@@ -241,8 +230,19 @@ impl Simulation {
 
     /// Returns pre-step state, then advances the simulation. The final call emits terminal state.
     pub fn step(&mut self) -> Result<Option<SimulationFrame>> {
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.step_inner()))
-            .unwrap_or_else(|_| Err(anyhow::anyhow!("simulation plugin panicked")));
+        self.step_with_trace(None)
+    }
+
+    /// Record this step's observations while keeping the writer with the caller.
+    pub fn step_with_trace(
+        &mut self,
+        sink: Option<&mut dyn TraceSink>,
+    ) -> Result<Option<SimulationFrame>> {
+        let mut trace = sink.map(Trace::new);
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            self.step_inner(trace.as_mut())
+        }))
+        .unwrap_or_else(|_| Err(anyhow::anyhow!("simulation plugin panicked")));
         if result.is_err() {
             self.termination = Some(TerminationReason::PluginFailure);
             self.finished = true;
@@ -251,12 +251,12 @@ impl Simulation {
         result
     }
 
-    fn step_inner(&mut self) -> Result<Option<SimulationFrame>> {
+    fn step_inner(&mut self, mut trace: Option<&mut Trace<'_>>) -> Result<Option<SimulationFrame>> {
         if self.finished {
             return Ok(None);
         }
         if self.termination.is_some() {
-            return Ok(Some(self.finish()?));
+            return Ok(Some(self.finish(trace)?));
         }
 
         self.generate_entities()?;
@@ -265,7 +265,7 @@ impl Simulation {
         let dt_s = self.config.run.dt_s;
         let time_s = self.time_s;
         let tick = self.tick;
-        if let Some(trace) = &mut self.trace {
+        if let Some(trace) = trace.as_deref_mut() {
             trace.beliefs(time_s, &self.entities)?;
         }
         let time = StepTime { time_s, dt_s, tick };
@@ -293,7 +293,7 @@ impl Simulation {
             substep_time_s += motion_dt_s;
         }
         // Motion leaves controller outputs unchanged: this is the last substep's.
-        if let Some(trace) = &mut self.trace {
+        if let Some(trace) = trace.as_deref_mut() {
             trace.outputs(time_s, &self.entities)?;
         }
 
@@ -304,13 +304,13 @@ impl Simulation {
         let sensor_contacts = self.snapshot();
         let sensor_truth = TruthContacts::new(&sensor_contacts.entities, &nearby);
         self.run_phase(|entity| entity.step_sensors(time, sensor_truth))?;
-        if let Some(trace) = &mut self.trace {
+        if let Some(trace) = trace.as_deref_mut() {
             trace.readings(time_s, &self.entities)?;
         }
         self.apply_interactions(&mut nearby)?;
         nearby.refresh(&self.entities);
         let contacts = self.snapshot().entities;
-        let mut network_trace = self.trace.as_ref().map(|_| NetworkTrace::default());
+        let mut network_trace = trace.as_ref().map(|_| NetworkTrace::default());
         self.world_stop |= self.world.networks(
             time,
             TruthContacts::new(&contacts, &nearby),
@@ -318,7 +318,7 @@ impl Simulation {
             &mut self.messages,
             network_trace.as_mut(),
         )?;
-        if let (Some(trace), Some(network_trace)) = (&mut self.trace, &network_trace) {
+        if let (Some(trace), Some(network_trace)) = (trace, &network_trace) {
             trace.network(network_trace)?;
         }
         // Estimation shares the delivery task: readings are delivered and belief
@@ -378,7 +378,7 @@ impl Simulation {
         None
     }
 
-    fn finish(&mut self) -> Result<SimulationFrame> {
+    fn finish(&mut self, trace: Option<&mut Trace<'_>>) -> Result<SimulationFrame> {
         self.finished = true;
         // The terminal frame holds the state after the last step, at the end time.
         for entity in &self.entities {
@@ -388,7 +388,7 @@ impl Simulation {
                 entity_ids: vec![entity.id],
             });
         }
-        if let Some(trace) = &mut self.trace {
+        if let Some(trace) = trace {
             trace.beliefs(self.time_s, &self.entities)?;
         }
         self.close_plugins()?;

@@ -101,7 +101,7 @@ Worker count and the viewer are command-line choices (`--workers`,
 | Key | Default | Meaning |
 | --- | --- | --- |
 | `team` | -1 | team number |
-| `color` | `[255, 255, 255]` | display color |
+| `color` | `[255, 255, 255]` | retained in the scenario; the viewer currently uses team colors |
 | `visual_model` | `aircraft` | display model |
 | `health` | 1 | starting health |
 | `id` | assigned | a fixed entity ID |
@@ -172,7 +172,8 @@ Every part of the path must already exist (after template expansion), so a
 typo is an error rather than a new key. To override a plugin parameter, write
 it in the file or template first; a bare `Straight:` has no `speed_mps` to replace.
 Quote a value containing brackets or spaces for the shell:
-`'entities.red.color:=[255, 0, 0]'`. A path can also name a whole plugin slot
+`'entities.red.position_m:=[0, 0, 200]'`. A path can also name a whole
+plugin slot
 the group has, replacing its plugins: `'entities.red.autonomy:={Straight: {}}'`.
 
 ## Sweeps
@@ -211,18 +212,18 @@ and each metrics plugin's per-team values. A shard runs cases `i`, `i + n`,
 `i + 2n`, ...; `bulk_run.py` puts shards in `shard-NNNN/` folders and `collect`
 merges them in case order after checking every case appears exactly once.
 
-Cases keep no frames or recordings. To look at one, rerun it with its values
-as overrides; runs are deterministic, so it is the same run:
+To inspect one case, rerun the base mission with the seed and parameter values
+from its `results.jsonl` row:
 
 ```sh
-ripple run missions/waypoints-point-agents.yaml run.seed:=2 \
-    entities.blue.autonomy.WaypointFollower.speed_mps:=5
+ripple run missions/waypoints-point-agents.yaml run.seed:=1 \
+  entities.blue.autonomy.WaypointFollower.speed_mps:=3 \
+  interactions.WaypointBroadcast.update_at_s:=3
 ```
 
-Only what sharding needs is implemented. Per-case output folders,
 `--case-id` replay, digests, input hashing, summaries, and Slurm job watching
-are not. Cluster setup: `conda env create -f environment.yaml`, activate it,
-and `cargo build --release -p ripple` once on shared storage.
+are not implemented. Cluster setup: `conda env create -f environment.yaml`,
+activate it, and `cargo build --release -p ripple` once on shared storage.
 
 ## Templates
 

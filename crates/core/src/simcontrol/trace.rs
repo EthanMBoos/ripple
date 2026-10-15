@@ -1,14 +1,9 @@
-//! Opt-in comparison trace, one JSON object per line.
+//! Opt-in observation records for the MCAP writer.
 //!
-//! The records match the C++ `benchmarking-edits` branch
-//! (`src/common/Trace.cpp`) so `reference/traces.py` can compare them:
-//! message deliveries, sensor readings, each entity's belief when its frame is
-//! logged, and autonomy/controller outputs after all controller substeps.
-//! A reading record holds what C++ publishes as a sensor message, which
-//! `reference/traces.py` pairs with it. Tracing only reads simulation state, so
-//! outputs are identical with it on or off.
-
-use std::io::Write;
+//! These records name Ripple's state, sensor, and message fields directly.
+//! `reference/traces.py` converts them to SCRIMMAGE's comparison shape.
+//! Tracing only reads simulation state, so the run's ordinary outputs are
+//! identical with it on or off.
 
 use anyhow::Result;
 use serde_json::{Value, json};
@@ -19,36 +14,52 @@ use crate::{
     pubsub::messages::{MessageEndpoint, NetworkTrace},
 };
 
-pub(crate) struct Trace {
-    out: Box<dyn Write + Send>,
+/// Receives one observation without a temporary JSON-lines file or parser.
+pub trait TraceSink {
+    fn record(&mut self, kind: &str, time_s: f64, value: Value) -> Result<()>;
 }
 
-impl Trace {
-    pub(crate) fn new(out: Box<dyn Write + Send>) -> Self {
+pub(crate) struct Trace<'a> {
+    out: &'a mut dyn TraceSink,
+}
+
+impl<'a> Trace<'a> {
+    pub(crate) fn new(out: &'a mut dyn TraceSink) -> Self {
         Self { out }
     }
 
-    fn record(&mut self, value: Value) -> Result<()> {
-        serde_json::to_writer(&mut self.out, &value)?;
-        self.out.write_all(b"\n")?;
-        Ok(())
+    fn record(&mut self, kind: &str, time_s: f64, value: Value) -> Result<()> {
+        self.out.record(kind, time_s, value)
     }
 
     pub(crate) fn beliefs(&mut self, time_s: f64, entities: &[Entity]) -> Result<()> {
         for entity in entities {
             let state: &KinematicState = entity.belief();
-            let q = state.orientation_world_from_body;
-            self.record(json!({
-                "kind": "belief",
-                "t": number(time_s),
-                "id": entity.id(),
-                // Rust-only: lets reference/metrics_model.py map entities to teams.
-                "team": entity.team_id(),
-                "p": vector(state.position_world_m),
-                "v": vector(state.velocity_world_mps),
-                "q": [number(q.w), number(q.x), number(q.y), number(q.z)],
-                "w": vector(state.angular_velocity_world_radps),
-            }))?;
+            let contacts: Vec<Value> = entity
+                .contacts_belief()
+                .iter()
+                .filter(|contact| contact.id != entity.id())
+                .map(|contact| {
+                    json!({
+                        "entity_id": contact.id,
+                        "team_id": contact.team_id,
+                        "sampled_at_s": number(contact.sampled_at_s),
+                        "state": state_record(&contact.state),
+                    })
+                })
+                .collect();
+            self.record(
+                "belief",
+                time_s,
+                json!({
+                    "kind": "belief",
+                    "time_s": number(time_s),
+                    "entity_id": entity.id(),
+                    "team_id": entity.team_id(),
+                    "state": state_record(state),
+                    "contacts": contacts,
+                }),
+            )?;
         }
         Ok(())
     }
@@ -56,14 +67,18 @@ impl Trace {
     pub(crate) fn outputs(&mut self, time_s: f64, entities: &[Entity]) -> Result<()> {
         for entity in entities {
             for (plugin, port, value) in entity.plugin_outputs() {
-                self.record(json!({
-                    "kind": "output",
-                    "t": time_s,
-                    "id": entity.id(),
-                    "plugin": plugin,
-                    "port": port,
-                    "value": number(value),
-                }))?;
+                self.record(
+                    "output",
+                    time_s,
+                    json!({
+                        "kind": "output",
+                        "time_s": number(time_s),
+                        "entity_id": entity.id(),
+                        "plugin": plugin,
+                        "port": port,
+                        "value": number(value),
+                    }),
+                )?;
             }
         }
         Ok(())
@@ -75,14 +90,18 @@ impl Trace {
             for (sensor, states) in entity.pending_measurements()? {
                 let states: Vec<Value> = states
                     .into_iter()
-                    .map(|(id, state)| state_record(id, state))
+                    .map(|(id, state)| json!({"entity_id": id, "state": state_record(state)}))
                     .collect();
-                self.record(json!({
-                    "kind": "reading",
-                    "t": time_s,
-                    "from": endpoint(sensor),
-                    "states": states,
-                }))?;
+                self.record(
+                    "reading",
+                    time_s,
+                    json!({
+                        "kind": "reading",
+                        "time_s": number(time_s),
+                        "sensor": endpoint(sensor),
+                        "states": states,
+                    }),
+                )?;
             }
         }
         Ok(())
@@ -91,27 +110,28 @@ impl Trace {
     /// Deliveries from one network phase.
     pub(crate) fn network(&mut self, network: &NetworkTrace) -> Result<()> {
         for delivery in &network.deliveries {
+            let kind = if delivery.deliver_at_s.is_some() {
+                "scheduled_delivery"
+            } else {
+                "delivery"
+            };
             let mut record = json!({
-                "kind": if delivery.deliver_at_s.is_some() { "scheduled_delivery" } else { "delivery" },
-                "t": delivery.time_s,
+                "kind": kind,
+                "time_s": number(delivery.time_s),
                 "network": delivery.network,
                 "topic": delivery.topic,
-                "from": endpoint(&delivery.sender),
-                "to": endpoint(&delivery.receiver),
+                "sender": endpoint(&delivery.sender),
+                "receiver": endpoint(&delivery.receiver),
             });
             if let Some(deliver_at_s) = delivery.deliver_at_s {
-                record["deliver_at"] = json!(deliver_at_s);
+                record["deliver_at_s"] = number(deliver_at_s);
             }
             if let Some(ids) = &delivery.entity_ids {
-                record["ids"] = json!(ids);
+                record["entity_ids"] = json!(ids);
             }
-            self.record(record)?;
+            record["payload"] = delivery.payload.clone();
+            self.record(kind, delivery.time_s, record)?;
         }
-        Ok(())
-    }
-
-    pub(crate) fn flush(&mut self) -> Result<()> {
-        self.out.flush()?;
         Ok(())
     }
 }
@@ -120,34 +140,21 @@ fn vector(v: Vec3) -> [Value; 3] {
     [number(v.x), number(v.y), number(v.z)]
 }
 
-fn state_record(id: Option<i32>, state: &KinematicState) -> Value {
+fn state_record(state: &KinematicState) -> Value {
     let q = state.orientation_world_from_body;
     json!({
-        "id": id,
-        "p": vector(state.position_world_m),
-        "v": vector(state.velocity_world_mps),
-        "q": [number(q.w), number(q.x), number(q.y), number(q.z)],
-        "w": vector(state.angular_velocity_world_radps),
+        "position_world_m": vector(state.position_world_m),
+        "velocity_world_mps": vector(state.velocity_world_mps),
+        "orientation_world_from_body": [number(q.w), number(q.x), number(q.y), number(q.z)],
+        "angular_velocity_world_radps": vector(state.angular_velocity_world_radps),
     })
 }
 
-/// `[entity_id or null, plugin name]` using C++ plugin names: Rust endpoints are
-/// `category/Name:slot`, and C++ names sensors `Name<slot>` and others `Name`.
 fn endpoint(endpoint: &MessageEndpoint) -> Value {
-    let (category, rest) = endpoint
-        .plugin
-        .split_once('/')
-        .unwrap_or(("", endpoint.plugin.as_str()));
-    let (name, slot) = rest.split_once(':').unwrap_or((rest, ""));
-    let name = if category == "sensor" {
-        format!("{name}{slot}")
-    } else {
-        name.to_owned()
-    };
-    json!([endpoint.entity_id, name])
+    json!({"entity_id": endpoint.entity_id, "plugin": endpoint.plugin})
 }
 
-/// JSON has no NaN or infinity; both traces write them as strings.
+/// JSON has no NaN or infinity; keep them explicit for the comparison reader.
 fn number(value: f64) -> Value {
     if value.is_finite() {
         json!(value)

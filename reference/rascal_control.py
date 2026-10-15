@@ -71,9 +71,9 @@ def controller(altitude_d=None, limits=None):
 def run(binary, output, name, text):
     path = output / f"{name}.yaml"
     path.write_text(text)
-    subprocess.run([binary, "run", path, "--root", ROOT, "--output", output / name, "--no-rerun"],
+    subprocess.run([binary, "run", path, "--root", ROOT, "--output", output / name, "--headless"],
                    check=True, capture_output=True)
-    return read_frames(output / name / "frames.bin")
+    return read_frames(output / name / "run.mcap")
 
 
 def yaw_deg(q):

@@ -291,7 +291,7 @@ impl Localization for DeadReckoning {
   removal). An input left out takes the one sensor of its kind, or the perfect
   measurement if there is none; several candidates, an unknown name, or a kind
   mismatch is a load error. `Other` inputs must be named. The resolved
-  scenario in `manifest.json` records every choice.
+  scenario in `run.mcap` records every choice.
 - **Commands.** `LocalizationContext::commands` holds what the motion model
   actually read on each substep of the tick just finished: the final
   controller's outputs, or the autonomy's if there is no controller.
@@ -377,9 +377,9 @@ and seeds](../concepts/randomness.md)).
 Try `missions/noisy-contacts.yaml`. Its route follower does not consume contacts;
 the public-plugin contract tests include a consumer that drives from measured
 positions and checks next-tick feedback, spawn/removal, and worker determinism.
-Neither measurements nor auction messages are automatically saved in stock
-`events.json`, summaries, or the Rerun dashboard. Add an experiment-specific
-consumer/output path when those records are needed.
+`--trace` records sensor readings, believed contacts, and delivered message
+payloads in `run.mcap`. It also records each autonomy and controller output
+after the last motion substep.
 
 ### SphereNetwork and AuctionAssign
 
@@ -503,6 +503,9 @@ outgoing queue. Message data is shared immutably for multicast, not plugin
 state. The following excerpt uses the `Population` message and `ExampleNetwork`
 from the plugin contract test fixtures, not names registered by the stock
 command:
+
+Message types derive `serde::Serialize` so trace recordings can include their
+payloads.
 
 ```rust
 // initialize:

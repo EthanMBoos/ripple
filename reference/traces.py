@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Compare C++ and Rust comparison traces (trace.jsonl), without a build.
+"""Compare SCRIMMAGE JSONL traces with Ripple MCAP traces, without a build.
 
-Both simulators write the same JSON-lines records; see crates/core/src/simcontrol/trace.rs
-and the C++ benchmarking-edits branch (src/common/Trace.cpp):
+Ripple records use named fields; this reader converts them to the comparison
+shape written by the C++ benchmarking-edits branch (src/common/Trace.cpp):
 
   delivery            a message reached a subscriber this tick
   scheduled_delivery  a message was queued with a positive delay
@@ -93,7 +93,56 @@ def decode_numbers(value):
     return value
 
 
+def comparison_endpoint(endpoint):
+    """Map a Ripple plugin identity to SCRIMMAGE's plugin name."""
+    category, separator, rest = endpoint["plugin"].partition("/")
+    if not separator:
+        rest = category
+        category = ""
+    name, _, slot = rest.partition(":")
+    return [endpoint["entity_id"], name + slot if category == "sensor" else name]
+
+
+def comparison_state(item):
+    state = item["state"]
+    return {"id": item["entity_id"], "p": state["position_world_m"],
+            "v": state["velocity_world_mps"],
+            "q": state["orientation_world_from_body"],
+            "w": state["angular_velocity_world_radps"]}
+
+
+def ripple_to_comparison(record):
+    """Translate one MCAP trace record at the SCRIMMAGE comparison boundary."""
+    kind = record["kind"]
+    converted = {"kind": kind, "t": record["time_s"]}
+    if kind == "belief":
+        converted.update(comparison_state(record))
+        converted["team"] = record["team_id"]
+    elif kind == "output":
+        converted.update(id=record["entity_id"], plugin=record["plugin"],
+                         port=record["port"], value=record["value"])
+    elif kind == "reading":
+        converted["from"] = comparison_endpoint(record["sensor"])
+        converted["states"] = [comparison_state(state) for state in record["states"]]
+    elif kind in ("delivery", "scheduled_delivery"):
+        converted.update(network=record["network"], topic=record["topic"],
+                         **{"from": comparison_endpoint(record["sender"]),
+                            "to": comparison_endpoint(record["receiver"])})
+        if "entity_ids" in record:
+            converted["ids"] = record["entity_ids"]
+        if "deliver_at_s" in record:
+            converted["deliver_at"] = record["deliver_at_s"]
+    else:
+        raise ValueError(f"unknown Ripple trace record kind {kind!r}")
+    return converted
+
+
 def read_trace(path):
+    path = Path(path)
+    if path.suffix == ".mcap" or path.is_dir():
+        from run import read_run
+        return [decode_numbers(ripple_to_comparison(item)) for item in
+                read_run(path).traces]
     records = []
     with Path(path).open(encoding="utf-8") as stream:
         for number, line in enumerate(stream, start=1):
@@ -277,7 +326,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("reference", type=Path, help="C++ trace.jsonl")
-    parser.add_argument("candidate", type=Path, help="Rust trace.jsonl")
+    parser.add_argument("candidate", type=Path, help="Ripple run.mcap")
     parser.add_argument("--report", type=Path, help="save a new JSON report")
     parser.add_argument("--pre-start-removed", default="",
                         help="comma-separated entity IDs destroyed before the first tick")

@@ -1,64 +1,55 @@
-use std::{fs, process::Command};
+use std::{fs, path::Path, process::Command};
+
+fn make_run(root: &Path) {
+    let mission =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../core/tests/fixtures/plugin_defaults.yaml");
+    let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
+        .current_dir(root)
+        .args([
+            "run",
+            mission.to_str().unwrap(),
+            "--headless",
+            "--output",
+            "saved run",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+}
 
 #[test]
-fn missing_recording_fails_without_creating_a_run() {
+fn missing_or_invalid_record_never_creates_a_run() {
     let temp = tempfile::tempdir().unwrap();
-    for path in ["missing.rrd", "."] {
+    for path in ["missing.mcap", "."] {
         let output = Command::new(env!("CARGO_BIN_EXE_ripple"))
             .current_dir(temp.path())
             .args(["replay", path])
             .output()
             .unwrap();
         assert!(!output.status.success());
-        assert!(String::from_utf8_lossy(&output.stderr).contains("cannot open recording"));
+        assert!(String::from_utf8_lossy(&output.stderr).contains("cannot open record"));
     }
-    assert!(!temp.path().join("runs").exists());
-}
-
-#[test]
-fn recording_must_be_a_file_not_a_nested_directory() {
-    let temp = tempfile::tempdir().unwrap();
-    fs::create_dir(temp.path().join("recording.rrd")).unwrap();
+    fs::write(temp.path().join("broken.mcap"), b"not MCAP").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_ripple"))
         .current_dir(temp.path())
-        .args(["replay", "."])
+        .args(["replay", "broken.mcap"])
         .output()
         .unwrap();
     assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr).contains("recording is not a file"));
-}
-
-#[test]
-fn draw_trails_needs_the_run_files_from_a_current_recording() {
-    let temp = tempfile::tempdir().unwrap();
-    fs::write(temp.path().join("recording.rrd"), b"fixture recording").unwrap();
-    let replay = || {
-        Command::new(env!("CARGO_BIN_EXE_ripple"))
-            .current_dir(temp.path())
-            .args(["replay", ".", "--draw-trails"])
-            .output()
-            .unwrap()
-    };
-    let output = replay();
-    assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr).contains("needs the run's manifest.json"));
-
-    fs::write(
-        temp.path().join("manifest.json"),
-        br#"{"rerun_recording": true}"#,
-    )
-    .unwrap();
-    let output = replay();
-    assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr).contains("no rerun_recording_id"));
+    assert!(!temp.path().join("runs").exists());
 }
 
 #[cfg(unix)]
 mod viewer_process {
-    use std::{fs, os::unix::fs::PermissionsExt, path::Path, process::Command};
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
 
-    // Stand-in executable: capture argv without opening a GUI or decoding data.
     const FAKE_VIEWER: &str = r#"#!/bin/sh
+test -s "$1" || exit 8
 printf '%s\n' "$#" "$1" > "$RIPPLE_REPLAY_TEST_LOG"
 exit "${RIPPLE_REPLAY_TEST_EXIT:-0}"
 "#;
@@ -82,81 +73,125 @@ exit "${RIPPLE_REPLAY_TEST_EXIT:-0}"
     }
 
     #[test]
-    fn file_and_run_directory_launch_one_literal_argument_without_changing_the_recording() {
+    fn replay_rebuilds_a_view_from_directory_or_file_and_draws_trails() {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path();
+        make_run(root);
         install_fake_viewer(root);
-        let run = root.join("saved run");
-        fs::create_dir(&run).unwrap();
-        let recording = run.join("recording.rrd");
-        fs::write(&recording, b"fixture recording").unwrap();
-        let expected = format!("1\n{}\n", recording.canonicalize().unwrap().display());
-        for input in ["saved run", "saved run/recording.rrd"] {
-            let output = replay_command(root).arg(input).output().unwrap();
+        let record = root.join("saved run/run.mcap");
+        let original = fs::read(&record).unwrap();
+        for input in ["saved run", "saved run/run.mcap"] {
+            let output = replay_command(root)
+                .arg(input)
+                .arg("--draw-trails")
+                .output()
+                .unwrap();
             assert!(
                 output.status.success(),
                 "{}",
                 String::from_utf8_lossy(&output.stderr)
             );
-            assert_eq!(
-                fs::read_to_string(root.join("viewer-args.txt")).unwrap(),
-                expected
-            );
-            assert_eq!(fs::read(&recording).unwrap(), b"fixture recording");
+            let log = fs::read_to_string(root.join("viewer-args.txt")).unwrap();
+            assert_eq!(log.lines().next(), Some("1"));
+            assert!(log.lines().nth(1).unwrap().ends_with("replay.rrd"));
+            assert_eq!(fs::read(&record).unwrap(), original);
         }
-        assert!(!root.join("runs").exists());
 
-        // Neither CLI options nor shell syntax may be interpreted as part of the filename.
-        let unusual = root.join("--literal $(touch injected).rrd");
-        fs::write(&unusual, b"fixture recording").unwrap();
+        let unusual = root.join("--literal $(touch injected).mcap");
+        fs::copy(&record, &unusual).unwrap();
         let output = replay_command(root)
             .arg("--")
             .arg(unusual.file_name().unwrap())
             .output()
             .unwrap();
-        assert!(output.status.success());
-        assert_eq!(
-            fs::read_to_string(root.join("viewer-args.txt")).unwrap(),
-            format!("1\n{}\n", unusual.canonicalize().unwrap().display())
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
         );
         assert!(!root.join("injected").exists());
     }
 
     #[test]
-    fn missing_viewer_reports_how_to_make_it_available() {
+    fn terrain_replay_uses_the_original_unchanged_files() {
         let temp = tempfile::tempdir().unwrap();
+        let root = temp.path();
+        let project = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../missions");
+        let inputs = root.join("terrain");
+        fs::create_dir(&inputs).unwrap();
+        for (source, target) in [
+            ("mcmillan.terrain.yaml", "header.yaml"),
+            ("mcmillan.f32", "mcmillan.f32"),
+            ("mcmillan.png", "mcmillan.png"),
+        ] {
+            fs::copy(project.join("terrain").join(source), inputs.join(target)).unwrap();
+        }
+        let mission = fs::read_to_string(project.join("terrain-mcmillan.yaml"))
+            .unwrap()
+            .replace("end_s: 150", "end_s: 0.1")
+            .replace(
+                "terrain: terrain/mcmillan.terrain.yaml",
+                "terrain: terrain/header.yaml",
+            );
+        fs::write(root.join("terrain-test.yaml"), mission).unwrap();
+        let run = Command::new(env!("CARGO_BIN_EXE_ripple"))
+            .current_dir(root)
+            .args([
+                "run",
+                "terrain-test.yaml",
+                "--headless",
+                "--output",
+                "saved",
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            run.status.success(),
+            "{}",
+            String::from_utf8_lossy(&run.stderr)
+        );
+        install_fake_viewer(root);
+        let replay = replay_command(root).arg("saved").output().unwrap();
+        assert!(
+            replay.status.success(),
+            "{}",
+            String::from_utf8_lossy(&replay.stderr)
+        );
+
+        fs::write(inputs.join("mcmillan.png"), b"changed image").unwrap();
+        let replay = replay_command(root).arg("saved").output().unwrap();
+        assert!(!replay.status.success());
+        assert!(
+            String::from_utf8_lossy(&replay.stderr)
+                .contains("terrain files changed since this run")
+        );
+
+        fs::remove_dir_all(inputs).unwrap();
+        let replay = replay_command(root).arg("saved").output().unwrap();
+        assert!(!replay.status.success());
+        assert!(String::from_utf8_lossy(&replay.stderr).contains("read terrain"));
+    }
+
+    #[test]
+    fn missing_viewer_and_unsuccessful_exit_are_reported() {
+        let temp = tempfile::tempdir().unwrap();
+        make_run(temp.path());
         fs::create_dir(temp.path().join("bin")).unwrap();
-        fs::write(temp.path().join("recording.rrd"), b"fixture recording").unwrap();
-        let output = replay_command(temp.path()).arg(".").output().unwrap();
+        let output = replay_command(temp.path())
+            .arg("saved run")
+            .output()
+            .unwrap();
         assert!(!output.status.success());
         assert!(String::from_utf8_lossy(&output.stderr).contains("ensure rerun is on PATH"));
-    }
 
-    #[test]
-    fn unsuccessful_viewer_exit_is_reported_as_failure() {
-        let temp = tempfile::tempdir().unwrap();
+        fs::remove_dir(temp.path().join("bin")).unwrap();
         install_fake_viewer(temp.path());
-        fs::write(temp.path().join("recording.rrd"), b"fixture recording").unwrap();
         let output = replay_command(temp.path())
             .env("RIPPLE_REPLAY_TEST_EXIT", "7")
-            .arg(".")
+            .arg("saved run")
             .output()
             .unwrap();
         assert!(!output.status.success());
-        let error = String::from_utf8_lossy(&output.stderr);
-        assert!(error.contains("Rerun viewer exited with"), "{error}");
-        assert!(error.contains('7'), "{error}");
-    }
-
-    #[test]
-    fn invalid_input_never_launches_the_viewer() {
-        let temp = tempfile::tempdir().unwrap();
-        install_fake_viewer(temp.path());
-        let output = replay_command(temp.path())
-            .arg("missing.rrd")
-            .output()
-            .unwrap();
-        assert!(!output.status.success());
-        assert!(!temp.path().join("viewer-args.txt").exists());
+        assert!(String::from_utf8_lossy(&output.stderr).contains("exited with exit status: 7"));
     }
 }

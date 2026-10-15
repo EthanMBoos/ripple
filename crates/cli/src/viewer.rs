@@ -10,7 +10,6 @@ mod terrain;
 mod trails;
 
 use trails::Trails;
-pub(crate) use trails::draw as draw_trails;
 
 pub(crate) struct Viewer {
     recording: RecordingStream,
@@ -27,17 +26,23 @@ pub(crate) struct Viewer {
     live_trails: Option<(RecordingStream, Trails)>,
 }
 impl Viewer {
-    /// `recording_id` lets `ripple replay --draw-trails` add trails to the
-    /// same recording later. `draw_trails` shows them in the launched viewer.
-    pub fn new(path: &Path, launch: bool, recording_id: &str, draw_trails: bool) -> Result<Self> {
+    /// A path exports an RRD; with no path, the live viewer only streams.
+    pub fn new(
+        path: Option<&Path>,
+        launch: bool,
+        recording_id: &str,
+        draw_trails: bool,
+    ) -> Result<Self> {
         ensure!(!draw_trails || launch, "--draw-trails needs the viewer");
-        ensure!(
-            !path.exists(),
-            "Rerun output already exists: {}",
-            path.display()
-        );
-        let mut sinks: Vec<Box<dyn rerun::sink::LogSink>> =
-            vec![Box::new(rerun::sink::FileSink::new(path)?)];
+        let mut sinks: Vec<Box<dyn rerun::sink::LogSink>> = Vec::new();
+        if let Some(path) = path {
+            ensure!(
+                !path.exists(),
+                "Rerun output already exists: {}",
+                path.display()
+            );
+            sinks.push(Box::new(rerun::sink::FileSink::new(path)?));
+        }
         let mut live_trails = None;
         if launch {
             let viewer = rerun::spawn(&rerun::SpawnOptions {
@@ -202,6 +207,10 @@ impl Viewer {
         self.recording.flush_with_timeout(Duration::from_secs(10))?;
         Ok(())
     }
+
+    pub fn log_saved_trails(&self, frames: &[SimulationFrame]) -> Result<()> {
+        trails::draw(&self.recording, frames)
+    }
 }
 
 pub(super) fn team_color(team_id: i32) -> [u8; 3] {
@@ -222,9 +231,8 @@ pub(super) fn playback_time_ns(elapsed_s: f64, previous_ns: Option<i64>) -> i64 
 fn status_text(index: usize, frame: &SimulationFrame, replay_time_ns: i64) -> String {
     let teams: BTreeSet<_> = frame.entities.iter().map(|entity| entity.team_id).collect();
     let mut text = format!(
-        "# Mission status\n\nReplay **{:.2} s** · frame **{index}**\n\nLegacy frame label **{:.2} s**\n\n**{} agents** · **{} teams**\n\n",
+        "# Mission status\n\nSimulation **{:.2} s** · frame **{index}**\n\n**{} agents** · **{} teams**\n\n",
         replay_time_ns as f64 * 1e-9,
-        frame.time_s,
         frame.entities.len(),
         teams.len()
     );

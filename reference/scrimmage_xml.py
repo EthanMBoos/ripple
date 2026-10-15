@@ -1,7 +1,7 @@
 """SCRIMMAGE's XML mission for a scenario Ripple loaded from YAML.
 
 Ripple records the scenario it loaded (templates expanded, overrides applied,
-every default filled in) in each run's manifest.json. `write` turns that record
+every default filled in) in each run's run.mcap. `write` turns that record
 into the XML SCRIMMAGE reads, so both simulators run the same mission:
 
     write(scenario.recorded(run), "mission.xml")

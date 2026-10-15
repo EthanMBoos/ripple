@@ -368,7 +368,7 @@ impl<'a> From<&'a [EntitySnapshot]> for TruthContacts<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{EntityKind, KinematicState};
+    use crate::KinematicState;
 
     fn index(positions: &[Vec3], cell_width_m: f64) -> SpatialIndex {
         let ids: Vec<i32> = (1..=positions.len() as i32).collect();
@@ -524,7 +524,6 @@ mod tests {
                 team_id: 1,
                 sub_swarm_id: 0,
                 active: index != 3,
-                kind: EntityKind::Sphere,
                 truth: KinematicState {
                     position_world_m: *position_world_m,
                     ..KinematicState::default()

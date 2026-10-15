@@ -250,7 +250,7 @@ entities:
 - `localization:` replaces the default `PassThrough` with `DeadReckoning`.
   It has one sensor that gives state readings, so `gps` feeds its `fix`
   input automatically. With two such sensors you would name one:
-  `inputs: {fix: gps}`. The run's `manifest.json` records the choice.
+  `inputs: {fix: gps}`. The scenario in `run.mcap` records the choice.
 - The autonomy and controller are unchanged. They act on belief and don't
   know which estimator produced it.
 

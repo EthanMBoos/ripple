@@ -248,8 +248,8 @@ CHECKS = [
           "lints; tests of these checking tools",
           "expected values in the tests", "every test passes, no lint or format finding",
           (QUICK, RELEASE), run_rust_tests),
-    Check("rust-determinism", "worker counts, recording, tracing, and spatial lookup method "
-          "change no output", "the one-worker run",
+    Check("rust-determinism", "worker counts, recording, tracing on shipped missions, and "
+          "spatial lookup method change no output", "the one-worker run",
           "byte-identical frames, events, and summaries on every mission and workload",
           (QUICK, RELEASE), run_determinism, keep_named("report.json")),
     Check("cpp-agreement", "behaviour matches C++ SCRIMMAGE on the curated missions "

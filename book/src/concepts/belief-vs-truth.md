@@ -89,7 +89,7 @@ localization:
 ```
 
 `inputs: {state: perfect}` keeps perfect localization even with a noisy sensor
-installed. The run's `manifest.json` records every input's source.
+installed. The scenario in `run.mcap` records every input's source.
 
 ## Timing: estimation ends the tick
 

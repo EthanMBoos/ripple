@@ -73,7 +73,7 @@ Paths in the middle column are relative to `crates/core/src/`.
 | `common/RTree` | `common/spatial.rs` | Finding nearby agents: `within` and `pairs_within`, answered by scan or grid; built once per tick after motion |
 | `plugin_manager/EntityPlugin`, `PluginManager` | [plugin_manager/entity_plugin.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin_manager/entity_plugin.rs), `plugin_manager/registry.rs`, `plugin_manager/builtins.rs` | Shared lifecycle/context types, typed factories and bundled registrations |
 | `pubsub/` | [pubsub/messages.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/pubsub/messages.rs), `pubsub/network.rs` | Publications, subscriber queues, delivery and the network interface |
-| Legacy frame/log protocol | [protocol/frame.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/protocol/frame.rs), `protocol/wire.rs` | Validated legacy protobuf frame I/O |
+| Run record | [record.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/record.rs), `proto/record.proto` | MCAP channels and embedded protobuf schema |
 | `src/plugins/<category>/` | [plugin/](https://github.com/EthanMBoos/ripple/tree/main/crates/core/src/plugin) | The single concrete model/algorithm implementation tree |
 | `include/scrimmage/plugins/<category>/<Plugin>/<Plugin>.xml` | The parameter struct's `Default` in `plugin/<category>/<plugin>/<plugin>.rs` | Mission defaults, beside the parameters they fill |
 
@@ -126,9 +126,10 @@ registry supports [Rust-built scenarios](../guides/rust-scenarios.md).
    `pubsub/messages.rs` commits communication at the defined delivery phase;
    `sensor/readings.rs` holds each sensor's latest reading for the estimators
    in `estimator.rs`, which write belief.
-6. `protocol/frame.rs` and `simcontrol/summary.rs`: provide frame and summary
-   output. The CLI owns files and Rerun through `crates/cli/src/viewer/` and
-   `viewer.rs`; the viewer does not own simulation time or physics.
+6. `record.rs` and `simcontrol/summary.rs`: provide frame and summary
+   output. The CLI owns run directories and Rerun through
+   `crates/cli/src/viewer/` and `viewer.rs`; the viewer does not own simulation
+   time or physics.
 
 See [Plugin API reference](../reference/plugin-api.md) for authoring and phase
 semantics, and

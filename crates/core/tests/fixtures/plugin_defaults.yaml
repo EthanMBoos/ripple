@@ -27,12 +27,12 @@ entities:
     position_variance_m2: [100, 100, 0]
     autonomy:
       Straight:
-        speed: 26
+        speed_mps: 26
     controller: {SimpleAircraftControllerPID: {}}
     motion_model:
       SimpleAircraft:
-        max_roll: 23
-        min_velocity: 16
+        max_roll_deg: 23
+        min_speed_mps: 16
     sensors:
       NoisyPosition:
         stddev_m: 0

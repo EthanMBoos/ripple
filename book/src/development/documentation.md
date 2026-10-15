@@ -26,6 +26,3 @@ workflow](https://github.com/EthanMBoos/ripple/blob/main/.github/workflows/book.
 builds and publishes changes on `main` to GitHub Pages. The repository's Pages
 source setting must be **GitHub Actions**. Generated HTML lives in the ignored
 `book/book/` directory.
-
-The [C++ appendix](../appendix/cpp.md) preserves the copied reference guides.
-Keep Rust API guidance and source-verified corrections in their own pages.

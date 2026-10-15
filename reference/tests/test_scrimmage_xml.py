@@ -60,13 +60,25 @@ class ScrimmageXmlTests(unittest.TestCase):
         mission = scenario()
         mission["entities"][0]["motion_model"] = plugin(
             "Multirotor", inertia_kgm2=[[1, 0, 0], [0, 2, 0], [0, 0, 3]],
-            rotors=[{"direction": "ccw", "position_m": [0, -0.175, 0]},
-                    {"direction": "cw", "position_m": [0.1, 0, 0.02], "tilt_deg": [0, 5, 0]}])
+            rotors=[{"direction": "ccw", "position_flu_m": [0, -0.175, 0]},
+                    {"direction": "cw", "position_flu_m": [0.1, 0, 0.02], "tilt_deg": [0, 5, 0]}])
         motion = scrimmage_xml.mission(mission).find("entity/motion_model")
         self.assertEqual(motion.get("inertia_matrix"), "[1 0 0] [0 2 0] [0 0 3]")
         self.assertEqual(motion.get("rotor_config"),
                          "[CCW 0 -0.175 0 0 0 0] [CW 0.1 0 0.02 0 5 0]")
         self.assertIsNone(motion.get("rotors"))
+
+    def test_parameters_take_scrimmage_keys_sorted_by_them(self):
+        mission = scenario()
+        mission["entities"][0]["motion_model"] = plugin(
+            "FixedWing6DOF", airframe="a4d", c_roll_p=-0.4, wind_mps=[1, 2, 0], mass_kg=9)
+        motion = scrimmage_xml.mission(mission).find("entity/motion_model")
+        self.assertEqual(list(motion.attrib), ["C_LP", "airframe", "mass", "wind_E", "wind_N"])
+        self.assertEqual((motion.get("C_LP"), motion.get("wind_N")), ("-0.4", "2"))
+        mission["entities"][0]["controller"] = [plugin("SimpleAircraftControllerPID", altitude_pid={
+            "kp": 1, "ki": 0, "kd": 0.8, "integrate_within_m": 1})]
+        controller = scrimmage_xml.mission(mission).find("entity/controller")
+        self.assertEqual(controller.attrib, {"alt_pid": "1 0 0.8 1"})
 
     def test_estimators_and_terrain_are_errors(self):
         mission = scenario()

@@ -44,40 +44,27 @@ const VELOCITY_PORTS: [&str; 3] = ["velocity_x", "velocity_y", "velocity_z"];
 struct MultirotorVelocityParams {
     /// `crazyflie2`, or absent for a vehicle given in full, as for Multirotor.
     airframe: Option<AirframeName>,
-    #[serde(rename = "mass")]
     mass_kg: Option<f64>,
-    #[serde(rename = "gravity_magnitude")]
     gravity_mps2: Option<f64>,
     inertia_kgm2: Option<[[f64; 3]; 3]>,
-    #[serde(rename = "c_T")]
     thrust_coefficient: Option<f64>,
-    #[serde(rename = "c_Q")]
     torque_coefficient: Option<f64>,
-    #[serde(rename = "omega_min")]
-    omega_min_radps: Option<f64>,
-    #[serde(rename = "omega_max")]
-    omega_max_radps: Option<f64>,
+    min_rotor_speed_radps: Option<f64>,
+    max_rotor_speed_radps: Option<f64>,
     rotors: Option<Vec<RotorParams>>,
     /// Velocity proportional gain, 1/s.
-    #[serde(rename = "velocity_p")]
-    velocity_gain_per_s: Option<f64>,
+    velocity_kp: Option<f64>,
     /// Velocity integral gain, 1/s^2.
-    #[serde(rename = "velocity_i")]
-    velocity_integral_gain_per_s2: Option<f64>,
+    velocity_ki: Option<f64>,
     /// Largest acceleration the integral may add, m/s^2.
-    #[serde(rename = "velocity_integral_limit")]
     velocity_integral_limit_mps2: Option<f64>,
     /// Attitude gain, 1/s.
-    #[serde(rename = "attitude_p")]
-    attitude_gain_per_s: Option<f64>,
+    attitude_kp: Option<f64>,
     /// Body-rate gain, 1/s.
-    #[serde(rename = "rate_p")]
-    rate_gain_per_s: Option<f64>,
+    body_rate_kp: Option<f64>,
     /// Largest tilt the velocity loop asks for, degrees.
-    #[serde(rename = "max_tilt")]
     max_tilt_deg: Option<f64>,
     /// Largest vertical acceleration the velocity loop asks for, m/s^2.
-    #[serde(rename = "max_vertical_acceleration")]
     max_vertical_acceleration_mps2: Option<f64>,
 }
 
@@ -140,30 +127,26 @@ impl Plugin for MultirotorVelocityController {
                 inertia_kgm2: params.inertia_kgm2,
                 thrust_coefficient: params.thrust_coefficient,
                 torque_coefficient: params.torque_coefficient,
-                omega_min_radps: params.omega_min_radps,
-                omega_max_radps: params.omega_max_radps,
+                min_rotor_speed_radps: params.min_rotor_speed_radps,
+                max_rotor_speed_radps: params.max_rotor_speed_radps,
                 rotors: params.rotors,
             },
         )?;
         ensure!(
             airframe.thrust_coefficient > 0.0,
-            "MultirotorVelocityController requires c_T > 0"
+            "MultirotorVelocityController requires thrust_coefficient > 0"
         );
         let defaults = default_gains();
         let gains = Gains {
-            velocity_per_s: params
-                .velocity_gain_per_s
-                .unwrap_or(defaults.velocity_per_s),
+            velocity_per_s: params.velocity_kp.unwrap_or(defaults.velocity_per_s),
             velocity_integral_per_s2: params
-                .velocity_integral_gain_per_s2
+                .velocity_ki
                 .unwrap_or(defaults.velocity_integral_per_s2),
             velocity_integral_limit_mps2: params
                 .velocity_integral_limit_mps2
                 .unwrap_or(defaults.velocity_integral_limit_mps2),
-            attitude_per_s: params
-                .attitude_gain_per_s
-                .unwrap_or(defaults.attitude_per_s),
-            rate_per_s: params.rate_gain_per_s.unwrap_or(defaults.rate_per_s),
+            attitude_per_s: params.attitude_kp.unwrap_or(defaults.attitude_per_s),
+            rate_per_s: params.body_rate_kp.unwrap_or(defaults.rate_per_s),
             max_tilt_rad: params
                 .max_tilt_deg
                 .map(math::deg_to_rad)
@@ -183,7 +166,7 @@ impl Plugin for MultirotorVelocityController {
         );
         ensure!(
             gains.max_tilt_rad > 0.0 && gains.max_tilt_rad < std::f64::consts::FRAC_PI_2,
-            "MultirotorVelocityController max_tilt must be between 0 and 90 degrees"
+            "MultirotorVelocityController max_tilt_deg must be between 0 and 90 degrees"
         );
         let thrust_from_wrench = allocation_inverse(&airframe)?;
         Ok(MultirotorVelocityConfig {
@@ -291,8 +274,8 @@ impl Controller for MultirotorVelocityController {
             moment_body_nm.z,
         ]);
         let rotor_thrusts_n = &self.config.thrust_from_wrench * wrench;
-        let min_thrust_n = airframe.thrust_coefficient * airframe.omega_min_radps.powi(2);
-        let max_thrust_n = airframe.thrust_coefficient * airframe.omega_max_radps.powi(2);
+        let min_thrust_n = airframe.thrust_coefficient * airframe.min_rotor_speed_radps.powi(2);
+        let max_thrust_n = airframe.thrust_coefficient * airframe.max_rotor_speed_radps.powi(2);
         for (rotor, thrust_n) in airframe.rotors.iter().zip(rotor_thrusts_n.iter()) {
             let thrust_n = thrust_n.clamp(min_thrust_n, max_thrust_n);
             io.write(&rotor.port, (thrust_n / airframe.thrust_coefficient).sqrt())?;
@@ -363,15 +346,15 @@ mod tests {
     /// A vehicle given in full, with this rotor layout.
     fn custom_quad(rotors: &str) -> Vec<(&str, &str)> {
         vec![
-            ("mass", "1.5"),
+            ("mass_kg", "1.5"),
             (
                 "inertia_kgm2",
                 "[[0.0122, 0, 0], [0, 0.0122, 0], [0, 0, 0.0244]]",
             ),
-            ("c_T", "5.45e-6"),
-            ("c_Q", "2.284e-7"),
-            ("omega_min", "0"),
-            ("omega_max", "1200"),
+            ("thrust_coefficient", "5.45e-6"),
+            ("torque_coefficient", "2.284e-7"),
+            ("min_rotor_speed_radps", "0"),
+            ("max_rotor_speed_radps", "1200"),
             ("rotors", rotors),
         ]
     }
@@ -383,8 +366,8 @@ mod tests {
     #[test]
     fn allocation_splits_hover_thrust_evenly_and_maps_moments_back() -> Result<()> {
         let custom = custom_quad(
-            "[{direction: ccw, position_m: [0, -0.175, 0]}, {direction: ccw, position_m: [0, 0.175, 0]}, \
-             {direction: cw, position_m: [0.175, 0, 0]}, {direction: cw, position_m: [-0.175, 0, 0]}]",
+            "[{direction: ccw, position_flu_m: [0, -0.175, 0]}, {direction: ccw, position_flu_m: [0, 0.175, 0]}, \
+             {direction: cw, position_flu_m: [0.175, 0, 0]}, {direction: cw, position_flu_m: [-0.175, 0, 0]}]",
         );
         for vehicle in [vec![("airframe", "crazyflie2")], custom] {
             let config = configure(&vehicle)?;
@@ -440,7 +423,7 @@ mod tests {
     fn rotors_that_cannot_yaw_are_rejected() {
         // Two coaxial-looking rotors on one axis cannot make all four axes.
         let result = configure(&custom_quad(
-            "[{direction: cw, position_m: [0.1, 0, 0]}, {direction: ccw, position_m: [-0.1, 0, 0]}]",
+            "[{direction: cw, position_flu_m: [0.1, 0, 0]}, {direction: ccw, position_flu_m: [-0.1, 0, 0]}]",
         ));
         assert!(result.is_err());
     }

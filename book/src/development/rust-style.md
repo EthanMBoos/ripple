@@ -102,9 +102,9 @@ Cargo integration-test targets. See [Source map](source-layout.md).
 
 Prefer named configurations even for a single physical parameter, such as
 `StraightConfig { speed_mps }`. Use `()` when there really is no configuration.
-Convert positional mission arrays into named fields at the parsing boundary;
-the PID controller uses `PidGains`, not unexplained array indices. Preserve
-mission keys, defaults, units, and validation behavior during readability work.
+Missions give named fields, not positional arrays: a PID is
+`{kp, ki, kd, integrate_within_*}`, not `[P, I, D, band]`. Preserve mission
+keys, defaults, units, and validation behavior during readability work.
 
 Use imperative loops and early returns for algorithms with branching or state
 changes. Keep short iterator expressions when they directly express the intent,
@@ -143,6 +143,54 @@ compile.
   equation function when their meaning is established immediately.
 - Do not use Unicode identifiers. ASCII names are easier to type, search, and
   discuss.
+
+## Parameter names
+
+A plugin parameter has one name: the config struct's field is the mission key,
+so a plugin has no `#[serde(rename)]`. The name is written for the person
+writing the mission, and should also be recognizable to someone working from
+a textbook (Beard and McLain, *Small Unmanned Aircraft*; Stevens, Lewis, and
+Johnson, *Aircraft Control and Simulation*; Nelson, *Flight Stability and
+Automatic Control*).
+
+- **Simple units in the name, compound units in the docs.** `mass_kg`,
+  `max_roll_deg`, `range_m`, `delay_s`, `loop_rate_hz`. A compound unit stays
+  out of the key (`thrust_coefficient` is N/(rad/s)², `velocity_kp` is 1/s),
+  and so does a pure number: a probability, fraction, or coefficient.
+- **Axis words, textbook subscripts.** The textbooks name a coefficient by a
+  letter and a subscript: C_L is lift and C_ℓ the rolling moment, told apart
+  only by case and typeface, which a lower-case key loses (`c_l_p` could be
+  either). So the letter becomes a word, `lift`, `drag`, `side`, `roll`,
+  `pitch`, or `yaw`, and the subscript stays as the books write it: `0`,
+  `alpha`, `beta`, the body rates `p`, `q`, `r`, or a control surface spelled
+  out. `c_roll_p` is C_ℓp (roll damping), `c_pitch_q` is C_mq, `c_lift_alpha`
+  is C_Lα, and `c_yaw_rudder` is C_nδr. The derivatives are per radian, as in
+  the books.
+- **Gains are `kp`, `ki`, `kd`.** A PID is a named map,
+  `altitude_pid: {kp: 0.1, ki: 0.0001, kd: 0.002, integrate_within_m: 10}`,
+  never a positional list. The integral accumulates only while the error is
+  within `integrate_within`, whose suffix is the loop's unit (`_deg`, `_m`,
+  `_mps`); `AngleGains`, `LengthGains`, and `SpeedGains` parse the three.
+- **Body vectors name their frame; world vectors do not.** The world frame is
+  always east, north, up, so mission keys leave it out: `position_m`,
+  `velocity_mps`, `wind_mps: [east, north, up]`. Body axes vary (FixedWing6DOF
+  and its landing gear use forward/right/down, Multirotor forward/left/up), so
+  a body vector says which: `position_frd_m`, `position_flu_m`. Inside the
+  code, `_world_` still marks world quantities, as in the section above.
+- **Only universal abbreviations:** `alpha`, `beta`, `p`, `q`, `r`, `kp`,
+  `ki`, `kd`, `enu`, `frd`, `flu`, and the unit suffixes. Everything else is
+  spelled out, and a name says what it belongs to: `wing_area_m2`, not
+  `area_m2`.
+- **One name per quantity across plugins.** `mass_kg` and `gravity_mps2` mean
+  the same in every vehicle; `network` names a network everywhere; `min_` and
+  `max_` lead a limit (`max_thrust_n`, `min_elevator_rad`). A setting that
+  turns a feature on is `enable_<feature>`; one that says what the thing is or
+  does reads as a description (`repeat`, `auctioneer`, `castered`).
+- **An option a plugin does not implement is not a field.**
+  `deny_unknown_fields` already rejects it by name.
+
+A plugin's parameter table in this book gives each key with its unit, a plain
+description, and, for a textbook quantity, its symbol and source.
 
 ## Named physical state, matrix coordinates
 

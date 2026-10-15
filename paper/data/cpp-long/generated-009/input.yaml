@@ -9,17 +9,16 @@
  },
  "interactions": {
   "Boundary": {
-   "center": [
+   "center_m": [
     0,
     0,
     200
    ],
-   "lengths": [
+   "lengths_m": [
     800,
     800,
     400
-   ],
-   "show_boundary": false
+   ]
   }
  },
  "networks": {
@@ -57,18 +56,18 @@
    "pitch_deg": -0.766668,
    "autonomy": {
     "Straight": {
-     "speed": 25.6954,
-     "loop_rate": 5
+     "speed_mps": 25.6954,
+     "loop_rate_hz": 5
     }
    },
    "controller": {
     "SimpleAircraftControllerPID": {
-     "loop_rate": 20
+     "loop_rate_hz": 20
     }
    },
    "motion_model": {
     "SimpleAircraft": {
-     "max_roll": 44.9698
+     "max_roll_deg": 44.9698
     }
    }
   }

@@ -34,12 +34,12 @@
    "randomize_every_spawn": true,
    "autonomy": {
     "ConstantVelocity": {
-     "velocity": [
+     "velocity_mps": [
       7.04329,
       -8.94377,
       -1.63513
      ],
-     "loop_rate": 0
+     "loop_rate_hz": 0
     }
    },
    "controller": {
@@ -47,7 +47,7 @@
    },
    "motion_model": {
     "SingleIntegrator": {
-     "max_speed": -1.0
+     "max_speed_mps": -1.0
     }
    }
   }

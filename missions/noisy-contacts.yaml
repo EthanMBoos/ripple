@@ -18,8 +18,8 @@ templates:
     heading_deg: 0
     autonomy:
       WaypointFollower:
-        waypoints: [[30, 0, 0], [30, 20, 0]]
-        speed: 5
+        waypoints_m: [[30, 0, 0], [30, 20, 0]]
+        speed_mps: 5
     controller: {SingleIntegratorControllerSimple: {}}
     motion_model: {SingleIntegrator: {}}
     sensors:

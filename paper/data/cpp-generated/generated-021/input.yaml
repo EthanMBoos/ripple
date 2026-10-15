@@ -9,23 +9,22 @@
  },
  "interactions": {
   "SimpleCollision": {
-   "collision_range": 18.7602
+   "collision_range_m": 18.7602
   },
   "GroundCollision": {
-   "ground_collision_z": 60.0567
+   "ground_altitude_m": 60.0567
   },
   "Boundary": {
-   "center": [
+   "center_m": [
     0,
     0,
     200
    ],
-   "lengths": [
+   "lengths_m": [
     800,
     800,
     400
-   ],
-   "show_boundary": false
+   ]
   }
  },
  "networks": {
@@ -54,12 +53,12 @@
    "randomize_every_spawn": true,
    "autonomy": {
     "ConstantVelocity": {
-     "velocity": [
+     "velocity_mps": [
       -2.86277,
       6.77194,
       -1.0996
      ],
-     "loop_rate": 2
+     "loop_rate_hz": 2
     }
    },
    "controller": {
@@ -67,7 +66,7 @@
    },
    "motion_model": {
     "SingleIntegrator": {
-     "max_speed": 4.825
+     "max_speed_mps": 4.825
     }
    }
   },
@@ -89,12 +88,12 @@
    "randomize_every_spawn": true,
    "autonomy": {
     "ConstantVelocity": {
-     "velocity": [
+     "velocity_mps": [
       -4.90207,
       -8.83504,
       1.31422
      ],
-     "loop_rate": 0
+     "loop_rate_hz": 0
     }
    },
    "controller": {
@@ -102,7 +101,7 @@
    },
    "motion_model": {
     "SingleIntegrator": {
-     "max_speed": 9.935
+     "max_speed_mps": 9.935
     }
    }
   },
@@ -127,18 +126,18 @@
    "pitch_deg": 1.30626,
    "autonomy": {
     "Straight": {
-     "speed": 27.2084,
-     "loop_rate": 0
+     "speed_mps": 27.2084,
+     "loop_rate_hz": 0
     }
    },
    "controller": {
     "SimpleAircraftControllerPID": {
-     "loop_rate": 50
+     "loop_rate_hz": 50
     }
    },
    "motion_model": {
     "SimpleAircraft": {
-     "max_roll": 29.4512
+     "max_roll_deg": 29.4512
     }
    }
   },
@@ -165,12 +164,12 @@
    },
    "autonomy": {
     "ConstantVelocity": {
-     "velocity": [
+     "velocity_mps": [
       5.07576,
       -0.230887,
       -0.424237
      ],
-     "loop_rate": 0
+     "loop_rate_hz": 0
     }
    },
    "controller": {
@@ -178,7 +177,7 @@
    },
    "motion_model": {
     "SingleIntegrator": {
-     "max_speed": -1.0
+     "max_speed_mps": -1.0
     }
    }
   }

@@ -119,11 +119,11 @@ fn simulation(
         let bridge = format!("{entity}.autonomy.ArduPilotBridge");
         params.extend([
             (format!("{bridge}.port"), port.to_string()),
-            (format!("{bridge}.frame_timeout"), "1.5".into()),
-            (format!("{bridge}.first_frame_timeout"), "5".into()),
+            (format!("{bridge}.frame_timeout_s"), "1.5".into()),
+            (format!("{bridge}.first_frame_timeout_s"), "5".into()),
             // No hold: these tests check the exchange and the physics from tick one.
             (
-                format!("{entity}.motion_model.FixedWing6DOF.use_launcher"),
+                format!("{entity}.motion_model.FixedWing6DOF.enable_launcher"),
                 "false".into(),
             ),
             (format!("{entity}.velocity_mps"), "[20, 0, 0]".into()),

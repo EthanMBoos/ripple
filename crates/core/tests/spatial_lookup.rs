@@ -22,7 +22,7 @@ fn chain(spatial_lookup: SpatialLookup) -> Result<ScenarioConfig> {
             visual_model: "sphere".into(),
             autonomy: vec![
                 PluginConfig::new("ConstantVelocity")
-                    .with_params(serde_json::json!({"velocity": [0.0, 0.0, 0.0]}))?,
+                    .with_params(serde_json::json!({"velocity_mps": [0.0, 0.0, 0.0]}))?,
             ],
             motion_model: PluginConfig::new("SingleIntegrator"),
             ..EntityGroupConfig::default()
@@ -36,7 +36,7 @@ fn chain(spatial_lookup: SpatialLookup) -> Result<ScenarioConfig> {
         spatial_lookup,
         interactions: vec![
             PluginConfig::new("SimpleCollision")
-                .with_params(serde_json::json!({"collision_range": 5.0}))?,
+                .with_params(serde_json::json!({"collision_range_m": 5.0}))?,
         ],
         entities: vec![
             agent(30, 0.0)?,

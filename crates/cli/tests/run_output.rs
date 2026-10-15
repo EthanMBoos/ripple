@@ -116,7 +116,7 @@ entities:
   point:
     team: 1
     autonomy:
-      ConstantVelocity: {velocity: [1.7e308, 0, 0]}
+      ConstantVelocity: {velocity_mps: [1.7e308, 0, 0]}
     controller:
       SingleIntegratorControllerSimple:
     motion_model:

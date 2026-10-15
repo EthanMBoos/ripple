@@ -14,14 +14,14 @@ use crate::{
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct SensorConfig {
-    bias_world_m: [f64; 3],
+    bias_m: [f64; 3],
     stddev_m: f64,
 }
 
 impl Default for SensorConfig {
     fn default() -> Self {
         Self {
-            bias_world_m: [0.0; 3],
+            bias_m: [0.0; 3],
             stddev_m: 0.1,
         }
     }
@@ -33,7 +33,7 @@ pub struct PositionObservation {
 }
 
 pub struct NoisyPosition {
-    bias_world_m: Vec3,
+    bias_m: Vec3,
     stddev_m: f64,
 }
 
@@ -48,7 +48,7 @@ impl Plugin for NoisyPosition {
 
     fn new(config: &SensorConfig) -> Self {
         Self {
-            bias_world_m: Vec3::from(config.bias_world_m),
+            bias_m: Vec3::from(config.bias_m),
             stddev_m: config.stddev_m,
         }
     }
@@ -66,7 +66,7 @@ impl Sensor for NoisyPosition {
             random.normal(&[1], 0.0, self.stddev_m)?,
             random.normal(&[2], 0.0, self.stddev_m)?,
         );
-        let measured_position_world_m = ideal_position_world_m + self.bias_world_m + noise_world_m;
+        let measured_position_world_m = ideal_position_world_m + self.bias_m + noise_world_m;
 
         let observation = PositionObservation {
             position_world_m: measured_position_world_m,
@@ -96,7 +96,7 @@ mod tests {
 
     fn check_observation(stddev_m: f64) -> anyhow::Result<()> {
         let config = SensorConfig {
-            bias_world_m: [1.0, -2.0, 3.0],
+            bias_m: [1.0, -2.0, 3.0],
             stddev_m,
         };
         let mut sensor = NoisyPosition::new(&config);
@@ -111,7 +111,7 @@ mod tests {
             random.normal(&[2], 0.0, stddev_m)?,
         );
         let expected_position_world_m =
-            truth.position_world_m + Vec3::from(config.bias_world_m) + expected_noise_world_m;
+            truth.position_world_m + Vec3::from(config.bias_m) + expected_noise_world_m;
         let mut messages = Messages::default();
         let mut pending = Readings::default();
         let update = sensor.step(&mut SensorContext {

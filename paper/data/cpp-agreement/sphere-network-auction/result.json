@@ -3,7 +3,7 @@
   "mission": "<checkout>/missions/verification/sphere-network-auction.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "5ea885bc580e4513c9ae64a96890589c853f259152f9e8fc07a631d45c2a2469",
+    "input_sha256": "dc398fcc1a89c2d7b2cb5558aad859301d328ab2659c7d771a5e32f99a7c7fa0",
     "xml_sha256": "63fe2c46251e33883969a70ccbb53a166f4d8f54b714c7d2c2dcf1d0c92e7f17",
     "effective_sha256": "87d84ba23f1bee93d199a1f85d4bb88b11bd21a043c098b55ed0fe326ac9a96b",
     "run_overrides": {
@@ -32,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-15_06-54-47",
+  "cpp_log_directory": "cpp/logs/2026-10-15_11-22-22",
   "cpp_output_hashes": {
     "frames.bin": "a1e79a394467933d2a8f254b3b2017fdd5f02965dc36b21d0c635efa4309f45b",
     "summary.csv": "5e17ab66d76ac75c1cf4f357ed1c4e2734d320e475e2eeb538592dd592f758ad"
@@ -54,7 +54,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "fc0f86b71890b29ebfab987d78eaa03e24124940cf56831e98ac5fe33471819d",
+  "recording_sha256": "eac20bca20ba4671dc88a83a4763d31359d4817f304f0733e717263e38ad1619",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

@@ -29,7 +29,7 @@ entities:
     heading_deg: 0
     autonomy:
       Straight:
-        speed: 18
+        speed_mps: 18
 
   chaser:
     template: aircraft
@@ -39,4 +39,4 @@ entities:
     heading_deg: 0
     autonomy:
       FollowNearest:
-        speed: 30
+        speed_mps: 30

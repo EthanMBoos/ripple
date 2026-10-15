@@ -49,13 +49,13 @@ entities:
     autonomy:
       ArduPilotBridge:
         port: 9002
-        frame_timeout: 10
-        first_frame_timeout: 60
+        frame_timeout_s: 10
+        first_frame_timeout_s: 60
         mode: AUTO
-        takeoff_altitude: 50
-        waypoints: [[731, -325, 60], [853, -51, 60], [-243, 437, 60], [-365, 163, 30], [91, -41, 0]]
+        takeoff_altitude_m: 50
+        waypoints_m: [[731, -325, 60], [853, -51, 60], [-243, 437, 60], [-365, 163, 30], [91, -41, 0]]
         land: true
-        goto: null
+        goto_m: null
         speedup: 100
         ardupilot_params:
           # Ground steering with the rudder below 5 m, for the takeoff and
@@ -78,14 +78,13 @@ entities:
           LAND_PITCH_DEG: 14
     sensors:
       SitlState:
-        wind_E: 0
-        wind_N: 0
+        wind_mps: [0, 0, 0]
     motion_model:
       FixedWing6DOF:
         # The Rascal 110: ArduPilot's JSBSim Rascal (see airframe.rs).
         airframe: rascal
-        use_launcher: false
-        use_ground_model: false
+        enable_launcher: false
+        enable_ground_spring: false
         landing_gear:
           # forward, right, down from the centre of gravity (m); JSBSim's Rascal
           - {position_frd_m: [0.084, -0.328, 0.434], spring_n_per_m: 7005, damping_n_s_per_m: 1459,
@@ -96,5 +95,4 @@ entities:
           # taildraggers, since castering ground-looped on the landing roll
           - {position_frd_m: [-0.826, 0, 0.203], spring_n_per_m: 7005, damping_n_s_per_m: 1459,
              static_friction: 0.8, rolling_friction: 0.1, steered_by_rudder: true}
-        wind_E: 0
-        wind_N: 0
+        wind_mps: [0, 0, 0]

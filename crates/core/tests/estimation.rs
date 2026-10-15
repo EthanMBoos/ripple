@@ -229,7 +229,7 @@ impl Autonomy for PanicOnStart {
     }
 }
 
-/// Passes `speed` through and logs the own-state x position it saw.
+/// Passes the `speed` port through and logs the own-state x position it saw.
 struct PositionWitness {
     log: String,
 }
@@ -287,7 +287,8 @@ fn mover(
         team,
         position_m,
         autonomy: vec![
-            PluginConfig::new("ConstantVelocity").with_params(json!({ "velocity": velocity }))?,
+            PluginConfig::new("ConstantVelocity")
+                .with_params(json!({ "velocity_mps": velocity }))?,
             PluginConfig::new("Witness").with_params(json!({ "log": log }))?,
         ],
         motion_model: PluginConfig::new("SingleIntegrator"),
@@ -636,9 +637,9 @@ fn estimators_run_every_tick() -> Result<()> {
     };
     let error = Simulation::new(scenario, &registry()?, 1)
         .err()
-        .expect("an estimator loop_rate is rejected");
+        .expect("an estimator loop_rate_hz is rejected");
     assert!(
-        format!("{error:#}").contains("takes no loop_rate"),
+        format!("{error:#}").contains("takes no loop_rate_hz"),
         "{error:#}"
     );
     Ok(())

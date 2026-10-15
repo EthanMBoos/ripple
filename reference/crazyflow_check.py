@@ -88,7 +88,7 @@ entities:
       ConstantVelocity:
     controller:
       MotorSpeeds:
-        speeds: [{speeds}]
+        speeds_radps: [{speeds}]
     motion_model:
       Multirotor:
 {motion}"""

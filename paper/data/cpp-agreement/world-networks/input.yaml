@@ -10,13 +10,12 @@ run:
 
 interactions:
   Boundary:
-    center: [0, 0, 200]
-    lengths: [600, 600, 400]
-    show_boundary: false
+    center_m: [0, 0, 200]
+    lengths_m: [600, 600, 400]
   GroundCollision:
     team: all
   SimpleCollision:
-    collision_range: 2
+    collision_range_m: 2
 networks: {LocalNetwork: {}, GlobalNetwork: {}}
 metrics: {SimpleCollisionMetrics: {}}
 
@@ -26,7 +25,7 @@ templates:
     velocity_mps: [20, 0, 0]
     autonomy:
       Straight:
-        speed: 20
+        speed_mps: 20
         enable_boundary_control: true
     controller: {SimpleAircraftControllerPID: {}}
     motion_model: {SimpleAircraft: {}}
@@ -54,4 +53,4 @@ entities:
     pitch_deg: 20
     autonomy:
       Straight:
-        speed: 20
+        speed_mps: 20

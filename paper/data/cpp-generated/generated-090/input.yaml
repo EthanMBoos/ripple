@@ -9,7 +9,7 @@
  },
  "interactions": {
   "SimpleCollision": {
-   "collision_range": 13.6866
+   "collision_range_m": 13.6866
   }
  },
  "networks": {
@@ -38,12 +38,12 @@
    "randomize_every_spawn": true,
    "autonomy": {
     "ConstantVelocity": {
-     "velocity": [
+     "velocity_mps": [
       -9.14038,
       1.3923,
       1.68763
      ],
-     "loop_rate": 0
+     "loop_rate_hz": 0
     }
    },
    "controller": {
@@ -51,7 +51,7 @@
    },
    "motion_model": {
     "SingleIntegrator": {
-     "max_speed": -1.0
+     "max_speed_mps": -1.0
     }
    }
   }

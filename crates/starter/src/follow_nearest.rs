@@ -12,7 +12,6 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct FollowNearestConfig {
-    #[serde(rename = "speed")]
     speed_mps: f64,
 }
 

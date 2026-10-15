@@ -9,7 +9,7 @@
  },
  "interactions": {
   "SimpleCollision": {
-   "collision_range": 9.46978
+   "collision_range_m": 9.46978
   }
  },
  "networks": {
@@ -46,18 +46,18 @@
    "pitch_deg": -2.63077,
    "autonomy": {
     "Straight": {
-     "speed": 15.7744,
-     "loop_rate": 5
+     "speed_mps": 15.7744,
+     "loop_rate_hz": 5
     }
    },
    "controller": {
     "SimpleAircraftControllerPID": {
-     "loop_rate": 0
+     "loop_rate_hz": 0
     }
    },
    "motion_model": {
     "SimpleAircraft": {
-     "max_roll": 28.6071
+     "max_roll_deg": 28.6071
     }
    },
    "sensors": {
@@ -106,18 +106,18 @@
    "pitch_deg": 1.74511,
    "autonomy": {
     "Straight": {
-     "speed": 27.1287,
-     "loop_rate": 0
+     "speed_mps": 27.1287,
+     "loop_rate_hz": 0
     }
    },
    "controller": {
     "SimpleAircraftControllerPID": {
-     "loop_rate": 20
+     "loop_rate_hz": 20
     }
    },
    "motion_model": {
     "SimpleAircraft": {
-     "max_roll": 23.6063
+     "max_roll_deg": 23.6063
     }
    }
   },
@@ -142,18 +142,18 @@
    "pitch_deg": -2.19721,
    "autonomy": {
     "Straight": {
-     "speed": 16.7976,
-     "loop_rate": 5
+     "speed_mps": 16.7976,
+     "loop_rate_hz": 5
     }
    },
    "controller": {
     "SimpleAircraftControllerPID": {
-     "loop_rate": 50
+     "loop_rate_hz": 50
     }
    },
    "motion_model": {
     "SimpleAircraft": {
-     "max_roll": 39.8436
+     "max_roll_deg": 39.8436
     }
    }
   }

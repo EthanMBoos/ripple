@@ -15,7 +15,6 @@ use crate::plugin::{
 struct MotorSpeedsParams {
     /// Shaft speeds in rad/s written to motor_0, motor_1, ...; a mission must
     /// list one per rotor.
-    #[serde(rename = "speeds")]
     speeds_radps: Vec<f64>,
 }
 

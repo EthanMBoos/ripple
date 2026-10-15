@@ -9,17 +9,16 @@
  },
  "interactions": {
   "Boundary": {
-   "center": [
+   "center_m": [
     0,
     0,
     200
    ],
-   "lengths": [
+   "lengths_m": [
     800,
     800,
     400
-   ],
-   "show_boundary": false
+   ]
   }
  },
  "networks": {
@@ -54,12 +53,12 @@
    },
    "autonomy": {
     "ConstantVelocity": {
-     "velocity": [
+     "velocity_mps": [
       -3.01492,
       4.14701,
       1.6648
      ],
-     "loop_rate": 0
+     "loop_rate_hz": 0
     }
    },
    "controller": {
@@ -67,7 +66,7 @@
    },
    "motion_model": {
     "SingleIntegrator": {
-     "max_speed": -1.0
+     "max_speed_mps": -1.0
     }
    }
   },
@@ -92,18 +91,18 @@
    "pitch_deg": 1.70606,
    "autonomy": {
     "Straight": {
-     "speed": 18.955,
-     "loop_rate": 10
+     "speed_mps": 18.955,
+     "loop_rate_hz": 10
     }
    },
    "controller": {
     "SimpleAircraftControllerPID": {
-     "loop_rate": 20
+     "loop_rate_hz": 20
     }
    },
    "motion_model": {
     "SimpleAircraft": {
-     "max_roll": 30.5934
+     "max_roll_deg": 30.5934
     }
    },
    "sensors": {
@@ -149,12 +148,12 @@
    },
    "autonomy": {
     "ConstantVelocity": {
-     "velocity": [
+     "velocity_mps": [
       0.182052,
       -0.834425,
       -1.78691
      ],
-     "loop_rate": 2
+     "loop_rate_hz": 2
     }
    },
    "controller": {
@@ -162,7 +161,7 @@
    },
    "motion_model": {
     "SingleIntegrator": {
-     "max_speed": -1.0
+     "max_speed_mps": -1.0
     }
    }
   },
@@ -189,12 +188,12 @@
    },
    "autonomy": {
     "ConstantVelocity": {
-     "velocity": [
+     "velocity_mps": [
       -5.51056,
       -6.00193,
       -1.51459
      ],
-     "loop_rate": 10
+     "loop_rate_hz": 10
     }
    },
    "controller": {
@@ -202,7 +201,7 @@
    },
    "motion_model": {
     "SingleIntegrator": {
-     "max_speed": 10.311
+     "max_speed_mps": 10.311
     }
    }
   }

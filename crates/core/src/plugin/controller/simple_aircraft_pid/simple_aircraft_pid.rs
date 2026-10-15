@@ -10,41 +10,48 @@
 //! rate limits every step. Use motion substeps (`motion_multiplier`) for
 //! faster aircraft: at 0.02 s the bound is 125 m/s.
 
-use anyhow::{Result, ensure};
+use anyhow::Result;
 use serde::Deserialize;
 
 use crate::plugin::{
     AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
 };
 use crate::{
-    common::{Pid, PidGains},
+    common::{AngleGains, LengthGains, Pid, SpeedGains},
     math,
 };
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-/// Each PID is `P, I, D, integral band`.
+/// Each PID is `{kp, ki, kd, integrate_within_*}`.
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct ControllerConfig {
-    #[serde(rename = "heading_pid")]
-    heading_gains: PidGains,
-    #[serde(rename = "alt_pid")]
-    altitude_gains: PidGains,
-    #[serde(rename = "vel_pid")]
-    speed_gains: PidGains,
-    /// Not yet implemented; must stay false.
-    use_roll: bool,
-    use_glide_slope: bool,
+    heading_pid: AngleGains,
+    altitude_pid: LengthGains,
+    speed_pid: SpeedGains,
 }
 
 impl Default for ControllerConfig {
     fn default() -> Self {
         Self {
-            heading_gains: PidGains::from([1.0, 0.01, 2.0, 9.0]),
-            altitude_gains: PidGains::from([1.0, 0.0, 0.8, 1.0]),
-            speed_gains: PidGains::from([1.0, 0.1, 0.0, 1.0]),
-            use_roll: false,
-            use_glide_slope: false,
+            heading_pid: AngleGains {
+                kp: 1.0,
+                ki: 0.01,
+                kd: 2.0,
+                integrate_within_deg: 9.0,
+            },
+            altitude_pid: LengthGains {
+                kp: 1.0,
+                ki: 0.0,
+                kd: 0.8,
+                integrate_within_m: 1.0,
+            },
+            speed_pid: SpeedGains {
+                kp: 1.0,
+                ki: 0.1,
+                kd: 0.0,
+                integrate_within_mps: 1.0,
+            },
         }
     }
 }
@@ -59,19 +66,14 @@ impl Plugin for SimpleAircraftControllerPid {
     type Config = ControllerConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<ControllerConfig> {
-        let config: ControllerConfig = params.parse()?;
-        ensure!(
-            !config.use_roll && !config.use_glide_slope,
-            "roll/glide-slope PID inputs are not yet implemented"
-        );
-        Ok(config)
+        params.parse()
     }
 
     fn new(config: &ControllerConfig) -> Self {
         Self {
-            heading_pid: Pid::angular(config.heading_gains),
-            altitude_pid: Pid::linear(config.altitude_gains),
-            speed_pid: Pid::linear(config.speed_gains),
+            heading_pid: Pid::angular(config.heading_pid.into()),
+            altitude_pid: Pid::linear(config.altitude_pid.into()),
+            speed_pid: Pid::linear(config.speed_pid.into()),
         }
     }
 
@@ -125,21 +127,34 @@ impl Controller for SimpleAircraftControllerPid {
     }
 }
 
-/// A mission gives gains as [P, I, D, integral band]; controller code uses named gains.
 #[cfg(test)]
 mod tests {
     use super::{Plugin, PluginParams, SimpleAircraftControllerPid};
 
     #[test]
-    fn gains_are_p_i_d_then_the_integral_band() -> anyhow::Result<()> {
-        let params = PluginParams::yaml("heading_pid: [2, 3, 4, 9]");
+    fn a_mission_pid_replaces_only_that_loop() -> anyhow::Result<()> {
+        let params =
+            PluginParams::yaml("heading_pid: {kp: 2, ki: 3, kd: 4, integrate_within_deg: 9}");
         let config = SimpleAircraftControllerPid::configure(&params)?;
-        assert!((config.heading_gains.proportional - 2.0).abs() < 1e-12);
-        assert!((config.heading_gains.integral - 3.0).abs() < 1e-12);
-        assert!((config.heading_gains.derivative - 4.0).abs() < 1e-12);
-        assert!((config.heading_gains.integral_band - 9.0).abs() < 1e-12);
-        assert!((config.altitude_gains.derivative - 0.8).abs() < 1e-12);
-        assert!((config.speed_gains.integral - 0.1).abs() < 1e-12);
+        assert!((config.heading_pid.kp - 2.0).abs() < 1e-12);
+        assert!((config.heading_pid.ki - 3.0).abs() < 1e-12);
+        assert!((config.heading_pid.kd - 4.0).abs() < 1e-12);
+        assert!((config.heading_pid.integrate_within_deg - 9.0).abs() < 1e-12);
+        assert!((config.altitude_pid.kd - 0.8).abs() < 1e-12);
+        assert!((config.speed_pid.ki - 0.1).abs() < 1e-12);
         Ok(())
+    }
+
+    #[test]
+    fn a_band_in_the_wrong_unit_is_an_error() {
+        let params =
+            PluginParams::yaml("altitude_pid: {kp: 1, ki: 0, kd: 0, integrate_within_deg: 1}");
+        let error = SimpleAircraftControllerPid::configure(&params)
+            .err()
+            .unwrap();
+        assert!(
+            format!("{error:#}").contains("integrate_within_deg"),
+            "{error:#}"
+        );
     }
 }

@@ -3,7 +3,7 @@
 //! Derived from SCRIMMAGE: src/plugins/autonomy/Straight/Straight.cpp.
 //! Autonomy phase: read current state, write desired altitude, speed, and heading.
 
-use anyhow::{Result, ensure};
+use anyhow::Result;
 use serde::Deserialize;
 
 use crate::math::{self, Vec3};
@@ -20,29 +20,15 @@ const HEADING: &str = "desired_heading";
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct StraightConfig {
-    #[serde(rename = "speed")]
     speed_mps: f64,
-    #[serde(rename = "enable_boundary_control")]
-    boundary_control: bool,
-    /// Excluded; missions schedule entities instead. Must stay false.
-    generate_entities: bool,
-    /// Not supported; visualization belongs to Rerun. Must stay false.
-    show_camera_images: bool,
-    save_camera_images: bool,
-    /// Accepted and ignored: the Rerun adapter already labels every entity.
-    #[serde(rename = "show_text_label")]
-    _show_text_label: bool,
+    enable_boundary_control: bool,
 }
 
 impl Default for StraightConfig {
     fn default() -> Self {
         Self {
             speed_mps: 21.0,
-            boundary_control: false,
-            generate_entities: false,
-            show_camera_images: false,
-            save_camera_images: false,
-            _show_text_label: false,
+            enable_boundary_control: false,
         }
     }
 }
@@ -50,7 +36,7 @@ impl Default for StraightConfig {
 pub struct Straight {
     speed_mps: f64,
     goal_world_m: Vec3,
-    boundary_control: bool,
+    enable_boundary_control: bool,
     boundary: Option<BoundaryRegion>,
 }
 
@@ -58,27 +44,14 @@ impl Plugin for Straight {
     type Config = StraightConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<StraightConfig> {
-        let config: StraightConfig = params.parse()?;
-        ensure!(
-            !config.generate_entities,
-            "Straight.generate_entities is excluded; use mission-scheduled entities"
-        );
-        ensure!(
-            !config.show_camera_images,
-            "Straight.show_camera_images is not supported; visualization belongs to Rerun"
-        );
-        ensure!(
-            !config.save_camera_images,
-            "Straight.save_camera_images is not supported; visualization belongs to Rerun"
-        );
-        Ok(config)
+        params.parse()
     }
 
     fn new(config: &StraightConfig) -> Self {
         Self {
             speed_mps: config.speed_mps,
             goal_world_m: Vec3::zeros(),
-            boundary_control: config.boundary_control,
+            enable_boundary_control: config.enable_boundary_control,
             boundary: None,
         }
     }
@@ -113,7 +86,7 @@ impl Autonomy for Straight {
             self.boundary = Some(*message.value);
         }
         let state = context.state;
-        if self.boundary_control
+        if self.enable_boundary_control
             && let Some(boundary) = self.boundary
             && !boundary.contains(state.position_world_m)
         {
@@ -148,7 +121,7 @@ mod tests {
 
     #[test]
     fn configured_speed_is_copied_into_independent_autonomy_instances() -> anyhow::Result<()> {
-        let config = Straight::configure(&PluginParams::yaml("speed: 24"))?;
+        let config = Straight::configure(&PluginParams::yaml("speed_mps: 24"))?;
         let mut first = Straight::new(&config);
         let second = Straight::new(&config);
         first.goal_world_m.x = 100.0;

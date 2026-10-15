@@ -36,9 +36,8 @@ style](book/src/development/rust-style.md), [source
 map](book/src/development/source-layout.md), [plugin
 API](book/src/reference/plugin-api.md), [user
 plugins](book/src/guides/user-plugins.md), [YAML
-missions](book/src/guides/yaml-missions.md), and the [C++ reference
-guides](book/src/appendix/cpp.md). The copied C++ guides stay unchanged; record
-differences in `docs/REFERENCE_NOTES.md`.
+missions](book/src/guides/yaml-missions.md). SCRIMMAGE's own documentation is
+in `../scrimmage/docs/source`; record differences in `docs/REFERENCE_NOTES.md`.
 
 User and developer guidance goes in `book/src/` (listed in `SUMMARY.md`);
 `docs/` holds plans, audits, and notes. Verification evidence lives in

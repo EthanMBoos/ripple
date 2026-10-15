@@ -81,8 +81,8 @@ def mission(rung):
         target = [waypoint[0], waypoint[1] + y, altitude + waypoint[2]]
         lines.append(f"  e{index:02}:  # {name}\n    position_m: [0, {y}, {altitude}]\n"
                      "    velocity_mps: [20, 0, 0]\n    heading_deg: 0\n"
-                     f"    autonomy:\n      WaypointFollower:\n        waypoints: [{target}]\n"
-                     f"        arrival_radius_m: 40\n        speed: {speed}\n" + vehicle(rung))
+                     f"    autonomy:\n      WaypointFollower:\n        waypoints_m: [{target}]\n"
+                     f"        arrival_radius_m: 40\n        speed_mps: {speed}\n" + vehicle(rung))
     return "\n".join(lines) + "\n"
 
 

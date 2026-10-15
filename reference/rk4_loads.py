@@ -86,8 +86,8 @@ class Runner:
         if multiplier is not None:
             scenario["run"]["motion_multiplier"] = multiplier
         if altitude_d is not None:
-            scenario["entities"][0]["controller"][0]["params"]["altitude_pid"] = [
-                0.1, 0.0001, altitude_d, 10]
+            scenario["entities"][0]["controller"][0]["params"]["altitude_pid"] = {
+                "kp": 0.1, "ki": 0.0001, "kd": altitude_d, "integrate_within_m": 10}
         self.count += 1
         folder = self.output / f"{self.count:03}-{mission.stem}-{loads}"
         inputs = folder / "input"

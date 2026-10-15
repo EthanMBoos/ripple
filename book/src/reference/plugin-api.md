@@ -1,10 +1,5 @@
 # Plugin API and lifecycle
 
-Use [C++ plugin guide](../appendix/cpp/plugin-development.md) for the SCRIMMAGE
-design. This document maps that design to the current Rust API; it does not
-redefine the original documentation or claim that every legacy service is
-ported.
-
 For engine navigation, see [Source map](../development/source-layout.md).
 Category interfaces live in named framework modules; concrete built-ins live
 only under `crates/core/src/plugin/<category>/`. The public authoring imports
@@ -76,9 +71,10 @@ stop-requesting update.
 
 Straight uses a named configuration struct. LocalNetwork and GlobalNetwork are
 stateless and use `Config = ()`; configuration still rejects unsupported delay
-modes. Call `configure` and pass its result to `new`. The controller reads
-`[P, I, D, integral band]` gains into named `PidGains`; angular PID updates use
-radians and convert the degree-valued band once at construction.
+modes. Call `configure` and pass its result to `new`. The controllers read
+`{kp, ki, kd, integrate_within_*}` gains (`AngleGains`, `LengthGains`,
+`SpeedGains`) into `PidGains`; angular PID updates use radians and convert the
+degree-valued band once at construction.
 
 Downstream plugins can import `Pid`, `PidGains`, `EulerAngles`, `Quaternion`,
 `Vec3`, and `rk4` directly from `ripple_core`. Use `Quaternion::from_euler`
@@ -168,38 +164,37 @@ mission's values, and `Default` supplies every key the mission leaves out:
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct SphereNetworkConfig {
-    #[serde(rename = "range")]   // the mission key
-    range_m: f64,                // the Rust name, with its unit
-    #[serde(rename = "prob_transmit")]
-    probability_transmit: f64,
+    range_m: f64,              // the mission key and the Rust name, with its unit
+    transmit_probability: f64,
 }
 
 impl Default for SphereNetworkConfig {
     fn default() -> Self {
-        Self { range_m: 100.0, probability_transmit: 1.0 }
+        Self { range_m: 100.0, transmit_probability: 1.0 }
     }
 }
 
 fn configure(params: &PluginParams<'_>) -> Result<SphereNetworkConfig> {
     let config: SphereNetworkConfig = params.parse()?;
-    ensure!(config.range_m >= 0.0, "SphereNetwork range must be nonnegative");
+    ensure!(config.range_m >= 0.0, "SphereNetwork range_m must be nonnegative");
     Ok(config)
 }
 ```
 
-- Values are YAML, and numbers must be finite: `[1, 0.01, 2, 9]` fills
-  `[f64; 4]` and `PidGains`.
+- Values are YAML, and numbers must be finite: `[0, 0, 200]` fills `[f64; 3]`,
+  and `{kp: 1, ki: 0.01, kd: 2, integrate_within_deg: 9}` fills `AngleGains`.
+- The field name is the mission key, so a plugin has no `#[serde(rename)]`:
+  one name, with its unit, as [Rust style](../development/rust-style.md#parameter-names)
+  describes.
 - `deny_unknown_fields` makes a misspelled or unsupported key an error that
   names the key, instead of silently using the default.
-- A C++ option that Rust does not implement stays a named field with a comment,
-  and `configure` rejects any value other than the one that means "off". An
-  option that is safe to ignore (Straight's `show_text_label`) is a `_`-prefixed
-  field.
+- An option a plugin does not implement is not a field at all;
+  `deny_unknown_fields` rejects it by name.
 - When the runtime needs derived values (radians, an inverse inertia, rotor
   geometry), parse a private `...Params` struct and build the `Config` from it,
   as SimpleAircraft and Multirotor do.
 - A plugin with no parameters uses `Config = ()`; `params.parse()` still
-  rejects any key the mission gives it. `loop_rate` is read by the framework.
+  rejects any key the mission gives it. `loop_rate_hz` is read by the framework.
 
 A value in the mission wins; `Default` supplies the rest. A value shared by
 several groups goes in a [template](../guides/yaml-missions.md#templates).
@@ -389,16 +384,15 @@ consumer/output path when those records are needed.
 ### SphereNetwork and AuctionAssign
 
 `SphereNetwork` routes between entity endpoints with strict 3D `distance <
-range` (meters, default 100), using current post-motion truth. Same-entity
+range_m` (default 100), using current post-motion truth. Same-entity
 endpoints bypass geometry. World plugins have no antenna position and are
 unreachable on this network; use GlobalNetwork for their traffic.
-`filter_comms_plane=true` permits two endpoints only when both are at/above
-`comms_boundary_altitude - comms_boundary_epsilon`, or both at/below altitude
-plus epsilon. Altitude and epsilon are meters; defaults are zero, epsilon
-nonnegative.
+`enable_altitude_split: true` permits two endpoints only when both are at/above
+`split_altitude_m - split_margin_m`, or both at/below `split_altitude_m +
+split_margin_m`. Both default to zero; the margin is nonnegative.
 
 Every reachable delivery, including same-entity traffic, independently succeeds
-with `prob_transmit` (0..1, default 1). Delivery is immediate in the network
+with `transmit_probability` (0..1, default 1). Delivery is immediate in the network
 phase; there are no retries, persistence, or legacy communication-delay modes.
 Each subscriber has its own loss decision and queue. Adding subscribers changes
 RNG consumption. The stream is deterministic for a fixed configuration at 1/2/8
@@ -419,7 +413,7 @@ Typed payloads and topic constants are exported from `plugin::autonomy`:
 bidder_id, bid }` / `BID_AUCTION_TOPIC`, and `AuctionResult { winner:
 Option<AuctionBid> }` / `RESULT_AUCTION_TOPIC`. The topic strings are
 `StartAuction`, `BidAuction`, and `ResultAuction`. Subscribe to results in an
-entity plugin. `network_name` defaults to SphereNetwork; unlike C++'s hard-coded
+entity plugin. `network` defaults to SphereNetwork; unlike C++'s hard-coded
 CommsNetwork alias, it selects a registered network name.
 
 Loss and bids are keyed random numbers ([Randomness and
@@ -589,7 +583,7 @@ Networks run in name order. Metrics can consume interaction messages within the
 same tick; autonomy cannot see post-motion sensor readings until its next step.
 Estimation runs inside each entity's delivery task, so it adds no worker phase.
 Autonomy/controller/sensor loop rates retain outputs when updates are skipped.
-Estimators run every tick and reject `loop_rate`: a reading or command from a
+Estimators run every tick and reject `loop_rate_hz`: a reading or command from a
 skipped tick would otherwise be lost. An estimator can do expensive work less
 often inside its own `step`.
 World-level plugins run each phase as in the C++ reference source.

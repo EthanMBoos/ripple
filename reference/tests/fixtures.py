@@ -11,8 +11,8 @@ _SCENARIO = {
     "end_conditions": {"time": True, "all_dead": False, "one_team": False},
     "spatial_lookup": {"method": "scan"},
     "terrain": None,
-    "interactions": [plugin("SimpleCollision", collision_range=5)],
-    "networks": [plugin("GlobalNetwork"), plugin("SphereNetwork", "CommsNetwork", range=100)],
+    "interactions": [plugin("SimpleCollision", collision_range_m=5)],
+    "networks": [plugin("GlobalNetwork"), plugin("SphereNetwork", "CommsNetwork", range_m=100)],
     "metrics": [plugin("SimpleCollisionMetrics")],
     "entities": [{
         "label": "blue", "team": 1, "color": [255, 255, 255], "visual_model": "aircraft",
@@ -20,8 +20,9 @@ _SCENARIO = {
         "position_m": [23.0, 0.0, 200.0], "position_variance_m2": [0.0, 0.0, 0.0],
         "heading_deg": 0.0, "heading_variance_deg2": 0.0, "roll_deg": 0.0, "pitch_deg": 0.0,
         "velocity_mps": [0.0, 0.0, 0.0], "randomize_every_spawn": False,
-        "autonomy": [plugin("Straight", speed=27)],
-        "controller": [plugin("SimpleAircraftControllerPID", heading_pid=[1, 0.01, 2, 9])],
+        "autonomy": [plugin("Straight", speed_mps=27)],
+        "controller": [plugin("SimpleAircraftControllerPID", heading_pid={
+            "kp": 1, "ki": 0.01, "kd": 2, "integrate_within_deg": 9})],
         "motion_model": plugin("SimpleAircraft"),
         "sensors": [plugin("NoisyState", position_stddev_m=[1, 2, 3])],
         "localization": {**plugin("PassThrough"), "inputs": {"state": "NoisyState:0"}},

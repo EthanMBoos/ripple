@@ -52,7 +52,7 @@ def mission(episode):
         forces = [step[index] for step in episode["forces"]]
         lines += [f"  agent{index}:", "    team: 1", f"    position_m: [{x!r}, {y!r}, 0]",
                   "    velocity_mps: [0, 0, 0]", "    autonomy:", "      ForceReplay:",
-                  f"        forces: {forces!r}", "    motion_model:", "      MpeParticle:"]
+                  f"        forces_n: {forces!r}", "    motion_model:", "      MpeParticle:"]
     for index, (x, y) in enumerate(episode["landmarks"]):
         lines += [f"  landmark{index}:", "    team: 2", f"    position_m: [{x!r}, {y!r}, 0]",
                   "    autonomy:", "      ConstantVelocity:", "    motion_model:",

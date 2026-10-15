@@ -7,9 +7,7 @@ readings to their own entity's estimators (see
 [Truth, measurements, and belief](information-flow.md)). Messages are the path
 for everything else: between plugins that are not wired together, between
 entities, and to and from world plugins, with a network deciding who receives
-each one and when. This is the Rust counterpart of the pub/sub section of the
-[C++ data-flow guide](../appendix/cpp/data-flow.md), which has known
-inaccuracies (its `LocalNetwork` is not a range-limited radio).
+each one and when.
 
 ## Publishing and subscribing
 

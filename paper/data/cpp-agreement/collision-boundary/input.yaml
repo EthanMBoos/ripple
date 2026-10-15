@@ -12,8 +12,8 @@ run:
 
 interactions:
   SimpleCollision:
-    collision_range: 5
-    startup_collision_range: 2
+    collision_range_m: 5
+    startup_collision_range_m: 2
 networks: {GlobalNetwork: {}, LocalNetwork: {}}
 metrics: {SimpleCollisionMetrics: {}}
 
@@ -23,7 +23,7 @@ templates:
     heading_deg: 0
     autonomy:
       ConstantVelocity:
-        velocity: [0, 0, 0]
+        velocity_mps: [0, 0, 0]
     controller: {SingleIntegratorControllerSimple: {}}
     motion_model: {SingleIntegrator: {}}
 
@@ -46,7 +46,7 @@ entities:
     position_m: [106.05, 0, 50]
     autonomy:
       ConstantVelocity:
-        velocity: [-2, 0, 0]
+        velocity_mps: [-2, 0, 0]
   same_team_still:
     template: point
     team: 1
@@ -57,7 +57,7 @@ entities:
     position_m: [206.05, 0, 50]
     autonomy:
       ConstantVelocity:
-        velocity: [-2, 0, 0]
+        velocity_mps: [-2, 0, 0]
   in_3d_a:
     template: point
     team: 2

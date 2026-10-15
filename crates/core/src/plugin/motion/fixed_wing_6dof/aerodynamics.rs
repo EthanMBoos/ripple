@@ -11,39 +11,39 @@ use super::airframe::Vehicle;
 /// Coefficient names deliberately match the aircraft equations and mission keys.
 #[derive(Clone)]
 pub(super) struct Aerodynamics {
-    c_d0: f64,
-    c_d_alpha: f64,
-    c_d_elevator: f64,
-    c_l0: f64,
-    c_l_alpha: f64,
-    c_lq: f64,
-    c_l_elevator: f64,
-    c_y_beta: f64,
-    c_y_rudder: f64,
+    c_drag_0: f64,
+    c_drag_alpha: f64,
+    c_drag_elevator: f64,
+    c_lift_0: f64,
+    c_lift_alpha: f64,
+    c_lift_q: f64,
+    c_lift_elevator: f64,
+    c_side_beta: f64,
+    c_side_rudder: f64,
     c_roll_beta: f64,
     c_roll_p: f64,
     c_roll_r: f64,
     c_roll_aileron: f64,
     c_roll_rudder: f64,
-    c_m0: f64,
-    c_m_alpha: f64,
-    c_mq: f64,
-    c_m_elevator: f64,
-    c_n_beta: f64,
-    c_np: f64,
-    c_nr: f64,
-    c_n_aileron: f64,
-    c_n_rudder: f64,
+    c_pitch_0: f64,
+    c_pitch_alpha: f64,
+    c_pitch_q: f64,
+    c_pitch_elevator: f64,
+    c_yaw_beta: f64,
+    c_yaw_p: f64,
+    c_yaw_r: f64,
+    c_yaw_aileron: f64,
+    c_yaw_rudder: f64,
     lift_table: Vec<[f64; 2]>,
     drag_table: Vec<[f64; 2]>,
 }
 
 pub(super) struct Airframe {
-    pub density_kgpm3: f64,
-    pub span_m: f64,
-    pub area_m2: f64,
-    pub chord_m: f64,
-    pub efficiency: f64,
+    pub air_density_kgpm3: f64,
+    pub wing_span_m: f64,
+    pub wing_area_m2: f64,
+    pub mean_chord_m: f64,
+    pub oswald_efficiency: f64,
 }
 
 pub(super) struct Loads {
@@ -55,29 +55,29 @@ impl Aerodynamics {
     pub(super) fn new(vehicle: &Vehicle, lift_table: &[[f64; 2]], drag_table: &[[f64; 2]]) -> Self {
         let params = vehicle;
         Self {
-            c_d0: params.c_d0,
-            c_d_alpha: params.c_d_alpha,
-            c_d_elevator: params.c_d_elevator,
-            c_l0: params.c_l0,
-            c_l_alpha: params.c_l_alpha,
-            c_lq: params.c_lq,
-            c_l_elevator: params.c_l_elevator,
-            c_y_beta: params.c_y_beta,
-            c_y_rudder: params.c_y_rudder,
+            c_drag_0: params.c_drag_0,
+            c_drag_alpha: params.c_drag_alpha,
+            c_drag_elevator: params.c_drag_elevator,
+            c_lift_0: params.c_lift_0,
+            c_lift_alpha: params.c_lift_alpha,
+            c_lift_q: params.c_lift_q,
+            c_lift_elevator: params.c_lift_elevator,
+            c_side_beta: params.c_side_beta,
+            c_side_rudder: params.c_side_rudder,
             c_roll_beta: params.c_roll_beta,
             c_roll_p: params.c_roll_p,
             c_roll_r: params.c_roll_r,
             c_roll_aileron: params.c_roll_aileron,
             c_roll_rudder: params.c_roll_rudder,
-            c_m0: params.c_m0,
-            c_m_alpha: params.c_m_alpha,
-            c_mq: params.c_mq,
-            c_m_elevator: params.c_m_elevator,
-            c_n_beta: params.c_n_beta,
-            c_np: params.c_np,
-            c_nr: params.c_nr,
-            c_n_aileron: params.c_n_aileron,
-            c_n_rudder: params.c_n_rudder,
+            c_pitch_0: params.c_pitch_0,
+            c_pitch_alpha: params.c_pitch_alpha,
+            c_pitch_q: params.c_pitch_q,
+            c_pitch_elevator: params.c_pitch_elevator,
+            c_yaw_beta: params.c_yaw_beta,
+            c_yaw_p: params.c_yaw_p,
+            c_yaw_r: params.c_yaw_r,
+            c_yaw_aileron: params.c_yaw_aileron,
+            c_yaw_rudder: params.c_yaw_rudder,
             lift_table: lift_table.to_vec(),
             drag_table: drag_table.to_vec(),
         }
@@ -99,11 +99,11 @@ impl Aerodynamics {
             .clamp(-1.0, 1.0)
             .asin();
         let twice_speed_mps = 2.0 * airspeed_mps;
-        let span_m = airframe.span_m;
-        let chord_m = airframe.chord_m;
-        let aspect_ratio = span_m / chord_m;
+        let wing_span_m = airframe.wing_span_m;
+        let mean_chord_m = airframe.mean_chord_m;
+        let aspect_ratio = wing_span_m / mean_chord_m;
         let pressure_area_n =
-            airframe.density_kgpm3 * airspeed_mps.powi(2) * airframe.area_m2 / 2.0;
+            airframe.air_density_kgpm3 * airspeed_mps.powi(2) * airframe.wing_area_m2 / 2.0;
         let p_radps = rates_model_radps.x;
         let q_radps = rates_model_radps.y;
         let r_radps = rates_model_radps.z;
@@ -115,26 +115,27 @@ impl Aerodynamics {
         // is treated as already a failure; the model is not meant to recover
         // from it faithfully.
         let lift_alpha = if self.lift_table.is_empty() {
-            self.c_l0 + self.c_l_alpha * alpha_rad
+            self.c_lift_0 + self.c_lift_alpha * alpha_rad
         } else {
             interpolate_clamped(&self.lift_table, alpha_rad)
         };
         let lift_coefficient = lift_alpha
-            + self.c_lq * q_radps * chord_m / twice_speed_mps
-            + self.c_l_elevator * control.elevator_rad;
+            + self.c_lift_q * q_radps * mean_chord_m / twice_speed_mps
+            + self.c_lift_elevator * control.elevator_rad;
         let lift_n = lift_coefficient * pressure_area_n;
         // Likewise drag, whose table can rise steeply past the stall.
         let drag_alpha = if self.drag_table.is_empty() {
-            self.c_d0 + self.c_d_alpha * alpha_rad.abs()
+            self.c_drag_0 + self.c_drag_alpha * alpha_rad.abs()
         } else {
             interpolate_clamped(&self.drag_table, alpha_rad)
         };
         let drag_n = (drag_alpha
-            + lift_coefficient * lift_coefficient / (PI * aspect_ratio * airframe.efficiency)
-            + self.c_d_elevator * control.elevator_rad.abs())
+            + lift_coefficient * lift_coefficient
+                / (PI * aspect_ratio * airframe.oswald_efficiency)
+            + self.c_drag_elevator * control.elevator_rad.abs())
             * pressure_area_n;
-        let side_n =
-            (self.c_y_beta * beta_rad + self.c_y_rudder * control.rudder_rad) * pressure_area_n;
+        let side_n = (self.c_side_beta * beta_rad + self.c_side_rudder * control.rudder_rad)
+            * pressure_area_n;
         let force_model_n = Vec3::new(
             lift_n * alpha_rad.sin() - drag_n * alpha_rad.cos() - side_n * beta_rad.sin(),
             side_n * beta_rad.cos(),
@@ -142,25 +143,25 @@ impl Aerodynamics {
         );
 
         let roll_nm = (self.c_roll_beta * beta_rad
-            + self.c_roll_p * p_radps * span_m / twice_speed_mps
-            + self.c_roll_r * r_radps * span_m / twice_speed_mps
+            + self.c_roll_p * p_radps * wing_span_m / twice_speed_mps
+            + self.c_roll_r * r_radps * wing_span_m / twice_speed_mps
             + self.c_roll_aileron * control.aileron_rad
             + self.c_roll_rudder * control.rudder_rad)
             * pressure_area_n
-            * span_m;
-        let pitch_nm = (self.c_m0
-            + self.c_m_alpha * alpha_rad
-            + self.c_mq * q_radps * chord_m / twice_speed_mps
-            + self.c_m_elevator * control.elevator_rad)
+            * wing_span_m;
+        let pitch_nm = (self.c_pitch_0
+            + self.c_pitch_alpha * alpha_rad
+            + self.c_pitch_q * q_radps * mean_chord_m / twice_speed_mps
+            + self.c_pitch_elevator * control.elevator_rad)
             * pressure_area_n
-            * chord_m;
-        let yaw_nm = (self.c_n_beta * beta_rad
-            + self.c_np * p_radps * span_m / twice_speed_mps
-            + self.c_nr * r_radps * span_m / twice_speed_mps
-            + self.c_n_aileron * control.aileron_rad
-            + self.c_n_rudder * control.rudder_rad)
+            * mean_chord_m;
+        let yaw_nm = (self.c_yaw_beta * beta_rad
+            + self.c_yaw_p * p_radps * wing_span_m / twice_speed_mps
+            + self.c_yaw_r * r_radps * wing_span_m / twice_speed_mps
+            + self.c_yaw_aileron * control.aileron_rad
+            + self.c_yaw_rudder * control.rudder_rad)
             * pressure_area_n
-            * span_m;
+            * wing_span_m;
         Loads {
             force_model_n,
             moment_model_nm: Vec3::new(roll_nm, pitch_nm, yaw_nm),
@@ -201,17 +202,17 @@ mod tests {
     #[test]
     fn lift_table_stalls_past_its_peak_and_matches_linear_lift_below() {
         let mut linear_vehicle = a4d();
-        linear_vehicle.c_l0 = 0.25;
-        linear_vehicle.c_l_alpha = 5.0;
+        linear_vehicle.c_lift_0 = 0.25;
+        linear_vehicle.c_lift_alpha = 5.0;
         let linear = Aerodynamics::new(&linear_vehicle, &[], &[]);
         let lift_table = [[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]];
         let table = Aerodynamics::new(&a4d(), &lift_table, &[]);
         let airframe = Airframe {
-            density_kgpm3: 1.225,
-            span_m: 2.7,
-            area_m2: 0.982,
-            chord_m: 0.351,
-            efficiency: 0.9,
+            air_density_kgpm3: 1.225,
+            wing_span_m: 2.7,
+            wing_area_m2: 0.982,
+            mean_chord_m: 0.351,
+            oswald_efficiency: 0.9,
         };
         // Lift is the force against the air's up component, at 15 m/s.
         let lift_n = |aerodynamics: &Aerodynamics, alpha_rad: f64| {
@@ -229,8 +230,8 @@ mod tests {
     fn drag_table_rises_past_the_stall_where_induced_drag_falls() {
         let lift_table = [[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]];
         let mut lift_only_vehicle = a4d();
-        lift_only_vehicle.c_d0 = 0.028;
-        lift_only_vehicle.c_d_alpha = 0.0;
+        lift_only_vehicle.c_drag_0 = 0.028;
+        lift_only_vehicle.c_drag_alpha = 0.0;
         let lift_only = Aerodynamics::new(&lift_only_vehicle, &lift_table, &[]);
         let drag_table = [
             [-1.57, 1.5],
@@ -241,11 +242,11 @@ mod tests {
         ];
         let with_drag = Aerodynamics::new(&a4d(), &lift_table, &drag_table);
         let airframe = Airframe {
-            density_kgpm3: 1.225,
-            span_m: 2.7,
-            area_m2: 0.982,
-            chord_m: 0.351,
-            efficiency: 0.995,
+            air_density_kgpm3: 1.225,
+            wing_span_m: 2.7,
+            wing_area_m2: 0.982,
+            mean_chord_m: 0.351,
+            oswald_efficiency: 0.995,
         };
         // Drag is the force along the air's direction, at 15 m/s.
         let drag_n = |aerodynamics: &Aerodynamics, alpha_rad: f64| {

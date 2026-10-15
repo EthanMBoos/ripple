@@ -20,7 +20,7 @@
 //! is. Each point moves in a straight line from its last position, so a fast
 //! rotation within one step is only approximated.
 //!
-//! FixedWing6DOF's own flat ground at `z = 0` (`use_ground_model`) must be off
+//! FixedWing6DOF's own flat ground at `z = 0` (`enable_ground_spring`) must be off
 //! in terrain missions; FixedWing6DOF refuses to start otherwise.
 use anyhow::{Context, Result, ensure};
 use serde::Deserialize;

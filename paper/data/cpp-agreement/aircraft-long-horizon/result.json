@@ -3,9 +3,9 @@
   "mission": "<checkout>/missions/verification/aircraft-long-horizon.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "c3a0d50f9640079b21d080c1f268ec5debf0d13aa0955aa28a25a758b32e5302",
-    "xml_sha256": "5344f926f0b38c67534bc289095c87ef358731d1b21af0573f2ef6c1224d448d",
-    "effective_sha256": "c6b9114e233dee8b5a19a5074b3ff854433b833c8a6779bfc05f7cce615eb029",
+    "input_sha256": "5342aa6802d2f089674eb130100163cd50f876101a2b617b99b770373d94013e",
+    "xml_sha256": "c397c59b174c8b77f01c87dacf107e9fda11365092dd19028e6397f2f434e2ae",
+    "effective_sha256": "57bd878a66003fdfaa6419fcc7f255cc22333320712a5a37cc55dcffd98d6cc9",
     "run_overrides": {
       "enable_gui": "false",
       "network_gui": "false",
@@ -32,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-15_06-53-40",
+  "cpp_log_directory": "cpp/logs/2026-10-15_11-21-15",
   "cpp_output_hashes": {
     "frames.bin": "0bd815906401d7c60d771188107c29abbb96dd9ba79eb951ce9178f2d6dfe638",
     "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
@@ -54,7 +54,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "241264e4142b360d801ab48be782ae7c1b7e92ce08593546443227e51b4d8aa8",
+  "recording_sha256": "7c00674e1ff031d01827927ecb3fd2d2292fe70ec884e2ac0e13aa112c9d3cf0",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

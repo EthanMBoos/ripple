@@ -26,24 +26,24 @@ templates:
     heading_deg: 0
     autonomy:
       Straight:
-        speed: 0
+        speed_mps: 0
     controller:
       MotorSpeeds:
-        speeds: [821.5838362577492, 821.5838362577492, 821.5838362577492, 821.5838362577492]
+        speeds_radps: [821.5838362577492, 821.5838362577492, 821.5838362577492, 821.5838362577492]
     motion_model:
       Multirotor:
-        mass: 1.5
+        mass_kg: 1.5
         inertia_kgm2: [[0.0122, 0, 0], [0, 0.0122, 0], [0, 0, 0.0244]]
-        c_D: 0.058
-        c_T: 5.45e-6
-        c_Q: 2.284e-7
-        omega_min: 346.41
-        omega_max: 1200
+        body_drag_coefficient: 0.058
+        thrust_coefficient: 5.45e-6
+        torque_coefficient: 2.284e-7
+        min_rotor_speed_radps: 346.41
+        max_rotor_speed_radps: 1200
         rotors:
-          - {direction: ccw, position_m: [0, -0.175, 0]}
-          - {direction: ccw, position_m: [0, 0.175, 0]}
-          - {direction: cw, position_m: [0.175, 0, 0]}
-          - {direction: cw, position_m: [-0.175, 0, 0]}
+          - {direction: ccw, position_flu_m: [0, -0.175, 0]}
+          - {direction: ccw, position_flu_m: [0, 0.175, 0]}
+          - {direction: cw, position_flu_m: [0.175, 0, 0]}
+          - {direction: cw, position_flu_m: [-0.175, 0, 0]}
 
 entities:
   carried:
@@ -57,22 +57,22 @@ entities:
     position_m: [20, 0, 30]
     motion_model:
       Multirotor:
-        mass: 1.5
+        mass_kg: 1.5
         inertia_kgm2: [[0.0122, 0, 0], [0, 0.0122, 0], [0, 0, 0.0244]]
-        c_D: 0.058
-        c_T: 5.45e-6
-        c_Q: 2.284e-7
-        omega_min: 346.41
-        omega_max: 1200
+        body_drag_coefficient: 0.058
+        thrust_coefficient: 5.45e-6
+        torque_coefficient: 2.284e-7
+        min_rotor_speed_radps: 346.41
+        max_rotor_speed_radps: 1200
         rotors:
-          - {direction: ccw, position_m: [0, -0.175, 0.03], tilt_deg: [10, 0, 0]}
-          - {direction: ccw, position_m: [0, 0.175, 0.03], tilt_deg: [-8, 0, 0]}
-          - {direction: cw, position_m: [0.175, 0, -0.02], tilt_deg: [0, 5, 0]}
-          - {direction: cw, position_m: [-0.175, 0, -0.02], tilt_deg: [0, -6, 20]}
+          - {direction: ccw, position_flu_m: [0, -0.175, 0.03], tilt_deg: [10, 0, 0]}
+          - {direction: ccw, position_flu_m: [0, 0.175, 0.03], tilt_deg: [-8, 0, 0]}
+          - {direction: cw, position_flu_m: [0.175, 0, -0.02], tilt_deg: [0, 5, 0]}
+          - {direction: cw, position_flu_m: [-0.175, 0, -0.02], tilt_deg: [0, -6, 20]}
   idle:
     template: quad
     team: 3
     position_m: [40, 0, 30]
     controller:
       MotorSpeeds:
-        speeds: [0, 0, 0, 0]
+        speeds_radps: [0, 0, 0, 0]

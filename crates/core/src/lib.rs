@@ -17,7 +17,7 @@ mod scenario;
 mod sensor;
 mod simcontrol;
 
-pub use common::{GeographicOrigin, Pid, PidGains, Terrain};
+pub use common::{AngleGains, GeographicOrigin, LengthGains, Pid, PidGains, SpeedGains, Terrain};
 pub use entity::{Entity, EntityKind, EntitySnapshot};
 pub use math::{EulerAngles, KinematicState, Quaternion, Vec3, rk4};
 pub use parse::{Mission, Params};

@@ -2,7 +2,7 @@
 //! Autonomy phase: write a configured constant ENU velocity to velocity_x/y/z.
 //! The reference fixture supplies the same commands to the upstream C++ models.
 
-use anyhow::{Result, ensure};
+use anyhow::Result;
 use serde::Deserialize;
 
 use crate::plugin::{
@@ -15,15 +15,14 @@ const PORTS: [&str; 3] = ["velocity_x", "velocity_y", "velocity_z"];
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct ConstantVelocityParams {
-    /// ENU velocity in m/s, written as three numbers: `"x y z"`.
-    #[serde(rename = "velocity")]
-    velocity_world_mps: Vec<f64>,
+    /// World velocity, `[east, north, up]`.
+    velocity_mps: [f64; 3],
 }
 
 impl Default for ConstantVelocityParams {
     fn default() -> Self {
         Self {
-            velocity_world_mps: vec![0.0; 3],
+            velocity_mps: [0.0; 3],
         }
     }
 }
@@ -37,15 +36,7 @@ impl Plugin for ConstantVelocity {
 
     fn configure(params: &PluginParams<'_>) -> Result<[f64; 3]> {
         let params: ConstantVelocityParams = params.parse()?;
-        ensure!(
-            params.velocity_world_mps.len() == 3,
-            "ConstantVelocity.velocity needs three numbers"
-        );
-        Ok([
-            params.velocity_world_mps[0],
-            params.velocity_world_mps[1],
-            params.velocity_world_mps[2],
-        ])
+        Ok(params.velocity_mps)
     }
 
     fn new(velocity_world_mps: &[f64; 3]) -> Self {

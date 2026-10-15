@@ -5,7 +5,7 @@
 //! Truth is sent on purpose: SITL makes its own noisy IMU, GPS, baro and compass
 //! from it, and its EKF is the aircraft's belief.
 //!
-//! It must run every tick (no `loop_rate`): the acceleration divides one
+//! It must run every tick (no `loop_rate_hz`): the acceleration divides one
 //! tick's velocity change by one tick. A skipped tick is an error.
 //!
 //! Frames: Ripple uses ENU world and forward-left-up (FLU) body axes;
@@ -25,24 +25,16 @@ pub const SITL_STATE_TOPIC: &str = "SitlState";
 #[serde(default, deny_unknown_fields)]
 pub struct SitlStateConfig {
     /// Must match the motion model's gravity (FixedWing6DOF's default is 9.81).
-    #[serde(rename = "gravity_magnitude")]
     gravity_mps2: f64,
-    /// Must match FixedWing6DOF's wind_E/N/U, which the sensor cannot read.
-    #[serde(rename = "wind_E")]
-    wind_east_mps: f64,
-    #[serde(rename = "wind_N")]
-    wind_north_mps: f64,
-    #[serde(rename = "wind_U")]
-    wind_up_mps: f64,
+    /// Must match FixedWing6DOF's `wind_mps`, which the sensor cannot read.
+    wind_mps: [f64; 3],
 }
 
 impl Default for SitlStateConfig {
     fn default() -> Self {
         Self {
             gravity_mps2: 9.81,
-            wind_east_mps: 0.0,
-            wind_north_mps: 0.0,
-            wind_up_mps: 0.0,
+            wind_mps: [0.0; 3],
         }
     }
 }
@@ -78,7 +70,7 @@ impl Plugin for SitlState {
         let config: SitlStateConfig = params.parse()?;
         ensure!(
             config.gravity_mps2 > 0.0,
-            "SitlState gravity_magnitude must be positive"
+            "SitlState gravity_mps2 must be positive"
         );
         Ok(config)
     }
@@ -86,11 +78,7 @@ impl Plugin for SitlState {
     fn new(config: &SitlStateConfig) -> Self {
         Self {
             gravity_mps2: config.gravity_mps2,
-            wind_world_mps: Vec3::new(
-                config.wind_east_mps,
-                config.wind_north_mps,
-                config.wind_up_mps,
-            ),
+            wind_world_mps: Vec3::from(config.wind_mps),
             previous_velocity_world_mps: Vec3::zeros(),
             previous_time_s: None,
         }
@@ -109,7 +97,7 @@ impl Sensor for SitlState {
             let elapsed_s = context.time.time_s - previous_time_s;
             ensure!(
                 (elapsed_s - context.time.dt_s).abs() <= 1e-9 * context.time.dt_s.max(1.0),
-                "SitlState must run every tick (remove its loop_rate)"
+                "SitlState must run every tick (remove its loop_rate_hz)"
             );
         }
         self.previous_time_s = Some(context.time.time_s);
@@ -262,7 +250,7 @@ mod tests {
         };
         let calm = sample(&truth, Vec3::zeros(), Vec3::zeros(), 9.81);
         assert!((calm.airspeed_mps - 20.0).abs() < 1e-12);
-        // wind_E = +5 on an eastbound aircraft is a tailwind.
+        // An east wind of +5 on an eastbound aircraft is a tailwind.
         let windy = sample(&truth, Vec3::zeros(), Vec3::new(5.0, 0.0, 0.0), 9.81);
         assert!((windy.airspeed_mps - 15.0).abs() < 1e-12);
     }

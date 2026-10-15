@@ -61,9 +61,10 @@ def mission(dt_s, end_s, entities):
 def controller(altitude_d=None, limits=None):
     text = "    controller:\n      AircraftPIDController:\n        airframe: rascal\n"
     if altitude_d is not None:
-        text += f"        altitude_pid: [0.1, 0.0001, {altitude_d!r}, 10]\n"
+        text += ("        altitude_pid: {kp: 0.1, ki: 0.0001, kd: "
+                 f"{altitude_d!r}, integrate_within_m: 10}}\n")
     if limits is not None:
-        text += f"        max_pitch: {limits[0]}\n        max_roll: {limits[1]}\n"
+        text += f"        max_pitch_deg: {limits[0]}\n        max_roll_deg: {limits[1]}\n"
     return text + "    motion_model:\n      FixedWing6DOF:\n        airframe: rascal\n"
 
 
@@ -103,7 +104,7 @@ def part_a(binary, output):
                 body = (f"    velocity_mps: [{SPEED_MPS * math.cos(math.radians(30))!r}, "
                         f"{SPEED_MPS * math.sin(math.radians(30))!r}, 0]\n"
                         f"    heading_deg: 30\n    roll_deg: {upset[0]}\n    pitch_deg: {upset[1]}\n"
-                        f"    autonomy:\n      Straight:\n        speed: {SPEED_MPS}\n" + controller(d))
+                        f"    autonomy:\n      Straight:\n        speed_mps: {SPEED_MPS}\n" + controller(d))
                 entities.append((f"upset {upset} D {d}", body))
                 keys.append((upset, d))
         frames = run(binary, output, f"upsets-dt{dt_s}", mission(dt_s, 45, entities))
@@ -131,8 +132,8 @@ def part_b(binary, output):
             # Waypoints are relative to the vehicle's start (entities sit 400 m apart).
             target = [waypoint[0], waypoint[1] + 400 * len(entities), waypoint[2]]
             body = (f"    velocity_mps: [{SPEED_MPS}, 0, 0]\n    heading_deg: 0\n"
-                    f"    autonomy:\n      WaypointFollower:\n        waypoints: [{target}]\n"
-                    f"        arrival_radius_m: 40\n        speed: {speed}\n" + controller(limits=limits))
+                    f"    autonomy:\n      WaypointFollower:\n        waypoints_m: [{target}]\n"
+                    f"        arrival_radius_m: 40\n        speed_mps: {speed}\n" + controller(limits=limits))
             entities.append((f"{limit_name}, {step_name}", body))
             keys.append((limit_name, step_name))
     frames = run(binary, output, "steps", mission(0.01, 60, entities))

@@ -14,8 +14,8 @@ networks:
   GlobalNetwork:
   CommsNetwork:
     plugin: SphereNetwork
-    range: 100
-    prob_transmit: 1
+    range_m: 100
+    transmit_probability: 1
 metrics: {SimpleCollisionMetrics: {}}
 
 templates:
@@ -25,7 +25,7 @@ templates:
     heading_deg: 0
     autonomy:
       AuctionAssign:
-        network_name: CommsNetwork
+        network: CommsNetwork
     controller: {SingleIntegratorControllerSimple: {}}
     motion_model: {SingleIntegrator: {}}
 

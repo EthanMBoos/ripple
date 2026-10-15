@@ -29,22 +29,22 @@ from frames import read_frames
 from project import ROOT, build_cli
 import scenario as missions
 GAIN_NUDGE = 1e-12
-# Default [P, I, D, integral band] per loop, from each Rust controller
+# Default gains per loop, from each Rust controller
 # (crates/core/src/plugin/controller/; AircraftPIDController's are its `a4d`
 # airframe gains, which generated missions name); a mission's own gains
 # replace them.
 PID_DEFAULTS = {
     "SimpleAircraftControllerPID": {
-        "heading_pid": [1.0, 0.01, 2.0, 9.0],
-        "alt_pid": [1.0, 0.0, 0.8, 1.0],
-        "vel_pid": [1.0, 0.1, 0.0, 1.0],
+        "heading_pid": {"kp": 1.0, "ki": 0.01, "kd": 2.0, "integrate_within_deg": 9.0},
+        "altitude_pid": {"kp": 1.0, "ki": 0.0, "kd": 0.8, "integrate_within_m": 1.0},
+        "speed_pid": {"kp": 1.0, "ki": 0.1, "kd": 0.0, "integrate_within_mps": 1.0},
     },
     "AircraftPIDController": {
-        "heading_pid": [1.0, 0.2, 1.0, 45.0],
-        "altitude_pid": [0.1, 0.0001, 0.002, 10.0],
-        "speed_pid": [1.0, 0.1, 0.03, 10.0],
-        "pitch_pid": [5.0, 0.01, 0.01, 9.0],
-        "roll_pid": [0.3, 0.1, 0.001, 9.0],
+        "heading_pid": {"kp": 1.0, "ki": 0.2, "kd": 1.0, "integrate_within_deg": 45.0},
+        "altitude_pid": {"kp": 0.1, "ki": 0.0001, "kd": 0.002, "integrate_within_m": 10.0},
+        "speed_pid": {"kp": 1.0, "ki": 0.1, "kd": 0.03, "integrate_within_mps": 10.0},
+        "pitch_pid": {"kp": 5.0, "ki": 0.01, "kd": 0.01, "integrate_within_deg": 9.0},
+        "roll_pid": {"kp": 0.3, "ki": 0.1, "kd": 0.001, "integrate_within_deg": 9.0},
     },
 }
 
@@ -58,19 +58,19 @@ def nudged(scenario):
     for group in scenario["entities"]:
         group["roll_deg"] = up(group["roll_deg"])
         motion = group["motion_model"]["params"]
-        if "max_roll" in motion:
-            motion["max_roll"] = up(motion["max_roll"])
+        if "max_roll_deg" in motion:
+            motion["max_roll_deg"] = up(motion["max_roll_deg"])
         for controller in group["controller"]:
             for loop, default in PID_DEFAULTS.get(controller["name"], {}).items():
-                gains = list(controller["params"].get(loop, default))
-                gains[0] *= 1 + GAIN_NUDGE
+                gains = dict(controller["params"].get(loop, default))
+                gains["kp"] *= 1 + GAIN_NUDGE
                 controller["params"][loop] = gains
         for autonomy in group["autonomy"]:
             params = autonomy["params"]
-            if "speed" in params:
-                params["speed"] = up(params["speed"])
-            if "velocity" in params:
-                params["velocity"] = [up(params["velocity"][0]), *params["velocity"][1:]]
+            if "speed_mps" in params:
+                params["speed_mps"] = up(params["speed_mps"])
+            if "velocity_mps" in params:
+                params["velocity_mps"] = [up(params["velocity_mps"][0]), *params["velocity_mps"][1:]]
     return scenario
 
 

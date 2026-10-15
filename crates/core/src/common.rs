@@ -10,7 +10,7 @@ pub(crate) mod variable_io;
 mod waypoints;
 
 pub(crate) use loop_rate::Rate;
-pub use pid::{Pid, PidGains};
+pub use pid::{AngleGains, LengthGains, Pid, PidGains, SpeedGains};
 pub use plugin_random::PluginRandom;
 pub(crate) use spatial::is_within;
 pub use spatial::{Pairs, SpatialIndex, TruthContacts};

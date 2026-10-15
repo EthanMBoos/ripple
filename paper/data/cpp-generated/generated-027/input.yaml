@@ -9,10 +9,10 @@
  },
  "interactions": {
   "SimpleCollision": {
-   "collision_range": 1.30383
+   "collision_range_m": 1.30383
   },
   "GroundCollision": {
-   "ground_collision_z": 57.6125
+   "ground_altitude_m": 57.6125
   }
  },
  "networks": {
@@ -47,12 +47,12 @@
    },
    "autonomy": {
     "ConstantVelocity": {
-     "velocity": [
+     "velocity_mps": [
       0.0,
       0.0,
       0.0
      ],
-     "loop_rate": 0
+     "loop_rate_hz": 0
     }
    },
    "controller": {
@@ -60,7 +60,7 @@
    },
    "motion_model": {
     "SingleIntegrator": {
-     "max_speed": 1.594
+     "max_speed_mps": 1.594
     }
    }
   },
@@ -81,12 +81,12 @@
    "heading_variance_deg2": 0,
    "autonomy": {
     "ConstantVelocity": {
-     "velocity": [
+     "velocity_mps": [
       5.29927,
       -3.48469,
       -0.571049
      ],
-     "loop_rate": 2
+     "loop_rate_hz": 2
     }
    },
    "controller": {
@@ -94,7 +94,7 @@
    },
    "motion_model": {
     "SingleIntegrator": {
-     "max_speed": 11.146
+     "max_speed_mps": 11.146
     }
    }
   }

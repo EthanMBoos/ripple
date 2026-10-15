@@ -19,7 +19,7 @@ templates:
     visual_model: sphere
     autonomy:
       Straight:
-        speed: 22
+        speed_mps: 22
     controller: {SimpleAircraftControllerPID: {}}
     motion_model: {SimpleAircraft: {}}
     sensors:

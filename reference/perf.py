@@ -54,8 +54,8 @@ def mission(agents, end, multiplier=1, controller_rate=0, variance=0, interactio
     if spawn:
         aircraft["spawn"] = spawn
     aircraft.update({
-        "autonomy": {"Straight": {"speed": 20}, **(autonomy or {})},
-        "controller": {"SimpleAircraftControllerPID": {"loop_rate": controller_rate}},
+        "autonomy": {"Straight": {"speed_mps": 20}, **(autonomy or {})},
+        "controller": {"SimpleAircraftControllerPID": {"loop_rate_hz": controller_rate}},
         "motion_model": {"SimpleAircraft": None},
         "sensors": sensors or {},
     })
@@ -67,7 +67,7 @@ def mission(agents, end, multiplier=1, controller_rate=0, variance=0, interactio
             "entities": {"aircraft": aircraft}}
 
 
-COLLISION = {"SimpleCollision": {"collision_range": 5}}
+COLLISION = {"SimpleCollision": {"collision_range_m": 5}}
 NOISE_5_5_1 = {"position_stddev_m": [5, 5, 1], "velocity_stddev_mps": [5, 5, 1]}
 # name: (description, agent counts, mission fields). Changing a workload makes
 # the accepted baseline incomparable, so perf.py stops comparing until a new
@@ -82,7 +82,7 @@ WORKLOADS = {
     "churn": ("scheduled spawning with collision removal", (64, 512), dict(
         end=200, variance=2500,
         # Aircraft hold 200 m, so this ground check costs time but never removes.
-        interactions={**COLLISION, "GroundCollision": {"ground_collision_z": 150}},
+        interactions={**COLLISION, "GroundCollision": {"ground_altitude_m": 150}},
         spawn={"rate_hz": 20, "batch_size": 4})),
     # Aircraft spread over about a kilometre, so few collide and the population
     # stays nearly constant: this measures the every-pair collision check itself.

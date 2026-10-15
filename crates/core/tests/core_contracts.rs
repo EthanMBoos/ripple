@@ -114,7 +114,7 @@ entities:
     team: 1
     autonomy:
       ClockLog:
-        loop_rate: 5
+        loop_rate_hz: 5
     motion_model:
       Still:
 ",

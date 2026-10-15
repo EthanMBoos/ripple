@@ -14,8 +14,8 @@ interactions:
 networks:
   LocalNetwork:
   SphereNetwork:
-    range: 100
-    prob_transmit: 1
+    range_m: 100
+    transmit_probability: 1
 
 templates:
   agent:

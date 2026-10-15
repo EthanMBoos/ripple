@@ -48,7 +48,7 @@ CASES = {
 
 
 def mission(agents, variance, range_m, collide):
-    interactions = {"SimpleCollision": {"collision_range": range_m}} if collide else {}
+    interactions = {"SimpleCollision": {"collision_range_m": range_m}} if collide else {}
     return perf.workload("collision", agents, variance=variance, interactions=interactions)
 
 

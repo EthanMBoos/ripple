@@ -26,7 +26,7 @@
     <roll>0.0</roll>
     <pitch>0.0</pitch>
     <use_variance_all_ents>false</use_variance_all_ents>
-    <autonomy enable_boundary_control="true" generate_entities="false" show_text_label="true">Straight</autonomy>
+    <autonomy enable_boundary_control="true">Straight</autonomy>
     <controller>SimpleAircraftControllerPID</controller>
     <motion_model>SimpleAircraft</motion_model>
   </entity>

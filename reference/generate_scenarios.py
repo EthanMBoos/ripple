@@ -35,15 +35,15 @@ def aircraft_group(rng, fixed_wing):
     speed = rng.uniform(150, 250) if fixed_wing else rng.uniform(15, 30)
     group = {"heading_deg": fmt(rng.uniform(-180, 180)),
              "roll_deg": fmt(rng.uniform(-5, 5)), "pitch_deg": fmt(rng.uniform(-3, 3)),
-             "autonomy": {"Straight": {"speed": fmt(speed), "loop_rate": rng.choice([0, 5, 10])}}}
+             "autonomy": {"Straight": {"speed_mps": fmt(speed), "loop_rate_hz": rng.choice([0, 5, 10])}}}
     if fixed_wing:
         group["velocity_mps"] = [fmt(speed), 0, 0]  # FixedWing6DOF needs airspeed at start.
         group["controller"] = {"AircraftPIDController": {"airframe": "a4d"}}
         group["motion_model"] = {"FixedWing6DOF": {
-            "airframe": "a4d", "wind_E": fmt(rng.uniform(-3, 3)), "wind_N": fmt(rng.uniform(-3, 3))}}
+            "airframe": "a4d", "wind_mps": [fmt(rng.uniform(-3, 3)), fmt(rng.uniform(-3, 3)), 0]}}
     else:
-        group["controller"] = {"SimpleAircraftControllerPID": {"loop_rate": rng.choice([0, 20, 50])}}
-        group["motion_model"] = {"SimpleAircraft": {"max_roll": fmt(rng.uniform(20, 45))}}
+        group["controller"] = {"SimpleAircraftControllerPID": {"loop_rate_hz": rng.choice([0, 20, 50])}}
+        group["motion_model"] = {"SimpleAircraft": {"max_roll_deg": fmt(rng.uniform(20, 45))}}
         if rng.random() < 0.4:
             sensor = rng.choice(["NoisyState", "NoisyContacts"])
             group["sensors"] = {sensor: sensor_bias(rng)}
@@ -55,10 +55,10 @@ def point_group(rng):
     if rng.random() < 0.1:
         velocity = [0, 0, 0]
     max_speed = rng.choice([-1, -1, round(rng.uniform(1, 12), 3)])
-    return {"autonomy": {"ConstantVelocity": {"velocity": [fmt(value) for value in velocity],
-                                              "loop_rate": rng.choice([0, 2, 10])}},
+    return {"autonomy": {"ConstantVelocity": {"velocity_mps": [fmt(value) for value in velocity],
+                                              "loop_rate_hz": rng.choice([0, 2, 10])}},
             "controller": {"SingleIntegratorControllerSimple": None},
-            "motion_model": {"SingleIntegrator": {"max_speed": fmt(max_speed)}}}
+            "motion_model": {"SingleIntegrator": {"max_speed_mps": fmt(max_speed)}}}
 
 
 def mission(rng, index, horizon=None):
@@ -80,13 +80,12 @@ def mission(rng, index, horizon=None):
     interactions = result["interactions"]
     collisions = rng.random() < 0.5
     if collisions:
-        interactions["SimpleCollision"] = {"collision_range": fmt(rng.uniform(1, 20))}
+        interactions["SimpleCollision"] = {"collision_range_m": fmt(rng.uniform(1, 20))}
     if rng.random() < 0.3:
         # Below every start altitude, so startup placement never fails.
-        interactions["GroundCollision"] = {"ground_collision_z": fmt(rng.uniform(0, 90))}
+        interactions["GroundCollision"] = {"ground_altitude_m": fmt(rng.uniform(0, 90))}
     if not fixed_wing and rng.random() < 0.3:
-        interactions["Boundary"] = {"center": [0, 0, 200], "lengths": [800, 800, 400],
-                                    "show_boundary": False}
+        interactions["Boundary"] = {"center_m": [0, 0, 200], "lengths_m": [800, 800, 400]}
     for block in range(rng.randint(1, 4)):
         count = rng.randint(1, 3)
         position = [rng.uniform(-500, 500), rng.uniform(-500, 500),

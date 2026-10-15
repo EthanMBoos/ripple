@@ -23,12 +23,13 @@ and
   defaults". A slot whose plugins all take defaults fits on one line:
   `networks: {LocalNetwork: {}, GlobalNetwork: {}}`. Give a plugin with values
   its own block.
-- Values are real YAML types: `25`, `true`, `[1, 0.01, 2, 9]`. No comma strings.
+- Values are real YAML types: `25`, `true`, `[0, 0, 200]`. No comma strings.
 - Non-finite numbers (`.inf`, `.nan`) are rejected, with the path to the value.
-- Field names carry units (`end_s`, `heading_deg`). Plugin parameters are the
-  names their config structs declare (`speed`, `position_stddev_m`).
+- Names carry units (`end_s`, `heading_deg`, `speed_mps`). Plugin parameters
+  are the names their config structs declare, with one name each (see [Rust
+  style](../development/rust-style.md#parameter-names)).
 - Entities and plugins are map keys (labels), so a path such as
-  `entities.red.autonomy.Straight.speed` names one value. Labels must be
+  `entities.red.autonomy.Straight.speed_mps` names one value. Labels must be
   non-empty and contain no dots. Errors name the label: `entity red: ...`.
 - **Key order matters.** Entities spawn and get IDs in file order, and
   plugins in a slot run in file order. YAML itself calls maps unordered, so do
@@ -66,7 +67,7 @@ entities:
       batch_size: 2
     autonomy:
       Straight:
-        speed: 25
+        speed_mps: 25
     controller: {SimpleAircraftControllerPID: {}}
     motion_model: {SimpleAircraft: {}}
 ```
@@ -127,7 +128,7 @@ Without `spawn`, all `count` entities spawn at the start. With it,
 ### Plugins
 
 Each key in a plugin slot is a label and, by default, the plugin name. Its map
-holds the plugin's parameters, plus two framework keys: `loop_rate` (Hz; 0 runs
+holds the plugin's parameters, plus two framework keys: `loop_rate_hz` (0 runs
 every step) and `plugin`. When one entity needs two of the same plugin, give
 each a label and name the plugin; a sensor's label also keys its random numbers
 ([Randomness and seeds](../concepts/randomness.md)):
@@ -156,7 +157,7 @@ An input left out takes the entity's one sensor of that kind, or the perfect
 measurement when it has none. See [Belief vs
 truth](../concepts/belief-vs-truth.md).
 
-Waypoints are a list of points: `waypoints: [[10, 0, 0], [10, 10, 0]]`.
+Waypoints are a list of points in metres: `waypoints_m: [[10, 0, 0], [10, 10, 0]]`.
 
 ## Command-line overrides
 
@@ -169,7 +170,7 @@ ripple run missions/straight-no-gui.yaml entities.red.heading_deg:=170 run.seed:
 
 Every part of the path must already exist (after template expansion), so a
 typo is an error rather than a new key. To override a plugin parameter, write
-it in the file or template first; a bare `Straight:` has no `speed` to replace.
+it in the file or template first; a bare `Straight:` has no `speed_mps` to replace.
 Quote a value containing brackets or spaces for the shell:
 `'entities.red.color:=[255, 0, 0]'`. A path can also name a whole plugin slot
 the group has, replacing its plugins: `'entities.red.autonomy:={Straight: {}}'`.
@@ -184,7 +185,7 @@ base_scenario: waypoints-point-agents.yaml   # relative to the sweep file
 seeds: [1, 2]                                # sets run.seed; optional
 parameter_combinations: cartesian            # or zip: lists must be the same length
 parameters:
-  entities.blue.autonomy.WaypointFollower.speed: [3, 5]
+  entities.blue.autonomy.WaypointFollower.speed_mps: [3, 5]
   interactions.WaypointBroadcast.update_at_s: [3, 100]
 ```
 
@@ -215,7 +216,7 @@ as overrides; runs are deterministic, so it is the same run:
 
 ```sh
 ripple run missions/waypoints-point-agents.yaml run.seed:=2 \
-    entities.blue.autonomy.WaypointFollower.speed:=5
+    entities.blue.autonomy.WaypointFollower.speed_mps:=5
 ```
 
 Only what sharding needs is implemented. Per-case output folders,
@@ -237,10 +238,10 @@ templates:
     visual_model: sphere
     autonomy:
       Straight:
-        speed: 0
+        speed_mps: 0
     controller:
       MotorSpeeds:
-        speeds: [821.58, 821.58, 821.58, 821.58]
+        speeds_radps: [821.58, 821.58, 821.58, 821.58]
     motion_model: {Multirotor: {}}
 
 entities:
@@ -254,7 +255,7 @@ entities:
     position_m: [-10, 10, 30]
     controller:              # replaces the template's controller slot
       MotorSpeeds:
-        speeds: [820, 821, 823, 822]
+        speeds_radps: [820, 821, 823, 822]
 ```
 
 Loading happens in this order: read the file, expand templates, apply
@@ -262,7 +263,7 @@ command-line overrides or sweep values, then validate. So an override
 can change a field a group inherited:
 
 ```sh
-ripple run missions/multirotor.yaml 'entities.level_hover.controller.MotorSpeeds.speeds:=[800, 800, 800, 800]'
+ripple run missions/multirotor.yaml 'entities.level_hover.controller.MotorSpeeds.speeds_radps:=[800, 800, 800, 800]'
 ```
 
 Overrides cannot address `templates` itself; change the groups instead. One

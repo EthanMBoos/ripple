@@ -16,7 +16,7 @@ templates:
     visual_model: sphere
     autonomy:
       Straight:
-        speed: 220
+        speed_mps: 220
     controller:
       AircraftPIDController:
         airframe: a4d
@@ -42,5 +42,4 @@ entities:
     motion_model:
       FixedWing6DOF:
         airframe: a4d
-        wind_E: -3
-        wind_N: 2
+        wind_mps: [-3, 2, 0]

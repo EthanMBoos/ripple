@@ -132,10 +132,10 @@ fn plugin_configs(slot: Mapping) -> Result<Vec<PluginConfig>> {
             Some(_) => bail!("plugin `{label}`: `plugin` must be a name"),
             None => (label.to_owned(), None),
         };
-        let loop_rate_hz = match params.remove("loop_rate") {
+        let loop_rate_hz = match params.remove("loop_rate_hz") {
             Some(value) => value
                 .as_f64()
-                .with_context(|| format!("plugin `{label}`: loop_rate must be a number"))?,
+                .with_context(|| format!("plugin `{label}`: loop_rate_hz must be a number"))?,
             None => 0.0,
         };
         configs.push(PluginConfig {
@@ -280,7 +280,7 @@ entities:
     team: 1
     autonomy:
       Straight:
-        speed: 25
+        speed_mps: 25
     controller:
       SimpleAircraftControllerPID:
     motion_model:
@@ -392,7 +392,7 @@ entities:
         for (path, message) in [
             ("entities.blue.teem", "field `teem` does not exist"),
             (
-                "entities.blue.motion_model.SimpleAircraft.speed",
+                "entities.blue.motion_model.SimpleAircraft.speed_mps",
                 "below a single value",
             ),
         ] {
@@ -405,12 +405,16 @@ entities:
     fn unknown_keys_bad_values_and_non_finite_numbers_are_errors() {
         for (from, to, message) in [
             ("team: 1", "teem: 1", "unknown field `teem`"),
-            ("speed: 25", "sped: 25", "unknown field `sped`"),
-            ("speed: 25", "speed: fast", "speed: invalid type"),
+            ("speed_mps: 25", "sped_mps: 25", "unknown field `sped_mps`"),
             (
-                "speed: 25",
-                "speed: .inf",
-                "entities.blue.autonomy.Straight.speed: expected a finite number",
+                "speed_mps: 25",
+                "speed_mps: fast",
+                "speed_mps: invalid type",
+            ),
+            (
+                "speed_mps: 25",
+                "speed_mps: .inf",
+                "entities.blue.autonomy.Straight.speed_mps: expected a finite number",
             ),
             (
                 "SimpleAircraft:",
@@ -443,7 +447,7 @@ templates:
     heading_deg: 90
     autonomy:
       Straight:
-        speed: 25
+        speed_mps: 25
     controller:
       SimpleAircraftControllerPID:
     motion_model:
@@ -474,10 +478,10 @@ entities:
     fn overrides_reach_inherited_fields_but_not_templates() -> Result<()> {
         let mission = load(
             TEMPLATED,
-            &[("entities.blue.autonomy.Straight.speed", "30")],
+            &[("entities.blue.autonomy.Straight.speed_mps", "30")],
         )?;
         assert_eq!(
-            mission.entities[0].autonomy[0].params["speed"],
+            mission.entities[0].autonomy[0].params["speed_mps"],
             Value::from(30)
         );
         let message = error(TEMPLATED, &[("templates.aircraft.team", "3")]);

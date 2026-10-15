@@ -14,10 +14,10 @@ fn construct_attitude_and_rotate_a_body_vector() {
 #[test]
 fn construct_and_step_linear_and_angular_controllers() {
     let gains = PidGains {
-        proportional: 2.0,
-        integral: 0.0,
-        derivative: 0.0,
-        integral_band: 10.0,
+        kp: 2.0,
+        ki: 0.0,
+        kd: 0.0,
+        integrate_within: 10.0,
     };
     let mut linear = Pid::linear(gains);
     assert!((linear.step(3.0, 1.0, 0.1) - 4.0).abs() < 1e-12);

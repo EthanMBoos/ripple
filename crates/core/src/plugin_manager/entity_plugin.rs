@@ -36,8 +36,8 @@ impl<'a> PluginParams<'a> {
         }
     }
 
-    /// (key, YAML value) pairs, for unit tests: `("mass", "1.5")`,
-    /// `("airframe", "crazyflie2")`, `("speeds", "[800, 800]")`.
+    /// (key, YAML value) pairs, for unit tests: `("mass_kg", "1.5")`,
+    /// `("airframe", "crazyflie2")`, `("speeds_radps", "[800, 800]")`.
     #[cfg(test)]
     pub(crate) fn pairs(pairs: &[(&str, &str)]) -> PluginParams<'static> {
         let values = pairs

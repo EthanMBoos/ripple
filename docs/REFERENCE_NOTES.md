@@ -7,10 +7,10 @@ reviewed source, not a required pin. Follow the branch for new comparisons. The
 describes current Rust APIs. Comparison results are in the
 [paper](../paper/README.md).
 
-## Corrections to the copied C++ guides
+## Corrections to SCRIMMAGE's documentation
 
-These findings come from source, rather than the synthesized guides in the
-[book appendix](../book/src/appendix/cpp.md).
+These findings come from source, rather than SCRIMMAGE's documentation
+(`../scrimmage/docs/source`).
 
 | Source in the C++ checkout | Finding |
 | --- | --- |
@@ -63,6 +63,25 @@ then SCRIMMAGE runs the written XML.
   a template's slot is replaced, not appended to; frames, events, and summary
   are byte-identical. SCRIMMAGE's own test missions are in its
   `test/test_missions/`.
+- **Ripple's parameter names, SCRIMMAGE's keys.** Each plugin parameter has
+  one name ([Rust style](../book/src/development/rust-style.md#parameter-names)):
+  `speed_mps`, not `speed`; `c_roll_p`, not `C_LP`; PID gains as
+  `{kp, ki, kd, integrate_within_*}`, not `"P I D band"`; `wind_mps` as one
+  `[east, north, up]`. SCRIMMAGE's names live only in `KEYS` in
+  `reference/scrimmage_xml.py`, which writes each parameter under SCRIMMAGE's
+  key, sorted by it as before, and leaves a zero wind component to SCRIMMAGE's
+  default. Options Ripple never implemented were deleted rather than kept as
+  fields that reject a value, among them SCRIMMAGE's display switches. The
+  rename was proven like the YAML move: 142 cases (every mission, the
+  reference inputs, the fixtures, the speed workloads, and the 100 generated
+  scenarios), the old build on the old missions against the new build on the
+  new ones, wrote byte-identical frames, events, summaries, and traces. The
+  written XML is identical except where a mission set a deleted option:
+  `world-networks` and 20 generated scenarios lose `show_boundary="false"`,
+  and `aircraft-long-horizon` loses `show_text_label="true"` and
+  `generate_entities="false"`. `show_boundary` and `show_text_label` only draw
+  in SCRIMMAGE's GUI, which the comparison never opens, and
+  `generate_entities` is false by default.
 
 ## Intentional differences from C++
 
@@ -124,10 +143,11 @@ then SCRIMMAGE runs the written XML.
   and its derivative terms N times weaker: the controller's tuning changes with
   `motion_multiplier`. Rust and `benchmarking-edits` (commit `5777aeea1`) use
   the given substep, with which N substeps behave exactly like running the
-  controller N times faster. That holds only for a controller without a
-  `loop_rate`: in both engines a rate-limited controller still receives the
-  substep, not the time since it last ran, so its tuning still changes with
-  `motion_multiplier` (see `agent_step` in `entity/plugin_stack.rs`).
+  controller N times faster. A rate-limited controller receives the time since
+  it last ran, summed over substeps, so its tuning does not change with
+  `motion_multiplier` either (`agent_step` in `entity/plugin_stack.rs`; C++
+  `EntityPlugin::loop_dt`, commit `719c0940c`; see [Core defects fixed on both
+  sides](#core-defects-fixed-on-both-sides)).
 
   Both also lower the default altitude derivative gain from 0.01 to 0.002.
   This is a tuning choice, not a fix: upstream's gain is too strong for the
@@ -637,7 +657,8 @@ compare it with.
 
 FixedWing6DOF's `landing_gear` and TerrainCollision's `structure_points_frd_m`
 are Rust-only too: C++ ground contact was the flat spring at `z = 0`
-(`use_ground_model`), which stays unchanged for the comparison missions. The
+(`use_ground_model`, Ripple's `enable_ground_spring`), which stays unchanged
+for the comparison missions. The
 gear follows JSBSim's FGLGear wheels (`landing_gear.rs`), so the comparison
 does not cover it; its own tests do (`crates/core/tests/landing_gear.rs`).
 
@@ -721,7 +742,7 @@ Keyed draws change two things about what is random, on both sides:
   the sending and receiving entities, the topic, and the sequence, so all
   subscribers on one entity hear it or none do, as with one radio. SCRIMMAGE
   draws once per subscriber. Each subscriber still receives with probability
-  `prob_transmit`.
+  `transmit_probability` (SCRIMMAGE's `prob_transmit`).
 - **NoisyState's first reading has its own key.** It is taken when the entity
   is created, in the tick of the sensor phase's next reading; without a
   separate key both readings would carry the same errors.

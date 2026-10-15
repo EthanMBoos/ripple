@@ -21,14 +21,14 @@ templates:
     visual_model: sphere
     autonomy:
       WaypointFollower:
-        waypoints: [[100, 0, 0], [100, 100, 0], [0, 100, 0], [0, 0, 0]]
+        waypoints_m: [[100, 0, 0], [100, 100, 0], [0, 100, 0], [0, 0, 0]]
         repeat: true
         arrival_radius_m: 2
-        speed: 10
+        speed_mps: 10
     controller: {SingleIntegratorControllerSimple: {}}
     motion_model:
       SingleIntegrator:
-        max_speed: 8      # the hidden truth: its motors only reach 8 m/s
+        max_speed_mps: 8      # the hidden truth: its motors only reach 8 m/s
 
 entities:
   dead_reckoning:
@@ -38,7 +38,7 @@ entities:
     sensors:
       gps:
         plugin: NoisyState
-        loop_rate: 0.2    # one fix every 5 s
+        loop_rate_hz: 0.2    # one fix every 5 s
         position_stddev_m: [0, 0, 0]   # exact fixes; raise to add GPS noise
     localization:
       DeadReckoning:

@@ -9,10 +9,10 @@
  },
  "interactions": {
   "SimpleCollision": {
-   "collision_range": 17.3435
+   "collision_range_m": 17.3435
   },
   "GroundCollision": {
-   "ground_collision_z": 79.5983
+   "ground_altitude_m": 79.5983
   }
  },
  "networks": {
@@ -43,8 +43,8 @@
    "pitch_deg": -2.28621,
    "autonomy": {
     "Straight": {
-     "speed": 179.441,
-     "loop_rate": 0
+     "speed_mps": 179.441,
+     "loop_rate_hz": 0
     }
    },
    "velocity_mps": [
@@ -60,8 +60,11 @@
    "motion_model": {
     "FixedWing6DOF": {
      "airframe": "a4d",
-     "wind_E": 2.12467,
-     "wind_N": 0.204032
+     "wind_mps": [
+      2.12467,
+      0.204032,
+      0
+     ]
     }
    }
   },
@@ -86,8 +89,8 @@
    "pitch_deg": -0.297414,
    "autonomy": {
     "Straight": {
-     "speed": 205.509,
-     "loop_rate": 5
+     "speed_mps": 205.509,
+     "loop_rate_hz": 5
     }
    },
    "velocity_mps": [
@@ -103,8 +106,11 @@
    "motion_model": {
     "FixedWing6DOF": {
      "airframe": "a4d",
-     "wind_E": -1.75903,
-     "wind_N": -0.438257
+     "wind_mps": [
+      -1.75903,
+      -0.438257,
+      0
+     ]
     }
    }
   },
@@ -128,8 +134,8 @@
    "pitch_deg": -0.732219,
    "autonomy": {
     "Straight": {
-     "speed": 180.207,
-     "loop_rate": 5
+     "speed_mps": 180.207,
+     "loop_rate_hz": 5
     }
    },
    "velocity_mps": [
@@ -145,8 +151,11 @@
    "motion_model": {
     "FixedWing6DOF": {
      "airframe": "a4d",
-     "wind_E": -2.54611,
-     "wind_N": 0.526073
+     "wind_mps": [
+      -2.54611,
+      0.526073,
+      0
+     ]
     }
    }
   },
@@ -170,8 +179,8 @@
    "pitch_deg": -2.91522,
    "autonomy": {
     "Straight": {
-     "speed": 204.766,
-     "loop_rate": 10
+     "speed_mps": 204.766,
+     "loop_rate_hz": 10
     }
    },
    "velocity_mps": [
@@ -187,8 +196,11 @@
    "motion_model": {
     "FixedWing6DOF": {
      "airframe": "a4d",
-     "wind_E": 0.9732,
-     "wind_N": -0.282859
+     "wind_mps": [
+      0.9732,
+      -0.282859,
+      0
+     ]
     }
    }
   }

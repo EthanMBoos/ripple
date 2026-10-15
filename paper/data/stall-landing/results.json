@@ -13,7 +13,7 @@
       "drag_table": "[[-1.57, 1.5], [-0.26, 0.056], [0.0, 0.028], [0.26, 0.056], [1.57, 1.5]]"
     }
   },
-  "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+  "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
   "results": {
     "linear": {
       "touchdown_time_s": 172.602,

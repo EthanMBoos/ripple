@@ -3,7 +3,7 @@
   "mission": "<checkout>/missions/fixed-wing-6dof-rascal.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "26ba4bd1e160b1e92807c86aa62d07b09de259504856d40b4a64de69558599c6",
+    "input_sha256": "29c1e7ddf60330690dafaefbfbf074e5efb64dc6cebed9a75a6ffd0189383a0e",
     "xml_sha256": "c9ca5796ecd2e4db315fcc77ad5a49d79a1d71bcefab0c87fbc18727d3255933",
     "effective_sha256": "31a3b3e972bfb1d35d08e4652f9f4e225166088c333e974885cbd43ab3a74ca6",
     "run_overrides": {
@@ -32,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-15_06-54-02",
+  "cpp_log_directory": "cpp/logs/2026-10-15_11-21-38",
   "cpp_output_hashes": {
     "frames.bin": "a03a4787d647093e8a1972a74f7112e9a82a31f6c06fb9d6d8a8bcd47f89c64d",
     "summary.csv": "c6fd86bfd0f66c37749d267e6888b1b3a9f8d984030a2c9b0fbdd70dc1004ba3"
@@ -54,7 +54,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "5ee8e81481af6e579f322179b873173fd99f824a6069db25cb4cc16fce98cbed",
+  "recording_sha256": "5bc8153bd3c23d5de8fd63c5b168779b5a539d1b122e0a117a15561b41a9e37c",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

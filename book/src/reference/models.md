@@ -19,13 +19,13 @@ the simulation loop. No runtime library loading is planned.
 ## Deliberate limits
 
 - Boundary publishes one axis-aligned cuboid. Faces are outside, as in C++.
-  Sphere/polyhedron/plane, rotation, and drawing are not implemented. Use
-  `show_boundary=false` (the Rust default); this is a behavioral region, not
-  a physical wall. An autonomy must choose how to respond. Straight keeps its
+  Sphere/polyhedron/plane, rotation, and drawing are not implemented; this is
+  a behavioral region, not a physical wall. An autonomy must choose how to respond. Straight keeps its
   old heading if horizontally coincident with the center instead of normalizing
   a zero vector.
-- GroundCollision uses a flat `ground_collision_z` in local meters, optional
-  team filtering, and removal. Force response and geodetic altitude are errors.
+- GroundCollision uses a flat `ground_altitude_m` in local meters, optional
+  team filtering, and removal. There is no force response or geodetic
+  altitude.
   Startup rejection is separately configurable and, like C++, has no team
   filter.
 - TerrainCollision removes agents that reach the mission's terrain, checking the
@@ -51,13 +51,12 @@ the simulation loop. No runtime library loading is planned.
   slower autonomy rates, tight aircraft turns, or noisy position at the final
   point is not a navigation guarantee. Choose sensible speed/radius/turn
   geometry.
-- SingleIntegrator's `max_speed` caps the speed: a faster command keeps its
-  direction at `max_speed`; negative (the default) means no limit.
-  `override_heading=true` is not implemented.
+- SingleIntegrator's `max_speed_mps` caps the speed: a faster command keeps its
+  direction at `max_speed_mps`; negative (the default) means no limit.
 - SimpleAircraft turns as a coordinated turn does, at g tan(bank) / speed, so
   its turn radius grows with speed squared. Its limits are physical:
-  speeds (`min_velocity`, `max_velocity`), bank and pitch (`max_roll`,
-  `max_pitch`, degrees), their rates, acceleration and deceleration
+  speeds (`min_speed_mps`, `max_speed_mps`), bank and pitch (`max_roll_deg`,
+  `max_pitch_deg`), their rates, acceleration and deceleration
   (`max_acceleration_mps2`, `max_deceleration_mps2`), and climb and descent
   rates (`max_climb_rate_mps`, `max_descent_rate_mps`). `airframe: rascal`
   loads limits fit to FixedWing6DOF's Rascal (`reference/simple_aircraft_fit.py`
@@ -77,9 +76,7 @@ the simulation loop. No runtime library loading is planned.
   substeps (`motion_multiplier: 5` gives 0.02 s and 125 m/s) for faster
   aircraft, such as the `rascal` profile at full speed.
 - SimpleAircraft is a kinematic stand-in: no claim of a high-fidelity flight
-  model. `show_text_label` in
-  legacy Straight inputs is superseded by Rerun's labels, not a plugin drawing
-  API.
+  model.
 - NoisyState estimates own state, not probabilistic target detection. Rust's
   independent sensor RNG streams differ from C++; its inherited covariance
   payload is not calibrated uncertainty. See the [paper's
@@ -96,3 +93,45 @@ backlog. Keep their limitations documented; do not add them for completeness.
 AuctionAssign is a single random-bid messaging demonstration with stationary
 agents, not a task planner. See [plugin contracts](plugin-api.md#noisycontacts)
 for reading types, radio policies, random numbers, and examples.
+
+## FixedWing6DOF parameters
+
+Keys follow [Parameter names](../development/rust-style.md#parameter-names).
+`airframe: a4d` or `airframe: rascal` fills every vehicle key; any key the
+mission gives overrides one value. Without an airframe the mission gives them
+all.
+
+| Keys | Meaning |
+| --- | --- |
+| `mass_kg`, `inertia_kgm2` or `inertia_slug_ft2` | mass; inertia as three rows |
+| `wing_span_m` (b), `wing_area_m2` (S), `mean_chord_m` (c̄), `oswald_efficiency` (e) | geometry; induced drag is C_L² / (π e AR), AR = b / c̄ |
+| `min_thrust_n`, `max_thrust_n`; `min_throttle`, `max_throttle` | thrust, linear in throttle between them |
+| `min_elevator_rad` ... `max_rudder_rad` | control surface limits |
+| `air_density_kgpm3`, `gravity_mps2`, `wind_mps` | environment: 1.225, 9.81, and `[east, north, up]` of zero by default |
+
+Each coefficient is a stability or control derivative, per radian and
+dimensionless, in the notation of Beard and McLain (*Small Unmanned Aircraft*,
+ch. 4) and Nelson (*Flight Stability and Automatic Control*). Rates enter
+nondimensionalized, as p b / 2V, q c̄ / 2V, and r b / 2V.
+
+| Key | Symbol | Meaning |
+| --- | --- | --- |
+| `c_lift_0`, `c_lift_alpha` | C_L0, C_Lα | lift at zero angle of attack, and its slope |
+| `c_lift_q`, `c_lift_elevator` | C_Lq, C_Lδe | lift from pitch rate and from the elevator |
+| `c_drag_0`, `c_drag_alpha`, `c_drag_elevator` | C_D0, C_Dα, C_Dδe | zero-lift drag, its rise with \|α\|, and elevator drag |
+| `c_side_beta`, `c_side_rudder` | C_Yβ, C_Yδr | side force from sideslip and from the rudder |
+| `c_roll_beta` | C_ℓβ | dihedral effect: roll from sideslip |
+| `c_roll_p`, `c_roll_r` | C_ℓp, C_ℓr | roll damping; roll from yaw rate |
+| `c_roll_aileron`, `c_roll_rudder` | C_ℓδa, C_ℓδr | roll from the ailerons and the rudder |
+| `c_pitch_0`, `c_pitch_alpha` | C_m0, C_mα | pitching moment at zero α; static stability (negative is stable) |
+| `c_pitch_q`, `c_pitch_elevator` | C_mq, C_mδe | pitch damping; elevator authority |
+| `c_yaw_beta` | C_nβ | weathercock stability: yaw from sideslip |
+| `c_yaw_p`, `c_yaw_r` | C_np, C_nr | yaw from roll rate; yaw damping |
+| `c_yaw_aileron`, `c_yaw_rudder` | C_nδa, C_nδr | adverse yaw from the ailerons; rudder authority |
+
+`lift_table` and `drag_table` (rows of `[alpha_rad, C]`) replace `c_lift_0 +
+c_lift_alpha α` and `c_drag_0 + c_drag_alpha |α|`, so the wing can stall;
+induced and elevator drag are still added. `enable_ground_spring` (on by
+default) is a flat spring at z = 0, which `landing_gear` or terrain replaces;
+`enable_launcher` with `launch_at_s`, `launch_speed_mps`, and
+`launch_acceleration_mps2` is a catapult.

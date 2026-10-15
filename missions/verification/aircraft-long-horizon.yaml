@@ -22,8 +22,6 @@ entities:
     heading_deg: 0
     autonomy:
       Straight:
-        show_text_label: true
-        generate_entities: false
         enable_boundary_control: true
     controller: {SimpleAircraftControllerPID: {}}
     motion_model: {SimpleAircraft: {}}
@@ -37,7 +35,7 @@ entities:
     heading_deg: 180
     autonomy:
       Straight:
-        speed: 21
+        speed_mps: 21
         enable_boundary_control: true
     controller: {SimpleAircraftControllerPID: {}}
     motion_model: {SimpleAircraft: {}}

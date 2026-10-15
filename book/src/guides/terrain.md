@@ -67,9 +67,9 @@ The viewer draws the terrain as triangles through the samples (skipping some on
 large grids), while collisions use the smooth interpolated surface, so an agent
 that looks like it touches the drawn ground may not quite, and the reverse.
 
-FixedWing6DOF has its own flat ground at `z = 0` (`use_ground_model`, on by
+FixedWing6DOF has its own flat ground at `z = 0` (`enable_ground_spring`, on by
 default), which would push aircraft up in mid-air over valleys below `z = 0`.
-It refuses to start in a terrain mission unless `use_ground_model` is false;
+It refuses to start in a terrain mission unless `enable_ground_spring` is false;
 add TerrainCollision to remove aircraft that hit the terrain, or give it
 landing gear.
 
@@ -89,7 +89,7 @@ JSBSim Rascal (`Rascal.xml`):
 motion_model:
   FixedWing6DOF:
     airframe: rascal
-    use_ground_model: false          # the wheels replace the flat spring
+    enable_ground_spring: false      # the wheels replace the flat spring
     landing_gear:
       # forward, right, down from the centre of gravity (m)
       - {position_frd_m: [0.084, -0.328, 0.434], spring_n_per_m: 7005, damping_n_s_per_m: 1459,

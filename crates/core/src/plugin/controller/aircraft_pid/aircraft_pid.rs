@@ -6,7 +6,7 @@
 use anyhow::{Context, Result, ensure};
 use serde::Deserialize;
 
-use crate::common::{Pid, PidGains};
+use crate::common::{AngleGains, LengthGains, Pid, PidGains, SpeedGains};
 use crate::plugin::motion::FixedWingAirframe;
 use crate::plugin::{
     AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
@@ -14,27 +14,20 @@ use crate::plugin::{
 
 /// Mission parameters. `airframe` loads the gains and attitude limits tuned
 /// for that aircraft, which any key below overrides; without it the mission
-/// gives every gain and limit. Each PID is `P, I, D, integral band`.
+/// gives every gain and limit. Each PID is `{kp, ki, kd, integrate_within_*}`.
 #[derive(Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct AircraftPidParams {
     /// `a4d` or `rascal`, as for FixedWing6DOF.
     airframe: Option<FixedWingAirframe>,
-    #[serde(rename = "heading_pid")]
-    heading: Option<PidGains>,
-    #[serde(rename = "altitude_pid")]
-    altitude: Option<PidGains>,
-    #[serde(rename = "speed_pid")]
-    speed: Option<PidGains>,
-    #[serde(rename = "pitch_pid")]
-    pitch: Option<PidGains>,
-    #[serde(rename = "roll_pid")]
-    roll: Option<PidGains>,
-    #[serde(rename = "max_pitch")]
+    heading_pid: Option<AngleGains>,
+    altitude_pid: Option<LengthGains>,
+    speed_pid: Option<SpeedGains>,
+    pitch_pid: Option<AngleGains>,
+    roll_pid: Option<AngleGains>,
     max_pitch_deg: Option<f64>,
-    #[serde(rename = "max_roll")]
     max_roll_deg: Option<f64>,
-    use_roll_control: bool,
+    enable_roll_control: bool,
 }
 
 #[derive(Clone)]
@@ -46,24 +39,49 @@ pub struct AircraftPidConfig {
     roll: PidGains,
     max_pitch_deg: f64,
     max_roll_deg: f64,
-    use_roll_control: bool,
+    enable_roll_control: bool,
 }
 
-/// The gains and limits each aircraft flies with. `use_roll_control` is a
+/// The gains and limits each aircraft flies with. `enable_roll_control` is a
 /// mission choice, not part of a profile.
 fn airframe_settings(airframe: FixedWingAirframe) -> AircraftPidConfig {
     // Set with the A-4D; its altitude derivative gain is 0.002, where 0.01
     // let a pitch upset grow into an altitude and heading oscillation at
     // 220 m/s (docs/REFERENCE_NOTES.md).
     let a4d = AircraftPidConfig {
-        heading: PidGains::from([1.0, 0.2, 1.0, 45.0]),
-        altitude: PidGains::from([0.1, 0.0001, 0.002, 10.0]),
-        speed: PidGains::from([1.0, 0.1, 0.03, 10.0]),
-        pitch: PidGains::from([5.0, 0.01, 0.01, 9.0]),
-        roll: PidGains::from([0.3, 0.1, 0.001, 9.0]),
+        heading: PidGains {
+            kp: 1.0,
+            ki: 0.2,
+            kd: 1.0,
+            integrate_within: 45.0,
+        },
+        altitude: PidGains {
+            kp: 0.1,
+            ki: 0.0001,
+            kd: 0.002,
+            integrate_within: 10.0,
+        },
+        speed: PidGains {
+            kp: 1.0,
+            ki: 0.1,
+            kd: 0.03,
+            integrate_within: 10.0,
+        },
+        pitch: PidGains {
+            kp: 5.0,
+            ki: 0.01,
+            kd: 0.01,
+            integrate_within: 9.0,
+        },
+        roll: PidGains {
+            kp: 0.3,
+            ki: 0.1,
+            kd: 0.001,
+            integrate_within: 9.0,
+        },
         max_pitch_deg: 45.0,
         max_roll_deg: 60.0,
-        use_roll_control: false,
+        enable_roll_control: false,
     };
     match airframe {
         FixedWingAirframe::A4d => a4d,
@@ -95,7 +113,7 @@ pub struct AircraftPidController {
     roll: Pid,
     max_pitch_rad: f64,
     max_roll_rad: f64,
-    use_roll_control: bool,
+    enable_roll_control: bool,
 }
 
 impl Plugin for AircraftPidController {
@@ -112,34 +130,39 @@ impl Plugin for AircraftPidController {
         };
         let config = AircraftPidConfig {
             heading: params
-                .heading
+                .heading_pid
+                .map(Into::into)
                 .or(profile.as_ref().map(|p| p.heading))
                 .with_context(|| missing("heading_pid"))?,
             altitude: params
-                .altitude
+                .altitude_pid
+                .map(Into::into)
                 .or(profile.as_ref().map(|p| p.altitude))
                 .with_context(|| missing("altitude_pid"))?,
             speed: params
-                .speed
+                .speed_pid
+                .map(Into::into)
                 .or(profile.as_ref().map(|p| p.speed))
                 .with_context(|| missing("speed_pid"))?,
             pitch: params
-                .pitch
+                .pitch_pid
+                .map(Into::into)
                 .or(profile.as_ref().map(|p| p.pitch))
                 .with_context(|| missing("pitch_pid"))?,
             roll: params
-                .roll
+                .roll_pid
+                .map(Into::into)
                 .or(profile.as_ref().map(|p| p.roll))
                 .with_context(|| missing("roll_pid"))?,
             max_pitch_deg: params
                 .max_pitch_deg
                 .or(profile.as_ref().map(|p| p.max_pitch_deg))
-                .with_context(|| missing("max_pitch"))?,
+                .with_context(|| missing("max_pitch_deg"))?,
             max_roll_deg: params
                 .max_roll_deg
                 .or(profile.as_ref().map(|p| p.max_roll_deg))
-                .with_context(|| missing("max_roll"))?,
-            use_roll_control: params.use_roll_control,
+                .with_context(|| missing("max_roll_deg"))?,
+            enable_roll_control: params.enable_roll_control,
         };
         ensure!(
             config.max_pitch_deg >= 0.0 && config.max_roll_deg >= 0.0,
@@ -157,12 +180,12 @@ impl Plugin for AircraftPidController {
             roll: Pid::angular(config.roll),
             max_pitch_rad: crate::math::deg_to_rad(config.max_pitch_deg),
             max_roll_rad: crate::math::deg_to_rad(config.max_roll_deg),
-            use_roll_control: config.use_roll_control,
+            enable_roll_control: config.enable_roll_control,
         }
     }
 
     fn ports(config: &AircraftPidConfig) -> Ports {
-        let steering = if config.use_roll_control {
+        let steering = if config.enable_roll_control {
             "desired_roll"
         } else {
             "desired_heading"
@@ -200,7 +223,7 @@ impl Controller for AircraftPidController {
             dt_s,
         );
 
-        let desired_roll_rad = if self.use_roll_control {
+        let desired_roll_rad = if self.enable_roll_control {
             io.read("desired_roll")?
         } else {
             -self.heading.step(
@@ -241,7 +264,9 @@ mod tests {
         // Five 0.02-second updates cover one 0.1-second mission tick.
         // With constant speed error 1, I grows by 0.02 each update; D is
         // 0.01 / 0.02 = 0.5 on the first update and zero thereafter.
-        let params = PluginParams::yaml("{airframe: a4d, speed_pid: [0, 1, 0.01, 10]}");
+        let params = PluginParams::yaml(
+            "{airframe: a4d, speed_pid: {kp: 0, ki: 1, kd: 0.01, integrate_within_mps: 10}}",
+        );
         let config = AircraftPidController::configure(&params)?;
         let mut controller = AircraftPidController::new(&config);
         let mut io = PluginIo::new(&AircraftPidController::ports(&config));
@@ -289,7 +314,7 @@ mod tests {
         let rascal = configure("rascal")?;
         assert_eq!((a4d.max_pitch_deg, a4d.max_roll_deg), (45.0, 60.0));
         assert_eq!((rascal.max_pitch_deg, rascal.max_roll_deg), (20.0, 45.0));
-        assert_eq!(rascal.altitude.derivative, a4d.altitude.derivative);
+        assert_eq!(rascal.altitude.kd, a4d.altitude.kd);
         let error = AircraftPidController::configure(&PluginParams::yaml("{}"))
             .err()
             .expect("no airframe and no gains");

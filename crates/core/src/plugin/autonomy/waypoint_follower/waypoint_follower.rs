@@ -16,9 +16,7 @@ use crate::plugin::{
 #[serde(default, deny_unknown_fields)]
 pub struct WaypointFollowerConfig {
     /// Initial route, replaced by any route received on `Waypoints`.
-    #[serde(rename = "waypoints")]
-    route: WaypointList,
-    #[serde(rename = "speed")]
+    waypoints_m: WaypointList,
     speed_mps: f64,
     arrival_radius_m: f64,
     repeat: bool,
@@ -27,7 +25,7 @@ pub struct WaypointFollowerConfig {
 impl Default for WaypointFollowerConfig {
     fn default() -> Self {
         Self {
-            route: WaypointList::default_route(),
+            waypoints_m: WaypointList::default_route(),
             speed_mps: 20.0,
             arrival_radius_m: 10.0,
             repeat: false,
@@ -57,7 +55,7 @@ impl Plugin for WaypointFollower {
 
     fn new(config: &Self::Config) -> Self {
         Self {
-            route: config.route.clone(),
+            route: config.waypoints_m.clone(),
             current: 0,
             speed_mps: config.speed_mps,
             arrival_radius_m: config.arrival_radius_m,
@@ -106,7 +104,7 @@ impl Autonomy for WaypointFollower {
             Vec3::zeros()
         } else {
             // The point model can land on a waypoint without overshooting before
-            // the next run (dt is the time between runs, so this holds with loop_rate).
+            // the next run (dt is the time between runs, so this holds with loop_rate_hz).
             let speed_mps = self.speed_mps.min(distance_m / context.time.dt_s);
             displacement_m / distance_m * speed_mps
         };

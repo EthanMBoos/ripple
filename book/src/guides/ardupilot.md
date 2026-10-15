@@ -52,10 +52,10 @@ $S run $M/rascal-sitl.yaml --headless run.end_s:=150
 
 # Two aircraft: one flying a looping route (AUTO), one circling
 $S run $M/rascal-sitl-pair.yaml --headless --workers 2 run.end_s:=240 \
-    "entities.rascal_a.$B.waypoints:=[[600,0,0], [600,200,50], [0,200,50], [0,0,0]]"
+    "entities.rascal_a.$B.waypoints_m:=[[600,0,0], [600,200,50], [0,200,50], [0,0,0]]"
 
 # Fly to a point and circle it (GUIDED)
-$S run $M/rascal-sitl.yaml --headless run.end_s:=180 "entities.rascal.$B.goto:=[800,400,50]"
+$S run $M/rascal-sitl.yaml --headless run.end_s:=180 "entities.rascal.$B.goto_m:=[800,400,50]"
 
 # Catapult takeoff from the ground, climbing to 50 m (TAKEOFF)
 $S run $M/rascal-sitl.yaml --headless run.end_s:=120 \
@@ -64,7 +64,7 @@ $S run $M/rascal-sitl.yaml --headless run.end_s:=120 \
 # Wind: 6 m/s from the north side (see "Wind" below for the sign); the sensor
 # and the motion model both take it
 $S run $M/rascal-sitl.yaml --headless run.end_s:=150 \
-    entities.rascal.sensors.SitlState.wind_N:=6 entities.rascal.motion_model.FixedWing6DOF.wind_N:=6
+    entities.rascal.sensors.SitlState.wind_mps.1:=6 entities.rascal.motion_model.FixedWing6DOF.wind_mps.1:=6
 ```
 
 `ripple run` starts one SITL container per `ArduPilotBridge` aircraft once the
@@ -87,16 +87,16 @@ The SITL session settings are bridge parameters:
 
 | Key | Default | Meaning |
 | --- | --- | --- |
-| `mode` | AUTO with `waypoints`, GUIDED with `goto`, else LOITER | ArduPlane mode to arm in |
-| `waypoints` | none | AUTO route `[[east, north, up], ...]`; it repeats |
-| `goto` | none | GUIDED target `[east, north, up]`, sent once armed |
-| `takeoff_altitude` | none | Start the AUTO route with a takeoff to this height, m |
+| `mode` | AUTO with `waypoints_m`, GUIDED with `goto_m`, else LOITER | ArduPlane mode to arm in |
+| `waypoints_m` | none | AUTO route `[[east, north, up], ...]`; it repeats |
+| `goto_m` | none | GUIDED target `[east, north, up]`, sent once armed |
+| `takeoff_altitude_m` | none | Start the AUTO route with a takeoff to this height, m |
 | `land` | false | Make the last waypoint a landing; the route does not repeat. Its `up` is the ground's height there relative to the start (0 on the same runway). |
 | `speedup` | 100 | SITL's cap on running faster than real time |
 | `ardupilot_params` | none | ArduPilot parameters for this aircraft, `{NAME: value}`, loaded after `rascal.parm` |
 
 Points are in metres **from that aircraft's start**, so each aircraft flies its
-own route. Conflicting settings, such as both `waypoints` and `goto`, or `goto`
+own route. Conflicting settings, such as both `waypoints_m` and `goto_m`, or `goto_m`
 with mode AUTO, are refused. Home, where local (0, 0, 0) is, is the mission
 terrain's origin, or McMillan Airfield without terrain.
 
@@ -106,7 +106,7 @@ terrain's origin, or McMillan Airfield without terrain.
 | --- | --- |
 | Aircraft | The Rascal: FixedWing6DOF's `airframe: rascal` (see [The aircraft](#the-aircraft)) |
 | Number | Any; one container each. ArduPilot aircraft exist from t = 0. |
-| Modes | Any ArduPlane mode by name with `mode`. LOITER, AUTO (`waypoints`), GUIDED (`goto`), and TAKEOFF have been flown. |
+| Modes | Any ArduPlane mode by name with `mode`. LOITER, AUTO (`waypoints_m`), GUIDED (`goto_m`), and TAKEOFF have been flown. |
 | Starts | Held at rest, then catapulted at the release time, in the air or from the ground; or on wheels from a runway ([Takeoff and landing](#takeoff-and-landing)) |
 | Wind | Steady wind, also sent to ArduPlane as airspeed |
 | Speed (macOS Docker) | About 9× real time for one aircraft, 5× for two, 2.5× for four |
@@ -138,10 +138,10 @@ So the SITL missions use FixedWing6DOF's launcher.
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
-| FixedWing6DOF `launch_time` | 40 | Release time, s. ArduPlane must be armed in its mode 1 s before, or the run fails and prints why. |
-| FixedWing6DOF `launch_speed`, `launch_accel` | 20, 20 | Catapult to 20 m/s at 20 m/s² (1 s) |
+| FixedWing6DOF `launch_at_s` | 40 | Release time, s. ArduPlane must be armed in its mode 1 s before, or the run fails and prints why. |
+| FixedWing6DOF `launch_speed_mps`, `launch_acceleration_mps2` | 20, 20 | Catapult to 20 m/s at 20 m/s² (1 s) |
 | `position_m` | [0, 0, 200] | Start position, m. With height 0 the aircraft sits on the ground. |
-| `wind_E`, `wind_N` on `SitlState` and FixedWing6DOF | 0 | Wind, m/s |
+| `wind_mps` on `SitlState` and FixedWing6DOF | [0, 0, 0] | Wind, m/s, `[east, north, up]` |
 | ArduPilotBridge `port` | 9002, 9012 | Each aircraft's UDP port |
 
 ## ArduPlane basics
@@ -246,25 +246,24 @@ autonomy:
     port: 9002                  # one port per aircraft
 sensors:
   SitlState:
-    wind_E: 0                   # wind must match the motion model
-    wind_N: 0
+    wind_mps: [0, 0, 0]         # wind must match the motion model
 # no controller: the bridge writes throttle, elevator, aileron, rudder
 motion_model:
   FixedWing6DOF:
     airframe: rascal
-    use_launcher: true
-    launch_time: 40
+    enable_launcher: true
+    launch_at_s: 40
 ```
 
 - **The mission needs the `LocalNetwork` network.** The sensor reaches
   the bridge through it.
 - **Use dt = 0.0025 s (400 Hz),** a whole multiple of ArduPlane's 50 Hz loop.
-- **Both plugins must run every tick,** so give them no `loop_rate`.
+- **Both plugins must run every tick,** so give them no `loop_rate_hz`.
 - **`ArduPilotBridge` maps each servo channel** as `[channel, pwm_min, pwm_max,
   output_min, output_max]`, with optional `throttle`, `elevator`, `aileron`,
   and `rudder` keys. The defaults are ArduPlane's outputs 1-4 on the Rascal's
   throws.
-- **Wind** is the air's velocity over the ground (ENU), so `wind_E: 5` on an
+- **Wind** is the air's velocity over the ground (ENU), so `wind_mps: [5, 0, 0]` on an
   eastbound aircraft is a tailwind. `SitlState` uses the same values to
   compute airspeed.
 
@@ -302,7 +301,7 @@ target/release/ripple run crates/ardupilot/missions/rascal-runway.yaml --headles
   starts at rest on the runway, so there is no hold or catapult: still on the
   ground, ArduPlane boots, aligns, and arms. The starting height and the
   14° nose-up attitude are set by hand, from the ground height there.
-- **The route.** The bridge's `takeoff_altitude` starts the AUTO mission with
+- **The route.** The bridge's `takeoff_altitude_m` starts the AUTO mission with
   a takeoff to 50 m, and `land: true` makes its last waypoint a landing. With
   a takeoff, the session arms on the ground first and then switches to AUTO,
   as a pilot would: in AUTO while still disarmed, ArduPlane runs through the

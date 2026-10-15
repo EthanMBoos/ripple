@@ -3,7 +3,7 @@
   "mission": "<checkout>/missions/fixed-wing-6dof.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "44ab0c70bda600d1d60b51c8a3f2518b8e43ce3a475ea376f0cf5159151d0ef9",
+    "input_sha256": "ae2ad5f4e80f331939941c2c4efeead784d3d580caa15549634f1cf9bde4dc5d",
     "xml_sha256": "7060e43e9391754d183c900bb9fe98ded7db8e5a9aaf6b570259c55aaadf7006",
     "effective_sha256": "7540d18af8adfa2a62155c2a719aba8d19e6d550cb4b23e5311363fbeadb7ca5",
     "run_overrides": {
@@ -32,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-15_06-53-55",
+  "cpp_log_directory": "cpp/logs/2026-10-15_11-21-30",
   "cpp_output_hashes": {
     "frames.bin": "4d9108cdf1302112f09c4f285e281a948b114d8a921ac9be3b3f2087bb5b2469",
     "summary.csv": "63ab66b50b669faae85cb8ba2c786f8f315386fc8f758130148eb979e980d67d"
@@ -54,7 +54,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "71aedb419450e2ce012022ff2dd6acd87841aa7d33b849942dc183f3a3450864",
+  "recording_sha256": "f5758458e3ba18806bc1483dc4dc8f9d0737831510edf7185414cdd59eb3df6d",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

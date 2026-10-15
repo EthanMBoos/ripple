@@ -36,18 +36,18 @@
    "pitch_deg": 2.10238,
    "autonomy": {
     "Straight": {
-     "speed": 15.5581,
-     "loop_rate": 10
+     "speed_mps": 15.5581,
+     "loop_rate_hz": 10
     }
    },
    "controller": {
     "SimpleAircraftControllerPID": {
-     "loop_rate": 20
+     "loop_rate_hz": 20
     }
    },
    "motion_model": {
     "SimpleAircraft": {
-     "max_roll": 27.1962
+     "max_roll_deg": 27.1962
     }
    },
    "sensors": {

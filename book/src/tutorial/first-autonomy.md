@@ -75,7 +75,6 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct FollowNearestConfig {
-    #[serde(rename = "speed")]
     speed_mps: f64,
 }
 
@@ -164,8 +163,8 @@ impl Autonomy for FollowNearest {
 
 - `FollowNearestConfig` is the **validated configuration**. It is built once
   from the mission, before the simulation starts. Its fields are the mission
-  parameters: `#[serde(rename = "speed")]` says the mission calls it `speed`,
-  while the Rust name `speed_mps` carries the unit. `Default` gives the value
+  parameters, under the same names: the mission's `speed_mps` is the field
+  `speed_mps`, and the name carries the unit. `Default` gives the value
   used when the mission doesn't set one.
 - `FollowNearest` is the **per-vehicle state**. Each vehicle using this plugin
   gets its own copy. This plugin only needs the speed. A plugin that remembers
@@ -175,11 +174,11 @@ impl Autonomy for FollowNearest {
 
 | Method | When it runs | What it does here |
 | --- | --- | --- |
-| `configure` | Once, while the mission loads | `params.parse()` fills the config from the mission, using 25 when it has no `speed`. Then it rejects bad values. |
+| `configure` | Once, while the mission loads | `params.parse()` fills the config from the mission, using 25 when it has no `speed_mps`. Then it rejects bad values. |
 | `new` | Once per vehicle | Copies the configuration into the vehicle's state. |
 | `ports` | While the mission loads | Declares the three outputs, with units and frames. The simulator checks them against the controller's inputs. |
 
-Because `configure` runs before anything moves, a mistake like `speed: -5`
+Because `configure` runs before anything moves, a mistake like `speed_mps: -5`
 stops the mission immediately with a clear error. You won't discover it halfway
 through a run. So does a typo: `sped: 30` is rejected as an unknown field
 instead of silently leaving the speed at 25.
@@ -261,7 +260,7 @@ entities:
     heading_deg: 0
     autonomy:
       Straight:
-        speed: 18
+        speed_mps: 18
 
   chaser:
     template: aircraft
@@ -271,12 +270,12 @@ entities:
     heading_deg: 0
     autonomy:
       FollowNearest:
-        speed: 30
+        speed_mps: 30
 ```
 
 A few things to notice:
 
-- `speed: 30` under `FollowNearest` overrides the default of 25.
+- `speed_mps: 30` under `FollowNearest` overrides the default of 25.
   Values in the mission always win over plugin defaults.
 - The `aircraft` template holds what both vehicles share; each group adds its
   own team, position, and autonomy.
@@ -374,7 +373,7 @@ base_scenario: follow-nearest.yaml
 seeds: [1]
 parameter_combinations: cartesian
 parameters:
-  entities.chaser.autonomy.FollowNearest.speed: [18, 22, 26, 30]
+  entities.chaser.autonomy.FollowNearest.speed_mps: [18, 22, 26, 30]
 ```
 
 ```sh
@@ -386,7 +385,7 @@ speed and the final metrics. `non_team_coll` shows whether the chaser caught the
 target: at 26 and 30 m/s it does, at 18 and 22 m/s it does not within 60 s. To
 watch one case, run it with that speed and open Rerun: `cargo run -- run
 crates/starter/missions/follow-nearest.yaml
-entities.chaser.autonomy.FollowNearest.speed:=22 --viewer`.
+entities.chaser.autonomy.FollowNearest.speed_mps:=22 --viewer`.
 
 ## Exercises
 

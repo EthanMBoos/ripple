@@ -74,7 +74,7 @@ fn a_misspelled_path_fails_before_creating_output() {
     let broken = temp.path().join("broken.sweep.yaml");
     fs::write(
         &broken,
-        text.replace("speed:", "sped:").replace(
+        text.replace("speed_mps:", "sped_mps:").replace(
             "base_scenario: waypoints-point-agents.yaml",
             &format!(
                 "base_scenario: {}",
@@ -91,7 +91,7 @@ fn a_misspelled_path_fails_before_creating_output() {
         .output()
         .unwrap();
     assert!(!result.status.success());
-    assert!(String::from_utf8_lossy(&result.stderr).contains("field `sped` does not exist"));
+    assert!(String::from_utf8_lossy(&result.stderr).contains("field `sped_mps` does not exist"));
     assert!(!temp.path().join("sweeps").exists());
 }
 

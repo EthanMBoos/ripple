@@ -27,20 +27,17 @@ const EVENT_KINDS: [EventKind; 6] = [
 #[derive(Clone, Copy, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct CollisionWeights {
-    #[serde(rename = "flight_time_w")]
-    flight_time: f64,
-    #[serde(rename = "team_collisions_w")]
-    same_team: f64,
-    #[serde(rename = "non_team_collisions_w")]
-    opposing_team: f64,
+    flight_time_weight: f64,
+    team_collision_weight: f64,
+    non_team_collision_weight: f64,
 }
 
 impl Default for CollisionWeights {
     fn default() -> Self {
         Self {
-            flight_time: 0.0,
-            same_team: -1.0,
-            opposing_team: -1.0,
+            flight_time_weight: 0.0,
+            team_collision_weight: -1.0,
+            non_team_collision_weight: -1.0,
         }
     }
 }
@@ -159,9 +156,9 @@ impl Metrics for SimpleCollisionMetrics {
             }
 
             let normalized_flight_time = flight_time_s / (effective_end_s - first_spawn_s);
-            let score = normalized_flight_time * self.weights.flight_time
-                + opposing_team_collisions as f64 * self.weights.opposing_team
-                + same_team_collisions as f64 * self.weights.same_team;
+            let score = normalized_flight_time * self.weights.flight_time_weight
+                + opposing_team_collisions as f64 * self.weights.non_team_collision_weight
+                + same_team_collisions as f64 * self.weights.team_collision_weight;
             report.teams.insert(
                 *team_id,
                 TeamMetrics {
@@ -189,9 +186,9 @@ mod tests {
     #[test]
     fn team_totals_do_not_mix_entities_or_collision_weights() {
         let mut metrics = SimpleCollisionMetrics::new(&CollisionWeights {
-            flight_time: 1.0,
-            same_team: 2.0,
-            opposing_team: 3.0,
+            flight_time_weight: 1.0,
+            team_collision_weight: 2.0,
+            non_team_collision_weight: 3.0,
         });
         metrics.scores = BTreeMap::from([
             (
@@ -242,9 +239,9 @@ mod tests {
     #[test]
     fn survivors_fly_until_the_report_time_after_another_entity_is_removed() {
         let mut metrics = SimpleCollisionMetrics::new(&CollisionWeights {
-            flight_time: 1.0,
-            same_team: 0.0,
-            opposing_team: 0.0,
+            flight_time_weight: 1.0,
+            team_collision_weight: 0.0,
+            non_team_collision_weight: 0.0,
         });
         metrics.scores = BTreeMap::from([
             (
@@ -273,9 +270,9 @@ mod tests {
     #[test]
     fn a_team_that_first_spawns_late_is_still_reported() {
         let mut metrics = SimpleCollisionMetrics::new(&CollisionWeights {
-            flight_time: 1.0,
-            same_team: 0.0,
-            opposing_team: 0.0,
+            flight_time_weight: 1.0,
+            team_collision_weight: 0.0,
+            non_team_collision_weight: 0.0,
         });
         metrics.scores = BTreeMap::from([
             (

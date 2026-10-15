@@ -20,7 +20,7 @@ entities:
     visual_model: sphere
     autonomy:
       Straight:
-        speed: 220
+        speed_mps: 220
     controller:
       AircraftPIDController:
         airframe: a4d

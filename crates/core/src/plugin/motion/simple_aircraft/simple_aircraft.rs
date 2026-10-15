@@ -44,18 +44,12 @@ const GRAVITY_MPS2: f64 = 9.81;
 #[serde(default, deny_unknown_fields)]
 struct SimpleAircraftParams {
     airframe: Option<SimpleAirframe>,
-    #[serde(rename = "min_velocity")]
     min_speed_mps: Option<f64>,
-    #[serde(rename = "max_velocity")]
     max_speed_mps: Option<f64>,
     /// Bank limit.
-    #[serde(rename = "max_roll")]
     max_roll_deg: Option<f64>,
-    #[serde(rename = "max_pitch")]
     max_pitch_deg: Option<f64>,
-    #[serde(rename = "max_roll_rate")]
     max_roll_rate_degps: Option<f64>,
-    #[serde(rename = "max_pitch_rate")]
     max_pitch_rate_degps: Option<f64>,
     max_acceleration_mps2: Option<f64>,
     max_deceleration_mps2: Option<f64>,
@@ -212,7 +206,7 @@ impl Plugin for SimpleAircraft {
 
         ensure!(
             config.min_speed_mps > 0.0 && config.min_speed_mps <= config.max_speed_mps,
-            "SimpleAircraft needs 0 < min_velocity <= max_velocity"
+            "SimpleAircraft needs 0 < min_speed_mps <= max_speed_mps"
         );
         ensure!(
             [
@@ -231,7 +225,7 @@ impl Plugin for SimpleAircraft {
         );
         ensure!(
             config.max_roll_rad < std::f64::consts::FRAC_PI_2,
-            "SimpleAircraft max_roll must be below 90 degrees"
+            "SimpleAircraft max_roll_deg must be below 90 degrees"
         );
         Ok(config)
     }

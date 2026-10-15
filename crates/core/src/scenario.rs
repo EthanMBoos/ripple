@@ -113,7 +113,7 @@ impl PluginConfig {
     pub(crate) fn validate(&self) -> Result<()> {
         ensure!(
             self.loop_rate_hz.is_finite() && self.loop_rate_hz >= 0.0,
-            "loop_rate must be finite and nonnegative"
+            "loop_rate_hz must be finite and nonnegative"
         );
         for value in self.params.values() {
             check_values(value)?;

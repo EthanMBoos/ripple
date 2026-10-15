@@ -18,15 +18,15 @@ entities:
     position_m: [0, 0, 1]
     autonomy:
       ConstantVelocity:
-        velocity: [1, 0, 0]
+        velocity_mps: [1, 0, 0]
     controller:
       MultirotorVelocityController:
         airframe: crazyflie2
     motion_model:
       Multirotor:
         airframe: crazyflie2
-        motor_time_constant_up: 0.0647
-        motor_time_constant_down: 0.0647
+        motor_time_constant_up_s: 0.0647
+        motor_time_constant_down_s: 0.0647
         rotor_drag_coefficient: 9.1785e-7
         rotor_drag_coefficient_axial: 10.311e-7
 ```
@@ -44,22 +44,23 @@ Crazyflies through velocity steps and an upset.
 ## The vehicle
 
 A mission either names the built-in measured vehicle with `airframe:
-crazyflie2`, or gives every vehicle number itself: `mass`, `inertia_kgm2`,
-`c_T`, `c_Q`, `omega_min`, `omega_max`, and `rotors`
-(`gravity_magnitude` defaults to 9.81). Inertia is three rows; each rotor
-gives its spin direction, hub position, and, if tilted, its tilt:
+crazyflie2`, or gives every vehicle number itself: `mass_kg`, `inertia_kgm2`,
+`thrust_coefficient` (c_T), `torque_coefficient` (c_Q), `min_rotor_speed_radps`,
+`max_rotor_speed_radps`, and `rotors` (`gravity_mps2` defaults to 9.81).
+Inertia is three rows; each rotor gives its spin direction, hub position in
+body forward/left/up axes, and, if tilted, its tilt:
 
 ```yaml
 inertia_kgm2: [[0.0122, 0, 0], [0, 0.0122, 0], [0, 0, 0.0244]]
 rotors:
-  - {direction: ccw, position_m: [0, -0.175, 0]}
-  - {direction: cw, position_m: [0.175, 0, 0], tilt_deg: [0, 5, 0]}
+  - {direction: ccw, position_flu_m: [0, -0.175, 0]}
+  - {direction: cw, position_flu_m: [0.175, 0, 0], tilt_deg: [0, 5, 0]}
 ```
 
 Rotor `i` reads the motor command on port `motor_i`. There is no default vehicle, so no
 mission flies unsourced numbers by accident. With `airframe` set, any of
 those keys overrides one value. The airframe never switches on an optional
-effect, and body drag `c_D` is zero unless the mission sets it.
+effect, and `body_drag_coefficient` is zero unless the mission sets it.
 
 | `crazyflie2` | Value | Source (Förster 2015, ETH thesis) |
 | --- | --- | --- |
@@ -86,7 +87,7 @@ Crazyflie values are Förster's.
 
 | Key | Effect (from RotorS unless noted) | Crazyflie value |
 | --- | --- | --- |
-| `motor_time_constant_up`, `motor_time_constant_down` | first-order motor lag, s | 0.0647 (eq. 3.16: -T/ln(a) at 500 Hz) |
+| `motor_time_constant_up_s`, `motor_time_constant_down_s` | first-order motor lag, s | 0.0647 (eq. 3.16: -T/ln(a) at 500 Hz) |
 | `rotor_drag_coefficient` | in-plane drag, -\|w\| x this x the hub's edgewise airspeed, kg/rad | 9.1785e-7 (eq. 4.8) |
 | `rotor_drag_coefficient_axial` | the same along the rotor axis (Förster, not RotorS), kg/rad | 10.311e-7 (eq. 4.8) |
 | `rolling_moment_coefficient` | rolling moment, kg m/rad | not measured; leave 0 |
@@ -108,7 +109,7 @@ and a reaction torque c_Q w² about that axis. With RotorS's effects on: the
 motor's first-order lag (separate spin-up and spin-down constants), rotor drag
 proportional to rotor speed and the hub's edgewise velocity (Martin and Salaün,
 2010), its axial counterpart from Förster, and the rolling moment. The body adds
-weight, an optional quadratic drag (`c_D`), and rigid-body rotation, integrated
+weight, an optional quadratic drag (`body_drag_coefficient`, c_D), and rigid-body rotation, integrated
 with RK4 that recomputes every load, and the motor speed, at each stage.
 
 Not modeled, each written as a named zero in `rotor.rs`: ground effect,
@@ -122,13 +123,13 @@ no landing.
 `MultirotorVelocityController` is a four-loop cascade written in SI units, so
 its gains are bandwidths (1/s):
 
-1. **Velocity**, world frame: `velocity_p` and `velocity_i`, with the
-   integral's contribution held within `velocity_integral_limit` (m/s²). The
-   result is limited to `max_tilt` (degrees) and
-   `max_vertical_acceleration` (m/s²), then turned into a thrust vector.
+1. **Velocity**, world frame: `velocity_kp` and `velocity_ki`, with the
+   integral's contribution held within `velocity_integral_limit_mps2`. The
+   result is limited to `max_tilt_deg` and `max_vertical_acceleration_mps2`,
+   then turned into a thrust vector.
 2. **Attitude**: body z along the thrust vector, heading held at the first
-   belief's yaw; `attitude_p` on the geometric attitude error.
-3. **Rate**: `rate_p`, with the airframe's inertia and gyroscopic term.
+   belief's yaw; `attitude_kp` on the geometric attitude error.
+3. **Rate**: `body_rate_kp`, with the airframe's inertia and gyroscopic term.
 4. **Mixing**: the pseudo-inverse of the airframe's allocation gives each
    rotor's thrust, clamped to the motor range, then its speed.
 

@@ -20,16 +20,16 @@ entities:
     visual_model: sphere
     autonomy:
       Straight:
-        speed: 220
+        speed_mps: 220
     controller:
       AircraftPIDController:
         airframe: a4d
-        heading_pid: [0, 0, 0, 45]
-        altitude_pid: [0, 0, 0, 10]
-        speed_pid: [0, 0, 0, 10]
-        pitch_pid: [0, 0, 0, 9]
-        roll_pid: [0, 0, 0, 9]
+        heading_pid: {kp: 0, ki: 0, kd: 0, integrate_within_deg: 45}
+        altitude_pid: {kp: 0, ki: 0, kd: 0, integrate_within_m: 10}
+        speed_pid: {kp: 0, ki: 0, kd: 0, integrate_within_mps: 10}
+        pitch_pid: {kp: 0, ki: 0, kd: 0, integrate_within_deg: 9}
+        roll_pid: {kp: 0, ki: 0, kd: 0, integrate_within_deg: 9}
     motion_model:
       FixedWing6DOF:
         airframe: a4d
-        thrust_min: 0
+        min_thrust_n: 0

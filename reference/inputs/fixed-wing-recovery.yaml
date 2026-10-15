@@ -22,14 +22,13 @@ entities:
     visual_model: sphere
     autonomy:
       Straight:
-        speed: 220
+        speed_mps: 220
     controller:
       AircraftPIDController:
         airframe: a4d
-        pitch_pid: [0.5, 0, 0.1, 9]
-        altitude_pid: [0.1, 0.0001, 0.002, 10]
+        pitch_pid: {kp: 0.5, ki: 0, kd: 0.1, integrate_within_deg: 9}
+        altitude_pid: {kp: 0.1, ki: 0.0001, kd: 0.002, integrate_within_m: 10}
     motion_model:
       FixedWing6DOF:
         airframe: a4d
-        wind_E: -3
-        wind_N: 2
+        wind_mps: [-3, 2, 0]

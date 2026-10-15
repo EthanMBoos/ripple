@@ -3,7 +3,7 @@
   "mission": "<run>-missions/generated-097.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "dd429899af6f41e1041097bbf13cfa0f0a0cbd44e12095c5a2569b6b351daa39",
+    "input_sha256": "0e39417fbbb166a468d2628003db8535681e7769f702d802da5b27ec02df4798",
     "xml_sha256": "d99f1ce15891ca3ac2888eafaa3398fedbbceed1c86bc2882c9b0c3d8d160cc7",
     "effective_sha256": "f17ff785b1b021605eeb1b52e6ea853c1644bef98ce7d462a96332cd62bd4bc4",
     "run_overrides": {
@@ -32,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-14_22-08-58",
+  "cpp_log_directory": "cpp/logs/2026-10-15_11-28-10",
   "cpp_output_hashes": {
     "frames.bin": "de70f0351a3ac949019dadae00c3be06a16e4428f5aaff34e67ed667a72c9691",
     "summary.csv": "06d94d01a64d052925f6614277ea79f0b02c02172fcf4acc18bdf01db619d5dd"
@@ -54,7 +54,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "20213d5300518e36408f42d458015d9b07d1aa89dad51a0fb81ebca9a961ac39",
+  "recording_sha256": "60fb93db3f48697cc736b38e7d35f329167f2455231bc35fde30e3e6651b4c34",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

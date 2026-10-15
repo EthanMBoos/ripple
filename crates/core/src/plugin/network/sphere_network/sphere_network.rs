@@ -18,15 +18,11 @@ use crate::plugin::{
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct SphereNetworkConfig {
-    #[serde(rename = "range")]
     range_m: f64,
-    #[serde(rename = "prob_transmit")]
-    probability_transmit: f64,
-    filter_comms_plane: bool,
-    #[serde(rename = "comms_boundary_altitude")]
-    boundary_altitude_m: f64,
-    #[serde(rename = "comms_boundary_epsilon")]
-    boundary_epsilon_m: f64,
+    transmit_probability: f64,
+    enable_altitude_split: bool,
+    split_altitude_m: f64,
+    split_margin_m: f64,
     /// A message arrives this long after it was sent, at the first tick at or
     /// after that time; 0 delivers it in this network phase.
     delay_s: f64,
@@ -36,10 +32,10 @@ impl Default for SphereNetworkConfig {
     fn default() -> Self {
         Self {
             range_m: 100.0,
-            probability_transmit: 1.0,
-            filter_comms_plane: false,
-            boundary_altitude_m: 0.0,
-            boundary_epsilon_m: 0.0,
+            transmit_probability: 1.0,
+            enable_altitude_split: false,
+            split_altitude_m: 0.0,
+            split_margin_m: 0.0,
             delay_s: 0.0,
         }
     }
@@ -47,10 +43,10 @@ impl Default for SphereNetworkConfig {
 
 pub struct SphereNetwork {
     range_m: f64,
-    probability_transmit: f64,
-    filter_comms_plane: bool,
-    boundary_altitude_m: f64,
-    boundary_epsilon_m: f64,
+    transmit_probability: f64,
+    enable_altitude_split: bool,
+    split_altitude_m: f64,
+    split_margin_m: f64,
     delay_s: f64,
 }
 
@@ -61,15 +57,15 @@ impl Plugin for SphereNetwork {
         let config: SphereNetworkConfig = params.parse()?;
         ensure!(
             config.range_m >= 0.0,
-            "SphereNetwork range must be nonnegative"
+            "SphereNetwork range_m must be nonnegative"
         );
         ensure!(
-            (0.0..=1.0).contains(&config.probability_transmit),
-            "prob_transmit must be in [0, 1]"
+            (0.0..=1.0).contains(&config.transmit_probability),
+            "transmit_probability must be in [0, 1]"
         );
         ensure!(
-            config.boundary_epsilon_m >= 0.0,
-            "comms_boundary_epsilon must be nonnegative"
+            config.split_margin_m >= 0.0,
+            "split_margin_m must be nonnegative"
         );
         ensure!(
             config.delay_s.is_finite() && config.delay_s >= 0.0,
@@ -81,10 +77,10 @@ impl Plugin for SphereNetwork {
     fn new(config: &SphereNetworkConfig) -> Self {
         Self {
             range_m: config.range_m,
-            probability_transmit: config.probability_transmit,
-            filter_comms_plane: config.filter_comms_plane,
-            boundary_altitude_m: config.boundary_altitude_m,
-            boundary_epsilon_m: config.boundary_epsilon_m,
+            transmit_probability: config.transmit_probability,
+            enable_altitude_split: config.enable_altitude_split,
+            split_altitude_m: config.split_altitude_m,
+            split_margin_m: config.split_margin_m,
             delay_s: config.delay_s,
         }
     }
@@ -100,7 +96,7 @@ impl Network for SphereNetwork {
                 PluginRandom::name(link.topic),
                 link.sequence,
             ];
-            if self.reachable(link) && random.uniform(&key) <= self.probability_transmit {
+            if self.reachable(link) && random.uniform(&key) <= self.transmit_probability {
                 Ok(Delivery::After {
                     delay_s: self.delay_s,
                 })
@@ -144,13 +140,13 @@ impl SphereNetwork {
         if (sender_position_m - receiver_position_m).norm() >= self.range_m {
             return false;
         }
-        if !self.filter_comms_plane {
+        if !self.enable_altitude_split {
             return true;
         }
-        let both_above = sender_position_m.z >= self.boundary_altitude_m - self.boundary_epsilon_m
-            && receiver_position_m.z >= self.boundary_altitude_m - self.boundary_epsilon_m;
-        let both_below = sender_position_m.z <= self.boundary_altitude_m + self.boundary_epsilon_m
-            && receiver_position_m.z <= self.boundary_altitude_m + self.boundary_epsilon_m;
+        let both_above = sender_position_m.z >= self.split_altitude_m - self.split_margin_m
+            && receiver_position_m.z >= self.split_altitude_m - self.split_margin_m;
+        let both_below = sender_position_m.z <= self.split_altitude_m + self.split_margin_m
+            && receiver_position_m.z <= self.split_altitude_m + self.split_margin_m;
         both_above || both_below
     }
 }
@@ -206,8 +202,9 @@ mod tests {
 
     #[test]
     fn range_is_three_dimensional_and_uses_each_current_snapshot() -> anyhow::Result<()> {
-        let network =
-            SphereNetwork::new(&SphereNetwork::configure(&PluginParams::yaml("range: 5"))?);
+        let network = SphereNetwork::new(&SphereNetwork::configure(&PluginParams::yaml(
+            "range_m: 5",
+        ))?);
         for (position, expected) in [
             (Vec3::new(3.0, 0.0, 3.999), true),
             (Vec3::new(3.0, 0.0, 4.0), false),
@@ -230,7 +227,7 @@ mod tests {
     fn altitude_plane_includes_epsilon_boundaries_and_same_parent_bypasses_geometry()
     -> anyhow::Result<()> {
         let params = PluginParams::yaml(
-            "{filter_comms_plane: true, comms_boundary_altitude: 10, comms_boundary_epsilon: 1}",
+            "{enable_altitude_split: true, split_altitude_m: 10, split_margin_m: 1}",
         );
         let network = SphereNetwork::new(&SphereNetwork::configure(&params)?);
         for (z1, z2, expected) in [
@@ -261,11 +258,11 @@ mod tests {
     #[test]
     fn invalid_range_probability_delay_and_old_delay_keys_are_rejected() {
         for params in [
-            "range: -1",
-            "range: .nan",
-            "prob_transmit: 1.1",
-            "prob_transmit: -0.1",
-            "comms_boundary_epsilon: -1",
+            "range_m: -1",
+            "range_m: .nan",
+            "transmit_probability: 1.1",
+            "transmit_probability: -0.1",
+            "split_margin_m: -1",
             "delay_s: -1",
             "comm_delay: 0",
             "is_stochastic_delay: true",

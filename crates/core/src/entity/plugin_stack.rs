@@ -301,7 +301,7 @@ impl CompiledStack {
         ] {
             ensure!(
                 estimator.loop_rate_hz == 0.0,
-                "{role} '{}' runs every tick and takes no loop_rate",
+                "{role} '{}' runs every tick and takes no loop_rate_hz",
                 estimator.name
             );
         }

@@ -99,16 +99,16 @@ impl SitlLauncher {
             fs::write(directory.join("mission.parm"), params)?;
             let name = format!("{LABEL}-{run_name}-{port}-{}", std::process::id());
             let sysid = index + 1;
-            let waypoints = plane
+            let waypoints_m = plane
                 .bridge
-                .waypoints
+                .waypoints_m
                 .iter()
                 .map(|[east, north, up]| format!("{east},{north},{up}"))
                 .collect::<Vec<_>>()
                 .join(";");
-            let goto = plane
+            let goto_m = plane
                 .bridge
-                .goto
+                .goto_m
                 .map(|[east, north, up]| format!("{east},{north},{up}"))
                 .unwrap_or_default();
             let environment = [
@@ -118,13 +118,13 @@ impl SitlLauncher {
                 ("SPEEDUP", plane.bridge.speedup.to_string()),
                 ("HOME_LOCATION", home.clone()),
                 ("MODE", plane.bridge.mode()?.to_string()),
-                ("WAYPOINTS", waypoints),
-                ("GOTO", goto),
+                ("WAYPOINTS", waypoints_m),
+                ("GOTO", goto_m),
                 (
                     "TAKEOFF_ALT",
                     plane
                         .bridge
-                        .takeoff_altitude
+                        .takeoff_altitude_m
                         .map(|m| m.to_string())
                         .unwrap_or_default(),
                 ),
@@ -216,7 +216,7 @@ fn find_aircraft(scenario: &ScenarioConfig) -> Result<Vec<Aircraft>> {
             .parse::<ArduPilotBridgeConfig>()
             .with_context(|| format!("{}: ArduPilotBridge", group.label))?;
         let release_s = if group.motion_model.name == "FixedWing6DOF" {
-            FixedWing6Dof::configure(&PluginParams::new(&group.motion_model))?.launch_time_s()
+            FixedWing6Dof::configure(&PluginParams::new(&group.motion_model))?.launch_at_s()
         } else {
             None
         };

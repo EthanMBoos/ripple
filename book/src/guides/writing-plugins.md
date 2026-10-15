@@ -111,8 +111,7 @@ Declare the parameters as a struct, and let serde fill it:
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct StraightConfig {
-    #[serde(rename = "speed")]   // what the mission calls it
-    speed_mps: f64,              // the Rust name, with its unit
+    speed_mps: f64,   // the mission key and the Rust name, with its unit
 }
 
 impl Default for StraightConfig {
@@ -123,14 +122,18 @@ impl Default for StraightConfig {
 
 fn configure(params: &PluginParams<'_>) -> Result<StraightConfig> {
     let config: StraightConfig = params.parse()?;
-    ensure!(config.speed_mps >= 0.0, "speed must be nonnegative");
+    ensure!(config.speed_mps >= 0.0, "speed_mps must be nonnegative");
     Ok(config)
 }
 ```
 
-A parameter's value is the mission's, under the plugin (`Straight: {speed:
-30}`), or else the struct's `Default`. Values are ordinary YAML: `speed: 25`,
-`gains: [1, 0, 2, 9]`; numbers must be finite. A bad value is an error that
+A parameter's value is the mission's, under the plugin (`Straight: {speed_mps:
+30}`), or else the struct's `Default`. The field's name is the key, with its
+unit, so there is one name ([Parameter
+names](../development/rust-style.md#parameter-names)). Values are ordinary YAML:
+`speed_mps: 25`, `center_m: [0, 0, 200]`,
+`heading_pid: {kp: 1, ki: 0.01, kd: 2, integrate_within_deg: 9}`; numbers must
+be finite. A bad value is an error that
 names the key, and so is a key the struct doesn't have: a typo never silently
 gives you the default.
 

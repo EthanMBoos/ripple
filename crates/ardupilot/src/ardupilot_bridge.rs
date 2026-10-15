@@ -13,7 +13,7 @@
 //! The exchange must be exactly one reply per frame: a reply carries no frame
 //! number, so an extra one would leave SITL a frame behind for the rest of the
 //! run. A frame gap, SITL restarting, or a timeout therefore fails the run
-//! instead of being smoothed over. It must run every tick (no `loop_rate`).
+//! instead of being smoothed over. It must run every tick (no `loop_rate_hz`).
 //!
 //! The last frame applied is never answered, because the run ends first;
 //! `ripple run` stops SITL when the run ends (`sitl_launcher.rs`). See
@@ -48,7 +48,7 @@ pub struct ServoMap {
 }
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-/// `mode`, `waypoints`, `goto`, and `speedup` set up this aircraft's SITL
+/// `mode`, `waypoints_m`, `goto_m`, and `speedup` set up this aircraft's SITL
 /// session (`sitl_launcher.rs`, `docker/session.py`); the bridge itself only
 /// exchanges frames.
 /// The default maps are ArduPlane's default outputs (SERVO1 aileron, SERVO2
@@ -61,30 +61,28 @@ pub struct ServoMap {
 pub struct ArduPilotBridgeConfig {
     /// UDP port this aircraft's SITL sends to (its `--sim-port-out`).
     port: u16,
-    #[serde(rename = "first_frame_timeout")]
     first_frame_timeout_s: f64,
     /// Longest wait for each later frame; must exceed SITL's 1 s resend.
-    #[serde(rename = "frame_timeout")]
     frame_timeout_s: f64,
     throttle: ServoMap,
     elevator: ServoMap,
     aileron: ServoMap,
     rudder: ServoMap,
     /// The ArduPlane mode to arm in: LOITER by default, AUTO with
-    /// `waypoints`, GUIDED with `goto`.
+    /// `waypoints_m`, GUIDED with `goto_m`.
     pub(crate) mode: Option<String>,
     /// An AUTO route that repeats: points `[east, north, up]` in metres from
     /// where the aircraft starts (ArduPlane moves home to where it arms).
-    pub(crate) waypoints: Vec<[f64; 3]>,
+    pub(crate) waypoints_m: Vec<[f64; 3]>,
     /// Start the AUTO route with a takeoff climbing to this height (m).
-    pub(crate) takeoff_altitude: Option<f64>,
+    pub(crate) takeoff_altitude_m: Option<f64>,
     /// End the AUTO route with a landing at its last waypoint instead of
     /// repeating it; that waypoint's `up` is the ground's height there
     /// relative to the start.
     pub(crate) land: bool,
     /// A GUIDED target `[east, north, up]` from the start, sent once armed;
     /// ArduPlane flies there and circles it.
-    pub(crate) goto: Option<[f64; 3]>,
+    pub(crate) goto_m: Option<[f64; 3]>,
     /// SITL's `--speedup`, its cap on running faster than real time.
     pub(crate) speedup: f64,
     /// ArduPilot parameters for this aircraft, loaded after
@@ -103,10 +101,10 @@ impl Default for ArduPilotBridgeConfig {
             aileron: ServoMap::from([1.0, 1000.0, 2000.0, -0.35, 0.35]),
             rudder: ServoMap::from([4.0, 1000.0, 2000.0, -0.35, 0.35]),
             mode: None,
-            waypoints: Vec::new(),
-            takeoff_altitude: None,
+            waypoints_m: Vec::new(),
+            takeoff_altitude_m: None,
             land: false,
-            goto: None,
+            goto_m: None,
             speedup: 100.0,
             ardupilot_params: BTreeMap::new(),
         }
@@ -215,7 +213,7 @@ impl Autonomy for ArduPilotBridge {
             let elapsed_s = context.time.time_s - previous_time_s;
             ensure!(
                 (elapsed_s - context.time.dt_s).abs() <= 1e-9 * context.time.dt_s.max(1.0),
-                "ArduPilotBridge must run every tick (remove its loop_rate)"
+                "ArduPilotBridge must run every tick (remove its loop_rate_hz)"
             );
         }
         self.previous_time_s = Some(context.time.time_s);
@@ -265,20 +263,20 @@ impl ArduPilotBridgeConfig {
         self.port
     }
 
-    /// The mode to arm in, checked against `waypoints` and `goto`.
+    /// The mode to arm in, checked against `waypoints_m` and `goto_m`.
     pub(crate) fn mode(&self) -> Result<&str> {
         ensure!(
-            !self.waypoints.is_empty() || (self.takeoff_altitude.is_none() && !self.land),
-            "ArduPilotBridge takeoff_altitude and land need waypoints"
+            !self.waypoints_m.is_empty() || (self.takeoff_altitude_m.is_none() && !self.land),
+            "ArduPilotBridge takeoff_altitude_m and land need waypoints_m"
         );
         ensure!(
-            self.waypoints.is_empty() || self.goto.is_none(),
-            "ArduPilotBridge takes waypoints (AUTO) or goto (GUIDED), not both"
+            self.waypoints_m.is_empty() || self.goto_m.is_none(),
+            "ArduPilotBridge takes waypoints_m (AUTO) or goto_m (GUIDED), not both"
         );
-        let needed = if !self.waypoints.is_empty() {
-            Some(("AUTO", "waypoints"))
+        let needed = if !self.waypoints_m.is_empty() {
+            Some(("AUTO", "waypoints_m"))
         } else {
-            self.goto.map(|_| ("GUIDED", "goto"))
+            self.goto_m.map(|_| ("GUIDED", "goto_m"))
         };
         match (self.mode.as_deref(), needed) {
             (Some(mode), Some((needed, key))) if mode != needed => {
@@ -432,25 +430,25 @@ mod tests {
             config
         };
         assert_eq!(config(|_| {}).mode().unwrap(), "LOITER");
-        let route = |config: &mut ArduPilotBridgeConfig| config.waypoints = vec![[1.0, 2.0, 3.0]];
+        let route = |config: &mut ArduPilotBridgeConfig| config.waypoints_m = vec![[1.0, 2.0, 3.0]];
         assert_eq!(config(route).mode().unwrap(), "AUTO");
         assert_eq!(
-            config(|config| config.goto = Some([1.0, 2.0, 3.0]))
+            config(|config| config.goto_m = Some([1.0, 2.0, 3.0]))
                 .mode()
                 .unwrap(),
             "GUIDED"
         );
         assert!(
             config(|config| {
-                config.waypoints = vec![[1.0, 2.0, 3.0]];
-                config.goto = Some([1.0, 2.0, 3.0]);
+                config.waypoints_m = vec![[1.0, 2.0, 3.0]];
+                config.goto_m = Some([1.0, 2.0, 3.0]);
             })
             .mode()
             .is_err()
         );
         assert!(
             config(|config| {
-                config.waypoints = vec![[1.0, 2.0, 3.0]];
+                config.waypoints_m = vec![[1.0, 2.0, 3.0]];
                 config.mode = Some("GUIDED".into());
             })
             .mode()

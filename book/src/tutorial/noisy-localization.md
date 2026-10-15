@@ -32,7 +32,7 @@ or a wrong idea of how the vehicle moves. This tutorial models the last two.
 
 The robot is a point that moves at the velocity it is given
 (`SingleIntegrator`). A `WaypointFollower` autonomy steers it around a 100 m
-square at 10 m/s. But its motion model has `max_speed: 8`: asking for 10, it
+square at 10 m/s. But its motion model has `max_speed_mps: 8`: asking for 10, it
 really moves at 8 m/s. That is the *hidden truth*, a physical fact
 the robot's software doesn't know.
 
@@ -171,7 +171,7 @@ This estimator tracks position and velocity only, which is all a point robot
 steering by position needs. Its attitude stays level and facing east (the
 default), so don't reuse it unchanged with a controller that steers by heading.
 
-The estimator never reads the true speed or `max_speed`. The only link between
+The estimator never reads the true speed or `max_speed_mps`. The only link between
 them is the `speed_gain` setting, which a person chose and may have got wrong.
 
 ## 3. Register it
@@ -214,14 +214,14 @@ templates:
     visual_model: sphere
     autonomy:
       WaypointFollower:
-        waypoints: [[100, 0, 0], [100, 100, 0], [0, 100, 0], [0, 0, 0]]
+        waypoints_m: [[100, 0, 0], [100, 100, 0], [0, 100, 0], [0, 0, 0]]
         repeat: true
         arrival_radius_m: 2
-        speed: 10
+        speed_mps: 10
     controller: {SingleIntegratorControllerSimple: {}}
     motion_model:
       SingleIntegrator:
-        max_speed: 8      # the hidden truth: its motors only reach 8 m/s
+        max_speed_mps: 8      # the hidden truth: its motors only reach 8 m/s
 
 entities:
   dead_reckoning:
@@ -231,7 +231,7 @@ entities:
     sensors:
       gps:
         plugin: NoisyState
-        loop_rate: 0.2    # one fix every 5 s
+        loop_rate_hz: 0.2    # one fix every 5 s
         position_stddev_m: [0, 0, 0]   # exact fixes; raise to add GPS noise
     localization:
       DeadReckoning:
@@ -246,7 +246,7 @@ entities:
 - The fix comes from the stock `NoisyState` sensor, named `gps`. Its noise
   defaults to zero; the mission names `position_stddev_m` anyway so the
   exercises can raise it from the command line (an override replaces a value
-  the mission has). `loop_rate: 0.2` runs it once every 5 s.
+  the mission has). `loop_rate_hz: 0.2` runs it once every 5 s.
 - `localization:` replaces the default `PassThrough` with `DeadReckoning`.
   It has one sensor that gives state readings, so `gps` feeds its `fix`
   input automatically. With two such sensors you would name one:
@@ -325,7 +325,7 @@ more than 10 m, and with the right gain the two stay together.
 
 The three sources of error stay in three places:
 
-- what the robot really does: the motion model (`max_speed: 8`);
+- what the robot really does: the motion model (`max_speed_mps: 8`);
 - what the sensor adds: `NoisyState` (the noise and the 5 s rate);
 - what the robot *assumes*: the estimator (`speed_gain`).
 
@@ -351,7 +351,7 @@ wrong belief, as it would on a real robot.
    way to each fix: `position += fix_weight * (fix - position)`. With noisy
    fixes and the right gain, which weight gives the smallest error?
 3. **Faster fixes.** Write a test that runs the mission at several fix rates
-   (override `entities.dead_reckoning.sensors.gps.loop_rate`) and reports the
+   (override `entities.dead_reckoning.sensors.gps.loop_rate_hz`) and reports the
    largest gap from `worst_gap_m`. How often must fixes arrive to keep the blue
    robot within 5 m of the gray one?
 4. **Learn the gain.** Between two fixes the estimator knows how far it

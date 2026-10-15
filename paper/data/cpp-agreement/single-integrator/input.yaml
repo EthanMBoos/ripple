@@ -29,48 +29,48 @@ entities:
     position_m: [0, 0, 10]
     autonomy:
       ConstantVelocity:
-        velocity: [3, 4, 0]
+        velocity_mps: [3, 4, 0]
     motion_model:
       SingleIntegrator:
-        max_speed: -1
+        max_speed_mps: -1
   capped:
     template: point
     team: 1
     position_m: [100, 0, 10]
     autonomy:
       ConstantVelocity:
-        velocity: [3, 4, 12]
+        velocity_mps: [3, 4, 12]
     motion_model:
       SingleIntegrator:
-        max_speed: 5
+        max_speed_mps: 5
   zero:
     template: point
     team: 2
     position_m: [200, 0, 10]
     autonomy:
       ConstantVelocity:
-        velocity: [0, 0, 0]
+        velocity_mps: [0, 0, 0]
     motion_model:
       SingleIntegrator:
-        max_speed: 2
+        max_speed_mps: 2
   other_quadrant:
     template: point
     team: 2
     position_m: [300, 0, 10]
     autonomy:
       ConstantVelocity:
-        velocity: [-2, 1, -1]
-        loop_rate: 2
+        velocity_mps: [-2, 1, -1]
+        loop_rate_hz: 2
     motion_model:
       SingleIntegrator:
-        max_speed: -1
+        max_speed_mps: -1
   slow:
     template: point
     team: 2
     position_m: [400, 0, 10]
     autonomy:
       ConstantVelocity:
-        velocity: [1, 0.5, 0]
+        velocity_mps: [1, 0.5, 0]
     motion_model:
       SingleIntegrator:
-        max_speed: 5
+        max_speed_mps: 5

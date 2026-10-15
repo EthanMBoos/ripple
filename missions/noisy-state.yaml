@@ -18,12 +18,12 @@ templates:
     velocity_mps: [20, 0, 0]
     autonomy:
       Straight:
-        speed: 20
+        speed_mps: 20
     controller: {SimpleAircraftControllerPID: {}}
     motion_model: {SimpleAircraft: {}}
     sensors:
       NoisyState:
-        loop_rate: 10
+        loop_rate_hz: 10
         position_bias_m: [0, 0, 2]
         position_stddev_m: [0.5, 0.5, 0.5]
         velocity_stddev_mps: [0.2, 0.2, 0.2]

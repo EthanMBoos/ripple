@@ -5,7 +5,7 @@
   <end_condition>time</end_condition>
   <network>LocalNetwork</network>
   <network>GlobalNetwork</network>
-  <entity_interaction center="0 0 200" lengths="600 600 400" show_boundary="false">Boundary</entity_interaction>
+  <entity_interaction center="0 0 200" lengths="600 600 400">Boundary</entity_interaction>
   <entity_interaction team="all">GroundCollision</entity_interaction>
   <entity_interaction collision_range="2">SimpleCollision</entity_interaction>
   <metrics>SimpleCollisionMetrics</metrics>

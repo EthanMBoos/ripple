@@ -29,9 +29,9 @@ entities:
     visual_model: sphere
     autonomy:
       Straight:
-        speed: 24
-        loop_rate: 5
+        speed_mps: 24
+        loop_rate_hz: 5
     controller:
       SimpleAircraftControllerPID:
-        loop_rate: 20
+        loop_rate_hz: 20
     motion_model: {SimpleAircraft: {}}

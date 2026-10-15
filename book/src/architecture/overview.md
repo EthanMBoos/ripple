@@ -2,11 +2,9 @@
 
 Ripple keeps SCRIMMAGE's structure (entities that carry a stack of replaceable
 plugins, plus world-level plugins that act on every entity) and changes how an
-experiment is described, run, and checked. This section is the Rust counterpart
-of the [C++ architecture guide](../appendix/cpp/architecture.md). The main
-structural difference from C++ is the estimation step: sensors only measure, and
-each entity's estimators own its belief (see [Truth, measurements, and
-belief](information-flow.md)).
+experiment is described, run, and checked. The main structural addition is
+the estimation step: sensors only measure, and each entity's estimators own its
+belief (see [Truth, measurements, and belief](information-flow.md)).
 
 ## The big picture
 

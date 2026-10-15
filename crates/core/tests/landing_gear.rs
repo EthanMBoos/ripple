@@ -45,7 +45,7 @@ fn rascal_gear(steered_tail: bool) -> serde_json::Value {
 fn rascal_motion(gear: serde_json::Value) -> serde_json::Value {
     json!({
         "airframe": "rascal",
-        "use_ground_model": false,
+        "enable_ground_spring": false,
         "landing_gear": gear,
     })
 }

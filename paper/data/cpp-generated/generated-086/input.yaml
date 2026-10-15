@@ -42,8 +42,8 @@
    "pitch_deg": 0.120473,
    "autonomy": {
     "Straight": {
-     "speed": 158.651,
-     "loop_rate": 5
+     "speed_mps": 158.651,
+     "loop_rate_hz": 5
     }
    },
    "velocity_mps": [
@@ -59,8 +59,11 @@
    "motion_model": {
     "FixedWing6DOF": {
      "airframe": "a4d",
-     "wind_E": 2.09221,
-     "wind_N": -2.22201
+     "wind_mps": [
+      2.09221,
+      -2.22201,
+      0
+     ]
     }
    }
   },
@@ -90,8 +93,8 @@
    "pitch_deg": -2.53518,
    "autonomy": {
     "Straight": {
-     "speed": 218.611,
-     "loop_rate": 5
+     "speed_mps": 218.611,
+     "loop_rate_hz": 5
     }
    },
    "velocity_mps": [
@@ -107,8 +110,11 @@
    "motion_model": {
     "FixedWing6DOF": {
      "airframe": "a4d",
-     "wind_E": 0.40104,
-     "wind_N": 2.865
+     "wind_mps": [
+      0.40104,
+      2.865,
+      0
+     ]
     }
    }
   },
@@ -138,8 +144,8 @@
    "pitch_deg": 0.580016,
    "autonomy": {
     "Straight": {
-     "speed": 202.359,
-     "loop_rate": 10
+     "speed_mps": 202.359,
+     "loop_rate_hz": 10
     }
    },
    "velocity_mps": [
@@ -155,8 +161,11 @@
    "motion_model": {
     "FixedWing6DOF": {
      "airframe": "a4d",
-     "wind_E": 2.18337,
-     "wind_N": 0.24186
+     "wind_mps": [
+      2.18337,
+      0.24186,
+      0
+     ]
     }
    }
   },
@@ -180,8 +189,8 @@
    "pitch_deg": -0.364755,
    "autonomy": {
     "Straight": {
-     "speed": 208.096,
-     "loop_rate": 10
+     "speed_mps": 208.096,
+     "loop_rate_hz": 10
     }
    },
    "velocity_mps": [
@@ -197,8 +206,11 @@
    "motion_model": {
     "FixedWing6DOF": {
      "airframe": "a4d",
-     "wind_E": -0.230128,
-     "wind_N": -2.10317
+     "wind_mps": [
+      -0.230128,
+      -2.10317,
+      0
+     ]
     }
    }
   }

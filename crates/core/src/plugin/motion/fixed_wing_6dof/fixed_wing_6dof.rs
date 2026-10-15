@@ -30,7 +30,7 @@
 //! - Not modeled (named zeros in `accelerations`): propeller slipstream over
 //!   the wing and tail, propeller torque and gyroscopic moments, and ground
 //!   effect. Also: separate wing stalls (so no spin), drag from sideslip,
-//!   unsteady aerodynamics (the alpha-dot derivatives are read but unused),
+//!   unsteady aerodynamics (no alpha-dot derivatives),
 //!   engine and propeller dynamics (thrust follows throttle at once),
 //!   compressibility, fuel burn, and gusts. Wind is added to velocity rather
 //!   than subtracted, a quirk kept from the reference.
@@ -73,134 +73,72 @@ const SLUG_FT_SQ_TO_KGM2: f64 = 1.35581795;
 struct FixedWingParams {
     /// `a4d` or `rascal`, or absent for an aircraft given in full.
     airframe: Option<FixedWingAirframe>,
-    #[serde(rename = "mass")]
     mass_kg: Option<f64>,
-    #[serde(rename = "gravity_magnitude")]
     gravity_mps2: f64,
     /// Three rows, in slug·ft² or SI. Give at most one; with neither, the
     /// airframe's applies.
     inertia_slug_ft2: Option<[[f64; 3]; 3]>,
     inertia_kgm2: Option<[[f64; 3]; 3]>,
-    #[serde(rename = "air_density")]
-    density_kgpm3: f64,
-    #[serde(rename = "wing_span")]
-    span_m: Option<f64>,
-    #[serde(rename = "surface_area_of_wing")]
-    area_m2: Option<f64>,
-    #[serde(rename = "chord_length")]
-    chord_m: Option<f64>,
-    #[serde(rename = "efficiency_factor")]
-    efficiency: Option<f64>,
-    /// Steady wind: the air's velocity over the ground, ENU.
-    #[serde(rename = "wind_E")]
-    wind_east_mps: f64,
-    #[serde(rename = "wind_N")]
-    wind_north_mps: f64,
-    #[serde(rename = "wind_U")]
-    wind_up_mps: f64,
-    #[serde(rename = "throttle_input_min")]
-    throttle_min: f64,
-    #[serde(rename = "throttle_input_max")]
-    throttle_max: f64,
-    #[serde(rename = "thrust_min")]
-    thrust_min_n: Option<f64>,
-    #[serde(rename = "thrust_max")]
-    thrust_max_n: Option<f64>,
-    #[serde(rename = "delta_elevator_min")]
-    elevator_min_rad: Option<f64>,
-    #[serde(rename = "delta_elevator_max")]
-    elevator_max_rad: Option<f64>,
-    #[serde(rename = "delta_aileron_min")]
-    aileron_min_rad: Option<f64>,
-    #[serde(rename = "delta_aileron_max")]
-    aileron_max_rad: Option<f64>,
-    #[serde(rename = "delta_rudder_min")]
-    rudder_min_rad: Option<f64>,
-    #[serde(rename = "delta_rudder_max")]
-    rudder_max_rad: Option<f64>,
-    #[serde(rename = "C_D0")]
-    c_d0: Option<f64>,
-    #[serde(rename = "C_D_alpha")]
-    c_d_alpha: Option<f64>,
+    air_density_kgpm3: f64,
+    wing_span_m: Option<f64>,
+    wing_area_m2: Option<f64>,
+    mean_chord_m: Option<f64>,
+    oswald_efficiency: Option<f64>,
+    /// Steady wind: the air's velocity over the ground, `[east, north, up]`.
+    wind_mps: [f64; 3],
+    min_throttle: f64,
+    max_throttle: f64,
+    min_thrust_n: Option<f64>,
+    max_thrust_n: Option<f64>,
+    min_elevator_rad: Option<f64>,
+    max_elevator_rad: Option<f64>,
+    min_aileron_rad: Option<f64>,
+    max_aileron_rad: Option<f64>,
+    min_rudder_rad: Option<f64>,
+    max_rudder_rad: Option<f64>,
+    c_drag_0: Option<f64>,
+    c_drag_alpha: Option<f64>,
     /// The key has a trailing underscore.
-    #[serde(rename = "C_D_delta_elevator_")]
-    c_d_elevator: Option<f64>,
-    #[serde(rename = "C_L0")]
-    c_l0: Option<f64>,
-    #[serde(rename = "C_L_alpha")]
-    c_l_alpha: Option<f64>,
-    #[serde(rename = "C_LQ")]
-    c_lq: Option<f64>,
-    /// Always zero in the reference; read only so a bad value is still an error.
-    #[serde(rename = "C_L_alpha_dot")]
-    _c_l_alpha_dot: Option<f64>,
-    #[serde(rename = "C_L_delta_elevator")]
-    c_l_elevator: Option<f64>,
-    #[serde(rename = "C_Y_beta")]
-    c_y_beta: Option<f64>,
-    #[serde(rename = "C_Y_delta_rudder")]
-    c_y_rudder: Option<f64>,
-    #[serde(rename = "C_L_beta")]
+    c_drag_elevator: Option<f64>,
+    c_lift_0: Option<f64>,
+    c_lift_alpha: Option<f64>,
+    c_lift_q: Option<f64>,
+    c_lift_elevator: Option<f64>,
+    c_side_beta: Option<f64>,
+    c_side_rudder: Option<f64>,
     c_roll_beta: Option<f64>,
-    #[serde(rename = "C_LP")]
     c_roll_p: Option<f64>,
-    #[serde(rename = "C_LR")]
     c_roll_r: Option<f64>,
-    #[serde(rename = "C_L_delta_aileron")]
     c_roll_aileron: Option<f64>,
-    #[serde(rename = "C_L_delta_rudder")]
     c_roll_rudder: Option<f64>,
-    #[serde(rename = "C_M0")]
-    c_m0: Option<f64>,
-    #[serde(rename = "C_M_alpha")]
-    c_m_alpha: Option<f64>,
-    #[serde(rename = "C_MQ")]
-    c_mq: Option<f64>,
-    /// Always zero in the reference; read only so a bad value is still an error.
-    #[serde(rename = "C_M_alpha_dot")]
-    _c_m_alpha_dot: Option<f64>,
-    #[serde(rename = "C_M_delta_elevator")]
-    c_m_elevator: Option<f64>,
-    #[serde(rename = "C_N_beta")]
-    c_n_beta: Option<f64>,
-    #[serde(rename = "C_NP")]
-    c_np: Option<f64>,
-    #[serde(rename = "C_NR")]
-    c_nr: Option<f64>,
-    #[serde(rename = "C_N_delta_aileron")]
-    c_n_aileron: Option<f64>,
-    #[serde(rename = "C_N_delta_rudder")]
-    c_n_rudder: Option<f64>,
-    /// The same name without the underscore, which parameter files often write;
-    /// rejected so a tuning value is not silently ignored.
-    #[serde(rename = "C_D_delta_elevator")]
-    c_d_elevator_without_underscore: Option<f64>,
+    c_pitch_0: Option<f64>,
+    c_pitch_alpha: Option<f64>,
+    c_pitch_q: Option<f64>,
+    c_pitch_elevator: Option<f64>,
+    c_yaw_beta: Option<f64>,
+    c_yaw_p: Option<f64>,
+    c_yaw_r: Option<f64>,
+    c_yaw_aileron: Option<f64>,
+    c_yaw_rudder: Option<f64>,
     /// Lift coefficient against angle of attack, as `[alpha_rad, C_L]` rows
-    /// sorted by angle (YAML only). Replaces `C_L0 + C_L_alpha * alpha`, so a
+    /// sorted by angle (YAML only). Replaces `c_lift_0 + c_lift_alpha * alpha`, so a
     /// lift that peaks and falls past the critical angle models a stall;
     /// interpolated linearly and held at the end values, like a JSBSim table.
     /// Empty (the default) keeps linear lift.
     lift_table: Vec<[f64; 2]>,
     /// Drag coefficient against angle of attack, as `[alpha_rad, C_D]` rows
     /// sorted by angle (YAML only), read like `lift_table`. Replaces
-    /// `C_D0 + C_D_alpha * |alpha|`, so drag can rise steeply past the stall;
+    /// `c_drag_0 + c_drag_alpha * |alpha|`, so drag can rise steeply past the stall;
     /// induced and elevator drag are still added. Empty keeps the linear drag.
     drag_table: Vec<[f64; 2]>,
-    use_ground_model: bool,
+    enable_ground_spring: bool,
     /// Wheels that roll on the ground (YAML only; see `landing_gear.rs`).
-    /// Replaces the flat spring, so `use_ground_model` must be false.
+    /// Replaces the flat spring, so `enable_ground_spring` must be false.
     landing_gear: Vec<Wheel>,
-    use_launcher: bool,
-    #[serde(rename = "launch_time")]
-    launch_time_s: f64,
-    #[serde(rename = "launch_accel")]
-    launch_accel_mps2: f64,
-    #[serde(rename = "launch_speed")]
+    enable_launcher: bool,
+    launch_at_s: f64,
+    launch_acceleration_mps2: f64,
     launch_speed_mps: f64,
-    /// Not supported; use the run's frames and Rerun recording. Must stay false.
-    write_csv: bool,
-    draw_vel: bool,
-    draw_ang_vel: bool,
 }
 
 impl Default for FixedWingParams {
@@ -211,61 +149,53 @@ impl Default for FixedWingParams {
             gravity_mps2: 9.81,
             inertia_slug_ft2: None,
             inertia_kgm2: None,
-            density_kgpm3: 1.225,
-            span_m: None,
-            area_m2: None,
-            chord_m: None,
-            efficiency: None,
-            wind_east_mps: 0.0,
-            wind_north_mps: 0.0,
-            wind_up_mps: 0.0,
-            throttle_min: 0.0,
-            throttle_max: 1.0,
-            thrust_min_n: None,
-            thrust_max_n: None,
-            elevator_min_rad: None,
-            elevator_max_rad: None,
-            aileron_min_rad: None,
-            aileron_max_rad: None,
-            rudder_min_rad: None,
-            rudder_max_rad: None,
-            c_d0: None,
-            c_d_alpha: None,
-            c_d_elevator: None,
-            c_l0: None,
-            c_l_alpha: None,
-            c_lq: None,
-            _c_l_alpha_dot: None,
-            c_l_elevator: None,
-            c_y_beta: None,
-            c_y_rudder: None,
+            air_density_kgpm3: 1.225,
+            wing_span_m: None,
+            wing_area_m2: None,
+            mean_chord_m: None,
+            oswald_efficiency: None,
+            wind_mps: [0.0; 3],
+            min_throttle: 0.0,
+            max_throttle: 1.0,
+            min_thrust_n: None,
+            max_thrust_n: None,
+            min_elevator_rad: None,
+            max_elevator_rad: None,
+            min_aileron_rad: None,
+            max_aileron_rad: None,
+            min_rudder_rad: None,
+            max_rudder_rad: None,
+            c_drag_0: None,
+            c_drag_alpha: None,
+            c_drag_elevator: None,
+            c_lift_0: None,
+            c_lift_alpha: None,
+            c_lift_q: None,
+            c_lift_elevator: None,
+            c_side_beta: None,
+            c_side_rudder: None,
             c_roll_beta: None,
             c_roll_p: None,
             c_roll_r: None,
             c_roll_aileron: None,
             c_roll_rudder: None,
-            c_m0: None,
-            c_m_alpha: None,
-            c_mq: None,
-            _c_m_alpha_dot: None,
-            c_m_elevator: None,
-            c_n_beta: None,
-            c_np: None,
-            c_nr: None,
-            c_n_aileron: None,
-            c_n_rudder: None,
-            c_d_elevator_without_underscore: None,
+            c_pitch_0: None,
+            c_pitch_alpha: None,
+            c_pitch_q: None,
+            c_pitch_elevator: None,
+            c_yaw_beta: None,
+            c_yaw_p: None,
+            c_yaw_r: None,
+            c_yaw_aileron: None,
+            c_yaw_rudder: None,
             lift_table: Vec::new(),
             drag_table: Vec::new(),
-            use_ground_model: true,
+            enable_ground_spring: true,
             landing_gear: Vec::new(),
-            use_launcher: false,
-            launch_time_s: 30.0,
-            launch_accel_mps2: 200.0,
+            enable_launcher: false,
+            launch_at_s: 30.0,
+            launch_acceleration_mps2: 200.0,
             launch_speed_mps: 20.0,
-            write_csv: false,
-            draw_vel: false,
-            draw_ang_vel: false,
         }
     }
 }
@@ -276,25 +206,25 @@ pub struct FixedWingConfig {
     gravity_mps2: f64,
     inertia_kgm2: Matrix3<f64>,
     inverse_inertia: Matrix3<f64>,
-    density_kgpm3: f64,
-    span_m: f64,
-    area_m2: f64,
-    chord_m: f64,
-    efficiency: f64,
+    air_density_kgpm3: f64,
+    wing_span_m: f64,
+    wing_area_m2: f64,
+    mean_chord_m: f64,
+    oswald_efficiency: f64,
     wind_world_mps: Vec3,
-    throttle_min: f64,
-    throttle_max: f64,
-    thrust_min_n: f64,
-    thrust_max_n: f64,
+    min_throttle: f64,
+    max_throttle: f64,
+    min_thrust_n: f64,
+    max_thrust_n: f64,
     elevator_limits_rad: [f64; 2],
     aileron_limits_rad: [f64; 2],
     rudder_limits_rad: [f64; 2],
     aerodynamics: Aerodynamics,
-    use_ground_model: bool,
+    enable_ground_spring: bool,
     landing_gear: Vec<Wheel>,
-    use_launcher: bool,
-    launch_time_s: f64,
-    launch_accel_mps2: f64,
+    enable_launcher: bool,
+    launch_at_s: f64,
+    launch_acceleration_mps2: f64,
     launch_speed_mps: f64,
 }
 
@@ -322,30 +252,16 @@ impl Plugin for FixedWing6Dof {
 
     fn configure(params: &PluginParams<'_>) -> Result<FixedWingConfig> {
         let params: FixedWingParams = params.parse()?;
-        for (key, enabled) in [
-            ("write_csv", params.write_csv),
-            ("draw_vel", params.draw_vel),
-            ("draw_ang_vel", params.draw_ang_vel),
-        ] {
-            ensure!(
-                !enabled,
-                "FixedWing6DOF {key}=true is not supported; use the run's frames and Rerun recording"
-            );
-        }
-        ensure!(
-            params.c_d_elevator_without_underscore.is_none(),
-            "use C_D_delta_elevator_ (with the trailing underscore)"
-        );
         let vehicle = vehicle(&params)?;
         ensure!(
             vehicle.elevator_limits_rad[0] <= vehicle.elevator_limits_rad[1]
                 && vehicle.aileron_limits_rad[0] <= vehicle.aileron_limits_rad[1]
                 && vehicle.rudder_limits_rad[0] <= vehicle.rudder_limits_rad[1],
-            "FixedWing6DOF requires each delta_*_min <= delta_*_max"
+            "FixedWing6DOF requires each min_*_rad <= max_*_rad"
         );
         ensure!(
-            params.landing_gear.is_empty() || !params.use_ground_model,
-            "FixedWing6DOF: set use_ground_model to false with landing_gear; the wheels replace it"
+            params.landing_gear.is_empty() || !params.enable_ground_spring,
+            "FixedWing6DOF: set enable_ground_spring to false with landing_gear; the wheels replace it"
         );
         check_alpha_table("lift_table", "C_L", &params.lift_table)?;
         check_alpha_table("drag_table", "C_D", &params.drag_table)?;
@@ -359,48 +275,44 @@ impl Plugin for FixedWing6Dof {
             gravity_mps2: params.gravity_mps2,
             inertia_kgm2,
             inverse_inertia,
-            density_kgpm3: params.density_kgpm3,
-            span_m: vehicle.span_m,
-            area_m2: vehicle.area_m2,
-            chord_m: vehicle.chord_m,
-            efficiency: vehicle.efficiency,
-            wind_world_mps: Vec3::new(
-                params.wind_east_mps,
-                params.wind_north_mps,
-                params.wind_up_mps,
-            ),
-            throttle_min: params.throttle_min,
-            throttle_max: params.throttle_max,
-            thrust_min_n: vehicle.thrust_min_n,
-            thrust_max_n: vehicle.thrust_max_n,
+            air_density_kgpm3: params.air_density_kgpm3,
+            wing_span_m: vehicle.wing_span_m,
+            wing_area_m2: vehicle.wing_area_m2,
+            mean_chord_m: vehicle.mean_chord_m,
+            oswald_efficiency: vehicle.oswald_efficiency,
+            wind_world_mps: Vec3::from(params.wind_mps),
+            min_throttle: params.min_throttle,
+            max_throttle: params.max_throttle,
+            min_thrust_n: vehicle.min_thrust_n,
+            max_thrust_n: vehicle.max_thrust_n,
             elevator_limits_rad: vehicle.elevator_limits_rad,
             aileron_limits_rad: vehicle.aileron_limits_rad,
             rudder_limits_rad: vehicle.rudder_limits_rad,
             aerodynamics: Aerodynamics::new(&vehicle, &params.lift_table, &params.drag_table),
-            use_ground_model: params.use_ground_model,
+            enable_ground_spring: params.enable_ground_spring,
             landing_gear: params.landing_gear,
-            use_launcher: params.use_launcher,
-            launch_time_s: params.launch_time_s,
-            launch_accel_mps2: params.launch_accel_mps2,
+            enable_launcher: params.enable_launcher,
+            launch_at_s: params.launch_at_s,
+            launch_acceleration_mps2: params.launch_acceleration_mps2,
             launch_speed_mps: params.launch_speed_mps,
         };
         ensure!(
             config.mass_kg > 0.0
-                && config.density_kgpm3 >= 0.0
+                && config.air_density_kgpm3 >= 0.0
                 && config.gravity_mps2 >= 0.0
-                && config.span_m > 0.0
-                && config.area_m2 > 0.0
-                && config.chord_m > 0.0
-                && config.efficiency > 0.0,
+                && config.wing_span_m > 0.0
+                && config.wing_area_m2 > 0.0
+                && config.mean_chord_m > 0.0
+                && config.oswald_efficiency > 0.0,
             "FixedWing6DOF requires positive mass and geometry, nonnegative air density and gravity"
         );
         ensure!(
-            config.throttle_min < config.throttle_max && config.thrust_min_n <= config.thrust_max_n,
+            config.min_throttle < config.max_throttle && config.min_thrust_n <= config.max_thrust_n,
             "FixedWing6DOF has invalid throttle/thrust limits"
         );
         ensure!(
-            !config.use_launcher
-                || (config.launch_accel_mps2 > 0.0 && config.launch_speed_mps >= 0.0),
+            !config.enable_launcher
+                || (config.launch_acceleration_mps2 > 0.0 && config.launch_speed_mps >= 0.0),
             "FixedWing6DOF launcher requires positive acceleration and nonnegative speed"
         );
         Ok(config)
@@ -409,7 +321,7 @@ impl Plugin for FixedWing6Dof {
     fn new(config: &FixedWingConfig) -> Self {
         Self {
             config: config.clone(),
-            launch: if config.use_launcher {
+            launch: if config.enable_launcher {
                 LaunchState::Waiting
             } else {
                 LaunchState::Flying
@@ -432,8 +344,8 @@ impl MotionModel for FixedWing6Dof {
         // replaces; with both, an aircraft over a valley below z = 0 would be
         // pushed up in mid-air.
         ensure!(
-            context.terrain.is_none() || !self.config.use_ground_model,
-            "FixedWing6DOF: set use_ground_model to false when terrain is configured; \
+            context.terrain.is_none() || !self.config.enable_ground_spring,
+            "FixedWing6DOF: set enable_ground_spring to false when terrain is configured; \
              add TerrainCollision to remove aircraft that hit terrain"
         );
         if let Some(terrain) = context.terrain {
@@ -519,17 +431,19 @@ impl FixedWing6Dof {
     fn advance_launcher(&mut self, time_s: f64) -> f64 {
         match self.launch {
             LaunchState::Waiting => {
-                if time_s > self.config.launch_time_s {
+                if time_s > self.config.launch_at_s {
                     self.launch = LaunchState::Launching { start_s: time_s };
                 }
                 0.0
             }
             LaunchState::Launching { start_s } => {
-                if self.config.launch_speed_mps / self.config.launch_accel_mps2 < time_s - start_s {
+                if self.config.launch_speed_mps / self.config.launch_acceleration_mps2
+                    < time_s - start_s
+                {
                     self.launch = LaunchState::Flying;
                 }
                 // Reference applies this force even on the transition-to-flight tick.
-                self.config.launch_accel_mps2 * self.config.mass_kg
+                self.config.launch_acceleration_mps2 * self.config.mass_kg
             }
             LaunchState::Flying => 0.0,
         }
@@ -538,8 +452,8 @@ impl FixedWing6Dof {
 
 impl FixedWingConfig {
     /// When the launcher releases the aircraft, or `None` without a launcher.
-    pub fn launch_time_s(&self) -> Option<f64> {
-        self.use_launcher.then_some(self.launch_time_s)
+    pub fn launch_at_s(&self) -> Option<f64> {
+        self.enable_launcher.then_some(self.launch_at_s)
     }
 
     /// Linear and angular acceleration in the model frame for one state.
@@ -557,11 +471,11 @@ impl FixedWingConfig {
         // Velocity through the air: ground velocity minus the air's (the wind's).
         let air_velocity_model_mps = state.velocity_model_mps - wind_model_mps;
         let airframe = Airframe {
-            density_kgpm3: self.density_kgpm3,
-            span_m: self.span_m,
-            area_m2: self.area_m2,
-            chord_m: self.chord_m,
-            efficiency: self.efficiency,
+            air_density_kgpm3: self.air_density_kgpm3,
+            wing_span_m: self.wing_span_m,
+            wing_area_m2: self.wing_area_m2,
+            mean_chord_m: self.mean_chord_m,
+            oswald_efficiency: self.oswald_efficiency,
         };
         let mut loads = self.aerodynamics.loads(
             &airframe,
@@ -605,7 +519,7 @@ impl FixedWingConfig {
             loads.force_model_n += force_model_n;
             loads.moment_model_nm += moment_model_nm;
         }
-        if self.use_ground_model && state.position_world_m.z < 0.0 {
+        if self.enable_ground_spring && state.position_world_m.z < 0.0 {
             // Inherited ground model: damping is only 40 N*s/m, not mass-scaled.
             // This is not a validated landing model for the default eight-tonne
             // aircraft; `landing_gear` is the real ground contact.
@@ -634,10 +548,10 @@ impl FixedWingConfig {
         // A non-reversing engine needs different limits; don't compensate in the PID.
         let throttle = throttle
             .clamp(-1.0, 1.0)
-            .clamp(self.throttle_min, self.throttle_max);
+            .clamp(self.min_throttle, self.max_throttle);
         let scale =
-            (self.thrust_max_n - self.thrust_min_n) / (self.throttle_max - self.throttle_min);
-        (throttle - self.throttle_min) * scale + self.thrust_min_n
+            (self.max_thrust_n - self.min_thrust_n) / (self.max_throttle - self.min_throttle);
+        (throttle - self.min_throttle) * scale + self.min_thrust_n
     }
 }
 
@@ -680,124 +594,152 @@ fn vehicle(params: &FixedWingParams) -> Result<Vehicle> {
         )?,
     };
     Ok(Vehicle {
-        mass_kg: pick("mass", params.mass_kg, preset.map(|v| v.mass_kg))?,
+        mass_kg: pick("mass_kg", params.mass_kg, preset.map(|v| v.mass_kg))?,
         inertia_kgm2,
-        span_m: pick("wing_span", params.span_m, preset.map(|v| v.span_m))?,
-        area_m2: pick(
-            "surface_area_of_wing",
-            params.area_m2,
-            preset.map(|v| v.area_m2),
+        wing_span_m: pick(
+            "wing_span_m",
+            params.wing_span_m,
+            preset.map(|v| v.wing_span_m),
         )?,
-        chord_m: pick("chord_length", params.chord_m, preset.map(|v| v.chord_m))?,
-        efficiency: pick(
-            "efficiency_factor",
-            params.efficiency,
-            preset.map(|v| v.efficiency),
+        wing_area_m2: pick(
+            "wing_area_m2",
+            params.wing_area_m2,
+            preset.map(|v| v.wing_area_m2),
         )?,
-        thrust_min_n: pick(
-            "thrust_min",
-            params.thrust_min_n,
-            preset.map(|v| v.thrust_min_n),
+        mean_chord_m: pick(
+            "mean_chord_m",
+            params.mean_chord_m,
+            preset.map(|v| v.mean_chord_m),
         )?,
-        thrust_max_n: pick(
-            "thrust_max",
-            params.thrust_max_n,
-            preset.map(|v| v.thrust_max_n),
+        oswald_efficiency: pick(
+            "oswald_efficiency",
+            params.oswald_efficiency,
+            preset.map(|v| v.oswald_efficiency),
+        )?,
+        min_thrust_n: pick(
+            "min_thrust_n",
+            params.min_thrust_n,
+            preset.map(|v| v.min_thrust_n),
+        )?,
+        max_thrust_n: pick(
+            "max_thrust_n",
+            params.max_thrust_n,
+            preset.map(|v| v.max_thrust_n),
         )?,
         elevator_limits_rad: [
             pick(
-                "delta_elevator_min",
-                params.elevator_min_rad,
+                "min_elevator_rad",
+                params.min_elevator_rad,
                 preset.map(|v| v.elevator_limits_rad[0]),
             )?,
             pick(
-                "delta_elevator_max",
-                params.elevator_max_rad,
+                "max_elevator_rad",
+                params.max_elevator_rad,
                 preset.map(|v| v.elevator_limits_rad[1]),
             )?,
         ],
         aileron_limits_rad: [
             pick(
-                "delta_aileron_min",
-                params.aileron_min_rad,
+                "min_aileron_rad",
+                params.min_aileron_rad,
                 preset.map(|v| v.aileron_limits_rad[0]),
             )?,
             pick(
-                "delta_aileron_max",
-                params.aileron_max_rad,
+                "max_aileron_rad",
+                params.max_aileron_rad,
                 preset.map(|v| v.aileron_limits_rad[1]),
             )?,
         ],
         rudder_limits_rad: [
             pick(
-                "delta_rudder_min",
-                params.rudder_min_rad,
+                "min_rudder_rad",
+                params.min_rudder_rad,
                 preset.map(|v| v.rudder_limits_rad[0]),
             )?,
             pick(
-                "delta_rudder_max",
-                params.rudder_max_rad,
+                "max_rudder_rad",
+                params.max_rudder_rad,
                 preset.map(|v| v.rudder_limits_rad[1]),
             )?,
         ],
-        c_d0: pick("C_D0", params.c_d0, preset.map(|v| v.c_d0))?,
-        c_d_alpha: pick("C_D_alpha", params.c_d_alpha, preset.map(|v| v.c_d_alpha))?,
-        c_d_elevator: pick(
-            "C_D_delta_elevator_",
-            params.c_d_elevator,
-            preset.map(|v| v.c_d_elevator),
+        c_drag_0: pick("c_drag_0", params.c_drag_0, preset.map(|v| v.c_drag_0))?,
+        c_drag_alpha: pick(
+            "c_drag_alpha",
+            params.c_drag_alpha,
+            preset.map(|v| v.c_drag_alpha),
         )?,
-        c_l0: pick("C_L0", params.c_l0, preset.map(|v| v.c_l0))?,
-        c_l_alpha: pick("C_L_alpha", params.c_l_alpha, preset.map(|v| v.c_l_alpha))?,
-        c_lq: pick("C_LQ", params.c_lq, preset.map(|v| v.c_lq))?,
-        c_l_elevator: pick(
-            "C_L_delta_elevator",
-            params.c_l_elevator,
-            preset.map(|v| v.c_l_elevator),
+        c_drag_elevator: pick(
+            "c_drag_elevator",
+            params.c_drag_elevator,
+            preset.map(|v| v.c_drag_elevator),
         )?,
-        c_y_beta: pick("C_Y_beta", params.c_y_beta, preset.map(|v| v.c_y_beta))?,
-        c_y_rudder: pick(
-            "C_Y_delta_rudder",
-            params.c_y_rudder,
-            preset.map(|v| v.c_y_rudder),
+        c_lift_0: pick("c_lift_0", params.c_lift_0, preset.map(|v| v.c_lift_0))?,
+        c_lift_alpha: pick(
+            "c_lift_alpha",
+            params.c_lift_alpha,
+            preset.map(|v| v.c_lift_alpha),
+        )?,
+        c_lift_q: pick("c_lift_q", params.c_lift_q, preset.map(|v| v.c_lift_q))?,
+        c_lift_elevator: pick(
+            "c_lift_elevator",
+            params.c_lift_elevator,
+            preset.map(|v| v.c_lift_elevator),
+        )?,
+        c_side_beta: pick(
+            "c_side_beta",
+            params.c_side_beta,
+            preset.map(|v| v.c_side_beta),
+        )?,
+        c_side_rudder: pick(
+            "c_side_rudder",
+            params.c_side_rudder,
+            preset.map(|v| v.c_side_rudder),
         )?,
         c_roll_beta: pick(
-            "C_L_beta",
+            "c_roll_beta",
             params.c_roll_beta,
             preset.map(|v| v.c_roll_beta),
         )?,
-        c_roll_p: pick("C_LP", params.c_roll_p, preset.map(|v| v.c_roll_p))?,
-        c_roll_r: pick("C_LR", params.c_roll_r, preset.map(|v| v.c_roll_r))?,
+        c_roll_p: pick("c_roll_p", params.c_roll_p, preset.map(|v| v.c_roll_p))?,
+        c_roll_r: pick("c_roll_r", params.c_roll_r, preset.map(|v| v.c_roll_r))?,
         c_roll_aileron: pick(
-            "C_L_delta_aileron",
+            "c_roll_aileron",
             params.c_roll_aileron,
             preset.map(|v| v.c_roll_aileron),
         )?,
         c_roll_rudder: pick(
-            "C_L_delta_rudder",
+            "c_roll_rudder",
             params.c_roll_rudder,
             preset.map(|v| v.c_roll_rudder),
         )?,
-        c_m0: pick("C_M0", params.c_m0, preset.map(|v| v.c_m0))?,
-        c_m_alpha: pick("C_M_alpha", params.c_m_alpha, preset.map(|v| v.c_m_alpha))?,
-        c_mq: pick("C_MQ", params.c_mq, preset.map(|v| v.c_mq))?,
-        c_m_elevator: pick(
-            "C_M_delta_elevator",
-            params.c_m_elevator,
-            preset.map(|v| v.c_m_elevator),
+        c_pitch_0: pick("c_pitch_0", params.c_pitch_0, preset.map(|v| v.c_pitch_0))?,
+        c_pitch_alpha: pick(
+            "c_pitch_alpha",
+            params.c_pitch_alpha,
+            preset.map(|v| v.c_pitch_alpha),
         )?,
-        c_n_beta: pick("C_N_beta", params.c_n_beta, preset.map(|v| v.c_n_beta))?,
-        c_np: pick("C_NP", params.c_np, preset.map(|v| v.c_np))?,
-        c_nr: pick("C_NR", params.c_nr, preset.map(|v| v.c_nr))?,
-        c_n_aileron: pick(
-            "C_N_delta_aileron",
-            params.c_n_aileron,
-            preset.map(|v| v.c_n_aileron),
+        c_pitch_q: pick("c_pitch_q", params.c_pitch_q, preset.map(|v| v.c_pitch_q))?,
+        c_pitch_elevator: pick(
+            "c_pitch_elevator",
+            params.c_pitch_elevator,
+            preset.map(|v| v.c_pitch_elevator),
         )?,
-        c_n_rudder: pick(
-            "C_N_delta_rudder",
-            params.c_n_rudder,
-            preset.map(|v| v.c_n_rudder),
+        c_yaw_beta: pick(
+            "c_yaw_beta",
+            params.c_yaw_beta,
+            preset.map(|v| v.c_yaw_beta),
+        )?,
+        c_yaw_p: pick("c_yaw_p", params.c_yaw_p, preset.map(|v| v.c_yaw_p))?,
+        c_yaw_r: pick("c_yaw_r", params.c_yaw_r, preset.map(|v| v.c_yaw_r))?,
+        c_yaw_aileron: pick(
+            "c_yaw_aileron",
+            params.c_yaw_aileron,
+            preset.map(|v| v.c_yaw_aileron),
+        )?,
+        c_yaw_rudder: pick(
+            "c_yaw_rudder",
+            params.c_yaw_rudder,
+            preset.map(|v| v.c_yaw_rudder),
         )?,
     })
 }
@@ -834,7 +776,7 @@ mod tests {
         let wind_mps = Vector3::new(-3.0, 2.0, 0.5);
         let aircraft = |wind: Vector3<f64>| -> anyhow::Result<FixedWing6Dof> {
             let params = PluginParams::yaml(&format!(
-                "{{airframe: a4d, wind_E: {:?}, wind_N: {:?}, wind_U: {:?}}}",
+                "{{airframe: a4d, wind_mps: [{:?}, {:?}, {:?}]}}",
                 wind.x, wind.y, wind.z
             ));
             Ok(FixedWing6Dof::new(&FixedWing6Dof::configure(&params)?))
@@ -878,7 +820,8 @@ mod tests {
 
     #[test]
     fn throttle_scaling_clamps_like_cpp_utilities_scale() -> anyhow::Result<()> {
-        let params = PluginParams::yaml("{airframe: a4d, thrust_min: -36000, thrust_max: 36000}");
+        let params =
+            PluginParams::yaml("{airframe: a4d, min_thrust_n: -36000, max_thrust_n: 36000}");
         let config = FixedWing6Dof::configure(&params)?;
         for (input, expected_n) in [
             (-2.0, -36000.0),
@@ -921,42 +864,42 @@ mod tests {
     {
         // The Rascal in full, every vehicle key, with C_MQ changed.
         let full = [
-            ("mass", "5.91"),
-            ("wing_span", "2.70"),
-            ("surface_area_of_wing", "0.982"),
-            ("chord_length", "0.351"),
-            ("efficiency_factor", "0.995"),
-            ("thrust_min", "0"),
-            ("thrust_max", "25"),
-            ("delta_elevator_min", "-0.30"),
-            ("delta_elevator_max", "0.30"),
-            ("delta_aileron_min", "-0.35"),
-            ("delta_aileron_max", "0.35"),
-            ("delta_rudder_min", "-0.35"),
-            ("delta_rudder_max", "0.35"),
-            ("C_D0", "0.028"),
-            ("C_D_alpha", "0"),
-            ("C_D_delta_elevator_", "0.01"),
-            ("C_L0", "0.25"),
-            ("C_L_alpha", "5"),
-            ("C_LQ", "0"),
-            ("C_L_delta_elevator", "0.2"),
-            ("C_Y_beta", "-1"),
-            ("C_Y_delta_rudder", "0"),
-            ("C_L_beta", "-0.1"),
-            ("C_LP", "-0.4"),
-            ("C_LR", "0.15"),
-            ("C_L_delta_aileron", "0.13"),
-            ("C_L_delta_rudder", "0.01"),
-            ("C_M0", "0"),
-            ("C_M_alpha", "-0.5"),
-            ("C_MQ", "-10"),
-            ("C_M_delta_elevator", "-0.5"),
-            ("C_N_beta", "0.12"),
-            ("C_NP", "0"),
-            ("C_NR", "-0.15"),
-            ("C_N_delta_aileron", "-0.03"),
-            ("C_N_delta_rudder", "-0.05"),
+            ("mass_kg", "5.91"),
+            ("wing_span_m", "2.70"),
+            ("wing_area_m2", "0.982"),
+            ("mean_chord_m", "0.351"),
+            ("oswald_efficiency", "0.995"),
+            ("min_thrust_n", "0"),
+            ("max_thrust_n", "25"),
+            ("min_elevator_rad", "-0.30"),
+            ("max_elevator_rad", "0.30"),
+            ("min_aileron_rad", "-0.35"),
+            ("max_aileron_rad", "0.35"),
+            ("min_rudder_rad", "-0.35"),
+            ("max_rudder_rad", "0.35"),
+            ("c_drag_0", "0.028"),
+            ("c_drag_alpha", "0"),
+            ("c_drag_elevator", "0.01"),
+            ("c_lift_0", "0.25"),
+            ("c_lift_alpha", "5"),
+            ("c_lift_q", "0"),
+            ("c_lift_elevator", "0.2"),
+            ("c_side_beta", "-1"),
+            ("c_side_rudder", "0"),
+            ("c_roll_beta", "-0.1"),
+            ("c_roll_p", "-0.4"),
+            ("c_roll_r", "0.15"),
+            ("c_roll_aileron", "0.13"),
+            ("c_roll_rudder", "0.01"),
+            ("c_pitch_0", "0"),
+            ("c_pitch_alpha", "-0.5"),
+            ("c_pitch_q", "-10"),
+            ("c_pitch_elevator", "-0.5"),
+            ("c_yaw_beta", "0.12"),
+            ("c_yaw_p", "0"),
+            ("c_yaw_r", "-0.15"),
+            ("c_yaw_aileron", "-0.03"),
+            ("c_yaw_rudder", "-0.05"),
         ];
         let resolve = |text: &str| -> anyhow::Result<_> {
             super::vehicle(&PluginParams::yaml(text).parse()?)
@@ -966,12 +909,12 @@ mod tests {
             .map(|(key, value)| format!("{key}: {value}\n"))
             .chain(["inertia_slug_ft2: [[1.95, 0, 0], [0, 1.55, 0], [0, 0, 1.91]]".into()])
             .collect();
-        let from_name = resolve("{airframe: rascal, C_MQ: -10}")?;
+        let from_name = resolve("{airframe: rascal, c_pitch_q: -10}")?;
         assert_eq!(from_name, resolve(&full)?);
-        assert_eq!(from_name.c_mq, -10.0);
+        assert_eq!(from_name.c_pitch_q, -10.0);
         // Without the override, the profile's own value.
         let plain = resolve("airframe: rascal")?;
-        assert_eq!(plain.c_mq, -12.0);
+        assert_eq!(plain.c_pitch_q, -12.0);
         Ok(())
     }
 

@@ -21,9 +21,7 @@ pub const RESULT_AUCTION_TOPIC: &str = "ResultAuction";
 #[serde(default, deny_unknown_fields)]
 pub struct AuctionAssignConfig {
     auctioneer: bool,
-    #[serde(rename = "auction_duration_s")]
-    duration_s: f64,
-    #[serde(rename = "network_name")]
+    auction_duration_s: f64,
     network: String,
 }
 
@@ -31,7 +29,7 @@ impl Default for AuctionAssignConfig {
     fn default() -> Self {
         Self {
             auctioneer: true,
-            duration_s: 5.0,
+            auction_duration_s: 5.0,
             network: "SphereNetwork".into(),
         }
     }
@@ -56,7 +54,7 @@ pub struct AuctionResult {
 
 pub struct AuctionAssign {
     auctioneer: bool,
-    duration_s: f64,
+    auction_duration_s: f64,
     network: String,
     started_at_s: Option<f64>,
     completed: bool,
@@ -69,7 +67,7 @@ impl Plugin for AuctionAssign {
     fn configure(params: &PluginParams<'_>) -> Result<AuctionAssignConfig> {
         let config: AuctionAssignConfig = params.parse()?;
         ensure!(
-            config.duration_s >= 0.0,
+            config.auction_duration_s >= 0.0,
             "auction_duration_s must be nonnegative"
         );
         ensure!(
@@ -82,7 +80,7 @@ impl Plugin for AuctionAssign {
     fn new(config: &AuctionAssignConfig) -> Self {
         Self {
             auctioneer: config.auctioneer,
-            duration_s: config.duration_s,
+            auction_duration_s: config.auction_duration_s,
             network: config.network.clone(),
             started_at_s: None,
             completed: false,
@@ -144,7 +142,7 @@ impl Autonomy for AuctionAssign {
         if self.auctioneer && context.entity.id == 1 {
             if let Some(started_at_s) = self.started_at_s {
                 // Strict deadline: close on the first tick after five seconds.
-                if !self.completed && context.time.time_s > started_at_s + self.duration_s {
+                if !self.completed && context.time.time_s > started_at_s + self.auction_duration_s {
                     // There is no plugin log output yet, so only subscribers see the
                     // result; stock run outputs
                     // (events, summary, Rerun) do not record it. Worth adding later.

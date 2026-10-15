@@ -36,8 +36,8 @@
    "pitch_deg": -1.42915,
    "autonomy": {
     "Straight": {
-     "speed": 157.461,
-     "loop_rate": 5
+     "speed_mps": 157.461,
+     "loop_rate_hz": 5
     }
    },
    "velocity_mps": [
@@ -53,8 +53,11 @@
    "motion_model": {
     "FixedWing6DOF": {
      "airframe": "a4d",
-     "wind_E": -2.20437,
-     "wind_N": 1.9213
+     "wind_mps": [
+      -2.20437,
+      1.9213,
+      0
+     ]
     }
    }
   }

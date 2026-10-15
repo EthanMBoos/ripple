@@ -27,12 +27,12 @@ templates:
     heading_deg: 0
     autonomy:
       Straight:
-        speed: 20
+        speed_mps: 20
     controller:
       AircraftPIDController:
         airframe: rascal
-        max_pitch: 45
-        max_roll: 60
+        max_pitch_deg: 45
+        max_roll_deg: 60
     motion_model:
       FixedWing6DOF:
         airframe: rascal
@@ -55,8 +55,8 @@ entities:
     controller:
       AircraftPIDController:
         airframe: rascal
-        heading_pid: [0, 0, 0, 0]
-        altitude_pid: [0, 0, 0, 0]
-        speed_pid: [0, 0, 0, 0]
-        pitch_pid: [0, 0, 0, 0]
-        roll_pid: [0, 0, 0, 0]
+        heading_pid: {kp: 0, ki: 0, kd: 0, integrate_within_deg: 0}
+        altitude_pid: {kp: 0, ki: 0, kd: 0, integrate_within_m: 0}
+        speed_pid: {kp: 0, ki: 0, kd: 0, integrate_within_mps: 0}
+        pitch_pid: {kp: 0, ki: 0, kd: 0, integrate_within_deg: 0}
+        roll_pid: {kp: 0, ki: 0, kd: 0, integrate_within_deg: 0}

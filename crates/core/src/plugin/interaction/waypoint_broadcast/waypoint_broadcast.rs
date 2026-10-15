@@ -11,27 +11,25 @@ use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Updat
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct WaypointBroadcastConfig {
-    #[serde(rename = "waypoints")]
-    initial: WaypointList,
+    waypoints_m: WaypointList,
     /// Optional replacement route, published once `update_at_s` is reached.
-    #[serde(rename = "update_waypoints")]
-    replacement: Option<WaypointList>,
+    update_waypoints_m: Option<WaypointList>,
     update_at_s: Option<f64>,
 }
 
 impl Default for WaypointBroadcastConfig {
     fn default() -> Self {
         Self {
-            initial: WaypointList::default_route(),
-            replacement: None,
+            waypoints_m: WaypointList::default_route(),
+            update_waypoints_m: None,
             update_at_s: None,
         }
     }
 }
 
 pub struct WaypointBroadcast {
-    initial: Option<WaypointList>,
-    replacement: Option<WaypointList>,
+    waypoints_m: Option<WaypointList>,
+    update_waypoints_m: Option<WaypointList>,
     update_at_s: f64,
 }
 
@@ -41,7 +39,7 @@ impl Plugin for WaypointBroadcast {
     fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
         let config: WaypointBroadcastConfig = params.parse()?;
         ensure!(
-            config.replacement.is_some() == config.update_at_s.is_some(),
+            config.update_waypoints_m.is_some() == config.update_at_s.is_some(),
             "provide both update_waypoints and update_at_s"
         );
         Ok(config)
@@ -49,8 +47,8 @@ impl Plugin for WaypointBroadcast {
 
     fn new(config: &Self::Config) -> Self {
         Self {
-            initial: Some(config.initial.clone()),
-            replacement: config.replacement.clone(),
+            waypoints_m: Some(config.waypoints_m.clone()),
+            update_waypoints_m: config.update_waypoints_m.clone(),
             // Unused when there is no replacement route.
             update_at_s: config.update_at_s.unwrap_or(0.0),
         }
@@ -62,13 +60,13 @@ impl Interaction for WaypointBroadcast {
         // Known limitation (the same publish-once pattern as Boundary):
         // entities spawned later never receive the route and keep their own configured one.
         // A possible fix is republishing the current route when an entity is generated.
-        if let Some(route) = self.initial.take() {
+        if let Some(route) = self.waypoints_m.take() {
             context
                 .messages
                 .publish("GlobalNetwork", WAYPOINT_TOPIC, route)?;
         }
         if context.time.time_s >= self.update_at_s
-            && let Some(route) = self.replacement.take()
+            && let Some(route) = self.update_waypoints_m.take()
         {
             context
                 .messages

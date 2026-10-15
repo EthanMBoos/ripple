@@ -1,11 +1,8 @@
 # The tick
 
 Each ordinary call to `Simulation::step()` runs one tick and returns that tick's
-frame: the snapshot taken right after generation, before anything moves
-(labelled with the following timestamp, as SCRIMMAGE does). The caller writes
-it; the engine does not. The order is fixed, and it is the order SCRIMMAGE uses,
-with one addition: the estimation step. This is the Rust counterpart of the
-simulation loop in the [C++ data-flow guide](../appendix/cpp/data-flow.md).
+frame: the snapshot taken right after generation, before anything moves,
+labelled with that state's time. The caller writes it; the engine does not. The order is fixed.
 
 ## Phase order
 
@@ -117,9 +114,9 @@ Simulation::new
 
 step()          runs one tick and returns its frame (snapshot A)
 ...
-step()          after an end condition: runs no tick; time rewinds by dt
-                (legacy behavior), EntityPresentAtEnd events are recorded,
-                plugins close once, and the terminal frame is returned
+step()          after an end condition: runs no tick; EntityPresentAtEnd
+                events are recorded, plugins close once, and the terminal
+                frame (the state at the end time) is returned
 step()          returns nothing: the run is over
 ```
 

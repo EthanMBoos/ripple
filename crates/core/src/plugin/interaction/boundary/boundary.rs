@@ -33,30 +33,17 @@ impl BoundaryRegion {
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct BoundaryConfig {
-    #[serde(rename = "center")]
-    center_world_m: [f64; 3],
-    #[serde(rename = "lengths")]
+    center_m: [f64; 3],
     lengths_m: [f64; 3],
-    #[serde(rename = "network_name")]
     network: String,
-    /// Only `cuboid` is implemented.
-    #[serde(rename = "type")]
-    shape: String,
-    /// Only an axis-aligned cuboid (`0 0 0`) is implemented.
-    rpy: [f64; 3],
-    /// Drawing is not implemented; must stay false.
-    show_boundary: bool,
 }
 
 impl Default for BoundaryConfig {
     fn default() -> Self {
         Self {
-            center_world_m: [0.0; 3],
+            center_m: [0.0; 3],
             lengths_m: [10.0; 3],
             network: "GlobalNetwork".into(),
-            shape: "cuboid".into(),
-            rpy: [0.0; 3],
-            show_boundary: false,
         }
     }
 }
@@ -72,15 +59,6 @@ impl Plugin for Boundary {
 
     fn configure(params: &PluginParams<'_>) -> Result<BoundaryConfig> {
         let config: BoundaryConfig = params.parse()?;
-        ensure!(config.shape == "cuboid", "Boundary supports cuboid only");
-        ensure!(
-            config.rpy == [0.0; 3],
-            "Boundary supports axis-aligned cuboids only"
-        );
-        ensure!(
-            !config.show_boundary,
-            "Boundary drawing is not implemented; use show_boundary=false"
-        );
         ensure!(
             config.lengths_m.iter().all(|length| *length > 0.0),
             "Boundary lengths must be positive"
@@ -91,7 +69,7 @@ impl Plugin for Boundary {
     fn new(config: &BoundaryConfig) -> Self {
         Self {
             region: BoundaryRegion {
-                center_world_m: Vec3::from(config.center_world_m),
+                center_world_m: Vec3::from(config.center_m),
                 lengths_m: Vec3::from(config.lengths_m),
             },
             network: config.network.clone(),

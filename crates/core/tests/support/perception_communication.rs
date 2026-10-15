@@ -240,7 +240,10 @@ fn auction_selects_highest_received_bid_and_excludes_out_of_range_agent() -> Res
 fn complete_loss_drops_even_same_entity_auction_traffic() -> Result<()> {
     let mut simulation = simulation(
         2,
-        &Params::from([("networks.SphereNetwork.prob_transmit".into(), "0".into())]),
+        &Params::from([(
+            "networks.SphereNetwork.transmit_probability".into(),
+            "0".into(),
+        )]),
     )?;
     while simulation.step()?.is_some() {}
     for index in 0..3 {
@@ -315,7 +318,7 @@ fn observation_history(workers: usize, seed: u32, probability: f64) -> Result<St
             .chain([
                 ("run.seed".into(), seed.to_string()),
                 (
-                    "networks.SphereNetwork.prob_transmit".into(),
+                    "networks.SphereNetwork.transmit_probability".into(),
                     probability.to_string(),
                 ),
             ])

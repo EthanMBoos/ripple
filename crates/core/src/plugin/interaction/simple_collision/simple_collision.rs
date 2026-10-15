@@ -15,18 +15,12 @@ use crate::{Entity, EventKind, Vec3};
 #[derive(Clone, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct CollisionConfig {
-    #[serde(rename = "collision_range")]
     collision_range_m: f64,
-    #[serde(rename = "startup_collision_range")]
     startup_collision_range_m: f64,
-    #[serde(rename = "startup_collisions_only")]
-    startup_only: bool,
-    #[serde(rename = "enable_team_collisions")]
-    same_team_enabled: bool,
-    #[serde(rename = "enable_non_team_collisions")]
-    opposing_team_enabled: bool,
-    #[serde(rename = "init_alt_deconflict")]
-    altitude_deconfliction: bool,
+    startup_collisions_only: bool,
+    enable_team_collisions: bool,
+    enable_non_team_collisions: bool,
+    startup_altitude_only: bool,
 }
 
 impl Default for CollisionConfig {
@@ -34,10 +28,10 @@ impl Default for CollisionConfig {
         Self {
             collision_range_m: 2.0,
             startup_collision_range_m: 2.0,
-            startup_only: false,
-            same_team_enabled: true,
-            opposing_team_enabled: true,
-            altitude_deconfliction: false,
+            startup_collisions_only: false,
+            enable_team_collisions: true,
+            enable_non_team_collisions: true,
+            startup_altitude_only: false,
         }
     }
 }
@@ -69,7 +63,7 @@ impl Interaction for SimpleCollision {
     fn collision_exists(&self, entities: &[Entity], position_world_m: Vec3) -> bool {
         entities.iter().any(|entity| {
             let separation_world_m = position_world_m - entity.truth().position_world_m;
-            if self.config.altitude_deconfliction {
+            if self.config.startup_altitude_only {
                 separation_world_m.z.abs() <= self.config.startup_collision_range_m
             } else {
                 separation_world_m.norm() <= self.config.startup_collision_range_m
@@ -78,7 +72,7 @@ impl Interaction for SimpleCollision {
     }
 
     fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
-        if self.config.startup_only {
+        if self.config.startup_collisions_only {
             return Ok(Update::Applied);
         }
 
@@ -98,9 +92,9 @@ impl Interaction for SimpleCollision {
 
             let same_team = first.team_id() == second.team_id();
             let enabled = if same_team {
-                self.config.same_team_enabled
+                self.config.enable_team_collisions
             } else {
-                self.config.opposing_team_enabled
+                self.config.enable_non_team_collisions
             };
             if !enabled {
                 continue;

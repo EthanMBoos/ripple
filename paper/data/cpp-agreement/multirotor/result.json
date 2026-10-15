@@ -3,7 +3,7 @@
   "mission": "<checkout>/missions/multirotor.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "c715be71934c22d151f53d1fa22eb48b2b29353ab7889d2e8688557b46278107",
+    "input_sha256": "6fc8b4b5a7bd83d824af162ec63ab5c550327b8b5c6fd69b0e1b694b2e09db67",
     "xml_sha256": "e4bd153d4f715ed8c32356ac14e4de0fff545b378527ebae1305d9eefb4e7553",
     "effective_sha256": "1f3ceaca1ce9c404e9bf9fb055315d4356c39c21f7cb97a70efce3ed5c373d92",
     "run_overrides": {
@@ -32,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-15_06-54-29",
+  "cpp_log_directory": "cpp/logs/2026-10-15_11-22-04",
   "cpp_output_hashes": {
     "frames.bin": "2b9bc21b79260a1bc18e2e473a8c9b2743acaa4ac64750df066738d6cf2eb16b",
     "summary.csv": "c5750d24bf8cd9cd7acb1354a6d525934e6ed23a4c2264d45a66c12cc15357d4"
@@ -54,7 +54,7 @@
     "events.json": true,
     "summary.csv": true
   },
-  "recording_sha256": "25cce14da6e588e8106198c38d7d46452315ba39176b56d6b498a8fabea61193",
+  "recording_sha256": "5d0859512b0a1a2b981284be8fab2daa389d40a45daf3e6474ac5aceae8b9f6c",
   "trace_equality": {
     "frames.bin": true,
     "events.json": true,

@@ -15,7 +15,6 @@ use crate::plugin::{
 #[serde(default, deny_unknown_fields)]
 pub struct ForceReplayConfig {
     /// ENU forces in N, `[x, y]`, one per tick from the first.
-    #[serde(rename = "forces")]
     forces_n: Vec<[f64; 2]>,
 }
 

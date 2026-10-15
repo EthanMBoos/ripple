@@ -38,19 +38,19 @@ pub(crate) struct AirframeOverrides {
     pub inertia_kgm2: Option<[[f64; 3]; 3]>,
     pub thrust_coefficient: Option<f64>,
     pub torque_coefficient: Option<f64>,
-    pub omega_min_radps: Option<f64>,
-    pub omega_max_radps: Option<f64>,
+    pub min_rotor_speed_radps: Option<f64>,
+    pub max_rotor_speed_radps: Option<f64>,
     pub rotors: Option<Vec<RotorParams>>,
 }
 
 /// One rotor as a mission gives it, such as
-/// `{direction: ccw, position_m: [0, 0.175, 0]}`.
+/// `{direction: ccw, position_flu_m: [0, 0.175, 0]}`.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct RotorParams {
     pub direction: Direction,
     /// Hub offset from the center of mass, body forward/left/up.
-    pub position_m: [f64; 3],
+    pub position_flu_m: [f64; 3],
     /// The thrust axis's tilt from body +z, as roll, pitch, and yaw (a
     /// rotation like an entity's attitude); untilted when left out.
     #[serde(default)]
@@ -67,8 +67,8 @@ pub(crate) struct Airframe {
     /// Reaction torque = c_Q w^2 (N m).
     pub torque_coefficient: f64,
     /// An armed motor's idle speed; there is no "off" below it.
-    pub omega_min_radps: f64,
-    pub omega_max_radps: f64,
+    pub min_rotor_speed_radps: f64,
+    pub max_rotor_speed_radps: f64,
     pub rotors: Vec<Rotor>,
 }
 
@@ -127,8 +127,12 @@ impl Airframe {
             torque_coefficient: overrides
                 .torque_coefficient
                 .unwrap_or(preset.torque_coefficient),
-            omega_min_radps: overrides.omega_min_radps.unwrap_or(preset.omega_min_radps),
-            omega_max_radps: overrides.omega_max_radps.unwrap_or(preset.omega_max_radps),
+            min_rotor_speed_radps: overrides
+                .min_rotor_speed_radps
+                .unwrap_or(preset.min_rotor_speed_radps),
+            max_rotor_speed_radps: overrides
+                .max_rotor_speed_radps
+                .unwrap_or(preset.max_rotor_speed_radps),
             rotors,
         };
         airframe.check()
@@ -143,13 +147,21 @@ impl Airframe {
             )
         };
         let airframe = Self {
-            mass_kg: keys.mass_kg.with_context(|| missing("mass"))?,
+            mass_kg: keys.mass_kg.with_context(|| missing("mass_kg"))?,
             gravity_mps2: keys.gravity_mps2.unwrap_or(9.81),
             inertia_kgm2: inertia(keys.inertia_kgm2.with_context(|| missing("inertia_kgm2"))?)?,
-            thrust_coefficient: keys.thrust_coefficient.with_context(|| missing("c_T"))?,
-            torque_coefficient: keys.torque_coefficient.with_context(|| missing("c_Q"))?,
-            omega_min_radps: keys.omega_min_radps.with_context(|| missing("omega_min"))?,
-            omega_max_radps: keys.omega_max_radps.with_context(|| missing("omega_max"))?,
+            thrust_coefficient: keys
+                .thrust_coefficient
+                .with_context(|| missing("thrust_coefficient"))?,
+            torque_coefficient: keys
+                .torque_coefficient
+                .with_context(|| missing("torque_coefficient"))?,
+            min_rotor_speed_radps: keys
+                .min_rotor_speed_radps
+                .with_context(|| missing("min_rotor_speed_radps"))?,
+            max_rotor_speed_radps: keys
+                .max_rotor_speed_radps
+                .with_context(|| missing("max_rotor_speed_radps"))?,
             rotors: rotors(&keys.rotors.with_context(|| missing("rotors"))?)?,
         };
         airframe.check()
@@ -164,8 +176,9 @@ impl Airframe {
             "Multirotor requires positive mass and nonnegative gravity and coefficients"
         );
         ensure!(
-            self.omega_min_radps >= 0.0 && self.omega_min_radps <= self.omega_max_radps,
-            "Multirotor requires 0 <= omega_min <= omega_max"
+            self.min_rotor_speed_radps >= 0.0
+                && self.min_rotor_speed_radps <= self.max_rotor_speed_radps,
+            "Multirotor requires 0 <= min_rotor_speed_radps <= max_rotor_speed_radps"
         );
         Ok(self)
     }
@@ -192,15 +205,15 @@ fn crazyflie2() -> Airframe {
     // The largest thrust eq. (3.3) gives (command 65535) sets the top speed,
     // so the vehicle has its measured thrust margin; eq. (3.4) itself gives
     // 3052 rad/s there, where c_T w^2 would overstate thrust by 5%.
-    let omega_max_radps = (forster_thrust_n(65535.0) / thrust_coefficient).sqrt();
+    let max_rotor_speed_radps = (forster_thrust_n(65535.0) / thrust_coefficient).sqrt();
     // Table 2.2: dCF = 0.092 m between opposite motor axes. Rotors on the
     // body axes (Fig. 2.4), listed counterclockwise from +x. The thesis does
     // not say which pair spins which way (Fig. 3.1 only that diagonal
     // pairs match); mirroring it flips only the sign of yaw.
     let arm_m = 0.092 / 2.0;
-    let rotor = |direction, position_m| RotorParams {
+    let rotor = |direction, position_flu_m| RotorParams {
         direction,
-        position_m,
+        position_flu_m,
         tilt_deg: [0.0; 3],
     };
     Airframe {
@@ -215,8 +228,8 @@ fn crazyflie2() -> Airframe {
         thrust_coefficient,
         torque_coefficient,
         // Commands below 1000 stop the motor (Sec. 3.3.2).
-        omega_min_radps: 0.0,
-        omega_max_radps,
+        min_rotor_speed_radps: 0.0,
+        max_rotor_speed_radps,
         rotors: rotors(&[
             rotor(Direction::Clockwise, [arm_m, 0.0, 0.0]),
             rotor(Direction::Counterclockwise, [0.0, arm_m, 0.0]),
@@ -261,7 +274,7 @@ pub(crate) fn rotors(params: &[RotorParams]) -> Result<Vec<Rotor>> {
     ensure!(!params.is_empty(), "Multirotor requires at least one rotor");
     let mut rotors = Vec::new();
     for (index, rotor) in params.iter().enumerate() {
-        let [x, y, z] = rotor.position_m;
+        let [x, y, z] = rotor.position_flu_m;
         let [roll, pitch, yaw] = rotor.tilt_deg;
         // The rotor pushes along body +z turned by its tilt.
         let tilt = Quaternion::from_euler(EulerAngles {
@@ -300,7 +313,7 @@ mod tests {
         assert!(
             (thrust_n(forster_speed_radps(37286.94)) - forster_thrust_n(37286.94)).abs() < 1e-7
         );
-        assert!((thrust_n(airframe.omega_max_radps) - 0.15971).abs() < 1e-5);
+        assert!((thrust_n(airframe.max_rotor_speed_radps) - 0.15971).abs() < 1e-5);
         assert!(
             (airframe.torque_coefficient / airframe.thrust_coefficient - 0.005964552).abs() < 1e-15
         );
@@ -326,7 +339,7 @@ mod tests {
 
     /// Förster eqs. (3.16)-(3.17): command to thrust is first order,
     /// H(z) = b / (1 - 0.9695404 z^-1), sampled at 500 Hz (Sec. 3.4.2). Its
-    /// time constant -T / ln(a) is the `motor_time_constant_up` and `_down`
+    /// time constant -T / ln(a) is the `motor_time_constant_up_s` and `_down_s`
     /// that Crazyflie missions write, 0.0647 s. Förster's lag is command to
     /// thrust; Ripple, like RotorS, lags shaft speed, and thrust goes with
     /// speed squared. The two share this time constant for small changes
@@ -352,8 +365,8 @@ mod tests {
         assert_eq!(airframe.mass_kg, 0.032);
         assert_eq!(airframe.inertia_kgm2, crazyflie2().inertia_kgm2);
         let invalid = AirframeOverrides {
-            omega_min_radps: Some(2000.0),
-            omega_max_radps: Some(1000.0),
+            min_rotor_speed_radps: Some(2000.0),
+            max_rotor_speed_radps: Some(1000.0),
             ..AirframeOverrides::default()
         };
         assert!(Airframe::new(Some(AirframeName::Crazyflie2), invalid).is_err());
@@ -367,17 +380,17 @@ mod tests {
             inertia_kgm2: Some([[0.01, 0.0, 0.0], [0.0, 0.01, 0.0], [0.0, 0.0, 0.02]]),
             thrust_coefficient: Some(1e-5),
             torque_coefficient: Some(1e-7),
-            omega_min_radps: Some(0.0),
-            omega_max_radps: Some(1000.0),
+            min_rotor_speed_radps: Some(0.0),
+            max_rotor_speed_radps: Some(1000.0),
             rotors: Some(vec![
                 RotorParams {
                     direction: Direction::Clockwise,
-                    position_m: [0.2, 0.0, 0.0],
+                    position_flu_m: [0.2, 0.0, 0.0],
                     tilt_deg: [0.0; 3],
                 },
                 RotorParams {
                     direction: Direction::Counterclockwise,
-                    position_m: [0.0, 0.2, 0.0],
+                    position_flu_m: [0.0, 0.2, 0.0],
                     tilt_deg: [0.0; 3],
                 },
             ]),
@@ -393,7 +406,12 @@ mod tests {
             },
         )
         .unwrap_err();
-        assert!(error.to_string().contains("`c_T` is missing"), "{error}");
+        assert!(
+            error
+                .to_string()
+                .contains("`thrust_coefficient` is missing"),
+            "{error}"
+        );
         Ok(())
     }
 
@@ -402,12 +420,12 @@ mod tests {
         let rotors = rotors(&[
             RotorParams {
                 direction: Direction::Clockwise,
-                position_m: [0.1, 0.0, 0.2],
+                position_flu_m: [0.1, 0.0, 0.2],
                 tilt_deg: [0.0, 90.0, 0.0],
             },
             RotorParams {
                 direction: Direction::Counterclockwise,
-                position_m: [0.0, 0.1, 0.0],
+                position_flu_m: [0.0, 0.1, 0.0],
                 tilt_deg: [30.0, 0.0, 45.0],
             },
         ])?;
@@ -423,8 +441,8 @@ mod tests {
         assert!((rotors[1].thrust_axis_body - expected).norm() < 1e-12);
         assert!(super::rotors(&[]).is_err());
         for invalid in [
-            "[{direction: up, position_m: [0, 0, 0]}]",
-            "[{direction: cw, position_m: [0, 0]}]",
+            "[{direction: up, position_flu_m: [0, 0, 0]}]",
+            "[{direction: cw, position_flu_m: [0, 0]}]",
             "[{direction: cw, position: [0, 0, 0]}]",
         ] {
             assert!(serde_yaml_ng::from_str::<Vec<RotorParams>>(invalid).is_err());

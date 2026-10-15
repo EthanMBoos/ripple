@@ -7,7 +7,7 @@
   <network>LocalNetwork</network>
   <entity_interaction collision_range="1.55062">SimpleCollision</entity_interaction>
   <entity_interaction ground_collision_z="25.1477">GroundCollision</entity_interaction>
-  <entity_interaction center="0 0 200" lengths="800 800 400" show_boundary="false">Boundary</entity_interaction>
+  <entity_interaction center="0 0 200" lengths="800 800 400">Boundary</entity_interaction>
   <metrics>SimpleCollisionMetrics</metrics>
   <entity>
     <team_id>1</team_id>

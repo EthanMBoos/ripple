@@ -1,5 +1,5 @@
 //! Position integrates commanded ENU velocity. Derived from SCRIMMAGE: motion/SingleIntegrator.
-//! Motion phase. `max_speed`, when set, caps the speed.
+//! Motion phase. `max_speed_mps`, when set, caps the speed.
 //!
 //! Fidelity
 //! - Source: a kinematic point: velocity is whatever was commanded, at once.
@@ -24,17 +24,13 @@ use crate::plugin::{
 pub struct SingleIntegratorConfig {
     /// The highest speed; a faster command keeps its direction at this speed.
     /// Negative (the default) means no limit.
-    #[serde(rename = "max_speed")]
     max_speed_mps: f64,
-    /// Not implemented; must stay false.
-    override_heading: bool,
 }
 
 impl Default for SingleIntegratorConfig {
     fn default() -> Self {
         Self {
             max_speed_mps: -1.0,
-            override_heading: false,
         }
     }
 }
@@ -47,12 +43,7 @@ impl Plugin for SingleIntegrator {
     type Config = SingleIntegratorConfig;
 
     fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
-        let config: SingleIntegratorConfig = params.parse()?;
-        ensure!(
-            !config.override_heading,
-            "SingleIntegrator override_heading is not implemented"
-        );
-        Ok(config)
+        params.parse()
     }
 
     fn new(config: &Self::Config) -> Self {
@@ -133,10 +124,7 @@ mod tests {
             (0.0, Vec3::new(1.0, 0.0, 0.0), Vec3::zeros()),
             (-1.0, Vec3::new(0.0, 0.0, 2.0), Vec3::new(0.0, 0.0, 2.0)),
         ] {
-            let config = SingleIntegratorConfig {
-                max_speed_mps,
-                ..SingleIntegratorConfig::default()
-            };
+            let config = SingleIntegratorConfig { max_speed_mps };
             let mut model = SingleIntegrator::new(&config);
             let mut io = PluginIo::new(&SingleIntegrator::ports(&config));
             io.receive(

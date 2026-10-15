@@ -68,13 +68,95 @@ def rows(matrix):
 def rotor_rows(rotors):
     """Rotors as SCRIMMAGE's rotor_config rows: "[CW x y z roll pitch yaw] ..."."""
     return " ".join(
-        f"[{rotor['direction'].upper()} {text(rotor['position_m'])} "
+        f"[{rotor['direction'].upper()} {text(rotor['position_flu_m'])} "
         f"{text(rotor.get('tilt_deg', [0, 0, 0]))}]" for rotor in rotors)
 
 
-def scrimmage_keys(params):
-    """Ripple's structured vehicle values under SCRIMMAGE's text keys."""
-    params = dict(params)
+MULTIROTOR_KEYS = {
+    "mass_kg": "mass", "gravity_mps2": "gravity_magnitude",
+    "thrust_coefficient": "c_T", "torque_coefficient": "c_Q",
+    "min_rotor_speed_radps": "omega_min", "max_rotor_speed_radps": "omega_max",
+}
+# Ripple's key -> SCRIMMAGE's, per plugin. PIDs ({kp, ki, kd, integrate_within_*})
+# become SCRIMMAGE's "P I D band" lists and wind_mps its three wind keys, a zero
+# component left to SCRIMMAGE's default of zero (`values`).
+KEYS = {
+    "AuctionAssign": {"network": "network_name"},
+    "Straight": {"speed_mps": "speed"},
+    "WaypointFollower": {"waypoints_m": "waypoints", "speed_mps": "speed"},
+    "ConstantVelocity": {"velocity_mps": "velocity"},
+    "AircraftPIDController": {"max_pitch_deg": "max_pitch", "max_roll_deg": "max_roll",
+                              "enable_roll_control": "use_roll_control"},
+    "SimpleAircraftControllerPID": {"altitude_pid": "alt_pid", "speed_pid": "vel_pid"},
+    "MultirotorVelocityController": {
+        **MULTIROTOR_KEYS, "velocity_kp": "velocity_p", "velocity_ki": "velocity_i",
+        "velocity_integral_limit_mps2": "velocity_integral_limit",
+        "attitude_kp": "attitude_p", "body_rate_kp": "rate_p", "max_tilt_deg": "max_tilt",
+        "max_vertical_acceleration_mps2": "max_vertical_acceleration"},
+    "MotorSpeeds": {"speeds_radps": "speeds"},
+    "Boundary": {"center_m": "center", "lengths_m": "lengths", "network": "network_name"},
+    "GroundCollision": {"ground_altitude_m": "ground_collision_z"},
+    "SimpleCollision": {"collision_range_m": "collision_range",
+                        "startup_collision_range_m": "startup_collision_range",
+                        "startup_altitude_only": "init_alt_deconflict"},
+    "WaypointBroadcast": {"waypoints_m": "waypoints", "update_waypoints_m": "update_waypoints"},
+    "SimpleCollisionMetrics": {"flight_time_weight": "flight_time_w",
+                               "team_collision_weight": "team_collisions_w",
+                               "non_team_collision_weight": "non_team_collisions_w"},
+    "Multirotor": {**MULTIROTOR_KEYS, "body_drag_coefficient": "c_D",
+                   "motor_time_constant_up_s": "motor_time_constant_up",
+                   "motor_time_constant_down_s": "motor_time_constant_down"},
+    "SimpleAircraft": {"min_speed_mps": "min_velocity", "max_speed_mps": "max_velocity",
+                       "max_roll_deg": "max_roll", "max_pitch_deg": "max_pitch",
+                       "max_roll_rate_degps": "max_roll_rate",
+                       "max_pitch_rate_degps": "max_pitch_rate"},
+    "SingleIntegrator": {"max_speed_mps": "max_speed"},
+    "SphereNetwork": {"range_m": "range", "transmit_probability": "prob_transmit",
+                      "enable_altitude_split": "filter_comms_plane",
+                      "split_altitude_m": "comms_boundary_altitude",
+                      "split_margin_m": "comms_boundary_epsilon"},
+    "FixedWing6DOF": {
+        "mass_kg": "mass", "gravity_mps2": "gravity_magnitude",
+        "air_density_kgpm3": "air_density", "wing_span_m": "wing_span",
+        "wing_area_m2": "surface_area_of_wing", "mean_chord_m": "chord_length",
+        "oswald_efficiency": "efficiency_factor",
+        "min_throttle": "throttle_input_min", "max_throttle": "throttle_input_max",
+        "min_thrust_n": "thrust_min", "max_thrust_n": "thrust_max",
+        "min_elevator_rad": "delta_elevator_min", "max_elevator_rad": "delta_elevator_max",
+        "min_aileron_rad": "delta_aileron_min", "max_aileron_rad": "delta_aileron_max",
+        "min_rudder_rad": "delta_rudder_min", "max_rudder_rad": "delta_rudder_max",
+        "c_drag_0": "C_D0", "c_drag_alpha": "C_D_alpha", "c_drag_elevator": "C_D_delta_elevator_",
+        "c_lift_0": "C_L0", "c_lift_alpha": "C_L_alpha", "c_lift_q": "C_LQ",
+        "c_lift_elevator": "C_L_delta_elevator",
+        "c_side_beta": "C_Y_beta", "c_side_rudder": "C_Y_delta_rudder",
+        "c_roll_beta": "C_L_beta", "c_roll_p": "C_LP", "c_roll_r": "C_LR",
+        "c_roll_aileron": "C_L_delta_aileron", "c_roll_rudder": "C_L_delta_rudder",
+        "c_pitch_0": "C_M0", "c_pitch_alpha": "C_M_alpha", "c_pitch_q": "C_MQ",
+        "c_pitch_elevator": "C_M_delta_elevator",
+        "c_yaw_beta": "C_N_beta", "c_yaw_p": "C_NP", "c_yaw_r": "C_NR",
+        "c_yaw_aileron": "C_N_delta_aileron", "c_yaw_rudder": "C_N_delta_rudder",
+        "enable_ground_spring": "use_ground_model", "enable_launcher": "use_launcher",
+        "launch_at_s": "launch_time", "launch_acceleration_mps2": "launch_accel",
+        "launch_speed_mps": "launch_speed"},
+}
+PID_BANDS = ("integrate_within_deg", "integrate_within_m", "integrate_within_mps")
+
+
+def values(key, value):
+    """SCRIMMAGE's (key, value) pairs for one Ripple parameter."""
+    if key == "wind_mps":
+        return [(name, speed) for name, speed in zip(("wind_E", "wind_N", "wind_U"), value) if speed]
+    if isinstance(value, dict) and "kp" in value:
+        band = next(value[name] for name in PID_BANDS if name in value)
+        return [(key, [value["kp"], value["ki"], value["kd"], band])]
+    return [(key, value)]
+
+
+def scrimmage_keys(name, params):
+    """Ripple's parameters under SCRIMMAGE's keys, sorted by them."""
+    renames = KEYS.get(name, {})
+    params = dict(sorted((renames.get(key, key), value) for given_key, given in params.items()
+                         for key, value in values(given_key, given)))
     for key, scrimmage_key in (("inertia_kgm2", "inertia_matrix"),
                                ("inertia_slug_ft2", "inertia_matrix_slug_ft_sq")):
         if key in params:
@@ -86,7 +168,7 @@ def scrimmage_keys(params):
 
 def plugin(parent, tag, config, label_attribute="instance"):
     profile = AIRFRAMES.get((config["name"], config["params"].get("airframe")), {})
-    params = {**profile, **scrimmage_keys(config["params"])}
+    params = {**profile, **scrimmage_keys(config["name"], config["params"])}
     if tag == "sensor" and config["name"] in NOISY_SENSORS:
         for prefix, bias, stddev in NOISE_KEYS:
             biases = params.pop(bias, [0, 0, 0])

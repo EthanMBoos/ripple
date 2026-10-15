@@ -12,7 +12,7 @@ fn simulation(altitude_bias: f64, sensor_rate: f64) -> Result<Simulation> {
             ("position_stddev_m", "[0, 0, 0]".to_string()),
             ("velocity_stddev_mps", "[0, 0, 0]".to_string()),
             ("position_bias_m", format!("[0, 0, {altitude_bias}]")),
-            ("loop_rate", sensor_rate.to_string()),
+            ("loop_rate_hz", sensor_rate.to_string()),
         ] {
             overrides.insert(format!("{sensor}.{field}"), value);
         }
@@ -48,7 +48,7 @@ entities:
 {aircraft}
     autonomy:
       Straight:
-        speed: 20
+        speed_mps: 20
     controller:
       SimpleAircraftControllerPID:
     motion_model:
@@ -171,7 +171,7 @@ fn a_zero_noise_reading_is_the_true_state_through_mpe_contact() -> Result<()> {
     position_m: [{x}, 0, 0]
     autonomy:
       ForceReplay:
-        forces: {:?}
+        forces_n: {:?}
     motion_model:
       MpeParticle:
     sensors:

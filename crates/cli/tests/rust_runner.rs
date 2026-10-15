@@ -16,7 +16,7 @@ fn scenario() -> ScenarioConfig {
         position_m: Vec3::new(0.0, 0.0, 100.0),
         autonomy: vec![
             PluginConfig::new("Straight")
-                .with_params(serde_json::json!({"speed": 25}))
+                .with_params(serde_json::json!({"speed_mps": 25}))
                 .unwrap(),
         ],
         controller: vec![PluginConfig::new("SimpleAircraftControllerPID")],
@@ -40,7 +40,7 @@ entities:
   plane:
     team: 1
     position_m: [0, 0, 100]
-    autonomy: {Straight: {speed: 25}}
+    autonomy: {Straight: {speed_mps: 25}}
     controller: {SimpleAircraftControllerPID: null}
     motion_model: {SimpleAircraft: null}
 "#,

@@ -45,7 +45,7 @@ def plugins(configs):
         if config["instance"] is not None:
             params["plugin"] = config["name"]
         if config["loop_rate_hz"]:
-            params["loop_rate"] = config["loop_rate_hz"]
+            params["loop_rate_hz"] = config["loop_rate_hz"]
         if config.get("inputs"):
             params["inputs"] = config["inputs"]
         slot[config["instance"] or config["name"]] = params

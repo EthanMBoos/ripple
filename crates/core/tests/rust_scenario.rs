@@ -8,8 +8,8 @@ use std::path::PathBuf;
 
 #[derive(Serialize)]
 struct WaypointParams {
-    waypoints: Vec<[f64; 3]>,
-    speed: f64,
+    waypoints_m: Vec<[f64; 3]>,
+    speed_mps: f64,
 }
 
 fn scenario() -> Result<ScenarioConfig> {
@@ -37,8 +37,8 @@ fn scenario() -> Result<ScenarioConfig> {
             }),
             autonomy: vec![
                 PluginConfig::new("WaypointFollower").with_params(WaypointParams {
-                    waypoints: vec![[100.0, 0.0, 20.0]],
-                    speed: 5.0,
+                    waypoints_m: vec![[100.0, 0.0, 20.0]],
+                    speed_mps: 5.0,
                 })?,
             ],
             controller: vec![PluginConfig::new("SingleIntegratorControllerSimple")],
@@ -145,8 +145,8 @@ fn typed_parameter_values_reject_nonfinite_numbers_before_conversion() {
         assert!(
             PluginConfig::new("WaypointFollower")
                 .with_params(WaypointParams {
-                    waypoints: vec![[0.0; 3]],
-                    speed
+                    waypoints_m: vec![[0.0; 3]],
+                    speed_mps: speed,
                 })
                 .is_err()
         );
@@ -191,7 +191,7 @@ fn thousands_of_agents_spawned_together_reach_metrics() -> Result<()> {
 
 #[derive(Serialize)]
 struct VelocityParams {
-    velocity: [f64; 3],
+    velocity_mps: [f64; 3],
 }
 
 #[test]
@@ -216,7 +216,7 @@ fn thousands_of_agents_removed_together_reach_metrics() -> Result<()> {
             position_m: Vec3::new(0.0, 0.0, 5.0),
             autonomy: vec![
                 PluginConfig::new("ConstantVelocity").with_params(VelocityParams {
-                    velocity: [0.0, 0.0, -10.0],
+                    velocity_mps: [0.0, 0.0, -10.0],
                 })?,
             ],
             controller: vec![PluginConfig::new("SingleIntegratorControllerSimple")],

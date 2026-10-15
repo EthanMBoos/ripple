@@ -9,7 +9,7 @@
  },
  "interactions": {
   "SimpleCollision": {
-   "collision_range": 5.46535
+   "collision_range_m": 5.46535
   }
  },
  "networks": {
@@ -46,18 +46,18 @@
    "pitch_deg": -1.17583,
    "autonomy": {
     "Straight": {
-     "speed": 25.3377,
-     "loop_rate": 5
+     "speed_mps": 25.3377,
+     "loop_rate_hz": 5
     }
    },
    "controller": {
     "SimpleAircraftControllerPID": {
-     "loop_rate": 50
+     "loop_rate_hz": 50
     }
    },
    "motion_model": {
     "SimpleAircraft": {
-     "max_roll": 24.735
+     "max_roll_deg": 24.735
     }
    }
   }

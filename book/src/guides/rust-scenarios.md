@@ -15,8 +15,8 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 struct Route {
-    waypoints: Vec<[f64; 3]>,
-    speed: f64,
+    waypoints_m: Vec<[f64; 3]>,
+    speed_mps: f64,
 }
 
 pub fn ring() -> anyhow::Result<ScenarioConfig> {
@@ -29,8 +29,8 @@ pub fn ring() -> anyhow::Result<ScenarioConfig> {
             team: 1,
             position_m: Vec3::new(200.0 * angle.cos(), 200.0 * angle.sin(), 100.0),
             autonomy: vec![PluginConfig::new("WaypointFollower").with_params(Route {
-                waypoints: vec![[0.0, 0.0, 100.0]],
-                speed: 5.0,
+                waypoints_m: vec![[0.0, 0.0, 100.0]],
+                speed_mps: 5.0,
             })?],
             controller: vec![PluginConfig::new("SingleIntegratorControllerSimple")],
             motion_model: PluginConfig::new("SingleIntegrator"),

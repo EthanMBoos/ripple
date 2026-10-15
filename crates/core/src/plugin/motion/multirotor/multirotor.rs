@@ -68,33 +68,24 @@ use rotor::{MotorLag, RotorAerodynamics, RotorCoefficients, rotor_loads};
 struct MultirotorParams {
     /// `crazyflie2`, or absent for a vehicle given in full.
     airframe: Option<AirframeName>,
-    #[serde(rename = "mass")]
     mass_kg: Option<f64>,
-    #[serde(rename = "gravity_magnitude")]
     gravity_mps2: Option<f64>,
     /// Three rows, kg m^2.
     inertia_kgm2: Option<[[f64; 3]; 3]>,
     /// Quadratic body drag D = 0.5 c_D |V| V. Förster's Crazyflie
     /// drag is rotor drag instead.
-    #[serde(rename = "c_D")]
-    drag_coefficient: f64,
+    body_drag_coefficient: f64,
     /// Thrust = c_T w^2 (N).
-    #[serde(rename = "c_T")]
     thrust_coefficient: Option<f64>,
     /// Reaction torque = c_Q w^2 (N m).
-    #[serde(rename = "c_Q")]
     torque_coefficient: Option<f64>,
-    #[serde(rename = "omega_min")]
-    omega_min_radps: Option<f64>,
-    #[serde(rename = "omega_max")]
-    omega_max_radps: Option<f64>,
+    min_rotor_speed_radps: Option<f64>,
+    max_rotor_speed_radps: Option<f64>,
     /// One per rotor: spin direction, hub position, and optional tilt (see
     /// `RotorParams`). Rotor i reads input motor_i.
     rotors: Option<Vec<RotorParams>>,
     /// RotorS motor lag (s); 0 is none.
-    #[serde(rename = "motor_time_constant_up")]
     motor_time_constant_up_s: f64,
-    #[serde(rename = "motor_time_constant_down")]
     motor_time_constant_down_s: f64,
     /// RotorS rotor drag, kg/rad; see `rotor.rs`.
     rotor_drag_coefficient: f64,
@@ -102,9 +93,6 @@ struct MultirotorParams {
     rotor_drag_coefficient_axial: f64,
     /// RotorS rolling moment, kg m/rad.
     rolling_moment_coefficient: f64,
-    /// Not supported; use the run's frames and Rerun. Must stay false.
-    write_csv: bool,
-    show_shapes: bool,
 }
 
 #[derive(Clone)]
@@ -132,14 +120,6 @@ impl Plugin for Multirotor {
 
     fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
         let params: MultirotorParams = params.parse()?;
-        ensure!(
-            !params.write_csv,
-            "Multirotor write_csv=true is not supported; use run frames and Rerun"
-        );
-        ensure!(
-            !params.show_shapes,
-            "Multirotor show_shapes=true is not supported; use run frames and Rerun"
-        );
         let airframe = Airframe::new(
             params.airframe,
             AirframeOverrides {
@@ -148,8 +128,8 @@ impl Plugin for Multirotor {
                 inertia_kgm2: params.inertia_kgm2,
                 thrust_coefficient: params.thrust_coefficient,
                 torque_coefficient: params.torque_coefficient,
-                omega_min_radps: params.omega_min_radps,
-                omega_max_radps: params.omega_max_radps,
+                min_rotor_speed_radps: params.min_rotor_speed_radps,
+                max_rotor_speed_radps: params.max_rotor_speed_radps,
                 rotors: params.rotors,
             },
         )?;
@@ -160,7 +140,7 @@ impl Plugin for Multirotor {
         let config = MultirotorConfig {
             airframe,
             inverse_inertia,
-            body_drag_coefficient: params.drag_coefficient,
+            body_drag_coefficient: params.body_drag_coefficient,
             motor_lag: MotorLag {
                 time_constant_up_s: params.motor_time_constant_up_s,
                 time_constant_down_s: params.motor_time_constant_down_s,
@@ -224,7 +204,12 @@ impl Multirotor {
         let commands_radps: Vec<f64> = self
             .motor_commands_radps
             .iter()
-            .map(|command| command.clamp(airframe.omega_min_radps, airframe.omega_max_radps))
+            .map(|command| {
+                command.clamp(
+                    airframe.min_rotor_speed_radps,
+                    airframe.max_rotor_speed_radps,
+                )
+            })
             .collect();
         if self.rotor_speeds_radps.is_empty() {
             self.rotor_speeds_radps = commands_radps.clone();
@@ -334,18 +319,18 @@ mod tests {
     /// A 1.5 kg test quad.
     fn quad() -> Result<Multirotor> {
         multirotor(&[
-            ("mass", "1.5"),
-            ("c_T", "5.45e-6"),
-            ("c_Q", "2.284e-7"),
-            ("omega_max", "1200"),
+            ("mass_kg", "1.5"),
+            ("thrust_coefficient", "5.45e-6"),
+            ("torque_coefficient", "2.284e-7"),
+            ("max_rotor_speed_radps", "1200"),
             // Idle rotors push nothing unless a test sets omega_min.
-            ("omega_min", "0"),
+            ("min_rotor_speed_radps", "0"),
             // Unit inertia keeps the expected rates equal to the applied torques.
             ("inertia_kgm2", "[[1, 0, 0], [0, 1, 0], [0, 0, 1]]"),
             (
                 "rotors",
-                "[{direction: ccw, position_m: [0, -0.175, 0]}, {direction: ccw, position_m: [0, 0.175, 0]}, \
-                 {direction: cw, position_m: [0.175, 0, 0]}, {direction: cw, position_m: [-0.175, 0, 0]}]",
+                "[{direction: ccw, position_flu_m: [0, -0.175, 0]}, {direction: ccw, position_flu_m: [0, 0.175, 0]}, \
+                 {direction: cw, position_flu_m: [0.175, 0, 0]}, {direction: cw, position_flu_m: [-0.175, 0, 0]}]",
             ),
         ])
     }
@@ -371,10 +356,10 @@ mod tests {
     fn minimum_speed_keeps_idle_thrust_and_torque() -> Result<()> {
         let mut model = quad()?;
         model.config.airframe.rotors.truncate(1);
-        model.config.airframe.omega_min_radps = 346.41;
+        model.config.airframe.min_rotor_speed_radps = 346.41;
         model.motor_commands_radps = vec![-100.0]; // Clamps to omega_min.
         let airframe = model.config.airframe.clone();
-        let idle_speed_squared = airframe.omega_min_radps.powi(2);
+        let idle_speed_squared = airframe.min_rotor_speed_radps.powi(2);
         let mut truth = KinematicState::default();
         model.integrate(&mut truth, 0.01)?;
         let thrust_acceleration =
@@ -467,16 +452,16 @@ mod tests {
         // pushes along body +x. Only r x F gives it a pitch moment
         // (0.2 m * F), and the reaction torque turns with the axis.
         let mut model = multirotor(&[
-            ("mass", "1.5"),
-            ("gravity_magnitude", "0"),
-            ("c_T", "5.45e-6"),
-            ("c_Q", "2.284e-7"),
-            ("omega_min", "0"),
-            ("omega_max", "1200"),
+            ("mass_kg", "1.5"),
+            ("gravity_mps2", "0"),
+            ("thrust_coefficient", "5.45e-6"),
+            ("torque_coefficient", "2.284e-7"),
+            ("min_rotor_speed_radps", "0"),
+            ("max_rotor_speed_radps", "1200"),
             ("inertia_kgm2", "[[1, 0, 0], [0, 1, 0], [0, 0, 1]]"),
             (
                 "rotors",
-                "[{direction: cw, position_m: [0.1, 0, 0.2], tilt_deg: [0, 90, 0]}]",
+                "[{direction: cw, position_flu_m: [0.1, 0, 0.2], tilt_deg: [0, 90, 0]}]",
             ),
         ])?;
         model.motor_commands_radps = vec![800.0];
@@ -494,7 +479,7 @@ mod tests {
     fn untilted_rotor_height_does_not_change_moments() -> Result<()> {
         let rotor = |height_m| super::RotorParams {
             direction: super::airframe::Direction::Clockwise,
-            position_m: [0.1, 0.2, height_m],
+            position_flu_m: [0.1, 0.2, height_m],
             tilt_deg: [0.0; 3],
         };
         let flat = super::airframe::rotors(&[rotor(0.0)])?;

@@ -6,5 +6,5 @@ base_scenario: waypoints-point-agents.yaml
 seeds: [1, 2]
 parameter_combinations: cartesian
 parameters:
-  entities.blue.autonomy.WaypointFollower.speed: [3, 5]
+  entities.blue.autonomy.WaypointFollower.speed_mps: [3, 5]
   interactions.WaypointBroadcast.update_at_s: [3, 100]

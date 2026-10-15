@@ -16,8 +16,8 @@
       "criterion": "every test passes, no lint or format finding",
       "passed": true,
       "note": "",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": null
     },
     "rust-determinism": {
@@ -26,8 +26,8 @@
       "criterion": "byte-identical frames, events, and summaries on every mission and workload",
       "passed": true,
       "note": "39 missions, 0 differing",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/rust-determinism/"
     },
     "cpp-agreement": {
@@ -37,7 +37,7 @@
       "passed": true,
       "note": "15 of 15 pass",
       "date": "2026-10-15",
-      "source_sha256": "eddcfe312f03a067c75cc2ed5c516e267eaf673d063c040a56bb3fa4d3598d84",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/cpp-agreement/"
     },
     "cpp-generated": {
@@ -46,8 +46,8 @@
       "criterion": "as cpp-agreement, all 100 pass",
       "passed": true,
       "note": "100 of 100 pass",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/cpp-generated/"
     },
     "cpp-long": {
@@ -56,8 +56,8 @@
       "criterion": "every run finishes cleanly with explained summaries; divergence is reported",
       "passed": true,
       "note": "10 of 10 agree throughout",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/cpp-long/"
     },
     "cpp-noise": {
@@ -66,8 +66,8 @@
       "criterion": "the case passes (samples within tolerance); no KS test below the Bonferroni threshold",
       "passed": true,
       "note": "samples agree; distributions agree",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/cpp-noise/"
     },
     "checker-sensitivity": {
@@ -77,7 +77,7 @@
       "passed": true,
       "note": "12 of 12 planted bugs caught",
       "date": "2026-10-15",
-      "source_sha256": "eddcfe312f03a067c75cc2ed5c516e267eaf673d063c040a56bb3fa4d3598d84",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/checker-sensitivity/"
     },
     "rust-platform": {
@@ -86,8 +86,8 @@
       "criterion": "runs complete; differences are reported",
       "passed": true,
       "note": "largest position difference 2.3678883310186693e-12 m",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/rust-platform/"
     },
     "speed-cpp-container": {
@@ -136,8 +136,8 @@
       "criterion": "runs complete; errors reported",
       "passed": true,
       "note": "",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/rk4-loads/"
     },
     "multirotor-control": {
@@ -146,8 +146,8 @@
       "criterion": "every velocity error within 5% over the last second, Crazyflie drag tilt within 2%, 5 substeps within 5 mm",
       "passed": true,
       "note": "",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/multirotor-control/"
     },
     "rascal-control": {
@@ -156,8 +156,8 @@
       "criterion": "altitude D changes the error under 1 cm; under the rascal limits every step settles and pitch stays under 25 degrees",
       "passed": true,
       "note": "",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/rascal-control/"
     },
     "simple-aircraft-fit": {
@@ -166,8 +166,8 @@
       "criterion": "every SimpleAircraft number within 5% (or 0.2) of the Rascal's",
       "passed": true,
       "note": "",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/simple-aircraft-fit/"
     },
     "rotors-motor": {
@@ -176,8 +176,8 @@
       "criterion": "every sample within 1e-12 relative; samples equal the committed fixture",
       "passed": true,
       "note": "",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/rotors-motor/"
     },
     "crazyflow-crazyflie": {
@@ -186,8 +186,8 @@
       "criterion": "without rotor drag, within 1e-6 m and 1e-6 rad over 3 s; the drag difference is reported",
       "passed": true,
       "note": "",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/crazyflow-crazyflie/"
     },
     "mpe-parity": {
@@ -196,8 +196,8 @@
       "criterion": "100 episodes: every state bit-identical, with and without contact; returns to 6 decimals",
       "passed": true,
       "note": "",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/mpe-parity/"
     },
     "stall-landing": {
@@ -206,8 +206,8 @@
       "criterion": "the repeat is byte-identical",
       "passed": true,
       "note": "",
-      "date": "2026-10-14",
-      "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803",
+      "date": "2026-10-15",
+      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
       "evidence": "paper/data/stall-landing/"
     }
   },

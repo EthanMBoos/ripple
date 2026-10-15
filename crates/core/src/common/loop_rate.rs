@@ -11,7 +11,7 @@ pub(crate) struct Rate {
 }
 impl Rate {
     pub(crate) fn new(rate_hz: f64) -> Result<Self> {
-        ensure!(rate_hz >= 0.0, "loop_rate must be nonnegative");
+        ensure!(rate_hz >= 0.0, "loop_rate_hz must be nonnegative");
         Ok(Self {
             period_s: if rate_hz == 0.0 { 0.0 } else { 1.0 / rate_hz },
             remaining_s: 0.0,

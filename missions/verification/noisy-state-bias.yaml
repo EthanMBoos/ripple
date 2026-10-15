@@ -21,7 +21,7 @@ entities:
     velocity_mps: [20, 0, 0]
     autonomy:
       Straight:
-        speed: 20
+        speed_mps: 20
     controller: {SimpleAircraftControllerPID: {}}
     motion_model: {SimpleAircraft: {}}
     sensors:

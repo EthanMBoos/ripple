@@ -9,7 +9,7 @@
  },
  "interactions": {
   "GroundCollision": {
-   "ground_collision_z": 20.7081
+   "ground_altitude_m": 20.7081
   }
  },
  "networks": {
@@ -40,8 +40,8 @@
    "pitch_deg": -1.91099,
    "autonomy": {
     "Straight": {
-     "speed": 189.198,
-     "loop_rate": 10
+     "speed_mps": 189.198,
+     "loop_rate_hz": 10
     }
    },
    "velocity_mps": [
@@ -57,8 +57,11 @@
    "motion_model": {
     "FixedWing6DOF": {
      "airframe": "a4d",
-     "wind_E": 0.738349,
-     "wind_N": 2.73252
+     "wind_mps": [
+      0.738349,
+      2.73252,
+      0
+     ]
     }
    }
   }

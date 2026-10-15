@@ -8,7 +8,7 @@ use ripple_core::plugin::PluginRegistry;
 use ripple_core::{Mission, Params, Simulation, SimulationFrame};
 
 /// SimpleAircraft with the Rascal's limits, starting east at 20 m/s and 300 m,
-/// commanded `velocity` (m/s) for `end_s`.
+/// commanded `velocity_mps` for `end_s`.
 fn fly(name: &str, velocity: [f64; 3], end_s: f64) -> Result<Vec<SimulationFrame>> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let path = std::env::temp_dir().join(format!("ripple-{name}-{}.yaml", std::process::id()));
@@ -27,7 +27,7 @@ entities:
     velocity_mps: [20, 0, 0]
     autonomy:
       ConstantVelocity:
-        velocity: {velocity:?}
+        velocity_mps: {velocity:?}
     controller:
       AircraftVelocityController:
       SimpleAircraftControllerPID:

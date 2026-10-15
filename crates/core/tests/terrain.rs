@@ -46,7 +46,7 @@ fn agent(id: i32, position_m: Vec3, velocity_mps: [f64; 3]) -> Result<EntityGrou
         visual_model: "sphere".into(),
         autonomy: vec![
             PluginConfig::new("ConstantVelocity")
-                .with_params(serde_json::json!({"velocity": velocity_mps}))?,
+                .with_params(serde_json::json!({"velocity_mps": velocity_mps}))?,
         ],
         motion_model: PluginConfig::new("SingleIntegrator"),
         ..EntityGroupConfig::default()
@@ -187,14 +187,14 @@ fn fixed_wing_refuses_its_flat_ground_model_with_terrain() -> Result<()> {
                 velocity_mps: Vec3::new(220.0, 0.0, 0.0),
                 visual_model: "sphere".into(),
                 autonomy: vec![
-                    PluginConfig::new("Straight").with_params(serde_json::json!({"speed": 220}))?,
+                    PluginConfig::new("Straight").with_params(serde_json::json!({"speed_mps": 220}))?,
                 ],
                 controller: vec![
                     PluginConfig::new("AircraftPIDController")
                         .with_params(serde_json::json!({"airframe": "a4d"}))?,
                 ],
                 motion_model: PluginConfig::new("FixedWing6DOF").with_params(
-                    serde_json::json!({"airframe": "a4d", "use_ground_model": use_ground_model}),
+                    serde_json::json!({"airframe": "a4d", "enable_ground_spring": use_ground_model}),
                 )?,
                 ..EntityGroupConfig::default()
             }],
@@ -205,7 +205,8 @@ fn fixed_wing_refuses_its_flat_ground_model_with_terrain() -> Result<()> {
         .err()
         .expect("flat ground with terrain");
     assert!(
-        format!("{error:#}").contains("set use_ground_model to false when terrain is configured"),
+        format!("{error:#}")
+            .contains("set enable_ground_spring to false when terrain is configured"),
         "{error:#}"
     );
     let mut simulation = Simulation::new(scenario(false)?, &PluginRegistry::with_builtins(), 1)?;

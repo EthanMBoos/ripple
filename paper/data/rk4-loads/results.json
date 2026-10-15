@@ -3,11 +3,11 @@
     "implementation": "upstream C++",
     "branch": "Ubuntu-24.04",
     "commit": "4bdf41fb06facaea358d478d9a07aa4d77fcac27",
-    "image": "sha256:aa441c0668a80a22dcd56e799e62611edc1e906eb8f2a54c411ab65aa6e46d7a"
+    "image": "sha256:e0be30a91cca2cbf35399f5599682156be5a2b5aab35ae512573d02ac58a66dc"
   },
   "stage": {
     "implementation": "this checkout",
-    "source_sha256": "7f3bf7ee940c9a64340d8d9abe76960fb8c460b72abd16cd7abafa52231c2803"
+    "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1"
   },
   "part_a": [
     {

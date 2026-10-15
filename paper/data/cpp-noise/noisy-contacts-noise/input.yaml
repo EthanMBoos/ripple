@@ -10,22 +10,17 @@ run:
   dt_s: 0.1
   seed: 23
 
-networks:
-  GlobalNetwork:
-  LocalNetwork:
-metrics:
-  SimpleCollisionMetrics:
+networks: {GlobalNetwork: {}, LocalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
 
 templates:
   aircraft:
     visual_model: sphere
     autonomy:
       Straight:
-        speed: 22
-    controller:
-      SimpleAircraftControllerPID:
-    motion_model:
-      SimpleAircraft:
+        speed_mps: 22
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
     sensors:
       NoisyContacts:
         position_bias_m: [1, -2, 0.5]

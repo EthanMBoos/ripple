@@ -4,27 +4,53 @@ use serde::Deserialize;
 
 use crate::math::angle_pi;
 
-/// Gains parsed from [P, I, D, integral band] values.
-#[derive(Clone, Copy, Debug, Deserialize)]
-#[serde(from = "[f64; 4]")]
+/// PID gains. The integral accumulates only while the error is within
+/// `integrate_within`: error units for linear loops, degrees for angular ones.
+#[derive(Clone, Copy, Debug)]
 pub struct PidGains {
-    pub proportional: f64,
-    pub integral: f64,
-    pub derivative: f64,
-    /// Error units for linear loops; degrees, as missions give it, for angular loops.
-    pub integral_band: f64,
+    pub kp: f64,
+    pub ki: f64,
+    pub kd: f64,
+    pub integrate_within: f64,
 }
 
-impl From<[f64; 4]> for PidGains {
-    fn from([proportional, integral, derivative, integral_band]: [f64; 4]) -> Self {
-        Self {
-            proportional,
-            integral,
-            derivative,
-            integral_band,
+/// Mission forms of [`PidGains`], one per loop unit, so the band's key names
+/// its unit: `{kp: 1, ki: 0.1, kd: 0, integrate_within_deg: 9}`.
+macro_rules! mission_gains {
+    ($(#[$doc:meta])* $name:ident, $band:ident) => {
+        $(#[$doc])*
+        #[derive(Clone, Copy, Debug, Deserialize)]
+        #[serde(deny_unknown_fields)]
+        pub struct $name {
+            pub kp: f64,
+            pub ki: f64,
+            pub kd: f64,
+            pub $band: f64,
         }
-    }
+
+        impl From<$name> for PidGains {
+            fn from(gains: $name) -> Self {
+                Self { kp: gains.kp, ki: gains.ki, kd: gains.kd, integrate_within: gains.$band }
+            }
+        }
+    };
 }
+
+mission_gains!(
+    /// Gains for a loop on an angle; the band is in degrees.
+    AngleGains,
+    integrate_within_deg
+);
+mission_gains!(
+    /// Gains for a loop on a length, such as altitude; the band is in metres.
+    LengthGains,
+    integrate_within_m
+);
+mission_gains!(
+    /// Gains for a loop on a speed; the band is in m/s.
+    SpeedGains,
+    integrate_within_mps
+);
 
 #[derive(Clone, Debug)]
 pub struct Pid {
@@ -42,22 +68,22 @@ impl Pid {
         Self::new(gains, false)
     }
 
-    /// Convert the integral band from degrees; updates use radians.
+    /// Convert `integrate_within` from degrees; updates use radians.
     pub fn angular(gains: PidGains) -> Self {
         Self::new(gains, true)
     }
 
     fn new(gains: PidGains, wrap_angle: bool) -> Self {
         let integral_band = if wrap_angle {
-            crate::math::deg_to_rad(gains.integral_band)
+            crate::math::deg_to_rad(gains.integrate_within)
         } else {
-            gains.integral_band
+            gains.integrate_within
         };
 
         Self {
-            proportional_gain: gains.proportional,
-            integral_gain: gains.integral,
-            derivative_gain: gains.derivative,
+            proportional_gain: gains.kp,
+            integral_gain: gains.ki,
+            derivative_gain: gains.kd,
             integral_band,
             wrap_angle,
             integral_error: 0.0,
@@ -94,10 +120,10 @@ mod tests {
     #[test]
     fn linear_loop_applies_proportional_integral_and_derivative_terms() {
         let mut pid = Pid::linear(PidGains {
-            proportional: 2.0,
-            integral: 3.0,
-            derivative: 4.0,
-            integral_band: 10.0,
+            kp: 2.0,
+            ki: 3.0,
+            kd: 4.0,
+            integrate_within: 10.0,
         });
         // Error 2: P=4, I=3*(2*0.5)=3, D=4*(2/0.5)=16.
         assert!((pid.step(3.0, 1.0, 0.5) - 23.0).abs() < 1e-12);
@@ -108,10 +134,10 @@ mod tests {
     #[test]
     fn leaving_the_integral_band_resets_accumulated_error() {
         let mut pid = Pid::linear(PidGains {
-            proportional: 0.0,
-            integral: 1.0,
-            derivative: 0.0,
-            integral_band: 2.0,
+            kp: 0.0,
+            ki: 1.0,
+            kd: 0.0,
+            integrate_within: 2.0,
         });
         assert!((pid.step(1.0, 0.0, 1.0) - 1.0).abs() < 1e-12);
         assert!(pid.step(3.0, 0.0, 1.0).abs() < 1e-12);
@@ -121,10 +147,10 @@ mod tests {
     #[test]
     fn angular_loop_wraps_error_and_converts_the_integral_band_once() {
         let mut pid = Pid::angular(PidGains {
-            proportional: 1.0,
-            integral: 1.0,
-            derivative: 0.0,
-            integral_band: 9.0,
+            kp: 1.0,
+            ki: 1.0,
+            kd: 0.0,
+            integrate_within: 9.0,
         });
         assert!((pid.integral_band - 9.0_f64.to_radians()).abs() < 1e-12);
         // The shortest turn from +179 degrees to -179 degrees is +2 degrees.

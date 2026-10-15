@@ -25,6 +25,21 @@ Preserve these observable timing/recording contracts during refactors. Current
 Rust lifecycle and delivery rules are in the
 [plugin reference](../book/src/reference/plugin-api.md#execution-and-lifecycle).
 
+## Where SCRIMMAGE's code lives in Ripple
+
+Responsibilities, not class parity. Ripple paths are under `crates/core/src/`.
+
+| SCRIMMAGE | Ripple |
+| --- | --- |
+| `src/simcontrol/SimControl.cpp` (tick, generation, threads, global plugins) | `simulation.rs`, `simulation/generation.rs`, `simulation/scheduler.rs`, `simulation/world_plugins.rs` |
+| `src/entity/Entity.cpp` | `entity.rs`, `entity/plugin_stack.rs` |
+| `src/parse/MissionParse.cpp` | `mission.rs`, `scenario.rs` |
+| `src/math/` (State, Quaternion, Angles) | `math/` |
+| `src/common/` (PID, VariableIO, Random, RTree) | `common/pid.rs`, `ports.rs`, `common/random.rs`, `common/spatial.rs` |
+| `src/plugin_manager/` (EntityPlugin, PluginManager) | `plugin.rs`, `plugin/registry.rs` |
+| `src/pubsub/` | `pubsub/` |
+| `src/plugins/<category>/` and each plugin's `.xml` defaults | `plugin/<category>/<plugin>/<plugin>.rs`, defaults in its parameter struct's `Default` |
+
 ## Missions are YAML
 
 Ripple reads only YAML. SCRIMMAGE reads only XML, so the comparison writes
@@ -250,8 +265,8 @@ comparison has proven what it needs to, they go.
 | What | Where | Replaced by |
 | --- | --- | --- |
 | Spawn spread given as a variance (`position_variance_m2`, `heading_variance_deg2`) | `entity.rs`, `scenario.rs` | A standard deviation in metres and degrees |
-| The first entities are created one step before the start time (generation runs at start − dt) | `simcontrol.rs` | Generation at the start time |
-| SCRIMMAGE's mission shapes: `randomize_every_spawn` (its `use_variance_all_ents`); PID gains in its order, with the integral band in degrees | `simcontrol/generation.rs`, `common/pid.rs` | Named gains and one spawn rule |
+| The first entities are created one step before the start time (generation runs at start − dt) | `simulation.rs` | Generation at the start time |
+| SCRIMMAGE's mission shapes: `randomize_every_spawn` (its `use_variance_all_ents`); PID gains in its order, with the integral band in degrees | `simulation/generation.rs`, `common/pid.rs` | Named gains and one spawn rule |
 | SCRIMMAGE's XML, written from a run's recorded scenario | `reference/scrimmage_xml.py`, `reference/scenario.py` | Nothing |
 
 ## Core defects fixed on both sides

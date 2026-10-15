@@ -1,12 +1,12 @@
 //! Type erasure and scheduling stay inside the engine, not in plugin author code.
-use crate::estimator::{Inputs, Source};
+use crate::plugin::estimator::{Inputs, Source};
 use crate::plugin::*;
 use crate::{
     KinematicState, Vec3,
     common::{Rate, Terrain},
     scenario::EntityGroupConfig,
 };
-use crate::{common::variable_io::Signals, plugin_manager::CompiledPlugin};
+use crate::{plugin::CompiledPlugin, ports::Signals};
 use anyhow::{Context, Result, bail, ensure};
 use std::collections::BTreeMap;
 

@@ -210,7 +210,7 @@ pub(crate) struct Mailbox<'a> {
     pub endpoint: &'a MessageEndpoint,
     pub messages: &'a mut Messages,
 }
-/// Records for the optional observation trace (see `simcontrol/trace.rs`).
+/// Records for the optional observation trace (see `simulation/trace.rs`).
 #[derive(Default)]
 pub(crate) struct NetworkTrace {
     pub deliveries: Vec<DeliveryRecord>,

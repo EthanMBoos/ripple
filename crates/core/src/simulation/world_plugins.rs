@@ -2,7 +2,7 @@
 use crate::common::{SpatialIndex, Terrain, TruthContacts};
 use crate::{Entity, EntitySnapshot, Event, Vec3, plugin::*, scenario::ScenarioConfig};
 use crate::{
-    plugin_manager::{Catalog, CompiledPlugin},
+    plugin::{Catalog, CompiledPlugin},
     pubsub::messages::{Mailbox, NetworkTrace, ScheduledMessage},
 };
 use anyhow::{Context, Result, ensure};

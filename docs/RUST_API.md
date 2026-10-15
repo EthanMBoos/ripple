@@ -36,7 +36,7 @@ definitions own defaults while the readers handle file syntax.
 
 ## Choices in this implementation
 
-- Public scenario types live in `scenario.rs`; `parse/` handles files.
+- Public scenario types live in `scenario.rs`; `mission.rs` reads mission files.
   YAML keeps small ordered-map adapters for groups and plugins. There is one
   set of group/run defaults, rather than parallel file and engine defaults.
 - Plugin descriptions remain registered names plus parameter values. Existing

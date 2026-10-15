@@ -9,7 +9,7 @@ use crate::{
     entity::EntityDefinition,
     math::Vec3,
     plugin::PluginRegistry,
-    simcontrol::{generation::Generator, world_plugins::CompiledWorld},
+    simulation::{generation::Generator, world_plugins::CompiledWorld},
 };
 
 /// Validated configuration and factories, ready for runtime construction.
@@ -182,19 +182,19 @@ pub struct EntityGroupConfig {
     pub pitch_deg: f64,
     pub velocity_mps: Vec3,
     pub randomize_every_spawn: bool,
-    #[serde(deserialize_with = "crate::parse::yaml_mission::plugins")]
+    #[serde(deserialize_with = "crate::mission::plugins")]
     pub autonomy: Vec<PluginConfig>,
-    #[serde(deserialize_with = "crate::parse::yaml_mission::plugins")]
+    #[serde(deserialize_with = "crate::mission::plugins")]
     pub controller: Vec<PluginConfig>,
-    #[serde(deserialize_with = "crate::parse::yaml_mission::motion_plugin")]
+    #[serde(deserialize_with = "crate::mission::motion_plugin")]
     pub motion_model: PluginConfig,
-    #[serde(deserialize_with = "crate::parse::yaml_mission::plugins")]
+    #[serde(deserialize_with = "crate::mission::plugins")]
     pub sensors: Vec<PluginConfig>,
     /// Maintains the entity's own-state belief; `PassThrough` by default.
-    #[serde(deserialize_with = "crate::parse::yaml_mission::estimator_plugin")]
+    #[serde(deserialize_with = "crate::mission::estimator_plugin")]
     pub localization: PluginConfig,
     /// Maintains the entity's known contacts; `PassThrough` by default.
-    #[serde(deserialize_with = "crate::parse::yaml_mission::estimator_plugin")]
+    #[serde(deserialize_with = "crate::mission::estimator_plugin")]
     pub tracking: PluginConfig,
 }
 
@@ -273,13 +273,13 @@ pub struct ScenarioConfig {
     /// A terrain header (see `common/terrain.rs`); world plugins read its ground
     /// heights. A relative path in a YAML mission is relative to the mission file.
     pub terrain: Option<PathBuf>,
-    #[serde(deserialize_with = "crate::parse::yaml_mission::entity_groups")]
+    #[serde(deserialize_with = "crate::mission::entity_groups")]
     pub entities: Vec<EntityGroupConfig>,
-    #[serde(deserialize_with = "crate::parse::yaml_mission::plugins")]
+    #[serde(deserialize_with = "crate::mission::plugins")]
     pub interactions: Vec<PluginConfig>,
-    #[serde(deserialize_with = "crate::parse::yaml_mission::plugins")]
+    #[serde(deserialize_with = "crate::mission::plugins")]
     pub networks: Vec<PluginConfig>,
-    #[serde(deserialize_with = "crate::parse::yaml_mission::plugins")]
+    #[serde(deserialize_with = "crate::mission::plugins")]
     pub metrics: Vec<PluginConfig>,
 }
 

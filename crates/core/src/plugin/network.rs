@@ -1,3 +1,17 @@
+//! Networks: the plugin interface and the built-in communication policies.
+//! `NetworkContext` lives with the message engine in `pubsub`.
+use super::NetworkContext;
+use crate::plugin::{Plugin, Update, WorldContext};
+use anyhow::Result;
+
+pub trait Network: Plugin {
+    fn initialize(&mut self, _context: &mut WorldContext<'_>) -> Result<()> {
+        Ok(())
+    }
+    fn step(&mut self, context: &mut NetworkContext<'_, '_>) -> Result<Update>;
+}
+
+// Built-ins selected by missions.
 #[path = "network/global_network/global_network.rs"]
 mod global_network;
 #[path = "network/local_network/local_network.rs"]

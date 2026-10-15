@@ -30,7 +30,7 @@ use crate::{
     Terrain,
     entity::EntitySnapshot,
     math::{KinematicState, Quaternion as MathQuaternion, Vec3},
-    simcontrol::{Event as SimulationEvent, Simulation, SimulationFrame, TraceSink},
+    simulation::{Event as SimulationEvent, Simulation, SimulationFrame, TraceSink},
 };
 
 const DESCRIPTOR: &[u8] = include_bytes!("../proto/record.desc");

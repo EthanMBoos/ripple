@@ -269,7 +269,7 @@ dedicated host output mount; they are removed after the run.
    `missions/` automatically.
 4. If it publishes a new sensor message whose contents should be compared, add
    the payload to both traces: `src/common/Trace.cpp` on the C++ branch and
-   `crates/core/src/simcontrol/trace.rs` here (see `sensor_states` in
+   `crates/core/src/simulation/trace.rs` here (see `sensor_states` in
    `pubsub/messages.rs`). Commit C++ changes on `benchmarking-edits`;
    the checker builds committed branches only.
 5. Optionally add the plugin to `generate_scenarios.py` for random coverage and

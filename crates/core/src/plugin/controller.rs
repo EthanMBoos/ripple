@@ -1,4 +1,18 @@
-//! Controller implementations selected by missions.
+//! Controllers: the plugin interface and the built-in control laws.
+use crate::{
+    plugin::{AgentContext, Plugin, Update},
+    ports::PluginIo,
+};
+use anyhow::Result;
+
+pub trait Controller: Plugin {
+    fn initialize(&mut self, _context: &mut AgentContext<'_>) -> Result<()> {
+        Ok(())
+    }
+    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update>;
+}
+
+// Built-ins selected by missions.
 #[path = "controller/aircraft_pid/aircraft_pid.rs"]
 mod aircraft_pid;
 pub use aircraft_pid::AircraftPidController;

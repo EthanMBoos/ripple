@@ -1,12 +1,14 @@
+//! Plugin registration: typed factories by category and the built-in list.
+use super::{
+    Autonomy, Controller, Input, Interaction, Localization, Metrics, MotionModel, Network,
+    PluginParams, Ports, ReadingKind, Sensor, Tracking, autonomy, controller, estimator,
+    interaction, metrics, motion, network, sensor,
+};
 use crate::entity::plugin_stack::{
     AgentBehavior, AutonomyAdapter, ControllerAdapter, LocalizationAdapter, LocalizationBehavior,
     MotionBehavior, SensorBehavior, TrackingAdapter, TrackingBehavior,
 };
-use crate::plugin::{
-    Autonomy, Controller, Input, Interaction, Localization, Metrics, MotionModel, Network,
-    PluginParams, Ports, ReadingKind, Sensor, Tracking,
-};
-use crate::simcontrol::world_plugins::{InteractionBehavior, MetricsBehavior, NetworkBehavior};
+use crate::simulation::world_plugins::{InteractionBehavior, MetricsBehavior, NetworkBehavior};
 use crate::{common::Rate, scenario::PluginConfig};
 use anyhow::{Context, Result, ensure};
 use std::collections::BTreeMap;
@@ -98,7 +100,7 @@ impl Default for PluginRegistry {
 impl PluginRegistry {
     pub fn with_builtins() -> Self {
         let mut registry = Self::default();
-        super::builtins::register_builtins(&mut registry).expect("built-in names must be unique");
+        register_builtins(&mut registry).expect("built-in names must be unique");
         registry
     }
     pub fn register_autonomy<T: Autonomy>(&mut self, name: &str) -> Result<()> {
@@ -245,4 +247,48 @@ impl PluginRegistry {
             }),
         )
     }
+}
+
+fn register_builtins(registry: &mut PluginRegistry) -> Result<()> {
+    registry.register_autonomy::<autonomy::Straight>("Straight")?;
+    registry.register_autonomy::<autonomy::WaypointFollower>("WaypointFollower")?;
+    registry.register_autonomy::<autonomy::AuctionAssign>("AuctionAssign")?;
+    registry.register_autonomy::<autonomy::ConstantVelocity>("ConstantVelocity")?;
+    registry.register_controller::<controller::SingleIntegratorControllerSimple>(
+        "SingleIntegratorControllerSimple",
+    )?;
+    registry.register_motion::<motion::SingleIntegrator>("SingleIntegrator")?;
+    registry.register_interaction::<interaction::WaypointBroadcast>("WaypointBroadcast")?;
+    registry.register_controller::<controller::SimpleAircraftControllerPid>(
+        "SimpleAircraftControllerPID",
+    )?;
+    registry.register_motion::<motion::SimpleAircraft>("SimpleAircraft")?;
+    registry.register_motion::<motion::FixedWing6Dof>("FixedWing6DOF")?;
+    registry.register_controller::<controller::AircraftPidController>("AircraftPIDController")?;
+    registry.register_controller::<controller::AircraftVelocityController>(
+        "AircraftVelocityController",
+    )?;
+    registry.register_motion::<motion::Multirotor>("Multirotor")?;
+    registry.register_controller::<controller::MotorSpeeds>("MotorSpeeds")?;
+    registry.register_controller::<controller::MultirotorVelocityController>(
+        "MultirotorVelocityController",
+    )?;
+    registry.register_sensor::<sensor::NoisyPosition>("NoisyPosition")?;
+    registry.register_sensor::<sensor::NoisyState>("NoisyState")?;
+    registry.register_sensor::<sensor::NoisyContacts>("NoisyContacts")?;
+    registry.register_localization::<estimator::PassThrough>("PassThrough")?;
+    registry.register_tracking::<estimator::PassThrough>("PassThrough")?;
+    registry.register_interaction::<interaction::SimpleCollision>("SimpleCollision")?;
+    registry.register_interaction::<interaction::Boundary>("Boundary")?;
+    registry.register_interaction::<interaction::GroundCollision>("GroundCollision")?;
+    registry.register_interaction::<interaction::TerrainCollision>("TerrainCollision")?;
+    registry.register_network::<network::LocalNetwork>("LocalNetwork")?;
+    registry.register_network::<network::GlobalNetwork>("GlobalNetwork")?;
+    registry.register_network::<network::SphereNetwork>("SphereNetwork")?;
+    registry.register_metrics::<metrics::SimpleCollisionMetrics>("SimpleCollisionMetrics")?;
+    registry.register_autonomy::<autonomy::ForceReplay>("ForceReplay")?;
+    registry.register_motion::<motion::MpeParticle>("MpeParticle")?;
+    registry.register_interaction::<interaction::MpeContact>("MpeContact")?;
+    registry.register_metrics::<metrics::SimpleSpread>("SimpleSpread")?;
+    Ok(())
 }

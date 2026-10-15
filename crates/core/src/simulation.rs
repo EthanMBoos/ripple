@@ -8,13 +8,13 @@ use serde::Serialize;
 use crate::{
     common::{SpatialIndex, Terrain, TruthContacts},
     entity::{Entity, EntityDefinition, EntitySnapshot},
-    estimator::{Contact, ContactList},
+    plugin::estimator::{Contact, ContactList},
     plugin::{Messages, MetricReport, PluginRegistry, StepTime},
     pubsub::messages::NetworkTrace,
     scenario::{EndConditions, ResolvedScenario, ScenarioConfig},
-    simcontrol::scheduler::Scheduler,
-    simcontrol::trace::Trace,
-    simcontrol::world_plugins::WorldPlugins,
+    simulation::scheduler::Scheduler,
+    simulation::trace::Trace,
+    simulation::world_plugins::WorldPlugins,
 };
 
 pub(crate) mod generation;
@@ -250,6 +250,7 @@ impl Simulation {
         result
     }
 
+    /// One tick, phase by phase, in the order of the book's phase table.
     fn step_inner(&mut self, mut trace: Option<&mut Trace<'_>>) -> Result<Option<SimulationFrame>> {
         if self.finished {
             return Ok(None);
@@ -261,18 +262,41 @@ impl Simulation {
         self.generate_entities()?;
         self.start_entities()?;
         let frame = self.snapshot();
-        let dt_s = self.config.run.dt_s;
-        let time_s = self.time_s;
-        let tick = self.tick;
+        let time = StepTime {
+            time_s: self.time_s,
+            dt_s: self.config.run.dt_s,
+            tick: self.tick,
+        };
         if let Some(trace) = trace.as_deref_mut() {
-            trace.beliefs(time_s, &self.entities)?;
+            trace.beliefs(time.time_s, &self.entities)?;
         }
-        let time = StepTime { time_s, dt_s, tick };
         self.run_phase(|entity| entity.step_autonomy(time))?;
+        self.controllers_and_motion(time)?;
+        // Motion leaves controller outputs unchanged: this is the last substep's.
+        if let Some(trace) = trace.as_deref_mut() {
+            trace.outputs(time.time_s, &self.entities)?;
+        }
+        let mut nearby = self.sense(time)?;
+        if let Some(trace) = trace.as_deref_mut() {
+            trace.readings(time.time_s, &self.entities)?;
+        }
+        self.apply_interactions(&mut nearby)?;
+        nearby.refresh(&self.entities);
+        let contacts = self.snapshot().entities;
+        self.route_messages(time, &contacts, &nearby, trace)?;
+        self.estimate(time, &contacts)?;
+        self.score(time, &contacts, &nearby)?;
+        self.remove_dead(time)?;
+        self.advance_time();
+        Ok(Some(frame))
+    }
 
+    /// Controllers, then motion, once per substep.
+    fn controllers_and_motion(&mut self, time: StepTime) -> Result<()> {
         // Each substep runs controllers, then motion, so a controller sees the
         // state the previous substep wrote (see docs/REFERENCE_NOTES.md,
-        // "Substep order"). Autonomy above and everything below run once per tick.
+        // "Substep order"). Autonomy before and everything after run once per tick.
+        let StepTime { time_s, dt_s, tick } = time;
         let motion_dt_s = dt_s / self.config.run.motion_multiplier as f64;
         let mut substep_time_s = time_s;
         let terrain = self.terrain.clone();
@@ -291,28 +315,33 @@ impl Simulation {
             self.run_phase(|entity| entity.step_motion(time, terrain.as_ref()))?;
             substep_time_s += motion_dt_s;
         }
-        // Motion leaves controller outputs unchanged: this is the last substep's.
-        if let Some(trace) = trace.as_deref_mut() {
-            trace.outputs(time_s, &self.entities)?;
-        }
+        Ok(())
+    }
 
+    /// Sensors measure the post-motion world; returns the spatial index built
+    /// from it for the interactions.
+    fn sense(&mut self, time: StepTime) -> Result<SpatialIndex> {
         // The spatial index is built from post-motion positions and refreshed
         // before each interaction and after them, so every query sees current
         // positions (an interaction may move entities).
-        let mut nearby = SpatialIndex::build(self.config.spatial_lookup, &self.entities);
+        let nearby = SpatialIndex::build(self.config.spatial_lookup, &self.entities);
         let sensor_contacts = self.snapshot();
         let sensor_truth = TruthContacts::new(&sensor_contacts.entities, &nearby);
         self.run_phase(|entity| entity.step_sensors(time, sensor_truth))?;
-        if let Some(trace) = trace.as_deref_mut() {
-            trace.readings(time_s, &self.entities)?;
-        }
-        self.apply_interactions(&mut nearby)?;
-        nearby.refresh(&self.entities);
-        let contacts = self.snapshot().entities;
+        Ok(nearby)
+    }
+
+    fn route_messages(
+        &mut self,
+        time: StepTime,
+        contacts: &[EntitySnapshot],
+        nearby: &SpatialIndex,
+        trace: Option<&mut Trace<'_>>,
+    ) -> Result<()> {
         let mut network_trace = trace.as_ref().map(|_| NetworkTrace::default());
         self.world_stop |= self.world.networks(
             time,
-            TruthContacts::new(&contacts, &nearby),
+            TruthContacts::new(contacts, nearby),
             &mut self.entities,
             &mut self.messages,
             network_trace.as_mut(),
@@ -320,20 +349,37 @@ impl Simulation {
         if let (Some(trace), Some(network_trace)) = (trace, &network_trace) {
             trace.network(network_trace)?;
         }
-        // Estimation shares the delivery task: readings are delivered and belief
-        // updated per entity, with no extra phase.
-        self.perfect_contacts = perfect_contacts(&contacts, time_s + dt_s);
+        Ok(())
+    }
+
+    /// Estimation shares the delivery task: readings are delivered and belief
+    /// updated per entity, with no extra phase.
+    fn estimate(&mut self, time: StepTime, contacts: &[EntitySnapshot]) -> Result<()> {
+        self.perfect_contacts = perfect_contacts(contacts, time.time_s + time.dt_s);
         let perfect = self.perfect_contacts.clone();
-        self.run_phase(|entity| entity.estimate(time, &perfect))?;
+        self.run_phase(|entity| entity.estimate(time, &perfect))
+    }
+
+    fn score(
+        &mut self,
+        time: StepTime,
+        contacts: &[EntitySnapshot],
+        nearby: &SpatialIndex,
+    ) -> Result<()> {
         self.world_stop |= self.world.metrics(
             time,
-            TruthContacts::new(&contacts, &nearby),
+            TruthContacts::new(contacts, nearby),
             &self.entity_teams,
             self.terrain.as_ref(),
         )?;
         // Retain a stop request even when its entity is removed in this same tick.
         self.world_stop |= self.entities.iter().any(Entity::stop_requested);
-        // Removal happens after networks and metrics so final-tick publications are delivered.
+        Ok(())
+    }
+
+    /// Removal happens after networks and metrics so final-tick publications
+    /// are delivered.
+    fn remove_dead(&mut self, time: StepTime) -> Result<()> {
         let mut close_error = None;
         for entity in self.entities.iter_mut().filter(|entity| entity.health <= 0) {
             if let Err(error) = entity.close(time) {
@@ -341,16 +387,19 @@ impl Simulation {
             }
         }
         self.entities.retain(|entity| entity.health > 0);
-        if let Some(error) = close_error {
-            return Err(error);
+        match close_error {
+            Some(error) => Err(error),
+            None => Ok(()),
         }
+    }
+
+    fn advance_time(&mut self) {
         self.step_count += 1;
         self.tick = self.step_count as i64;
         // Time is counted, not accumulated: repeated addition of dt drifts in
         // the last digits (0.1 added 299 times is 29.900000000000155).
-        self.time_s = self.config.run.start_s + self.step_count as f64 * dt_s;
+        self.time_s = self.config.run.start_s + self.step_count as f64 * self.config.run.dt_s;
         self.termination = self.reached_end_condition();
-        Ok(Some(frame))
     }
 
     fn reached_end_condition(&self) -> Option<TerminationReason> {

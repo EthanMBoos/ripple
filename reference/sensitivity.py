@@ -27,10 +27,10 @@ from reference_check import compare_case, write_json
 CORE = "crates/core/src/"
 # (name, file, original text, defective text). Each original must occur exactly once.
 DEFECTS = [
-    ("controller substeps receive the full step dt", CORE + "simcontrol.rs",
+    ("controller substeps receive the full step dt", CORE + "simulation.rs",
      "                entity.step_controller(time)\n",
      "                entity.step_controller(StepTime { dt_s, ..time })\n"),
-    ("frame timestamp labels the time after the step", CORE + "simcontrol.rs",
+    ("frame timestamp labels the time after the step", CORE + "simulation.rs",
      "before this tick's step.\n            time_s: self.time_s,",
      "before this tick's step.\n            time_s: self.time_s + self.config.run.dt_s,"),
     ("rate-limited plugins receive the tick's dt", CORE + "entity/plugin_stack.rs",

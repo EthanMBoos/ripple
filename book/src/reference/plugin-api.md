@@ -1,10 +1,10 @@
 # Plugin API and lifecycle
 
 For engine navigation, see [Source map](../development/source-layout.md).
-Category interfaces live in named framework modules; concrete built-ins live
-only under `crates/core/src/plugin/<category>/`. The public authoring imports
-remain `ripple_core::plugin::*`; the source moves do not require changes to an
-external plugin project.
+Each category's interface and its built-ins live in
+`crates/core/src/plugin/<category>.rs`, with each built-in in its own folder
+under `plugin/<category>/`. Authors import everything from
+`ripple_core::plugin::*`.
 
 ## Extension points
 
@@ -100,10 +100,11 @@ The steps here are for adding a stock plugin.
 4. Register the type with `register_autonomy`, `register_controller`,
    `register_motion`, `register_sensor`, `register_localization`,
    `register_tracking`, `register_interaction`, `register_network`, or
-   `register_metrics` in `plugin_manager/builtins.rs` for a bundled plugin.
+   `register_metrics` in `register_builtins` (`plugin/registry.rs`) for a
+   bundled plugin.
 5. Reference that registration name in the mission.
 
-[builtins.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin_manager/builtins.rs)
+[registry.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/registry.rs)
 shows every registration category. Missions select the registered names:
 
 ```yaml
@@ -147,9 +148,9 @@ pub use simple_aircraft::SimpleAircraft;
 The path is relative to the category file. The logical module remains
 `plugin::motion::simple_aircraft`, and the public type remains
 `ripple_core::plugin::motion::SimpleAircraft`. No extra wrapper module or
-duplicate implementation is needed. Keep category interfaces in named framework
-files such as `motion.rs`, and registrations in
-`plugin_manager/builtins.rs`; neither belongs in the model equations.
+duplicate implementation is needed. Keep category interfaces in the category
+files such as `plugin/motion.rs`, and registrations in `plugin/registry.rs`;
+neither belongs in the model equations.
 
 Reference headers, build files, schemas, and unported plugins remain in sibling
 `../scrimmage`, branch `Ubuntu-24.04`; do not recreate a parallel reference tree

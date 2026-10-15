@@ -73,7 +73,7 @@ deeply nested expression when the intermediate values answer those questions.
 
 Use the same reading order in every concrete plugin module:
 
-1. Module documentation: purpose, C++ counterpart (or explicitly Rust-only),
+1. Module documentation: purpose, the reference it follows (or Rust-only),
    execution phase, inputs, and outputs.
 2. Explicit imports, grouped as standard library, dependencies, then crate
    imports.
@@ -87,11 +87,11 @@ Use the same reading order in every concrete plugin module:
 Separate structs, implementation blocks, and functions with a blank line. Keep
 all imports at the top except test-only imports inside the test module. Prefer
 explicit imports over wildcard imports in concrete plugin implementations. Keep
-the existing C++-familiar directories; do not split declarations and
+the existing subsystem directories; do not split declarations and
 implementations into artificial header/source pairs or add namespace wrappers.
 
 Use descriptive module filenames rather than `mod.rs`. Core modules use the
-standard sibling pattern: `simcontrol.rs` declares helpers in `simcontrol/`.
+standard sibling pattern: `simulation.rs` declares helpers in `simulation/`.
 Only keep a supporting directory when it contains files. Plugins are the
 intentional exception: keep `<plugin>.rs`, and any private submodules, inside
 the plugin's own folder. The named category module uses `#[path]` to load that

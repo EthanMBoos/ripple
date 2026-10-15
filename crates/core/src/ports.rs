@@ -1,3 +1,5 @@
+//! Named, unit-checked ports that connect a plugin stack's autonomy, controller,
+//! and motion model.
 use anyhow::{Context, Result, ensure};
 use std::collections::BTreeMap;
 

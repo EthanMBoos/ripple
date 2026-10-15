@@ -1,7 +1,7 @@
 use anyhow::Result;
 use ripple_core::{
     EntityGroupConfig, Mission, Params, PluginConfig, RunConfig, ScenarioConfig, Simulation, Spawn,
-    Vec3, plugin::PluginRegistry, write_frame,
+    Vec3, plugin::PluginRegistry,
 };
 use serde::Serialize;
 use std::path::PathBuf;
@@ -60,7 +60,8 @@ fn outputs(config: ScenarioConfig, workers: usize) -> Result<Outputs> {
     let mut simulation = Simulation::new(config, &PluginRegistry::with_builtins(), workers)?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
-        write_frame(&mut frames, &frame)?;
+        serde_json::to_writer(&mut frames, &frame)?;
+        frames.push(b'\n');
     }
     assert_eq!(simulation.entities().len(), 3);
     // Each spawned entity receives independent motion state and a different birth time.

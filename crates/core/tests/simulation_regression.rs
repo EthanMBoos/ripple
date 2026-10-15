@@ -1,9 +1,7 @@
-use std::io::Write;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use ripple_core::{Mission, Params, Simulation, write_frame};
+use ripple_core::{Mission, Params, Simulation, TraceSink};
 
 #[derive(Debug, PartialEq, Eq)]
 struct MissionOutput {
@@ -13,14 +11,11 @@ struct MissionOutput {
 }
 
 /// Collects trace bytes so a test can inspect them after the run.
-#[derive(Clone, Default)]
-struct SharedBuffer(Arc<Mutex<Vec<u8>>>);
-impl Write for SharedBuffer {
-    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
-        self.0.lock().unwrap().extend_from_slice(bytes);
-        Ok(bytes.len())
-    }
-    fn flush(&mut self) -> std::io::Result<()> {
+struct Buffer<'a>(&'a mut Vec<u8>);
+impl TraceSink for Buffer<'_> {
+    fn record(&mut self, _kind: &str, _time_s: f64, value: serde_json::Value) -> Result<()> {
+        serde_json::to_writer(&mut self.0, &value)?;
+        self.0.push(b'\n');
         Ok(())
     }
 }
@@ -32,7 +27,7 @@ fn run_mission(name: &str, threads: usize) -> Result<MissionOutput> {
 fn run_mission_with_trace(
     name: &str,
     threads: usize,
-    trace: Option<SharedBuffer>,
+    trace: Option<&mut Vec<u8>>,
 ) -> Result<MissionOutput> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mission = Mission::load(&root.join("missions").join(name), &root, &Params::new())?;
@@ -41,13 +36,14 @@ fn run_mission_with_trace(
         &ripple_core::plugin::PluginRegistry::with_builtins(),
         threads,
     )?;
-    if let Some(trace) = trace {
-        simulation.enable_trace(Box::new(trace));
-    }
+    let mut trace = trace.map(Buffer);
     let mut frames = Vec::new();
 
-    while let Some(frame) = simulation.step()? {
-        write_frame(&mut frames, &frame)?;
+    while let Some(frame) =
+        simulation.step_with_trace(trace.as_mut().map(|sink| sink as &mut dyn TraceSink))?
+    {
+        serde_json::to_writer(&mut frames, &frame)?;
+        frames.push(b'\n');
     }
 
     Ok(MissionOutput {
@@ -100,13 +96,10 @@ fn comparison_trace_does_not_change_mission_output() -> Result<()> {
         "verification/noisy-contacts-bias.yaml",
         "verification/sphere-network-auction.yaml",
     ] {
-        let trace = SharedBuffer::default();
-        let traced = run_mission_with_trace(mission, 2, Some(trace.clone()))?;
+        let mut trace = Vec::new();
+        let traced = run_mission_with_trace(mission, 2, Some(&mut trace))?;
         assert_eq!(run_mission(mission, 2)?, traced, "{mission}");
-        assert!(
-            !trace.0.lock().unwrap().is_empty(),
-            "{mission} wrote no trace"
-        );
+        assert!(!trace.is_empty(), "{mission} wrote no trace");
     }
     Ok(())
 }

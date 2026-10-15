@@ -10,10 +10,9 @@
 //! - one JSON row per case in `results.jsonl`, and `sweep.json` with the case
 //!   counts that `scripts/bulk_run.py collect` checks before merging shards.
 //!
-//! Not implemented: per-case run folders and recordings,
-//! `--case-id` replay, digests, input archiving and hashes, and CSV/Markdown
-//! summaries. To look at one case, rerun it with `ripple run <base> <path>:=<value>`;
-//! runs are deterministic, so it is the same run.
+//! To inspect one case, rerun the base mission with its recorded seed and
+//! parameter values. Per-case recordings, digests, input archiving and hashes,
+//! and CSV/Markdown summaries are not implemented.
 use anyhow::{Context, Result, bail, ensure};
 use clap::Args;
 use ripple_core::{
@@ -93,9 +92,7 @@ struct CaseRow {
     error: Option<String>,
     steps: Option<usize>,
     termination: Option<TerminationReason>,
-    /// Post-run results only: each metrics plugin's per-team `score` and declared
-    /// columns, the same values `summary.csv` holds (a missing value is 0 there too).
-    /// In-run detail is deliberately not kept; rerun one case to inspect it.
+    /// Post-run results: each metric plugin's per-team score and columns.
     metrics: BTreeMap<String, BTreeMap<i32, BTreeMap<String, f64>>>,
 }
 

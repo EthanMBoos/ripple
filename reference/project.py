@@ -62,7 +62,7 @@ def source_files(root=ROOT):
     """The files that determine what the simulator computes."""
     files = [root / "Cargo.toml", root / "Cargo.lock", root / "reference/benchmark_runner.rs"]
     files += [path for path in (root / "crates").rglob("*")
-              if path.is_file() and path.suffix in {".rs", ".xml", ".yaml", ".toml"}
+              if path.is_file() and path.suffix in {".rs", ".xml", ".yaml", ".toml", ".proto", ".desc"}
               and "target" not in path.relative_to(root).parts]
     return sorted(files)
 

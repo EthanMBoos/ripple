@@ -55,6 +55,46 @@ def write_run(path, position=0.0):
     (path / "summary.csv").write_text("team_id,score\n-2,0.000000\n")
 
 
+def write_ripple_run(path, position=0.0, summary="team_id,score\n-2,0.000000\n"):
+    """A tiny unchunked MCAP fixture for the comparison command."""
+    path.mkdir(exist_ok=True)
+
+    def string(value):
+        raw = value.encode()
+        return struct.pack("<I", len(raw)) + raw
+
+    def record(opcode, body):
+        return bytes([opcode]) + struct.pack("<Q", len(body)) + body
+
+    def channel(number, topic):
+        return record(4, struct.pack("<HH", number, 0) + string(topic)
+                      + string("protobuf") + struct.pack("<I", 0))
+
+    def item(number, payload):
+        return record(5, struct.pack("<HIQQ", number, 0, 0, 0) + payload)
+
+    def vec(x=0.0):
+        return double(1, x) + double(2, 0.0) + double(3, 0.0)
+
+    state = (message(1, vec(position))
+             + message(2, double(1, 1.0))
+             + message(3, vec()) + message(4, vec()))
+    entity = integer(1, 1) + message(2, state) + integer(3, 1)
+    description = (integer(1, 1) + integer(2, -2) + integer(3, 0)
+                   + message(4, b"test") + message(5, b"aircraft"))
+    scenario = json.dumps({"entities": [{"label": "test"}]})
+    metadata = string("ripple.run") + struct.pack("<I", len(string("scenario") + string(scenario)))
+    metadata += string("scenario") + string(scenario)
+    body = (record(1, string("") + string("test fixture"))
+            + channel(1, "/entities") + channel(2, "/frames")
+            + channel(3, "/summary") + record(12, metadata)
+            + item(1, description) + item(2, double(1, 0.1) + message(2, entity))
+            + item(3, message(1, summary.encode()))
+            + record(15, struct.pack("<I", 0))
+            + record(2, struct.pack("<QQI", 0, 0, 0)))
+    (path / "run.mcap").write_bytes(b"\x89MCAP0\r\n" + body + b"\x89MCAP0\r\n")
+
+
 class ComparisonTests(unittest.TestCase):
     def test_quaternion_sign_and_rotation_angle(self):
         identity = (1.0, 0.0, 0.0, 0.0)
@@ -126,14 +166,13 @@ class ComparisonTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             left, right = Path(directory) / "left", Path(directory) / "right"
             write_run(left)
-            write_run(right)
-            (right / "summary.csv").write_text("team_id,score\n-2,0.000002\n")
+            write_ripple_run(right, summary="team_id,score\n-2,0.000002\n")
             result = compare.compare_runs(left, right)
             self.assertFalse(result.passed)
             self.assertEqual(result.mismatch_count, 1)
             for text in ("", "score,team_id\n0,1\n",
                          "team_id,score\n1,0\n1,0\n", "team_id,score\n1\n"):
-                (right / "summary.csv").write_text(text)
+                write_ripple_run(right, summary=text)
                 with self.assertRaises(ValueError):
                     compare.compare_runs(left, right)
 
@@ -190,7 +229,7 @@ class CommandTests(unittest.TestCase):
             directory = Path(directory)
             left, right = directory / "left run", directory / "right run"
             write_run(left)
-            write_run(right)
+            write_ripple_run(right)
             report = directory / "reports/result.json"
             command = [sys.executable, str(Path(compare.__file__).resolve()),
                        str(left), str(right), "--report", str(report)]
@@ -202,7 +241,7 @@ class CommandTests(unittest.TestCase):
             process = subprocess.run(command, cwd=directory, capture_output=True, text=True)
             self.assertEqual(process.returncode, 2)
             self.assertEqual(report.read_bytes(), original)
-            (right / "summary.csv").write_text("team_id,score\n-2,1\n")
+            write_ripple_run(right, summary="team_id,score\n-2,1\n")
             command[-1] = str(directory / "failed.json")
             process = subprocess.run(command, cwd=directory, capture_output=True, text=True)
             self.assertEqual(process.returncode, 1, process.stderr)

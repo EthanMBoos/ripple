@@ -1,14 +1,14 @@
 //! Typed local-ENU route shared by the waypoint publisher and autonomy.
 
 use anyhow::{Result, ensure};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::Vec3;
 
 pub const WAYPOINT_TOPIC: &str = "Waypoints";
 
 /// Deserializes from a list of points such as `[[0, 0, 200], [100, 0, 200]]`.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(try_from = "Vec<[f64; 3]>")]
 pub struct WaypointList {
     pub positions_world_m: Vec<Vec3>,

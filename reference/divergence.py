@@ -54,7 +54,7 @@ def up(value):
 
 
 def nudged(scenario):
-    """The scenario a run recorded (its manifest's), nudged in place."""
+    """The scenario a run recorded, nudged in place."""
     for group in scenario["entities"]:
         group["roll_deg"] = up(group["roll_deg"])
         motion = group["motion_model"]["params"]
@@ -105,10 +105,10 @@ def main(argv=None):
                                  missions.as_yaml(nudged(missions.recorded(case / "rust-1"))))
         run = args.output / case.name
         subprocess.run([binary, "run", mission, "--root", ROOT, "--output", run,
-                        "--workers", "1", "--no-rerun"], check=True, capture_output=True)
+                        "--workers", "1", "--headless"], check=True, capture_output=True)
         cpp = case / info["cpp_log_directory"] / "frames.bin"
-        port, control = growth(cpp, case / "rust-1/frames.bin"), growth(
-            case / "rust-1/frames.bin", run / "frames.bin")
+        port, control = growth(cpp, case / "rust-1/run.mcap"), growth(
+            case / "rust-1/run.mcap", run / "run.mcap")
         cases.append({
             "case": info.get("case", case.name),
             "end_s": port[-1][0],

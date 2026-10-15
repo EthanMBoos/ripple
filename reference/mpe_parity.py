@@ -27,6 +27,7 @@ import sys
 
 from frames import read_frames
 from project import ROOT, build_cli, source_identity
+from run import read_run
 
 MPE2 = "mpe2==1.1.1"
 MPE2_COMMIT = "147a8e88b669de9f0b06d1947c44d5c380c570bb"
@@ -61,7 +62,7 @@ def mission(episode):
 
 
 def mean_return(folder):
-    header, row = (folder / "summary.csv").read_text().splitlines()[:2]
+    header, row = read_run(folder).summary.splitlines()[:2]
     return float(dict(zip(header.split(","), row.split(",")))["return"])
 
 
@@ -112,8 +113,8 @@ def main(argv=None):
         folder.mkdir()
         (folder / "mission.yaml").write_text(mission(episode))
         subprocess.run([binary, "run", folder / "mission.yaml", "--root", ROOT, "--output",
-                        folder / "ripple", "--no-rerun"], check=True, capture_output=True)
-        results.append(compare(episode, read_frames(folder / "ripple/frames.bin"),
+                        folder / "ripple", "--headless"], check=True, capture_output=True)
+        results.append(compare(episode, read_frames(folder / "ripple/run.mcap"),
                                mean_return(folder / "ripple")))
 
     passed = (len(results) == EPISODES

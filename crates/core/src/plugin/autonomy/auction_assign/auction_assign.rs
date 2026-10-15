@@ -6,7 +6,7 @@
 //! Each bid is the random number keyed by its auction's auctioneer.
 
 use anyhow::{Result, ensure};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::plugin::{
     AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
@@ -35,18 +35,18 @@ impl Default for AuctionAssignConfig {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
 pub struct AuctionStart {
     pub auctioneer_id: i32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
 pub struct AuctionBid {
     pub bidder_id: i32,
     pub bid: f64,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
 pub struct AuctionResult {
     /// None when no bid reached the auctioneer before it closed.
     pub winner: Option<AuctionBid>,

@@ -79,8 +79,8 @@ def step_metrics(times, speeds, command):
 def run(binary, output, multiplier):
     folder = output / f"substeps-{multiplier}"
     subprocess.run([binary, "run", MISSION, f"run.motion_multiplier:={multiplier}", "--root", ROOT,
-                    "--output", folder, "--no-rerun"], check=True, capture_output=True)
-    return read_frames(folder / "frames.bin")
+                    "--output", folder, "--headless"], check=True, capture_output=True)
+    return read_frames(folder / "run.mcap")
 
 
 def analyze(frames, labels):

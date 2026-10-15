@@ -67,7 +67,7 @@ class Runner:
 
     def run_rust(self, mission, folder):
         run_logged([self.rust, "run", mission, "--root", ROOT, "--output", folder / "rust",
-                    "--workers", "1", "--no-rerun"], folder / "rust.log",
+                    "--workers", "1", "--headless"], folder / "rust.log",
                    timeout=self.settings.timeout)
         return folder / "rust"
 
@@ -94,7 +94,7 @@ class Runner:
         inputs.mkdir(parents=True)
         edited = missions.write(inputs / "input.yaml", missions.as_yaml(scenario))
         if loads == "stage":
-            return read_frames(self.run_rust(edited, folder) / "frames.bin")
+            return read_frames(self.run_rust(edited, folder) / "run.mcap")
         prepare_mission(inputs, scenario)
         logs = run_cpp(self.settings, self.image, folder / "cpp", inputs / "effective.xml", {})
         return read_frames(logs / "frames.bin")

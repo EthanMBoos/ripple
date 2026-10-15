@@ -60,6 +60,16 @@ fn shards_together_equal_the_whole_sweep() {
     shard_rows.sort();
     assert_eq!(whole_rows.lines().collect::<Vec<_>>(), shard_rows);
     assert_eq!(shard_rows.len(), 8);
+    let whole_dir = temp.path().join("sweeps/waypoints-point-agents/run000");
+    assert_eq!(fs::read_dir(whole_dir).unwrap().count(), 2);
+    for index in ["0", "1", "2"] {
+        assert_eq!(
+            fs::read_dir(temp.path().join(format!("shard-{index}")))
+                .unwrap()
+                .count(),
+            2
+        );
+    }
 }
 
 #[test]

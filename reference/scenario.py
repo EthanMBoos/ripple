@@ -1,7 +1,7 @@
 """Missions as data, for scripts that build, edit, or translate them.
 
 Ripple records the scenario it loaded (templates expanded, overrides applied,
-every default filled in) in each run's manifest.json. A script reads that
+every default filled in) in each run's run.mcap. A script reads that
 record with `recorded`, edits it as plain data, and writes it back as a YAML
 mission with `as_yaml` and `write`. Missions are written as JSON, which YAML
 reads, so the scripts need only the standard library. `loaded` reads the
@@ -16,8 +16,9 @@ from project import ROOT
 
 
 def recorded(run):
-    """The scenario a finished run loaded, from its manifest.json."""
-    return json.loads((Path(run) / "manifest.json").read_text())["scenario"]
+    """The resolved scenario stored with a finished run."""
+    from run import read_run
+    return read_run(run).scenario
 
 
 def write(path, mission):
@@ -30,7 +31,7 @@ def loaded(cli, mission, scratch):
     a run cut to no time, with the mission's end time put back."""
     run = json.loads(Path(mission).read_text())["run"]
     subprocess.run([str(cli), "run", str(mission), "--root", str(ROOT), "--output", str(scratch),
-                    "--no-rerun", f"run.end_s:={run.get('start_s', 0)}"],
+                    "--headless", f"run.end_s:={run.get('start_s', 0)}"],
                    check=True, stdout=subprocess.DEVNULL)
     scenario = recorded(scratch)
     scenario["run"]["end_s"] = run.get("end_s", 100)

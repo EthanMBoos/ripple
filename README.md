@@ -36,12 +36,12 @@ ripple run missions/straight-no-gui.yaml --headless
 ripple replay runs/straight-no-gui/run000
 ```
 
-Each run gets a new folder (`runs/<mission>/run000`, `run001`, ...) holding
-frames, events, a summary, a manifest, and a Rerun recording. Replay needs the
-`rerun` viewer matching the SDK version in `Cargo.lock` on your PATH. Use
-`--viewer` to watch live or `--no-rerun` to skip recording. Add `--draw-trails`
-to `run --viewer` or `replay` to draw each agent's recent path; trails are never
-saved in the recording.
+Each run gets a new folder (`runs/<mission>/run000`, `run001`, ...) holding one
+`run.mcap` with frames, events, metrics, and the resolved scenario. Replay needs
+the `rerun` viewer matching the SDK version in `Cargo.lock` on your PATH. Use
+`--viewer` to watch live or `--export-rrd` to save a Rerun recording. Add
+`--draw-trails` to `run --viewer` or `replay` to draw each agent's recent path.
+See [Run records](book/src/guides/run-records.md) for the channels and reader.
 
 Other missions to try:
 

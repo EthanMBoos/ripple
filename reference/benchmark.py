@@ -58,7 +58,7 @@ COUNTS = {"motion": (64, 256, 1024), "substeps": (64, 256, 1024),
 VARIANTS = ("cpp-1", "cpp-8", "rust-1", "rust-8")
 HANG_S = 120  # far longer than any run here takes
 HANG_RETRIES = 5
-RUST_FILES = ("frames.bin", "summary.csv", "events.json")
+RUST_FILES = ("run.mcap",)
 RANDOM = {"churn", "sensing", "collision"}  # random spawns; noisy state that Straight steers by
 
 
@@ -128,13 +128,15 @@ def run_retrying(variant, name, agents, directory, hangs, one_step=False):
 
 
 def output_folder(directory):
-    frames = list(directory.rglob("frames.bin"))
-    if len(frames) != 1:
-        raise RuntimeError(f"expected one frames.bin in {directory}")
-    return frames[0].parent
+    outputs = list(directory.rglob("run.mcap")) + list(directory.rglob("frames.bin"))
+    if len(outputs) != 1:
+        raise RuntimeError(f"expected one output in {directory}")
+    return outputs[0].parent
 
 
 def same_output(left, right, names=("frames.bin", "summary.csv")):
+    if (left / "run.mcap").exists():
+        names = RUST_FILES
     return all(sha256(left / name) == sha256(right / name) for name in names)
 
 

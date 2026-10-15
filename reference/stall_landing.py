@@ -37,7 +37,7 @@ LIFT_TABLE = "[[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]"
 DRAG_TABLE = "[[-1.57, 1.5], [-0.26, 0.056], [0.0, 0.028], [0.26, 0.056], [1.57, 1.5]]"
 VARIANTS = {"linear": {}, "linear-repeat": {}, "lift": {"lift_table": LIFT_TABLE},
             "lift-drag": {"lift_table": LIFT_TABLE, "drag_table": DRAG_TABLE}}
-FILES = ("frames.bin", "events.json", "summary.csv")
+FILES = ("run.mcap",)
 START_EN_M = (-121.657, -290.181)
 REST_Z_M = -22.685
 HEADING_RAD = math.radians(-24.0)  # runway direction, ENU heading
@@ -61,7 +61,7 @@ def alpha_deg(orientation, velocity):
 
 
 def summarize(run_dir):
-    rows = [(f.time_s, e) for f in read_frames(Path(run_dir) / "frames.bin")
+    rows = [(f.time_s, e) for f in read_frames(Path(run_dir) / "run.mcap")
             for e in f.entities.values()]
     peak = max(range(len(rows)), key=lambda i: rows[i][1].position[2])
     touchdown = next(i for i in range(peak, len(rows))
@@ -118,7 +118,7 @@ def main(argv=None):
         mission = mission_copy(tables, output / "missions" / f"{variant}.yaml")
         with (output / f"{variant}.log").open("w") as log:
             subprocess.run([binary, "run", mission, "--root", ROOT, "--output", output / variant,
-                            "--headless", "--no-rerun"], cwd=ROOT, check=True,
+                            "--headless"], cwd=ROOT, check=True,
                            stdout=log, stderr=subprocess.STDOUT)
         results[variant] = summarize(output / variant)
         print(variant, json.dumps(results[variant]), flush=True)

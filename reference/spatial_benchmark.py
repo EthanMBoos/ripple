@@ -30,6 +30,7 @@ import sys
 
 import perf
 from project import ROOT, build_runner, source_identity
+from run import read_run
 
 SPREAD = 1_000_000  # position variance, m^2: perf.py's collision workload
 CLUSTERED = 400     # 20 m standard deviation: agents crowd into a few cells
@@ -62,10 +63,12 @@ def run(runner, mission, output, grid):
     if status:
         raise RuntimeError(f"{command} failed: {stderr.strip()[-300:]}")
     result = json.loads(stdout.strip().splitlines()[-1])
-    events = (output / "events.json").read_bytes()
+    saved = read_run(output)
     collisions = sum(event["kind"] in ("TeamCollision", "NonTeamCollision")
-                     for event in json.loads(events))
-    digest = hashlib.sha256((output / "frames.bin").read_bytes() + events).hexdigest()
+                     for event in saved.events)
+    digest = hashlib.sha256(b"".join(payload for topic in
+        ("/entities", "/frames", "/events", "/summary")
+        for payload in saved.channels.get(topic, []))).hexdigest()
     scale = 1 if platform.system() == "Darwin" else 1024  # ru_maxrss: bytes on macOS
     return result["run_s"], result["steps"], usage.ru_maxrss * scale / 1e6, collisions, digest
 

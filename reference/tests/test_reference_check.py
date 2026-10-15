@@ -62,13 +62,15 @@ class ReferenceCheckTests(unittest.TestCase):
             left, right = Path(directory) / "left", Path(directory) / "right"
             left.mkdir()
             right.mkdir()
-            for name in check.OUTPUT_FILES:
-                (left / name).write_text("same")
-                (right / name).write_text("same")
-            (right / "events.json").write_text("different")
-            self.assertEqual(check.same_outputs(left, right), {
-                "frames.bin": True, "events.json": False, "summary.csv": True,
-            })
+            def saved(path):
+                channels = {topic: [b"same"] for topic in check.OUTPUT_CHANNELS}
+                if path == right:
+                    channels["/events"] = [b"different"]
+                return SimpleNamespace(channels=channels, scenario=scenario(), metadata={})
+            with patch.object(check, "read_run", side_effect=saved):
+                equal = check.same_outputs(left, right)
+            self.assertFalse(equal["/events"])
+            self.assertTrue(all(value for key, value in equal.items() if key != "/events"))
 
     def test_build_failure_writes_a_failed_report(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -100,9 +102,7 @@ class ReferenceCheckTests(unittest.TestCase):
             else:
                 target = Path(command[command.index("--output") + 1])
                 target.mkdir()
-                for name in check.OUTPUT_FILES:
-                    (target / name).write_text("identical Rust output")
-                (target / "manifest.json").write_text(json.dumps({"scenario": scenario()}))
+                (target / "run.mcap").write_bytes(b"fixture")
                 if "--headless" in command:
                     (target / "recording.rrd").write_bytes(b"recording fixture")
             return 0
@@ -114,7 +114,10 @@ class ReferenceCheckTests(unittest.TestCase):
         mission = Path(temporary) / "mission.yaml"
         mission.write_text("format_version: 1")
         images = {"baseline": "baseline-image", "instrumented": "instrumented-image"}
+        saved = SimpleNamespace(scenario=scenario(), metadata={},
+                                channels={topic: [b"same"] for topic in check.OUTPUT_CHANNELS})
         with patch.object(check, "run_logged", side_effect=fake_run), \
+             patch.object(check, "read_run", return_value=saved), \
              patch.object(check, "compare_case", return_value=comparison), \
              patch.object(check.subprocess, "run"):
             result = check.check_mission(SimpleNamespace(timeout=1), "case", mission,

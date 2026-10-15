@@ -29,7 +29,7 @@ Rust lifecycle and delivery rules are in the
 
 Ripple reads only YAML. SCRIMMAGE reads only XML, so the comparison writes
 SCRIMMAGE's mission from the scenario a Ripple run records in its
-`manifest.json` (`reference/scrimmage_xml.py`): Ripple runs the YAML first,
+`run.mcap` (`reference/scrimmage_xml.py`): Ripple runs the YAML first,
 then SCRIMMAGE runs the written XML.
 
 - **What is written.** Every entity value, since the two simulators' entity
@@ -223,7 +223,6 @@ comparison has proven what it needs to, they go.
 
 | What | Where | Replaced by |
 | --- | --- | --- |
-| Frames written in SCRIMMAGE's protobuf format (`frames.bin`), the comparison's medium | `crates/core/src/protocol/`, `reference/frames.py` | A plain columnar format, or Rerun recordings only |
 | Spawn spread given as a variance (`position_variance_m2`, `heading_variance_deg2`) | `entity.rs`, `scenario.rs` | A standard deviation in metres and degrees |
 | The first entities are created one step before the start time (generation runs at start − dt) | `simcontrol.rs` | Generation at the start time |
 | SCRIMMAGE's mission shapes: `randomize_every_spawn` (its `use_variance_all_ents`); PID gains in its order, with the integral band in degrees | `simcontrol/generation.rs`, `common/pid.rs` | Named gains and one spawn rule |

@@ -1,4 +1,4 @@
-"""A small scenario as a run's manifest.json records it, for tests that need no Cargo."""
+"""A small resolved scenario for tests that need no Cargo."""
 import copy
 
 

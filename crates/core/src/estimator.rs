@@ -11,7 +11,7 @@ use std::{any::Any, sync::Arc};
 use anyhow::{Context, Result};
 
 use crate::{
-    EntityKind, EntitySnapshot, KinematicState, Vec3,
+    EntitySnapshot, KinematicState, Vec3,
     common::{PluginRandom, is_within},
     plugin_manager::entity_plugin::{EntityInfo, Plugin, StepTime, Update},
     pubsub::Messages,
@@ -24,7 +24,6 @@ pub struct Contact {
     pub id: i32,
     pub team_id: i32,
     pub sub_swarm_id: i32,
-    pub kind: EntityKind,
     pub state: KinematicState,
     /// When the reading behind this estimate was taken.
     pub sampled_at_s: f64,
@@ -35,7 +34,6 @@ impl Contact {
             id: snapshot.id,
             team_id: snapshot.team_id,
             sub_swarm_id: snapshot.sub_swarm_id,
-            kind: snapshot.kind,
             state: snapshot.truth.clone(),
             sampled_at_s,
         }
@@ -241,7 +239,6 @@ mod tests {
             id,
             team_id: 1,
             sub_swarm_id: 0,
-            kind: EntityKind::Sphere,
             state: KinematicState {
                 position_world_m: Vec3::new(x_m, 0.0, 0.0),
                 ..KinematicState::default()

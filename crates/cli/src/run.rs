@@ -2,13 +2,9 @@ use crate::viewer::Viewer;
 use anyhow::{Context, Result, ensure};
 use clap::Args;
 use ripple_core::{
-    Mission, Params, ScenarioConfig, Simulation, plugin::PluginRegistry, write_frame,
+    Mission, Params, ScenarioConfig, Simulation, plugin::PluginRegistry, record::RunWriter,
 };
-use std::{
-    fs,
-    io::{BufWriter, Write},
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 pub(crate) mod output;
 
@@ -23,8 +19,8 @@ pub(crate) struct RunOptions {
     /// Project folder (missions/, runs/, sweeps/); defaults to this repository.
     #[arg(long)]
     root: Option<PathBuf>,
-    /// Open Rerun and stream live, also keeping recording.rrd.
-    #[arg(long, conflicts_with_all = ["headless", "no_rerun"])]
+    /// Open Rerun and stream the live run.
+    #[arg(long, conflicts_with = "headless")]
     viewer: bool,
     /// Draw each agent's recent path in the live viewer (not saved; see
     /// `ripple replay --draw-trails`).
@@ -33,12 +29,12 @@ pub(crate) struct RunOptions {
     /// Suppress the viewer even if enable_gui is true in the mission.
     #[arg(long)]
     headless: bool,
-    /// Skip Rerun recording as well as the viewer.
+    /// Save an optional Rerun recording alongside run.mcap.
     #[arg(long)]
-    no_rerun: bool,
+    export_rrd: bool,
     #[arg(long, default_value_t = 1_000_000)]
     max_steps: usize,
-    /// Also write trace.jsonl, the C++ comparison trace (see reference/README.md).
+    /// Record beliefs, readings, deliveries, and outputs in run.mcap.
     #[arg(long)]
     trace: bool,
     /// Mission overrides: dotted paths and YAML values (`entities.red.count:=20`).
@@ -74,12 +70,11 @@ pub(crate) fn run(
             name,
             output: options.output,
             workers: options.workers.unwrap_or(mission.workers),
-            viewer: !options.headless && !options.no_rerun && (options.viewer || mission.viewer),
-            recording: !options.no_rerun,
+            viewer: !options.headless && (options.viewer || mission.viewer),
+            export_rrd: options.export_rrd,
             draw_trails: options.draw_trails,
             max_steps: options.max_steps,
             trace: options.trace,
-            source: Some(mission.source),
         },
     )?;
     Ok(())
@@ -97,18 +92,16 @@ pub struct RunSettings {
     /// Explicit output directory, which must not already exist.
     pub output: Option<PathBuf>,
     pub workers: usize,
-    /// Launch the viewer while recording. Requires `recording`.
+    /// Launch the live viewer.
     pub viewer: bool,
-    /// Save `recording.rrd` in addition to frames, events, and summary.
-    pub recording: bool,
+    /// Export `recording.rrd` in addition to run.mcap.
+    pub export_rrd: bool,
     /// Draw each agent's recent path in the viewer. Requires `viewer`; trails
     /// are never saved.
     pub draw_trails: bool,
     pub max_steps: usize,
-    /// Write `trace.jsonl` for C++ comparison; outputs are unchanged.
+    /// Record observation channels; simulation outputs are unchanged.
     pub trace: bool,
-    /// Optional mission-file provenance; Rust-built scenarios can leave it unset.
-    pub source: Option<PathBuf>,
 }
 
 impl Default for RunSettings {
@@ -119,28 +112,23 @@ impl Default for RunSettings {
             output: None,
             workers: 1,
             viewer: false,
-            recording: true,
+            export_rrd: false,
             draw_trails: false,
             max_steps: 1_000_000,
             trace: false,
-            source: None,
         }
     }
 }
 
-/// Run a scenario with the same outputs, recording, and failure handling as `ripple run`.
+/// Run a scenario with the same record and failure handling as `ripple run`.
 /// Invalid setup fails before an output directory is created. Step failures retain
-/// partial outputs and their error in `manifest.json`.
+/// a valid partial MCAP with their error in the result metadata.
 pub fn run_scenario(
     scenario: ScenarioConfig,
     registry: &PluginRegistry,
     settings: RunSettings,
 ) -> Result<PathBuf> {
     ensure!(settings.max_steps > 0, "max_steps must be positive");
-    ensure!(
-        !settings.viewer || settings.recording,
-        "viewer requires recording"
-    );
     ensure!(
         !settings.draw_trails || settings.viewer,
         "--draw-trails needs the viewer (--viewer)"
@@ -150,9 +138,6 @@ pub fn run_scenario(
         "experiment name must not be empty"
     );
     let mut simulation = Simulation::new(scenario, registry, settings.workers)?;
-    // The resolved scenario, which names every estimator input's source.
-    let scenario_record = serde_json::to_value(simulation.scenario())?;
-
     let runs = settings.root.join("runs").join(&settings.name);
     let output = output::create_directory(settings.output.as_deref(), &runs)?;
     // One ArduPlane SITL container per ArduPilotBridge aircraft, stopped when
@@ -160,17 +145,20 @@ pub fn run_scenario(
     #[cfg(feature = "ardupilot")]
     let _sitl =
         ardupilot::SitlLauncher::start(simulation.scenario(), simulation.terrain(), &output)?;
-    // Unique per run; the manifest records it for `ripple replay --draw-trails`.
-    let recording_id = format!(
-        "{}-{}",
-        settings.name,
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)?
-            .as_nanos()
-    );
-    let mut viewer = if settings.recording {
+    let mut viewer = if settings.export_rrd || settings.viewer {
+        // Rerun streams need a recording ID, independent of the stable MCAP bytes.
+        let recording_id = format!(
+            "{}-{}",
+            settings.name,
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)?
+                .as_nanos()
+        );
         let mut viewer = Viewer::new(
-            &output.join("recording.rrd"),
+            settings
+                .export_rrd
+                .then(|| output.join("recording.rrd"))
+                .as_deref(),
             settings.viewer,
             &recording_id,
             settings.draw_trails,
@@ -182,17 +170,16 @@ pub fn run_scenario(
     } else {
         None
     };
-    let mut frames = BufWriter::new(fs::File::create_new(output.join("frames.bin"))?);
-    if settings.trace {
-        let trace = fs::File::create_new(output.join("trace.jsonl"))?;
-        simulation.enable_trace(Box::new(BufWriter::new(trace)));
-    }
-    // Keep the step error instead of returning early, so a failed run still records
-    // its frames so far, events, summary, and the reason in manifest.json.
+    let mut record = RunWriter::create(&output.join("run.mcap"), &simulation, settings.trace)?;
+    // Keep a step error until the result metadata and MCAP footer are written.
     let mut frame_index = 0;
     let step_result = (|| -> Result<()> {
-        while let Some(frame) = simulation.step()? {
-            write_frame(&mut frames, &frame)?;
+        while let Some(frame) = simulation.step_with_trace(
+            settings
+                .trace
+                .then_some(&mut record as &mut dyn ripple_core::TraceSink),
+        )? {
+            record.step_frame(&simulation, &frame)?;
             if let Some(viewer) = &mut viewer {
                 viewer.log_frame(frame_index, &frame)?;
             }
@@ -205,33 +192,10 @@ pub fn run_scenario(
         }
         Ok(())
     })();
-    frames.flush()?;
-    simulation.flush_trace()?;
+    record.finish_run(&simulation, step_result.as_ref().err())?;
     if let Some(viewer) = viewer {
         viewer.finish()?;
     }
-    fs::write(output.join("summary.csv"), simulation.summary_csv())?;
-    fs::write(
-        output.join("events.json"),
-        serde_json::to_vec_pretty(simulation.events())?,
-    )?;
-    let manifest = serde_json::json!({
-        "reference_branch": "Ubuntu-24.04",
-        "execution": "unpaced",
-        "rerun_recording": settings.recording,
-        "rerun_recording_id": settings.recording.then_some(&recording_id),
-        "viewer": settings.viewer,
-        "worker_count": settings.workers,
-        "source": settings.source,
-        "scenario": scenario_record,
-        "steps": simulation.step_count(),
-        "termination": simulation.termination(),
-        "error": step_result.as_ref().err().map(|error| format!("{error:#}")),
-    });
-    fs::write(
-        output.join("manifest.json"),
-        serde_json::to_vec_pretty(&manifest)?,
-    )?;
     if let Err(error) = step_result {
         return Err(error.context(format!(
             "run failed; partial output in {}",

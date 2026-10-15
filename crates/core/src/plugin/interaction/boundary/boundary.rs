@@ -3,14 +3,14 @@
 //! Geometry is ordinary Rust data, independent of rendering and physical collision.
 
 use anyhow::{Result, ensure};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::Vec3;
 use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
 
 pub const BOUNDARY_TOPIC: &str = "Boundary";
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Serialize)]
 pub struct BoundaryRegion {
     pub center_world_m: Vec3,
     pub lengths_m: Vec3,

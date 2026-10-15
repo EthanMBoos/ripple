@@ -22,6 +22,34 @@ def output(t, entity_id, port, value):
 
 
 class TraceComparisonTests(unittest.TestCase):
+    def test_ripple_trace_conversion(self):
+        state = {"position_world_m": [1, 2, 3],
+                 "velocity_world_mps": [4, 5, 6],
+                 "orientation_world_from_body": [1, 0, 0, 0],
+                 "angular_velocity_world_radps": [7, 8, 9]}
+        belief_record = {"kind": "belief", "time_s": 0.1, "entity_id": 3,
+                         "team_id": 2, "state": state, "contacts": []}
+        self.assertEqual(traces.ripple_to_comparison(belief_record),
+                         {"kind": "belief", "t": 0.1, "id": 3, "team": 2,
+                          "p": [1, 2, 3], "v": [4, 5, 6],
+                          "q": [1, 0, 0, 0], "w": [7, 8, 9]})
+        delivery_record = {"kind": "scheduled_delivery", "time_s": 0.1,
+                           "network": "LocalNetwork", "topic": "WaypointList",
+                           "sender": {"entity_id": 3,
+                                      "plugin": "autonomy/SomeAutonomy:0"},
+                           "receiver": {"entity_id": 4,
+                                        "plugin": "sensor/NoisyContacts:1"},
+                           "deliver_at_s": 0.2, "entity_ids": [3],
+                           "payload": {"waypoints": []}}
+        self.assertEqual(traces.ripple_to_comparison(delivery_record),
+                         {"kind": "scheduled_delivery", "t": 0.1,
+                          "network": "LocalNetwork", "topic": "WaypointList",
+                          "from": [3, "SomeAutonomy"],
+                          "to": [4, "NoisyContacts1"],
+                          "deliver_at": 0.2, "ids": [3]})
+        self.assertEqual(traces.comparison_endpoint(
+            {"entity_id": None, "plugin": "SimControl"}), [None, "SimControl"])
+
     def base(self):
         return [belief(0.0, 1), belief(0.0, 2),
                 delivery(0.0, [0, "SimControl"], [0, "Metrics"], ids=[1]),

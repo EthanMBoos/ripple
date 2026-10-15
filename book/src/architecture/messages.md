@@ -21,6 +21,8 @@ Every plugin owns its `Messages`: outbox, subscriptions, and inbox. There is no
 shared message bus that plugins write to directly, and every subscriber has its
 own queue, so one plugin reading a message never removes it for another.
 Messages are typed; a subscriber that expects a different type is an error.
+Published values implement `serde::Serialize` so `--trace` can record payloads
+when a network delivers them.
 
 ## Networks decide delivery
 

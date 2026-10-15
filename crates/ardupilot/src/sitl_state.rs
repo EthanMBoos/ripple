@@ -15,7 +15,7 @@ use anyhow::{Result, ensure};
 use nalgebra::{Matrix3, Rotation3, UnitQuaternion};
 use ripple_core::plugin::{Plugin, PluginParams, Sensor, SensorContext, Update};
 use ripple_core::{KinematicState, Vec3};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// LocalNetwork topic carrying one `SitlSample` per tick.
 pub const SITL_STATE_TOPIC: &str = "SitlState";
@@ -40,7 +40,7 @@ impl Default for SitlStateConfig {
 }
 
 /// One state sample in ArduPilot's frames and units.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct SitlSample {
     pub position_ned_m: Vec3,
     pub velocity_ned_mps: Vec3,

@@ -40,8 +40,8 @@ belief (see [Truth, measurements, and belief](information-flow.md)).
 │  next phase. Snapshots: read-only copies other entities read.      │
 └───────────────────────────────┬────────────────────────────────────┘
                                 ▼
-     frames.bin, events.json, summary.csv, manifest, optional
-     trace.jsonl, optional Rerun recording (output only)
+     run.mcap (frames, events, metrics, scenario, optional trace)
+     optional Rerun export (output only)
 ```
 
 ## Crates
@@ -102,7 +102,8 @@ let mission = Mission::load(path, root, &Params::new())?;
 let mut simulation =
     Simulation::new(mission.scenario, &PluginRegistry::with_builtins(), workers)?;
 while let Some(frame) = simulation.step()? {
-    write_frame(&mut frames, &frame)?;
+    // Inspect the state or pass it to a recorder.
+    inspect(frame);
 }
 ```
 

@@ -142,7 +142,11 @@ def decode_frame(payload):
 
 
 def read_frames(path):
-    data = Path(path).read_bytes()
+    path = Path(path)
+    if path.suffix == ".mcap" or path.is_dir():
+        from run import read_run
+        return read_run(path).frames
+    data = path.read_bytes()
     result = []
     offset = 0
     try:

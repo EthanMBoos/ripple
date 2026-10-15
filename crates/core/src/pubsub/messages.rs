@@ -4,6 +4,8 @@ use crate::{
     plugin::{StepTime, Update},
 };
 use anyhow::{Result, ensure};
+use serde::Serialize;
+use serde_json::Value;
 use std::{
     any::{Any, TypeId},
     collections::BTreeMap,
@@ -25,6 +27,13 @@ pub struct Message<T> {
 
 type Channel = (String, String);
 type Payload = Arc<dyn Any + Send + Sync>;
+type PayloadSerializer = fn(&Payload) -> Result<Value>;
+
+fn serialize_payload<T: Serialize + 'static>(value: &Payload) -> Result<Value> {
+    Ok(serde_json::to_value(
+        value.downcast_ref::<T>().expect("payload type changed"),
+    )?)
+}
 /// Each channel's subscribers (per entity, for same-entity routing), in mailbox
 /// order: the mailbox's index and the message type it expects. The entity comes
 /// first in the key so most comparisons are of integers, not channel names.
@@ -44,12 +53,14 @@ struct Publication {
     channel: Channel,
     sent_at_s: f64,
     value: Payload,
+    serialize: PayloadSerializer,
 }
 struct Envelope {
     sender: MessageEndpoint,
     sent_at_s: f64,
     delivered_at_s: f64,
     value: Payload,
+    serialize: PayloadSerializer,
 }
 
 /// One mailbox per plugin instance. Multicast shares immutable payloads, never plugin state.
@@ -98,7 +109,7 @@ impl Messages {
         self.subscriptions.insert(channel, TypeId::of::<T>());
         Ok(())
     }
-    pub fn publish<T: Send + Sync + 'static>(
+    pub fn publish<T: Serialize + Send + Sync + 'static>(
         &mut self,
         network: &str,
         topic: &str,
@@ -118,7 +129,7 @@ impl Messages {
     }
     /// Engine lifecycle events are bounded by the population, not by plugin code,
     /// so they skip the per-plugin publisher limit.
-    pub(crate) fn publish_engine_event<T: Send + Sync + 'static>(
+    pub(crate) fn publish_engine_event<T: Serialize + Send + Sync + 'static>(
         &mut self,
         network: &str,
         topic: &str,
@@ -128,6 +139,7 @@ impl Messages {
             channel: (network.to_owned(), topic.to_owned()),
             sent_at_s: self.time_s,
             value: Arc::new(value),
+            serialize: serialize_payload::<T>,
         });
     }
     /// Drain this plugin's delivered messages. Other subscribers have independent queues.
@@ -198,12 +210,12 @@ pub(crate) struct Mailbox<'a> {
     pub endpoint: &'a MessageEndpoint,
     pub messages: &'a mut Messages,
 }
-/// Records for the opt-in comparison trace (see `simcontrol/trace.rs`).
+/// Records for the optional observation trace (see `simcontrol/trace.rs`).
 #[derive(Default)]
 pub(crate) struct NetworkTrace {
     pub deliveries: Vec<DeliveryRecord>,
 }
-/// One message reaching one subscriber, for the opt-in comparison trace.
+/// One message reaching one subscriber, for the observation trace.
 pub(crate) struct DeliveryRecord {
     pub time_s: f64,
     pub network: String,
@@ -212,6 +224,7 @@ pub(crate) struct DeliveryRecord {
     pub receiver: MessageEndpoint,
     /// Entity IDs for engine lifecycle and collision events.
     pub entity_ids: Option<Vec<i32>>,
+    pub payload: Value,
     /// Set when the message was queued with a positive delay.
     pub deliver_at_s: Option<f64>,
 }
@@ -236,7 +249,7 @@ pub struct NetworkContext<'a, 'mailbox> {
     pub(crate) scheduled: &'a mut Vec<ScheduledMessage>,
     pub(crate) random: PluginRandom,
     pub(crate) routed: bool,
-    /// Present only when the simulation writes a comparison trace.
+    /// Present only when the simulation writes an observation trace.
     pub(crate) trace: Option<&'a mut NetworkTrace>,
 }
 impl NetworkContext<'_, '_> {
@@ -362,6 +375,7 @@ impl NetworkContext<'_, '_> {
                             sender: sender.clone(),
                             receiver: mailbox.endpoint.clone(),
                             entity_ids: event_ids(&publication.value),
+                            payload: (publication.serialize)(&publication.value)?,
                             deliver_at_s: Some(delivered_at_s),
                         });
                     }
@@ -378,6 +392,7 @@ impl NetworkContext<'_, '_> {
                             sent_at_s: publication.sent_at_s,
                             delivered_at_s,
                             value: Arc::clone(&publication.value),
+                            serialize: publication.serialize,
                         },
                     });
                 }
@@ -420,6 +435,7 @@ impl NetworkContext<'_, '_> {
                         sender: message.envelope.sender.clone(),
                         receiver: receiver.endpoint.clone(),
                         entity_ids: event_ids(&message.envelope.value),
+                        payload: (message.envelope.serialize)(&message.envelope.value)?,
                         deliver_at_s: None,
                     });
                 }
@@ -770,6 +786,7 @@ mod tests {
                     sent_at_s: 0.0,
                     delivered_at_s: 100.0,
                     value: Arc::new(42_i32),
+                    serialize: serialize_payload::<i32>,
                 },
             });
         }

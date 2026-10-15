@@ -1,5 +1,5 @@
 # One auction over a spherical radio network. The auction's messages and winner
-# are not written to events.json, the summary, or Rerun yet; in the viewer this
+# are not written to the event channel, the summary, or Rerun yet; in the viewer this
 # is three stationary agents. The contract tests in
 # crates/core/tests/support/perception_communication.rs check the outcome.
 format_version: 1

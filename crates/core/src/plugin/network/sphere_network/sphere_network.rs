@@ -157,7 +157,7 @@ mod tests {
     use crate::plugin::{
         MessageEndpoint, Plugin, PluginParams, StepTime, Transmission, TruthContacts,
     };
-    use crate::{EntityKind, EntitySnapshot, KinematicState, Vec3};
+    use crate::{EntitySnapshot, KinematicState, Vec3};
 
     fn reachable(
         network: &SphereNetwork,
@@ -173,7 +173,6 @@ mod tests {
                 team_id: 1,
                 sub_swarm_id: 0,
                 active: true,
-                kind: EntityKind::Sphere,
                 truth: KinematicState {
                     position_world_m,
                     ..KinematicState::default()

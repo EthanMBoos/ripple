@@ -1,0 +1,40 @@
+
+´
+record.protoripple.record"3
+Vector3
+x (Rx
+y (Ry
+z (Rz"D
+
+Quaternion
+w (Rw
+x (Rx
+y (Ry
+z (Rz"Â
+State@
+position_world_m (2.ripple.record.Vector3RpositionWorldMX
+orientation_world_from_body (2.ripple.record.QuaternionRorientationWorldFromBodyD
+velocity_world_mps (2.ripple.record.Vector3RvelocityWorldMpsW
+angular_velocity_world_radps (2.ripple.record.Vector3RangularVelocityWorldRadps"¡
+EntityDescription
+id (Rid
+team_id (RteamId
+group_index (R
+groupIndex
+group_label (	R
+groupLabel!
+visual_model (	RvisualModel"a
+EntityState
+id (Rid*
+truth (2.ripple.record.StateRtruth
+active (Ractive"V
+Frame
+time_s (RtimeS6
+entities (2.ripple.record.EntityStateRentities"Q
+Event
+time_s (RtimeS
+kind (	Rkind
+
+entity_ids (R	entityIds"
+Summary
+csv (	Rcsvbproto3

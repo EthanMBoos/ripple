@@ -18,7 +18,7 @@ pub use run::{RunSettings, run_scenario};
 
 #[derive(Parser)]
 #[command(
-    name = "scrimmage",
+    name = "ripple",
     version,
     about = "Ripple, a multi-agent robotics simulator ported from SCRIMMAGE, with Rerun visualization"
 )]
@@ -29,15 +29,15 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Run a mission, recording frames, metrics, and Rerun data.
+    /// Run a mission, recording frames, events, and metrics in MCAP.
     Run(run::RunOptions),
     /// Run a YAML mission across seeds and parameter values (a `*.sweep.yaml`), whole or one shard.
     Sweep(sweep::SweepOptions),
-    /// Open a saved Rerun recording without rerunning the mission.
+    /// View a saved MCAP run without rerunning the mission.
     Replay {
-        /// Run directory containing recording.rrd, or the recording file itself.
+        /// Run directory containing run.mcap, or the MCAP file itself.
         path: PathBuf,
-        /// Also draw each agent's recent path, rebuilt from the run's frames.bin.
+        /// Also draw each agent's recent path, rebuilt from the frames.
         #[arg(long)]
         draw_trails: bool,
     },

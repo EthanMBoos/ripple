@@ -25,16 +25,16 @@ pub(crate) struct ResolvedScenario {
 #[serde(try_from = "Vec<String>")]
 pub struct EndConditions {
     pub time: bool,
-    pub all_dead: bool,
-    pub one_team: bool,
+    pub no_entities: bool,
+    pub one_team_left: bool,
 }
 
 impl Default for EndConditions {
     fn default() -> Self {
         Self {
             time: true,
-            all_dead: false,
-            one_team: false,
+            no_entities: false,
+            one_team_left: false,
         }
     }
 }
@@ -43,14 +43,14 @@ impl EndConditions {
     pub(crate) fn from_names<'a>(names: impl IntoIterator<Item = &'a str>) -> Result<Self> {
         let mut conditions = Self {
             time: false,
-            all_dead: false,
-            one_team: false,
+            no_entities: false,
+            one_team_left: false,
         };
         for name in names {
             match name {
                 "time" => conditions.time = true,
-                "all_dead" => conditions.all_dead = true,
-                "one_team" => conditions.one_team = true,
+                "no_entities" => conditions.no_entities = true,
+                "one_team_left" => conditions.one_team_left = true,
                 "none" => {}
                 invalid => bail!("unknown end condition: {invalid}"),
             }

@@ -239,7 +239,7 @@ run:
   end_s: 60
   dt_s: 0.1
   seed: 1
-end_conditions: [time, one_team]
+end_conditions: [time, one_team_left]
 
 interactions: {SimpleCollision: {}}
 networks: {GlobalNetwork: {}}   # Straight listens on it for a boundary
@@ -392,9 +392,10 @@ cargo run --release -- sweep crates/starter/missions/follow-nearest.sweep.yaml
 ```
 
 Each case is one line of `sweeps/follow-nearest/run000/results.jsonl`, with the
-speed and the final metrics. `non_team_coll` shows whether the chaser caught the
-target: at 26 and 30 m/s it does, at 18 and 22 m/s it does not within 60 s. To
-watch one case, run it with that speed and open Rerun: `cargo run -- run
+speed and the final metrics. `non_team_collisions` shows whether the chaser
+caught the target: at 26 and 30 m/s it does, at 18 and 22 m/s it does not
+within 60 s. To watch one case, run it with that speed and open Rerun: `cargo
+run -- run
 crates/starter/missions/follow-nearest.yaml
 entities.chaser.autonomy.FollowNearest.speed_mps:=22 --viewer`.
 

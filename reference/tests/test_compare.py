@@ -55,8 +55,21 @@ def write_run(path, position=0.0):
     (path / "summary.csv").write_text("team_id,score\n-2,0.000000\n")
 
 
-def write_ripple_run(path, position=0.0, summary="team_id,score\n-2,0.000000\n"):
-    """A tiny unchunked MCAP fixture for the comparison command."""
+def summary_report(plugin, columns, teams):
+    """One metric plugin's summary entry; `teams` maps team -> (score, {column: value})."""
+    payload = message(1, plugin.encode()) + b"".join(message(2, name.encode())
+                                                     for name in columns)
+    for team, (score, row) in teams.items():
+        payload += message(3, integer(1, team) + double(2, score) + b"".join(
+            message(3, message(1, name.encode()) + double(2, value))
+            for name, value in row.items()))
+    return message(1, payload)
+
+
+def write_ripple_run(path, position=0.0, scores=((-2, 0.0),), summary=None):
+    """A tiny unchunked MCAP fixture for the comparison command. The summary is
+    one metric plugin's (team, score) `scores`, unless `summary` gives the
+    encoded reports."""
     path.mkdir(exist_ok=True)
 
     def string(value):
@@ -89,7 +102,9 @@ def write_ripple_run(path, position=0.0, summary="team_id,score\n-2,0.000000\n")
             + channel(1, "/entities") + channel(2, "/frames")
             + channel(3, "/summary") + record(12, metadata)
             + item(1, description) + item(2, double(1, 0.1) + message(2, entity))
-            + item(3, message(1, summary.encode()))
+            + item(3, summary if summary is not None else message(1, message(
+                1, b"metrics/SimpleCollisionMetrics:0") + b"".join(
+                message(3, integer(1, team) + double(2, score)) for team, score in scores)))
             + record(15, struct.pack("<I", 0))
             + record(2, struct.pack("<QQI", 0, 0, 0)))
     (path / "run.mcap").write_bytes(b"\x89MCAP0\r\n" + body + b"\x89MCAP0\r\n")
@@ -166,15 +181,46 @@ class ComparisonTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             left, right = Path(directory) / "left", Path(directory) / "right"
             write_run(left)
-            write_ripple_run(right, summary="team_id,score\n-2,0.000002\n")
+            write_ripple_run(right, scores=[(-2, 0.000002)])
             result = compare.compare_runs(left, right)
             self.assertFalse(result.passed)
             self.assertEqual(result.mismatch_count, 1)
-            for text in ("", "score,team_id\n0,1\n",
-                         "team_id,score\n1,0\n1,0\n", "team_id,score\n1\n"):
-                write_ripple_run(right, summary=text)
-                with self.assertRaises(ValueError):
-                    compare.compare_runs(left, right)
+            write_ripple_run(right, scores=[])
+            self.assertFalse(compare.compare_runs(left, right).passed)
+            write_ripple_run(right, scores=[(-2, 0.0), (-2, 0.0)])
+            with self.assertRaises(ValueError):
+                compare.compare_runs(left, right)
+
+    def test_scrimmage_table_follows_declared_columns_and_its_merge_rule(self):
+        from run import read_run
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "run"
+            write_ripple_run(path, summary=summary_report(
+                "metrics/A:0", ["entity_count", "flight_time_s", "unset"],
+                {2: (1.0, {"entity_count": 3.0}),
+                 1: (0.5, {"flight_time_s": 4.0, "entity_count": 5.0})})
+                + summary_report("metrics/B:0", ["entity_count", "extra"],
+                                 {1: (2.0, {"entity_count": 9.0, "extra": 6.0})}))
+            run = read_run(path)
+        self.assertEqual(run.metric_columns["metrics/A:0"],
+                         ["entity_count", "flight_time_s", "unset"])
+        header, teams = compare.scrimmage_summary(run)
+        # A column no team set stays, the first team's missing value doesn't
+        # reorder, and a repeated name takes the first plugin's value, as
+        # SimControl::output_summary writes them.
+        self.assertEqual(header, ["team_id", "score", "entity_count", "flight_time",
+                                  "unset", "entity_count", "extra"])
+        self.assertEqual(teams, {1: [2.5, 5.0, 4.0, 0.0, 5.0, 6.0],
+                                 2: [1.0, 3.0, 0.0, 0.0, 3.0, 0.0]})
+
+    def test_undeclared_summary_column_is_rejected(self):
+        from run import read_run
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "run"
+            write_ripple_run(path, summary=summary_report(
+                "metrics/A:0", ["entity_count"], {1: (0.0, {"other": 1.0})}))
+            with self.assertRaises(ValueError):
+                read_run(path)
 
     def test_nonfinite_summary_values(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -241,7 +287,7 @@ class CommandTests(unittest.TestCase):
             process = subprocess.run(command, cwd=directory, capture_output=True, text=True)
             self.assertEqual(process.returncode, 2)
             self.assertEqual(report.read_bytes(), original)
-            write_ripple_run(right, summary="team_id,score\n-2,1\n")
+            write_ripple_run(right, scores=[(-2, 1.0)])
             command[-1] = str(directory / "failed.json")
             process = subprocess.run(command, cwd=directory, capture_output=True, text=True)
             self.assertEqual(process.returncode, 1, process.stderr)

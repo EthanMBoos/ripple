@@ -607,10 +607,11 @@ failures name the responsible plugin; caught panics may have only phase/entity
 context. Do not rely on recovery from an aborted process or a panicking
 constructor.
 
-Metrics return a `MetricReport` containing ordered headers and per-team values
-and scores. Multiple metrics instances are supported. CSV output sums team
-scores and qualifies duplicate column names with the plugin instance identity.
-`Simulation::metric_reports()` exposes each report separately.
+Metrics return a `MetricReport`: ordered column names and, per team, a score
+and values. Multiple metrics instances are supported; each reports its own
+score, and Ripple does not add scores across plugins. A column with no value
+for a team is left out of the run record and sweep rows, not written as zero.
+`Simulation::metric_reports()` exposes each report.
 
 ## What remains
 

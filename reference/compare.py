@@ -8,7 +8,6 @@ overwritten.
 
 import argparse
 import csv
-import io
 from dataclasses import asdict, dataclass, field
 import json
 import math
@@ -28,7 +27,7 @@ VELOCITY_TOLERANCE_MPS = 1e-8
 ORIENTATION_TOLERANCE_RAD = 1e-9
 ANGULAR_VELOCITY_TOLERANCE_RADPS = 1e-9
 TIMESTAMP_TOLERANCE_S = 1e-9
-SUMMARY_TOLERANCE = 1e-6  # C++ summaries print six decimal places.
+SUMMARY_TOLERANCE = 1e-6  # C++ summaries print six decimal places; Ripple's are exact.
 
 
 @dataclass
@@ -107,16 +106,45 @@ def compare_frames(reference, candidate):
     return result
 
 
-def read_summary(path, text=None):
-    path = Path(path)
-    if text is not None:
-        stream = io.StringIO(text)
-    elif path.suffix == ".mcap" or path.is_dir():
+# SCRIMMAGE's summary.csv names for Ripple's SimpleCollisionMetrics columns.
+SUMMARY_COLUMNS = {"flight_time_s": "flight_time", "flight_time_fraction": "flight_time_norm",
+                   "non_team_collisions": "non_team_coll", "team_collisions": "team_coll",
+                   "ground_collisions": "ground_coll"}
+
+
+def scrimmage_summary(run):
+    """A Ripple run's metrics (run.py's `Run`) as SCRIMMAGE's summary.csv,
+    following SimControl::output_summary: every plugin's declared columns in
+    order, under SCRIMMAGE's names, a name repeated if two plugins declare it;
+    per team, the sum of every plugin's score, then each column's value from
+    one map per team where the first plugin to set a name keeps it, and 0 where
+    no plugin set it."""
+    names = [name for plugin in run.metrics for name in run.metric_columns[plugin]]
+    header = ["team_id", "score"] + [SUMMARY_COLUMNS.get(name, name) for name in names]
+    teams = {}
+    for team_id in sorted({team for rows in run.metrics.values() for team in rows}):
+        rows = [plugin_rows[team_id] for plugin_rows in run.metrics.values()
+                if team_id in plugin_rows]
+        merged = {}
+        for row in rows:
+            for name, value in row.items():
+                if name != "score":
+                    merged.setdefault(name, value)
+        teams[team_id] = ([sum(row["score"] for row in rows)]
+                          + [merged.get(name, 0.0) for name in names])
+    return header, teams
+
+
+def read_summary(source):
+    """(header, {team: values}) from a summary.csv path, or a Ripple run
+    (path or `Run`) in SCRIMMAGE's layout."""
+    if not isinstance(source, (str, Path)):
+        return scrimmage_summary(source)
+    path = Path(source)
+    if path.suffix == ".mcap" or path.is_dir():
         from run import read_run
-        stream = io.StringIO(read_run(path).summary)
-    else:
-        stream = path.open(newline="", encoding="utf-8")
-    with stream:
+        return scrimmage_summary(read_run(path))
+    with path.open(newline="", encoding="utf-8") as stream:
         rows = csv.reader(stream, strict=True)
         header = next(rows, [])
         if not header or header[0] != "team_id":
@@ -135,9 +163,9 @@ def read_summary(path, text=None):
     return header, teams
 
 
-def compare_summaries(reference, candidate, result, candidate_text=None):
+def compare_summaries(reference, candidate, result):
     expected_header, expected_teams = read_summary(reference)
-    actual_header, actual_teams = read_summary(candidate, candidate_text)
+    actual_header, actual_teams = read_summary(candidate)
     if expected_header != actual_header or expected_teams.keys() != actual_teams.keys():
         result.mismatch("summary columns or team IDs differ")
         return
@@ -155,8 +183,7 @@ def compare_runs(reference, candidate):
     ripple = read_run(candidate)
     result = compare_frames(read_frames(reference / "frames.bin"),
                             ripple.frames)
-    compare_summaries(reference / "summary.csv", candidate / "run.mcap", result,
-                      ripple.summary)
+    compare_summaries(reference / "summary.csv", ripple, result)
     result.passed = result.mismatch_count == 0
     return result
 

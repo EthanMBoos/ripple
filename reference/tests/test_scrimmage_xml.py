@@ -36,7 +36,7 @@ class ScrimmageXmlTests(unittest.TestCase):
         group = mission["entities"][0]
         group["spawn"] = {"rate_hz": 0.5, "batch_size": 2, "start_s": 1.0, "time_stddev_s": 0.1}
         group["autonomy"][0]["params"]["waypoints"] = [[0, 0, 200], [100, 0, 200]]
-        mission["end_conditions"]["all_dead"] = True
+        mission["end_conditions"]["no_entities"] = True
         root = scrimmage_xml.mission(mission)
         self.assertEqual(root.findtext("entity/generate_rate"), "0.5")
         self.assertEqual(root.findtext("entity/generate_time_variance"), "0.1")

@@ -83,6 +83,32 @@ then SCRIMMAGE runs the written XML.
   in SCRIMMAGE's GUI, which the comparison never opens, and
   `generate_entities` is false by default.
 
+## Metric outputs
+
+SCRIMMAGE's `summary.csv` adds every metric plugin's team score into one
+`score`, prints six decimals, and writes 0 for a value a team doesn't have.
+Ripple's `/summary` keeps each plugin's own score and columns, at full
+precision, and leaves out a missing value. SimpleCollisionMetrics' columns are
+`flight_time_s`, `flight_time_fraction`, `non_team_collisions`,
+`team_collisions`, and `ground_collisions` (SCRIMMAGE's `flight_time`,
+`flight_time_norm`, `non_team_coll`, `team_coll`, `ground_coll`), and the end
+conditions `no_entities` and `one_team_left` (`all_dead`, `one_team`), whose
+termination reasons are now `NoEntities` and `OneTeamLeft`.
+`compare.py`'s `scrimmage_summary` rebuilds SCRIMMAGE's table from Ripple's
+as `SimControl::output_summary` writes it: every plugin's declared columns in
+order under SCRIMMAGE's names (a name two plugins declare appears twice), the
+summed score, and per team one map of values where the first plugin to set a
+name keeps it and an unset name is 0. `scrimmage_xml.py` writes its
+end-condition names; summaries still agree within 1e-6, since C++ rounds.
+
+- **Proof (2026-10-15).** The 23 missions under `missions/` (all but
+  `terrain-mcmillan`) and the starter mission, old build against new, wrote
+  byte-identical entities, frames, and events; the old summary text was
+  reproduced exactly from the new summary by the deleted rule after renaming
+  the columns; result metadata and scenario differ only by the renamed
+  termination reasons and end conditions. Both sweeps' `results.jsonl`, already
+  at full precision, are identical after renaming.
+
 ## Intentional differences from C++
 
 - **Estimation owns belief.** C++ lets any plugin set belief, falls back to

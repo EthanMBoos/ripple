@@ -9,11 +9,10 @@ in MPE2 with random continuous actions (reference/mpe2/rollout.py), replays
 each in Ripple from the same starts with the same forces (MpeParticle,
 MpeContact, SimpleSpread, ForceReplay), and compares every agent's position
 and velocity after every step, and each episode's mean return (the episode
-total only: summary.csv does not hold per-step rewards).
+total only: the run's summary does not hold per-step rewards).
 
 Passes when every position and velocity matches MPE2's bit for bit, with and
-without contact, and every mean return agrees to the 6 decimals of
-summary.csv.
+without contact, and every mean return agrees within RETURN_TOLERANCE.
 
 MPE2 runs in a uv environment with MPE2 (pinned) unless --python names an
 interpreter that has it. Writes OUTPUT/results.json.
@@ -40,7 +39,9 @@ RADIUS_M = 0.15
 # below any velocity's last bit here, so only closer approaches count as
 # contact (reported, not part of the criterion).
 CONTACT_RANGE_M = 2 * RADIUS_M + 0.040
-RETURN_TOLERANCE = 1e-6  # summary.csv keeps 6 decimals
+# Ripple and MPE2 sum the rewards in different orders; the largest difference
+# measured on 2026-10-15 was 1.4e-14.
+RETURN_TOLERANCE = 1e-12
 
 
 def mission(episode):
@@ -62,8 +63,8 @@ def mission(episode):
 
 
 def mean_return(folder):
-    header, row = read_run(folder).summary.splitlines()[:2]
-    return float(dict(zip(header.split(","), row.split(",")))["return"])
+    (teams,) = read_run(folder).metrics.values()
+    return teams[1]["return"]
 
 
 def compare(episode, frames, ripple_return):

@@ -289,9 +289,11 @@ fn run_case(
             let mut teams = BTreeMap::new();
             for (team, metrics) in &report.teams {
                 let mut values = BTreeMap::from([("score".to_owned(), metrics.score)]);
+                // A column the plugin set no value for stays out of the row.
                 for header in &report.headers {
-                    let value = metrics.values.get(header).copied().unwrap_or(0.0);
-                    values.insert(header.clone(), value);
+                    if let Some(&value) = metrics.values.get(header) {
+                        values.insert(header.clone(), value);
+                    }
                 }
                 teams.insert(*team, values);
             }

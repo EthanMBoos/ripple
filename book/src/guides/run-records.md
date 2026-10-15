@@ -13,7 +13,7 @@ The main channels are:
 | `/entities` | An entity's ID, team, group index and label, and visual model, once at its first frame |
 | `/frames` | Simulation time and the entities' current truth and active flags |
 | `/events` | Generation, removal, and collision events |
-| `/summary` | The final metric table |
+| `/summary` | Each metric plugin's score and columns per team, at full precision; a column with no value for a team is left out |
 
 `--trace` adds `/beliefs`, `/readings`, `/deliveries`, and `/outputs` for
 analysis and learning data. Belief records include the contacts a policy can see;
@@ -63,6 +63,10 @@ saved = read_run("runs/straight-no-gui/run000")
 for frame in saved.frames:
     for entity in frame.entities.values():
         print(frame.time_s, entity.id, entity.position)
+
+# Each metric plugin's results by team, as in a sweep's results.jsonl.
+team = saved.metrics["metrics/SimpleCollisionMetrics:0"][1]
+print(team["score"], team["non_team_collisions"])
 ```
 
 For pandas, build rows from the same loop and pass them to

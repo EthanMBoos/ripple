@@ -27,7 +27,6 @@ crates/core/src/
   simcontrol/
     generation.rs
     scheduler.rs
-    summary.rs
     world_plugins.rs
   sensor.rs
   sensor/
@@ -126,10 +125,9 @@ registry supports [Rust-built scenarios](../guides/rust-scenarios.md).
    `pubsub/messages.rs` commits communication at the defined delivery phase;
    `sensor/readings.rs` holds each sensor's latest reading for the estimators
    in `estimator.rs`, which write belief.
-6. `record.rs` and `simcontrol/summary.rs`: provide frame and summary
-   output. The CLI owns run directories and Rerun through
-   `crates/cli/src/viewer/` and `viewer.rs`; the viewer does not own simulation
-   time or physics.
+6. `record.rs`: writes frames, events, and each metric plugin's results. The
+   CLI owns run directories and Rerun through `crates/cli/src/viewer/` and
+   `viewer.rs`; the viewer does not own simulation time or physics.
 
 See [Plugin API reference](../reference/plugin-api.md) for authoring and phase
 semantics, and

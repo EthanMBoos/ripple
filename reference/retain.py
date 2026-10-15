@@ -9,6 +9,7 @@ depend on where the checkout or the runs folder was. Standard library only.
 from pathlib import Path
 import shutil
 
+from compare import scrimmage_summary
 from project import ROOT
 from run import read_run
 
@@ -55,7 +56,11 @@ def copy_reference_check(check, output, extra=()):
         summaries = list((result.parent / "cpp/logs").glob("*/summary.csv"))
         if summaries:
             shutil.copyfile(summaries[0], case / "cpp-summary.csv")
-            (case / "rust-summary.csv").write_text(read_run(result.parent / "rust-1").summary)
+            # Ripple's metrics in the C++ layout, at full precision, beside it.
+            header, teams = scrimmage_summary(read_run(result.parent / "rust-1"))
+            rows = [",".join(header)] + [",".join([str(team), *map(repr, values)])
+                                         for team, values in teams.items()]
+            (case / "rust-summary.csv").write_text("\n".join(rows) + "\n")
     for path in extra:
         copy_files(Path(path).parent, output, [Path(path).name])
         sanitize(output / Path(path).name, check)

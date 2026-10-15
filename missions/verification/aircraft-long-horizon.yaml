@@ -7,7 +7,7 @@ run:
   end_s: 200
   dt_s: 0.1
   seed: 2147483648
-end_conditions: [time, all_dead]
+end_conditions: [time, no_entities]
 
 networks: {GlobalNetwork: {}, LocalNetwork: {}}
 metrics: {SimpleCollisionMetrics: {}}

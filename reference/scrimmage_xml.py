@@ -139,6 +139,8 @@ KEYS = {
         "launch_at_s": "launch_time", "launch_acceleration_mps2": "launch_accel",
         "launch_speed_mps": "launch_speed"},
 }
+# Ripple's end condition -> SCRIMMAGE's.
+END_CONDITIONS = {"no_entities": "all_dead", "one_team_left": "one_team"}
 PID_BANDS = ("integrate_within_deg", "integrate_within_m", "integrate_within_mps")
 
 
@@ -204,7 +206,8 @@ def mission(scenario):
         "enable_gui": "false", "network_gui": "false", "start_paused": "false", "time_warp": "0",
     })
     element(root, "seed", run["seed"])
-    ends = [name for name, on in scenario["end_conditions"].items() if on]
+    ends = [END_CONDITIONS.get(name, name)
+            for name, on in scenario["end_conditions"].items() if on]
     element(root, "end_condition", ", ".join(sorted(ends)) or "none")
     # The spatial lookup changes only how fast Ripple answers range queries.
     for config in scenario["networks"]:

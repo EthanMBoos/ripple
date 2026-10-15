@@ -71,7 +71,7 @@ fn outputs(config: ScenarioConfig, workers: usize) -> Result<Outputs> {
     Ok(Outputs {
         frames,
         events: serde_json::to_vec(simulation.events())?,
-        summary: simulation.summary_csv(),
+        summary: format!("{:?}", simulation.metric_reports()),
     })
 }
 
@@ -182,11 +182,9 @@ fn thousands_of_agents_spawned_together_reach_metrics() -> Result<()> {
     };
     let mut simulation = Simulation::new(config, &PluginRegistry::with_builtins(), 4)?;
     while simulation.step()?.is_some() {}
-    assert!(
-        simulation
-            .summary_csv()
-            .contains("\n1,0.000000,5000.000000,")
-    );
+    let team = &simulation.metric_reports()[0].1.teams[&1];
+    assert_eq!(team.score, 0.0);
+    assert_eq!(team.values["entity_count"], 5000.0);
     Ok(())
 }
 
@@ -229,10 +227,9 @@ fn thousands_of_agents_removed_together_reach_metrics() -> Result<()> {
     let mut simulation = Simulation::new(config, &PluginRegistry::with_builtins(), 4)?;
     while simulation.step()?.is_some() {}
     assert!(simulation.entities().is_empty());
-    let summary = simulation.summary_csv();
-    assert!(
-        summary.lines().nth(1).unwrap().ends_with(",1500.000000"),
-        "{summary}"
+    assert_eq!(
+        simulation.metric_reports()[0].1.teams[&1].values["ground_collisions"],
+        1500.0
     );
     Ok(())
 }

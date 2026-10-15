@@ -47,7 +47,7 @@ fn global_boundary_changes_both_aircraft_paths_and_ground_hits_reach_metrics() -
             .any(|event| event.kind == EventKind::EntityRemoved && event.entity_ids == vec![3])
     );
     assert_eq!(
-        bounded.metric_reports()[0].1.teams[&3].values["ground_coll"],
+        bounded.metric_reports()[0].1.teams[&3].values["ground_collisions"],
         1.0
     );
     Ok(())

@@ -7,7 +7,7 @@ run:
   end_s: 60
   dt_s: 0.1
   seed: 1
-end_conditions: [time, one_team]
+end_conditions: [time, one_team_left]
 
 interactions: {SimpleCollision: {}}
 networks: {GlobalNetwork: {}}   # Straight listens on it for a boundary

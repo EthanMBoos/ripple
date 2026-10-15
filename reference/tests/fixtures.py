@@ -8,7 +8,7 @@ def plugin(name, instance=None, **params):
 
 _SCENARIO = {
     "run": {"start_s": 0.0, "end_s": 200.0, "dt_s": 0.1, "seed": 12345, "motion_multiplier": 1},
-    "end_conditions": {"time": True, "all_dead": False, "one_team": False},
+    "end_conditions": {"time": True, "no_entities": False, "one_team_left": False},
     "spatial_lookup": {"method": "scan"},
     "terrain": None,
     "interactions": [plugin("SimpleCollision", collision_range_m=5)],

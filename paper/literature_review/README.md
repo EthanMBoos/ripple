@@ -6,8 +6,8 @@ code the authors published. It goes in `sources/`, which git ignores, since
 these are other people's papers and code.
 
 ```sh
-uv run --with pymupdf4llm scripts/build_paper_sources.py            # everything
-uv run --with pymupdf4llm scripts/build_paper_sources.py --key KEY  # one source
+uv run --with "pymupdf4llm<2" scripts/build_paper_sources.py            # everything
+uv run --with "pymupdf4llm<2" scripts/build_paper_sources.py --key KEY  # one source
 ```
 
 Rerunning skips what's already downloaded. `sources/INDEX.md` lists what came

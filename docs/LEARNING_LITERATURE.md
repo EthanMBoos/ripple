@@ -1,13 +1,127 @@
 # Learned vs classical: what's out there
 
-Notes from the literature search behind the [learned policies
-plan](TODO.md#learned-policies) and the paper's task and protocol sections.
+Notes from the literature search behind the [LLM delivery
+plan](TODO.md#paper-llm-planners-over-a-classical-stack-chosen-october-2026)
+and the paper's task and protocol sections.
 Done in September and October 2026. Citations were checked against arXiv or
 the publisher unless marked unverified.
 
 The papers themselves, with their code, download with
 `scripts/build_paper_sources.py` (see
 [paper/literature_review](../paper/literature_review/README.md)).
+
+## LLM planners over classical stacks
+
+For the LLM delivery plan. A first structured pass (October 2026): fixed
+questions, searches across venues for 2022 to 2026, and the reference
+lists of the main survey and papers. Venues are confirmed where stated;
+"seen as abstract" means the full paper wasn't read.
+
+**Q1. LLM task planning for multi-robot teams.**
+
+- Survey: Li et al., "Large Language Models for Multi-Robot Systems: A
+  Survey" (arXiv 2502.03814; Autonomous Robots, 2026). Four levels (task
+  allocation, motion planning, action generation, human in the loop). It
+  finds no high-level task-allocation work for UAVs (only FlockGPT,
+  formation control); evaluations are mostly indoor household simulators
+  (AI2-THOR, Habitat, PyBullet, BEHAVIOR-1K). It calls for bridging lab
+  simulation and the real world and for outdoor, noisy settings; notes LLM
+  latency (one GPT-4 path-finding step took 15 to 30 s) and dependence on
+  a server link. Our starting bibliography.
+- SMART-LLM (Kannan et al., IROS 2024): decomposition, coalition
+  formation, allocation by skill, few-shot prompts. RoCo (Mandi et al.,
+  ICRA 2024): each arm's LLM negotiates; invalid plans get environment
+  feedback; a central motion planner executes. Chen et al., "Scalable
+  Multi-Robot Collaboration with LLMs: Centralized or Decentralized?"
+  (ICRA 2024). COHERENT (Liu et al., ICRA 2025): quadrotors, robot dogs,
+  and arms; a proposal, execution, feedback, adjustment loop; 100-task
+  benchmark. LiP-LLM (Obata et al., RA-L): LLM plus linear programming and
+  dependency graphs. DART-LLM: dependency graphs. CoMuRoS (arXiv
+  2511.22354): ground robots and arms, event-driven replanning.
+- Aerial: TypeFly (arXiv 2312.14950): an LLM writes programs in a small
+  drone language, with replanning. UAV-VLA (arXiv 2501.05014) and
+  UAV-CodeAgents: missions generated from satellite images. SwarmGPT
+  (Schuck et al., RA-L 2025): choreography from GPT-4 fixed by a safety
+  filter (planned before flight; waypoint plans about 50% successful with
+  10 drones). TACOS (arXiv 2510.01869). MultiUAV-Plat (arXiv 2606.31073,
+  an unreviewed preprint; drones move to the next position each step).
+  Surveys: "UAVs Meet LLMs" (arXiv 2501.02341), LLM-assisted UAV
+  operations (arXiv 2602.19534), Drones 2026 perception-cognition-action.
+
+**Q1b. Delivery dispatch, from a second agent's review.** LLM-DaaS
+(Wassim, Mohamed, and Hamdi, arXiv 2412.11672, 2024): small fine-tuned
+LLMs turn text delivery requests into structured ones, then drone
+selection, composition, and weather-aware routing; no vehicle dynamics or
+radio. SCoBA (Choudhury, Gupta, Kochenderfer, Sadigh, and Bohg, RSS 2020):
+online multi-robot task allocation under deadlines and uncertain
+completion, tree search per agent plus conflict resolution, evaluated on
+drone delivery dispatch; the competent classical baseline to beat.
+
+**Q2. Checking an LLM's plan before execution.** The established pattern,
+so not our novelty on its own.
+
+- LLM-Modulo (Kambhampati et al., ICML 2024 position paper): LLMs propose,
+  sound external verifiers check. LLM+P (Liu et al., arXiv 2304.11477;
+  venue not confirmed): the LLM writes PDDL, a classical planner solves.
+- SayPlan (Rana et al., CoRL 2023): the plan is refined in a loop against
+  a scene graph simulator before execution, and a classical path planner
+  shortens the LLM's horizon.
+- AutoTAMP (arXiv 2306.06531): LLM translates to signal temporal logic,
+  a task and motion planner solves and checks. SELP (ICRA 2025): LTL
+  plans. VerifyLLM, T3 Planner (arXiv 2510.16767): pre-execution checks
+  with temporal logic.
+- Khatana, Song, Hovakimyan, and Voulgaris, "Verifier-Mediated Multi-LLM
+  Coordination for Multi-Robot Path Planning" (arXiv 2610.12761, IROS 2026
+  workshop FM-MRS, 8 October 2026): a geometric verifier grounds each
+  plan into trajectories, predicts conflicts between robots, and feeds
+  them back for replanning; centralized against decentralized; CARLA and
+  Crazyflies. The closest to "Ripple checks the plan"; theirs is a
+  geometric conflict check without dynamics or a network. Seen as
+  abstract.
+
+**Q3. Learned world models checking actions at test time** (the trend the
+framing leans on): a policy proposes, a world model imagines outcomes,
+the best is kept. WEAVER (2026, on π0.5: 14% better real-world success
+with test-time planning), ω-EVA (arXiv 2606.09457), GPC, RoboMonkey;
+Fast-WAM (arXiv 2603.16666) asks whether it's needed at all. Seen in
+surveys (arXiv 2605.00080, 2606.00113).
+
+**Q4. LLM planning under communication limits.** Nothing found that tests
+LLM multi-robot planning with delayed or lost messages. Ao, Gao, and
+Simchi-Levi (arXiv 2603.26993, a technical note) bound what delegated
+multi-agent LLM planning loses under a communication budget, in theory.
+Non-LLM work on degraded communication (task allocation, exploration with
+over 50% loss) shows it changes what works best.
+
+**Q5. Robot foundation models are hierarchical.** π0.5 (CoRL 2025) and
+π0.6 (model card, November 2025): one VLA predicts a language subtask,
+then an 860M-parameter action expert outputs action chunks (63 ms per
+chunk). π*0.6 adds RL from experience (RECAP). π0.7 (April 2026, read as
+a summary): steered by language coaching, metadata, and subgoal images
+from a world model, with a separate high-level policy writing subtasks.
+GR00T N1 and Figure's Helix are described as dual systems (secondary
+sources).
+
+**Q6. Guards over learned components.** Zongo and Wei (DASC 2026, arXiv
+2607.10014): overriding a learned drone separation policy's actions barely
+helped under GPS degradation; correcting its inputs cut near mid-air
+collisions 90%. Black-Box Simplex (arXiv 2102.12981). ASTM F3269-21.
+
+**What this leaves open.** Checking LLM plans before execution is
+established (SayPlan, LLM-Modulo, Khatana et al.), so a checker alone
+isn't new. Open, as far as this pass found: LLM fleet planning outdoors
+over a network that delays and drops messages; fixed-wing vehicles; the
+gap between idealized and realistic execution, measured; and a checker
+that simulates full dynamics and communication fast enough to use online,
+compared against geometric checks and reactive guards. LLM latency itself
+(seconds per call) against vehicles that can't stop is a concrete
+realistic effect nobody has measured.
+
+**Still to do before writing.** Read in full: the Li et al. survey's
+remaining sections, SayPlan, COHERENT, Khatana et al., RoCo, SMART-LLM,
+TypeFly, SwarmGPT. Follow citations forward from SayPlan, COHERENT, and
+Khatana et al. Check CoRL, RSS, ICRA, and IROS 2025 and 2026 accepted
+lists for "LLM" with "multi-robot", "UAV", or "verification".
 
 ## What learning papers usually show
 

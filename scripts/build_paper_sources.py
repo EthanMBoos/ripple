@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Download the papers and code behind paper/references.bib, for local reading.
 
-    uv run --with pymupdf4llm scripts/build_paper_sources.py            # everything
-    uv run --with pymupdf4llm scripts/build_paper_sources.py --key KEY  # one source
+    uv run --with "pymupdf4llm<2" scripts/build_paper_sources.py            # everything
+    uv run --with "pymupdf4llm<2" scripts/build_paper_sources.py --key KEY  # one source
     python3 scripts/build_paper_sources.py --no-convert                 # PDFs and repos only
 
 For each BibTeX key, paper/literature_review/sources/KEY/ gets the PDF, a
@@ -61,7 +61,7 @@ def download(url, target):
 
 def convert(pdf, folder):
     """Markdown and extracted images, for searching and close reading."""
-    import pymupdf4llm  # needs `uv run --with pymupdf4llm`
+    import pymupdf4llm  # needs `uv run --with "pymupdf4llm<2"` (2.0 is an empty package)
     images = folder / "images"
     images.mkdir(exist_ok=True)
     markdown = pymupdf4llm.to_markdown(str(pdf), write_images=True, image_path=str(images),

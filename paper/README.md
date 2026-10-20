@@ -4,14 +4,13 @@ The paper, its bibliography, the generated tables, and the retained data.
 The paper is the record of evidence for what it claims; there is no separate
 evidence document.
 
-- **[manuscript/main.tex](manuscript/main.tex): the academic paper.** Does
-  realistic sensing, communication, and vehicle dynamics change which
-  approach, learned or classical, wins on standard multi-agent tasks? Three
-  tasks (cooperative navigation, circle-crossing collision avoidance, flocking)
-  are run up a fidelity ladder in **Ripple**, whose integrations each have an
-  external baseline. The [roadmap](../docs/TODO.md) drives the work. One
-  table summarizes what each component is checked against; the appendix
-  covers determinism, cost, and the command that reruns every check.
+- **[manuscript/main.tex](manuscript/main.tex): the academic paper.** A
+  language model plans for a mixed fleet by calling skills as tools, each
+  skill a **Ripple** plugin: how much each added skill helps, how planners
+  rank on exactly replayable episodes, and whether the planner knows what
+  each vehicle can do. The [roadmap](../docs/TODO.md) drives the work; the
+  appendix covers determinism, cost, and the command that reruns every
+  check.
 
 It uses the IEEE conference layout. Venue and titles are provisional. Results
 marked **[Provisional]** do not yet come from a release run of the suite.

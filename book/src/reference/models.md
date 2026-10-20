@@ -45,7 +45,10 @@ describes it and the other checks.
   attitude limits tuned for that aircraft; without one, the mission gives them
   all. The `a4d` altitude derivative gain is 0.002, since 0.01 turned upsets
   into growing swings at 220 m/s. `rascal` uses ArduPlane's attitude limits
-  (pitch 20°, roll 45°). Checked by `rascal_control.py`.
+  (pitch 20°, roll 45°). Its speed loop holds airspeed through the wind it is
+  given, `wind_mps` (still air by default, where airspeed is ground speed);
+  give it FixedWing6DOF's wind, or another to model a wrong estimate.
+  Checked by `rascal_control.py`.
 - **AircraftVelocityController** goes before either aircraft controller and
   turns a velocity command into heading, speed, and a climbing altitude
   target (within `max_altitude_error_m`, default 10 m). The aircraft's own

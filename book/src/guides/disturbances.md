@@ -37,6 +37,12 @@ north wind, blowing toward the south, is `[0, -6, 0]`. Only FixedWing6DOF
 models it so far; flight in a steady wind is flight in still air carried by
 the wind.
 
+Give AircraftPIDController the same `wind_mps`, so its speed loop holds
+airspeed as an autopilot does. Without it the controller assumes still air
+and holds ground speed: into a headwind it opens the throttle to keep its
+speed over the ground, which makes wind far milder than it is. In a sweep,
+vary both together (`parameter_combinations: zip`).
+
 ## Sensing noise
 
 NoisyState measures the agent's own state, and NoisyContacts every other

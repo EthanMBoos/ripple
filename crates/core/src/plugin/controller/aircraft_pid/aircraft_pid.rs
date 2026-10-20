@@ -2,10 +2,14 @@
 //!
 //! Derived from SCRIMMAGE: controller/AircraftPIDController (GTRI, LGPL-3.0-or-later).
 //! Controller phase: read desired commands and belief, output throttle and surfaces.
+//! The speed loop holds airspeed: belief's velocity minus `wind_mps`, the wind
+//! the autopilot believes (a real one measures airspeed or estimates the
+//! wind). In still air, the default, that is the ground speed.
 
 use anyhow::{Context, Result, ensure};
 use serde::Deserialize;
 
+use crate::Vec3;
 use crate::common::{AngleGains, LengthGains, Pid, PidGains, SpeedGains};
 use crate::plugin::motion::FixedWingAirframe;
 use crate::plugin::{
@@ -28,6 +32,9 @@ struct AircraftPidParams {
     max_pitch_deg: Option<f64>,
     max_roll_deg: Option<f64>,
     enable_roll_control: bool,
+    /// The air's velocity the speed loop assumes, `[east, north, up]`, as
+    /// FixedWing6DOF's `wind_mps`. Not part of a profile.
+    wind_mps: [f64; 3],
 }
 
 #[derive(Clone)]
@@ -40,10 +47,11 @@ pub struct AircraftPidConfig {
     max_pitch_deg: f64,
     max_roll_deg: f64,
     enable_roll_control: bool,
+    wind_world_mps: Vec3,
 }
 
-/// The gains and limits each aircraft flies with. `enable_roll_control` is a
-/// mission choice, not part of a profile.
+/// The gains and limits each aircraft flies with. `enable_roll_control` and
+/// the wind are mission choices, not part of a profile.
 fn airframe_settings(airframe: FixedWingAirframe) -> AircraftPidConfig {
     // Set with the A-4D; its altitude derivative gain is 0.002, where 0.01
     // let a pitch upset grow into an altitude and heading oscillation at
@@ -82,6 +90,7 @@ fn airframe_settings(airframe: FixedWingAirframe) -> AircraftPidConfig {
         max_pitch_deg: 45.0,
         max_roll_deg: 60.0,
         enable_roll_control: false,
+        wind_world_mps: Vec3::zeros(),
     };
     match airframe {
         FixedWingAirframe::A4d => a4d,
@@ -114,6 +123,7 @@ pub struct AircraftPidController {
     max_pitch_rad: f64,
     max_roll_rad: f64,
     enable_roll_control: bool,
+    wind_world_mps: Vec3,
 }
 
 impl Plugin for AircraftPidController {
@@ -163,6 +173,7 @@ impl Plugin for AircraftPidController {
                 .or(profile.as_ref().map(|p| p.max_roll_deg))
                 .with_context(|| missing("max_roll_deg"))?,
             enable_roll_control: params.enable_roll_control,
+            wind_world_mps: Vec3::from(params.wind_mps),
         };
         ensure!(
             config.max_pitch_deg >= 0.0 && config.max_roll_deg >= 0.0,
@@ -181,6 +192,7 @@ impl Plugin for AircraftPidController {
             max_pitch_rad: crate::math::deg_to_rad(config.max_pitch_deg),
             max_roll_rad: crate::math::deg_to_rad(config.max_roll_deg),
             enable_roll_control: config.enable_roll_control,
+            wind_world_mps: config.wind_world_mps,
         }
     }
 
@@ -236,11 +248,10 @@ impl Controller for AircraftPidController {
         let aileron_rad =
             self.roll
                 .step(desired_roll_rad, attitude.roll_world_from_body_rad(), dt_s);
-        let throttle = self.speed.step(
-            io.read("desired_speed")?,
-            state.velocity_world_mps.norm(),
-            dt_s,
-        );
+        let airspeed_mps = (state.velocity_world_mps - self.wind_world_mps).norm();
+        let throttle = self
+            .speed
+            .step(io.read("desired_speed")?, airspeed_mps, dt_s);
 
         io.write("elevator", elevator_rad.clamp(-1.0, 1.0))?;
         io.write("aileron", aileron_rad.clamp(-1.0, 1.0))?;

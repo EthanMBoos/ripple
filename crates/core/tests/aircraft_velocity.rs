@@ -122,3 +122,58 @@ fn a_reversal_turns_no_faster_than_the_bank_limit_allows() -> Result<()> {
     assert!(fastest_degps > 0.999, "{fastest_degps}");
     Ok(())
 }
+
+/// The Rascal under AircraftPIDController, flying east at 20 m/s into a
+/// 6 m/s headwind for 60 s; `told` gives the controller the wind.
+fn into_headwind(told: bool) -> Result<SimulationFrame> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let name = format!("headwind-{told}");
+    let path = std::env::temp_dir().join(format!("ripple-{name}-{}.yaml", std::process::id()));
+    let controller_wind = if told { "wind_mps: [-6, 0, 0]" } else { "" };
+    std::fs::write(
+        &path,
+        format!(
+            "format_version: 1
+name: {name}
+run:
+  end_s: 60
+  dt_s: 0.01
+entities:
+  rascal:
+    team: 1
+    position_m: [0, 0, 300]
+    velocity_mps: [20, 0, 0]
+    autonomy:
+      Straight:
+        speed_mps: 20
+    controller:
+      AircraftPIDController:
+        airframe: rascal
+        {controller_wind}
+    motion_model:
+      FixedWing6DOF:
+        airframe: rascal
+        wind_mps: [-6, 0, 0]
+"
+        ),
+    )?;
+    let mission = Mission::load(&path, &root, &Params::new());
+    std::fs::remove_file(&path)?;
+    let mut simulation = Simulation::new(mission?.scenario, &PluginRegistry::with_builtins(), 1)?;
+    let mut last = None;
+    while let Some(frame) = simulation.step()? {
+        last = Some(frame);
+    }
+    Ok(last.unwrap())
+}
+
+#[test]
+fn the_speed_loop_holds_airspeed_in_the_wind_it_is_given() -> Result<()> {
+    // Told the wind, the Rascal flies 20 m/s through the air, 14 over the ground.
+    let told = speed_mps(&into_headwind(true)?);
+    assert!((told - 14.0).abs() < 0.1, "{told}");
+    // Not told, it holds 20 m/s over the ground, 26 through the air.
+    let untold = speed_mps(&into_headwind(false)?);
+    assert!((untold - 20.0).abs() < 0.1, "{untold}");
+    Ok(())
+}

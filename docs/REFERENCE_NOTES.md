@@ -365,6 +365,7 @@ in "Before" are the focused tests' output on the code before the change
 | SimpleAircraft limits | Physical limits (speeds, bank, acceleration, climb, descent); `airframe: rascal` flies like FixedWing6DOF's Rascal within 5% | Throttle in [-100, 100] / 5; no climb limit but pitch | `reference/simple_aircraft_fit.py` | none: the defaults are SCRIMMAGE's numbers |
 | Velocity commands for aircraft | Heading along the command (kept at zero), speed and climb within the aircraft's limits, turns no tighter than its bank allows | none: aircraft took heading, altitude, and speed | `crates/core/tests/aircraft_velocity.rs` | none (Rust-only controller) |
 | Message delay | `delay_s` on GlobalNetwork and SphereNetwork arrives at the first tick at or after it | delay rejected | `global_network_delay_arrives_at_the_first_tick_at_or_after_it` | none (below) |
+| AircraftPIDController airspeed | The speed loop holds airspeed, velocity minus the `wind_mps` it is given (default still air) | Into a 6 m/s headwind the Rascal held 20 m/s over the ground, 26 through the air | `the_speed_loop_holds_airspeed_in_the_wind_it_is_given` | none: SCRIMMAGE's holds ground speed, the default here; no compared mission sets the wind, and `scrimmage_xml.py` would write it as wind keys SCRIMMAGE's controller ignores |
 
 Details worth knowing:
 

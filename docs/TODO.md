@@ -1,135 +1,105 @@
 # Roadmap
 
-## Disturbance models
+## Direction (2026-10-21)
 
-Built before the learning work.
+A language model plans for a fleet over a library of classical and learned
+skills, π0.5-style: the model picks a skill and its parameters for each
+vehicle, and each skill is an autonomy plugin. Adding a skill is one Rust
+file, and every result replays byte for byte.
 
-1. **Units.** MPE's arena has no scale (about ±1, agent radius 0.15). State
-   how many metres one unit is, so metres of GPS error mean something there.
-   GPS specs give a horizontal 95% radius; the YAML takes a per-axis
-   standard deviation, which is about the 95% radius divided by 2.45.
-2. **Design the first noise sweep (point agents).** The agent's own
-   position is noisy (NoisyState); landmarks are exact (they come from a
-   map). Decide how teammates are known: each agent broadcasting its own
-   noisy position (shared GPS error), or NoisyContacts (independent
-   perception error per observer). Contacts need a way to leave a team
-   unperturbed. Noise defaults to none, so the base mission sets only the
-   fields it sweeps (an override replaces a value the mission has). White,
-   zero-mean noise; belief from `PassThrough`, stated in the paper. A
-   `.sweep.yaml` with `zip` over both horizontal axes
-   (`position_stddev_m.0`, `position_stddev_m.1`).
-3. **Wind.** Steady wind on the multirotor (drag on airspeed) and
-   `SimpleAircraft`. FixedWing6DOF already has it (`wind_E/N/U`, the air's
-   velocity). Gusts only if steady wind matters.
-4. **Message delay sweep.** `delay_s` on GlobalNetwork and SphereNetwork,
-   swept like loss. Random delay, if needed, as a keyed draw per message.
-5. **A Kalman filter** for the aircraft rungs: raw GPS-like readings as
-   belief make the Rascal's controller jitter (about 0.15 rad/s body rates).
-   Point agents keep `PassThrough`.
-   The sensors report no covariance; the filter needs the configured noise
-   covariance.
-6. **Realistic ranges** for each disturbance, from real specs, published
-   wind limits, or ArduPilot SITL. These go in the paper's ranges figure.
-7. **Later: drifting noise.** Real GPS error drifts slowly; a first-order
-   Gauss-Markov error needs a measured magnitude and correlation time. The
-   navigation prediction (targets swapping) is driven by jitter, so white
-   noise tests it first.
+Dropped: checking plans in high-fidelity flight before sending them. The
+6-DOF model added nothing over a turn-limited model, and the separation
+losses came from airspace design, not flight or radio. Comms (delay, loss,
+aged reports) are out of scope.
 
-## Learned policies
+## Paper
 
-Decide first how trained policies run in Ripple: exported into an autonomy
-plugin, or driven from Python. For the second, stop the tick at the decision
-point (observations out, actions in), as Isaac Lab's `ManagerBasedRLEnv` and
-Gymnasium's `step(actions)` do, with `motion_multiplier` as their
-`decimation`; autonomy plugins become one way to fill the actions.
+Pitch Ripple as the instrument for evaluating language-model fleet
+planners, not as another planner. Positioning and sources:
+`paper/literature_review/reports/LLM fleet planner literature review.md`.
 
-1. **Classical baseline on MPE2.**
-   - Hungarian autonomy, re-solved every tick from each agent's own belief;
-     cost is distance, ties go to the lowest ids.
-   - Stopping-point controller: after a push F, an MPE2 agent stops at
-     p + 4·v·dt + 4·F·dt², so use the F that puts that point on the target,
-     clipped to ±5 per axis. Every number comes from MPE2; no fitted
-     parameters.
-   - Path cost in SimpleSpread (distance flown over the assignment's
-     straight-line cost).
-   - The same baseline in Python against MPE2 must give Ripple's scores on
-     the same starts. Keep the script, starts, and scores as evidence.
-2. **Learned side on MPE2.**
-   - Train MAPPO with BenchMARL (PettingZoo 1.25, Python 3.12 or older,
-     `max_cycles: 25`, continuous actions).
-   - ONNX policy plugin: `tract-onnx` in an optional crate, actions sampled
-     as keyed random numbers so output stays byte-identical at any worker
-     count and paired runs share their samples.
-   - The exported policy's observations, actions, and returns match MPE2's
-     on the same starts.
-   - Then the benchmark comparison on paired episodes.
-3. **Side check, outside Ripple.** Reproduce Papoudakis et al.'s MAPPO
-   result with their code (about 5 hours), and score the classical baseline
-   in their environment under the same protocol (their number is the best of
-   41 evaluations averaged over 5 seeds). Start anytime.
-4. **Velocity commands for point agents.** One velocity controller in Ripple
-   and as an MPE2 wrapper, checked against each other. Retrain both sides for
-   velocity commands and measure that switch against step 2, so the sweeps
-   connect to the benchmark's ranking.
-5. **Sensing on navigation**: run the noise sweep designed in milestone B,
-   step 2, with both methods.
-6. **Navigation on the Crazyflie, then fixed-wing**, with noise and wind
-   sweeps. A landmark is covered while an aircraft loiters within a radius;
-   define the radius and arena first.
-7. **Training bridge**, for training at the realistic setting: an optional
-   PyO3 crate shaped like a PettingZoo parallel environment.
-   `Simulation::step` returns the pre-step state, so it needs its own step;
-   reset rebuilds the simulation. Measure its speed first.
-8. **Collision avoidance.** ORCA, NH-ORCA, constant-speed ORCA, a barrier
-   function controller; circle and swap sweeps; separation metrics; a holding
-   pattern at the goal for aircraft.
-9. **Flocking.** Reynolds, Olfati-Saber, and Vásárhelyi plugins; neighbor
-   messages with hop count and age; alignment and group metrics. Reproduce
-   Tolstaya et al.'s range result first.
+Already taken, so not contributions: an LLM picking skills as tools, skills
+added without retraining, growing skill libraries, caching or replaying
+model calls, deterministic simulation alone, the π0.5-style hierarchy.
 
-Two good tasks are still a paper.
+Four measurements ("we found no prior work that..."):
 
-### Rules for a fair comparison
+1. **Noise.** Episodes replay byte for byte, model calls included, at 1,
+   2, and 8 workers. Live reruns diverge; split score variance into model
+   and world.
+2. **Mixed fleets.** Capability violations as the fixed-wing share grows,
+   with vehicle cards absent, in text, or in numbers. The fidelity null
+   becomes a rule: idealize within an airframe class, model between them.
+3. **Skill library.** Grow it, remove skills one at a time, swap a learned
+   skill for its classical twin, vary descriptions and granularity; cost
+   per skill against success gained.
+4. **Where an LLM pays.** LLMs, ReAct, SMART-LLM and HMAS-2 prompts, an
+   optimizer, and an auction on identical episodes with scripted events;
+   templated against messy requests.
 
-- Learned and classical send the same command, read the same belief, and run
-  on the same episodes. One observation definition per task, with a parity
-  test against the training sim.
-- No training code here: train with existing libraries, export to ONNX, run
-  in Ripple.
-- Train three ways: simplest setting, center of the realistic range, and
-  randomized. Evaluate every policy across the whole sweep.
-- Classical gets the same tuning budget as learned, and is also reported
-  tuned at the simplest setting and frozen.
-- One primary metric per task, chosen in advance; collisions, coverage, and
-  the rest are reported separately, never combined into one score.
-- 10 training seeds; seeds are the unit. Interquartile means with bootstrap
-  intervals (`rliable`).
-- Realistic ranges come from real specs, published wind limits, or
-  ArduPilot SITL, never made-up numbers.
-- The paper's predictions are fixed once experiments start; a result that
-  contradicts one is reported as such.
+Task: medical delivery (Zipline-style). Fixed-wing aircraft fly long legs
+and drop by parachute; multirotors serve short legs and land on rooftops.
+Plain-language requests (urgent, routine, cancellations, closures) plus
+scripted events; every task also has a structured form for the optimizer
+and auction. Base distances, fleet, and request rates on published
+operations.
 
-## Other work
+Re-run: Web-of-Drones' coverage and formation tasks (prompts on Zenodo),
+with and without fixed-wing aircraft. Optional: exact optima from the
+MRTA-Benchmark (TU Delft, 4TU), SwarmGPT primitives against waypoints. Not
+building on MultiUAV-Plat; cite it as related work only.
 
-- Rerun the five speed checks and accept a new baseline (`perf.py --accept`):
-  renaming the workload missions' keys changed their hash, so
-  `speed-regression` reports different workloads until then. Outputs are
-  byte-identical, so no change is expected.
-- Every new piece (vehicle, autopilot, sensor) is checked against an outside
-  source, with versions, conversions, and errors written down. Matching a
-  source is not matching reality: borrowed coefficients stay labeled.
-- With new effects off, old missions run exactly as before.
-- Unicycle dynamics.
-- More sensor models and plugin debug geometry.
-- The viewer draws each Boundary box from the recorded scenario, with a
-  toggle in the display to hide it.
-- ArduPilotBridge's servo maps are still positional
-  (`throttle: [3, 1000, 2000, 0, 1]`, channel then PWM and output ranges);
-  give them named fields like the PID gains.
+Venue: CoRL 2027; fallback RA-L with IROS; NeurIPS D&B if the leaderboard
+leads. Check deadlines.
+
+Maybe: a hardware moment on Crazyflies, revise plans from flown traces,
+what-if forks, red against blue.
+
+## Next
+
+- [ ] Skill interface: description, typed parameters, parse the model's
+      output into skill assignments.
+- [ ] Response cache for model calls.
+- [ ] Three or four skills, one mission type, a first library-growth curve
+      on development scenarios.
+- [ ] Vehicle cards (minimum speed, turn radius, hover, endurance).
+- [ ] Gut check first (two weeks): delivery with three skills, two models
+      and a greedy auction, five live reruns on the same 50 episodes, one
+      mixed-fleet run. Go on only if rankings swap between reruns or
+      fixed-wing violations are common.
+- [ ] Delivery missions; an optimizer and an auction baseline.
+- [ ] Save `nisingizwe2022drone`'s PDF by hand again (deleted with the
+      unused sources on 2026-10-21; the Lancet blocks scripted downloads).
+- [ ] Before citing: check every [M] source in the report, AMASS (FFG,
+      fixed-wing LLM swarms), AutoHMA-LLM, and sweep 2026 preprints; add
+      the TODO citations in the manuscript to `references.bib`.
+
+## Evaluation rules
+
+- Development and test scenarios are fixed before prompting; frozen prompts
+  on test; report how many prompt versions were tried.
+- At least two model families and one open-weights model, pinned.
+- Grading is automatic and fixed in advance; baselines get the same tuning
+  budget.
+
+## Needed for learning work
+
+- [ ] Drive Ripple from Python (Gymnasium/PettingZoo; PyO3 when speed
+      matters).
+- [ ] ONNX policy plugin (`tract-onnx`, optional crate), actions as keyed
+      random draws.
+
+## Other
+
+- [ ] Rerun the speed checks and accept a new baseline (`perf.py --accept`);
+      workload missions' keys were renamed, outputs unchanged.
+- [ ] Decide whether to remove MPE (plugins, mission, parity check).
+- [ ] Add a delivery-sized multirotor (RotorS Firefly); keep the Crazyflie.
+- [ ] ArduPilotBridge servo maps: named fields instead of positions.
+- [ ] Viewer: draw Boundary boxes from the scenario, with a toggle.
+- [ ] Unicycle dynamics; more sensor models.
 
 ## Not planned
 
-Runtime plugin loading, legacy protobuf/string-map spawning, OpenCL, VTK, ROS,
-and JSBSim. ArduPilot and Burn stay optional, out of the default build.
-Pursuit was dropped as a task: results depend on how each paper designs the
-evader.
+Runtime plugin loading, legacy protobuf/string-map spawning, OpenCL, VTK,
+ROS, JSBSim. ArduPilot and Burn stay optional, out of the default build.

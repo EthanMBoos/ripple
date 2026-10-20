@@ -1,6 +1,7 @@
-% Academic paper: whether realistic sensing, communication, and vehicle
-% dynamics change how learned and classical multi-robot policies rank, measured
-% in one testbed whose integrations are checked against external baselines.
+% Academic paper: Ripple as an instrument for evaluating language-model
+% fleet planners that call classical and learned skills, each a plugin, on
+% exactly replayable episodes with mixed fixed-wing and multirotor fleets.
+% Positioning: paper/literature_review/reports/.
 % Choose the venue and replace prompts after the experiments establish results.
 \documentclass[conference]{IEEEtran}
 \usepackage[T1]{fontenc}
@@ -17,8 +18,8 @@
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usetikzlibrary{arrows.meta}
-% Figure colours, as in the companion real-to-sim paper: classical methods in
-% blue, learned methods in orange, the realistic range in red.
+% Figure colours: classical skills in blue, the language model and learned
+% skills in orange, highlights in red.
 \definecolor{classc}{RGB}{70,112,150}
 \definecolor{classf}{RGB}{214,226,236}
 \definecolor{learnc}{RGB}{190,112,58}
@@ -27,11 +28,7 @@
 \definecolor{ink}{RGB}{60,60,60}
 \definecolor{cream}{RGB}{247,243,231}
 \definecolor{creamb}{RGB}{216,208,184}
-% Grey tiles stand in for figures whose content is not drawn yet.
-\tikzset{tile/.style={fill=black!17, rounded corners=2pt},
-  tiletext/.style={font=\ttfamily\scriptsize, text=black!55, align=center}}
-% Run-in bold paragraph headings, as in the companion real-to-sim paper,
-% instead of IEEEtran's lettered ones.
+% Run-in bold paragraph headings instead of IEEEtran's lettered ones.
 \renewcommand{\paragraph}[1]{\par\textbf{#1.}\ }
 
 \newcommand{\stub}[1]{\par\noindent\textit{TODO: #1}\par}
@@ -41,11 +38,11 @@
 
 \begin{document}
 
-\title{Ripple: Do Multi-Robot Benchmarks\\Pick the Right Method?}
+\title{Ripple: Replayable Episodes for Evaluating\\Language-Model Fleet Planners}
 \author{\IEEEauthorblockN{Ethan Moosbrugger Boos}
 \IEEEauthorblockA{Georgia Institute of Technology}}
-% Teaser. Panel 3 is a schematic gap curve; the real curves replace it once
-% the sweeps have run.
+% Teaser: a request, the planner calling skills as tools, and the fleet
+% flying them. Schematic until the runs exist.
 \makeatletter
 \let\@oldmaketitle\@maketitle
 \renewcommand{\@maketitle}{\@oldmaketitle
@@ -58,81 +55,58 @@
   num/.style={circle, fill=ink, text=white, inner sep=1.2pt,
               font=\scriptsize\bfseries},
   mono/.style={font=\ttfamily\scriptsize},
-  agent/.style={circle, fill=ink, inner sep=0pt, minimum size=2.2mm},
-  landmark/.style={fill=black!35, inner sep=0pt, minimum size=1.8mm},
-  slider/.style={ink!45, line width=0.8pt}]
+  box/.style={draw=ink, fill=white, rounded corners=2pt, inner sep=3pt},
+  skill/.style={draw=classc, fill=classf, rounded corners=2pt,
+                font=\ttfamily\scriptsize, minimum width=1.55cm,
+                minimum height=0.42cm, inner sep=1pt},
+  learned/.style={skill, draw=learnc, fill=learnf}]
   % Stage panels and headers
   \fill[stage] (0,0) rectangle (5.0,4.2);
   \fill[stage] (5.3,0) rectangle (11.3,4.2);
   \fill[stage] (11.6,0) rectangle (17.6,4.2);
   \node[num] at (0.35,3.82) {1};
-  \node[hdr] at (0.6,3.82) {The benchmark};
+  \node[hdr] at (0.6,3.82) {A request};
   \node[num] at (5.65,3.82) {2};
-  \node[hdr] at (5.9,3.82) {Make it more real};
+  \node[hdr] at (5.9,3.82) {Call skills as tools};
   \node[num] at (11.95,3.82) {3};
-  \node[hdr] at (12.2,3.82) {How does the gap move?};
+  \node[hdr] at (12.2,3.82) {Fly, and replay exactly};
   \draw[->, ink, line width=1pt] (4.92,2.1) -- (5.38,2.1);
   \draw[->, ink, line width=1pt] (11.22,2.1) -- (11.68,2.1);
 
-  % Stage 1: the benchmark world
-  \draw[creamb, fill=white, rounded corners=3pt] (0.35,1.0) rectangle (4.65,3.4);
-  \foreach \a/\l in {{(1.0,1.3)}/{(1.5,2.75)}, {(2.35,2.0)}/{(3.8,2.85)},
-                     {(3.3,1.3)}/{(2.85,1.75)}} {
-    \draw[ink!40, dashed] \a -- \l;
-    \node[landmark] at \l {};
-    \node[agent] at \a {};
-  }
-  \node[mono, anchor=west] at (1.15,1.3) {agent};
-  \node[mono, anchor=west] at (1.65,2.75) {landmark};
-  \node[mono, text=black!55, anchor=north west] at (0.4,3.38)
-    {cover the landmarks};
-  \node[mono, text=black!55, align=center] at (2.5,0.5)
-    {point agents,\\exact observations};
+  % Stage 1: request and the language-model planner
+  \node[box, mono, align=left, text width=3.9cm] (req) at (2.5,2.85)
+    {Clinic C: two units of blood,\\urgent. Rooftop drop at D.};
+  \node[box, fill=learnf, draw=learnc, font=\scriptsize\bfseries]
+    (llm) at (2.5,1.55) {language-model planner};
+  \draw[->, ink!70] (req) -- (llm);
 
-  % Stage 2: vehicles, then one disturbance swept
-  \foreach \x/\name in {6.55/point, 8.3/multirotor, 10.05/fixed wing}
-    \node[mono] at (\x,2.35) {\name};
-  \node[agent] at (6.55,2.95) {};
-  \begin{scope}[shift={(8.3,2.95)}]
-    \draw[ink, line width=0.8pt] (-0.16,-0.16) -- (0.16,0.16)
-      (-0.16,0.16) -- (0.16,-0.16);
-    \foreach \x/\y in {-0.16/-0.16, 0.16/0.16, -0.16/0.16, 0.16/-0.16}
-      \draw[ink, fill=white] (\x,\y) circle (0.075);
-  \end{scope}
-  \begin{scope}[shift={(10.05,2.95)}, line cap=round]
-    \draw[ink, line width=1.6pt] (0,-0.22) -- (0,0.24);
-    \draw[ink, line width=1.6pt] (-0.3,0.05) -- (0.3,0.05);
-    \draw[ink, line width=1.2pt] (-0.12,-0.18) -- (0.12,-0.18);
-  \end{scope}
-  \draw[->, ink!50] (6.95,2.95) -- (7.85,2.95);
-  \draw[->, ink!50] (8.7,2.95) -- (9.6,2.95);
-  \node[mono] at (8.3,1.6) {noise, loss, latency, wind};
-  \fill[accent!25] (8.9,1.02) rectangle (9.9,1.18);
-  \draw[ink!45, line width=0.8pt] (6.2,1.1) -- (10.6,1.1);
-  \draw[ink, fill=white] (6.2,1.1) circle (0.07);
-  \node[mono, text=black!55] at (6.2,0.7) {none};
-  \node[mono, text=accent] at (9.4,0.7) {realistic};
+  % Stage 2: the skill library; the planner's calls
+  \node[skill] at (6.45,3.05) {route};
+  \node[skill] at (8.15,3.05) {drop};
+  \node[skill] at (9.85,3.05) {land};
+  \node[skill] at (6.45,2.45) {loiter};
+  \node[skill] at (8.15,2.45) {reload};
+  \node[learned] at (9.85,2.45) {learned};
+  \node[skill, dashed, draw=accent, fill=white, text=accent] at (8.15,1.85)
+    {+ one file};
+  \node[mono, align=left, anchor=west] at (5.6,0.85)
+    {fixed-wing 1: drop(C, blood x2)\\multirotor 2: land(D roof)};
 
-  % Stage 3: schematic gap curve, one possible outcome
-  \draw[creamb, fill=white, rounded corners=3pt] (11.95,0.3) rectangle (17.25,3.4);
-  \fill[accent!10] (14.6,0.55) rectangle (15.75,3.0);
-  \node[mono, text=accent] at (15.175,3.2) {realistic};
-  \draw[ink!70] (12.4,1.95) -- (17.1,1.95);
-  \node[rotate=90, mono, text=black!55] at (12.2,1.95) {gap};
-  \node[mono, text=learnc, anchor=west] at (12.5,3.2) {learned ahead};
-  \node[mono, text=classc, anchor=west] at (12.5,0.8) {classical ahead};
-  \fill[ink!12] plot[smooth] coordinates {(12.6,2.80) (13.4,2.78) (14.2,2.68)
-      (14.9,2.36) (15.5,1.96) (16.2,1.50) (16.9,1.18)}
-    -- plot[smooth] coordinates {(16.9,0.50) (16.2,0.90) (15.5,1.46)
-      (14.9,1.93) (14.2,2.28) (13.4,2.44) (12.6,2.48)} -- cycle;
-  \draw[ink, line width=1pt] plot[smooth] coordinates {(12.6,2.64)
-    (13.4,2.61) (14.2,2.48) (14.9,2.14) (15.5,1.71) (16.2,1.20) (16.9,0.84)};
+  % Stage 3: the same episode, byte for byte
+  \node[box, mono, align=center, text width=4.8cm] at (14.6,2.85)
+    {events, wind, and the model's\\replies, cached by prompt};
+  \draw[->, ink!70] (14.6,2.4) -- (14.6,1.85);
+  \node[box, mono, align=center, draw=accent, text=accent,
+    line width=0.8pt] at (14.6,1.4) {same run, byte for byte,\\no model calls};
+  \node[mono, text=black!50, align=center] at (14.6,0.45)
+    {every planner meets the same episode};
 \end{tikzpicture}\\[7pt]
-\parbox{0.92\textwidth}{\footnotesize Fig.~1. Starting from a standard
-benchmark task, each disturbance is increased in turn on each vehicle, and
-the gap between a learned and a classical method is measured at every level.
-The shaded band is the realistic range; the curve is one possible
-outcome. (Schematic: results pending.)}
+\parbox{0.92\textwidth}{\footnotesize Fig.~1. The planner reads a request
+and calls skills from the library, one per vehicle, with their parameters.
+Each skill is a plugin, so the library can grow and shrink during a study,
+and classical and learned versions of a skill swap behind one interface.
+With the model's replies cached, every episode replays exactly, so every
+planner meets the same one. (Schematic.)}
 \end{center}
 \vspace{-0.4em}
 }
@@ -141,26 +115,21 @@ outcome. (Schematic: results pending.)}
 \setcounter{figure}{1}
 
 \begin{abstract}
-Methods for multi-robot coordination are chosen largely by their rank on
-simulated benchmarks, where agents are points, observations are exact, and
-messages always arrive. Learned methods are mostly ranked against one another
-there, and when they are compared with classical methods, the two often receive
-different information. Whether these rankings survive the sensing noise, message
-loss, latency, and vehicle dynamics that real hardware produces, and so whether
-they choose the right method, has not been measured. We measure it in Ripple, a
-deterministic simulator built for controlled sweeps, in which learned and
-classical policies receive the same information and commands and every model is
-verified against an independent implementation or published measurements.
-Starting from cooperative navigation exactly as a standard benchmark defines it,
-we sweep each disturbance from none to beyond what real hardware produces, on
-point agents, a multirotor, and fixed-wing aircraft, across navigation,
-collision avoidance, and flocking, and measure how the gap between the learned
-and classical methods changes. \textit{[Finding: how each gap changes across its
-sweep, whether and where it changes sign relative to the realistic range, and
-which methods degrade gradually and which fail abruptly.]} \textit{[Finding: how
-far retraining under realistic conditions shifts the gap.]} All comparisons are
-between simulations; they describe the modeled effects under the tested
-conditions.
+Language models are now routinely proposed as the high-level planner for
+robot fleets, calling a library of skills as tools. They are evaluated on
+homogeneous fleets, with idealized execution, on runs that cannot be
+repeated, and rarely against classical allocators. We present Ripple, a
+deterministic multi-agent simulator in which whole episodes, the model's
+replies included, replay byte for byte at any number of threads, fixed-wing
+aircraft and multirotors share one world, and every skill is a plugin with
+swappable classical and learned versions. With it we measure four things on
+identical episodes: how much of a planner's score is noise, how often
+planners give a vehicle a task its dynamics rule out, how success changes as
+the skill library grows and shrinks, and where a language model beats an
+optimizer and an auction. The task is medical delivery by a fleet of
+fixed-wing aircraft and multirotors. \textit{[findings]}. We also re-run the
+tasks of a recent drone-swarm study on mixed fleets. All results are from
+simulation.
 \end{abstract}
 
 \IEEEpeerreviewmaketitle
@@ -168,161 +137,169 @@ conditions.
 \section{Introduction}
 \label{sec:intro}
 
-Multi-robot teams are meant to work outside the lab: quadrotors mapping a
-building, fixed-wing aircraft searching a coastline, ground vehicles sharing
-a warehouse. In each, the team's sensing is imperfect, its radios drop and
-delay messages, and its vehicles cannot move however a planner wishes. Yet
-the methods these teams run are mostly chosen in simulators that leave all of
-this out. Multi-agent reinforcement learning is developed on benchmarks built
-for speed, such as the particle environments \cite{lowe2017maddpg}, VMAS
-\cite{bettini2022vmas}, and JaxMARL \cite{rutherford2023jaxmarl}, where agents
-are points, observations are exact, and messages always arrive. Methods are
-ranked there, and the ranking guides which ones are built on and deployed.
-\emph{Does a ranking measured on such a benchmark still hold once sensing,
-communication, and the vehicle become realistic?}
+Robot foundation models split the work in two: a slow planner decides in
+language what to do next, and a fast policy does it. $\pi_{0.5}$ predicts
+``pick up the pillow'' from ``clean the bedroom'' before producing motor
+commands \cite{black2025pi05}, and GR00T N1 pairs a reasoning model with a
+fast action model in the same way \cite{nvidia2025gr00t}. The same split
+suits a fleet of vehicles. A language model reads requests and decides who
+does what, and each vehicle's autonomy and autopilot carry it out. Language
+models have been proposed for exactly this
+\cite{li2026llmmrs,kannan2024smartllm,liu2025coherent,zhang2026multiuavplat}.
 
-Some degradation is expected as noise, loss, and dynamics are added. What
-matters for choosing a method is whether they hurt one method more than
-another, and by how much. Consider a team covering a set of landmarks. A
-classical planner assigns each agent to a landmark and flies it there; with
-exact positions, the assignment minimizes total travel. With noisy
-positions, two agents at similar distances may swap targets back and forth.
-One possible outcome is that the planner collapses at a particular noise
-level while a learned policy that reacts to each observation degrades
-smoothly. Whether the benchmark picked the right method then depends on
-where that collapse falls relative
-to the noise that real positioning systems produce. The question therefore
-calls for a curve, not a single comparison: for each disturbance, how the gap
-between the two methods changes as the disturbance grows, and where the
-realistic range lies along it.
+The planner's actions are calls to skills: fly a route, drop a package,
+land, loiter. These are solved classical behaviours, and a learned one can
+sit beside them where it helps. Consider a fleet delivering blood to
+clinics, as fixed-wing drones do in Rwanda \cite{nisingizwe2022drone}. An
+urgent request arrives for a distant clinic, and another for a hospital
+rooftop nearby. A fixed-wing aircraft covers the long leg fastest and drops
+its package on a pass, but it cannot hover, has a minimum speed, and needs
+room to turn; only a multirotor can land on the roof. Existing planners
+describe a robot's
+abilities as a list of discrete skills
+\cite{kannan2024smartllm,liu2025coherent}, which says nothing about these
+limits. \emph{Do planners know what each vehicle can do, and where does a
+language model earn its cost over a classical allocator?}
 
-We measure these curves with Ripple, a deterministic multi-robot simulator
-built for controlled sweeps (Fig.~1). In Ripple, learned and classical
-policies read the same belief, built from the same sensors and messages, and
-command the same controllers, so neither side receives information the other
-lacks, a confound common in published comparisons
-(Section~\ref{sec:tasks}). Every run can be repeated exactly, so both methods
-are evaluated on identical episodes, and each physical effect can be switched
-on alone. Each model the study relies on is checked against an independent
-implementation or published measurements.
+Answering this is harder than it looks, because the evaluations do not
+repeat. A model at temperature zero still gives different replies from run
+to run, enough to reorder a leaderboard \cite{he2025nondeterminism,atil2024nondeterminism}, and the fleet studies closest to ours report
+a handful of flights or a single pass over their tasks
+\cite{ludwig2026cola,iannoli2026webofdrones,zhang2026multiuavplat}. Ripple
+keys every random number by what it is for, gives the same bytes at any
+number of threads, and, with the model's replies cached by prompt, replays a
+whole episode exactly. Two planners can then be compared on the same
+episodes, and a planner's own variation measured apart from the world's.
 
-The study starts from cooperative navigation exactly as a standard benchmark
-defines it: Ripple reproduces the benchmark's motion step by step, so the
-starting ranking can be checked by anyone. From there, both methods switch to
-the velocity command a real vehicle takes, and we sweep sensing noise,
-message loss, latency, and, for the aircraft, wind, each from none to well
-beyond what real hardware produces, on point agents, a Crazyflie quadrotor,
-and fixed-wing aircraft, across navigation, collision avoidance, and
-flocking. For each sweep we report the gap curve over ten training seeds,
-whether and where it changes sign relative to the realistic range, and the
-failures behind it.
-Finally, we train the learned policies under realistic conditions to see how
-far that shifts their curves.
-
-Our central contribution is this measurement: gap curves between learned and
-classical multi-robot methods across realistic disturbances and vehicles,
-starting from a benchmark's own task, with both methods given the same
-information and commands. It rests on a second contribution, Ripple, in
-which vehicle models, sensing, communication, and external autopilots share
-one deterministic pipeline and each model is checked against an outside
-source. \stub{Summarize the findings: how each gap changed across its sweep,
-any changes of sign and where they fall relative to the realistic range, and
-which methods fail abruptly. Do not assume a change of sign before the
-experiments show one.}
+Our contributions are Ripple as an instrument for evaluating language-model
+fleet planners, and four measurements made with it: how much of a planner's
+score is noise; how often planners give a vehicle a task its dynamics rule
+out, on mixed fixed-wing and multirotor fleets; how success changes as the
+skill library grows and shrinks, and when a learned skill replaces its
+classical twin; and where a language model beats an optimizer and an
+auction. \stub{One or two sentences of findings, once they exist.}
 
 \section{Related Work}
 \label{sec:related}
 
-\paragraph{Multi-agent simulators}
-PettingZoo standardized how a learner steps a multi-agent environment
-\cite{terry2021pettingzoo}, and Isaac Gym, VMAS, and JaxMARL moved simulation
-onto the GPU
-\cite{makoviychuk2021isaacgym,bettini2022vmas,rutherford2023jaxmarl}. These
-tools are moving toward physical fidelity, with actuator models and sensors
-in Isaac Lab \cite{mittal2025isaaclab} and drone swarms in Crazyflow
-\cite{schuck2026crazyflow} and MuJoCo-Drones-Gym \cite{tayal2026mujocodrones}.
-Communication is usually an action channel or part of the observation; queued
-delivery with delay and loss comes from co-simulation with a network simulator
-\cite{burmeister2025defiance}. Vehicle dynamics come from dedicated tools such
-as JSBSim \cite{berndt2004jsbsim}, the autopilots' own simulators
-\cite{ardupilotsitl,px4gazebo}, and RotorS \cite{furrer2016rotors}. These tools
-aim at training throughput or at one vehicle's physics. Ripple aims instead at
-controlled comparison: one factor changed at a time, with every run repeatable.
+\paragraph{Language models as planners for robot teams}
+Language models assign subtasks by skill \cite{kannan2024smartllm},
+negotiate plans among robots \cite{mandi2024roco}, and coordinate
+heterogeneous teams through rounds of feedback
+\cite{chen2024scalable,liu2025coherent}, mostly in indoor simulators
+\cite{li2026llmmrs}. Heterogeneity there means different discrete skills,
+not different dynamics. For drones, language models call tools over
+ArduPilot \cite{iannoli2026webofdrones,ludwig2026cola} and PX4
+\cite{nazzari2025tacos}, plan choreographies corrected by a safety filter
+\cite{schuck2025swarmgpt}, and are benchmarked at scale on MultiUAV-Plat,
+whose 1{,}500 tasks leave flight dynamics out of scope
+\cite{zhang2026multiuavplat}. The studies with real autopilots are small, the
+large one is idealized, and every fleet is of one vehicle type. We found no
+prior work that evaluates a language-model planner on a mixed fixed-wing and
+multirotor fleet.
 
-\paragraph{Fidelity and transfer}
-Several projects train in a fast simulator and test somewhere more
-realistic: maritime game policies on uncrewed surface vessels
-\cite{crowley2025pyquaticus}, a connected-vehicle benchmark that separates
-the loss from a different control stack from the loss from a more realistic
-environment \cite{beerwerth2026zeroshot}, and policies moved between aircraft
-through per-aircraft controllers \cite{sun2026bvrsim}. Labiosa and Hanna
-ablated which simplifications let robot soccer policies transfer, and matched
-a well-tuned hand-written behavior \cite{labiosa2025abstract}. Truong et
-al.\ found that a lower-fidelity simulator transferred better than a
-higher-fidelity one for legged visual navigation
-\cite{truong2022rethinking}, so a more detailed simulation is not
-automatically closer to reality. These studies ask what makes a policy
-transfer. We ask whether added realism reorders methods.
+\paragraph{Language models over skills}
+Language models choose among a robot's described skills
+\cite{ahn2022saycan}, write programs that call them
+\cite{liang2023codeaspolicies}, grow libraries of them
+\cite{wang2023voyager}, pick between a learned and a classical skill for each
+subtask \cite{wang2024robogen}, and hand problems to classical planners
+\cite{liu2023llmp,chen2023autotamp,kambhampati2024llmmodulo}. Documentation
+alone lets a model use new tools \cite{hsieh2023tooldoc}.
+For software agents, choosing the right skill gets harder as the library
+grows \cite{chen2026skillscaling}. We found no robotics study that measures
+plan success against library size, removes skills one at a time, or swaps a
+classical and a learned version of the same skill under one planner.
 
-\paragraph{Learned and classical methods across simulators}
-MASP compares a MAPPO-trained planner with Hungarian-assignment planners on a
-particle navigation task and on simulated quadrotors, and finds the learned
-planner faster in both \cite{yang2025masp}. Tolstaya et al.\ trained flocking
-controllers on point masses and on quadrotors in AirSim, with classical
-controllers as bounds \cite{tolstaya2020gnn}. In both, the environments
-differ in several ways at once, and the aim is a better method. Kadian et
-al.\ measure how well simulation predicts real-robot results, for a single
-agent and learned policies only \cite{kadian2020sim2real}, and Li et al.\
-find that robustness of cooperative learning to one perturbation does not
-carry over to another \cite{li2025robustness}. Reviews of MARL evaluation
-find inconsistent seeds, metrics, and baselines
-\cite{gorsane2022evaluation,papoudakis2021benchmarking}, and SMACv2 showed
-that a fixed benchmark can be solved without the observations it provides
-\cite{ellis2023smacv2}. In contrast, we change one modeled effect at a time,
-give learned and classical methods the same information and commands, and
-start from a benchmark's own task.
+\paragraph{Reproducible evaluation}
+Learning results swing with seeds and evaluation choices
+\cite{agarwal2021precipice,gorsane2022evaluation}, and agent benchmarks now
+report run-to-run variance rather than remove it \cite{yao2024taubench,bjarnason2026randomness}. Caching and replaying model
+calls is established for software agents \cite{aisi2024inspect,chawla2026chronicle}, but a cache keyed on the prompt only works if everything
+upstream of the prompt is deterministic. Robot simulators document
+determinism only for one version on one machine, and some vary across
+parallel environments \cite{mujocodocs,isaaclabdocs,zhang2026gpusimbench}. We found no embodied benchmark in which whole episodes, model
+calls included, replay byte for byte.
 
 \section{Problem Setup}
 \label{sec:setup}
 
-We compare a learned method $L$ and a classical method $C$ on a task with a
-primary metric $J$, where higher is better. A sweep varies one disturbance,
-such as the standard deviation of position noise, over levels
-$0 = x_0 < x_1 < \dots < x_K$, where $x_0$ is the undisturbed setting.
-Each training seed $s$ yields one learned policy. Both methods run the same
-$E$ evaluation episodes at every level, and the seed's gap at level $x_k$ is
-the learned policy's average lead,
-\begin{equation}
-\Delta_s(x_k) = \frac{1}{E}\sum_{e=1}^{E}
-  \left[ J_{L,s}(x_k, e) - J_C(x_k, e) \right].
-\end{equation}
-The function $x \mapsto \Delta_s(x)$ is the seed's gap curve, and the gap
-curves of ten seeds are the primary result. Published specifications give a
-realistic range $R$ for each disturbance. For one effect, the ranking holds
-if the sign of $\Delta_s(x_0)$ holds at every level inside $R$. On point
-agents, $x_0$ already uses velocity commands; the switch from the
-benchmark's force actions is measured as a step of its own, so its effect
-is not mixed into any sweep. When the sign changes between neighbouring
-levels $x_k$ and $x_{k+1}$, we report the change as bracketed by them, with
-the number of seeds that show it. Vehicles do not form a continuous axis, so
-each vehicle rung has its own sweeps, and rungs are compared at matching
-levels.
+\paragraph{The fleet and missions}
+A mixed fleet of fixed-wing aircraft and multirotors at one depot delivers
+medical supplies to clinics and rooftops. Fixed-wing aircraft fly long legs
+and drop packages by parachute; multirotors serve short legs and rooftops,
+where they land. Requests arrive in plain language (urgent and routine
+deliveries, cancellations, clinics closing for a time), and events (a
+vehicle fails, a zone closes, the wind changes) arrive from a scripted
+stream. \stub{Distances, fleet sizes, and request rates, based on published
+operations.}
+
+\paragraph{Skills}
+A skill is an autonomy plugin with a short description and typed parameters,
+for example \texttt{drop(clinic, item)} or \texttt{land(site)}. Each
+vehicle runs one skill at a time over its own controller and dynamics. Some
+skills have both a classical and a learned version behind the same
+interface. Each vehicle comes with a card of its limits (minimum speed, turn
+radius, whether it can hover, endurance), given to the planner as text, as
+numbers, or not at all.
+
+\paragraph{The planner}
+When a request or event arrives, the planner sees the open requests, each
+vehicle's reported state, and the skill descriptions, and returns one skill
+call per vehicle. The calls are parsed and checked against the parameter
+types; a call a vehicle cannot run is counted and refused. A separation
+guard keeps vehicles apart.
+
+\paragraph{Tasks}
+Every delivery task also has a structured form, so the optimizer and the
+auction plan from the same information as the language model, and a parser
+is the reference on requests that fit a template. To test whether published
+results hold under replay, we also re-run the coverage and formation tasks
+of Web-of-Drones with its published prompts \cite{iannoli2026webofdrones},
+with and without fixed-wing aircraft in the fleet.
+
+\paragraph{Scoring}
+Each mission type has one primary score, fixed in advance and computed by
+code. Capability violations and separation losses are reported beside it.
+Intervals are bootstrapped over episodes, and paired comparisons use the
+same episodes for every planner.
 
 \section{Ripple}
 \label{sec:system}
 
-Ripple began as a Rust port of the C++ simulator SCRIMMAGE
-\cite{demarco2018} and agrees with SCRIMMAGE to within floating-point
-rounding on every compared mission (Table~\ref{tab:checks-main}); known
-defects in SCRIMMAGE are fixed in both for the comparison. Four of Ripple's
-properties carry the study.
+Ripple began as a Rust port of SCRIMMAGE \cite{demarco2018}. Four
+properties make it suited to growing a skill library and comparing planners
+on it.
 
-\paragraph{One deterministic tick}
-Each tick runs fixed phases (Fig.~\ref{fig:tick}), and every phase finishes
-for every agent before the next begins. Output is byte-identical at any
-number of CPU workers and with recording on or off, so learned and classical
-policies can be evaluated on exactly the same episodes, and any run can be
-replayed.
+\paragraph{Skills are plugins}
+Every behaviour is a plugin with a parameter struct, registered in one line
+and selected in a mission file. Typed ports check units and frames between a
+skill, its controller, and its vehicle when a mission loads, so one skill can
+drive vehicles of different kinds, and a classical and a learned version of
+a skill are interchangeable. Fixed-wing aircraft on a 6-DOF model and
+multirotors fly in the same world. \stub{Lines of code per skill in the
+library.}
+
+\paragraph{Determinism}
+Each tick runs fixed phases (Fig.~\ref{fig:tick}), and output is
+byte-identical at any number of workers. Every random number is keyed by
+what it is for (seed, agent, plugin, tick, quantity), so two planners on the
+same episode meet the same wind and the same events, and, with the
+planner's calls cached by prompt, an experiment reruns byte for byte without
+contacting a model.
+
+\paragraph{Speed}
+\prov A 60~s mission with three Rascals on the 6-DOF model under their
+autopilots, at 100 steps per second, runs in about 40~ms on one core of an
+Apple M2 Pro, including writing the recording. Sweeps over any mission
+parameter and seed are built in, and run in parallel shards.
+
+\paragraph{Checked models}
+Each model is checked against an independent implementation. Over 100
+generated scenarios Ripple agrees with SCRIMMAGE to $2.8\times10^{-11}$~m,
+and the fixed-wing aircraft and its autopilot agree to
+$2.3\times10^{-13}$~m. This shows the equations and timing came through
+intact, not that they match a real aircraft.
 
 \begin{figure}[t]
 \centering
@@ -348,331 +325,73 @@ replayed.
   % Back to the top for the next tick
   \draw[flow] (p7.south) -- ++(0,-0.3) -| node[mono, pos=0.25, above]
     {next tick: time advances by $\Delta t$} (-0.0,4.35) -- (p0.west);
-  % Where each disturbance enters
-  \node[tag, anchor=west] at ([xshift=1mm]p2.east) {dynamics, wind};
-  \node[tag, anchor=west] at ([xshift=1mm]p3.east) {noise};
-  \node[tag, anchor=west] at ([xshift=1mm]p5.east) {loss, latency};
+  % Where the planner's skill calls and the vehicles enter
+  \node[tag, anchor=west] at ([xshift=1mm]p0.east) {skill};
+  \node[tag, anchor=west] at ([xshift=1mm]p2.east) {vehicle, wind};
 \end{tikzpicture}
-\caption{The main phases of one tick in Ripple (spawning, removal, and
-output omitted). Each phase finishes for every agent before the
-next begins, and controllers and motion repeat for each substep. Autonomy,
-learned or classical, reads only the agent's belief, which estimation builds
-from sensor readings and delivered messages. Each disturbance enters at one
-phase (red).}
+\caption{One tick in Ripple. Each phase finishes for every agent before the
+next begins. The skill a planner calls runs in the autonomy phase.}
 \label{fig:tick}
 \end{figure}
 
-\paragraph{Truth, measurements, and belief}
-Sensors read the true state and produce measurements; estimators turn
-measurements and received messages into each agent's belief; policies and
-controllers read only belief. A disturbance therefore reaches a decision
-only through what the agent could have measured or been told, and learned
-and classical policies receive identical information. In the noise sweeps the
-estimator copies the latest reading into belief, so belief is the measurement
-and a curve reflects the noise itself rather than the quality of a filter.
-
-\paragraph{Controlled sweeps}
-Every physical effect is an optional parameter of its model, off by default,
-so earlier results stay valid as effects are added. A sweep file varies any
-mission parameter across levels and seeds and runs in parallel shards, so a
-change in a curve can be attributed to the one factor that changed.
-
-\paragraph{Checked models}
-Each model the study uses is checked against an external source
-(Table~\ref{tab:checks-main}). Agreement with another implementation shows
-that the equations, conversions, and timing came through intact; agreement
-with a real vehicle requires measurements, which the Crazyflie's parameters
-have and the other models do not yet.
-
-\begin{table*}[t]
-\centering
-\small
-\caption{What each component of the study is checked against. Results come
-from one release run of \texttt{reference/suite.py}, retained in
-\texttt{paper/data/}; rows marked planned are not yet run.}
-\label{tab:checks-main}
-\begin{tabularx}{\textwidth}{@{}P{0.2\textwidth}P{0.34\textwidth}X@{}}
-\toprule
-Component & Checked against & Result \\
-\midrule
-Simulation core & SCRIMMAGE: 15 missions, 100 generated scenarios, every
-  message delivery, plugin output, and noise sample & Agree to
-  $2.8\times10^{-11}$~m at worst; 12 of 12 planted porting bugs caught \\
-Determinism & The same missions at 1, 2, and 8 workers, recording on and off &
-  Byte-identical on 39 missions \\
-Benchmark point agents & MPE2 v1.1.1 \texttt{simple\_spread\_v3}: 100 episodes
-  replayed with the same forces & All 100 bit-identical, 49 with contact;
-  returns within $1.4\times10^{-14}$ \\
-Multirotor rotors & RotorS's motor and rotor code on 480 sampled states &
-  Within $4\times10^{-15}$~N and $7\times10^{-16}$~N\,m \\
-Multirotor flight & Crazyflow, an independent model, with the same constants
-  and motor commands & The same 3~s tumbling trajectory to
-  $3\times10^{-12}$~m, rotor drag off \\
-Crazyflie parameters & Its measured identification \cite{forster2015crazyflie}
-  & Mass, inertia, and drag as published; thrust within 10.4\% across the
-  measured range \\
-Kinematic aircraft & The 6-DOF Rascal flown through the same maneuvers &
-  Speeds, acceleration, climb, descent, and turn rate within 3\% \\
-Fixed-wing stall tables & JSBSim's Rascal tables on matched inputs & Planned
-  \\
-Imported policies & The training simulator on identical observations &
-  Planned \\
-\bottomrule
-\end{tabularx}
-\end{table*}
-
-\section{Study Design}
-\label{sec:tasks}
-
-\subsection{Vehicles}
-
-\paragraph{Point agents}
-The benchmark's point agents (MPE2's particle model, with its damping and
-soft contact force) reproduce MPE2 step by step
-(Table~\ref{tab:checks-main}). On the ladder of vehicle rungs, the same point
-agents follow a velocity command through a fixed controller.
-
-\paragraph{Multirotor}
-The main realistic vehicle is a Crazyflie, the quadrotor on which learned
-multi-robot policies are most often flown
-\cite{batra2021quadswarm,chen2023stgnn,chen2025open}. Its mass, inertia,
-drag, and thrust and torque coefficients come from bench measurements of the
-real vehicle \cite{forster2015crazyflie}; motor lag, rotor drag, and the
-rolling moment follow RotorS \cite{furrer2016rotors}. A cascaded controller
-flies it from the velocity command, reaching a 1~m/s step with a 1.0~s rise
-and 20\% overshoot at 500~Hz. Its main uncertainty is motor lag: an
-independent identification of a similar vehicle gives a lag twice as long
-\cite{schuck2026crazyflow}, so the lag is itself worth sweeping.
-
-\paragraph{Fixed wing}
-Fixed-wing aircraft are the stress case: they cannot stop, hold a position,
-or match a neighbour's velocity at any speed. Two models separate the causes
-of a failure. A kinematic aircraft has only speed, climb, and bank limits and
-turns as a coordinated turn does, with its limits fitted to the Rascal; a
-6-DOF model flies the Rascal's coefficient
-tables, with stall tables after JSBSim, under ArduPilot's autopilot run in
-lockstep or a native controller. A failure on both points to the inability
-to stop; one that appears only with 6-DOF dynamics points to the dynamics,
-or to the controller that flies them.
-For aircraft, the velocity command becomes a heading and a speed held above
-the minimum airspeed, so a command to stop becomes a loiter.
-
-\subsection{Tasks}
-
-We use three standard tasks, each with published learned results and a
-well-established classical method, and each most sensitive to one factor
-(Fig.~\ref{fig:tasks}).
-
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}[x=1cm,y=1cm]
-  \fill[tile] (0,0) rectangle (2.7,2.4);
-  \fill[tile] (2.95,0) rectangle (5.65,2.4);
-  \fill[tile] (5.9,0) rectangle (8.6,2.4);
-  \node[tiletext] at (1.35,1.2) {top-down:\\agents and\\landmarks};
-  \node[tiletext] at (4.3,1.2) {top-down:\\crossing\\a circle};
-  \node[tiletext] at (7.25,1.2) {top-down:\\flock and\\radio links};
-  \node[font=\scriptsize\bfseries] at (1.35,-0.25) {(a) Navigation};
-  \node[font=\scriptsize\bfseries] at (4.3,-0.25) {(b) Avoidance};
-  \node[font=\scriptsize\bfseries] at (7.25,-0.25) {(c) Flocking};
-\end{tikzpicture}
-\caption{The three tasks, as trajectories from Ripple runs. (Placeholder:
-plots pending.)}
-\label{fig:tasks}
-\end{figure}
-
-\paragraph{Cooperative navigation}
-$N$ agents must cover $N$ landmarks without colliding, as in the particle
-environments' \emph{spread} task \cite{lowe2017maddpg}. The classical solution
-assigns agents to landmarks optimally \cite{kuhn1955hungarian}, or plans the
-assignment and trajectories together \cite{turpin2014capt}. Our baseline
-re-solves the assignment at every step from each agent's own belief and
-steers the point where the agent would coast to a stop: with the benchmark's
-damping, an agent at $p$ with velocity $v$ pushed with force $F$ for one step
-$\Delta t$ comes to rest at $p + 4v\Delta t + 4F\Delta t^2$, and the
-controller applies the force that puts that point on the landmark, clipped to
-the benchmark's limit. Every number comes from the benchmark, so the baseline
-has no fitted parameters, and written against the benchmark implementation
-it must reproduce Ripple's scores. We report the benchmark return, the
-landmarks occupied, collisions, and distance flown against the optimal
-assignment's straight-line cost. The main factor is sensing; communication is
-not varied, because the benchmark's agents observe one another directly.
-
-\paragraph{Circle-crossing collision avoidance}
-Agents start on a circle and fly to the opposite side, so all of them meet
-in the middle. The classical method is reciprocal velocity obstacles (ORCA)
-\cite{vandenberg2011orca,alonsomora2010nhorca}. Several learned policies are
-reported to beat ORCA
-\cite{chen2017cadrl,long2018towards,everett2021ga3c,fan2020distributed}, but
-the comparisons are less clear than they appear: the median gain was small
-\cite{chen2017cadrl}, ORCA's radii were enlarged to absorb discrete-time
-collisions \cite{everett2021ga3c}, and a laser-scanner policy was compared
-with an ORCA given its neighbours' true states \cite{long2018towards}. Here
-both read the same belief, and the main factor is dynamics. Aircraft fly a
-holding pattern at the goal. We measure success, collisions, deadlocks, extra
-time, and closest approach, including the worst cases.
-
-\paragraph{Flocking with limited communication}
-Agents start with random velocities and must align and stay together,
-communicating only with neighbours in range. The classical methods are
-Reynolds' rules \cite{reynolds1987flocks} and Olfati-Saber's algorithms
-\cite{olfatisaber2006flocking}, which have flown outdoors on 30 drones
-\cite{vasarhelyi2018optimized}. Learned flocking has been tested under fading
-and delay \cite{gao2025airgnn,marino2024gated}, against expert controllers
-rather than classical rules. The main factor is communication. Aircraft flock
-around a moving reference point. We measure velocity alignment, the number of
-separate groups, closest approach, and messages sent.
-
-\subsection{Policies and Training}
-
-Ripple has no training code. Policies are trained with existing libraries
-\cite{yu2022mappo,bettini2024benchmarl} in fast simulators
-\cite{bettini2022vmas,rutherford2023jaxmarl,terry2021pettingzoo}, exported,
-and run inside Ripple as an autonomy plugin with a fixed thread count. Every
-random number in Ripple is a function of what it is for (seed, agent, plugin,
-tick, and target), so runs are deterministic and paired runs of two methods
-draw the same noise on the same measurements. To train at the
-realistic setting, an outside learner steps Ripple through a standard
-multi-agent interface \cite{terry2021pettingzoo}. A parity test checks each
-task's observations against the training simulator, and we reproduce one
-published result, MAPPO on the spread task \cite{papoudakis2021benchmarking},
-with its authors' code, as a check on our training setup. Each learned method
-is trained three ways: at the simplest setting, at the realistic setting, and
-with the setting randomized. Comparing them separates a policy trained in the
-wrong place from a method that is fragile. Classical methods get the same
-tuning budget, counted in evaluations; the navigation baseline has nothing to
-tune.
-
-\subsection{Sweeps and Evaluation}
-
-Each disturbance is swept alone on each rung, then all together, from none
-to well beyond what real hardware produces, with levels spaced finely near
-the realistic range (Fig.~\ref{fig:ranges}). The range comes from published
-sensor and radio specifications, published operating limits for wind, or
-ArduPilot software-in-the-loop runs. We record the turn rates, actuator
-saturation, and message ages actually reached, since a sweep that never
-reaches an effect's regime cannot show the effect is unimportant.
-
-Each task's primary metric is chosen in advance: the benchmark's return for
-navigation, success for collision avoidance, and velocity alignment for
-flocking; other outcomes are reported separately. Each learned configuration
-uses ten training seeds, and seeds, not episodes, are the independent units.
-Each method's own curve is summarized with interquartile means and stratified
-bootstrap intervals \cite{agarwal2021precipice,gorsane2022evaluation}. Tests
-cover one comparison chosen in advance per question below, corrected for
-multiplicity; everything else is exploratory. Event counts (collisions,
-deadlocks, assignment switches) are reported at every level, and replays are
-inspected near any change of sign or abrupt fall.
-
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}[x=1cm,y=1cm]
-  \fill[tile] (0,0) rectangle (8.6,2.6);
-  \node[tiletext] at (4.3,1.3) {one axis per disturbance:\\
-    position noise, message loss, latency, wind;\\
-    benchmark default at zero, realistic band shaded,\\
-    sweep levels as ticks, with sources};
-\end{tikzpicture}
-\caption{The sweeps against the realistic range. Each axis runs from the
-benchmark's setting, no disturbance, to beyond what real hardware produces;
-the shaded band comes from published specifications, and the ticks are the
-levels we evaluate. (Placeholder: figure pending.)}
-\label{fig:ranges}
-\end{figure}
-
 \section{Experiments}
-\label{sec:learning}
+\label{sec:experiments}
 
-The experiments answer five questions. For each, we recorded a prediction
-before the main runs, derived from what each method assumes, and we report
-results that contradict a prediction as such:
-\begin{enumerate}
-\item Does a simple classical baseline belong beside learned methods on the
-benchmark?
-\item Does the navigation ranking survive realistic sensing?
-\item Do fixed-wing aircraft reverse the collision-avoidance ranking, and
-why?
-\item Does lossy, late communication change which method flocks better?
-\item How far does training under realistic conditions shift the learned
-curves?
-\end{enumerate}
+\paragraph{Setup}
+\stub{Missions, fleet, skills, planners, numbers of episodes.} Planners are
+several pinned language models from at least two commercial families and
+one open-weights model, a ReAct agent, the prompting schemes of SMART-LLM
+and HMAS-2 \cite{kannan2024smartllm,chen2024scalable}, an allocation
+optimizer, and an auction. Prompts are tuned on development scenarios only,
+and the test scenarios, written first, are run once with frozen prompts; we
+report how many prompt versions were tried. Planner calls are cached, so all
+results rerun exactly.
 
-\subsection{Does a classical baseline belong on the benchmark?}
-Learned results on the spread task are usually reported against one another,
-without a classical reference \cite{papoudakis2021benchmarking}, and a
-learned policy has been compared with optimal assignment only in its
-authors' own environment, where it came close but did not match it
-\cite{muthusamy2024unlabeled}. We compare MAPPO, trained with published
-settings, with the assignment baseline at the benchmark's own setting, and
-expect the baseline to match or exceed it on coverage and path cost. We then
-repeat the comparison with both methods on velocity commands, the learned
-one retrained; this links the benchmark's ranking to the vehicle rungs.
+\subsection{How much of a planner's score is noise?}
+We check that every episode gives the same bytes at 1, 2, and 8 workers and
+with visualization on or off. We then query the models live several times on
+the same episodes and split the spread in scores into the model's own
+variation and the world's, using the keyed random numbers to hold one fixed
+while the other varies. \stub{Results pending.}
+
+\subsection{Do planners know what each vehicle can do?}
+On mixed fleets, we count calls that give a vehicle a task its dynamics rule
+out, as the share of fixed-wing aircraft grows, for each planner and with
+the vehicle cards absent, in text, or in numbers. Within one class of
+airframe, adding dynamic detail barely changed outcomes in our trials;
+between classes it decides what a vehicle can do at all. \stub{Results
+pending.}
+
+\subsection{How does success change with the skill library?}
+We grow the library one skill at a time, remove skills one at a time, and
+replace a classical skill with its learned twin with everything else held
+fixed, measuring the primary score beside the lines of code each skill
+took. We also vary how skills are described (full, terse, misleading,
+missing) and how coarse they are, from raw waypoints to whole behaviours.
 \stub{Results pending.}
 
-\subsection{Does the navigation ranking survive realistic sensing?}
-Assignment should hold until the noise is comparable to the differences
-between agents' distances to their landmarks, then fall sharply as agents
-swap targets; MAPPO should degrade gradually. We expect the gap to change
-sign within the error of consumer satellite positioning, and count
-assignment switches and path cost to explain it. \stub{Results pending.}
-
-\subsection{Do fixed-wing aircraft reverse collision avoidance?}
-ORCA assumes an agent can slow down or stop. Aircraft held near constant
-speed settle on parallel tracks without resolving the conflict
-\cite{durand2018csorca}, and we found no learned versus classical comparison
-on fixed-wing aircraft. We expect the gap at zero disturbance to have the
-opposite sign on the fixed-wing rungs from the point-agent rung, and the
-multirotor, which can nearly stop, to stay close to the point agents. If ORCA
-also fails on the kinematic aircraft, the inability to stop is the cause; if
-only on the 6-DOF aircraft, the dynamics are. We count deadlocks and closest
-approach. \stub{Results pending.}
-
-\subsection{Does lossy communication change who flocks better?}
-A learned flocking controller's advantage comes from information passed over
-several hops: Tolstaya et al.'s graph network beat a local controller at a
-short communication range, where that information matters most
-\cite{tolstaya2020gnn}. Lost and late messages degrade it, while the
-classical rules use only direct neighbours. We expect the gap to change sign
-within the loss and delay of real low-power radios. \stub{Results pending.}
-
-\subsection{How far does realistic training shift the curves?}
-Training under realistic or randomized conditions removes the learned
-policy's unfamiliarity with the disturbance, while a classical method's
-broken assumption remains. We expect it to shift the learned gap curves in
-their favour, moving any change of sign toward larger disturbances, without
-removing the loss. We compare the three training conditions as groups of ten
-seeds. \stub{Results pending.}
+\subsection{Where does a language model earn its cost?}
+On the same episodes with scripted events, we rank every planner, with
+intervals and the probability that one beats another. Requests either fit a
+template, where a parser and the optimizer are the reference, or do not
+(``clinic D's generator failed; move its vaccines to E before they
+spoil''). We expect the optimizer to win on the first and the model to be
+needed on the second \cite{choudhury2020scoba}. \stub{Results pending.}
 
 \section{Discussion and Future Work}
-\label{sec:limits}
+\label{sec:discussion}
 
-\stub{Summarize what the gap curves show across the three tasks and the
-vehicle rungs: where the benchmark's ranking held, where it changed, which
-factor changed it, and what realistic training recovered.}
+\stub{What the experiments show, in a few sentences.}
 
-Every comparison in this study is between simulations. The ladder measures
-whether a simplified benchmark predicts what a checked, more detailed
-simulation says, not what real vehicles would do, and a more detailed
-simulation is not automatically closer to reality
-\cite{truong2022rethinking}. The results are therefore guidance within the
-tested models and regimes. Where a model's source was measured on hardware,
-as the Crazyflie's parameters were \cite{forster2015crazyflie}, matching that
-source carries some of its evidence. The multirotor's motor lag is uncertain
-by a factor of two, and spin and propeller wash over a wing are not modeled.
-
-Several directions follow. A few real flights, such as three Crazyflies on
-the navigation task, would test the multirotor rung directly, and measured
-flight data for a fixed-wing aircraft would do the same for the aircraft
-rungs. Gusts, larger teams, and further tasks would extend the sweeps.
-More broadly, we hope that reporting a gap curve with its realistic range,
-rather than a single ranking, becomes a common way to compare multi-robot
-methods, so that a benchmark result says how far it can be trusted.
+All results are from simulation. The models are checked against independent
+implementations, not flight data. Flying the same planners and skills on a
+few small quadrotors is the natural next step.
 
 \section*{Generative AI Disclosure}
 
-Claude (Anthropic) assisted with implementation, running the experiments,
-checking sources, and drafting text from retained data. OpenAI Codex
-assisted with revising the paper's framing and evaluation plan.
+Claude (Anthropic) assisted with implementation, checking sources, and
+drafting text. OpenAI Codex assisted with revising the paper's framing and
+evaluation plan.
 \stub{Update this statement to reflect actual assistance and author review,
 following the selected venue's policy.}
 
@@ -681,20 +400,22 @@ following the selected venue's policy.}
 \section{Determinism, Cost, and Reproduction}
 \label{app:self}
 
-Output is byte-identical across 1, 2, and 8 workers, with and without
-recording and tracing, and whether a scenario comes from a YAML file or Rust;
-across Linux/amd64 and macOS/arm64, events and summaries are identical and
-trajectories differ by at most $2.4\times10^{-12}$~m. Spatial queries from a
-grid and message routing by subscriber make a 4{,}096-agent step 2.4 and 40
-times faster than the pairwise designs they replace, with identical output.
-On one core, Ripple runs 1.04 to 1.6 times faster than single-threaded
-SCRIMMAGE and uses 2.1 to 6.3 times less memory. Every verification check in
-this paper comes from one command, run in a fresh copy of the Ripple
-repository next to a SCRIMMAGE checkout:
+A run gives the same bytes on 1, 2, or 8 workers, with recording and
+tracing on or off, and whether the scenario is written in YAML or in Rust.
+Between Linux on amd64 and macOS on arm64, events and summaries match
+exactly, and trajectories differ by at most $2.4\times10^{-12}$~m.
+
+Large fleets stay cheap. Ripple routes messages by subscriber: when each of
+4{,}096 aircraft sends a message, the step takes 9.4~ms, against 378~ms in
+SCRIMMAGE. A spatial grid makes collision checks among 4{,}096 agents 2.4
+times faster than testing every pair, with the same result.
+
+To reproduce every check in this paper, clone Ripple next to a SCRIMMAGE
+checkout and run
 \begin{verbatim}
 python3 reference/suite.py --release --retain
 \end{verbatim}
-\texttt{reference/README.md} documents each check.
+\texttt{reference/README.md} describes each check.
 
 \bibliographystyle{plainnat}
 \bibliography{../references}

@@ -33,5 +33,12 @@
  {"key": "aisi2024inspect", "repositories": ["https://github.com/UKGovernmentBEIS/inspect_ai.git"], "note": "Documentation site, no PDF; paper.md is a text copy of the caching page."},
  {"key": "mujocodocs", "repositories": [], "note": "Documentation, no PDF; paper.md is a text copy of the page."},
  {"key": "isaaclabdocs", "repositories": [], "note": "Documentation, no PDF; paper.md is a text copy of the page."},
- {"key": "nisingizwe2022drone", "repositories": [], "note": "The Lancet Global Health 10(4):e564-e569, doi 10.1016/S2214-109X(22)00048-1. Open access, but the Lancet site blocks scripted downloads and there is no PubMed Central copy; paper.pdf was saved from a browser and added by hand (2026-10-20)."}
+ {"key": "nisingizwe2022drone", "repositories": [], "note": "The Lancet Global Health 10(4):e564-e569, doi 10.1016/S2214-109X(22)00048-1. Open access, but the Lancet site blocks scripted downloads and there is no PubMed Central copy; paper.pdf was saved from a browser and added by hand (2026-10-20)."},
+ {"key": "yang2025autohmallm", "repositories": [], "note": "IEEE TCCN 11(2):987-998, doi 10.1109/TCCN.2025.3528892. Paywalled, no arXiv version; paper.pdf was saved from a browser and added by hand (2026-10-22)."},
+ {"key": "yuan2025nelv", "pdf_url": "https://arxiv.org/pdf/2510.21739", "repositories": []},
+ {"key": "amass2025", "repositories": [], "note": "A funded project with no published results as of 2026-10-22. Project page https://projekte.ffg.at/projekt/5125059; kickoff slides https://www.ffg.at/sites/default/files/allgemeine_downloads/thematische%20programme/Mobilitaet/Take%20Off/04_TO_AS2023_AMASS_dApolito_25032025.pdf (both block scripts). Check AIT's publications for its outputs before submitting."},
+ {"key": "rivera2025fleet", "pdf_url": "https://arxiv.org/pdf/2510.07417", "repositories": []},
+ {"key": "yang2024safetychip", "pdf_url": "https://arxiv.org/pdf/2309.09919", "repositories": []},
+ {"key": "vimalkanth2026houserules", "pdf_url": "https://openreview.net/pdf?id=plGCWNnOZh", "repositories": [], "note": "NeurIPS 2026 NEmo workshop oral; no arXiv version as of 2026-10-23. Page https://neurips.cc/virtual/2026/161901. OpenReview refuses scripted downloads (403); save the PDF by hand."},
+ {"key": "laban2025lost", "pdf_url": "https://arxiv.org/pdf/2505.06120", "repositories": []}
 ]

@@ -11,6 +11,7 @@ use ripple_core::plugin::PluginRegistry;
 fn main() -> anyhow::Result<()> {
     let mut registry = PluginRegistry::with_builtins();
     starter::register(&mut registry)?;
+    delivery::register(&mut registry)?;
     #[cfg(feature = "ardupilot")]
     ardupilot::register(&mut registry)?;
     ripple_cli::main(registry, concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))

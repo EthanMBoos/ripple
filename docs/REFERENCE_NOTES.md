@@ -144,6 +144,21 @@ end-condition names; summaries still agree within 1e-6, since C++ rounds.
   experiments are timed on their own: C++ `SimpleINS` accumulates synthetic
   drift inside a sensor, so it is not an equivalent workload for a
   command-based predictor.
+- **One autonomy per vehicle, not a stack.** C++ entities can run several
+  autonomy plugins, each with an `is_controlling` flag; the controller takes
+  the desired state of the last one that is controlling
+  (`Entity::setup_desired_state`). On top of that, `GraphvizFSM` publishes a
+  state machine's current state, `AutonomyExecutor` loads named autonomies at
+  run time and runs a configured set in each state, and `MotorSchemas` blends
+  weighted behavior sub-plugins per state. Rust ports none of these. Several
+  autonomies on one entity still run each tick in mission order, but with no
+  controlling flag: each copies every output it declares, so the last to
+  declare a port always sets it, including the 0 it starts with. Loading
+  plugins mid-run is out of scope (docs/TODO.md), and three plugins wired by
+  topic names are more to follow than one. The book's pattern is one autonomy
+  per vehicle that holds its phases and behaviors as ordinary parts
+  ([Writing plugins](../book/src/guides/writing-plugins.md#several-behaviors-on-one-vehicle));
+  `crates/delivery`'s `Courier` and its skills are the example.
 - **Straight and the sensor messages.** C++ Straight steers by the newest
   `StateWithCovariance` message, which holds the same measurement as belief.
   Rust sensors publish no message (readings go to estimators), and Rust

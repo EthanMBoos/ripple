@@ -205,6 +205,56 @@ registration or messages between them. Extract one when it owns a distinct
 responsibility, not for every short calculation. World rules, such as
 boundaries and collisions, belong in interactions, not in every autonomy.
 
+## Several behaviors on one vehicle
+
+A vehicle often does different things at different times: wait, fly to a
+site, land, come home. Each behavior the vehicle can be told to run is a
+*skill*: a behavior packaged so it can be called, with a name, parameters,
+and a way to say it's done. A planner calls skills; the vehicle's autonomy
+runs them. Give the vehicle one autonomy plugin that owns the switching:
+
+- the plugin keeps a small state for what the vehicle is doing (idle,
+  running a skill, returning) and holds the skill that is running;
+- each skill is an ordinary struct in its own file, with its own state,
+  behind a small `Skill` trait your crate defines;
+- every tick the plugin steps the running skill and writes its command to
+  the plugin's ports.
+
+```rust,ignore
+/// A behavior a vehicle can be told to run. Defined in your crate, not the
+/// engine.
+trait Skill {
+    /// Advance one tick; return the command for the controller.
+    fn step(&mut self, belief: &KinematicState, time: StepTime) -> Command;
+    fn done(&self) -> bool;
+}
+
+struct Courier {
+    phase: Phase,                   // idle, running, returning, ...
+    running: Option<Box<dyn Skill>>,
+}
+```
+
+Adding a skill is then one file and one line where the plugin creates it,
+and two versions of a skill (a classical one and a learned one) can sit
+behind the same trait. The delivery crate's `Courier` works this way, with
+`drop`, `land`, and `drop_via` as its skills (`crates/delivery/src/skill.rs`).
+
+Don't make each skill its own autonomy plugin on the same vehicle. An
+entity's autonomy plugins all run every tick, in mission order, and each
+copies every output it declares onto the vehicle's commands, so the last one
+that declares a port always sets it. A plugin with nothing to say still
+repeats its last value, which starts at 0. Nothing marks one plugin as in
+control, and plugins are fixed when the mission loads. Two autonomies on one
+vehicle work only when they don't share ports, such as one that steers and
+one that only sends messages.
+
+Coordination above the vehicle, such as a fleet planner, is another entity's
+autonomy that sends orders as messages; the delivery crate's `Dispatcher`
+does this from the depot. SCRIMMAGE composed several autonomy plugins with a
+state machine instead; [REFERENCE_NOTES](https://github.com/EthanMBoos/ripple/blob/main/docs/REFERENCE_NOTES.md)
+says what was left out and why.
+
 ## Testing
 
 - **Unit tests** go in a `#[cfg(test)] mod tests` block at the bottom of the

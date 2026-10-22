@@ -205,6 +205,18 @@ registration or messages between them. Extract one when it owns a distinct
 responsibility, not for every short calculation. World rules, such as
 boundaries and collisions, belong in interactions, not in every autonomy.
 
+## Several behaviors on one vehicle
+
+A vehicle that is told what to do next by a planner (wait, fly to a site,
+land, come home) is best written as one autonomy plugin that hosts a library
+of *skills*, each an ordinary struct in its own file. [Skills: many behaviors
+in one autonomy](skills.md) describes the pattern, with the delivery crate's
+`Courier` as the example.
+
+Coordination above the vehicle, such as a fleet planner, is another entity's
+autonomy that sends orders as messages; the delivery crate's `Dispatcher`
+does this from the depot.
+
 ## Testing
 
 - **Unit tests** go in a `#[cfg(test)] mod tests` block at the bottom of the

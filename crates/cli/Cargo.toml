@@ -18,6 +18,7 @@ path = "src/main.rs"
 ripple-core = { path = "../core" }
 # User plugin crates compiled into `ripple`; each is registered in src/main.rs.
 starter = { path = "../starter" }
+delivery = { path = "../delivery" }
 # Optional ArduPilot SITL adapter, outside the default build: `--features ardupilot`.
 ardupilot = { path = "../ardupilot", optional = true }
 anyhow.workspace = true

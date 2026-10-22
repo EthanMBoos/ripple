@@ -1,96 +1,95 @@
 # Roadmap
 
-## Direction (2026-10-21)
+## Direction
 
-A language model plans for a fleet over a library of classical and learned
-skills, π0.5-style: the model picks a skill and its parameters for each
-vehicle, and each skill is an autonomy plugin. Adding a skill is one Rust
-file, and every result replays byte for byte.
+A language-model planner dispatches a mixed fleet (fixed-wing aircraft and
+multirotors) by calling skills that each vehicle's autonomy hosts, while
+operations add rules mid-mission in plain language. Ripple replays every
+mission exactly, so compliance can be measured one decision at a time and
+over whole missions, and the same mission rerun with one thing changed. The
+paper (`paper/manuscript/main.tex`) is "Ripple: Catching Language-Model
+Fleet Planner Mistakes Before Deployment".
 
-Dropped: checking plans in high-fidelity flight before sending them. The
-6-DOF model added nothing over a turn-limited model, and the separation
-losses came from airspace design, not flight or radio. Comms (delay, loss,
-aged reports) are out of scope.
+Where the results stand (Haiku only; `sweeps/directives-test/run002`,
+`sweeps/directives-6dof/run000`): a planner that slips in 7-10% of decisions
+breaks 60-90% of missions; for the grounded-vehicle and standby rules one
+plain wording is never broken and another breaks 8-9 of 10 missions; the
+no-fly zone breaks under both; breaks lean toward urgent deliveries; the
+right skill (`drop_via`) removes the no-fly breaches; without vehicle limits
+the planner sends fixed-wing aircraft to land about 18 times a mission;
+results hold on the 6-DOF aircraft.
+
+Not ours to claim (already published): an LLM picking skills as tools,
+growing skill libraries, caching model calls, deterministic simulation
+alone, the π0.5-style hierarchy, rules changed mid-task with less direct
+wording breaking them more often and a shield removing violations (House
+Rules, text worlds). Ours: a fleet checked from flown trajectories, slips
+adding up over a mission, two equally plain wordings differing, a skill as
+the fix. No optimizer baseline: enforcement in code is the oracle.
+
+## Rounding out the results
+
+What reviewers will push on, most likely first.
+
+Must have:
+- [ ] Model adapter: a client behind the Dispatcher's `command` interface for
+      GPT, Gemini, and an open-weights model (API or local server), keeping
+      the saved replies.
+- [ ] Five models: Claude Haiku and Sonnet (two sizes), a GPT and a Gemini
+      model, one open-weights model (Llama or Qwen); ideally one reasoning
+      model. Pilot one new model end to end first.
+- [ ] Twenty test missions per condition (seeds), two replies each, so the
+      intervals tighten to about 15-20 points.
+- [ ] All six wordings per rule on the test missions (or at least three),
+      plus a few wordings written by someone else, to answer "you picked
+      wording B because it broke".
+- [ ] A mitigation condition: a system prompt saying rules override
+      deadlines, and reasoning before calls. Tests the claim that compliance
+      needs the edge case spelled out or a guard in code.
+
+Strongly recommended:
+- [ ] The deadline claim as a regression: breaking against urgency and slack,
+      mission as a random effect. No new runs.
+- [ ] A second map: other clinic positions and a zone across other routes.
+- [ ] Noise reruns on the test missions (three live replies); the paper's
+      noise numbers are from the first pilot.
+
+Nice to have:
+- [ ] Remove skills and vary their descriptions (a chart only if graded).
+- [ ] Multirotor model check, once the RotorS Firefly exists: rerun the
+      standby rule with it, the mirror of the 6-DOF fixed-wing check.
+- [ ] The heading test: "vehicles fly straight to a site and straight back"
+      beside the rule again; does no-fly wording A hold?
+
+Cost: today's sweep is about 2,300 calls per model at five seeds; the
+must-haves come to roughly 10,000-15,000 per model.
 
 ## Paper
 
-Pitch Ripple as the instrument for evaluating language-model fleet
-planners, not as another planner. Positioning and sources:
-`paper/literature_review/reports/LLM fleet planner literature review.md`.
-
-Already taken, so not contributions: an LLM picking skills as tools, skills
-added without retraining, growing skill libraries, caching or replaying
-model calls, deterministic simulation alone, the π0.5-style hierarchy.
-
-Four measurements ("we found no prior work that..."):
-
-1. **Noise.** Episodes replay byte for byte, model calls included, at 1,
-   2, and 8 workers. Live reruns diverge; split score variance into model
-   and world.
-2. **Mixed fleets.** Capability violations as the fixed-wing share grows,
-   with vehicle cards absent, in text, or in numbers. The fidelity null
-   becomes a rule: idealize within an airframe class, model between them.
-3. **Skill library.** Grow it, remove skills one at a time, swap a learned
-   skill for its classical twin, vary descriptions and granularity; cost
-   per skill against success gained.
-4. **Where an LLM pays.** LLMs, ReAct, SMART-LLM and HMAS-2 prompts, an
-   optimizer, and an auction on identical episodes with scripted events;
-   templated against messy requests.
-
-Task: medical delivery (Zipline-style). Fixed-wing aircraft fly long legs
-and drop by parachute; multirotors serve short legs and land on rooftops.
-Plain-language requests (urgent, routine, cancellations, closures) plus
-scripted events; every task also has a structured form for the optimizer
-and auction. Base distances, fleet, and request rates on published
-operations.
-
-Re-run: Web-of-Drones' coverage and formation tasks (prompts on Zenodo),
-with and without fixed-wing aircraft. Optional: exact optima from the
-MRTA-Benchmark (TU Delft, 4TU), SwarmGPT primitives against waypoints. Not
-building on MultiUAV-Plat; cite it as related work only.
-
-Venue: CoRL 2027; fallback RA-L with IROS; NeurIPS D&B if the leaderboard
-leads. Check deadlines.
-
-Maybe: a hardware moment on Crazyflies, revise plans from flown traces,
-what-if forks, red against blue.
-
-## Next
-
-- [ ] Skill interface: description, typed parameters, parse the model's
-      output into skill assignments.
-- [ ] Response cache for model calls.
-- [ ] Three or four skills, one mission type, a first library-growth curve
-      on development scenarios.
-- [ ] Vehicle cards (minimum speed, turn radius, hover, endurance).
-- [ ] Gut check first (two weeks): delivery with three skills, two models
-      and a greedy auction, five live reruns on the same 50 episodes, one
-      mixed-fleet run. Go on only if rankings swap between reruns or
-      fixed-wing violations are common.
-- [ ] Delivery missions; an optimizer and an auction baseline.
-- [ ] Save `nisingizwe2022drone`'s PDF by hand again (deleted with the
-      unused sources on 2026-10-21; the Lancet blocks scripted downloads).
-- [ ] Before citing: check every [M] source in the report, AMASS (FFG,
-      fixed-wing LLM swarms), AutoHMA-LLM, and sweep 2026 preprints; add
-      the TODO citations in the manuscript to `references.bib`.
+- [ ] Discussion, in a few sentences, once the results settle.
+- [ ] Trim back to the venue's page limit (scoring details into an
+      appendix).
+- [ ] Redraw the figures from the final runs: `mission_strip.py` (Figs. 1
+      and 2), `results_figs.py` (Fig. 4), Fig. 3's call by hand; then remove
+      the old-build worktree in the scratchpad.
+- [ ] Before submitting: AIT's publications for AMASS results, the IEEE
+      Xplore venues of SayCan, Code as Policies, SMART-LLM, and COHERENT, and
+      a sweep of new preprints.
+- [ ] Venue: CoRL 2027; fallback RA-L with IROS. Check deadlines.
 
 ## Evaluation rules
 
-- Development and test scenarios are fixed before prompting; frozen prompts
+- Development and test missions are fixed before prompting; frozen prompts
   on test; report how many prompt versions were tried.
-- At least two model families and one open-weights model, pinned.
-- Grading is automatic and fixed in advance; baselines get the same tuning
-  budget.
+- Models pinned; at least two families and one open-weights model.
+- Grading is automatic and fixed in advance; every reply is saved.
 
-## Needed for learning work
+## Engine
 
 - [ ] Drive Ripple from Python (Gymnasium/PettingZoo; PyO3 when speed
       matters).
 - [ ] ONNX policy plugin (`tract-onnx`, optional crate), actions as keyed
       random draws.
-
-## Other
-
 - [ ] Rerun the speed checks and accept a new baseline (`perf.py --accept`);
       workload missions' keys were renamed, outputs unchanged.
 - [ ] Decide whether to remove MPE (plugins, mission, parity check).
@@ -103,3 +102,4 @@ what-if forks, red against blue.
 
 Runtime plugin loading, legacy protobuf/string-map spawning, OpenCL, VTK,
 ROS, JSBSim. ArduPilot and Burn stay optional, out of the default build.
+Comms (delay, loss, aged reports) are out of scope for the study.

@@ -1,0 +1,21 @@
+# Test run on new missions (seeds 4-8; seeds 1-3 were used for building and
+# debugging). Missions end at minute 30, since instructions run from minute 5
+# to 25. Closures are left out (never broken). Wording A (0, written first)
+# against wording B (the one broken most in development: no-fly 3, grounding
+# 2, standby 2). Conditions: direct, two samples, with a no-instruction run;
+# drop_via offered, for the no-fly rule; enforced (breaking calls refused in
+# code), one sample; and no instruction with the vehicles' limits left out of
+# the prompt, two samples. 28 combinations x 5 seeds = 140 runs, about 2,300
+# model calls. Summarize with directives.py and deadlines.py.
+name: directives-test
+base_scenario: delivery.yaml
+seeds: [4, 5, 6, 7, 8]
+parameter_combinations: zip
+parameters:
+  run.end_s: [1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800, 1800]
+  entities.depot.autonomy.Dispatcher.directive.kind: [none, no_fly, no_fly, ground_vehicle, ground_vehicle, reserve_multirotor, reserve_multirotor, none, no_fly, no_fly, ground_vehicle, ground_vehicle, reserve_multirotor, reserve_multirotor, none, no_fly, no_fly, none, no_fly, no_fly, no_fly, no_fly, ground_vehicle, ground_vehicle, reserve_multirotor, reserve_multirotor, none, none]
+  entities.depot.autonomy.Dispatcher.directive.phrasing: [0, 0, 3, 0, 2, 0, 2, 0, 0, 3, 0, 2, 0, 2, 0, 0, 3, 0, 0, 3, 0, 3, 0, 2, 0, 2, 0, 0]
+  entities.depot.autonomy.Dispatcher.sample: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1]
+  entities.depot.autonomy.Dispatcher.skills: [[drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land, drop_via], [drop, land, drop_via], [drop, land, drop_via], [drop, land, drop_via], [drop, land, drop_via], [drop, land, drop_via], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land]]
+  entities.depot.autonomy.Dispatcher.enforce_instruction: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, true, true, true, true, false, false]
+  entities.depot.autonomy.Dispatcher.limits_in_prompt: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false, false]

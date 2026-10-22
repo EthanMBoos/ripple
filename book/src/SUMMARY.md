@@ -17,6 +17,7 @@
 # Guides
 
 - [Writing plugins](guides/writing-plugins.md)
+- [Skills: many behaviors in one autonomy](guides/skills.md)
 - [YAML missions and templates](guides/yaml-missions.md)
 - [Sweeps and results](guides/sweeps.md)
 - [Run records](guides/run-records.md)

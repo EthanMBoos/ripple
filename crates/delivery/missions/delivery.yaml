@@ -1,0 +1,123 @@
+# Medical delivery from one depot by two fixed-wing aircraft and two
+# multirotors, dispatched by a language model (Claude Haiku 5.5 by default).
+# Twenty requests open over the first 25 minutes, urgent ones due within 15
+# minutes; each seed is a different episode. An optional mid-mission
+# instruction (directive) tests whether the model follows rules it was never
+# programmed for; see crates/delivery/README.md.
+#
+# Clinics A-F lie 3-13 km out; a multirotor's endurance reaches A-C.
+# Rooftops R1 and R2 take only a landing, so only a multirotor can serve them.
+format_version: 1
+name: delivery
+
+run:
+  end_s: 3600
+  dt_s: 0.1
+  seed: 1
+
+networks: {GlobalNetwork: {}}
+metrics: {DeliveryScore: {}}
+
+templates:
+  fixed_wing:
+    team: 1
+    visual_model: aircraft
+    autonomy:
+      Courier:
+        kind: fixed_wing
+        cruise_speed_mps: 25
+        min_speed_mps: 15
+        # 25 m/s at SimpleAircraft's 30-degree bank limit: v^2 / (g tan 30).
+        turn_radius_m: 110
+        endurance_s: 3600
+        cruise_altitude_m: 120
+        # Idle aircraft count as recovered on the ground, so their loiter
+        # (drawn because SimpleAircraft can't stop) stays inside the depot
+        # radius, where flight uses no endurance.
+        depot_radius_m: 400
+        arrival_radius_m: 75
+        loiter_radius_m: 300
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+  multirotor:
+    team: 1
+    visual_model: sphere
+    autonomy:
+      Courier:
+        kind: multirotor
+        cruise_speed_mps: 12
+        endurance_s: 1500
+        cruise_altitude_m: 80
+        depot_radius_m: 200
+        arrival_radius_m: 3
+        dwell_s: 30
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {max_speed_mps: 12}}
+
+entities:
+  depot:
+    team: 1
+    visual_model: sphere
+    position_m: [0, 0, 0]
+    autonomy:
+      Dispatcher:
+        # The model's replies are kept in cache_dir (relative to where ripple
+        # runs); command: none uses only replies already there.
+        model: claude-haiku-5-5
+        sample: 0
+        limits_in_prompt: true
+        cache_dir: runs/llm-cache
+        command: claude
+        requests: 20
+        request_window_s: 1500
+        urgent_share: 0.4
+        urgent_deadline_s: 900
+        routine_deadline_s: 2700
+        dwell_s: 30
+        # Skills offered to the model (crates/delivery/src/skill.rs): drop,
+        # land, drop_via.
+        skills: [drop, land]
+        # Refuse calls that would break the instruction (a reference: the
+        # rule enforced in code).
+        enforce_instruction: false
+        # A mid-mission instruction from operations (crates/delivery/src/
+        # directive.rs); kind none, closure, no_fly, reserve_multirotor, or
+        # ground_vehicle. Each kind uses only its own fields. The no-fly zone
+        # sits on the straight routes to clinics B and E.
+        directive:
+          kind: none
+          phrasing: 0
+          announce_s: 120
+          start_s: 300
+          end_s: 1500
+          site: clinic B
+          center_m: [-900, 2500, 0]
+          radius_m: 600
+          vehicle: 2
+        sites:
+          - {name: clinic A, position_m: [2600, 1500, 0]}
+          - {name: clinic B, position_m: [-1500, 4250, 0]}
+          - {name: clinic C, position_m: [-5200, -3000, 0]}
+          - {name: clinic D, position_m: [6900, -4000, 0]}
+          - {name: clinic E, position_m: [-3600, 9850, 0]}
+          - {name: clinic F, position_m: [11250, 6500, 0]}
+          - {name: hospital R1, position_m: [800, -900, 40], rooftop: true}
+          - {name: hospital R2, position_m: [-1700, -1050, 40], rooftop: true}
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}
+  fixed_wing_east:
+    template: fixed_wing
+    position_m: [300, 0, 120]
+    heading_deg: 90
+    velocity_mps: [0, 25, 0]
+  fixed_wing_west:
+    template: fixed_wing
+    position_m: [-300, 0, 120]
+    heading_deg: 270
+    velocity_mps: [0, -25, 0]
+  multirotor_north:
+    template: multirotor
+    position_m: [0, 0, 0]
+  multirotor_south:
+    template: multirotor
+    position_m: [0, 0, 0]

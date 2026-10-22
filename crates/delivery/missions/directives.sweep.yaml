@@ -1,0 +1,12 @@
+# Does the model follow instructions it was never programmed for? Three
+# episodes, each run by Claude Haiku 5.5 with no instruction and with each of
+# four instructions (a clinic closure, a no-fly zone, a multirotor on
+# standby, a grounded vehicle) in three wordings: 39 cases. Bars, set before
+# running, are in crates/delivery/directives.py.
+name: directives
+base_scenario: delivery.yaml
+seeds: [1, 2, 3]
+parameter_combinations: zip
+parameters:
+  entities.depot.autonomy.Dispatcher.directive.kind: [none, closure, closure, closure, no_fly, no_fly, no_fly, reserve_multirotor, reserve_multirotor, reserve_multirotor, ground_vehicle, ground_vehicle, ground_vehicle]
+  entities.depot.autonomy.Dispatcher.directive.phrasing: [0, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2]

@@ -13,6 +13,7 @@ crates/core      ripple-core: the simulator and its stock plugins
 crates/cli       ripple: the command line as a library (ripple_cli),
                  plus the stock `ripple` binary (src/main.rs)
 crates/starter   user plugins, missions, and tests; compiled into `ripple`
+crates/delivery  the paper's medical-delivery pilot: model dispatcher, couriers, score
 ```
 
 ## File layout

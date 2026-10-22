@@ -1,0 +1,16 @@
+# Medical delivery by a mixed fleet, dispatched by a language model. The stock
+# `ripple` command registers this crate's plugins (crates/cli/src/main.rs); see
+# README.md for the pilot experiment.
+[package]
+name = "delivery"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+ripple-core = { path = "../core" }
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2 = "0.10"

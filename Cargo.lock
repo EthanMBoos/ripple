@@ -1028,6 +1028,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "delivery"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "ripple-core",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4056,6 +4067,7 @@ dependencies = [
  "anyhow",
  "ardupilot",
  "clap",
+ "delivery",
  "png",
  "rerun",
  "ripple-core",

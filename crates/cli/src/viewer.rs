@@ -1,7 +1,7 @@
 //! Rerun observes the run; playback and debug panels never change simulation state.
 use anyhow::{Result, ensure};
 use rerun::{RecordingStream, RecordingStreamBuilder};
-use ripple_core::{SimulationFrame, Terrain};
+use ripple_core::{SimulationFrame, Terrain, plugin::interaction::BoundaryRegion};
 use std::{collections::BTreeSet, path::Path, time::Duration};
 
 mod blueprint;
@@ -87,6 +87,74 @@ impl Viewer {
         terrain::log(&self.recording, terrain)
     }
 
+    /// Draw each Boundary box once, in the 3D world and on the map. Rerun hides
+    /// an entity per view, so the blueprint panel's eye on `world/boundaries`
+    /// hides the 3D box only; `map/boundaries` has its own.
+    pub fn log_boundaries(&mut self, boundaries: &[BoundaryRegion]) -> Result<()> {
+        if boundaries.is_empty() {
+            return Ok(());
+        }
+        let color = [170, 170, 120];
+        let (mut edges, mut outlines) = (Vec::new(), Vec::new());
+        let (mut walls, mut triangles) = (Vec::new(), Vec::new());
+        for boundary in boundaries {
+            let min_m = boundary.center_world_m - boundary.lengths_m * 0.5;
+            let max_m = boundary.center_world_m + boundary.lengths_m * 0.5;
+            // The box's floor, corner to corner and back to the first.
+            let floor_m = [
+                [min_m.x, min_m.y],
+                [max_m.x, min_m.y],
+                [max_m.x, max_m.y],
+                [min_m.x, max_m.y],
+                [min_m.x, min_m.y],
+            ]
+            .map(|[east_m, north_m]| [east_m as f32, north_m as f32, min_m.z as f32]);
+            let roof_m = floor_m.map(|[east_m, north_m, _]| [east_m, north_m, max_m.z as f32]);
+            edges.push(floor_m.to_vec());
+            edges.push(roof_m.to_vec());
+            edges.extend(floor_m[..4].iter().zip(&roof_m).map(|(a, b)| vec![*a, *b]));
+            // The four side walls, two triangles each; the floor and roof
+            // stay open so the box doesn't hide what flies inside it.
+            for side in 0..4 {
+                let first = u32::try_from(walls.len())?;
+                walls.extend([
+                    floor_m[side],
+                    floor_m[side + 1],
+                    roof_m[side + 1],
+                    roof_m[side],
+                ]);
+                triangles.push([first, first + 1, first + 2]);
+                triangles.push([first, first + 2, first + 3]);
+            }
+            outlines.push(floor_m.map(map::project).to_vec());
+            // Fit the map and its grid around the box as well as the agents.
+            for corner in floor_m {
+                self.widen_range(corner);
+            }
+        }
+        self.recording.log_static(
+            "world/boundaries",
+            &rerun::LineStrips3D::new(edges)
+                .with_colors([color])
+                .with_radii([rerun::Radius::new_ui_points(1.0)]),
+        )?;
+        self.recording.log_static(
+            "world/boundaries/walls",
+            &rerun::Mesh3D::new(walls)
+                .with_triangle_indices(triangles)
+                .with_albedo_factor(rerun::Rgba32::from_unmultiplied_rgba(
+                    color[0], color[1], color[2], 40,
+                )),
+        )?;
+        self.recording.log_static(
+            "map/boundaries",
+            &rerun::LineStrips2D::new(outlines)
+                .with_colors([color])
+                .with_radii([rerun::Radius::new_ui_points(1.0)]),
+        )?;
+        Ok(())
+    }
+
     pub fn log_frame(&mut self, index: usize, frame: &SimulationFrame) -> Result<()> {
         let first_time_s = *self.first_time_s.get_or_insert(frame.time_s);
         let time_ns = playback_time_ns(frame.time_s - first_time_s, self.last_time_ns);
@@ -116,11 +184,7 @@ impl Viewer {
             let color = team_color(entity.team_id);
             let label = format!("{} · team {}", entity.id, entity.team_id);
             let point = [position.x as f32, position.y as f32, position.z as f32];
-            let [low, high] = self.position_range_m.get_or_insert([point, point]);
-            for axis in 0..3 {
-                low[axis] = low[axis].min(point[axis]);
-                high[axis] = high[axis].max(point[axis]);
-            }
+            self.widen_range(point);
 
             self.recording.log(
                 path.as_str(),
@@ -190,6 +254,15 @@ impl Viewer {
         )?;
         self.previous_ids = current_ids;
         Ok(())
+    }
+
+    /// Grow the range the map is fitted to so it includes `point`.
+    fn widen_range(&mut self, point: [f32; 3]) {
+        let [low, high] = self.position_range_m.get_or_insert([point, point]);
+        for axis in 0..3 {
+            low[axis] = low[axis].min(point[axis]);
+            high[axis] = high[axis].max(point[axis]);
+        }
     }
 
     pub fn finish(self) -> Result<()> {

@@ -2,7 +2,8 @@ use crate::viewer::Viewer;
 use anyhow::{Context, Result, ensure};
 use clap::Args;
 use ripple_core::{
-    Mission, Params, ScenarioConfig, Simulation, plugin::PluginRegistry, record::RunWriter,
+    Mission, Params, ScenarioConfig, Simulation, plugin::PluginRegistry,
+    plugin::interaction::BoundaryRegion, record::RunWriter,
 };
 use std::path::{Path, PathBuf};
 
@@ -166,6 +167,9 @@ pub fn run_scenario(
         if let Some(terrain) = simulation.terrain() {
             viewer.log_terrain(terrain)?;
         }
+        viewer.log_boundaries(&BoundaryRegion::in_scenario(
+            &simulation.scenario().interactions,
+        )?)?;
         Some(viewer)
     } else {
         None

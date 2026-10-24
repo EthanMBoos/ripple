@@ -93,7 +93,6 @@ must-haves come to roughly 10,000-15,000 per model.
 - [ ] Rerun the speed checks and accept a new baseline (`perf.py --accept`);
       workload missions' keys were renamed, outputs unchanged.
 - [ ] Add a delivery-sized multirotor (RotorS Firefly); keep the Crazyflie.
-- [ ] Viewer: draw Boundary boxes from the scenario, with a toggle.
 
 ## Not planned
 

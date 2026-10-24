@@ -30,6 +30,8 @@ use crate::{
     Terrain,
     entity::EntitySnapshot,
     math::{KinematicState, Quaternion as MathQuaternion, Vec3},
+    plugin::interaction::BoundaryRegion,
+    scenario::PluginConfig,
     simulation::{Event as SimulationEvent, Simulation, SimulationFrame, TraceSink},
 };
 
@@ -487,8 +489,16 @@ pub fn read_frames(path: &Path) -> Result<Vec<SimulationFrame>> {
     frames_from_bytes(&bytes, &scenario)
 }
 
+/// What a replay draws: the frames, the terrain files named by the scenario,
+/// and its Boundary regions.
+pub struct Replay {
+    pub frames: Vec<SimulationFrame>,
+    pub terrain: Option<Terrain>,
+    pub boundaries: Vec<BoundaryRegion>,
+}
+
 /// Decode the MCAP frames and load the terrain files named by its scenario.
-pub fn read_replay(path: &Path) -> Result<(Vec<SimulationFrame>, Option<Terrain>)> {
+pub fn read_replay(path: &Path) -> Result<Replay> {
     let bytes = fs::read(path).with_context(|| format!("read {}", path.display()))?;
     let metadata = metadata_from_bytes(&bytes, "ripple.run")?;
     let scenario = scenario_from_metadata(&metadata)?;
@@ -509,7 +519,23 @@ pub fn read_replay(path: &Path) -> Result<(Vec<SimulationFrame>, Option<Terrain>
             Terrain::load(header)
         })
         .transpose()?;
-    Ok((frames, terrain))
+    let interactions = scenario["interactions"]
+        .as_array()
+        .context("recorded scenario has no interactions")?
+        .iter()
+        .filter(|plugin| plugin["name"] == "Boundary")
+        .map(|plugin| {
+            let mut config = PluginConfig::new("Boundary");
+            config.params = serde_json::from_value(plugin["params"].clone())?;
+            Ok(config)
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let boundaries = BoundaryRegion::in_scenario(&interactions)?;
+    Ok(Replay {
+        frames,
+        terrain,
+        boundaries,
+    })
 }
 
 fn frames_from_bytes(bytes: &[u8], scenario: &serde_json::Value) -> Result<Vec<SimulationFrame>> {

@@ -46,7 +46,10 @@ Replay reads `run.mcap` and draws a temporary Rerun recording. It never steps
 the simulator. `ripple run --viewer` streams the same drawing live. To keep an
 RRD export beside the MCAP, pass `--export-rrd` to `run`; ordinary runs save
 only MCAP. `--draw-trails` adds each agent's recent path to a live or replayed
-view.
+view. A mission's Boundary boxes are drawn on the map and in the 3D world. To
+hide them in the 3D world, open Rerun's blueprint panel (Cmd+B or Ctrl+B) and
+click the eye beside `boundaries` under "3D world"; the map keeps its own
+copy, with its own eye.
 
 ## Read it from Python
 

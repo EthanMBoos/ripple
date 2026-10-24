@@ -130,7 +130,8 @@ every decision.
   [Terrain](../guides/terrain.md).
 - **Boundary** publishes an axis-aligned box (`center_m`, `lengths_m`). It is
   a region autonomies respond to, not a wall. It publishes once, so agents
-  that spawn later don't receive it. Checked in the comparison.
+  that spawn later don't receive it. The viewer draws the box. Checked in
+  the comparison.
 - **WaypointBroadcast** publishes a route (`waypoints_m`) and optionally one
   replacement (`update_waypoints_m` at `update_at_s`). Agents that spawn after
   a broadcast use their own configured route until the next one.

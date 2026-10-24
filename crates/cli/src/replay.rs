@@ -21,7 +21,11 @@ pub(crate) fn replay(path: &Path, draw_trails: bool) -> Result<()> {
         "record is not a file: {}",
         record_path.display()
     );
-    let (frames, terrain) = record::read_replay(&record_path)?;
+    let record::Replay {
+        frames,
+        terrain,
+        boundaries,
+    } = record::read_replay(&record_path)?;
 
     // Keep this export only while the viewer process is open. Ordinary runs
     // have one durable output, run.mcap.
@@ -31,6 +35,7 @@ pub(crate) fn replay(path: &Path, draw_trails: bool) -> Result<()> {
     if let Some(terrain) = terrain {
         viewer.log_terrain(&terrain)?;
     }
+    viewer.log_boundaries(&boundaries)?;
     for (index, frame) in frames.iter().enumerate() {
         viewer.log_frame(index, frame)?;
     }

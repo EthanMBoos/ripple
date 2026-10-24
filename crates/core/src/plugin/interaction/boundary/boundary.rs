@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::Vec3;
 use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
+use crate::scenario::PluginConfig;
 
 pub const BOUNDARY_TOPIC: &str = "Boundary";
 
@@ -26,6 +27,18 @@ impl BoundaryRegion {
             }
         }
         true
+    }
+
+    /// The region of each Boundary among a scenario's interactions, for
+    /// drawing; parameters are checked as a run checks them.
+    pub fn in_scenario(interactions: &[PluginConfig]) -> Result<Vec<BoundaryRegion>> {
+        interactions
+            .iter()
+            .filter(|plugin| plugin.name == "Boundary")
+            .map(|plugin| {
+                Ok(Boundary::new(&Boundary::configure(&PluginParams::new(plugin))?).region)
+            })
+            .collect()
     }
 }
 
@@ -96,6 +109,7 @@ impl Interaction for Boundary {
 mod tests {
     use super::BoundaryRegion;
     use crate::Vec3;
+    use crate::scenario::PluginConfig;
 
     #[test]
     fn cuboid_contains_interior_but_not_its_faces() {
@@ -111,5 +125,17 @@ mod tests {
                 assert!(!region.contains(point));
             }
         }
+    }
+
+    #[test]
+    fn a_scenario_gives_each_boundarys_region() {
+        let mut boundary = PluginConfig::new("Boundary");
+        boundary.params = serde_yaml_ng::from_str("center_m: [1, 2, 3]").unwrap();
+        let other = PluginConfig::new("GroundCollision");
+        let regions = BoundaryRegion::in_scenario(&[boundary, other]).unwrap();
+        assert_eq!(regions.len(), 1);
+        assert_eq!(regions[0].center_world_m, Vec3::new(1.0, 2.0, 3.0));
+        // Lengths the mission leaves out take the plugin's default.
+        assert_eq!(regions[0].lengths_m, Vec3::new(10.0, 10.0, 10.0));
     }
 }

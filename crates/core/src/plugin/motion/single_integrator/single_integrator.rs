@@ -7,8 +7,7 @@
 //! - Valid range: any speed; it is an idealization, not a vehicle.
 //! - Not modeled: mass, forces, acceleration limits, and any lag between
 //!   command and motion. The attitude only follows the velocity's direction.
-//! - To go further: a force-driven point (MPE's force and damping) for
-//!   matching learning benchmarks; a vehicle model for anything physical.
+//! - To go further: a vehicle model for anything physical.
 
 use anyhow::{Result, ensure};
 use serde::Deserialize;

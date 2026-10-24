@@ -28,6 +28,3 @@ pub use auction_assign::{
 #[path = "autonomy/constant_velocity/constant_velocity.rs"]
 mod constant_velocity;
 pub use constant_velocity::ConstantVelocity;
-#[path = "autonomy/force_replay/force_replay.rs"]
-mod force_replay;
-pub use force_replay::ForceReplay;

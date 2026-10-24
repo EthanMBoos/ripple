@@ -302,7 +302,7 @@ still agrees. The numbers in "Before" are those failing tests' output.
 | Rate-limited plugins | dt is the time since the plugin last ran; it runs once per period from its first tick | 5 Hz at 10 Hz ran at 0, 0.1, 0.3, 0.5 s, each with dt 0.1 | `a_rate_limited_plugin_runs_once_per_period_...`, `loop_rate` unit tests | `EntityPlugin.cpp/.h`, `SimControl.cpp` |
 | Spawn sampling | Every spawn is sampled around the configured start, unrounded | Mean heading of 200 spawns 49.8 degrees for a configured 90 | `every_spawn_is_sampled_around_the_configured_start` | `SimControl.cpp` |
 | Time | Time is start + steps x dt; a frame is labeled with its state's time; every label is unique | Frame 0 labeled 0.1 s; the final label repeated | `time_is_the_step_count_times_dt_...`, `a_spawn_rate_equal_to_the_tick_rate_spawns_every_tick` | `SimControl.cpp/.h` |
-| MpeContact timing | A zero-noise reading is the true state, contact or not | Reading 0.547 m/s against a true 0.447 m/s on a contact step | `a_zero_noise_reading_is_the_true_state_through_mpe_contact` | none (Rust-only; MPE2 is the reference) |
+| MpeContact timing | A zero-noise reading is the true state, contact or not | Reading 0.547 m/s against a true 0.447 m/s on a contact step | removed with the MPE plugins (2026-10-24) | none (Rust-only; MPE2 is the reference) |
 | Duplicate sensor messages | Readings and decisions unchanged; the unused messages are gone | NoisyState and NoisyContacts published a LocalNetwork copy only Straight received, and discarded | the comparison below | none: in SCRIMMAGE the message is the sensor's output |
 
 Details worth knowing:
@@ -356,9 +356,8 @@ Details worth knowing:
 - **Comparisons after.** The C++ matrix (15 missions, against
   `benchmarking-edits` with these fixes) passes: positions agree to
   4.9e-12 m, 812 sensor states match, and 722 SCRIMMAGE sensor-message
-  deliveries are skipped as described. MPE2 parity: all 100 episodes
-  bit-identical (56 before; the 44 others were contact episodes). The other
-  checks run in the full suite.
+  deliveries are skipped as described. The other checks run in the full
+  suite.
 
 ## Interfaces fixed for the study
 

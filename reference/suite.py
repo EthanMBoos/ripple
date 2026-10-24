@@ -329,12 +329,6 @@ CHECKS = [
           "without rotor drag, within 1e-6 m and 1e-6 rad over 3 s; the drag difference is reported",
           (RELEASE,), script_check("crazyflow_check.py", "crazyflow-crazyflie"),
           keep_named("results.json")),
-    Check("mpe-parity", "MPE point agents (MpeParticle, MpeContact, SimpleSpread) against MPE2's "
-          "simple_spread_v3, step by step from the same starts with the same forces",
-          "MPE2 v1.1.1 (Farama-Foundation/MPE2, pinned), run with uv",
-          "100 episodes: every state bit-identical, with and without contact; returns to 6 decimals",
-          (RELEASE,), script_check("mpe_parity.py", "mpe-parity"),
-          keep_named("results.json")),
     Check("stall-landing", "whether stall tables change ArduPlane's Rascal landing",
           "the same mission without tables, and a repeat of it",
           "the repeat is byte-identical", (RELEASE,), script_check("stall_landing.py", "stall-landing"),

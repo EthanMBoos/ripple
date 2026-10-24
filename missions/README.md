@@ -32,7 +32,6 @@ with a dotted path, such as `entities.red.heading_deg:=170`.
 | `verification/collision-boundary.yaml` | SimpleCollision's strict range: pairs exactly at range survive, closing pairs collide (opposing and same team). |
 | `verification/sphere-network-auction.yaml` | SphereNetwork reach (inside, exactly at, and beyond range) through AuctionAssign messages on a network named `CommsNetwork`. |
 | `verification/sphere-network-loss.yaml` | SphereNetwork loss at `transmit_probability` 0.5, with keyed draws per message. |
-| `verification/mpe-simple-spread.yaml` | MPE's point agents and the `simple_spread` score, replayed step by step (`reference/mpe_parity.py`). |
 
 The `verification/` missions are what `reference/missions.txt` and the other
 checks run; [reference/README.md](../reference/README.md) describes each check.

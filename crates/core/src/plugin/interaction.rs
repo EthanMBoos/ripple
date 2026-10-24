@@ -57,6 +57,3 @@ pub use terrain_collision::TerrainCollision;
 #[path = "interaction/waypoint_broadcast/waypoint_broadcast.rs"]
 mod waypoint_broadcast;
 pub use waypoint_broadcast::WaypointBroadcast;
-#[path = "interaction/mpe_contact/mpe_contact.rs"]
-mod mpe_contact;
-pub use mpe_contact::MpeContact;

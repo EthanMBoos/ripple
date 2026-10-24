@@ -92,7 +92,6 @@ must-haves come to roughly 10,000-15,000 per model.
       random draws.
 - [ ] Rerun the speed checks and accept a new baseline (`perf.py --accept`);
       workload missions' keys were renamed, outputs unchanged.
-- [ ] Decide whether to remove MPE (plugins, mission, parity check).
 - [ ] Add a delivery-sized multirotor (RotorS Firefly); keep the Crazyflie.
 - [ ] ArduPilotBridge servo maps: named fields instead of positions.
 - [ ] Viewer: draw Boundary boxes from the scenario, with a toggle.

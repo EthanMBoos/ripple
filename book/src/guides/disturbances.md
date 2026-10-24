@@ -23,7 +23,7 @@ truth](../concepts/belief-vs-truth.md)).
 ## Vehicle dynamics
 
 The motion model is the vehicle. From simplest to most realistic:
-SingleIntegrator and MpeParticle are points that move as commanded;
+SingleIntegrator is a point that moves as commanded;
 Multirotor is a rigid body on rotors, with optional motor lag and rotor drag;
 SimpleAircraft turns and climbs within an aircraft's limits; FixedWing6DOF is
 a full aerodynamic aircraft. The velocity controllers (AircraftVelocity,

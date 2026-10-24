@@ -19,7 +19,7 @@ pub struct MotionContext<'a> {
     pub terrain: Option<&'a Terrain>,
     /// Forces interactions applied to this entity in the last interaction
     /// phase (`Entity::apply_force`), in the order applied. They act on every
-    /// motion step of this tick. MpeParticle reads them; other models do not.
+    /// motion step of this tick. No built-in model reads them.
     pub applied_forces_world_n: &'a [Vec3],
 }
 
@@ -45,6 +45,3 @@ pub use simple_aircraft::SimpleAircraft;
 #[path = "motion/single_integrator/single_integrator.rs"]
 mod single_integrator;
 pub use single_integrator::SingleIntegrator;
-#[path = "motion/mpe_particle/mpe_particle.rs"]
-mod mpe_particle;
-pub use mpe_particle::MpeParticle;

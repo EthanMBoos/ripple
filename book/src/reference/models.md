@@ -28,10 +28,8 @@ describes it and the other checks.
   a time; agents hold still. Its payloads and topics (`AuctionStart`,
   `AuctionBid`, `AuctionResult`) are exported from `plugin::autonomy`.
   Checked in the comparison.
-- **ConstantVelocity** writes a fixed velocity command (`velocity_mps`), and
-  **ForceReplay** a fixed list of forces, one per tick (`forces_n`). Both are
-  test drivers, not behaviors: ForceReplay is how `reference/mpe_parity.py`
-  feeds MPE2's actions to MpeParticle.
+- **ConstantVelocity** writes a fixed velocity command (`velocity_mps`), a
+  test driver rather than a behavior.
 
 ## Controllers
 
@@ -67,10 +65,6 @@ describes it and the other checks.
 - **SingleIntegrator** moves at the commanded velocity at once. With
   `max_speed_mps` set, a faster command keeps its direction at that speed.
   No mass, forces, or lag. Checked in the comparison.
-- **MpeParticle** is the Multi-Agent Particle Environment's agent (MPE2
-  v1.1.1): a unit mass pushed by a force, with MPE's per-step `damping`. It is
-  valid only at MPE's 0.1 s step with one substep, since the damping is per
-  step. Checked step by step against MPE2 (`mpe_parity.py`).
 - **SimpleAircraft** is a kinematic aircraft: speed, roll, and pitch follow
   commands within rate and range limits, and it turns as a coordinated turn
   does, at g tan(bank) / speed. `airframe: rascal` loads limits fit to
@@ -140,9 +134,6 @@ every decision.
 - **WaypointBroadcast** publishes a route (`waypoints_m`) and optionally one
   replacement (`update_waypoints_m` at `update_at_s`). Agents that spawn after
   a broadcast use their own configured route until the next one.
-- **MpeContact** is MPE's soft push between overlapping MpeParticle agents
-  (`radius_m`, `contact_force`, `contact_margin_m`), applied as a force on the
-  next step. Checked with MpeParticle against MPE2.
 
 ## Networks
 
@@ -163,9 +154,6 @@ every decision.
   team, non-team, and ground collisions, and scores them with
   `flight_time_weight`, `team_collision_weight`, and
   `non_team_collision_weight`. Checked in the comparison.
-- **SimpleSpread** scores MPE's `simple_spread`: the benchmark return,
-  collisions, and landmark coverage as separate numbers. Checked against
-  MPE2's returns.
 
 ## FixedWing6DOF parameters
 

@@ -27,7 +27,6 @@ Every check of `reference/suite.py` in this release, on 3 different sources (`re
 | `simple-aircraft-fit` | SimpleAircraft's rascal limits against FixedWing6DOF's Rascal: speeds, acceleration, climb, descent, turn rate, and attitude rates | FixedWing6DOF's Rascal under AircraftPIDController | passed |
 | `rotors-motor` | Multirotor's motor lag and rotor loads against RotorS, sample by sample | RotorS's motor-plugin source (ethz-asl/rotors_simulator), compiled in Docker | passed |
 | `crazyflow-crazyflie` | Multirotor's Crazyflie against Crazyflow's first-principles dynamics, same constants and motor commands | Crazyflow (learnsyslab/crazyflow, pinned), run with uv | passed |
-| `mpe-parity` | MPE point agents (MpeParticle, MpeContact, SimpleSpread) against MPE2's simple_spread_v3, step by step from the same starts with the same forces | MPE2 v1.1.1 (Farama-Foundation/MPE2, pinned), run with uv | passed |
 | `stall-landing` | whether stall tables change ArduPlane's Rascal landing | the same mission without tables, and a repeat of it | passed |
 
 ## Agreement with SCRIMMAGE

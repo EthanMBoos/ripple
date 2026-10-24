@@ -16,9 +16,6 @@ vehicle.
   planted one at a time; it catches all twelve.
 - **Determinism**: the same missions at 1, 2, and 8 workers, with recording
   on and off, must give byte-identical output.
-- **Benchmark point agents** (MpeParticle, MpeContact, SimpleSpread) replay
-  100 episodes of MPE2's `simple_spread_v3` with the same forces. All 100 are
-  bit-identical, and the returns agree to 1.4 × 10⁻¹⁴.
 - **Multirotor rotors** match RotorS's motor and rotor code on 480 sampled
   states, to about 10⁻¹⁵.
 - **Multirotor flight** matches Crazyflow, an independent model, on the same
@@ -42,7 +39,7 @@ One runner, `reference/suite.py`, runs every check by name:
 python3 reference/suite.py --list                 # each check and what it passes on
 python3 reference/suite.py                        # quick set, about 30 minutes
 python3 reference/suite.py --release              # everything, several hours
-python3 reference/suite.py --check mpe-parity     # one check
+python3 reference/suite.py --check rotors-motor   # one check
 ```
 
 The SCRIMMAGE and RotorS checks build their reference in Docker. Each run
@@ -67,4 +64,4 @@ Agreement with a real vehicle needs measurements of that vehicle. The
 Crazyflie has them; the other vehicles don't yet. So results on the aircraft
 are statements about the modelled aircraft. A model is also checked only
 inside its valid range: a fit to a cruising aircraft says nothing about a
-stall, and MpeParticle's damping holds only at MPE's step size.
+stall.

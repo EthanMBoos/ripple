@@ -35,9 +35,10 @@ use crate::sitl_state::{SITL_STATE_TOPIC, SitlSample};
 
 /// How one servo channel maps to a motion input: PWM `pwm_min_us..pwm_max_us`
 /// maps linearly onto `output_min..output_max` (swap the outputs to reverse).
-/// In a mission: `"channel, pwm_min, pwm_max, output_min, output_max"`.
+/// A mission gives all five fields, e.g. `throttle: {channel: 3, pwm_min_us:
+/// 1000, pwm_max_us: 2000, output_min: 0, output_max: 1}`.
 #[derive(Clone, Copy, Debug, Deserialize)]
-#[serde(from = "[f64; 5]")]
+#[serde(deny_unknown_fields)]
 pub struct ServoMap {
     /// ArduPilot output number, 1-based (SERVO1 is 1).
     channel: f64,
@@ -353,7 +354,7 @@ impl ServoMap {
         );
         ensure!(
             self.pwm_max_us > self.pwm_min_us,
-            "ArduPilotBridge {name} pwm_max must exceed pwm_min"
+            "ArduPilotBridge {name} pwm_max_us must exceed pwm_min_us"
         );
         Ok(())
     }
@@ -371,6 +372,8 @@ impl ServoMap {
     }
 }
 
+/// `[channel, pwm_min_us, pwm_max_us, output_min, output_max]`, for the
+/// defaults and tests.
 impl From<[f64; 5]> for ServoMap {
     fn from([channel, pwm_min_us, pwm_max_us, output_min, output_max]: [f64; 5]) -> Self {
         Self {
@@ -414,6 +417,15 @@ mod tests {
     fn pwm_zero_means_not_driven_yet() {
         let aileron = ArduPilotBridgeConfig::default().aileron;
         assert_eq!(aileron.output(&frame_with(1, 0)), None);
+    }
+
+    #[test]
+    fn a_mission_names_each_field() {
+        let map: ServoMap = serde_json::from_str(
+            r#"{"channel": 3, "pwm_min_us": 1000, "pwm_max_us": 2000, "output_min": 0, "output_max": 1}"#,
+        )
+        .unwrap();
+        assert!((map.output(&frame_with(3, 1250)).unwrap() - 0.25).abs() < 1e-12);
     }
 
     #[test]

@@ -260,10 +260,11 @@ motion_model:
   the bridge through it.
 - **Use dt = 0.0025 s (400 Hz),** a whole multiple of ArduPlane's 50 Hz loop.
 - **Both plugins must run every tick,** so give them no `loop_rate_hz`.
-- **`ArduPilotBridge` maps each servo channel** as `[channel, pwm_min, pwm_max,
-  output_min, output_max]`, with optional `throttle`, `elevator`, `aileron`,
-  and `rudder` keys. The defaults are ArduPlane's outputs 1-4 on the Rascal's
-  throws.
+- **`ArduPilotBridge` maps each servo channel** with optional `throttle`,
+  `elevator`, `aileron`, and `rudder` keys, each giving all of `channel`,
+  `pwm_min_us`, `pwm_max_us`, `output_min`, and `output_max` (PWM maps
+  linearly onto the outputs; swap them to reverse a channel). The defaults
+  are ArduPlane's outputs 1-4 on the Rascal's throws.
 - **Wind** is the air's velocity over the ground (ENU), so `wind_mps: [5, 0, 0]` on an
   eastbound aircraft is a tailwind. `SitlState` uses the same values to
   compute airspeed.

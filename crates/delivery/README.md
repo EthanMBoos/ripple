@@ -67,7 +67,12 @@ cargo test -p delivery
 ## Simplifications
 
 - The multirotors are point models (SingleIntegrator) and the fixed-wing
-  aircraft SimpleAircraft; links are perfect.
+  aircraft SimpleAircraft; links are perfect. Two variants swap in fuller
+  vehicles with the same vehicle cards: `delivery-6dof.yaml` flies the
+  fixed-wing aircraft on FixedWing6DOF, and `delivery-firefly.yaml` flies the
+  multirotors as RotorS's Firefly hexacopter. The Firefly needs the
+  courier's `approach_per_s` to stop on a pad; the book's "Flying a
+  multirotor" says why.
 - An idle fixed-wing aircraft counts as recovered and on the ground. It is
   drawn loitering only because SimpleAircraft can't stop, inside the depot
   radius where flight uses no endurance. A vehicle that runs out of

@@ -56,8 +56,12 @@ Strongly recommended:
 
 Nice to have:
 - [ ] Remove skills and vary their descriptions (a chart only if graded).
-- [ ] Multirotor model check, once the RotorS Firefly exists: rerun the
-      standby rule with it, the mirror of the 6-DOF fixed-wing check.
+- [ ] Multirotor model check: rerun the standby rule on
+      `delivery-firefly.yaml` (RotorS's Firefly), the mirror of the 6-DOF
+      fixed-wing check. Needs new model calls: the vehicles' timing changes
+      the prompts. The planner assumes straight lines at cruise speed and
+      the Firefly also brakes and descends, so compare arrival times and
+      slack across paired runs before reading equal scores as no change.
 - [ ] The heading test: "vehicles fly straight to a site and straight back"
       beside the rule again; does no-fly wording A hold?
 
@@ -92,7 +96,6 @@ must-haves come to roughly 10,000-15,000 per model.
       random draws.
 - [ ] Rerun the speed checks and accept a new baseline (`perf.py --accept`);
       workload missions' keys were renamed, outputs unchanged.
-- [ ] Add a delivery-sized multirotor (RotorS Firefly); keep the Crazyflie.
 
 ## Not planned
 

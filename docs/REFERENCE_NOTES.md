@@ -668,6 +668,12 @@ key, `rotor_drag_coefficient_axial`, zero by default. RotorS's Hummingbird motor
 constants are not used: they repeat its Firefly's digit for digit, with no
 source.
 
+The `firefly` preset copies RotorS's Firefly model file at the commit the
+`rotors-motor` check pins; the book chapter lists each number and the
+choices made in copying it (mass from the model's parts, the body's
+inertia, gains per airframe). Its motor lag, drag, and rolling moment are
+written by missions, like the Crazyflie's.
+
 ## Ported models keep C++ numerics; new models do not
 
 Ported plugins reproduce the C++ implementation, including its numerical

@@ -1,5 +1,5 @@
-//! Rigid-body multirotor with optional RotorS motor and rotor effects and a
-//! built-in Crazyflie 2.0. Derived from SCRIMMAGE's Multirotor (GTRI,
+//! Rigid-body multirotor with optional RotorS motor and rotor effects, and a
+//! built-in Crazyflie 2.0 and RotorS Firefly. Derived from SCRIMMAGE's Multirotor (GTRI,
 //! LGPL-3.0-or-later).
 //! Motion phase: read motor shaft speed commands in rad/s, integrate, write
 //! world truth. Body axes are forward/left/up.
@@ -10,8 +10,9 @@
 //!   rigid body, RK4 with every load evaluated at each stage). The optional
 //!   motor lag, rotor drag, and rolling moment port RotorS's motor plugin
 //!   (`rotor.rs`). Vehicle numbers come from `airframe.rs`: the Crazyflie 2.0
-//!   measured by Förster (2015), or a vehicle the mission gives in full;
-//!   c_T, c_Q, omega_max and the arm are derived from his fits there.
+//!   measured by Förster (2015), whose c_T, c_Q, omega_max and arm are
+//!   derived from his fits there; RotorS's Firefly hexacopter, from its
+//!   model file; or a vehicle the mission gives in full.
 //! - Validated against: RotorS's motor-plugin source, sample by sample, for
 //!   motor lag and per-rotor loads (`reference/rotors_motor.py`); Crazyflow's
 //!   first-principles dynamics with the Crazyflie numbers
@@ -66,7 +67,7 @@ use rotor::{MotorLag, RotorAerodynamics, RotorCoefficients, rotor_loads};
 #[derive(Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct MultirotorParams {
-    /// `crazyflie2`, or absent for a vehicle given in full.
+    /// `crazyflie2`, `firefly`, or absent for a vehicle given in full.
     airframe: Option<AirframeName>,
     mass_kg: Option<f64>,
     gravity_mps2: Option<f64>,

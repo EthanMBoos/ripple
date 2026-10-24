@@ -37,7 +37,7 @@ check failed. Every script also runs on its own; its docstring says how.
 | `speed-spatial` | release | collision cost, scan against grids (`spatial_benchmark.py`) | the scan | identical output |
 | `speed-messages` | release | routing cost with all-agent messages (`message_benchmark.py`) | native C++ | runs |
 | `rk4-loads` | release | forces at every RK4 stage against held forces (`rk4_loads.py`) | unmodified C++ | runs |
-| `multirotor-control` | quick | MultirotorVelocityController step responses and step-size convergence (`multirotor_control.py`) | the commands; Förster's drag; 20 substeps | whole velocity error within 5%; drag tilt within 2%; within 5 mm |
+| `multirotor-control` | quick | MultirotorVelocityController step responses and step-size convergence (`multirotor_control.py`) | the commands; each vehicle's rotor drag; 20 substeps | whole velocity error within 5%; drag tilt within 2%; step responses within 5 mm |
 | `simple-aircraft-fit` | quick | SimpleAircraft's `rascal` limits flown against FixedWing6DOF's Rascal (`simple_aircraft_fit.py`) | the Rascal under AircraftPIDController | every number within 5% (or 0.2) |
 | `rascal-control` | quick | AircraftPIDController's `rascal` settings: altitude D after upsets, steps under each attitude limit (`rascal_control.py`) | the commands; the `a4d` limits | D changes error under 1 cm; steps settle, pitch under 25 degrees |
 | `rotors-motor` | release | Multirotor motor lag and rotor loads (`rotors_motor.py`) | RotorS's motor-plugin source in Docker | every sample within 1e-12 relative |

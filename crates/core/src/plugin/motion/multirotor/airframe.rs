@@ -4,11 +4,18 @@
 //!
 //! A mission either names a measured vehicle with `airframe` (and may
 //! override any of its keys) or gives every vehicle number itself. There is
-//! no default vehicle. The one built-in is a Crazyflie 2.0 from Förster's
-//! 2015 ETH thesis (handle 20.500.11850/214143). Equation numbers below are
-//! the thesis's; its body axes (Fig. 2.4) run along the motor arms, so the
-//! Crazyflie here is a "+" quad whose forward is an arm, 45 degrees from the
-//! real vehicle's front. That keeps the measured inertia matrix as published.
+//! no default vehicle. Two are built in:
+//!
+//! - `crazyflie2`, a Crazyflie 2.0 from Förster's 2015 ETH thesis (handle
+//!   20.500.11850/214143). Equation numbers below are the thesis's; its body
+//!   axes (Fig. 2.4) run along the motor arms, so the Crazyflie here is a "+"
+//!   quad whose forward is an arm, 45 degrees from the real vehicle's front.
+//!   That keeps the measured inertia matrix as published.
+//! - `firefly`, RotorS's AscTec Firefly hexacopter, from its model file
+//!   `rotors_description/urdf/firefly.xacro` at the commit the `rotors-motor`
+//!   check pins (`cd813b7`). These are RotorS's model numbers, not a
+//!   published identification of the vehicle. The book chapter "Flying a
+//!   multirotor" lists the choices made in copying them, and why.
 //!
 //! A preset holds only the vehicle's own numbers. Optional effects (motor
 //! lag, rotor drag) are switched on in the mission, like FixedWing6DOF's stall
@@ -27,6 +34,8 @@ use crate::math::{self, EulerAngles, Quaternion, Vec3};
 pub(crate) enum AirframeName {
     /// Crazyflie 2.0, from Förster's measurements (see `crazyflie2`).
     Crazyflie2,
+    /// RotorS's Firefly hexacopter (see `firefly`).
+    Firefly,
 }
 
 /// Keys a mission may set; with a preset, `None` keeps its value, and
@@ -107,6 +116,7 @@ impl Airframe {
     pub fn new(name: Option<AirframeName>, overrides: AirframeOverrides) -> Result<Self> {
         let preset = match name {
             Some(AirframeName::Crazyflie2) => crazyflie2(),
+            Some(AirframeName::Firefly) => firefly(),
             None => return Self::from_keys(overrides),
         };
         let inertia_kgm2 = match overrides.inertia_kgm2 {
@@ -240,6 +250,60 @@ fn crazyflie2() -> Airframe {
     }
 }
 
+/// RotorS's AscTec Firefly, from `rotors_description/urdf/firefly.xacro`
+/// (lines cited as `xacro:N`) at RotorS commit `cd813b7`. A hexacopter with
+/// six arms 60 degrees apart, the first 30 degrees left of forward, in
+/// RotorS's body axes, which are Ripple's (forward, left, up).
+fn firefly() -> Airframe {
+    // The whole vehicle RotorS simulates: body 1.5 kg (xacro:28), six rotors
+    // of 0.005 kg (xacro:31), and the 0.015 kg IMU that `firefly_base.xacro`
+    // mounts (component_snippets.xacro:855). RotorS's controller files
+    // (`resource/firefly.yaml`, `parameters.h`) say 1.56779 kg instead,
+    // 1.5% more than these parts; nothing in the model accounts for it, so
+    // the model's own sum is used.
+    let mass_kg = 1.5 + 6.0 * 0.005 + 0.015;
+    let thrust_coefficient = 8.54858e-06; // motor_constant, xacro:35
+    let arm_m = 0.215; // xacro:32
+    // Hubs sit 0.037 m above the body origin (rotor_offset_top, xacro:33).
+    // With the rotors' mass the center of mass moves up 0.7 mm; ignored.
+    let hub_up_m = 0.037;
+    let (cos30, sin30) = (0.866025403784, 0.5); // xacro:40-41
+    let rotor = |direction, forward, left| RotorParams {
+        direction,
+        position_flu_m: [forward * arm_m, left * arm_m, hub_up_m],
+        tilt_deg: [0.0; 3],
+    };
+    Airframe {
+        mass_kg,
+        gravity_mps2: 9.81,
+        // The body's inertia as published (xacro:47), which RotorS's own
+        // controller also uses. The six rotors on their arms would add about
+        // 2% about x and y; left out to keep the published numbers.
+        inertia_kgm2: Matrix3::new(
+            0.0347563, 0.0, 0.0, //
+            0.0, 0.0458929, 0.0, //
+            0.0, 0.0, 0.0977,
+        ),
+        thrust_coefficient,
+        // moment_constant (xacro:36) is c_Q / c_T, in metres.
+        torque_coefficient: 0.016 * thrust_coefficient,
+        // RotorS's motor runs from rest up to max_rot_velocity (xacro:39).
+        min_rotor_speed_radps: 0.0,
+        max_rotor_speed_radps: 838.0,
+        // motor_number 0 to 5 (xacro:71-199), with their spin directions;
+        // counterclockwise from front-left, as the ports motor_0 to motor_5.
+        rotors: rotors(&[
+            rotor(Direction::Counterclockwise, cos30, sin30),
+            rotor(Direction::Clockwise, 0.0, 1.0),
+            rotor(Direction::Counterclockwise, -cos30, sin30),
+            rotor(Direction::Clockwise, -cos30, -sin30),
+            rotor(Direction::Counterclockwise, 0.0, -1.0),
+            rotor(Direction::Clockwise, cos30, -sin30),
+        ])
+        .expect("the Firefly's rotors are valid"),
+    }
+}
+
 /// Förster eq. (3.3): one rotor's thrust (N) against the motor command
 /// (0 to 65535).
 fn forster_thrust_n(command: f64) -> f64 {
@@ -297,7 +361,7 @@ mod tests {
     use anyhow::Result;
 
     use super::{
-        Airframe, AirframeName, AirframeOverrides, Direction, RotorParams, crazyflie2,
+        Airframe, AirframeName, AirframeOverrides, Direction, RotorParams, crazyflie2, firefly,
         forster_speed_radps, forster_thrust_n, rotors,
     };
     use crate::math::Vec3;
@@ -320,6 +384,31 @@ mod tests {
         // Opposite motors 92 mm apart.
         let span_m = (airframe.rotors[0].offset_body_m - airframe.rotors[2].offset_body_m).norm();
         assert!((span_m - 0.092).abs() < 1e-15);
+    }
+
+    #[test]
+    fn firefly_hovers_at_544_radps_with_a_thrust_margin_of_2_4() {
+        let airframe = firefly();
+        assert!((airframe.mass_kg - 1.545).abs() < 1e-12);
+        let weight_n = airframe.mass_kg * airframe.gravity_mps2;
+        // Six equal rotors share the weight: w = sqrt(m g / (6 c_T)), worked
+        // by hand as 543.60 rad/s, and 36.0 N at 838 rad/s against 15.2 N.
+        let hover_radps = (weight_n / (6.0 * airframe.thrust_coefficient)).sqrt();
+        assert!((hover_radps - 543.60).abs() < 0.01, "{hover_radps}");
+        let max_thrust_n =
+            6.0 * airframe.thrust_coefficient * airframe.max_rotor_speed_radps.powi(2);
+        assert!((max_thrust_n / weight_n - 2.38).abs() < 0.01);
+        // Opposite hubs 0.43 m apart, all 0.037 m up; spins alternate, so
+        // the reaction torques cancel at hover.
+        let span_m = (airframe.rotors[0].offset_body_m - airframe.rotors[3].offset_body_m).norm();
+        assert!((span_m - 0.43).abs() < 1e-9);
+        let net_reaction: f64 = airframe
+            .rotors
+            .iter()
+            .map(|rotor| rotor.direction.reaction_sign())
+            .sum();
+        assert_eq!(net_reaction, 0.0);
+        assert!(airframe.rotors.iter().all(|r| r.offset_body_m.z == 0.037));
     }
 
     #[test]

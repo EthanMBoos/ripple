@@ -84,8 +84,9 @@ describes it and the other checks.
   aircraft and for step-size convergence (`rk4_loads.py`).
   Its parameters are [below](#fixedwing6dof-parameters).
 - **Multirotor** is a rigid-body multirotor with thrust and torque growing
-  with rotor speed squared, RK4, and a built-in Crazyflie 2.0
-  (`airframe: crazyflie2`). Optional RotorS effects: motor lag, rotor drag, and
+  with rotor speed squared, RK4, and two built-in vehicles: a Crazyflie 2.0
+  (`airframe: crazyflie2`) and RotorS's Firefly hexacopter
+  (`airframe: firefly`). Optional RotorS effects: motor lag, rotor drag, and
   rolling moment. Checked in the comparison and against RotorS's
   motor code, Crazyflow's dynamics, and the Crazyflie's measured
   identification; see [Flying a

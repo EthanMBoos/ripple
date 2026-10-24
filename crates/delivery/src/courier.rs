@@ -46,6 +46,10 @@ pub struct CourierConfig {
     loiter_radius_m: f64,
     dwell_s: f64,
     reload_s: f64,
+    /// Slow toward a target at this rate, speed = rate x distance up to
+    /// cruise, so a vehicle with real dynamics can stop on it. 0 commands
+    /// cruise until one tick short, as point models follow exactly.
+    approach_per_s: f64,
 }
 
 impl Default for CourierConfig {
@@ -63,6 +67,7 @@ impl Default for CourierConfig {
             loiter_radius_m: 300.0,
             dwell_s: 30.0,
             reload_s: 120.0,
+            approach_per_s: 0.0,
         }
     }
 }
@@ -76,6 +81,7 @@ pub struct Courier {
     loiter_radius_m: f64,
     dwell_s: f64,
     reload_s: f64,
+    approach_per_s: f64,
     /// Its own phase; while a skill runs, the skill's.
     phase: Phase,
     running: Option<Box<dyn Skill>>,
@@ -104,6 +110,10 @@ impl Plugin for Courier {
             config.arrival_radius_m > 0.0 && config.depot_radius_m > 0.0,
             "Courier arrival and depot radii must be positive"
         );
+        ensure!(
+            config.approach_per_s >= 0.0,
+            "Courier approach_per_s must be nonnegative"
+        );
         Ok(config)
     }
 
@@ -123,6 +133,7 @@ impl Plugin for Courier {
             loiter_radius_m: config.loiter_radius_m,
             dwell_s: config.dwell_s,
             reload_s: config.reload_s,
+            approach_per_s: config.approach_per_s,
             phase: Phase::Idle,
             running: None,
             carrying: None,
@@ -315,7 +326,12 @@ impl Courier {
             Vec3::zeros()
         } else {
             // Slow down to land on the point instead of overshooting it.
-            let speed_mps = self.card.cruise_speed_mps.min(distance_m / dt_s);
+            let stopping_speed_mps = if self.approach_per_s > 0.0 {
+                distance_m * self.approach_per_s
+            } else {
+                distance_m / dt_s
+            };
+            let speed_mps = self.card.cruise_speed_mps.min(stopping_speed_mps);
             displacement_m / distance_m * speed_mps
         };
         (heading_rad, altitude_m, velocity_world_mps)

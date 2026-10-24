@@ -1,8 +1,9 @@
 # Closed-loop multirotor flight: MultirotorVelocityController flies the same
 # velocity commands point agents take (velocity_x, velocity_y, velocity_z) on
-# a Crazyflie 2.0. Each vehicle gets one constant command from t = 0, so these
-# are step responses; one starts rolled 15 degrees and must recover to a
-# hover.
+# a Crazyflie 2.0 and on RotorS's Firefly hexacopter. Each vehicle gets one
+# constant command from t = 0, so these are step responses; one of each
+# starts rolled 15 degrees and must recover to a hover, and one Firefly
+# cruises at the delivery mission's 12 m/s.
 # reference/multirotor_control.py measures them (rise, overshoot, settling,
 # steady tilt, and convergence as the step shrinks).
 # The controller runs at every motion substep: 0.01 s ticks with 5 substeps
@@ -37,6 +38,24 @@ templates:
         rotor_drag_coefficient: 9.1785e-7
         rotor_drag_coefficient_axial: 10.311e-7
 
+  firefly:
+    visual_model: sphere
+    autonomy:
+      ConstantVelocity:
+        velocity_mps: [1, 0, 0]
+    controller:
+      MultirotorVelocityController:
+        airframe: firefly
+    motion_model:
+      Multirotor:
+        # RotorS's firefly.xacro: mass, inertia, layout, thrust, torque.
+        airframe: firefly
+        # RotorS's motor plugin effects, from the same file (xacro:37-43).
+        motor_time_constant_up_s: 0.0125
+        motor_time_constant_down_s: 0.025
+        rotor_drag_coefficient: 8.06428e-5
+        rolling_moment_coefficient: 1.0e-6
+
 entities:
   crazyflie_forward:
     template: crazyflie
@@ -70,3 +89,43 @@ entities:
     autonomy:
       ConstantVelocity:
         velocity_mps: [0, 0, 0]
+
+  firefly_forward:
+    template: firefly
+    team: 2
+    position_m: [0, 20, 10]
+
+  firefly_climb:
+    template: firefly
+    team: 2
+    position_m: [0, 23, 10]
+    autonomy:
+      ConstantVelocity:
+        velocity_mps: [0, 0, 0.5]
+
+  firefly_fast:
+    template: firefly
+    team: 2
+    position_m: [0, 26, 10]
+    autonomy:
+      ConstantVelocity:
+        velocity_mps: [2, 1, 0]
+
+  firefly_upset:
+    template: firefly
+    team: 2
+    position_m: [0, 29, 10]
+    roll_deg: 15
+    heading_deg: 30
+    autonomy:
+      ConstantVelocity:
+        velocity_mps: [0, 0, 0]
+
+  # The delivery mission's multirotor cruise speed.
+  firefly_cruise:
+    template: firefly
+    team: 2
+    position_m: [0, 32, 10]
+    autonomy:
+      ConstantVelocity:
+        velocity_mps: [12, 0, 0]

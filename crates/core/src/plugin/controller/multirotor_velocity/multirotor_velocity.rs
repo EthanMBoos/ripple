@@ -42,7 +42,8 @@ const VELOCITY_PORTS: [&str; 3] = ["velocity_x", "velocity_y", "velocity_z"];
 #[derive(Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct MultirotorVelocityParams {
-    /// `crazyflie2`, or absent for a vehicle given in full, as for Multirotor.
+    /// `crazyflie2`, `firefly`, or absent for a vehicle given in full, as for
+    /// Multirotor. It also picks the default gains.
     airframe: Option<AirframeName>,
     mass_kg: Option<f64>,
     gravity_mps2: Option<f64>,
@@ -81,20 +82,40 @@ struct Gains {
     max_vertical_acceleration_mps2: f64,
 }
 
-/// Default gains, chosen by step-response tuning for a Crazyflie flown with
-/// Förster's 65 ms motor lag (`reference/multirotor_control.py`, evidence in
-/// paper/data). The lag adds a pole at 15 rad/s, and with no derivative term
-/// the attitude poles must sum to 1 / tau; rate and attitude gains place all
-/// three near -5 rad/s. Retune them for another vehicle or a longer lag.
-fn default_gains() -> Gains {
-    Gains {
-        velocity_per_s: 1.2,
-        velocity_integral_per_s2: 0.36,
-        velocity_integral_limit_mps2: 2.0,
-        attitude_per_s: 1.7,
-        rate_per_s: 5.1,
-        max_tilt_rad: math::deg_to_rad(20.0),
-        max_vertical_acceleration_mps2: 4.0,
+/// Default gains for an airframe, each chosen by step-response tuning
+/// (`reference/multirotor_control.py`, evidence in paper/data); a vehicle
+/// given in full starts from the Crazyflie's. Retune them for another
+/// vehicle or a longer motor lag.
+fn default_gains(airframe: Option<AirframeName>) -> Gains {
+    match airframe {
+        // Flown with Förster's 65 ms motor lag. The lag adds a pole at 15
+        // rad/s, and with no derivative term the attitude poles must sum to
+        // 1 / tau; rate and attitude gains place all three near -5 rad/s.
+        Some(AirframeName::Crazyflie2) | None => Gains {
+            velocity_per_s: 1.2,
+            velocity_integral_per_s2: 0.36,
+            velocity_integral_limit_mps2: 2.0,
+            attitude_per_s: 1.7,
+            rate_per_s: 5.1,
+            max_tilt_rad: math::deg_to_rad(20.0),
+            max_vertical_acceleration_mps2: 4.0,
+        },
+        // Flown with RotorS's 12.5 ms / 25 ms motor lag. RotorS's Lee gains
+        // for the Firefly (`lee_controller_firefly.yaml`) in this
+        // controller's form: velocity 4.7 / m = 3.0 /s, attitude K_R / K_w =
+        // 5.8 /s, rate K_w / J = 15 /s about x and 11 /s about y (one rate
+        // gain here, so between them). Lee has no integral; 0.6 /s^2 removes
+        // the rotor drag's steady error with 5-7% overshoot, where 2.25
+        // (Crazyflie's Ki / Kv^2) gave 23%.
+        Some(AirframeName::Firefly) => Gains {
+            velocity_per_s: 3.0,
+            velocity_integral_per_s2: 0.6,
+            velocity_integral_limit_mps2: 2.0,
+            attitude_per_s: 5.8,
+            rate_per_s: 13.0,
+            max_tilt_rad: math::deg_to_rad(20.0),
+            max_vertical_acceleration_mps2: 4.0,
+        },
     }
 }
 
@@ -136,7 +157,7 @@ impl Plugin for MultirotorVelocityController {
             airframe.thrust_coefficient > 0.0,
             "MultirotorVelocityController requires thrust_coefficient > 0"
         );
-        let defaults = default_gains();
+        let defaults = default_gains(params.airframe);
         let gains = Gains {
             velocity_per_s: params.velocity_kp.unwrap_or(defaults.velocity_per_s),
             velocity_integral_per_s2: params

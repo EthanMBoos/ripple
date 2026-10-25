@@ -26,7 +26,7 @@ use crate::messages::{
     ASSIGNMENT_TOPIC, Assignment, CallRecord, DECISION_TOPIC, DELIVERED_TOPIC, DIRECTIVE_TOPIC,
     Decision, Delivered, Phase, REQUEST_TOPIC, Request, STATUS_TOPIC, SkillName, Status, Waiting,
 };
-use crate::planner::{self, ModelPlanner, View};
+use crate::planner::{self, Guidance, ModelPlanner, View};
 
 #[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -44,6 +44,9 @@ pub struct DispatcherConfig {
     model: String,
     sample: u32,
     limits_in_prompt: bool,
+    /// General advice in the system prompt: `none` or `rules_first`
+    /// (`planner::Guidance`).
+    guidance: Guidance,
     cache_dir: String,
     command: String,
     /// Delivery sites. Required.
@@ -77,6 +80,7 @@ impl Default for DispatcherConfig {
             model: "claude-haiku-5-5".into(),
             sample: 0,
             limits_in_prompt: true,
+            guidance: Guidance::None,
             cache_dir: "runs/llm-cache".into(),
             command: "claude".into(),
             sites: Vec::new(),
@@ -158,6 +162,7 @@ impl Plugin for Dispatcher {
                 model: config.model.clone(),
                 sample: config.sample,
                 limits_in_prompt: config.limits_in_prompt,
+                system: config.guidance.system_prompt(),
                 cache_dir: config.cache_dir.clone().into(),
                 command: config.command.clone(),
             },

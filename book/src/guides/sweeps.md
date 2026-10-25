@@ -16,13 +16,38 @@ parameter_combinations: cartesian            # or zip: lists of equal length
 parameters:
   entities.blue.autonomy.WaypointFollower.speed_mps: [3, 5]
   interactions.WaypointBroadcast.update_at_s: [3, 100]
+  run.end_s: 120                             # one value: the same in every case
 ```
 
 That is 2 seeds × 2 speeds × 2 update times = 8 cases. With `cartesian`,
 every combination runs; with `zip`, the lists go in step (the first value of
 each, then the second), which suits two settings that move together, such as
-the noise on two axes. Cases are numbered with the seed changing fastest, then
-the last path.
+the noise on two axes. A path given one value instead of a list takes it in
+every case under either rule, so a zipped sweep can hold a constant without
+repeating it down a list. Cases are numbered with the seed changing fastest,
+then the last path.
+
+A study with many hand-picked conditions reads better as a table, one row
+per case:
+
+```yaml
+name: directives-test
+base_scenario: delivery.yaml
+seeds: [4, 5, 6]
+parameters:                                  # constants only
+  run.end_s: 1800
+prefix: entities.depot.autonomy.Dispatcher   # put before each column
+columns: [directive.kind, directive.phrasing, sample]
+cases:
+  - [none,   0, 0]
+  - [no_fly, 0, 0]
+  - [no_fly, 3, 0]
+```
+
+Each row is one combination, numbered in order, so the cases run and are
+recorded exactly as a zipped sweep of the same values would be, and
+`results.jsonl` holds the full dotted paths. `parameter_combinations` is left
+out.
 
 Each path is a dotted path into the mission, set exactly as a [command-line
 override](yaml-missions.md#command-line-overrides) sets it, after templates

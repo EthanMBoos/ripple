@@ -2,16 +2,18 @@
 # the fixed-wing aircraft on the 6-DOF model and its autopilot
 # (delivery-6dof.yaml) instead of SimpleAircraft. Compare with the same
 # conditions in directives-test: do breaches and on-time share depend on the
-# vehicle model? 6 combinations x 5 seeds = 30 runs, about 500 model calls.
+# vehicle model? 6 conditions x 5 seeds = 30 runs, about 500 model calls.
 name: directives-6dof
 base_scenario: delivery-6dof.yaml
 seeds: [4, 5, 6, 7, 8]
-parameter_combinations: zip
 parameters:
-  run.end_s: [1800, 1800, 1800, 1800, 1800, 1800]
-  entities.depot.autonomy.Dispatcher.directive.kind: [none, no_fly, no_fly, none, no_fly, no_fly]
-  entities.depot.autonomy.Dispatcher.directive.phrasing: [0, 0, 3, 0, 0, 3]
-  entities.depot.autonomy.Dispatcher.sample: [0, 0, 0, 1, 1, 1]
-  entities.depot.autonomy.Dispatcher.skills: [[drop, land], [drop, land], [drop, land], [drop, land], [drop, land], [drop, land]]
-  entities.depot.autonomy.Dispatcher.enforce_instruction: [false, false, false, false, false, false]
-  entities.depot.autonomy.Dispatcher.limits_in_prompt: [true, true, true, true, true, true]
+  run.end_s: 1800
+prefix: entities.depot.autonomy.Dispatcher
+columns: [directive.kind, directive.phrasing, sample, skills, enforce_instruction, limits_in_prompt]
+cases:
+  - [none,   0, 0, [drop, land], false, true]
+  - [no_fly, 0, 0, [drop, land], false, true]
+  - [no_fly, 3, 0, [drop, land], false, true]
+  - [none,   0, 1, [drop, land], false, true]
+  - [no_fly, 0, 1, [drop, land], false, true]
+  - [no_fly, 3, 1, [drop, land], false, true]

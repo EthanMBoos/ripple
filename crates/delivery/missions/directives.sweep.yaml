@@ -6,7 +6,19 @@
 name: directives
 base_scenario: delivery.yaml
 seeds: [1, 2, 3]
-parameter_combinations: zip
-parameters:
-  entities.depot.autonomy.Dispatcher.directive.kind: [none, closure, closure, closure, no_fly, no_fly, no_fly, reserve_multirotor, reserve_multirotor, reserve_multirotor, ground_vehicle, ground_vehicle, ground_vehicle]
-  entities.depot.autonomy.Dispatcher.directive.phrasing: [0, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2]
+prefix: entities.depot.autonomy.Dispatcher
+columns: [directive.kind, directive.phrasing]
+cases:
+  - [none,               0]
+  - [closure,            0]
+  - [closure,            1]
+  - [closure,            2]
+  - [no_fly,             0]
+  - [no_fly,             1]
+  - [no_fly,             2]
+  - [reserve_multirotor, 0]
+  - [reserve_multirotor, 1]
+  - [reserve_multirotor, 2]
+  - [ground_vehicle,     0]
+  - [ground_vehicle,     1]
+  - [ground_vehicle,     2]

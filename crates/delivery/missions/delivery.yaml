@@ -66,6 +66,9 @@ entities:
         model: claude-haiku-5-5
         sample: 0
         limits_in_prompt: true
+        # General advice in the system prompt: none, or rules_first (the
+        # sentence is in planner.rs).
+        guidance: none
         cache_dir: runs/llm-cache
         command: claude
         requests: 20

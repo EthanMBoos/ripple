@@ -2,8 +2,11 @@
 //! whole or as one shard.
 //!
 //! Implemented, the minimum that sharding needs:
-//! - the `*.sweep.yaml` file: `name`, `base_scenario`, `seeds`,
-//!   `parameter_combinations` (`cartesian` or `zip`), and dotted-path `parameters`;
+//! - the `*.sweep.yaml` file: `name`, `base_scenario`, `seeds`, dotted-path
+//!   `parameters`, each a list of values or one value, which every case
+//!   takes, combined by `parameter_combinations` (`cartesian` or `zip`); or,
+//!   for a table of conditions, `columns` and one row of values per case in
+//!   `cases`, with `parameters` then holding only constants;
 //! - a fixed case numbering, so `case-0007` means the same seed and values
 //!   whether the sweep runs whole or in shards;
 //! - `--shard-index i --shard-count n`, which runs cases i, i+n, i+2n, ...;
@@ -57,17 +60,44 @@ struct SweepFile {
     /// Each case uses one; empty means the base mission's own `run.seed`.
     #[serde(default)]
     seeds: Vec<u32>,
+    #[serde(default)]
     parameter_combinations: Combinations,
-    /// Dotted path (as in a command-line override) to the values it takes.
+    /// Dotted path (as in a command-line override) to the values it takes:
+    /// a list, or one value, which every case takes.
+    #[serde(default, deserialize_with = "one_or_many")]
     parameters: BTreeMap<String, Vec<Value>>,
+    /// Conditions as a table: each case is one row of `cases`, one value per
+    /// path in `columns`. With a table, `parameters` holds only constants.
+    #[serde(default)]
+    columns: Vec<String>,
+    /// Put before each column's path, so the columns read short.
+    #[serde(default)]
+    prefix: Option<String>,
+    #[serde(default)]
+    cases: Vec<Vec<Value>>,
 }
 
-#[derive(Clone, Copy, Deserialize)]
+fn one_or_many<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<BTreeMap<String, Vec<Value>>, D::Error> {
+    let raw: BTreeMap<String, Value> = Deserialize::deserialize(deserializer)?;
+    Ok(raw
+        .into_iter()
+        .map(|(path, value)| match value {
+            Value::Sequence(values) => (path, values),
+            value => (path, vec![value]),
+        })
+        .collect())
+}
+
+#[derive(Clone, Copy, Default, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum Combinations {
     /// Every combination of values.
+    #[default]
     Cartesian,
     /// The i-th value of every path together; lists must have equal lengths.
+    /// A path with one value keeps it in every case.
     Zip,
 }
 
@@ -197,8 +227,46 @@ fn validate(spec: &SweepFile) -> Result<()> {
         );
         ensure!(!values.is_empty(), "sweep parameter `{path}` has no values");
     }
+    if !spec.columns.is_empty() || !spec.cases.is_empty() {
+        ensure!(
+            !spec.columns.is_empty() && !spec.cases.is_empty(),
+            "a sweep table needs both `columns` and `cases`"
+        );
+        for row in &spec.cases {
+            ensure!(
+                row.len() == spec.columns.len(),
+                "every row of `cases` needs one value per column ({} columns)",
+                spec.columns.len()
+            );
+        }
+        for path in spec.columns.iter().map(|column| column_path(spec, column)) {
+            ensure!(path != "run.seed", "run.seed is set by the sweep's `seeds`");
+            ensure!(
+                !spec.parameters.contains_key(&path),
+                "`{path}` is both a column and a parameter"
+            );
+            ensure!(
+                spec.columns
+                    .iter()
+                    .filter(|column| column_path(spec, column) == path)
+                    .count()
+                    == 1,
+                "column `{path}` is listed twice"
+            );
+        }
+        ensure!(
+            spec.parameters.values().all(|values| values.len() == 1),
+            "with `cases`, each parameter takes one value; vary the rest by column"
+        );
+        return Ok(());
+    }
     if matches!(spec.parameter_combinations, Combinations::Zip) {
-        let lengths: Vec<usize> = spec.parameters.values().map(Vec::len).collect();
+        let lengths: Vec<usize> = spec
+            .parameters
+            .values()
+            .map(Vec::len)
+            .filter(|&length| length != 1)
+            .collect();
         ensure!(
             lengths.windows(2).all(|pair| pair[0] == pair[1]),
             "zipped sweep parameters must have the same number of values"
@@ -207,9 +275,20 @@ fn validate(spec: &SweepFile) -> Result<()> {
     Ok(())
 }
 
+/// A column's full dotted path.
+fn column_path(spec: &SweepFile, column: &str) -> String {
+    match &spec.prefix {
+        Some(prefix) => format!("{prefix}.{column}"),
+        None => column.to_owned(),
+    }
+}
+
 fn combination_count(spec: &SweepFile) -> usize {
+    if !spec.cases.is_empty() {
+        return spec.cases.len();
+    }
     match spec.parameter_combinations {
-        Combinations::Zip => spec.parameters.values().next().map_or(1, Vec::len),
+        Combinations::Zip => spec.parameters.values().map(Vec::len).max().unwrap_or(1),
         Combinations::Cartesian => spec.parameters.values().map(Vec::len).product(),
     }
 }
@@ -217,11 +296,30 @@ fn combination_count(spec: &SweepFile) -> usize {
 /// The values of combination `index`. Cartesian order: paths in
 /// alphabetical order, the last path changing fastest.
 fn parameters_at(spec: &SweepFile, index: usize) -> BTreeMap<String, Value> {
+    if !spec.cases.is_empty() {
+        let constants = spec
+            .parameters
+            .iter()
+            .map(|(path, values)| (path.clone(), values[0].clone()));
+        let row = spec
+            .columns
+            .iter()
+            .zip(&spec.cases[index])
+            .map(|(column, value)| (column_path(spec, column), value.clone()));
+        return constants.chain(row).collect();
+    }
     if matches!(spec.parameter_combinations, Combinations::Zip) {
         return spec
             .parameters
             .iter()
-            .map(|(path, values)| (path.clone(), values[index].clone()))
+            .map(|(path, values)| {
+                let value = if values.len() == 1 {
+                    &values[0]
+                } else {
+                    &values[index]
+                };
+                (path.clone(), value.clone())
+            })
             .collect();
     }
     let mut remaining = index;
@@ -321,7 +419,47 @@ mod tests {
                 ("a".into(), vec![Value::from(1), Value::from(2)]),
                 ("b".into(), vec![Value::from(10), Value::from(20)]),
             ]),
+            columns: Vec::new(),
+            prefix: None,
+            cases: Vec::new(),
         }
+    }
+
+    fn table() -> SweepFile {
+        SweepFile {
+            parameters: BTreeMap::from([("k".into(), vec![Value::from(5)])]),
+            columns: vec!["x".into(), "y".into()],
+            prefix: Some("p".into()),
+            cases: vec![
+                vec![Value::from(1), Value::from(2)],
+                vec![Value::from(3), Value::from(4)],
+            ],
+            ..spec(Combinations::Cartesian, vec![7, 8])
+        }
+    }
+
+    #[test]
+    fn a_table_gives_one_case_per_row_with_the_constants() {
+        let good = table();
+        validate(&good).expect("a well-formed table");
+        assert_eq!(combination_count(&good), 2);
+        let (seed, parameters) = case_inputs(&good, 3);
+        assert_eq!(seed, Some(8));
+        assert_eq!(parameters["k"].as_i64(), Some(5));
+        assert_eq!(parameters["p.x"].as_i64(), Some(3));
+        assert_eq!(parameters["p.y"].as_i64(), Some(4));
+
+        let mut ragged = table();
+        ragged.cases[1].pop();
+        assert!(validate(&ragged).is_err());
+        let mut twice = table();
+        twice.parameters.insert("p.x".into(), vec![Value::from(0)]);
+        assert!(validate(&twice).is_err());
+        let mut listed = table();
+        listed
+            .parameters
+            .insert("k".into(), vec![Value::from(5), Value::from(6)]);
+        assert!(validate(&listed).is_err());
     }
 
     #[test]
@@ -340,13 +478,17 @@ mod tests {
             [(1, 10), (1, 20), (2, 10), (2, 20)].map(|(a, b)| (Some(a), Some(b)))
         );
 
-        // Zip pairs the i-th values; seeds cycle fastest across cases.
-        let zipped = spec(Combinations::Zip, vec![7, 8]);
+        // Zip pairs the i-th values; seeds cycle fastest across cases. A path
+        // with one value keeps it in every case.
+        let mut zipped = spec(Combinations::Zip, vec![7, 8]);
+        zipped.parameters.insert("c".into(), vec![Value::from(9)]);
+        validate(&zipped).expect("one value fits any zip");
         assert_eq!(combination_count(&zipped), 2);
         let (seed, parameters) = case_inputs(&zipped, 3);
         assert_eq!(seed, Some(8));
         assert_eq!(parameters["a"].as_i64(), Some(2));
         assert_eq!(parameters["b"].as_i64(), Some(20));
+        assert_eq!(parameters["c"].as_i64(), Some(9));
     }
 
     #[test]
@@ -358,7 +500,9 @@ mod tests {
         assert!(validate(&seeded).is_err());
 
         let mut uneven = spec(Combinations::Zip, vec![]);
-        uneven.parameters.insert("c".into(), vec![Value::from(1)]);
+        uneven
+            .parameters
+            .insert("c".into(), vec![Value::from(1); 3]);
         assert!(validate(&uneven).is_err());
     }
 }

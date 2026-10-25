@@ -199,6 +199,31 @@ pub fn arrival_s(vehicle: &Status, request: &Request, via_world_m: Option<Vec3>)
 pub const SYSTEM_PROMPT: &str = "You dispatch a fleet of medical delivery drones from \
 one depot. Assign idle vehicles to waiting requests. Reply with JSON only, no other text.";
 
+/// General advice added to the system prompt: the "did you just tell it?"
+/// condition. Written once, before the test missions ran (2026-10-24), and
+/// never adjusted to a failure.
+#[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum Guidance {
+    #[default]
+    None,
+    /// Rules before deadlines, and a written check before the calls.
+    RulesFirst,
+}
+
+impl Guidance {
+    pub fn system_prompt(self) -> String {
+        match self {
+            Guidance::None => SYSTEM_PROMPT.into(),
+            Guidance::RulesFirst => format!(
+                "{SYSTEM_PROMPT} Instructions from operations take priority over deadlines. \
+                 Start the JSON with a \"reasoning\" field that checks each assignment you \
+                 intend against every instruction, then give the assignments."
+            ),
+        }
+    }
+}
+
 /// The decision in plain language. Times are minutes and distances kilometers,
 /// rounded, so that the prompt (and the cache key) depends only on the state.
 pub fn prompt(view: &View<'_>, limits_in_prompt: bool) -> String {
@@ -350,6 +375,8 @@ pub fn parse(reply: &str) -> Option<Vec<Call>> {
 pub struct ModelPlanner {
     pub model: String,
     pub sample: u32,
+    /// The system prompt, from `Guidance::system_prompt`.
+    pub system: String,
     pub limits_in_prompt: bool,
     pub cache_dir: PathBuf,
     /// The client: run as `command -p --model <model> ...` with the prompt on
@@ -379,7 +406,7 @@ impl ModelPlanner {
 
     fn reply(&self, prompt: &str) -> Result<String> {
         let key = Sha256::digest(
-            format!("{}\n{}\n{SYSTEM_PROMPT}\n{prompt}", self.model, self.sample).as_bytes(),
+            format!("{}\n{}\n{}\n{prompt}", self.model, self.sample, self.system).as_bytes(),
         );
         let hex: String = key.iter().map(|byte| format!("{byte:02x}")).collect();
         let path = self.cache_dir.join(format!("{hex}.json"));
@@ -401,7 +428,7 @@ impl ModelPlanner {
         let cached = CachedReply {
             model: self.model.clone(),
             sample: self.sample,
-            system: SYSTEM_PROMPT.into(),
+            system: self.system.clone(),
             prompt: prompt.into(),
             reply: reply.clone(),
         };
@@ -435,7 +462,7 @@ impl ModelPlanner {
             let spawned = Command::new(&self.command)
                 .args(["-p", "--model", &self.model, "--output-format", "text"])
                 .args(["--no-session-persistence", "--tools", ""])
-                .args(["--system-prompt", SYSTEM_PROMPT])
+                .args(["--system-prompt", &self.system])
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
@@ -521,6 +548,7 @@ mod tests {
         let planner = || ModelPlanner {
             model: "fake".into(),
             sample: 0,
+            system: SYSTEM_PROMPT.into(),
             limits_in_prompt: false,
             cache_dir: folder.join("cache"),
             command: client.display().to_string(),

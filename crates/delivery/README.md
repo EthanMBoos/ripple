@@ -14,7 +14,7 @@ src/directive.rs    the mid-mission instructions and their wordings
 src/courier.rs      one vehicle: run its assigned skill, return, reload
 src/score.rs        on-time share, refused calls, broken instructions
 src/messages.rs     what they send each other on GlobalNetwork
-missions/           the mission and the instruction sweep
+missions/           the missions and the instruction sweeps
 directives.py       the instruction pilot's summary and bars
 trace.py            one run's decisions, replayed from the saved replies
 deadlines.py        whether breaking calls came under deadline pressure
@@ -50,7 +50,9 @@ cargo test -p delivery
   JSON file per prompt (prompt and reply inside), named by a hash of the
   model, the `sample` index, and the prompt. A rerun therefore replays
   exactly without calling the model, and `command: none` makes a missing
-  reply an error. A different `sample` asks again.
+  reply an error. A different `sample` asks again. `guidance: rules_first`
+  adds one fixed sentence of general advice to the system prompt (rules before
+  deadlines, a written check before the calls); its text is in `planner.rs`.
 - **Instructions.** `directive` in the mission sets one: a clinic closure, a
   no-fly zone, a multirotor kept on standby, or a grounded vehicle, each in
   six wordings. The model sees it from `announce_s` to `end_s`. The score

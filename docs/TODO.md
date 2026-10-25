@@ -48,14 +48,16 @@ to see the failure first.
    - [ ] Hook up other models behind the Dispatcher's `command` interface
          (GPT, Gemini, and an open-weights model), still saving every reply.
          Try one new model end to end first.
-   - [ ] Run seven models (see Budget below).
+   - [ ] Run seven models: the core set on the cheap four, the small set on
+         the expensive three (see Budget below).
    - If bigger models never break the rules, I'll report that. Then the
      message is "test the model you're going to use".
 3. **General advice in the prompt isn't enough.** Answers "did you just try
    telling it?"
-   - [ ] Add one general instruction to the system prompt (rules come before
-         deadlines; think before each call). Write it once, before seeing
-         results, and don't change it per failure.
+   - [x] One general instruction in the system prompt, `guidance:
+         rules_first` (planner.rs), written 2026-10-24 before any test
+         model ran it: rules before deadlines, and a written check before
+         the calls. Not to be changed per failure.
    - If it fixes everything, the takeaway is that you only find that out by
      testing. If it doesn't, that's more reason to put the rule in a skill.
 4. **Small mistakes add up.** Slipping on 7-10% of decisions breaks 60-90%
@@ -113,19 +115,21 @@ Not every model needs every condition. Each question needs different
 coverage:
 - "Did you pick the wording?" needs every wording, but only on two models.
 - "Did you pick the map?" needs the zone on every route, also only on two.
-- "Is it just one model?" needs every model, but only the core comparison.
+- "Is it just one model?" needs every model, but only no rule and each rule
+  in wordings A and B.
 
 | | Models | What runs | Calls per model |
 | --- | --- | --- | --- |
-| Full set | 2 (Haiku and one OpenAI model) | all wordings, 20 missions, generic prompt, zone on every route | ~12,000 |
-| Core set | the other 5 | the two plain wordings per rule that diverged, 20 missions, generic prompt | ~3,000-4,000 |
+| Small set | Opus and OpenAI's two big models | `directives-small.sweep.yaml`: no rule, each rule in wordings A and B; 10 missions | ~1,200 |
+| Core set | Haiku, Sonnet, OpenAI's cheap model, the open-weights model | `directives-test.sweep.yaml`: the small set's rows plus a second sample, drop_via, enforced, no limits, rules_first; 20 missions | ~12,000 |
+| Full set | 2 (Haiku and one OpenAI model) | the core set plus all wordings and the zone on every route | ~25,000 |
 
-About 40,000 calls in all, against about 85,000 if all seven ran
-everything. These are rough, scaled from the current sweep (about 2,300
-calls per model at five missions); work out exact counts from the sweep
-configs before starting. To save more, run Opus, the expensive one, on 10
-missions instead of 20: it still counts toward "it happens across models",
-with wider error bars.
+The core set is 35 conditions x 20 seeds = 700 runs at about 17 decisions
+each. About 75,000 calls in all for seven models, almost all of them on the
+cheap ones. The small set's error bars are about 30 points a condition,
+enough to tell "never broken" from "broken most of the time", which is all
+the expensive models are there to show. Its rows are the first seven of the
+core set, so the two compare case for case.
 
 The limit is API access, rate limits, and spend, not code: the adapter and
 sweeps are days of work, and the calls run in parallel over a few days.

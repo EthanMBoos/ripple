@@ -19,8 +19,8 @@ directives.py       the instruction pilot's summary and bars
 trace.py            one run's decisions, replayed from the saved replies
 deadlines.py        whether breaking calls came under deadline pressure
 probe.py            one decision at a time: saved moments asked again per wording
-mission_strip.py    the paper's mission figures (Figs. 1 and 2) from one traced run
-results_figs.py     the paper's result figure (Fig. 4) and the numbers the text quotes
+mission_hero.py     the paper's title map (Fig. 1) from one traced run
+results_figs.py     the paper's result figure (Fig. 3) and the numbers the text quotes
 ```
 
 ```sh

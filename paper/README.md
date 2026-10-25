@@ -9,8 +9,7 @@ evidence document.
   skill a **Ripple** plugin: how much each added skill helps, how planners
   rank on exactly replayable episodes, and whether the planner knows what
   each vehicle can do. The [roadmap](../docs/TODO.md) drives the work; the
-  appendix covers determinism, cost, and the command that reruns every
-  check.
+  appendix gives the full counts behind the mission results.
 
 It uses the IEEE conference layout. Venue and titles are provisional. Results
 marked **[Provisional]** do not yet come from a release run of the suite.

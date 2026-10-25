@@ -5,7 +5,7 @@
         sweeps/directives-6dof/run000 paper/manuscript
 
 Writes fig-slope.tex, a TikZ picture for main.tex to \\input (like the
-mission figures from mission_strip.py, in the paper's own fonts and
+mission map from mission_hero.py, in the paper's own fonts and
 colours): per rule and wording, the share of decisions that broke the rule
 where it could be broken against the share of missions broken, on one 0-100%
 scale. Also prints the numbers the text quotes: the missions' 95% intervals,

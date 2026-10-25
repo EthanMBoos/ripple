@@ -376,7 +376,9 @@ trials shows up within a single mission, over its many decisions.
 % Placed here so it floats to the top of the page where Sec. IV begins.
 % The skill interface, as one call flowing from what the planner reads to the
 % vehicle that runs it. The call is real: the mission of Fig. 2 (seed 4, test
-% run) with drop_via also offered, replayed from saved replies; the inset is
+% run) with drop_via also offered, replayed from saved replies (reply sample
+% 1, runs/llm-cache/f9d9135e...cc6d38.json, the prompt in App. "One Decision
+% in Full"); the inset is
 % vehicle 2's flown track to clinic E, sampled every 20 s.
 \begin{figure*}[t]
 \centering
@@ -477,7 +479,9 @@ It comes from the mission of Fig.~\ref{fig:strip}, run again with
 \texttt{drop\_via} also offered: at minute 3.6, as soon as the urgent request
 for clinic E arrives, the planner sends a fixed-wing aircraft around the zone
 through a waypoint it chose, the delivery that the planner of
-Fig.~\ref{fig:strip} held for six minutes and then flew straight through.}
+Fig.~\ref{fig:strip} held for six minutes and then flew straight through.
+The left column is condensed from the full prompt in
+Appendix~\ref{app:prompt}.}
 \label{fig:arch}
 \end{figure*}
 
@@ -499,9 +503,17 @@ land, or drop by way of a waypoint, and each vehicle's autonomy carries out
 the call over that vehicle's own controller and dynamics. Whenever a request
 arrives or a vehicle comes home, the planner sees the open requests, each
 vehicle's state and limits (minimum speed, turn radius, whether it can
-hover, how much flight time it has left), and the skills it may use, and it
-replies with calls. A call a vehicle cannot carry out, such as sending a
-fixed-wing aircraft to land on a roof, is refused and counted.
+hover, how much flight time it has left), the skills it may use, and any
+instruction in force, and it replies with calls. Each decision is a new
+prompt built from the mission as it stands, without the planner's earlier
+decisions (Appendix~\ref{app:prompt} shows one in full). This keeps memory
+out of the test. Every rule in force appears in every prompt, so when the
+planner breaks a rule, the rule was in front of it, and the loss of
+reliability over long exchanges \cite{laban2025lost} plays no part. It also
+means each prompt depends only on the mission's state, so a reply saved once
+is reused on every rerun and the mission replays exactly. A call a vehicle
+cannot carry out, such as sending a fixed-wing aircraft to land on a roof, is
+refused and counted.
 
 Partway through the mission, operations may send one instruction in plain
 language: a clinic closes, a no-fly zone opens, a multirotor has to stay on
@@ -776,6 +788,76 @@ breaking call, of those where one was possible. Missions broken: judged
 from the flown trajectories, with Wilson 95\% intervals. Cost: change in on-time share, in points,
 against the same missions without the rule.}
 \end{table}
+
+\section{One Decision in Full}
+\label{app:prompt}
+
+Below is the decision of Fig.~\ref{fig:arch}, word for word: everything
+the planner saw and its reply. At minute 3.6 an urgent request opens for
+clinic E, and the straight route there crosses a no-fly zone that starts at
+minute 5. A fixed-wing aircraft flying straight would still be inside the
+zone when it starts. The planner instead calls \texttt{drop\_via} with a
+waypoint at (1, 5)~km, east of the zone, and the aircraft delivers without
+entering it.
+In the mission of Fig.~\ref{fig:strip}, which offers no such skill, the
+planner held the same request and later flew straight through.
+
+Every decision gets a new prompt like this one, built from the mission as it
+stands; nothing from earlier decisions is included. Long lines are wrapped.
+
+{\scriptsize
+\begin{verbatim}
+System:
+You dispatch a fleet of medical delivery drones from one
+  depot. Assign idle vehicles to waiting requests. Reply with
+  JSON only, no other text.
+
+Prompt:
+Time: minute 3.6. The depot is at (0.0, 0.0) km.
+
+Skills:
+- drop: fly over the site and drop the package by parachute (a
+  multirotor hovers over it to release), then return to
+  reload.
+- land: fly to the site, land, hand over the package, then
+  return to reload.
+- drop_via: like drop, but fly to the site and back through a
+  waypoint you choose; use it to route around an area.
+Each vehicle carries one package and flies straight to the
+  site and straight back, unless its skill says otherwise.
+  Rooftop sites accept only a landing.
+
+Vehicles:
+- vehicle 2: fixed-wing, idle, at (0.0, 0.3) km; cruise 25
+  m/s; cannot hover or land, minimum speed 15 m/s, turn radius
+  110 m; 60.0 min of flight left
+- vehicle 3: fixed-wing, idle, at (-0.0, -0.3) km; cruise 25
+  m/s; cannot hover or land, minimum speed 15 m/s, turn radius
+  110 m; 60.0 min of flight left
+- vehicle 4: multirotor, busy (returning), at (0.6, -0.7) km;
+  cruise 12 m/s; can hover and land; 22.7 min of flight left
+- vehicle 5: multirotor, idle, at (0.0, 0.0) km; cruise 12
+  m/s; can hover and land; 25.0 min of flight left
+
+Waiting requests:
+- request 2: 3 units of insulin for clinic E at (-3.6, 9.8)
+  km, urgent, due by minute 18.6
+
+Instructions from operations:
+- No vehicle may fly within 0.6 km of (-0.9, 2.5) km from
+  minute 5 to minute 25.
+
+Reply with {"assignments": [{"vehicle": <id>, "skill": "drop"
+  or "land" or "drop_via", "request": <id>}, ...]}. Assign
+  only idle vehicles, at most one request each. Leave a
+  request unassigned if no idle vehicle should take it.
+For drop_via, also give "via": [x, y], the waypoint in km.
+
+Reply:
+{"assignments": [{"vehicle": 2, "skill": "drop_via",
+  "request": 2, "via": [1.0, 5.0]}]}
+\end{verbatim}
+}
 
 \bibliographystyle{plainnat}
 \bibliography{../references}

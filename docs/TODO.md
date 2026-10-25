@@ -27,46 +27,108 @@ Rules, text worlds). Ours: a fleet checked from flown trajectories, slips
 adding up over a mission, two equally plain wordings differing, a skill as
 the fix. No optimizer baseline: enforcement in code is the oracle.
 
-## Rounding out the results
+## What I want to show
 
-What reviewers will push on, most likely first.
+The main point: you can't tell ahead of time which rule a planner will
+break, so you have to run the missions to find out. Ripple makes that cheap.
+Tweaking the prompt until it stops breaking doesn't count, since you'd need
+to see the failure first.
 
-Must have:
-- [ ] Model adapter: a client behind the Dispatcher's `command` interface for
-      GPT, Gemini, and an open-weights model (API or local server), keeping
-      the saved replies.
-- [ ] Five models: Claude Haiku and Sonnet (two sizes), a GPT and a Gemini
-      model, one open-weights model (Llama or Qwen); ideally one reasoning
-      model. Pilot one new model end to end first.
-- [ ] Twenty test missions per condition (seeds), two replies each, so the
-      intervals tighten to about 15-20 points.
-- [ ] All six wordings per rule on the test missions (or at least three),
-      plus a few wordings written by someone else, to answer "you picked
-      wording B because it broke".
-- [ ] A mitigation condition: a system prompt saying rules override
-      deadlines, and reasoning before calls. Tests the claim that compliance
-      needs the edge case spelled out or a guard in code.
+1. **You can't tell from the wording which rule will break.** Two rules
+   that read equally clearly get very different results (one never broken,
+   one broken in 8-9 of 10 missions).
+   - [ ] Pick all the wordings before running the test missions: six per
+         rule (at least three), plus a few written by someone else or by a
+         different model. That way nobody can say I chose the one that
+         broke.
+   - If there turns out to be an obvious pattern, I'll say testing finds it
+     faster than guessing.
+2. **It happens with other models too.** If different models break
+   different rules, that's the best argument for testing.
+   - [ ] Hook up other models behind the Dispatcher's `command` interface
+         (GPT, Gemini, and an open-weights model), still saving every reply.
+         Try one new model end to end first.
+   - [ ] Run seven models (see Budget below).
+   - If bigger models never break the rules, I'll report that. Then the
+     message is "test the model you're going to use".
+3. **General advice in the prompt isn't enough.** Answers "did you just try
+   telling it?"
+   - [ ] Add one general instruction to the system prompt (rules come before
+         deadlines; think before each call). Write it once, before seeing
+         results, and don't change it per failure.
+   - If it fixes everything, the takeaway is that you only find that out by
+     testing. If it doesn't, that's more reason to put the rule in a skill.
+4. **Small mistakes add up.** Slipping on 7-10% of decisions breaks 60-90%
+   of missions. Current runs already show this; it just needs more missions.
+5. **Rules break more under deadline pressure.** Breaks lean toward urgent
+   deliveries.
+   - [ ] Check this with a regression on the existing runs (breaks against
+         urgency and slack). No new runs needed.
+   - If urgency doesn't explain it, I'll just describe what happened.
+6. **The fix is a skill, not a better prompt.** `drop_via` stops the no-fly
+   breaches. Without vehicle limits, the planner tries to land fixed-wing
+   aircraft about 18 times a mission. Already true; check it again on the
+   new models.
 
-Strongly recommended:
-- [ ] The deadline claim as a regression: breaking against urgency and slack,
-      mission as a random effect. No new runs.
-- [ ] A second map: other clinic positions and a zone across other routes.
-- [ ] Noise reruns on the test missions (three live replies); the paper's
-      noise numbers are from the first pilot.
+To make the numbers solid either way:
+- [ ] Run twenty test missions per condition, with two replies each, so the
+      error bars shrink to about 15-20 points.
+- [ ] Rerun the noise check on the test missions (three live replies). The
+      paper's noise numbers still come from the first pilot.
+- [ ] Don't pick where the rules land; run every option. Put the no-fly
+      zone on the route to each of the six clinics in turn (centered halfway
+      along the straight line from the depot), and close each clinic in
+      turn. Report all of them. If every option is tested, there's nothing to
+      cherry-pick. This is only sweep settings, no code; it costs more model
+      calls, so use fewer seeds per placement if needed. The wording
+      comparison doesn't depend on this, since both wordings always run on
+      the same map.
 
-Nice to have:
-- [ ] Remove skills and vary their descriptions (a chart only if graded).
-- [ ] Multirotor model check: rerun the standby rule on
-      `delivery-firefly.yaml` (RotorS's Firefly), the mirror of the 6-DOF
-      fixed-wing check. Needs new model calls: the vehicles' timing changes
-      the prompts. The planner assumes straight lines at cruise speed and
-      the Firefly also brakes and descends, so compare arrival times and
-      slack across paired runs before reading equal scores as no change.
-- [ ] The heading test: "vehicles fly straight to a site and straight back"
-      beside the rule again; does no-fly wording A hold?
+If there's time:
+- [ ] Take skills away, or change their descriptions, and see what happens.
+      Only make a chart if it's graded.
+- [ ] Rerun the standby rule on the Firefly multirotor
+      (`delivery-firefly.yaml`), like the 6-DOF check for the fixed-wing
+      aircraft. This needs new model calls, because the vehicles' timing
+      changes the prompts. The planner assumes vehicles fly straight lines at
+      cruise speed, but the Firefly also brakes and descends, so compare
+      arrival times between paired runs before deciding equal scores mean
+      nothing changed.
+- [ ] Put "vehicles fly straight to a site and straight back" next to the
+      no-fly rule again and see whether wording A still holds.
 
-Cost: today's sweep is about 2,300 calls per model at five seeds; the
-must-haves come to roughly 10,000-15,000 per model.
+## Budget
+
+Models (seven):
+- Claude Haiku, Sonnet, and Opus.
+- OpenAI's top three; make one of them a reasoning model.
+- One open-weights model (Llama or Qwen). No hosting needed: OpenRouter or
+  Together serve them behind an OpenAI-style API, so it reuses the OpenAI
+  adapter. Reviewers will ask for one because anyone can rerun it later.
+- Gemini only if there's money left; the open model matters more.
+
+Two size ladders also show whether a bigger model fixes it (point 2).
+
+Not every model needs every condition. Each question needs different
+coverage:
+- "Did you pick the wording?" needs every wording, but only on two models.
+- "Did you pick the map?" needs the zone on every route, also only on two.
+- "Is it just one model?" needs every model, but only the core comparison.
+
+| | Models | What runs | Calls per model |
+| --- | --- | --- | --- |
+| Full set | 2 (Haiku and one OpenAI model) | all wordings, 20 missions, generic prompt, zone on every route | ~12,000 |
+| Core set | the other 5 | the two plain wordings per rule that diverged, 20 missions, generic prompt | ~3,000-4,000 |
+
+About 40,000 calls in all, against about 85,000 if all seven ran
+everything. These are rough, scaled from the current sweep (about 2,300
+calls per model at five missions); work out exact counts from the sweep
+configs before starting. To save more, run Opus, the expensive one, on 10
+missions instead of 20: it still counts toward "it happens across models",
+with wider error bars.
+
+The limit is API access, rate limits, and spend, not code: the adapter and
+sweeps are days of work, and the calls run in parallel over a few days.
 
 ## Paper
 
@@ -79,7 +141,24 @@ must-haves come to roughly 10,000-15,000 per model.
 - [ ] Before submitting: AIT's publications for AMASS results, the IEEE
       Xplore venues of SayCan, Code as Policies, SMART-LLM, and COHERENT, and
       a sweep of new preprints.
-- [ ] Venue: CoRL 2027; fallback RA-L with IROS. Check deadlines.
+- [ ] Venue: RA-L first, submitted as soon as results and writing are done
+      (results are a few weeks out: the adapter and sweeps are days of
+      work, and the calls run in parallel over a few days). Check this
+      year's dates; the ones below are typical, not confirmed.
+  - RA-L: submissions any time, a real revision round (reviewers can ask
+    for a condition and we can add it), less hostile to simulation-only
+    work, and suits an evaluation paper. It can be presented at ICRA or
+    IROS; the IROS option usually closes near IROS's own deadline (early
+    March).
+  - CoRL (usually due late May or June): where SayCan and Code as Policies
+    went, so the audience knows LLM planners over skills. But reviewers
+    expect learning and often hardware; we train nothing and run only in
+    simulation. Worth it only with a small hardware demo (a few quadrotors
+    flying the same planner and skills).
+  - ICRA/IROS directly: broad, fine with simulation and multi-robot work;
+    SMART-LLM and COHERENT went to ICRA. Shorter pages, noisier reviews,
+    and an evaluation paper can read as "no method". ICRA 2027's deadline
+    (around mid-September 2026) has passed.
 
 ## Evaluation rules
 
@@ -90,12 +169,15 @@ must-haves come to roughly 10,000-15,000 per model.
 
 ## Engine
 
-- [ ] Drive Ripple from Python (Gymnasium/PettingZoo; PyO3 when speed
-      matters).
-- [ ] ONNX policy plugin (`tract-onnx`, optional crate), actions as keyed
-      random draws.
-- [ ] Rerun the speed checks and accept a new baseline (`perf.py --accept`);
-      workload missions' keys were renamed, outputs unchanged.
+- [ ] Later, low priority: accept a new speed baseline. The workload keys
+      were renamed, so `perf.py` won't compare until `--accept`. A run on
+      2026-10-24 (laptop hot and on low battery, right after a long
+      equivalence run) had every 1-worker case 2-13% slower than the
+      2026-10-14 baseline and most 8-worker cases faster; three 1-worker
+      collision cases went past the 10% limit. Most likely the machine, but
+      nothing recorded rules out a small code cost since then. To settle it,
+      time the 2026-10-14 build and `main` alternately, plugged in and cool,
+      then accept.
 
 ## Not planned
 

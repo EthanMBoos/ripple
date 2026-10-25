@@ -153,6 +153,10 @@ impl Entity {
     pub fn team_id(&self) -> i32 {
         self.team_id
     }
+    /// Index of the mission entity group this entity came from.
+    pub fn group_index(&self) -> i32 {
+        self.group_index
+    }
     pub fn truth(&self) -> &KinematicState {
         &self.truth
     }

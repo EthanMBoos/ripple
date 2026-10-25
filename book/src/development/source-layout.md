@@ -14,6 +14,9 @@ crates/cli       ripple: the command line as a library (ripple_cli),
                  plus the stock `ripple` binary (src/main.rs)
 crates/starter   user plugins, missions, and tests; compiled into `ripple`
 crates/delivery  the paper's medical-delivery pilot: model dispatcher, couriers, score
+crates/ardupilot optional: ArduPlane SITL bridge (`--features ardupilot`)
+crates/learning  optional: RL demos, policies run from ONNX (`--features learning`);
+                 python/ holds the Python module and trainers
 ```
 
 ## File layout

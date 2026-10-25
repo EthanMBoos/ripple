@@ -14,5 +14,7 @@ fn main() -> anyhow::Result<()> {
     delivery::register(&mut registry)?;
     #[cfg(feature = "ardupilot")]
     ardupilot::register(&mut registry)?;
+    #[cfg(feature = "learning")]
+    learning::register(&mut registry)?;
     ripple_cli::main(registry, concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))
 }

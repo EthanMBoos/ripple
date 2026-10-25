@@ -1,0 +1,19 @@
+# The Python side of the learning demos. `uv sync --extra train` builds the
+# Rust module with maturin and installs the trainers; see
+# crates/learning/README.md.
+[build-system]
+requires = ["maturin>=1.9,<2"]
+build-backend = "maturin"
+
+[project]
+name = "ripple-learning"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["gymnasium>=1.0", "pettingzoo>=1.24", "numpy"]
+
+[project.optional-dependencies]
+train = ["stable-baselines3>=2.3", "torch", "onnx", "onnxscript"]
+
+[tool.maturin]
+module-name = "ripple_learning._native"
+features = ["pyo3/extension-module"]

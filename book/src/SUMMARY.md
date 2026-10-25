@@ -36,6 +36,8 @@
 
 - [Terrain](guides/terrain.md)
 - [Flying ArduPlane (SITL)](guides/ardupilot.md)
+- [Training a single agent](guides/training-single-agent.md)
+- [Training a team](guides/training-team.md)
 
 # Development
 

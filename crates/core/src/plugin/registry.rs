@@ -104,17 +104,28 @@ impl PluginRegistry {
         registry
     }
     pub fn register_autonomy<T: Autonomy>(&mut self, name: &str) -> Result<()> {
+        self.register_autonomy_with(name, T::new)
+    }
+    /// Registers an autonomy built by `new` instead of `Plugin::new`, so a
+    /// program that owns the simulation can hand each instance something of
+    /// its own, such as the actions a Python trainer chooses.
+    pub fn register_autonomy_with<T: Autonomy>(
+        &mut self,
+        name: &str,
+        new: impl Fn(&T::Config) -> T + Clone + Send + Sync + 'static,
+    ) -> Result<()> {
         self.autonomies.insert(
             name,
-            Box::new(|params| {
+            Box::new(move |params| {
                 let config = T::configure(params)?;
+                let new = new.clone();
                 Ok(CompiledPlugin {
                     name: String::new(),
                     ports: T::ports(&config),
                     rate: Rate::new(params.loop_rate_hz)?,
                     inputs: Vec::new(),
                     reading_kind: ReadingKind::Other,
-                    instantiate: Box::new(move || Box::new(AutonomyAdapter(T::new(&config)))),
+                    instantiate: Box::new(move || Box::new(AutonomyAdapter(new(&config)))),
                 })
             }),
         )

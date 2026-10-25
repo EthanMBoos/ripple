@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/core", "crates/cli", "crates/starter", "crates/delivery", "crates/ardupilot"]
+members = ["crates/core", "crates/cli", "crates/starter", "crates/delivery", "crates/ardupilot", "crates/learning", "crates/learning/python"]
 default-members = ["crates/core", "crates/cli"]
 resolver = "2"
 

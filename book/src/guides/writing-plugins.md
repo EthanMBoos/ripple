@@ -139,6 +139,12 @@ Use the call for its type: `register_autonomy`, `register_controller`,
 `register_metrics`. Registering a name already used in the same category is an
 error at startup, so nothing is silently replaced.
 
+`register_autonomy_with` takes a closure that builds each instance in place of
+`Plugin::new`, for a program that owns the simulation and must hand every
+instance something of its own. The learning demos use it to pass in a Python
+trainer's actions ([Training a single
+agent](training-single-agent.md#the-pieces)).
+
 ## Ports: the control chain
 
 Autonomy, controllers, and motion models pass commands down a chain of named

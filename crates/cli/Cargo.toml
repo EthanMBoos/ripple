@@ -21,6 +21,8 @@ starter = { path = "../starter" }
 delivery = { path = "../delivery" }
 # Optional ArduPilot SITL adapter, outside the default build: `--features ardupilot`.
 ardupilot = { path = "../ardupilot", optional = true }
+# Optional reinforcement-learning demos, outside the default build: `--features learning`.
+learning = { path = "../learning", optional = true }
 anyhow.workspace = true
 clap.workspace = true
 serde_json.workspace = true
@@ -33,3 +35,4 @@ rerun = { version = "=0.36.2", default-features = false, features = ["sdk"] }
 
 [features]
 ardupilot = ["dep:ardupilot"]
+learning = ["dep:learning"]

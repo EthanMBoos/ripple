@@ -78,12 +78,14 @@ def missions(root=ROOT):
     """Every runnable mission under missions/ and the user crates, not sweeps.
 
     ArduPilot missions need SITL in Docker and are run by their own study.
+    Learning missions need `--features learning`; crates/learning/tests
+    replays them.
     """
     found = [path for path in sorted((root / "missions").rglob("*"))
              if path.suffix == ".yaml"
              and not path.name.endswith((".sweep.yaml", ".terrain.yaml"))]
     found += [path for path in sorted((root / "crates").glob("*/missions/*.yaml"))
-              if not path.name.endswith(".sweep.yaml") and path.parts[-3] != "ardupilot"]
+              if not path.name.endswith(".sweep.yaml") and path.parts[-3] not in ("ardupilot", "learning")]
     return found
 
 

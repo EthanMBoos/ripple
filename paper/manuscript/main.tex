@@ -588,6 +588,12 @@ language: a clinic closes, a no-fly zone opens, a multirotor has to stay on
 standby, or a vehicle is grounded. In the unguarded conditions, the planner
 alone decides whether to follow it. We write each instruction several ways
 and check, from the fleet's flights and deliveries, whether it was obeyed.
+The check is on the fleet, not on the call, and is the same whatever the
+wording says: time a vehicle spends inside the no-fly zone during its
+window, time the grounded vehicle is away, and time in the window with no
+idle multirotor at the depot. A multirotor sent out just before the standby
+window and still away when it opens therefore breaks the rule, though the
+call that sent it was made before the window.
 
 We score a mission by the share of requests delivered on time, and report
 broken instructions, refused calls, and vehicles lost for lack of endurance

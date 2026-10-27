@@ -50,13 +50,20 @@ cargo test -p delivery
   JSON file per prompt (prompt and reply inside), named by a hash of the
   model, the `sample` index, and the prompt. A rerun therefore replays
   exactly without calling the model, and `command: none` makes a missing
-  reply an error. A different `sample` asks again. `guidance: rules_first`
-  adds one fixed sentence of general advice to the system prompt (rules before
-  deadlines, a written check before the calls); its text is in `planner.rs`.
+  reply an error. A different `sample` asks again. Everything the model is
+  told before the state is in the mission's `prompt` block, in full: the
+  system prompt, the sentences `additions` can add to it (`priority`, rules
+  before deadlines and each call names the instruction it was checked
+  against; `definitions`, a busy vehicle cannot be sent and is not one kept
+  at the depot), and whether the vehicles' `limits` are stated.
 - **Instructions.** `directive` in the mission sets one: a clinic closure, a
   no-fly zone, a multirotor kept on standby, or a grounded vehicle, each in
-  six wordings. The model sees it from `announce_s` to `end_s`. The score
-  counts breaches between `start_s` and `end_s` from what the fleet did, and
+  six wordings written out in the mission by name (`wordings`), with
+  `wording` picking one. The model sees it from `announce_s` to `end_s`. The score
+  counts breaches between `start_s` and `end_s` from what the fleet did,
+  whatever the wording says (for standby, seconds with no idle multirotor at
+  the depot, so a multirotor sent just before the window and still away when
+  it opens counts), and
   every call is labeled with whether, flown as planned, it would break the
   instruction (`planner::breaks_instruction`), which gives breaches per
   decision and the first breaking decision. `enforce_instruction: true`

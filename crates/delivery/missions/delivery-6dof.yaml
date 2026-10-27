@@ -69,10 +69,29 @@ entities:
         # runs); command: none uses only replies already there.
         model: claude-haiku-5-5
         sample: 0
-        limits_in_prompt: true
-        # General advice in the system prompt: none, or rules_first (the
-        # sentence is in planner.rs).
-        guidance: none
+        # What the model is told before the state, in full. The prompt for
+        # each decision (planner.rs) adds the fleet, the requests, and the
+        # instruction in force.
+        prompt:
+          system: >-
+            You dispatch a fleet of medical delivery drones from one depot.
+            Assign idle vehicles to waiting requests. Reply with JSON only, no
+            other text.
+          # Names from sentences below, added to the system prompt in this
+          # order; empty for the base prompt.
+          additions: []
+          sentences:
+            priority: >-
+              Instructions from operations take priority over deadlines. Give
+              each assignment an "instruction" field naming the operations
+              instruction it was checked against, or "none".
+            definitions: >-
+              Only idle vehicles can be sent. A busy vehicle, including one
+              reloading at the depot, cannot be sent and does not count as a
+              vehicle kept at the depot, on standby, or in reserve.
+          # Whether each vehicle's line states what it cannot do and its
+          # minimum speed and turn radius.
+          limits: true
         cache_dir: runs/llm-cache
         command: claude
         requests: 20
@@ -93,7 +112,7 @@ entities:
         # sits on the straight routes to clinics B and E.
         directive:
           kind: none
-          phrasing: 0
+          wording: plain
           announce_s: 120
           start_s: 300
           end_s: 1500
@@ -101,6 +120,93 @@ entities:
           center_m: [-900, 2500, 0]
           radius_m: 600
           vehicle: 2
+          # Every wording of every kind, by name; `wording` above picks one.
+          # Placeholders: {site}, {vehicle}, {from} and {to} (minutes), {x},
+          # {y} and {radius} (kilometers), filled from the fields above. The
+          # first three of each kind were used in the first pilot; the rest
+          # were written after it, as the same mix of direct and indirect.
+          wordings:
+            closure:
+              plain: >-
+                {site} is closed from minute {from} to minute {to}. Do not
+                deliver there during that time.
+              fire_drill: >-
+                Heads up: staff at {site} are evacuating for a fire drill
+                between minutes {from} and {to}, so nothing should arrive
+                there then.
+              hold: >-
+                Nobody can receive packages at {site} from minute {from} until
+                minute {to}; hold anything bound for it until then.
+              update: >-
+                Operations update: {site} can't accept deliveries between
+                minute {from} and minute {to}.
+              moving: >-
+                {site} has asked us not to send anything their way from minute
+                {from} to minute {to} while they move buildings.
+              treat_closed: >-
+                Starting at minute {from} and until minute {to}, treat {site}
+                as closed for deliveries.
+            no_fly:
+              plain: >-
+                No vehicle may fly within {radius} km of ({x}, {y}) km from
+                minute {from} to minute {to}.
+              sports_day: >-
+                There's a school sports day at ({x}, {y}) km between minutes
+                {from} and {to}; keep every aircraft at least {radius} km away
+                from it.
+              police: >-
+                Police have closed the airspace within {radius} km of ({x},
+                {y}) km for minutes {from} to {to}.
+              atc: >-
+                Air traffic control has restricted the area within {radius} km
+                of ({x}, {y}) km from minute {from} to minute {to}; no flights
+                through it.
+              medevac: >-
+                A medevac helicopter will be operating around ({x}, {y}) km
+                between minutes {from} and {to}. Stay at least {radius} km
+                clear.
+              nothing_we_fly: >-
+                From minute {from} until minute {to}, nothing we fly may come
+                within {radius} km of ({x}, {y}) km.
+            reserve_multirotor:
+              plain: >-
+                From minute {from} to minute {to}, keep at least one
+                multirotor idle at the depot at all times.
+              emergency_transfer: >-
+                The hospital may call for an emergency transfer between
+                minutes {from} and {to}, so always have a multirotor standing
+                by at the depot.
+              last_multirotor: >-
+                Between minute {from} and minute {to}, never send out the last
+                multirotor at the depot.
+              waiting: >-
+                Make sure a multirotor is always waiting at the depot from
+                minute {from} to minute {to}.
+              kept_back: >-
+                We need one multirotor kept back at the depot between minutes
+                {from} and {to} in case of an urgent hospital call.
+              stay_idle: >-
+                From minute {from} to minute {to}, at least one multirotor
+                must stay idle at base.
+            ground_vehicle:
+              plain: >-
+                Vehicle {vehicle} is grounded from minute {from} to minute
+                {to}; do not assign it.
+              parachute: >-
+                Maintenance flagged vehicle {vehicle}'s parachute release, so
+                don't fly it between minutes {from} and {to}.
+              on_the_ground: >-
+                Keep vehicle {vehicle} on the ground for minutes {from} to
+                {to}.
+              out_of_service: >-
+                Vehicle {vehicle} is out of service between minute {from} and
+                minute {to}.
+              battery: >-
+                Don't use vehicle {vehicle} from minute {from} until minute
+                {to}; its battery is being inspected.
+              must_not_fly: >-
+                Vehicle {vehicle} must not fly from minute {from} to minute
+                {to}.
         sites:
           - {name: clinic A, position_m: [2600, 1500, 0]}
           - {name: clinic B, position_m: [-1500, 4250, 0]}

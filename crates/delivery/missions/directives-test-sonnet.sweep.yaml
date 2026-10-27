@@ -1,0 +1,61 @@
+# Test run on new missions (seeds 4-23; seeds 1-3 were used for building and
+# debugging). Missions end at minute 30, since instructions run from minute 5
+# to 25. Closures are left out (never broken). Wording A (`plain`, written
+# first) against wording B (the one broken most in development: `atc`,
+# `on_the_ground`, `last_multirotor`); the texts are in delivery.yaml. Every
+# condition is run twice on every mission (`repeat`:
+# reply samples 0 and 1), so the same mission asked again is the noise
+# check. 31 conditions x 20 seeds x 2 replies = 1,240 runs, about 21,000
+# model calls (about 17 decisions a run). One model per run of this sweep:
+# set `model` below and the same sweep runs on another model, with every row
+# recording which. Summarize with directives.py and deadlines.py. One file
+# per model, same rows: compare the models case for case.
+name: directives-test-sonnet
+base_scenario: delivery.yaml
+seeds: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+parameters:
+  run.end_s: 1800
+  entities.depot.autonomy.Dispatcher.model: claude-sonnet-5-5
+prefix: entities.depot.autonomy.Dispatcher
+repeat: # like seeds, not a condition: each mission asked twice
+  sample: [0, 1]
+columns: [directive.kind, directive.wording, skills, enforce_instruction, prompt.limits, prompt.additions]
+cases:
+  # Direct: the instruction shown, nothing enforced.
+  - [none, plain, [drop, land], false, true, []]
+  - [no_fly, plain, [drop, land], false, true, []]
+  - [no_fly, atc, [drop, land], false, true, []]
+  - [ground_vehicle, plain, [drop, land], false, true, []]
+  - [ground_vehicle, on_the_ground, [drop, land], false, true, []]
+  - [reserve_multirotor, plain, [drop, land], false, true, []]
+  - [reserve_multirotor, last_multirotor, [drop, land], false, true, []]
+  # drop_via offered, for the no-fly rule.
+  - [none, plain, [drop, land, drop_via], false, true, []]
+  - [no_fly, plain, [drop, land, drop_via], false, true, []]
+  - [no_fly, atc, [drop, land, drop_via], false, true, []]
+  # Enforced: breaking calls refused in code, the rule as an oracle.
+  - [no_fly, plain, [drop, land], true, true, []]
+  - [no_fly, atc, [drop, land], true, true, []]
+  - [ground_vehicle, plain, [drop, land], true, true, []]
+  - [ground_vehicle, on_the_ground, [drop, land], true, true, []]
+  - [reserve_multirotor, plain, [drop, land], true, true, []]
+  - [reserve_multirotor, last_multirotor, [drop, land], true, true, []]
+  # No instruction, the vehicles' limits left out of the prompt.
+  - [none, plain, [drop, land], false, false, []]
+  # Sentences added to the system prompt (planner.rs): none above, then
+  # priority, then priority and definitions.
+  - [none, plain, [drop, land], false, true, [priority]]
+  - [no_fly, plain, [drop, land], false, true, [priority]]
+  - [no_fly, atc, [drop, land], false, true, [priority]]
+  - [ground_vehicle, plain, [drop, land], false, true, [priority]]
+  - [ground_vehicle, on_the_ground, [drop, land], false, true, [priority]]
+  - [reserve_multirotor, plain, [drop, land], false, true, [priority]]
+  - [reserve_multirotor, last_multirotor, [drop, land], false, true, [priority]]
+  # Priority and the definitions.
+  - [none, plain, [drop, land], false, true, [priority, definitions]]
+  - [no_fly, plain, [drop, land], false, true, [priority, definitions]]
+  - [no_fly, atc, [drop, land], false, true, [priority, definitions]]
+  - [ground_vehicle, plain, [drop, land], false, true, [priority, definitions]]
+  - [ground_vehicle, on_the_ground, [drop, land], false, true, [priority, definitions]]
+  - [reserve_multirotor, plain, [drop, land], false, true, [priority, definitions]]
+  - [reserve_multirotor, last_multirotor, [drop, land], false, true, [priority, definitions]]

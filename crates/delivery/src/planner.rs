@@ -9,6 +9,7 @@
 //! reply to the same prompt, so samples 0, 1, and 2 are three live reruns of
 //! one episode.
 
+use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::io::Write as _;
 use std::path::PathBuf;
@@ -196,31 +197,48 @@ pub fn arrival_s(vehicle: &Status, request: &Request, via_world_m: Option<Vec3>)
     out_m(vehicle, request, via_world_m) / vehicle.card.cruise_speed_mps
 }
 
-pub const SYSTEM_PROMPT: &str = "You dispatch a fleet of medical delivery drones from \
-one depot. Assign idle vehicles to waiting requests. Reply with JSON only, no other text.";
-
-/// General advice added to the system prompt: the "did you just tell it?"
-/// condition. Written once, before the test missions ran (2026-10-24), and
-/// never adjusted to a failure.
-#[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum Guidance {
-    #[default]
-    None,
-    /// Rules before deadlines, and a written check before the calls.
-    RulesFirst,
+/// What the model is told before the state, in full: the mission's `prompt`
+/// block. The decision prompt (`prompt` below) adds the state.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct PromptConfig {
+    /// The system prompt.
+    pub system: String,
+    /// Names from `sentences`, added to the system prompt in this order:
+    /// the "did you just tell it?" conditions.
+    pub additions: Vec<String>,
+    /// The sentences an addition can add, by name.
+    pub sentences: BTreeMap<String, String>,
+    /// Whether each vehicle's line states what it cannot do (hover, land)
+    /// and its minimum speed and turn radius.
+    pub limits: bool,
 }
 
-impl Guidance {
-    pub fn system_prompt(self) -> String {
-        match self {
-            Guidance::None => SYSTEM_PROMPT.into(),
-            Guidance::RulesFirst => format!(
-                "{SYSTEM_PROMPT} Instructions from operations take priority over deadlines. \
-                 Start the JSON with a \"reasoning\" field that checks each assignment you \
-                 intend against every instruction, then give the assignments."
-            ),
+impl Default for PromptConfig {
+    fn default() -> Self {
+        Self {
+            system: String::new(),
+            additions: Vec::new(),
+            sentences: BTreeMap::new(),
+            limits: true,
         }
+    }
+}
+
+impl PromptConfig {
+    /// The system prompt with the listed additions, space-separated.
+    pub fn system_prompt(&self) -> Result<String> {
+        ensure!(!self.system.trim().is_empty(), "prompt.system is empty");
+        let mut text = self.system.clone();
+        for name in &self.additions {
+            let sentence = self
+                .sentences
+                .get(name)
+                .with_context(|| format!("prompt.sentences has no `{name}`"))?;
+            text.push(' ');
+            text.push_str(sentence);
+        }
+        Ok(text)
     }
 }
 
@@ -375,7 +393,7 @@ pub fn parse(reply: &str) -> Option<Vec<Call>> {
 pub struct ModelPlanner {
     pub model: String,
     pub sample: u32,
-    /// The system prompt, from `Guidance::system_prompt`.
+    /// The system prompt, from `PromptConfig::system_prompt`.
     pub system: String,
     pub limits_in_prompt: bool,
     pub cache_dir: PathBuf,
@@ -548,7 +566,7 @@ mod tests {
         let planner = || ModelPlanner {
             model: "fake".into(),
             sample: 0,
-            system: SYSTEM_PROMPT.into(),
+            system: "Base.".into(),
             limits_in_prompt: false,
             cache_dir: folder.join("cache"),
             command: client.display().to_string(),
@@ -571,5 +589,26 @@ mod tests {
         assert_eq!(saved.reply("the same prompt")?, replies[0]);
         std::fs::remove_dir_all(&folder)?;
         Ok(())
+    }
+
+    #[test]
+    fn prompt_additions_are_added_in_the_order_listed() {
+        let config = PromptConfig {
+            system: "Base.".into(),
+            additions: vec!["b".into(), "a".into()],
+            sentences: BTreeMap::from([("a".into(), "A.".into()), ("b".into(), "B.".into())]),
+            limits: true,
+        };
+        assert_eq!(config.system_prompt().unwrap(), "Base. B. A.");
+        let missing = PromptConfig {
+            additions: vec!["c".into()],
+            ..config.clone()
+        };
+        assert!(missing.system_prompt().is_err());
+        let base = PromptConfig {
+            additions: Vec::new(),
+            ..config
+        };
+        assert_eq!(base.system_prompt().unwrap(), "Base.");
     }
 }

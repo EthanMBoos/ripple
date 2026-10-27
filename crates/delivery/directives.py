@@ -54,7 +54,7 @@ def main(folder):
                         if name.startswith(DISPATCHER) and not name.startswith(DIRECTIVE)
                         and name.removeprefix(DISPATCHER) not in ("sample", "command"))
         (values,) = [teams["1"] for teams in case["metrics"].values()]
-        key = (arm or "default", parameters[DIRECTIVE + "kind"], parameters[DIRECTIVE + "phrasing"])
+        key = (arm or "default", parameters[DIRECTIVE + "kind"], parameters[DIRECTIVE + "wording"])
         runs[key].append((case["seed"], values))
 
     for arm in sorted({arm for arm, _, _ in runs}):

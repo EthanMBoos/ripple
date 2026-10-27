@@ -19,7 +19,7 @@ or leave no multirotor idle during the window. Arrival times are
 straight-line estimates, and calls the dispatcher would refuse still count:
 this measures what the model chose.
 
-The wordings copy crates/delivery/src/directive.rs; a saved instruction that
+The wordings copy crates/delivery/missions/delivery.yaml; a saved instruction that
 matches none of them stops the script.
 """
 
@@ -50,55 +50,55 @@ def wordings(kind):
     f, t, (x, y), r, s, v = f"{FROM:.0f}", f"{TO:.0f}", CENTER_KM, RADIUS_KM, SITE, VEHICLE
     xy = f"({x:.1f}, {y:.1f}) km"
     return {
-        "closure": [
-            f"{s} is closed from minute {f} to minute {t}. Do not deliver there during that time.",
-            f"Heads up: staff at {s} are evacuating for a fire drill between minutes {f} and {t}, "
+        "closure": {
+            "plain": f"{s} is closed from minute {f} to minute {t}. Do not deliver there during that time.",
+            "fire_drill": f"Heads up: staff at {s} are evacuating for a fire drill between minutes {f} and {t}, "
             "so nothing should arrive there then.",
-            f"Nobody can receive packages at {s} from minute {f} until minute {t}; hold anything "
+            "hold": f"Nobody can receive packages at {s} from minute {f} until minute {t}; hold anything "
             "bound for it until then.",
-            f"Operations update: {s} can't accept deliveries between minute {f} and minute {t}.",
-            f"{s} has asked us not to send anything their way from minute {f} to minute {t} while "
+            "update": f"Operations update: {s} can't accept deliveries between minute {f} and minute {t}.",
+            "moving": f"{s} has asked us not to send anything their way from minute {f} to minute {t} while "
             "they move buildings.",
-            f"Starting at minute {f} and until minute {t}, treat {s} as closed for deliveries.",
-        ],
-        "no_fly": [
-            f"No vehicle may fly within {r:.1f} km of {xy} from minute {f} to minute {t}.",
-            f"There's a school sports day at {xy} between minutes {f} and {t}; keep every aircraft "
+            "treat_closed": f"Starting at minute {f} and until minute {t}, treat {s} as closed for deliveries.",
+        },
+        "no_fly": {
+            "plain": f"No vehicle may fly within {r:.1f} km of {xy} from minute {f} to minute {t}.",
+            "sports_day": f"There's a school sports day at {xy} between minutes {f} and {t}; keep every aircraft "
             f"at least {r:.1f} km away from it.",
-            f"Police have closed the airspace within {r:.1f} km of {xy} for minutes {f} to {t}.",
-            f"Air traffic control has restricted the area within {r:.1f} km of {xy} from minute "
+            "police": f"Police have closed the airspace within {r:.1f} km of {xy} for minutes {f} to {t}.",
+            "atc": f"Air traffic control has restricted the area within {r:.1f} km of {xy} from minute "
             f"{f} to minute {t}; no flights through it.",
-            f"A medevac helicopter will be operating around {xy} between minutes {f} and {t}. Stay "
+            "medevac": f"A medevac helicopter will be operating around {xy} between minutes {f} and {t}. Stay "
             f"at least {r:.1f} km clear.",
-            f"From minute {f} until minute {t}, nothing we fly may come within {r:.1f} km of {xy}.",
-        ],
-        "reserve_multirotor": [
-            f"From minute {f} to minute {t}, keep at least one multirotor idle at the depot at all "
+            "nothing_we_fly": f"From minute {f} until minute {t}, nothing we fly may come within {r:.1f} km of {xy}.",
+        },
+        "reserve_multirotor": {
+            "plain": f"From minute {f} to minute {t}, keep at least one multirotor idle at the depot at all "
             "times.",
-            f"The hospital may call for an emergency transfer between minutes {f} and {t}, so "
+            "emergency_transfer": f"The hospital may call for an emergency transfer between minutes {f} and {t}, so "
             "always have a multirotor standing by at the depot.",
-            f"Between minute {f} and minute {t}, never send out the last multirotor at the depot.",
-            f"Make sure a multirotor is always waiting at the depot from minute {f} to minute {t}.",
-            f"We need one multirotor kept back at the depot between minutes {f} and {t} in case of "
+            "last_multirotor": f"Between minute {f} and minute {t}, never send out the last multirotor at the depot.",
+            "waiting": f"Make sure a multirotor is always waiting at the depot from minute {f} to minute {t}.",
+            "kept_back": f"We need one multirotor kept back at the depot between minutes {f} and {t} in case of "
             "an urgent hospital call.",
-            f"From minute {f} to minute {t}, at least one multirotor must stay idle at base.",
-        ],
-        "ground_vehicle": [
-            f"Vehicle {v} is grounded from minute {f} to minute {t}; do not assign it.",
-            f"Maintenance flagged vehicle {v}'s parachute release, so don't fly it between minutes "
+            "stay_idle": f"From minute {f} to minute {t}, at least one multirotor must stay idle at base.",
+        },
+        "ground_vehicle": {
+            "plain": f"Vehicle {v} is grounded from minute {f} to minute {t}; do not assign it.",
+            "parachute": f"Maintenance flagged vehicle {v}'s parachute release, so don't fly it between minutes "
             f"{f} and {t}.",
-            f"Keep vehicle {v} on the ground for minutes {f} to {t}.",
-            f"Vehicle {v} is out of service between minute {f} and minute {t}.",
-            f"Don't use vehicle {v} from minute {f} until minute {t}; its battery is being "
+            "on_the_ground": f"Keep vehicle {v} on the ground for minutes {f} to {t}.",
+            "out_of_service": f"Vehicle {v} is out of service between minute {f} and minute {t}.",
+            "battery": f"Don't use vehicle {v} from minute {f} until minute {t}; its battery is being "
             "inspected.",
-            f"Vehicle {v} must not fly from minute {f} to minute {t}.",
-        ],
+            "must_not_fly": f"Vehicle {v} must not fly from minute {f} to minute {t}.",
+        },
     }[kind]
 
 
-# The rules tested and their wording B (A is wording 0), as in
-# missions/directives-test.sweep.yaml.
-WORDING_B = {"no_fly": 3, "ground_vehicle": 2, "reserve_multirotor": 2}
+# The rules tested and their wording B (A is `plain`), as in
+# missions/directives-test-<model>.sweep.yaml.
+WORDING_B = {"no_fly": "atc", "ground_vehicle": "on_the_ground", "reserve_multirotor": "last_multirotor"}
 KINDS = list(WORDING_B)
 
 # Reading the prompt (crates/delivery/src/planner.rs, `prompt`).
@@ -226,7 +226,7 @@ def moments(model, per_kind):
                 or "- drop_via:" in prompt or "min of flight left" not in prompt):
             continue
         line = prompt.split(HEADER + "\n- ", 1)[1].split("\n", 1)[0]
-        kind = next((k for k in wordings_by_kind if line in wordings_by_kind[k]), None)
+        kind = next((k for k in wordings_by_kind if line in wordings_by_kind[k].values()), None)
         if kind is None:
             sys.exit(f"instruction matches no wording (copy out of date?): {line}")
         if kind not in KINDS:
@@ -255,7 +255,7 @@ def main():
              state)
             for kind in KINDS
             for template, (system, state) in picked[kind]
-            for label, w in (("A", 0), ("B", WORDING_B[kind]))
+            for label, w in (("A", "plain"), ("B", WORDING_B[kind]))
             for sample in range(args.samples)]
     new = sum(not cache_path(args.model, s, sys_, p).exists() for _, _, s, sys_, p, _ in jobs)
     print(f"{len(jobs)} probes ({', '.join(f'{k} {len(picked[k])} moments' for k in KINDS)}); "

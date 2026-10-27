@@ -14,11 +14,13 @@
 //! misreading the instruction or from slipping while planning, which also
 //! answers "why not translate to constraints" (FLEET) without an optimizer. The score checks
 //! compliance from what the fleet actually does between `start_s` and `end_s`.
-//! Each kind has six wordings of the same rule, written as operations staff
-//! might, so a planner can be tested on whether it follows the rule however it
-//! is worded. Wordings 0-2 were used in the first pilot; 3-5 were written
-//! after it, with its results known, as the same mix of direct and indirect
-//! wordings. Treat 3-5 as the cleaner test of wording.
+//! The mission gives each kind's wordings in full, by name (`wordings` in
+//! the Dispatcher's `directive` block), and `wording` picks one, so a planner
+//! can be tested on whether it follows the rule however it is worded. A
+//! wording is a template: `{site}`, `{vehicle}`, `{from}` and `{to}` (minutes),
+//! `{x}`, `{y}` and `{radius}` (kilometers) are filled from the fields below.
+
+use std::collections::BTreeMap;
 
 use anyhow::{Result, ensure};
 use ripple_core::Vec3;
@@ -38,13 +40,29 @@ pub enum DirectiveKind {
     GroundVehicle,
 }
 
+impl DirectiveKind {
+    /// The key under `wordings`, as the mission spells the kind.
+    fn name(self) -> &'static str {
+        match self {
+            DirectiveKind::None => "none",
+            DirectiveKind::Closure => "closure",
+            DirectiveKind::NoFly => "no_fly",
+            DirectiveKind::ReserveMultirotor => "reserve_multirotor",
+            DirectiveKind::GroundVehicle => "ground_vehicle",
+        }
+    }
+}
+
 /// Mission parameters; `Default` is no instruction.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Directive {
     pub kind: DirectiveKind,
-    /// Which of the six wordings, 0 to 5.
-    pub phrasing: u32,
+    /// The name of the wording used, from `wordings[kind]`.
+    pub wording: String,
+    /// Every wording of every kind, by kind and then by name: the text the
+    /// model sees, with the placeholders in the module doc.
+    pub wordings: BTreeMap<String, BTreeMap<String, String>>,
     pub announce_s: f64,
     pub start_s: f64,
     pub end_s: f64,
@@ -58,7 +76,8 @@ impl Default for Directive {
     fn default() -> Self {
         Self {
             kind: DirectiveKind::None,
-            phrasing: 0,
+            wording: String::new(),
+            wordings: BTreeMap::new(),
             announce_s: 120.0,
             start_s: 300.0,
             end_s: 1500.0,
@@ -72,7 +91,14 @@ impl Default for Directive {
 
 impl Directive {
     pub fn validate(&self) -> Result<()> {
-        ensure!(self.phrasing < 6, "directive phrasing must be 0 to 5");
+        if self.active() {
+            ensure!(
+                self.template().is_some(),
+                "directive wordings[{}] has no wording named `{}`",
+                self.kind.name(),
+                self.wording
+            );
+        }
         ensure!(
             self.announce_s <= self.start_s && self.start_s <= self.end_s,
             "directive times must satisfy announce_s <= start_s <= end_s"
@@ -100,109 +126,58 @@ impl Directive {
         Vec3::from(self.center_m)
     }
 
-    /// The instruction as operations would write it.
+    fn template(&self) -> Option<&String> {
+        self.wordings.get(self.kind.name())?.get(&self.wording)
+    }
+
+    /// The instruction as operations would write it: the wording with its
+    /// placeholders filled.
     pub fn text(&self) -> String {
-        let (from, to) = (self.start_s / 60.0, self.end_s / 60.0);
-        let (x, y) = (self.center_m[0] / 1000.0, self.center_m[1] / 1000.0);
-        let radius_km = self.radius_m / 1000.0;
-        let (site, vehicle) = (&self.site, self.vehicle);
-        match (self.kind, self.phrasing) {
-            (DirectiveKind::None, _) => String::new(),
-            (DirectiveKind::Closure, 0) => format!(
-                "{site} is closed from minute {from:.0} to minute {to:.0}. Do not deliver \
-                 there during that time."
-            ),
-            (DirectiveKind::Closure, 1) => format!(
-                "Heads up: staff at {site} are evacuating for a fire drill between minutes \
-                 {from:.0} and {to:.0}, so nothing should arrive there then."
-            ),
-            (DirectiveKind::Closure, 2) => format!(
-                "Nobody can receive packages at {site} from minute {from:.0} until minute \
-                 {to:.0}; hold anything bound for it until then."
-            ),
-            (DirectiveKind::Closure, 3) => format!(
-                "Operations update: {site} can't accept deliveries between minute {from:.0} \
-                 and minute {to:.0}."
-            ),
-            (DirectiveKind::Closure, 4) => format!(
-                "{site} has asked us not to send anything their way from minute {from:.0} to \
-                 minute {to:.0} while they move buildings."
-            ),
-            (DirectiveKind::Closure, _) => format!(
-                "Starting at minute {from:.0} and until minute {to:.0}, treat {site} as closed \
-                 for deliveries."
-            ),
-            (DirectiveKind::NoFly, 0) => format!(
-                "No vehicle may fly within {radius_km:.1} km of ({x:.1}, {y:.1}) km from \
-                 minute {from:.0} to minute {to:.0}."
-            ),
-            (DirectiveKind::NoFly, 1) => format!(
-                "There's a school sports day at ({x:.1}, {y:.1}) km between minutes {from:.0} \
-                 and {to:.0}; keep every aircraft at least {radius_km:.1} km away from it."
-            ),
-            (DirectiveKind::NoFly, 2) => format!(
-                "Police have closed the airspace within {radius_km:.1} km of ({x:.1}, {y:.1}) km \
-                 for minutes {from:.0} to {to:.0}."
-            ),
-            (DirectiveKind::NoFly, 3) => format!(
-                "Air traffic control has restricted the area within {radius_km:.1} km of \
-                 ({x:.1}, {y:.1}) km from minute {from:.0} to minute {to:.0}; no flights \
-                 through it."
-            ),
-            (DirectiveKind::NoFly, 4) => format!(
-                "A medevac helicopter will be operating around ({x:.1}, {y:.1}) km between \
-                 minutes {from:.0} and {to:.0}. Stay at least {radius_km:.1} km clear."
-            ),
-            (DirectiveKind::NoFly, _) => format!(
-                "From minute {from:.0} until minute {to:.0}, nothing we fly may come within \
-                 {radius_km:.1} km of ({x:.1}, {y:.1}) km."
-            ),
-            (DirectiveKind::ReserveMultirotor, 0) => format!(
-                "From minute {from:.0} to minute {to:.0}, keep at least one multirotor idle at \
-                 the depot at all times."
-            ),
-            (DirectiveKind::ReserveMultirotor, 1) => format!(
-                "The hospital may call for an emergency transfer between minutes {from:.0} and \
-                 {to:.0}, so always have a multirotor standing by at the depot."
-            ),
-            (DirectiveKind::ReserveMultirotor, 2) => format!(
-                "Between minute {from:.0} and minute {to:.0}, never send out the last \
-                 multirotor at the depot."
-            ),
-            (DirectiveKind::ReserveMultirotor, 3) => format!(
-                "Make sure a multirotor is always waiting at the depot from minute {from:.0} \
-                 to minute {to:.0}."
-            ),
-            (DirectiveKind::ReserveMultirotor, 4) => format!(
-                "We need one multirotor kept back at the depot between minutes {from:.0} and \
-                 {to:.0} in case of an urgent hospital call."
-            ),
-            (DirectiveKind::ReserveMultirotor, _) => format!(
-                "From minute {from:.0} to minute {to:.0}, at least one multirotor must stay \
-                 idle at base."
-            ),
-            (DirectiveKind::GroundVehicle, 0) => format!(
-                "Vehicle {vehicle} is grounded from minute {from:.0} to minute {to:.0}; do not \
-                 assign it."
-            ),
-            (DirectiveKind::GroundVehicle, 1) => format!(
-                "Maintenance flagged vehicle {vehicle}'s parachute release, so don't fly it \
-                 between minutes {from:.0} and {to:.0}."
-            ),
-            (DirectiveKind::GroundVehicle, 2) => {
-                format!("Keep vehicle {vehicle} on the ground for minutes {from:.0} to {to:.0}.")
-            }
-            (DirectiveKind::GroundVehicle, 3) => format!(
-                "Vehicle {vehicle} is out of service between minute {from:.0} and minute \
-                 {to:.0}."
-            ),
-            (DirectiveKind::GroundVehicle, 4) => format!(
-                "Don't use vehicle {vehicle} from minute {from:.0} until minute {to:.0}; its \
-                 battery is being inspected."
-            ),
-            (DirectiveKind::GroundVehicle, _) => {
-                format!("Vehicle {vehicle} must not fly from minute {from:.0} to minute {to:.0}.")
-            }
-        }
+        let Some(template) = self.template() else {
+            return String::new();
+        };
+        template
+            .replace("{site}", &self.site)
+            .replace("{vehicle}", &self.vehicle.to_string())
+            .replace("{from}", &format!("{:.0}", self.start_s / 60.0))
+            .replace("{to}", &format!("{:.0}", self.end_s / 60.0))
+            .replace("{x}", &format!("{:.1}", self.center_m[0] / 1000.0))
+            .replace("{y}", &format!("{:.1}", self.center_m[1] / 1000.0))
+            .replace("{radius}", &format!("{:.1}", self.radius_m / 1000.0))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_wording_is_filled_from_the_fields() {
+        let directive = Directive {
+            kind: DirectiveKind::NoFly,
+            wording: "atc".into(),
+            wordings: BTreeMap::from([(
+                "no_fly".into(),
+                BTreeMap::from([(
+                    "atc".into(),
+                    "No flights within {radius} km of ({x}, {y}) km from minute {from} to \
+                     minute {to}."
+                        .into(),
+                )]),
+            )]),
+            center_m: [-900.0, 2500.0, 0.0],
+            ..Directive::default()
+        };
+        directive.validate().expect("the wording exists");
+        assert_eq!(
+            directive.text(),
+            "No flights within 0.6 km of (-0.9, 2.5) km from minute 5 to minute 25."
+        );
+        let missing = Directive {
+            wording: "plain".into(),
+            ..directive
+        };
+        assert!(missing.validate().is_err());
+        assert_eq!(Directive::default().text(), "");
     }
 }

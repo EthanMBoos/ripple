@@ -22,7 +22,8 @@ import sys
 from pathlib import Path
 
 D = "entities.depot.autonomy.Dispatcher."
-WORDING = {"no_fly": (0, 3), "ground_vehicle": (0, 2), "reserve_multirotor": (0, 2)}
+WORDING = {"no_fly": ("plain", "atc"), "ground_vehicle": ("plain", "on_the_ground"),
+           "reserve_multirotor": ("plain", "last_multirotor")}
 
 
 def load(folder):
@@ -38,9 +39,9 @@ def load(folder):
 
 def select(cases, kind, wording=None, skills=2, enforce=False, limits=True):
     return [(p, seed, v) for p, seed, v in cases
-            if p["directive.kind"] == kind and (wording is None or p["directive.phrasing"] == wording)
+            if p["directive.kind"] == kind and (wording is None or p["directive.wording"] == wording)
             and len(p["skills"]) == skills and p["enforce_instruction"] == enforce
-            and p["limits_in_prompt"] == limits]
+            and p["prompt.limits"] == limits]
 
 
 def broken(values):
@@ -123,8 +124,8 @@ def slope(cases):
 def other_results(cases, six):
     """The numbers the text quotes for the skill, the limits, and the 6-DOF
     check, printed for checking."""
-    planner = [missions(select(cases, "no_fly", w)) for w in (0, 3)]
-    via = [missions(select(cases, "no_fly", w, skills=3)) for w in (0, 3)]
+    planner = [missions(select(cases, "no_fly", w)) for w in WORDING["no_fly"]]
+    via = [missions(select(cases, "no_fly", w, skills=3)) for w in WORDING["no_fly"]]
     for w, (p, v) in zip("AB", zip(planner, via)):
         print(f"skill {w}: planner {p}, drop_via {v}, p = {fisher(*p, *v):.4f}")
     for stated in (True, False):
@@ -132,7 +133,7 @@ def other_results(cases, six):
         counts = [v.get("refused_wrong_skill", 0) for _, _, v in runs]
         print(f"limits stated={stated}: land calls {sum(counts):g}, range {min(counts):g}-"
               f"{max(counts):g}, on time {on_time(runs):.2f}")
-    for w in (0, 3):
+    for w in WORDING["no_fly"]:
         kin, dof = missions(select(cases, "no_fly", w)), missions(select(six, "no_fly", w))
         print(f"6-DOF wording {w}: kinematic {kin}, 6-DOF {dof}, p = {fisher(*kin, *dof):.3f}")
 

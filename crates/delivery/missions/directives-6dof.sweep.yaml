@@ -9,11 +9,10 @@ seeds: [4, 5, 6, 7, 8]
 parameters:
   run.end_s: 1800
 prefix: entities.depot.autonomy.Dispatcher
-columns: [directive.kind, directive.phrasing, sample, skills, enforce_instruction, limits_in_prompt]
+repeat: # like seeds, not a condition: each mission asked twice
+  sample: [0, 1]
+columns: [directive.kind, directive.wording, skills, enforce_instruction, prompt.limits]
 cases:
-  - [none,   0, 0, [drop, land], false, true]
-  - [no_fly, 0, 0, [drop, land], false, true]
-  - [no_fly, 3, 0, [drop, land], false, true]
-  - [none,   0, 1, [drop, land], false, true]
-  - [no_fly, 0, 1, [drop, land], false, true]
-  - [no_fly, 3, 1, [drop, land], false, true]
+  - [none, plain, [drop, land], false, true]
+  - [no_fly, plain, [drop, land], false, true]
+  - [no_fly, atc, [drop, land], false, true]

@@ -1,21 +1,21 @@
 # The small set for expensive models: does the result hold on this model at
-# all? No instruction, then each rule in wording A and wording B, one sample,
+# all? No instruction, then each rule in wording A and wording B, one reply,
 # on the first ten test missions. The same rows open directives-test, so the
 # two compare case for case. 7 conditions x 10 seeds = 70 runs, about 1,200
 # model calls. Set `model` below for the model under test.
-name: directives-small
+name: directives-small-opus
 base_scenario: delivery.yaml
 seeds: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 parameters:
   run.end_s: 1800
   entities.depot.autonomy.Dispatcher.model: claude-opus-5-5
 prefix: entities.depot.autonomy.Dispatcher
-columns: [directive.kind, directive.phrasing, sample, skills, enforce_instruction, limits_in_prompt, guidance]
+columns: [directive.kind, directive.wording, skills, enforce_instruction, prompt.limits, prompt.additions]
 cases:
-  - [none,               0, 0, [drop, land], false, true, none]
-  - [no_fly,             0, 0, [drop, land], false, true, none]
-  - [no_fly,             3, 0, [drop, land], false, true, none]
-  - [ground_vehicle,     0, 0, [drop, land], false, true, none]
-  - [ground_vehicle,     2, 0, [drop, land], false, true, none]
-  - [reserve_multirotor, 0, 0, [drop, land], false, true, none]
-  - [reserve_multirotor, 2, 0, [drop, land], false, true, none]
+  - [none, plain, [drop, land], false, true, []]
+  - [no_fly, plain, [drop, land], false, true, []]
+  - [no_fly, atc, [drop, land], false, true, []]
+  - [ground_vehicle, plain, [drop, land], false, true, []]
+  - [ground_vehicle, on_the_ground, [drop, land], false, true, []]
+  - [reserve_multirotor, plain, [drop, land], false, true, []]
+  - [reserve_multirotor, last_multirotor, [drop, land], false, true, []]

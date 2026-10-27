@@ -6,7 +6,9 @@
 //!   `parameters`, each a list of values or one value, which every case
 //!   takes, combined by `parameter_combinations` (`cartesian` or `zip`); or,
 //!   for a table of conditions, `columns` and one row of values per case in
-//!   `cases`, with `parameters` then holding only constants;
+//!   `cases`, with `parameters` then holding only constants; and `repeat`,
+//!   paths (after `prefix`) to values every condition is run with in turn,
+//!   like `seeds` (a model's reply sample, say): a repeat is not a condition;
 //! - a fixed case numbering, so `case-0007` means the same seed and values
 //!   whether the sweep runs whole or in shards;
 //! - `--shard-index i --shard-count n`, which runs cases i, i+n, i+2n, ...;
@@ -60,6 +62,12 @@ struct SweepFile {
     /// Each case uses one; empty means the base mission's own `run.seed`.
     #[serde(default)]
     seeds: Vec<u32>,
+    /// Path (after `prefix`, like a column) to the values every condition is
+    /// run with in turn, like `seeds`: a repeat of the whole sweep, not a
+    /// condition. Several paths combine every way, the last path
+    /// (alphabetically) changing fastest.
+    #[serde(default)]
+    repeat: BTreeMap<String, Vec<Value>>,
     #[serde(default)]
     parameter_combinations: Combinations,
     /// Dotted path (as in a command-line override) to the values it takes:
@@ -161,10 +169,10 @@ pub(crate) fn sweep(
         .parent()
         .unwrap_or_else(|| Path::new("."))
         .join(&spec.base_scenario);
-    // Case numbering: case i uses seed i % seeds and value combination
-    // i / seeds, so every seed runs with each combination before the next one.
-    let seed_count = spec.seeds.len().max(1);
-    let total_case_count = combination_count(&spec) * seed_count;
+    // Case numbering: case i uses seed i % seeds, then the repeat values, then
+    // value combination i / (seeds * repeats), so every seed runs with each
+    // combination before the next one.
+    let total_case_count = combination_count(&spec) * spec.seeds.len().max(1) * repeat_count(&spec);
     let (shard_index, shard_count) = match (options.shard_index, options.shard_count) {
         (Some(index), Some(count)) if count > 0 && index < count => (index, count),
         (None, None) => (0, 1),
@@ -226,6 +234,19 @@ fn validate(spec: &SweepFile) -> Result<()> {
             "run.seed is set by the sweep's `seeds`, not `parameters`"
         );
         ensure!(!values.is_empty(), "sweep parameter `{path}` has no values");
+    }
+    for (repeat, values) in &spec.repeat {
+        let path = column_path(spec, repeat);
+        ensure!(path != "run.seed", "run.seed is set by the sweep's `seeds`");
+        ensure!(!values.is_empty(), "sweep repeat `{repeat}` has no values");
+        ensure!(
+            !spec.parameters.contains_key(&path)
+                && !spec
+                    .columns
+                    .iter()
+                    .any(|column| column_path(spec, column) == path),
+            "`{path}` is both a repeat and a parameter or column"
+        );
     }
     if !spec.columns.is_empty() || !spec.cases.is_empty() {
         ensure!(
@@ -293,6 +314,10 @@ fn combination_count(spec: &SweepFile) -> usize {
     }
 }
 
+fn repeat_count(spec: &SweepFile) -> usize {
+    spec.repeat.values().map(Vec::len).product()
+}
+
 /// The values of combination `index`. Cartesian order: paths in
 /// alphabetical order, the last path changing fastest.
 fn parameters_at(spec: &SweepFile, index: usize) -> BTreeMap<String, Value> {
@@ -331,11 +356,22 @@ fn parameters_at(spec: &SweepFile, index: usize) -> BTreeMap<String, Value> {
     selected
 }
 
-/// Case `index`'s seed (if the sweep sets one) and parameter values.
+/// Case `index`'s seed (if the sweep sets one) and parameter values, the
+/// repeat values among them.
 fn case_inputs(spec: &SweepFile, index: usize) -> (Option<u32>, BTreeMap<String, Value>) {
     let seed_count = spec.seeds.len().max(1);
     let seed = spec.seeds.get(index % seed_count).copied();
-    (seed, parameters_at(spec, index / seed_count))
+    let repeat_count = repeat_count(spec);
+    let mut parameters = parameters_at(spec, index / (seed_count * repeat_count));
+    let mut remaining = (index / seed_count) % repeat_count;
+    for (repeat, values) in spec.repeat.iter().rev() {
+        parameters.insert(
+            column_path(spec, repeat),
+            values[remaining % values.len()].clone(),
+        );
+        remaining /= values.len();
+    }
+    (seed, parameters)
 }
 
 /// Loads the base mission with this case's values, applied exactly like
@@ -414,6 +450,7 @@ mod tests {
             name: "test".into(),
             base_scenario: "base.yaml".into(),
             seeds,
+            repeat: BTreeMap::new(),
             parameter_combinations: combinations,
             parameters: BTreeMap::from([
                 ("a".into(), vec![Value::from(1), Value::from(2)]),
@@ -489,6 +526,46 @@ mod tests {
         assert_eq!(parameters["a"].as_i64(), Some(2));
         assert_eq!(parameters["b"].as_i64(), Some(20));
         assert_eq!(parameters["c"].as_i64(), Some(9));
+    }
+
+    #[test]
+    fn a_repeat_runs_every_condition_with_each_value() {
+        // Seeds cycle fastest, then the repeat values, then the conditions.
+        let mut repeated = table();
+        repeated
+            .repeat
+            .insert("sample".into(), vec![Value::from(0), Value::from(1)]);
+        validate(&repeated).expect("a repeat on a table");
+        let inputs: Vec<_> = (0..8)
+            .map(|index| {
+                let (seed, parameters) = case_inputs(&repeated, index);
+                (
+                    seed,
+                    parameters["p.sample"].as_i64(),
+                    parameters["p.x"].as_i64(),
+                )
+            })
+            .collect();
+        let expected = [
+            (7, 0, 1),
+            (8, 0, 1),
+            (7, 1, 1),
+            (8, 1, 1),
+            (7, 0, 3),
+            (8, 0, 3),
+            (7, 1, 3),
+            (8, 1, 3),
+        ]
+        .map(|(seed, sample, x)| (Some(seed), Some(sample), Some(x)));
+        assert_eq!(inputs, expected);
+        assert_eq!(
+            repeat_count(&repeated) * combination_count(&repeated) * 2,
+            8
+        );
+
+        let mut twice = repeated;
+        twice.repeat.insert("x".into(), vec![Value::from(0)]);
+        assert!(validate(&twice).is_err());
     }
 
     #[test]

@@ -16,7 +16,10 @@
 //! count: flights it assigned after the instruction was announced, and for
 //! standby the decision that sent out the last idle multirotor. A vehicle
 //! already flying when it was announced can't be called back, so its
-//! breaches aren't the planner's. `directive_opportunities` counts decisions
+//! breaches aren't the planner's. The rule is about the depot being covered,
+//! not about when the call was made: a multirotor sent out between the
+//! announcement and the window's start, and still away when it opens, is a
+//! breach. `directive_opportunities` counts decisions
 //! while the instruction was in force at which it could have been broken.
 
 use std::collections::{BTreeMap, BTreeSet};

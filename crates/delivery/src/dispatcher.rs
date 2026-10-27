@@ -26,7 +26,7 @@ use crate::messages::{
     ASSIGNMENT_TOPIC, Assignment, CallRecord, DECISION_TOPIC, DELIVERED_TOPIC, DIRECTIVE_TOPIC,
     Decision, Delivered, Phase, REQUEST_TOPIC, Request, STATUS_TOPIC, SkillName, Status, Waiting,
 };
-use crate::planner::{self, Guidance, ModelPlanner, View};
+use crate::planner::{self, ModelPlanner, PromptConfig, View};
 
 #[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -43,10 +43,8 @@ struct Site {
 pub struct DispatcherConfig {
     model: String,
     sample: u32,
-    limits_in_prompt: bool,
-    /// General advice in the system prompt: `none` or `rules_first`
-    /// (`planner::Guidance`).
-    guidance: Guidance,
+    /// What the model is told before the state (`planner::PromptConfig`).
+    prompt: PromptConfig,
     cache_dir: String,
     command: String,
     /// Delivery sites. Required.
@@ -79,8 +77,7 @@ impl Default for DispatcherConfig {
         Self {
             model: "claude-haiku-5-5".into(),
             sample: 0,
-            limits_in_prompt: true,
-            guidance: Guidance::None,
+            prompt: PromptConfig::default(),
             cache_dir: "runs/llm-cache".into(),
             command: "claude".into(),
             sites: Vec::new(),
@@ -149,6 +146,7 @@ impl Plugin for Dispatcher {
             "Dispatcher range margin and retry interval must be positive"
         );
         config.directive.validate()?;
+        config.prompt.system_prompt()?;
         ensure!(
             !config.skills.is_empty(),
             "Dispatcher needs at least one skill"
@@ -161,8 +159,8 @@ impl Plugin for Dispatcher {
             model: ModelPlanner {
                 model: config.model.clone(),
                 sample: config.sample,
-                limits_in_prompt: config.limits_in_prompt,
-                system: config.guidance.system_prompt(),
+                limits_in_prompt: config.prompt.limits,
+                system: config.prompt.system_prompt().expect("checked in configure"),
                 cache_dir: config.cache_dir.clone().into(),
                 command: config.command.clone(),
             },

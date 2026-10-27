@@ -69,7 +69,7 @@ def main(arguments):
                     continue
                 row = (call["slack_s"] / 60, urgent.get(call["request_id"], False),
                        parameters[DISPATCHER + "directive.kind"],
-                       parameters[DISPATCHER + "directive.phrasing"], case["case_id"],
+                       parameters[DISPATCHER + "directive.wording"], case["case_id"],
                        decision["time_s"] / 60)
                 (broke if call["breaks_instruction"] else kept).append(row)
 

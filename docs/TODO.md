@@ -10,14 +10,28 @@ over whole missions, and the same mission rerun with one thing changed. The
 paper (`paper/manuscript/main.tex`) is "Ripple: Catching Language-Model
 Fleet Planner Mistakes Before Deployment".
 
-Where the results stand (Haiku only; `sweeps/directives-test/run002`,
-`sweeps/directives-6dof/run000`): a planner that slips in 7-10% of decisions
-breaks 60-90% of missions; for the grounded-vehicle and standby rules one
-plain wording is never broken and another breaks 8-9 of 10 missions; the
-no-fly zone breaks under both; breaks lean toward urgent deliveries; the
-right skill (`drop_via`) removes the no-fly breaches; without vehicle limits
-the planner sends fixed-wing aircraft to land about 18 times a mission;
-results hold on the 6-DOF aircraft.
+Where the results stand (2026-10-27; one reply per condition is complete
+on Haiku, `sweeps/directives-test-haiku/run001`, and Sonnet,
+`sweeps/directives-test-sonnet/run003`, seeds 4-23, with a second reply on
+the base rows; those folders record the parameter names before the
+`prompt` and `wording` rename, and a fresh run of both sweeps is the next
+step, see below). At the base prompt the
+two models break different rules: Haiku breaks the grounded vehicle in
+wording B in 24 of 40 missions and Sonnet never does; both break the no-fly
+zone (15-25 of 40) and standby B (32-36 of 40); wording A of the grounding
+and standby rules is never or almost never broken by either. The ladder
+lands differently on each model: `priority` removes Sonnet's no-fly breaks
+(2 of 20 under B) but only halves Haiku's (11 of 20), and `definitions`
+removes the standby misreading on both (neither model sends the last idle
+multirotor while the other reloads, in over 300 such moments each) and
+Haiku's grounding breaks (1 of 20). Haiku's no-fly zone is not fixed by any
+rung; `drop_via` fixes it on both models (0 of 40), and enforcement is 0
+everywhere. The standby breaks that remain at the top rung (Sonnet 7 of 20,
+Haiku 3 of 20) are sends at minutes 3-5 that leave the depot empty when the
+window opens; the planner notes the call is "before the window opens", and
+the score counts the empty depot (stated in the paper and score.rs). Without
+vehicle limits Haiku makes about 42 wrong-skill calls a mission, Sonnet
+about 2. Breaks lean toward urgent deliveries on both models.
 
 Not ours to claim (already published): an LLM picking skills as tools,
 growing skill libraries, caching model calls, deterministic simulation
@@ -52,14 +66,26 @@ to see the failure first.
          the expensive three (see Budget below).
    - If bigger models never break the rules, I'll report that. Then the
      message is "test the model you're going to use".
-3. **General advice in the prompt isn't enough.** Answers "did you just try
-   telling it?"
-   - [x] One general instruction in the system prompt, `guidance:
-         rules_first` (planner.rs), written 2026-10-24 before any test
-         model ran it: rules before deadlines, and a written check before
-         the calls. Not to be changed per failure.
-   - If it fixes everything, the takeaway is that you only find that out by
-     testing. If it doesn't, that's more reason to put the rule in a skill.
+3. **How much help does each model need?** Answers "did you just try
+   telling it?" The Dispatcher's `prompt.additions` lists sentences added to
+   the system prompt (text in the mission's `prompt` block), run as three
+   levels on every model:
+   - `[]`: the three-sentence base prompt.
+   - `[priority]`: adds that instructions from operations take priority
+     over deadlines, and that each assignment names the instruction it was
+     checked against.
+   - `[priority, definitions]`: adds what the vehicle states in the prompt
+     mean for a rule: a busy vehicle, including one reloading at the depot,
+     cannot be sent and is not one kept at the depot, on standby, or in
+     reserve.
+   The question is where on this ladder each model stops breaking each
+   rule, and whether the models stop at the same rung. The ladder was
+   workshopped on the development missions the way anyone writes a prompt;
+   the text is fixed for the test runs.
+   - [ ] Run all three rungs on every model.
+   - If the top rung fixes everything, the takeaway is that you only find
+     out what to define by testing. If it doesn't, that's more reason to put
+     the rule in a skill.
 4. **Small mistakes add up.** Slipping on 7-10% of decisions breaks 60-90%
    of missions. Current runs already show this; it just needs more missions.
 5. **Rules break more under deadline pressure.** Breaks lean toward urgent
@@ -74,7 +100,13 @@ to see the failure first.
 
 To make the numbers solid either way:
 - [ ] Run twenty test missions per condition, with two replies each, so the
-      error bars shrink to about 15-20 points.
+      error bars shrink to about 15-20 points. The test sweeps now ask every
+      mission twice (`repeat`), so this is a fresh run of
+      `directives-test-haiku` and `directives-test-sonnet`: the 840 cases
+      already asked replay from the saved replies, and the second reply on
+      the enforced, no-limits, and prompt-addition rows is about 400 live
+      cases per model (the runs started on 2026-10-27 were stopped partway;
+      their replies are saved, so a rerun only asks what is missing).
 - [ ] Rerun the noise check on the test missions (three live replies). The
       paper's noise numbers still come from the first pilot.
 - [ ] Don't pick where the rules land; run every option. Put the no-fly
@@ -120,13 +152,13 @@ coverage:
 
 | | Models | What runs | Calls per model |
 | --- | --- | --- | --- |
-| Small set | Opus and OpenAI's two big models | `directives-small.sweep.yaml`: no rule, each rule in wordings A and B; 10 missions | ~1,200 |
-| Core set | Haiku, Sonnet, OpenAI's cheap model, the open-weights model | `directives-test.sweep.yaml`: the small set's rows plus a second sample, drop_via, enforced, no limits, rules_first; 20 missions | ~12,000 |
+| Small set | Opus and OpenAI's two big models | `directives-small-opus.sweep.yaml`: no rule, each rule in wordings A and B; 10 missions | ~1,200 |
+| Core set | Haiku, Sonnet, OpenAI's cheap model, the open-weights model | `directives-test-<model>.sweep.yaml` (one file per model): the small set's rows plus drop_via, enforced, no limits, priority, priority and definitions; 20 missions, each asked twice | ~21,000 |
 | Full set | 2 (Haiku and one OpenAI model) | the core set plus all wordings and the zone on every route | ~25,000 |
 
-The core set is 35 conditions x 20 seeds = 700 runs at about 17 decisions
-each. About 75,000 calls in all for seven models, almost all of them on the
-cheap ones. The small set's error bars are about 30 points a condition,
+The core set is 31 conditions x 20 seeds x 2 replies = 1,240 runs at about
+17 decisions each. About 110,000 calls in all for seven models, almost all
+of them on the cheap ones. The small set's error bars are about 30 points a condition,
 enough to tell "never broken" from "broken most of the time", which is all
 the expensive models are there to show. Its rows are the first seven of the
 core set, so the two compare case for case.

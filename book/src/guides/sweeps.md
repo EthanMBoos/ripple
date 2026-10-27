@@ -34,20 +34,31 @@ per case:
 name: directives-test
 base_scenario: delivery.yaml
 seeds: [4, 5, 6]
-parameters:                                  # constants only
+parameters: # constants only
   run.end_s: 1800
-prefix: entities.depot.autonomy.Dispatcher   # put before each column
-columns: [directive.kind, directive.phrasing, sample]
+prefix: entities.depot.autonomy.Dispatcher # before each column and repeat
+repeat: # like seeds, not a condition
+  sample: [0, 1]
+columns: [directive.kind, directive.wording]
 cases:
-  - [none,   0, 0]
-  - [no_fly, 0, 0]
-  - [no_fly, 3, 0]
+  - [none, plain]
+  - [no_fly, plain]
+  - [no_fly, atc]
 ```
 
 Each row is one combination, numbered in order, so the cases run and are
 recorded exactly as a zipped sweep of the same values would be, and
 `results.jsonl` holds the full dotted paths. `parameter_combinations` is left
-out.
+out. `repeat` runs every condition once per value, like `seeds`, for a
+setting that repeats the study rather than changing it. Here it is the
+model's reply sample, so each mission is asked twice. The point is that
+everything else in a run is deterministic: the same mission with the same
+replies gives the same run, byte for byte, and the one input Ripple does not
+control is the model's answer. A repeat over the reply sample holds every
+other input fixed and lets only that vary, so any difference between the two
+runs of a mission is the model's own variation, not the engine's. Seeds
+cycle fastest, then the repeat values, then the rows: 3 rows × 3 seeds × 2
+samples = 18 cases.
 
 Each path is a dotted path into the mission, set exactly as a [command-line
 override](yaml-missions.md#command-line-overrides) sets it, after templates

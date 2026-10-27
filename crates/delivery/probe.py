@@ -170,8 +170,18 @@ def breaks(kind, now, vehicles, waiting, calls):
             # Out to the site, then back to the depot: in the zone when?
             for start, a, b, leg_end in ((now, vehicle["at"], request["at"], arrive),
                                          (arrive, request["at"], (0.0, 0.0), back)):
+                active_start, active_end = max(start, FROM), min(leg_end, TO)
+                if active_start > active_end:
+                    continue
                 distance, along = closest(a, b, CENTER_KM)
-                if distance < RADIUS_KM and FROM <= start + along * (leg_end - start) <= TO:
+                if leg_end > start:
+                    # Search only the part flown while the zone is active.
+                    first = (active_start - start) / (leg_end - start)
+                    last = (active_end - start) / (leg_end - start)
+                    along = max(first, min(last, along))
+                    point = tuple(x + along * (y - x) for x, y in zip(a, b))
+                    distance = math.dist(point, CENTER_KM)
+                if distance < RADIUS_KM:
                     return True
     if kind == "reserve_multirotor":
         idle_multirotors = {v for v, s in vehicles.items() if s["idle"] and s["kind"] == "multirotor"}

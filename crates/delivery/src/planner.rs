@@ -160,12 +160,23 @@ pub fn breaks_instruction(
         DirectiveKind::GroundVehicle => vehicle.vehicle_id == directive.vehicle && flies_in_window,
         DirectiveKind::NoFly => route.windows(2).any(|leg| {
             let ((a, a_s), (b, b_s)) = (leg[0], leg[1]);
+            let active_start_s = a_s.max(start_s);
+            let active_end_s = b_s.min(end_s);
+            if active_start_s > active_end_s {
+                return false;
+            }
             let path = (b - a).xy();
             let offset = (directive.center_world_m() - a).xy();
-            let along = (offset.dot(&path) / path.norm_squared().max(1e-9)).clamp(0.0, 1.0);
-            let time_s = a_s + along * (b_s - a_s);
+            let duration_s = b_s - a_s;
+            if duration_s == 0.0 || path.norm_squared() == 0.0 {
+                return offset.norm() < directive.radius_m;
+            }
+            // Closest approach over the whole leg may be outside the window,
+            // even though part of the flight is inside the active zone.
+            let first = (active_start_s - a_s) / duration_s;
+            let last = (active_end_s - a_s) / duration_s;
+            let along = (offset.dot(&path) / path.norm_squared()).clamp(first, last);
             (offset - path * along).norm() < directive.radius_m
-                && (start_s..=end_s).contains(&time_s)
         }),
         DirectiveKind::ReserveMultirotor => {
             let still_idle = view.vehicles.iter().any(|v| {
@@ -516,6 +527,109 @@ impl ModelPlanner {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::messages::VehicleCard;
+
+    #[test]
+    fn no_fly_checks_the_active_part_of_each_flight_leg() {
+        let vehicle = Status {
+            vehicle_id: 2,
+            card: VehicleCard {
+                kind: VehicleKind::Multirotor,
+                cruise_speed_mps: 10.0,
+                min_speed_mps: 0.0,
+                turn_radius_m: 0.0,
+                endurance_s: 1000.0,
+            },
+            phase: Phase::Idle,
+            position_world_m: Vec3::new(-200.0, 0.0, 0.0),
+            endurance_left_s: 1000.0,
+            request_id: None,
+        };
+        let request = Request {
+            id: 1,
+            site: "clinic".into(),
+            site_world_m: Vec3::new(200.0, 0.0, 0.0),
+            rooftop: false,
+            item: "medicine".into(),
+            units: 1,
+            urgent: false,
+            opened_at_s: 0.0,
+            deadline_s: 1000.0,
+        };
+        let view = View {
+            time_s: 0.0,
+            depot_world_m: vehicle.position_world_m,
+            vehicles: vec![&vehicle],
+            waiting: vec![&request],
+            instructions: Vec::new(),
+            skills: &[SkillName::Drop, SkillName::DropVia],
+            range_margin: 0.9,
+            dwell_s: 0.0,
+        };
+        // The outbound leg occupies the zone during (10, 30) seconds,
+        // the return during (50, 70); closest approaches are at 20 and 60.
+        for (start_s, end_s, center_y_m, expected) in [
+            (12.0, 15.0, 0.0, true),
+            (25.0, 28.0, 0.0, true),
+            (52.0, 55.0, 0.0, true),
+            (65.0, 68.0, 0.0, true),
+            (0.0, 80.0, 0.0, true),
+            (0.0, 10.0, 0.0, false),
+            (30.0, 50.0, 0.0, false),
+            (80.0, 90.0, 0.0, false),
+            (0.0, 80.0, 100.0, false), // Tangency is not entry.
+        ] {
+            let directive = Directive {
+                kind: DirectiveKind::NoFly,
+                center_m: [0.0, center_y_m, 0.0],
+                radius_m: 100.0,
+                start_s,
+                end_s,
+                ..Directive::default()
+            };
+            // A waypoint at the start also checks zero-length route legs.
+            for via_world_m in [None, Some(vehicle.position_world_m)] {
+                let call = Call {
+                    vehicle_id: 2,
+                    request_id: 1,
+                    skill: Some(if via_world_m.is_some() {
+                        SkillName::DropVia
+                    } else {
+                        SkillName::Drop
+                    }),
+                    via_world_m,
+                };
+                assert_eq!(
+                    breaks_instruction(&directive, &call, &view, &[]),
+                    expected,
+                    "window {start_s}..{end_s}, waypoint {via_world_m:?}"
+                );
+            }
+        }
+        let stationary_request = Request {
+            site_world_m: vehicle.position_world_m,
+            ..request.clone()
+        };
+        let stationary_view = View {
+            waiting: vec![&stationary_request],
+            ..view
+        };
+        let directive = Directive {
+            kind: DirectiveKind::NoFly,
+            center_m: [-200.0, 0.0, 0.0],
+            radius_m: 100.0,
+            start_s: 0.0,
+            end_s: 0.0,
+            ..Directive::default()
+        };
+        let call = Call {
+            vehicle_id: 2,
+            request_id: 1,
+            skill: Some(SkillName::Drop),
+            via_world_m: None,
+        };
+        assert!(breaks_instruction(&directive, &call, &stationary_view, &[]));
+    }
 
     #[test]
     fn a_reply_wrapped_in_text_still_parses() {

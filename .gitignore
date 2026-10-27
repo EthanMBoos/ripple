@@ -6,3 +6,8 @@ __pycache__/
 /book/book/
 /paper/data/.campaign-staging/
 /paper/literature_review/sources/
+
+# Local graphify outputs, caches, and metadata.
+graphify-out/
+.graphify*/
+.graphify*

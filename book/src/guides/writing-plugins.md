@@ -69,6 +69,7 @@ impl Plugin for MyPlugin {
 impl Autonomy for MyPlugin {           // or Controller, MotionModel, Sensor, ...
     fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> { /* optional */ }
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> { /* each tick */ }
+    fn close(&mut self, time: StepTime) -> Result<()> { /* optional: once, at the end */ }
 }
 ```
 

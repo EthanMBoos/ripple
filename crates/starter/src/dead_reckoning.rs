@@ -46,14 +46,14 @@ impl Plugin for DeadReckoning {
             speed_gain: config.speed_gain,
         }
     }
-}
 
-impl Localization for DeadReckoning {
     fn inputs(_config: &DeadReckoningConfig) -> Vec<Input> {
         // A full-state reading; only its position is used.
         vec![Input::new("fix", ReadingKind::State)]
     }
+}
 
+impl Localization for DeadReckoning {
     fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
         // Start from the first fix, at rest. Attitude is not estimated.
         let fix = context

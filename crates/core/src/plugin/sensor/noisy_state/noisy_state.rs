@@ -46,13 +46,13 @@ impl Plugin for NoisyState {
     fn new(noise: &StateNoise) -> Self {
         Self { noise: *noise }
     }
-}
 
-impl Sensor for NoisyState {
     fn reading_kind(_config: &StateNoise) -> ReadingKind {
         ReadingKind::State
     }
+}
 
+impl Sensor for NoisyState {
     /// The first reading, sampled like every later one, so the first decision
     /// sees noise too. It is taken in the tick of the sensor phase's next
     /// reading, so it has its own key.

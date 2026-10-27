@@ -33,13 +33,13 @@ impl Plugin for NoisyContacts {
     fn new(noise: &StateNoise) -> Self {
         Self { noise: *noise }
     }
-}
 
-impl Sensor for NoisyContacts {
     fn reading_kind(_config: &StateNoise) -> ReadingKind {
         ReadingKind::Contacts
     }
+}
 
+impl Sensor for NoisyContacts {
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
         // Every other live entity is measured, however far away: an ideal sensor.
         // A real one would have range and field of view.

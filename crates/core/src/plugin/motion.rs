@@ -2,7 +2,7 @@
 use crate::{
     KinematicState, Vec3,
     common::Terrain,
-    plugin::{EntityInfo, Plugin, StepTime, Update},
+    plugin::{EntityInfo, StepTime, Update},
     ports::PluginIo,
     pubsub::Messages,
 };
@@ -23,11 +23,14 @@ pub struct MotionContext<'a> {
     pub applied_forces_world_n: &'a [Vec3],
 }
 
-pub trait MotionModel: Plugin {
+pub trait MotionModel: Send {
     fn initialize(&mut self, _context: &mut MotionContext<'_>) -> Result<()> {
         Ok(())
     }
     fn step(&mut self, context: &mut MotionContext<'_>, io: &mut PluginIo) -> Result<Update>;
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
 }
 
 // Built-ins selected by missions.

@@ -8,69 +8,10 @@ use crate::{
 use anyhow::{Context, Result, ensure};
 use std::collections::BTreeMap;
 
-// Same forwarding layer as entity/plugin_stack.rs; its comment describes a
-// possible simplification to investigate once the tool is more established.
-pub(crate) trait InteractionBehavior: Send {
-    fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()>;
-    fn collision_exists(&self, entities: &[Entity], position_world_m: Vec3) -> bool;
-    fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update>;
-    fn close(&mut self, time: StepTime) -> Result<()>;
-}
-impl<T: Interaction> InteractionBehavior for T {
-    fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()> {
-        Interaction::initialize(self, context)
-    }
-    fn collision_exists(&self, entities: &[Entity], position_world_m: Vec3) -> bool {
-        Interaction::collision_exists(self, entities, position_world_m)
-    }
-    fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
-        Interaction::step(self, context)
-    }
-    fn close(&mut self, time: StepTime) -> Result<()> {
-        Plugin::close(self, time)
-    }
-}
-pub(crate) trait NetworkBehavior: Send {
-    fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()>;
-    fn step(&mut self, context: &mut NetworkContext<'_, '_>) -> Result<Update>;
-    fn close(&mut self, time: StepTime) -> Result<()>;
-}
-impl<T: Network> NetworkBehavior for T {
-    fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()> {
-        Network::initialize(self, context)
-    }
-    fn step(&mut self, context: &mut NetworkContext<'_, '_>) -> Result<Update> {
-        Network::step(self, context)
-    }
-    fn close(&mut self, time: StepTime) -> Result<()> {
-        Plugin::close(self, time)
-    }
-}
-pub(crate) trait MetricsBehavior: Send {
-    fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()>;
-    fn step(&mut self, context: &mut WorldContext<'_>) -> Result<Update>;
-    fn report(&self, time_s: f64) -> MetricReport;
-    fn close(&mut self, time: StepTime) -> Result<()>;
-}
-impl<T: Metrics> MetricsBehavior for T {
-    fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()> {
-        Metrics::initialize(self, context)
-    }
-    fn step(&mut self, context: &mut WorldContext<'_>) -> Result<Update> {
-        Metrics::step(self, context)
-    }
-    fn report(&self, time_s: f64) -> MetricReport {
-        Metrics::report(self, time_s)
-    }
-    fn close(&mut self, time: StepTime) -> Result<()> {
-        Plugin::close(self, time)
-    }
-}
-
 pub(crate) struct CompiledWorld {
-    interactions: Vec<CompiledPlugin<dyn InteractionBehavior>>,
-    networks: Vec<CompiledPlugin<dyn NetworkBehavior>>,
-    metrics: Vec<CompiledPlugin<dyn MetricsBehavior>>,
+    interactions: Vec<CompiledPlugin<dyn Interaction>>,
+    networks: Vec<CompiledPlugin<dyn Network>>,
+    metrics: Vec<CompiledPlugin<dyn Metrics>>,
 }
 
 fn compile_world_plugins<T: ?Sized>(
@@ -225,9 +166,9 @@ impl<T: ?Sized> WorldSlot<T> {
     }
 }
 pub(crate) struct WorldPlugins {
-    interactions: Vec<WorldSlot<dyn InteractionBehavior>>,
-    networks: Vec<WorldSlot<dyn NetworkBehavior>>,
-    metrics: Vec<WorldSlot<dyn MetricsBehavior>>,
+    interactions: Vec<WorldSlot<dyn Interaction>>,
+    networks: Vec<WorldSlot<dyn Network>>,
+    metrics: Vec<WorldSlot<dyn Metrics>>,
 }
 impl WorldPlugins {
     pub fn initialize(
@@ -238,19 +179,13 @@ impl WorldPlugins {
         terrain: Option<&Terrain>,
     ) -> Result<()> {
         for slot in &mut self.networks {
-            slot.initialize(time, contacts, teams, terrain, NetworkBehavior::initialize)?;
+            slot.initialize(time, contacts, teams, terrain, Network::initialize)?;
         }
         for slot in &mut self.interactions {
-            slot.initialize(
-                time,
-                contacts,
-                teams,
-                terrain,
-                InteractionBehavior::initialize,
-            )?;
+            slot.initialize(time, contacts, teams, terrain, Interaction::initialize)?;
         }
         for slot in &mut self.metrics {
-            slot.initialize(time, contacts, teams, terrain, MetricsBehavior::initialize)?;
+            slot.initialize(time, contacts, teams, terrain, Metrics::initialize)?;
         }
         Ok(())
     }
@@ -390,13 +325,13 @@ impl WorldPlugins {
             }
         };
         for slot in &mut self.interactions {
-            record(slot.close(time, InteractionBehavior::close));
+            record(slot.close(time, Interaction::close));
         }
         for slot in &mut self.networks {
-            record(slot.close(time, NetworkBehavior::close));
+            record(slot.close(time, Network::close));
         }
         for slot in &mut self.metrics {
-            record(slot.close(time, MetricsBehavior::close));
+            record(slot.close(time, Metrics::close));
         }
         failure.map_or(Ok(()), Err)
     }

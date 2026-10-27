@@ -109,11 +109,11 @@ impl Plugin for CommandLog {
             log: config.log.clone(),
         }
     }
-}
-impl Localization for CommandLog {
     fn inputs(_: &LogConfig) -> Vec<Input> {
         vec![Input::new("state", ReadingKind::State)]
     }
+}
+impl Localization for CommandLog {
     fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
         assert_eq!(context.commands.substeps(), 0);
         self.step(context).map(|_| ())
@@ -153,11 +153,11 @@ impl Plugin for Echo {
             log: config.log.clone(),
         }
     }
-}
-impl Localization for Echo {
     fn inputs(_: &LogConfig) -> Vec<Input> {
         vec![Input::new("state", ReadingKind::State)]
     }
+}
+impl Localization for Echo {
     fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
         context.messages.subscribe::<f64>("LocalNetwork", "echo")?;
         self.step(context).map(|_| ())
@@ -195,11 +195,11 @@ impl Plugin for WrongType {
     fn new(_: &()) -> Self {
         Self
     }
-}
-impl Localization for WrongType {
     fn inputs(_: &()) -> Vec<Input> {
         vec![Input::new("state", ReadingKind::State)]
     }
+}
+impl Localization for WrongType {
     fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
         context.inputs.latest::<ContactList>("state")?;
         Ok(())

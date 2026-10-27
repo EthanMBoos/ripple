@@ -103,16 +103,46 @@ impl<'a> PluginParams<'a> {
     }
 }
 
-/// Immutable, validated configuration is distinct from per-entity mutable plugin state.
+/// How a plugin is built: its configuration, parsed and checked once per
+/// mission, and the facts the engine needs before any instance exists. What a
+/// plugin does each tick is its category trait (`Autonomy`, `Sensor`, ...),
+/// which does not extend this one.
+///
+/// Why the engine holds plugins as trait objects (`Box<dyn Autonomy>`). Two
+/// facts force it: the mission file names the plugin at run time, after the
+/// program is compiled, and this crate is compiled before user plugin crates
+/// exist, so the code that steps a vehicle is written once for a list of
+/// plugins it cannot see. Those are design goals, not accidents: a plugin is
+/// written in its own crate without editing core, and a mission is a file
+/// changed without recompiling. Drop either and an enum of every plugin with
+/// a `match` would be plainer.
+///
+/// Why two traits. Through a trait object there is no way to call a
+/// constructor or name the concrete type's config, so building is its own
+/// trait, answered from the concrete type while the mission loads. The
+/// alternative is one trait with `init(&mut self, params)` on an empty
+/// object, which would parse per instance and could not check ports before
+/// anything is spawned.
+///
+/// `reading_kind` and `inputs` sit here, next to `ports`, because they depend
+/// on the configuration; only a few categories override them. `close` lives
+/// on each category trait because it is called through the box.
 pub trait Plugin: Send + Sized + 'static {
+    /// Immutable, validated configuration, distinct from per-entity state.
     type Config: Send + Sync + 'static;
     fn configure(params: &PluginParams<'_>) -> Result<Self::Config>;
     fn new(config: &Self::Config) -> Self;
-    fn close(&mut self, _time: StepTime) -> Result<()> {
-        Ok(())
-    }
     fn ports(_config: &Self::Config) -> Ports {
         Ports::default()
+    }
+    /// Sensors: what their readings contain; see `ReadingKind`.
+    fn reading_kind(_config: &Self::Config) -> ReadingKind {
+        ReadingKind::Other
+    }
+    /// Estimators: the readings they read; a mission's `inputs` selects each
+    /// one's sensor.
+    fn inputs(_config: &Self::Config) -> Vec<Input> {
+        Vec::new()
     }
 }
 

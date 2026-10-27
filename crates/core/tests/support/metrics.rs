@@ -25,10 +25,6 @@ impl Plugin for PopulationMetrics {
             closed: false,
         }
     }
-    fn close(&mut self, _time: StepTime) -> Result<()> {
-        self.closed = true;
-        Ok(())
-    }
 }
 impl Metrics for PopulationMetrics {
     fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()> {
@@ -65,5 +61,9 @@ impl Metrics for PopulationMetrics {
                 },
             )]),
         }
+    }
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        self.closed = true;
+        Ok(())
     }
 }

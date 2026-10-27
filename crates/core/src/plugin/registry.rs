@@ -1,18 +1,16 @@
 //! Plugin registration: typed factories by category and the built-in list.
 use super::{
-    Autonomy, Controller, Input, Interaction, Localization, Metrics, MotionModel, Network,
+    Autonomy, Controller, Input, Interaction, Localization, Metrics, MotionModel, Network, Plugin,
     PluginParams, Ports, ReadingKind, Sensor, Tracking, autonomy, controller, estimator,
     interaction, metrics, motion, network, sensor,
 };
-use crate::entity::plugin_stack::{
-    AgentBehavior, AutonomyAdapter, ControllerAdapter, LocalizationAdapter, LocalizationBehavior,
-    MotionBehavior, SensorBehavior, TrackingAdapter, TrackingBehavior,
-};
-use crate::simulation::world_plugins::{InteractionBehavior, MetricsBehavior, NetworkBehavior};
 use crate::{common::Rate, scenario::PluginConfig};
 use anyhow::{Context, Result, ensure};
 use std::collections::BTreeMap;
 
+/// A plugin as a mission names it: the facts read from its configuration
+/// (answered once, by the concrete type) and a way to make instances. `T` is
+/// the category trait object the instances are stored as.
 pub(crate) struct CompiledPlugin<T: ?Sized> {
     pub name: String,
     pub ports: Ports,
@@ -24,6 +22,28 @@ pub(crate) struct CompiledPlugin<T: ?Sized> {
     pub instantiate: Box<dyn Fn() -> Box<T> + Send + Sync>,
 }
 type Compiler<T> = Box<dyn Fn(&PluginParams<'_>) -> Result<CompiledPlugin<T>> + Send + Sync>;
+
+/// One category's compiler for plugin type `P`: parse and check the mission's
+/// parameters once, then make instances from the result. `new` is usually
+/// `P::new`; `erase` boxes an instance as its category (`Box<dyn Autonomy>`),
+/// which only a function written at a call site that knows `P` can do.
+fn compiler<P: Plugin, T: ?Sized + 'static>(
+    new: impl Fn(&P::Config) -> P + Clone + Send + Sync + 'static,
+    erase: fn(P) -> Box<T>,
+) -> Compiler<T> {
+    Box::new(move |params| {
+        let config = P::configure(params)?;
+        let new = new.clone();
+        Ok(CompiledPlugin {
+            name: String::new(),
+            ports: P::ports(&config),
+            rate: Rate::new(params.loop_rate_hz)?,
+            inputs: P::inputs(&config),
+            reading_kind: P::reading_kind(&config),
+            instantiate: Box::new(move || erase(new(&config))),
+        })
+    })
+}
 
 /// One category's named constructors. The result keeps its category through spawning.
 pub(crate) struct Catalog<T: ?Sized> {
@@ -69,17 +89,18 @@ impl<T: ?Sized> Catalog<T> {
     }
 }
 
-/// User projects register ordinary Rust types. No simulator source edits are required.
+/// User projects register ordinary Rust types. No simulator source edits are
+/// required. Each catalog holds the category trait the author implemented.
 pub struct PluginRegistry {
-    pub(crate) autonomies: Catalog<dyn AgentBehavior>,
-    pub(crate) controllers: Catalog<dyn AgentBehavior>,
-    pub(crate) motion: Catalog<dyn MotionBehavior>,
-    pub(crate) sensors: Catalog<dyn SensorBehavior>,
-    pub(crate) localization: Catalog<dyn LocalizationBehavior>,
-    pub(crate) tracking: Catalog<dyn TrackingBehavior>,
-    pub(crate) interactions: Catalog<dyn InteractionBehavior>,
-    pub(crate) networks: Catalog<dyn NetworkBehavior>,
-    pub(crate) metrics: Catalog<dyn MetricsBehavior>,
+    pub(crate) autonomies: Catalog<dyn Autonomy>,
+    pub(crate) controllers: Catalog<dyn Controller>,
+    pub(crate) motion: Catalog<dyn MotionModel>,
+    pub(crate) sensors: Catalog<dyn Sensor>,
+    pub(crate) localization: Catalog<dyn Localization>,
+    pub(crate) tracking: Catalog<dyn Tracking>,
+    pub(crate) interactions: Catalog<dyn Interaction>,
+    pub(crate) networks: Catalog<dyn Network>,
+    pub(crate) metrics: Catalog<dyn Metrics>,
 }
 
 impl Default for PluginRegistry {
@@ -103,160 +124,51 @@ impl PluginRegistry {
         register_builtins(&mut registry).expect("built-in names must be unique");
         registry
     }
-    pub fn register_autonomy<T: Autonomy>(&mut self, name: &str) -> Result<()> {
-        self.register_autonomy_with(name, T::new)
+    pub fn register_autonomy<P: Plugin + Autonomy>(&mut self, name: &str) -> Result<()> {
+        self.register_autonomy_with(name, P::new)
     }
     /// Registers an autonomy built by `new` instead of `Plugin::new`, so a
     /// program that owns the simulation can hand each instance something of
     /// its own, such as the actions a Python trainer chooses.
-    pub fn register_autonomy_with<T: Autonomy>(
+    pub fn register_autonomy_with<P: Plugin + Autonomy>(
         &mut self,
         name: &str,
-        new: impl Fn(&T::Config) -> T + Clone + Send + Sync + 'static,
+        new: impl Fn(&P::Config) -> P + Clone + Send + Sync + 'static,
     ) -> Result<()> {
-        self.autonomies.insert(
-            name,
-            Box::new(move |params| {
-                let config = T::configure(params)?;
-                let new = new.clone();
-                Ok(CompiledPlugin {
-                    name: String::new(),
-                    ports: T::ports(&config),
-                    rate: Rate::new(params.loop_rate_hz)?,
-                    inputs: Vec::new(),
-                    reading_kind: ReadingKind::Other,
-                    instantiate: Box::new(move || Box::new(AutonomyAdapter(new(&config)))),
-                })
-            }),
-        )
+        self.autonomies
+            .insert(name, compiler(new, |plugin| Box::new(plugin)))
     }
-    pub fn register_controller<T: Controller>(&mut self, name: &str) -> Result<()> {
-        self.controllers.insert(
-            name,
-            Box::new(|params| {
-                let config = T::configure(params)?;
-                Ok(CompiledPlugin {
-                    name: String::new(),
-                    ports: T::ports(&config),
-                    rate: Rate::new(params.loop_rate_hz)?,
-                    inputs: Vec::new(),
-                    reading_kind: ReadingKind::Other,
-                    instantiate: Box::new(move || Box::new(ControllerAdapter(T::new(&config)))),
-                })
-            }),
-        )
+    pub fn register_controller<P: Plugin + Controller>(&mut self, name: &str) -> Result<()> {
+        self.controllers
+            .insert(name, compiler(P::new, |plugin| Box::new(plugin)))
     }
-    pub fn register_motion<T: MotionModel>(&mut self, name: &str) -> Result<()> {
-        self.motion.insert(
-            name,
-            Box::new(|params| {
-                let config = T::configure(params)?;
-                Ok(CompiledPlugin {
-                    name: String::new(),
-                    ports: T::ports(&config),
-                    rate: Rate::new(params.loop_rate_hz)?,
-                    inputs: Vec::new(),
-                    reading_kind: ReadingKind::Other,
-                    instantiate: Box::new(move || Box::new(T::new(&config))),
-                })
-            }),
-        )
+    pub fn register_motion<P: Plugin + MotionModel>(&mut self, name: &str) -> Result<()> {
+        self.motion
+            .insert(name, compiler(P::new, |plugin| Box::new(plugin)))
     }
-    pub fn register_sensor<T: Sensor>(&mut self, name: &str) -> Result<()> {
-        self.sensors.insert(
-            name,
-            Box::new(|params| {
-                let config = T::configure(params)?;
-                Ok(CompiledPlugin {
-                    name: String::new(),
-                    ports: T::ports(&config),
-                    rate: Rate::new(params.loop_rate_hz)?,
-                    inputs: Vec::new(),
-                    reading_kind: T::reading_kind(&config),
-                    instantiate: Box::new(move || Box::new(T::new(&config))),
-                })
-            }),
-        )
+    pub fn register_sensor<P: Plugin + Sensor>(&mut self, name: &str) -> Result<()> {
+        self.sensors
+            .insert(name, compiler(P::new, |plugin| Box::new(plugin)))
     }
-    pub fn register_localization<T: Localization>(&mut self, name: &str) -> Result<()> {
-        self.localization.insert(
-            name,
-            Box::new(|params| {
-                let config = T::configure(params)?;
-                Ok(CompiledPlugin {
-                    name: String::new(),
-                    ports: T::ports(&config),
-                    rate: Rate::new(params.loop_rate_hz)?,
-                    inputs: <T as Localization>::inputs(&config),
-                    reading_kind: ReadingKind::Other,
-                    instantiate: Box::new(move || Box::new(LocalizationAdapter(T::new(&config)))),
-                })
-            }),
-        )
+    pub fn register_localization<P: Plugin + Localization>(&mut self, name: &str) -> Result<()> {
+        self.localization
+            .insert(name, compiler(P::new, |plugin| Box::new(plugin)))
     }
-    pub fn register_tracking<T: Tracking>(&mut self, name: &str) -> Result<()> {
-        self.tracking.insert(
-            name,
-            Box::new(|params| {
-                let config = T::configure(params)?;
-                Ok(CompiledPlugin {
-                    name: String::new(),
-                    ports: T::ports(&config),
-                    rate: Rate::new(params.loop_rate_hz)?,
-                    inputs: <T as Tracking>::inputs(&config),
-                    reading_kind: ReadingKind::Other,
-                    instantiate: Box::new(move || Box::new(TrackingAdapter(T::new(&config)))),
-                })
-            }),
-        )
+    pub fn register_tracking<P: Plugin + Tracking>(&mut self, name: &str) -> Result<()> {
+        self.tracking
+            .insert(name, compiler(P::new, |plugin| Box::new(plugin)))
     }
-    pub fn register_interaction<T: Interaction>(&mut self, name: &str) -> Result<()> {
-        self.interactions.insert(
-            name,
-            Box::new(|params| {
-                let config = T::configure(params)?;
-                Ok(CompiledPlugin {
-                    name: String::new(),
-                    ports: T::ports(&config),
-                    rate: Rate::new(params.loop_rate_hz)?,
-                    inputs: Vec::new(),
-                    reading_kind: ReadingKind::Other,
-                    instantiate: Box::new(move || Box::new(T::new(&config))),
-                })
-            }),
-        )
+    pub fn register_interaction<P: Plugin + Interaction>(&mut self, name: &str) -> Result<()> {
+        self.interactions
+            .insert(name, compiler(P::new, |plugin| Box::new(plugin)))
     }
-    pub fn register_network<T: Network>(&mut self, name: &str) -> Result<()> {
-        self.networks.insert(
-            name,
-            Box::new(|params| {
-                let config = T::configure(params)?;
-                Ok(CompiledPlugin {
-                    name: String::new(),
-                    ports: T::ports(&config),
-                    rate: Rate::new(params.loop_rate_hz)?,
-                    inputs: Vec::new(),
-                    reading_kind: ReadingKind::Other,
-                    instantiate: Box::new(move || Box::new(T::new(&config))),
-                })
-            }),
-        )
+    pub fn register_network<P: Plugin + Network>(&mut self, name: &str) -> Result<()> {
+        self.networks
+            .insert(name, compiler(P::new, |plugin| Box::new(plugin)))
     }
-    pub fn register_metrics<T: Metrics>(&mut self, name: &str) -> Result<()> {
-        self.metrics.insert(
-            name,
-            Box::new(|params| {
-                let config = T::configure(params)?;
-                Ok(CompiledPlugin {
-                    name: String::new(),
-                    ports: T::ports(&config),
-                    rate: Rate::new(params.loop_rate_hz)?,
-                    inputs: Vec::new(),
-                    reading_kind: ReadingKind::Other,
-                    instantiate: Box::new(move || Box::new(T::new(&config))),
-                })
-            }),
-        )
+    pub fn register_metrics<P: Plugin + Metrics>(&mut self, name: &str) -> Result<()> {
+        self.metrics
+            .insert(name, compiler(P::new, |plugin| Box::new(plugin)))
     }
 }
 
@@ -287,8 +199,8 @@ fn register_builtins(registry: &mut PluginRegistry) -> Result<()> {
     registry.register_sensor::<sensor::NoisyPosition>("NoisyPosition")?;
     registry.register_sensor::<sensor::NoisyState>("NoisyState")?;
     registry.register_sensor::<sensor::NoisyContacts>("NoisyContacts")?;
-    registry.register_localization::<estimator::PassThrough>("PassThrough")?;
-    registry.register_tracking::<estimator::PassThrough>("PassThrough")?;
+    registry.register_localization::<estimator::PassThroughState>("PassThrough")?;
+    registry.register_tracking::<estimator::PassThroughContacts>("PassThrough")?;
     registry.register_interaction::<interaction::SimpleCollision>("SimpleCollision")?;
     registry.register_interaction::<interaction::Boundary>("Boundary")?;
     registry.register_interaction::<interaction::GroundCollision>("GroundCollision")?;

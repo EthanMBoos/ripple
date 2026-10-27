@@ -1,15 +1,18 @@
 //! Controllers: the plugin interface and the built-in control laws.
 use crate::{
-    plugin::{AgentContext, Plugin, Update},
+    plugin::{AgentContext, StepTime, Update},
     ports::PluginIo,
 };
 use anyhow::Result;
 
-pub trait Controller: Plugin {
+pub trait Controller: Send {
     fn initialize(&mut self, _context: &mut AgentContext<'_>) -> Result<()> {
         Ok(())
     }
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update>;
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
 }
 
 // Built-ins selected by missions.

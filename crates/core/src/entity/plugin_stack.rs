@@ -10,107 +10,6 @@ use crate::{plugin::CompiledPlugin, ports::Signals};
 use anyhow::{Context, Result, bail, ensure};
 use std::collections::BTreeMap;
 
-// These runtime-only traits forward calls to the public plugin traits.
-// Once the tool is more established, investigate separating construction from
-// runtime methods so we might remove this forwarding layer across all
-// categories. Keep the current plugin API for now; this is not a required refactor.
-// Estimators have adapters because one type (PassThrough) implements both roles.
-pub(crate) trait AgentBehavior: Send {
-    fn close(&mut self, time: StepTime) -> Result<()>;
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()>;
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update>;
-}
-pub(crate) struct AutonomyAdapter<T>(pub T);
-impl<T: Autonomy> AgentBehavior for AutonomyAdapter<T> {
-    fn close(&mut self, time: StepTime) -> Result<()> {
-        self.0.close(time)
-    }
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
-        self.0.initialize(context)
-    }
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
-        self.0.step(context, io)
-    }
-}
-pub(crate) struct ControllerAdapter<T>(pub T);
-impl<T: Controller> AgentBehavior for ControllerAdapter<T> {
-    fn close(&mut self, time: StepTime) -> Result<()> {
-        self.0.close(time)
-    }
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
-        self.0.initialize(context)
-    }
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
-        self.0.step(context, io)
-    }
-}
-pub(crate) trait MotionBehavior: Send {
-    fn close(&mut self, time: StepTime) -> Result<()>;
-    fn initialize(&mut self, context: &mut MotionContext<'_>) -> Result<()>;
-    fn step(&mut self, context: &mut MotionContext<'_>, io: &mut PluginIo) -> Result<Update>;
-}
-impl<T: MotionModel> MotionBehavior for T {
-    fn close(&mut self, time: StepTime) -> Result<()> {
-        Plugin::close(self, time)
-    }
-    fn initialize(&mut self, context: &mut MotionContext<'_>) -> Result<()> {
-        MotionModel::initialize(self, context)
-    }
-    fn step(&mut self, context: &mut MotionContext<'_>, io: &mut PluginIo) -> Result<Update> {
-        MotionModel::step(self, context, io)
-    }
-}
-pub(crate) trait SensorBehavior: Send {
-    fn close(&mut self, time: StepTime) -> Result<()>;
-    fn initialize(&mut self, context: &mut SensorContext<'_>) -> Result<()>;
-    fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update>;
-}
-impl<T: Sensor> SensorBehavior for T {
-    fn close(&mut self, time: StepTime) -> Result<()> {
-        Plugin::close(self, time)
-    }
-    fn initialize(&mut self, context: &mut SensorContext<'_>) -> Result<()> {
-        Sensor::initialize(self, context)
-    }
-    fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
-        Sensor::step(self, context)
-    }
-}
-pub(crate) trait LocalizationBehavior: Send {
-    fn close(&mut self, time: StepTime) -> Result<()>;
-    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()>;
-    fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update>;
-}
-pub(crate) struct LocalizationAdapter<T>(pub T);
-impl<T: Localization> LocalizationBehavior for LocalizationAdapter<T> {
-    fn close(&mut self, time: StepTime) -> Result<()> {
-        self.0.close(time)
-    }
-    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
-        Localization::initialize(&mut self.0, context)
-    }
-    fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update> {
-        Localization::step(&mut self.0, context)
-    }
-}
-pub(crate) trait TrackingBehavior: Send {
-    fn close(&mut self, time: StepTime) -> Result<()>;
-    fn initialize(&mut self, context: &mut TrackingContext<'_>) -> Result<()>;
-    fn step(&mut self, context: &mut TrackingContext<'_>) -> Result<Update>;
-}
-pub(crate) struct TrackingAdapter<T>(pub T);
-impl<T: Tracking> TrackingBehavior for TrackingAdapter<T> {
-    fn close(&mut self, time: StepTime) -> Result<()> {
-        self.0.close(time)
-    }
-    fn initialize(&mut self, context: &mut TrackingContext<'_>) -> Result<()> {
-        Tracking::initialize(&mut self.0, context)
-    }
-    fn step(&mut self, context: &mut TrackingContext<'_>) -> Result<Update> {
-        Tracking::step(&mut self.0, context)
-    }
-}
-
 /// The name missions use for the engine's perfect measurement.
 pub(crate) const PERFECT: &str = "perfect";
 
@@ -208,14 +107,14 @@ fn source_names(sources: &[(String, Source)]) -> BTreeMap<String, String> {
 }
 
 pub(crate) struct CompiledStack {
-    autonomies: Vec<CompiledPlugin<dyn AgentBehavior>>,
-    controllers: Vec<CompiledPlugin<dyn AgentBehavior>>,
-    motion: CompiledPlugin<dyn MotionBehavior>,
-    sensors: Vec<CompiledPlugin<dyn SensorBehavior>>,
+    autonomies: Vec<CompiledPlugin<dyn Autonomy>>,
+    controllers: Vec<CompiledPlugin<dyn Controller>>,
+    motion: CompiledPlugin<dyn MotionModel>,
+    sensors: Vec<CompiledPlugin<dyn Sensor>>,
     sensor_identities: Vec<String>,
-    localization: CompiledPlugin<dyn LocalizationBehavior>,
+    localization: CompiledPlugin<dyn Localization>,
     localization_sources: Vec<(String, Source)>,
-    tracking: CompiledPlugin<dyn TrackingBehavior>,
+    tracking: CompiledPlugin<dyn Tracking>,
     tracking_sources: Vec<(String, Source)>,
 }
 impl CompiledStack {
@@ -341,20 +240,8 @@ impl CompiledStack {
     }
 
     pub fn instantiate(&self, entity_id: i32, seed: u32) -> PluginStack {
-        // Each instance's random numbers are keyed by a stable identity.
-        let agent_slots = |category: &str, plugins: &[CompiledPlugin<dyn AgentBehavior>]| {
-            plugins
-                .iter()
-                .enumerate()
-                .map(|(index, plugin)| {
-                    let identity = format!("{category}/{}:{index}", plugin.name);
-                    let random = PluginRandom::new(seed, entity_id, &identity);
-                    Slot::new(plugin, random, endpoint(entity_id, identity))
-                })
-                .collect()
-        };
-        let autonomies = agent_slots("autonomy", &self.autonomies);
-        let controllers = agent_slots("controller", &self.controllers);
+        let autonomies = agent_slots("autonomy", &self.autonomies, entity_id, seed);
+        let controllers = agent_slots("controller", &self.controllers, entity_id, seed);
         let motion_identity = format!("motion/{}:0", self.motion.name);
         let motion = Slot::new(
             &self.motion,
@@ -423,6 +310,24 @@ impl CompiledStack {
     }
 }
 
+/// Each instance's random numbers are keyed by a stable identity.
+fn agent_slots<T: ?Sized>(
+    category: &str,
+    plugins: &[CompiledPlugin<T>],
+    entity_id: i32,
+    seed: u32,
+) -> Vec<Slot<T>> {
+    plugins
+        .iter()
+        .enumerate()
+        .map(|(index, plugin)| {
+            let identity = format!("{category}/{}:{index}", plugin.name);
+            let random = PluginRandom::new(seed, entity_id, &identity);
+            Slot::new(plugin, random, endpoint(entity_id, identity))
+        })
+        .collect()
+}
+
 // DEVNOTE: Every plugin has a message "address": which entity it belongs to
 // plus a name like "sensor/NoisyContacts:0". Networks use it to know who sent
 // a message and who should receive it. We used to rebuild that name from
@@ -483,15 +388,17 @@ impl<T: ?Sized> Slot<T> {
         .unwrap_or_else(|_| Err(anyhow::anyhow!("plugin close panicked")))
         .with_context(|| format!("close '{}'", self.name))
     }
-}
 
-impl Slot<dyn AgentBehavior> {
+    // Autonomies and controllers are different traits with the same shape
+    // (both take an `AgentContext` and a `PluginIo`), so they share these two
+    // and are told which trait's method to call, as `close` is.
     fn agent_initialize(
         &mut self,
         entity: EntityInfo,
         time: StepTime,
         state: &KinematicState,
         contacts: KnownContacts<'_>,
+        initialize: impl FnOnce(&mut T, &mut AgentContext<'_>) -> Result<()>,
     ) -> Result<()> {
         self.messages.time_s = time.time_s;
         let mut context = AgentContext {
@@ -502,8 +409,7 @@ impl Slot<dyn AgentBehavior> {
             messages: &mut self.messages,
             random: self.random.at_tick(time.tick),
         };
-        self.plugin
-            .initialize(&mut context)
+        initialize(&mut self.plugin, &mut context)
             .with_context(|| format!("initialize '{}' on entity {}", self.name, entity.id))
     }
     fn agent_step(
@@ -512,6 +418,7 @@ impl Slot<dyn AgentBehavior> {
         time: StepTime,
         state: &KinematicState,
         contacts: KnownContacts<'_>,
+        step: impl FnOnce(&mut T, &mut AgentContext<'_>, &mut PluginIo) -> Result<Update>,
     ) -> Result<Update> {
         // A rate-limited plugin's dt is the time since it last ran.
         let Some(elapsed_s) = self.rate.due(time.dt_s) else {
@@ -530,22 +437,21 @@ impl Slot<dyn AgentBehavior> {
             messages: &mut self.messages,
             random: self.random.at_tick(time.tick),
         };
-        self.plugin
-            .step(&mut context, &mut self.io)
+        step(&mut self.plugin, &mut context, &mut self.io)
             .with_context(|| format!("step '{}' on entity {}", self.name, entity.id))
     }
 }
 
 pub(crate) struct PluginStack {
-    autonomies: Vec<Slot<dyn AgentBehavior>>,
-    controllers: Vec<Slot<dyn AgentBehavior>>,
-    motion: Slot<dyn MotionBehavior>,
-    sensors: Vec<Slot<dyn SensorBehavior>>,
+    autonomies: Vec<Slot<dyn Autonomy>>,
+    controllers: Vec<Slot<dyn Controller>>,
+    motion: Slot<dyn MotionModel>,
+    sensors: Vec<Slot<dyn Sensor>>,
     /// Each sensor's instance name and reading kind, in sensor order.
     sensor_readings: Vec<(String, ReadingKind)>,
-    localization: Slot<dyn LocalizationBehavior>,
+    localization: Slot<dyn Localization>,
     localization_sources: Vec<(String, Source)>,
-    tracking: Slot<dyn TrackingBehavior>,
+    tracking: Slot<dyn Tracking>,
     tracking_sources: Vec<(String, Source)>,
     outputs: Signals,
     /// Delivered sensor readings, which only estimators read.
@@ -663,10 +569,22 @@ impl PluginStack {
         self.readings.clear_fresh();
         let contacts = KnownContacts::new(&self.contacts, entity.id);
         for controller in self.controllers.iter_mut().rev() {
-            controller.agent_initialize(entity, time, &self.belief, contacts)?;
+            controller.agent_initialize(
+                entity,
+                time,
+                &self.belief,
+                contacts,
+                Controller::initialize,
+            )?;
         }
         for autonomy in &mut self.autonomies {
-            autonomy.agent_initialize(entity, time, &self.belief, contacts)?;
+            autonomy.agent_initialize(
+                entity,
+                time,
+                &self.belief,
+                contacts,
+                Autonomy::initialize,
+            )?;
         }
         Ok(())
     }
@@ -741,7 +659,7 @@ impl PluginStack {
         let contacts = KnownContacts::new(&self.contacts, entity.id);
         for autonomy in &mut self.autonomies {
             handle_update(
-                autonomy.agent_step(entity, time, &self.belief, contacts)?,
+                autonomy.agent_step(entity, time, &self.belief, contacts, Autonomy::step)?,
                 &mut self.stop_requested,
             );
             // Source order resolves multiple autonomy writers deterministically.
@@ -761,7 +679,7 @@ impl PluginStack {
         for controller in &mut self.controllers {
             controller.io.receive(upstream)?;
             handle_update(
-                controller.agent_step(entity, time, &self.belief, contacts)?,
+                controller.agent_step(entity, time, &self.belief, contacts, Controller::step)?,
                 &mut self.stop_requested,
             );
             upstream = &controller.io.outputs;
@@ -902,7 +820,10 @@ impl PluginStack {
         Ok(())
     }
     pub fn mailboxes<'a>(&'a mut self, mailboxes: &mut Vec<crate::pubsub::messages::Mailbox<'a>>) {
-        for slot in self.autonomies.iter_mut().chain(&mut self.controllers) {
+        for slot in &mut self.autonomies {
+            mailboxes.push(slot.mailbox());
+        }
+        for slot in &mut self.controllers {
             mailboxes.push(slot.mailbox());
         }
         mailboxes.push(self.motion.mailbox());
@@ -932,15 +853,18 @@ impl PluginStack {
                 failure.get_or_insert(error);
             }
         };
-        for slot in self.autonomies.iter_mut().chain(&mut self.controllers) {
-            record(slot.close(time, AgentBehavior::close));
+        for slot in &mut self.autonomies {
+            record(slot.close(time, Autonomy::close));
         }
-        record(self.motion.close(time, MotionBehavior::close));
+        for slot in &mut self.controllers {
+            record(slot.close(time, Controller::close));
+        }
+        record(self.motion.close(time, MotionModel::close));
         for sensor in &mut self.sensors {
-            record(sensor.close(time, SensorBehavior::close));
+            record(sensor.close(time, Sensor::close));
         }
-        record(self.localization.close(time, LocalizationBehavior::close));
-        record(self.tracking.close(time, TrackingBehavior::close));
+        record(self.localization.close(time, Localization::close));
+        record(self.tracking.close(time, Tracking::close));
         failure.map_or(Ok(()), Err)
     }
 }

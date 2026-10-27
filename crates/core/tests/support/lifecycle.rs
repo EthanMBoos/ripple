@@ -49,11 +49,6 @@ impl Plugin for LifecycleSensor {
             action: config.action,
         }
     }
-
-    fn close(&mut self, _: StepTime) -> Result<()> {
-        CLOSED.fetch_add(1, Ordering::SeqCst);
-        Ok(())
-    }
 }
 
 impl Sensor for LifecycleSensor {
@@ -70,6 +65,11 @@ impl Sensor for LifecycleSensor {
             Action::Stop => Ok(Update::Stop),
             _ => Ok(Update::Applied),
         }
+    }
+
+    fn close(&mut self, _: StepTime) -> Result<()> {
+        CLOSED.fetch_add(1, Ordering::SeqCst);
+        Ok(())
     }
 }
 

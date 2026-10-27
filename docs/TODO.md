@@ -171,8 +171,7 @@ sweeps are days of work, and the calls run in parallel over a few days.
 - [ ] Trim back to the venue's page limit (scoring details into an
       appendix).
 - [ ] Redraw the figures from the final runs: `mission_hero.py` (Fig. 1),
-      `results_figs.py` (Fig. 3), Fig. 2's call by hand; then remove
-      the old-build worktree in the scratchpad.
+      `results_figs.py` (Fig. 3), Fig. 2's call by hand.
 - [ ] Before submitting: AIT's publications for AMASS results, the IEEE
       Xplore venues of SayCan, Code as Policies, SMART-LLM, and COHERENT, and
       a sweep of new preprints.

@@ -102,14 +102,14 @@ impl Plugin for DeadReckoning {
             speed_gain: config.speed_gain,
         }
     }
-}
 
-impl Localization for DeadReckoning {
     fn inputs(_config: &DeadReckoningConfig) -> Vec<Input> {
         // A full-state reading; only its position is used.
         vec![Input::new("fix", ReadingKind::State)]
     }
+}
 
+impl Localization for DeadReckoning {
     fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
         // Start from the first fix, at rest. Attitude is not estimated.
         let fix = context
@@ -147,12 +147,16 @@ impl Localization for DeadReckoning {
 ```
 
 The configuration and `impl Plugin` have the same shape as in the autonomy
-tutorial. What is new is `impl Localization`:
+tutorial, plus one method:
 
 - **`inputs`** declares the readings the estimator needs. Here that is one
   input, named `fix`, which takes readings of a full state
   (`ReadingKind::State`). The estimator doesn't name a sensor; the mission
-  decides which sensor feeds `fix` (see below).
+  decides which sensor feeds `fix` (see below). It sits in `impl Plugin`
+  because it is settled while the mission loads, like `ports`.
+
+What is new is `impl Localization`:
+
 - **`initialize`** runs once, before any decision, and sets the first belief.
   `inputs.latest` returns the most recent reading for an input. There is no
   fallback to truth: with no reading at startup the mission stops with this

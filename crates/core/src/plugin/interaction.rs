@@ -3,7 +3,7 @@
 use crate::{
     Entity, Event, EventKind, Vec3,
     common::SpatialIndex,
-    plugin::{Plugin, StepTime, Update, WorldContext},
+    plugin::{StepTime, Update, WorldContext},
     pubsub::Messages,
 };
 use anyhow::Result;
@@ -31,7 +31,7 @@ impl InteractionContext<'_> {
     }
 }
 
-pub trait Interaction: Plugin {
+pub trait Interaction: Send {
     fn initialize(&mut self, _context: &mut WorldContext<'_>) -> Result<()> {
         Ok(())
     }
@@ -39,6 +39,9 @@ pub trait Interaction: Plugin {
         false
     }
     fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update>;
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
 }
 
 // Built-ins selected by missions.

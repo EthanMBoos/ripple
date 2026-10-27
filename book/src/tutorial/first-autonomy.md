@@ -170,7 +170,7 @@ impl Autonomy for FollowNearest {
   gets its own copy. This plugin only needs the speed. A plugin that remembers
   things between ticks, such as a PID controller's integral, keeps them here.
 
-### `impl Plugin`: lifecycle
+### `impl Plugin`: how it is built
 
 | Method | When it runs | What it does here |
 | --- | --- | --- |
@@ -414,8 +414,8 @@ entities.chaser.autonomy.FollowNearest.speed_mps:=22 --viewer`.
 ## What you learned
 
 - A plugin is a configuration struct, a state struct, `impl Plugin` for
-  lifecycle, and one category trait (here `impl Autonomy`) for the per-tick
-  work.
+  how it is built, and one category trait (here `impl Autonomy`) for the
+  per-tick work.
 - Ports connect the plugin stack and are checked before the mission runs.
 - Parameters are a serde struct with a `Default`. Mission values override the
   defaults, and unknown keys are errors.

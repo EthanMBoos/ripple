@@ -23,11 +23,11 @@ impl Plugin for EastFix {
             initial_x_world_m: config.initial_x_world_m,
         }
     }
-}
-impl Localization for EastFix {
     fn inputs(_: &EastFixConfig) -> Vec<Input> {
         vec![Input::new("fix", ReadingKind::Other)]
     }
+}
+impl Localization for EastFix {
     fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
         context.state.position_world_m.x = self.initial_x_world_m;
         Ok(())

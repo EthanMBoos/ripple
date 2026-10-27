@@ -1,5 +1,5 @@
 //! Metrics: the plugin interface, its reports, and the built-in scoring.
-use crate::plugin::{Plugin, Update, WorldContext};
+use crate::plugin::{StepTime, Update, WorldContext};
 use anyhow::Result;
 use std::collections::BTreeMap;
 
@@ -13,12 +13,15 @@ pub struct MetricReport {
     pub headers: Vec<String>,
     pub teams: BTreeMap<i32, TeamMetrics>,
 }
-pub trait Metrics: Plugin {
+pub trait Metrics: Send {
     fn initialize(&mut self, _context: &mut WorldContext<'_>) -> Result<()> {
         Ok(())
     }
     fn step(&mut self, context: &mut WorldContext<'_>) -> Result<Update>;
     fn report(&self, time_s: f64) -> MetricReport;
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
 }
 
 // Built-ins selected by missions.

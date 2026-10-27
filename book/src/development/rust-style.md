@@ -79,9 +79,11 @@ Use the same reading order in every concrete plugin module:
    imports.
 3. Port/event constants, named configuration, and state/measurement types.
 4. The plugin struct, which owns its per-instance state.
-5. `impl Plugin`: configuration parsing, construction, and optional ports/close.
-6. The category implementation: optional initialization, then step and
-   reporting.
+5. `impl Plugin`: configuration parsing, construction, and the optional
+   load-time facts (`ports`; `reading_kind` for sensors; `inputs` for
+   estimators).
+6. The category implementation: optional initialization, then step,
+   reporting, and an optional close.
 7. Private model/conversion helpers, followed by module tests.
 
 Separate structs, implementation blocks, and functions with a blank line. Keep

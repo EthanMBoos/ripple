@@ -183,12 +183,6 @@ impl Plugin for ArduPilotBridge {
         }
     }
 
-    fn close(&mut self, _time: StepTime) -> Result<()> {
-        // Free the port now; the simulation keeps closed plugins until it is dropped.
-        self.socket = None;
-        Ok(())
-    }
-
     fn ports(_config: &ArduPilotBridgeConfig) -> Ports {
         Ports::default()
             .output(Port::new("throttle", Unit::Dimensionless, Frame::None))
@@ -256,6 +250,12 @@ impl Autonomy for ArduPilotBridge {
         io.write("aileron", inputs.aileron_rad)?;
         io.write("rudder", inputs.rudder_rad)?;
         Ok(Update::Applied)
+    }
+
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        // Free the port now; the simulation keeps closed plugins until it is dropped.
+        self.socket = None;
+        Ok(())
     }
 }
 

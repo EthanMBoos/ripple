@@ -3,7 +3,7 @@ use crate::{
     KinematicState,
     common::{PluginRandom, TruthContacts},
     plugin::estimator::ContactList,
-    plugin::{EntityInfo, Plugin, StepTime, Update},
+    plugin::{EntityInfo, StepTime, Update},
     pubsub::Messages,
 };
 use anyhow::{Result, ensure};
@@ -50,15 +50,15 @@ impl SensorContext<'_> {
     }
 }
 
-pub trait Sensor: Plugin {
-    /// What this sensor's readings contain; see `ReadingKind`.
-    fn reading_kind(_config: &Self::Config) -> ReadingKind {
-        ReadingKind::Other
-    }
+/// What its readings contain is declared by `Plugin::reading_kind`.
+pub trait Sensor: Send {
     fn initialize(&mut self, _context: &mut SensorContext<'_>) -> Result<()> {
         Ok(())
     }
     fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update>;
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
 }
 
 // Built-ins selected by missions.

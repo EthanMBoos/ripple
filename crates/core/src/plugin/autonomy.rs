@@ -1,15 +1,23 @@
 //! Autonomy: the plugin interface and the built-in algorithms.
 use crate::{
-    plugin::{AgentContext, Plugin, Update},
+    plugin::{AgentContext, StepTime, Update},
     ports::PluginIo,
 };
 use anyhow::Result;
 
-pub trait Autonomy: Plugin {
+/// What an autonomy does each tick. How it is built is its `Plugin` impl.
+/// `Send`, like every category trait, because entities step on worker threads.
+pub trait Autonomy: Send {
     fn initialize(&mut self, _context: &mut AgentContext<'_>) -> Result<()> {
         Ok(())
     }
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update>;
+    /// Runs once: when the entity is removed, the run ends, or it fails. Not
+    /// a destructor: it has the simulation time, it can fail, and the plugin
+    /// stays in memory until the simulation is dropped.
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
 }
 
 // Built-ins selected by missions.

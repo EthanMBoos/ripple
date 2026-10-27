@@ -8,7 +8,11 @@ live in `crates/core/src/plugin/<category>.rs`.
 
 ## Traits
 
-Every plugin implements `Plugin` and one category trait.
+Every plugin implements `Plugin`, which says how it is built, and one
+category trait, which says what it does each tick. The two are independent:
+the engine stores each plugin as its category trait (`Box<dyn Autonomy>`),
+and everything `Plugin` answers is read from the concrete type while the
+mission loads.
 
 ```rust,ignore
 pub trait Plugin: Send + Sized + 'static {
@@ -16,18 +20,27 @@ pub trait Plugin: Send + Sized + 'static {
     fn configure(params: &PluginParams<'_>) -> Result<Self::Config>;
     fn new(config: &Self::Config) -> Self;
     fn ports(config: &Self::Config) -> Ports { Ports::default() }
-    fn close(&mut self, time: StepTime) -> Result<()> { Ok(()) }
+    fn reading_kind(config: &Self::Config) -> ReadingKind { ReadingKind::Other }  // sensors
+    fn inputs(config: &Self::Config) -> Vec<Input> { Vec::new() }                  // estimators
 }
 ```
 
-| Trait | `initialize` (optional) | `step` | Also |
+Every category trait has an `initialize`, a required `step`, and an
+optional `close`. `initialize` is optional everywhere except `Localization`.
+The own-state belief starts at the origin, at rest, and decisions read
+belief, never truth, so if nothing sets it the first decision is made for a
+vehicle at the origin. Localization must set it, from the startup readings or
+a known prior. Tracking's empty contact list is a true belief, "no one known
+yet", so it needs no setting.
+
+| Trait | `initialize` | `step` | Also |
 | --- | --- | --- | --- |
 | `Autonomy` | `AgentContext` | `AgentContext`, `PluginIo` | |
 | `Controller` | `AgentContext` | `AgentContext`, `PluginIo` | |
 | `MotionModel` | `MotionContext` | `MotionContext`, `PluginIo` | |
-| `Sensor` | `SensorContext` | `SensorContext` | `reading_kind` |
-| `Localization` | `LocalizationContext` (required) | `LocalizationContext` | `inputs` |
-| `Tracking` | `TrackingContext` | `TrackingContext` | `inputs` |
+| `Sensor` | `SensorContext` | `SensorContext` | |
+| `Localization` | `LocalizationContext` (required) | `LocalizationContext` | |
+| `Tracking` | `TrackingContext` | `TrackingContext` | |
 | `Interaction` | `WorldContext` | `InteractionContext` | `collision_exists` (startup placement) |
 | `Network` | `WorldContext` | `NetworkContext` | |
 | `Metrics` | `WorldContext` | `WorldContext` | `report` |
@@ -87,11 +100,14 @@ default to `PassThrough`. They run every tick after delivery, localization
 first; autonomy and controllers see the result on their next step.
 
 ```rust,ignore
-impl Localization for DeadReckoning {
+impl Plugin for DeadReckoning {
+    // ...configure, new...
     // The readings this estimator reads; the mission's `inputs` picks each sensor.
     fn inputs(_: &Config) -> Vec<Input> {
         vec![Input::new("fix", ReadingKind::Other)]
     }
+}
+impl Localization for DeadReckoning {
     fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
         // Set the first belief from startup readings or a known prior.
         Ok(())
@@ -114,7 +130,7 @@ impl Localization for DeadReckoning {
 
 - **Readings.** A sensor hands each sample to its entity's estimators with
   `context.publish_reading(value)`, keyed by the sensor's name in the mission.
-  `Sensor::reading_kind` says what it holds: `State` (a `KinematicState`),
+  `Plugin::reading_kind` says what it holds: `State` (a `KinematicState`),
   `Contacts` (a `ContactList`), or `Other` (any type, checked when read).
   `inputs.latest` returns the newest reading; `inputs.fresh` only one that
   arrived since the last estimation step.

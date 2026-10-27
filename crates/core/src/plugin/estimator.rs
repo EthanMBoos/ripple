@@ -14,7 +14,7 @@ use crate::{
     EntitySnapshot, KinematicState, Vec3,
     common::{PluginRandom, is_within},
     plugin::sensor::{ReadingKind, Readings},
-    plugin::{EntityInfo, Plugin, StepTime, Update},
+    plugin::{EntityInfo, StepTime, Update},
     pubsub::Messages,
 };
 
@@ -207,32 +207,32 @@ pub struct TrackingContext<'a> {
 }
 
 /// Maintains the entity's own state from readings and the commands it issued.
-pub trait Localization: Plugin {
-    /// The readings this estimator reads; a mission's `inputs` selects each one's sensor.
-    fn inputs(_config: &Self::Config) -> Vec<Input> {
-        Vec::new()
-    }
+/// Its readings are declared by `Plugin::inputs`.
+pub trait Localization: Send {
     /// Set the initial belief, from the startup readings, before any decision runs.
     fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()>;
     fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update>;
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
 }
 
 /// Maintains the contacts the entity knows about, using localization's pose.
-pub trait Tracking: Plugin {
-    /// The readings this estimator reads; a mission's `inputs` selects each one's sensor.
-    fn inputs(_config: &Self::Config) -> Vec<Input> {
-        Vec::new()
-    }
+/// Its readings are declared by `Plugin::inputs`.
+pub trait Tracking: Send {
     fn initialize(&mut self, _context: &mut TrackingContext<'_>) -> Result<()> {
         Ok(())
     }
     fn step(&mut self, context: &mut TrackingContext<'_>) -> Result<Update>;
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
 }
 
 // Built-ins selected by missions.
 #[path = "estimator/pass_through/pass_through.rs"]
 mod pass_through;
-pub use pass_through::PassThrough;
+pub use pass_through::{PassThroughContacts, PassThroughState};
 
 #[cfg(test)]
 mod tests {

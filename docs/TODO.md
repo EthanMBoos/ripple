@@ -10,28 +10,27 @@ over whole missions, and the same mission rerun with one thing changed. The
 paper (`paper/manuscript/main.tex`) is "Ripple: Catching Language-Model
 Fleet Planner Mistakes Before Deployment".
 
-Where the results stand (2026-10-27; one reply per condition is complete
-on Haiku, `sweeps/directives-test-haiku/run001`, and Sonnet,
-`sweeps/directives-test-sonnet/run003`, seeds 4-23, with a second reply on
-the base rows; those folders record the parameter names before the
-`prompt` and `wording` rename, and a fresh run of both sweeps is the next
-step, see below). At the base prompt the
-two models break different rules: Haiku breaks the grounded vehicle in
-wording B in 24 of 40 missions and Sonnet never does; both break the no-fly
-zone (15-25 of 40) and standby B (32-36 of 40); wording A of the grounding
-and standby rules is never or almost never broken by either. The ladder
-lands differently on each model: `priority` removes Sonnet's no-fly breaks
-(2 of 20 under B) but only halves Haiku's (11 of 20), and `definitions`
-removes the standby misreading on both (neither model sends the last idle
-multirotor while the other reloads, in over 300 such moments each) and
-Haiku's grounding breaks (1 of 20). Haiku's no-fly zone is not fixed by any
-rung; `drop_via` fixes it on both models (0 of 40), and enforcement is 0
-everywhere. The standby breaks that remain at the top rung (Sonnet 7 of 20,
-Haiku 3 of 20) are sends at minutes 3-5 that leave the depot empty when the
-window opens; the planner notes the call is "before the window opens", and
-the score counts the empty depot (stated in the paper and score.rs). Without
-vehicle limits Haiku makes about 42 wrong-skill calls a mission, Sonnet
-about 2. Breaks lean toward urgent deliveries on both models.
+Where the results stand (2026-10-27; Haiku is complete with two replies
+per condition, seeds 4-23, so its counts are of 40 missions; Sonnet has one
+reply per condition, with a second reply on the base rows only, so its
+upper-rung counts are of 20, and its fresh run is the next step, see
+below). At the base prompt the two models break
+different rules: Haiku breaks the grounded vehicle in wording B in 24 of 40
+missions and Sonnet never does; both break the no-fly zone (15-25 of 40)
+and standby B (32-36 of 40); wording A of the grounding and standby rules is
+never or almost never broken by either. The ladder lands differently on
+each model: `priority` removes Sonnet's no-fly breaks (2 of 20 under B) but
+not Haiku's (23 of 40), and `definitions` removes the standby misreading on
+both (neither model sends the last idle multirotor while the other reloads,
+in over 300 such moments each) and most of Haiku's grounding breaks (4 of
+40). Haiku's no-fly zone is not fixed by any rung (19 of 40 under B at the
+top rung); `drop_via` fixes it on both models (0 of 40), and enforcement is
+0 everywhere. The standby breaks that remain at the top rung (Sonnet 7 of
+20, Haiku 8 of 40) are sends at minutes 3-5 that leave the depot empty when
+the window opens; the planner notes the call is "before the window opens",
+and the score counts the empty depot (stated in the paper and score.rs).
+Without vehicle limits Haiku makes about 21 wrong-skill calls a mission,
+Sonnet about 2. Breaks lean toward urgent deliveries on both models.
 
 Not ours to claim (already published): an LLM picking skills as tools,
 growing skill libraries, caching model calls, deterministic simulation
@@ -101,12 +100,12 @@ to see the failure first.
 To make the numbers solid either way:
 - [ ] Run twenty test missions per condition, with two replies each, so the
       error bars shrink to about 15-20 points. The test sweeps now ask every
-      mission twice (`repeat`), so this is a fresh run of
-      `directives-test-haiku` and `directives-test-sonnet`: the 840 cases
+      mission twice (`repeat`). Haiku is done (1,240 cases, no errors).
+      Sonnet still needs its run of `directives-test-sonnet`: the cases
       already asked replay from the saved replies, and the second reply on
       the enforced, no-limits, and prompt-addition rows is about 400 live
-      cases per model (the runs started on 2026-10-27 were stopped partway;
-      their replies are saved, so a rerun only asks what is missing).
+      cases (the run started on 2026-10-27 was stopped partway; its replies
+      are saved, so the rerun only asks what is missing).
 - [ ] Rerun the noise check on the test missions (three live replies). The
       paper's noise numbers still come from the first pilot.
 - [ ] Don't pick where the rules land; run every option. Put the no-fly

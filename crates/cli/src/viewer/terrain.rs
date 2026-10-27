@@ -1,5 +1,5 @@
 //! Draw the mission's terrain once: a mesh in the 3D view, textured with the
-//! terrain's aerial image if it has one and coloured by height otherwise, and
+//! terrain's aerial image if it has one and colored by height otherwise, and
 //! shaded relief under the 2D map. Display only; the simulation reads
 //! `Terrain` directly.
 use anyhow::{Context, Result, ensure};
@@ -137,7 +137,7 @@ fn read_rgb_png(path: &Path) -> Result<(u32, u32, Vec<u8>)> {
     Ok((frame.width, frame.height, pixels))
 }
 
-/// Height colours darkened on slopes facing away from a north-west light.
+/// Height colors darkened on slopes facing away from a north-west light.
 fn log_relief(
     recording: &RecordingStream,
     terrain: &Terrain,

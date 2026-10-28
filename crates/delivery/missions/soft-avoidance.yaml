@@ -19,7 +19,7 @@ entities:
     autonomy:
       Dispatcher:
         provider: openai
-        via: cli
+        via: api
         model: gpt-6-luna
         sample: 0
         cache_dir: runs/llm-cache

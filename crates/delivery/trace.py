@@ -6,7 +6,7 @@ what became of each call, and when each request was delivered.
         entities.depot.autonomy.Dispatcher.directive.kind:=closure
 
 Reruns the mission with the given overrides from the saved replies
-(`command: none`, so no model calls and the same run as before) with
+(`offline: true`, so no model calls and the same run as before) with
 --trace, and reads the record. Run from the repository root after
 `cargo build --release`.
 """
@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT / "reference"))
 from run import read_run  # noqa: E402
 
 MISSION = "crates/delivery/missions/delivery.yaml"
-SAVED_ONLY = "entities.depot.autonomy.Dispatcher.command:=none"
+SAVED_ONLY = "entities.depot.autonomy.Dispatcher.offline:=true"
 
 
 def minutes(seconds):

@@ -45,12 +45,25 @@ cargo test -p delivery
   a rooftop, and a round trip within 90% of the endurance left. A call that
   fails is refused and counted by reason (`refused_out_of_range`, ...).
 - **The model.** Each decision is a plain-language prompt
-  (`planner::prompt`) sent through the `claude` command-line client, Claude
-  Haiku 5.5 by default. Replies are saved in `runs/llm-cache/`, one readable
-  JSON file per prompt (prompt and reply inside), named by a hash of the
+  (`planner::prompt`), answered by Claude Haiku 5.5 through the `claude`
+  command-line client by default. The mission's `provider` (`claude`,
+  `openai`, or `ollama`) and `via` (`cli` or `api`) pick the client
+  (`src/client.rs`): the `claude` or `codex` command, signed in as you are;
+  the Anthropic or OpenAI API, with a key in `ANTHROPIC_API_KEY` or
+  `OPENAI_API_KEY`; or a local Ollama server (`host`, default
+  `http://localhost:11434`; `brew install ollama`, `ollama serve`, `ollama
+  pull <model>`). The `claude` command replaces its system prompt and drops
+  its tools, so it sends one call with the planner's prompt; `codex exec`
+  is one turn of a coding agent with its tools kept. A comparison across
+  providers should go `via: api`, where what each provider is sent is
+  exactly the request in `client.rs`. No client is asked for well-formed
+  JSON, so a reply that does not parse counts the same everywhere. Replies
+  are saved in `runs/llm-cache/`, one readable JSON file per prompt
+  (client, prompt, and reply inside), named by a hash of the client, the
   model, the `sample` index, and the prompt. A rerun therefore replays
-  exactly without calling the model, and `command: none` makes a missing
-  reply an error. A different `sample` asks again. Everything the model is
+  exactly without calling the model, and `offline: true` makes a missing
+  reply an error. A different `sample` asks again; for Ollama it is also
+  the seed. Everything the model is
   told before the state is in the mission's `prompt` block, in full: the
   system prompt, the sentences `additions` can add to it (`priority`, rules
   before deadlines and each call names the instruction it was checked

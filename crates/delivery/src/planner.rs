@@ -11,15 +11,14 @@
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
-use std::io::Write as _;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
 
-use anyhow::{Context, Result, bail, ensure};
+use anyhow::{Context, Result, ensure};
 use ripple_core::Vec3;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+use crate::client::Client;
 use crate::directive::{Directive, DirectiveKind};
 use crate::messages::{Assignment, Phase, Request, SkillName, Status, VehicleKind};
 use crate::skill;
@@ -430,7 +429,7 @@ pub fn parse(reply: &str) -> Option<Vec<Call>> {
     )
 }
 
-/// A language model, called through a command-line client, with its replies
+/// A language model, asked through a client (`client.rs`), with its replies
 /// kept on disk.
 pub struct ModelPlanner {
     pub model: String,
@@ -440,19 +439,26 @@ pub struct ModelPlanner {
     pub limits_in_prompt: bool,
     pub omit: Vec<VehicleInfo>,
     pub cache_dir: PathBuf,
-    /// The client: run as `command -p --model <model> ...` with the prompt on
-    /// stdin, printing the reply. `none` uses only replies already in the
-    /// folder, and a missing one is an error.
-    pub command: String,
+    pub client: Client,
+    /// Use only the replies already in the folder; a missing one is an error.
+    pub offline: bool,
 }
 
 #[derive(Serialize, Deserialize)]
 struct CachedReply {
+    /// Which client asked (`Client::name`). Replies saved before there was a
+    /// choice came from the `claude` command.
+    #[serde(default = "first_client")]
+    client: String,
     model: String,
     sample: u32,
     system: String,
     prompt: String,
     reply: String,
+}
+
+fn first_client() -> String {
+    "claude".into()
 }
 
 impl ModelPlanner {
@@ -466,27 +472,46 @@ impl ModelPlanner {
     }
 
     fn reply(&self, prompt: &str) -> Result<String> {
+        // The client's prefix is empty for the `claude` command, so its
+        // replies keep the names they were saved under.
         let key = Sha256::digest(
-            format!("{}\n{}\n{}\n{prompt}", self.model, self.sample, self.system).as_bytes(),
+            format!(
+                "{}{}\n{}\n{}\n{prompt}",
+                self.client.key_prefix(),
+                self.model,
+                self.sample,
+                self.system
+            )
+            .as_bytes(),
         );
         let hex: String = key.iter().map(|byte| format!("{byte:02x}")).collect();
         let path = self.cache_dir.join(format!("{hex}.json"));
         let read_cached = || -> Result<String> {
             let cached: CachedReply = serde_json::from_str(&std::fs::read_to_string(&path)?)
                 .with_context(|| format!("reading cached reply {}", path.display()))?;
+            ensure!(
+                cached.client == self.client.name(),
+                "cached reply {} is from client {}, not {}",
+                path.display(),
+                cached.client,
+                self.client.name()
+            );
             Ok(cached.reply)
         };
         if path.exists() {
             return read_cached();
         }
         ensure!(
-            self.command != "none",
-            "no saved reply {} (command: none)",
+            !self.offline,
+            "no saved reply {} (offline: true)",
             path.display()
         );
-        let reply = self.ask(prompt)?;
+        let reply = self
+            .client
+            .ask(&self.model, &self.system, prompt, self.sample)?;
         std::fs::create_dir_all(&self.cache_dir)?;
         let cached = CachedReply {
+            client: self.client.name().into(),
             model: self.model.clone(),
             sample: self.sample,
             system: self.system.clone(),
@@ -511,48 +536,6 @@ impl ModelPlanner {
             Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => read_cached(),
             Err(error) => Err(error.into()),
         }
-    }
-
-    /// Tries three times, a minute apart.
-    fn ask(&self, prompt: &str) -> Result<String> {
-        let mut last_error = String::new();
-        for attempt in 0..3 {
-            if attempt > 0 {
-                std::thread::sleep(std::time::Duration::from_secs(60));
-            }
-            let spawned = Command::new(&self.command)
-                .args(["-p", "--model", &self.model, "--output-format", "text"])
-                .args(["--no-session-persistence", "--tools", ""])
-                .args(["--system-prompt", &self.system])
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
-                .spawn();
-            // The client can be missing for a moment while it updates itself.
-            let mut child = match spawned {
-                Ok(child) => child,
-                Err(error) => {
-                    last_error = format!("starting {}: {error}", self.command);
-                    continue;
-                }
-            };
-            child
-                .stdin
-                .take()
-                .context("model client stdin")?
-                .write_all(prompt.as_bytes())?;
-            let output = child.wait_with_output()?;
-            if output.status.success() {
-                return Ok(String::from_utf8_lossy(&output.stdout).trim().to_string());
-            }
-            // The client may report its error on either stream.
-            last_error = format!(
-                "{} {}",
-                String::from_utf8_lossy(&output.stderr).trim(),
-                String::from_utf8_lossy(&output.stdout).trim()
-            );
-        }
-        bail!("{} failed three times: {last_error}", self.command)
     }
 }
 
@@ -716,7 +699,10 @@ mod tests {
             limits_in_prompt: false,
             omit: Vec::new(),
             cache_dir: folder.join("cache"),
-            command: client.display().to_string(),
+            client: Client::ClaudeCli {
+                command: client.display().to_string(),
+            },
+            offline: false,
         };
         let asks: Vec<_> = (0..2)
             .map(|_| {
@@ -730,7 +716,7 @@ mod tests {
             .collect::<Result<Vec<_>>>()?;
         assert_eq!(replies[0], replies[1]);
         let saved = ModelPlanner {
-            command: "none".into(),
+            offline: true,
             ..planner()
         };
         assert_eq!(saved.reply("the same prompt")?, replies[0]);

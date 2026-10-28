@@ -52,7 +52,7 @@ def main(folder):
         arm = ", ".join(f"{name.removeprefix(DISPATCHER)}={value}"
                         for name, value in sorted(parameters.items())
                         if name.startswith(DISPATCHER) and not name.startswith(DIRECTIVE)
-                        and name.removeprefix(DISPATCHER) not in ("sample", "command"))
+                        and name.removeprefix(DISPATCHER) not in ("sample", "command", "offline"))
         (values,) = [teams["1"] for teams in case["metrics"].values()]
         key = (arm or "default", parameters[DIRECTIVE + "kind"], parameters[DIRECTIVE + "wording"])
         runs[key].append((case["seed"], values))

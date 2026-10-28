@@ -3,6 +3,7 @@
 # bulk_run.py submit starts the array; this only runs the shard for this task.
 # The environment, checkout, and release binary are on shared storage.
 # --export=ALL carries the activated environment here; nothing is reinstalled.
+# API keys for a model asked via: api come along with it.
 # Pass any extra sbatch arguments after `--` in the launcher command.
 #SBATCH --job-name=ripple-sweep
 #SBATCH --cpus-per-task=1

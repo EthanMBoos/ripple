@@ -21,6 +21,7 @@ use ripple_core::plugin::{
 };
 use serde::Deserialize;
 
+use crate::client::{Client, Provider, Via};
 use crate::directive::Directive;
 use crate::messages::{
     ASSIGNMENT_TOPIC, Assignment, CallRecord, DECISION_TOPIC, DELIVERED_TOPIC, DIRECTIVE_TOPIC,
@@ -41,12 +42,25 @@ struct Site {
 #[derive(Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct DispatcherConfig {
+    /// Whose model, and how it is reached (`client.rs`): `via` left out is
+    /// the command-line client, or the server for Ollama.
+    provider: Provider,
+    via: Option<Via>,
     model: String,
     sample: u32,
     /// What the model is told before the state (`planner::PromptConfig`).
     prompt: PromptConfig,
     cache_dir: String,
-    command: String,
+    /// Use only the replies already in `cache_dir`; a missing one is an
+    /// error. Its own switch rather than a value of `via`, since the cache
+    /// names the client whose replies a replay reads.
+    offline: bool,
+    /// The executable for `via: cli`, when not the client's own name. The
+    /// shipped missions leave it out: written, it would pin one executable
+    /// across providers.
+    command: Option<String>,
+    /// The server for `via: api` or Ollama, when not the provider's own.
+    host: Option<String>,
     /// Delivery sites. Required.
     sites: Vec<Site>,
     requests: u32,
@@ -75,11 +89,15 @@ pub struct DispatcherConfig {
 impl Default for DispatcherConfig {
     fn default() -> Self {
         Self {
+            provider: Provider::Claude,
+            via: None,
             model: "claude-haiku-5-5".into(),
             sample: 0,
             prompt: PromptConfig::default(),
             cache_dir: "runs/llm-cache".into(),
-            command: "claude".into(),
+            offline: false,
+            command: None,
+            host: None,
             sites: Vec::new(),
             requests: 12,
             request_window_s: 1500.0,
@@ -97,6 +115,18 @@ impl Default for DispatcherConfig {
             skills: vec![SkillName::Drop, SkillName::Land],
             enforce_instruction: false,
         }
+    }
+}
+
+impl DispatcherConfig {
+    fn client(&self) -> Result<Client> {
+        Client::new(
+            self.provider,
+            self.via,
+            self.command.as_deref(),
+            self.host.as_deref(),
+            self.offline,
+        )
     }
 }
 
@@ -147,6 +177,7 @@ impl Plugin for Dispatcher {
         );
         config.directive.validate()?;
         config.prompt.system_prompt()?;
+        config.client()?;
         ensure!(
             !config.skills.is_empty(),
             "Dispatcher needs at least one skill"
@@ -163,7 +194,8 @@ impl Plugin for Dispatcher {
                 omit: config.prompt.omit.clone(),
                 system: config.prompt.system_prompt().expect("checked in configure"),
                 cache_dir: config.cache_dir.clone().into(),
-                command: config.command.clone(),
+                client: config.client().expect("checked in configure"),
+                offline: config.offline,
             },
             sites: config.sites.clone(),
             request_count: config.requests,

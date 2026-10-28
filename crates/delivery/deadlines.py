@@ -4,7 +4,7 @@
     python3 crates/delivery/deadlines.py sweeps/directives-test/run001
 
 Reruns every instruction case of a sweep (none, and enforced, are skipped)
-from the saved replies (`command: none`, so no model calls) with --trace,
+from the saved replies (`offline: true`, so no model calls) with --trace,
 and compares the calls that broke the instruction with the calls that kept
 it: how many served an urgent request, how many had three minutes or less
 to spare (the dispatcher's estimate of arrival against the deadline), and
@@ -47,10 +47,10 @@ def main(arguments):
                 or parameters.get(DISPATCHER + "enforce_instruction")):
             continue
         overrides = [override(name, value) for name, value in parameters.items()
-                     if name != DISPATCHER + "command"]
+                     if name != DISPATCHER + "offline"]
         command = [str(ROOT / "target/release/ripple"), "run", MISSION, "--headless",
                    "--trace", f"run.seed:={case['seed']}", *overrides,
-                   DISPATCHER + "command:=none"]
+                   DISPATCHER + "offline:=true"]
         output = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
         if output.returncode != 0:
             skipped.append(case["case_id"])

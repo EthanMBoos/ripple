@@ -82,8 +82,15 @@ entities:
     position_m: [0, 0, 0]
     autonomy:
       Dispatcher:
-        # The model's replies are kept in cache_dir (relative to where ripple
-        # runs); command: none uses only replies already there.
+        # Whose model and how it is reached (src/client.rs): provider claude,
+        # openai, or ollama; via cli (the claude or codex command, signed in
+        # as you are) or api (a key in ANTHROPIC_API_KEY or OPENAI_API_KEY).
+        # Ollama is api only, at host or OLLAMA_HOST (default
+        # http://localhost:11434). The model's replies are kept in cache_dir
+        # (relative to where ripple runs); offline: true uses only replies
+        # already there.
+        provider: claude
+        via: cli
         model: claude-haiku-5-5
         sample: 0
         # What the model is told before the state, in full. The prompt for
@@ -110,7 +117,7 @@ entities:
           # minimum speed and turn radius.
           limits: true
         cache_dir: runs/llm-cache
-        command: claude
+        offline: false
         requests: 20
         request_window_s: 1500
         urgent_share: 0.4

@@ -46,7 +46,27 @@ if "- drop_via:" in prompt and "vehicle 2: fixed-wing, idle" in prompt:
 print(json.dumps({"assignments": calls}))
 "#;
 
-/// A fresh folder holding a fake client and its cache.
+/// Answers like `codex exec`: the reply goes to the `-o` file, stdout is
+/// chatter, and the system prompt arrives as a file named in `-c`.
+const CODEX: &str = r#"#!/usr/bin/env python3
+import json, sys
+args = sys.argv[1:]
+assert args[0] == "exec" and "--ephemeral" in args, args
+reply_path = args[args.index("-o") + 1]
+[instructions] = [a for a in args if a.startswith("model_instructions_file=")]
+system = open(json.loads(instructions.split("=", 1)[1])).read()
+assert "dispatch" in system, system
+prompt = sys.stdin.read()
+assert "vehicle 2" in prompt, prompt
+print("[codex] thinking about it")
+with open(reply_path, "w") as out:
+    out.write(json.dumps({"assignments": [{"vehicle": 2, "skill": "land", "request": 1}]}))
+"#;
+
+/// A fresh folder holding a fake client, its cache, and a copy of the
+/// mission that names the fake as the client's executable (`command`, which
+/// the shipped mission leaves out so that `provider` alone picks the
+/// client).
 fn scratch(name: &str, client: &str) -> Result<PathBuf> {
     let folder = std::env::temp_dir().join(format!("delivery-{name}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&folder);
@@ -54,7 +74,23 @@ fn scratch(name: &str, client: &str) -> Result<PathBuf> {
     let path = folder.join("fake-model");
     std::fs::write(&path, client)?;
     std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))?;
+    let mission = std::fs::read_to_string(shipped_mission())?;
+    let line = "        offline: false\n";
+    assert_eq!(
+        mission.matches(line).count(),
+        1,
+        "the mission's offline line"
+    );
+    let mission = mission.replace(
+        line,
+        &format!("{line}        command: {}\n", path.display()),
+    );
+    std::fs::write(folder.join("delivery.yaml"), mission)?;
     Ok(folder)
+}
+
+fn shipped_mission() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("missions/delivery.yaml")
 }
 
 fn set(name: &str, value: impl ToString) -> (String, String) {
@@ -64,28 +100,38 @@ fn set(name: &str, value: impl ToString) -> (String, String) {
 /// The fake client in `folder`, saving replies there; `saved_only` uses only
 /// the saved replies.
 fn model(folder: &Path, saved_only: bool) -> Vec<(String, String)> {
-    let command = if saved_only {
-        "none".to_string()
-    } else {
-        folder.join("fake-model").display().to_string()
-    };
     vec![
-        set("command", command),
+        set("offline", saved_only),
         set("cache_dir", folder.join("cache").display()),
     ]
 }
 
-/// The fleet's delivery results after a whole run.
-fn run(overrides: &[(String, String)], workers: usize) -> Result<BTreeMap<String, f64>> {
+/// The `client` named in every reply saved in `folder`.
+fn saved_clients(folder: &Path) -> Result<Vec<String>> {
+    let mut clients = Vec::new();
+    for entry in std::fs::read_dir(folder.join("cache"))? {
+        let saved: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(entry?.path())?)?;
+        clients.push(saved["client"].as_str().unwrap_or("").to_string());
+    }
+    clients.sort();
+    clients.dedup();
+    Ok(clients)
+}
+
+/// The fleet's delivery results after a whole run of the mission copy in
+/// `folder`, or of the shipped mission when there is none.
+fn run(
+    folder: Option<&Path>,
+    overrides: &[(String, String)],
+    workers: usize,
+) -> Result<BTreeMap<String, f64>> {
     let crate_folder = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut registry = PluginRegistry::with_builtins();
     delivery::register(&mut registry)?;
     let params: Params = overrides.iter().cloned().collect();
-    let mission = Mission::load(
-        &crate_folder.join("missions/delivery.yaml"),
-        crate_folder,
-        &params,
-    )?;
+    let path = folder.map_or_else(shipped_mission, |folder| folder.join("delivery.yaml"));
+    let mission = Mission::load(&path, crate_folder, &params)?;
     let mut simulation = Simulation::new(mission.scenario, &registry, workers)?;
     while simulation.step()?.is_some() {}
     let reports = simulation.metric_reports();
@@ -95,16 +141,58 @@ fn run(overrides: &[(String, String)], workers: usize) -> Result<BTreeMap<String
 #[test]
 fn impossible_calls_are_refused_and_replay_exactly_from_the_cache() -> Result<()> {
     let folder = scratch("impossible", IMPOSSIBLE)?;
-    let live = run(&model(&folder, false), 1)?;
+    let live = run(Some(&folder), &model(&folder, false), 1)?;
     assert_eq!(live["delivered"], 0.0);
     assert_eq!(live["refused_wrong_skill"], live["decisions"]);
     assert!(!live.contains_key("directive_breaches"), "{live:?}");
 
     // Offline the client can't run, so every reply comes from the cache: the
     // run must be the same, at another worker count too.
-    assert_eq!(live, run(&model(&folder, true), 2)?);
+    assert_eq!(live, run(Some(&folder), &model(&folder, true), 2)?);
     std::fs::remove_dir_all(&folder)?;
     Ok(())
+}
+
+#[test]
+fn codex_is_asked_in_its_exec_mode_and_answers_through_its_reply_file() -> Result<()> {
+    let folder = scratch("codex", CODEX)?;
+    let mut overrides = model(&folder, false);
+    overrides.push(set("provider", "openai"));
+    overrides.push(set("via", "cli"));
+    let live = run(Some(&folder), &overrides, 1)?;
+    assert_eq!(live["delivered"], 0.0);
+    assert_eq!(live["refused_wrong_skill"], live["decisions"]);
+    assert_eq!(saved_clients(&folder)?, ["codex"]);
+
+    // The replies replay under the same client, and under no other.
+    let mut offline = model(&folder, true);
+    offline.push(set("provider", "openai"));
+    assert_eq!(live, run(Some(&folder), &offline, 2)?);
+    let under_claude =
+        run(Some(&folder), &model(&folder, true), 1).expect_err("another client's replies");
+    assert!(
+        format!("{under_claude:#}").contains("no saved reply"),
+        "{under_claude:#}"
+    );
+    std::fs::remove_dir_all(&folder)?;
+    Ok(())
+}
+
+#[test]
+fn asking_an_api_without_its_key_says_which_variable_to_set() {
+    // The key is read from the environment, which a test must not set, so
+    // this only checks the message when the variable is absent.
+    if std::env::var("ANTHROPIC_API_KEY").is_ok() {
+        return;
+    }
+    let error = run(None, &[set("provider", "claude"), set("via", "api")], 1).expect_err("no key");
+    assert!(
+        format!("{error:#}").contains("set ANTHROPIC_API_KEY"),
+        "{error:#}"
+    );
+    let error =
+        run(None, &[set("provider", "ollama"), set("via", "cli")], 1).expect_err("no command");
+    assert!(format!("{error:#}").contains("Ollama"), "{error:#}");
 }
 
 #[test]
@@ -113,7 +201,7 @@ fn a_grounded_vehicle_that_flies_is_a_breach_and_the_model_was_told() -> Result<
     let mut overrides = model(&folder, false);
     overrides.push(set("directive.kind", "ground_vehicle"));
     overrides.push(set("directive.vehicle", 2));
-    let results = run(&overrides, 1)?;
+    let results = run(Some(&folder), &overrides, 1)?;
     assert!(results["delivered"] > 0.0, "{results:?}");
     assert!(results["directive_breaches"] > 0.0, "{results:?}");
     assert_eq!(results["vehicles_lost"], 0.0);
@@ -150,7 +238,7 @@ fn drop_via_is_offered_only_when_listed_and_delivers_through_its_waypoint() -> R
     let folder = scratch("via", VIA)?;
     let mut overrides = model(&folder, false);
     overrides.push(set("skills", "[drop, land, drop_via]"));
-    let results = run(&overrides, 1)?;
+    let results = run(Some(&folder), &overrides, 1)?;
     assert!(results["delivered"] > 0.0, "{results:?}");
     assert!(!results.contains_key("refused"), "{results:?}");
     let prompts = std::fs::read_to_string(folder.join("prompts.txt"))?;
@@ -159,7 +247,7 @@ fn drop_via_is_offered_only_when_listed_and_delivers_through_its_waypoint() -> R
 
     // With the default skills the model is never offered it.
     let folder = scratch("no-via", VIA)?;
-    let results = run(&model(&folder, false), 1)?;
+    let results = run(Some(&folder), &model(&folder, false), 1)?;
     assert_eq!(results["delivered"], 0.0);
     let prompts = std::fs::read_to_string(folder.join("prompts.txt"))?;
     assert!(!prompts.contains("drop_via"));
@@ -173,12 +261,12 @@ fn enforcing_the_instruction_refuses_the_calls_that_would_break_it() -> Result<(
     let mut overrides = model(&folder, false);
     overrides.push(set("directive.kind", "ground_vehicle"));
     overrides.push(set("directive.vehicle", 2));
-    let free = run(&overrides, 1)?;
+    let free = run(Some(&folder), &overrides, 1)?;
     assert!(free["breaking_decisions"] > 0.0, "{free:?}");
     assert!(free["directive_breaches"] > 0.0, "{free:?}");
 
     overrides.push(set("enforce_instruction", true));
-    let enforced = run(&overrides, 1)?;
+    let enforced = run(Some(&folder), &overrides, 1)?;
     assert!(enforced["refused_breaks_instruction"] > 0.0, "{enforced:?}");
     assert!(!enforced.contains_key("breaking_decisions"), "{enforced:?}");
     assert_eq!(enforced["directive_breaches"], 0.0, "{enforced:?}");

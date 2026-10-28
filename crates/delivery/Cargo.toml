@@ -14,3 +14,5 @@ anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2 = "0.10"
+# The API clients; already compiled through rerun, so nothing new.
+ureq = { version = "3", features = ["json"] }

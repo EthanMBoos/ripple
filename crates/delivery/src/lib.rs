@@ -9,10 +9,14 @@
 //! - `DeliveryScore` (metrics): on-time deliveries, refused calls, and
 //!   whether the fleet followed a mid-mission instruction (`directive.rs`).
 //!
+//! The model is asked through `client.rs`: the `claude` or `codex` command,
+//! the Anthropic or OpenAI API, or a local Ollama server.
+//!
 //! The `ripple` command calls `register` at startup (crates/cli/src/main.rs).
 use anyhow::Result;
 use ripple_core::plugin::PluginRegistry;
 
+mod client;
 mod courier;
 mod directive;
 mod dispatcher;

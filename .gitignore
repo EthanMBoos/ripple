@@ -7,7 +7,7 @@ __pycache__/
 /paper/data/.campaign-staging/
 /paper/literature_review/sources/
 
-# Local graphify outputs, caches, and metadata.
 graphify-out/
 .graphify*/
 .graphify*
+.vscode/settings.json

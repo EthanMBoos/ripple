@@ -23,11 +23,12 @@ use serde::Deserialize;
 
 use crate::client::{Client, Provider, Via};
 use crate::directive::Directive;
+use crate::messages::SOFT_AVOIDANCE_TOPIC;
 use crate::messages::{
     ASSIGNMENT_TOPIC, Assignment, CallRecord, DECISION_TOPIC, DELIVERED_TOPIC, DIRECTIVE_TOPIC,
     Decision, Delivered, Phase, REQUEST_TOPIC, Request, STATUS_TOPIC, SkillName, Status, Waiting,
 };
-use crate::planner::{self, ModelPlanner, PromptConfig, View};
+use crate::planner::{self, ModelPlanner, PlannerKind, PromptConfig, SoftAvoidance, View};
 
 #[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -84,6 +85,9 @@ pub struct DispatcherConfig {
     /// Refuse calls that would break the instruction, as if the rule were
     /// enforced in code (a reference, not a planner).
     enforce_instruction: bool,
+    soft_avoidance: Option<SoftAvoidance>,
+    planner: PlannerKind,
+    waypoint_grid_steps: u32,
 }
 
 impl Default for DispatcherConfig {
@@ -114,6 +118,9 @@ impl Default for DispatcherConfig {
             directive: Directive::default(),
             skills: vec![SkillName::Drop, SkillName::Land],
             enforce_instruction: false,
+            soft_avoidance: None,
+            planner: PlannerKind::Model,
+            waypoint_grid_steps: 40,
         }
     }
 }
@@ -125,7 +132,7 @@ impl DispatcherConfig {
             self.via,
             self.command.as_deref(),
             self.host.as_deref(),
-            self.offline,
+            self.offline || self.planner != PlannerKind::Model,
         )
     }
 }
@@ -147,6 +154,9 @@ pub struct Dispatcher {
     announced: bool,
     skills: Vec<SkillName>,
     enforce_instruction: bool,
+    soft_avoidance: Option<SoftAvoidance>,
+    planner: PlannerKind,
+    waypoint_grid_steps: u32,
     /// Every request of the episode, by opening time; IDs count from 1.
     requests: Vec<Request>,
     opened: usize,
@@ -158,6 +168,8 @@ pub struct Dispatcher {
     delivered: BTreeSet<i32>,
     changed: bool,
     last_decision_s: f64,
+    soft_announced: bool,
+    soft_decided: bool,
 }
 
 impl Plugin for Dispatcher {
@@ -174,6 +186,29 @@ impl Plugin for Dispatcher {
         ensure!(
             config.range_margin > 0.0 && config.retry_interval_s > 0.0,
             "Dispatcher range margin and retry interval must be positive"
+        );
+        if let Some(field) = &config.soft_avoidance {
+            field.validate()?;
+            ensure!(
+                config.requests == 1 && config.sites.len() == 1 && config.request_window_s == 0.0,
+                "soft avoidance supports one request at time zero and one site"
+            );
+            ensure!(
+                !config.directive.active()
+                    && config
+                        .skills
+                        .iter()
+                        .all(|s| matches!(s, SkillName::Drop | SkillName::DropVia)),
+                "soft avoidance supports drop/drop_via without a hard directive"
+            );
+        }
+        ensure!(
+            config.planner == PlannerKind::Model || config.soft_avoidance.is_some(),
+            "reference planners require soft_avoidance"
+        );
+        ensure!(
+            config.waypoint_grid_steps > 0,
+            "waypoint_grid_steps must be positive"
         );
         config.directive.validate()?;
         config.prompt.system_prompt()?;
@@ -212,6 +247,9 @@ impl Plugin for Dispatcher {
             announced: false,
             skills: config.skills.clone(),
             enforce_instruction: config.enforce_instruction,
+            soft_avoidance: config.soft_avoidance.clone(),
+            planner: config.planner,
+            waypoint_grid_steps: config.waypoint_grid_steps,
             requests: Vec::new(),
             opened: 0,
             fleet: BTreeMap::new(),
@@ -220,6 +258,8 @@ impl Plugin for Dispatcher {
             delivered: BTreeSet::new(),
             changed: false,
             last_decision_s: f64::NEG_INFINITY,
+            soft_announced: false,
+            soft_decided: false,
         }
     }
 
@@ -246,6 +286,14 @@ impl Autonomy for Dispatcher {
 
     fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
         let now_s = context.time.time_s;
+        if let Some(field) = &self.soft_avoidance
+            && !self.soft_announced
+        {
+            context
+                .messages
+                .publish("GlobalNetwork", SOFT_AVOIDANCE_TOPIC, field.clone())?;
+            self.soft_announced = true;
+        }
 
         // Input: reports, deliveries, and requests that open now.
         for message in context
@@ -297,8 +345,18 @@ impl Autonomy for Dispatcher {
             .iter()
             .any(|v| v.phase == Phase::Idle && v.request_id.is_none());
         let due = self.changed || now_s >= self.last_decision_s + self.retry_interval_s;
-        if !view.waiting.is_empty() && idle && due {
-            let plan = self.model.plan(&view)?;
+        if !view.waiting.is_empty() && idle && due && !self.soft_decided {
+            if self.soft_avoidance.is_some() {
+                ensure!(
+                    view.vehicles.len() == 1
+                        && view.vehicles[0].card.kind == crate::messages::VehicleKind::Multirotor,
+                    "soft avoidance supports one multirotor courier"
+                );
+            }
+            let plan = match self.planner {
+                PlannerKind::Model => self.model.plan(&view)?,
+                kind => planner::reference_plan(&view, kind, self.waypoint_grid_steps),
+            };
             let mut decision = Decision {
                 time_s: now_s,
                 instructions: view.instructions.clone(),
@@ -366,6 +424,10 @@ impl Autonomy for Dispatcher {
                     outcome: verdict.err().unwrap_or("assigned").into(),
                     breaks_instruction,
                     arrival_s,
+                    soft_prediction: verdict
+                        .is_ok()
+                        .then(|| planner::soft_prediction(call, &view))
+                        .flatten(),
                     slack_s: request
                         .zip(arrival_s)
                         .map(|(r, a)| r.deadline_s - now_s - a),
@@ -387,6 +449,7 @@ impl Autonomy for Dispatcher {
                 .publish("GlobalNetwork", DECISION_TOPIC, decision)?;
             self.changed = false;
             self.last_decision_s = now_s;
+            self.soft_decided = self.soft_avoidance.is_some();
         }
         for name in ["velocity_x", "velocity_y", "velocity_z"] {
             io.write(name, 0.0)?;
@@ -417,6 +480,7 @@ impl Dispatcher {
             skills: &self.skills,
             range_margin: self.range_margin,
             dwell_s: self.dwell_s,
+            soft_avoidance: self.soft_avoidance.as_ref(),
         }
     }
 

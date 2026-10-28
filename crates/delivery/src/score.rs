@@ -32,10 +32,12 @@ use ripple_core::plugin::{
 use serde::Deserialize;
 
 use crate::directive::{Directive, DirectiveKind};
+use crate::messages::SOFT_AVOIDANCE_TOPIC;
 use crate::messages::{
     ASSIGNMENT_TOPIC, Assignment, DECISION_TOPIC, DELIVERED_TOPIC, DIRECTIVE_TOPIC, Decision,
     Delivered, Phase, REQUEST_TOPIC, Request, STATUS_TOPIC, Status, VehicleKind,
 };
+use crate::planner::SoftAvoidance;
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -77,6 +79,7 @@ pub struct DeliveryScore {
     opportunities: f64,
     breaches: f64,
     breach_s: f64,
+    soft_trip: Option<SoftTrip>,
 }
 
 impl Plugin for DeliveryScore {
@@ -107,12 +110,16 @@ impl Plugin for DeliveryScore {
             opportunities: 0.0,
             breaches: 0.0,
             breach_s: 0.0,
+            soft_trip: None,
         }
     }
 }
 
 impl Metrics for DeliveryScore {
     fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()> {
+        context
+            .messages
+            .subscribe::<SoftAvoidance>("GlobalNetwork", SOFT_AVOIDANCE_TOPIC)?;
         context
             .messages
             .subscribe::<Request>("GlobalNetwork", REQUEST_TOPIC)?;
@@ -136,6 +143,12 @@ impl Metrics for DeliveryScore {
     fn step(&mut self, context: &mut WorldContext<'_>) -> Result<Update> {
         for message in context
             .messages
+            .receive::<SoftAvoidance>("GlobalNetwork", SOFT_AVOIDANCE_TOPIC)?
+        {
+            self.soft_trip = Some(SoftTrip::new((*message.value).clone()));
+        }
+        for message in context
+            .messages
             .receive::<Request>("GlobalNetwork", REQUEST_TOPIC)?
         {
             self.requests
@@ -155,6 +168,10 @@ impl Metrics for DeliveryScore {
             .receive::<Assignment>("GlobalNetwork", ASSIGNMENT_TOPIC)?
         {
             let order = &message.value;
+            if let Some(trip) = &mut self.soft_trip {
+                trip.assignment = Some(**order);
+                trip.start_s = now_s + context.time.dt_s;
+            }
             self.request_assigned_s
                 .insert(order.request_id, message.sent_at_s);
             self.vehicle_assigned_s
@@ -282,6 +299,14 @@ impl Metrics for DeliveryScore {
             .receive::<Decision>("GlobalNetwork", DECISION_TOPIC)?
         {
             let decision = &message.value;
+            if let Some(trip) = &mut self.soft_trip {
+                trip.decided = true;
+                trip.prediction = decision
+                    .calls
+                    .iter()
+                    .find(|call| call.outcome == "assigned")
+                    .and_then(|call| call.soft_prediction);
+            }
             if self.had_opportunity(&directive, decision) {
                 self.opportunities += 1.0;
             }
@@ -316,6 +341,30 @@ impl Metrics for DeliveryScore {
                     add("refused".into(), 1.0);
                     add(format!("refused_{}", call.outcome), 1.0);
                 }
+            }
+        }
+        if let Some(trip) = &mut self.soft_trip {
+            // Truth is at the end of this tick; status is from autonomy at
+            // its start. Stop when the courier confirms delivery AND return.
+            let sample_s = now_s + context.time.dt_s;
+            if let Some(order) = trip.assignment {
+                let Some(entity) = context
+                    .contacts_truth
+                    .iter()
+                    .find(|e| e.id == order.vehicle_id && e.active)
+                else {
+                    return Ok(Update::Stop);
+                };
+                trip.observe(entity.truth.position_world_m, sample_s);
+                let phase = self.fleet.get(&order.vehicle_id).map(|s| s.phase);
+                trip.completed = self.delivered_s.contains_key(&order.request_id)
+                    && matches!(phase, Some(Phase::Reloading | Phase::Idle));
+                if trip.completed || phase == Some(Phase::Lost) {
+                    return Ok(Update::Stop);
+                }
+            } else if trip.decided {
+                // Empty, malformed, or rejected plans are unsuccessful trials.
+                return Ok(Update::Stop);
             }
         }
         Ok(Update::Applied)
@@ -366,6 +415,9 @@ impl Metrics for DeliveryScore {
             values.insert("directive_breaches".into(), self.breaches);
             values.insert("directive_breach_s".into(), self.breach_s);
             values.insert("directive_opportunities".into(), self.opportunities);
+        }
+        if let Some(trip) = &self.soft_trip {
+            trip.report(&mut values);
         }
         let score = if total_weight > 0.0 {
             on_time_weight / total_weight
@@ -439,6 +491,83 @@ impl DeliveryScore {
                     .is_some_and(|s| s.card.kind == VehicleKind::Multirotor)
             }),
             DirectiveKind::None => false,
+        }
+    }
+}
+
+/// One fixed-region trial, from accepted assignment to confirmed return.
+/// Deliberately separate from the original delivery score.
+struct SoftTrip {
+    field: SoftAvoidance,
+    assignment: Option<Assignment>,
+    decided: bool,
+    completed: bool,
+    start_s: f64,
+    last: Option<(Vec3, f64)>,
+    duration_s: f64,
+    exposure_s: f64,
+    path_length_m: f64,
+    peak_severity: f64,
+    prediction: Option<crate::planner::SoftPrediction>,
+}
+
+impl SoftTrip {
+    fn new(field: SoftAvoidance) -> Self {
+        Self {
+            field,
+            assignment: None,
+            decided: false,
+            completed: false,
+            start_s: 0.0,
+            last: None,
+            duration_s: 0.0,
+            exposure_s: 0.0,
+            path_length_m: 0.0,
+            peak_severity: 0.0,
+            prediction: None,
+        }
+    }
+
+    fn observe(&mut self, position: Vec3, time_s: f64) {
+        self.peak_severity = self.peak_severity.max(self.field.severity(position));
+        if let Some((previous, previous_s)) = self.last {
+            self.exposure_s += self
+                .field
+                .exposure_s(previous, position, time_s - previous_s);
+            self.path_length_m += (position - previous).norm();
+            let center = Vec3::new(self.field.center_m[0], self.field.center_m[1], 0.0);
+            let distance = pass_distance_m(previous, position, center);
+            self.peak_severity = self
+                .peak_severity
+                .max(self.field.severity(center + Vec3::new(distance, 0.0, 0.0)));
+        }
+        self.duration_s = time_s - self.start_s;
+        self.last = Some((position, time_s));
+    }
+
+    fn report(&self, values: &mut BTreeMap<String, f64>) {
+        for (name, value) in [
+            ("risk_trip_started", f64::from(self.assignment.is_some())),
+            ("risk_trip_completed", f64::from(self.completed)),
+            ("risk_trip_time_s", self.duration_s),
+            ("risk_exposure_s", self.exposure_s),
+            ("risk_path_length_m", self.path_length_m),
+            ("risk_peak_severity", self.peak_severity),
+        ] {
+            values.insert(name.into(), value);
+        }
+        // No cost for failed/unfinished trips: zero exposure from doing
+        // nothing must never rank ahead of a completed delivery and return.
+        if self.completed {
+            values.insert(
+                "risk_time_cost_s".into(),
+                self.duration_s + self.field.risk_weight * self.exposure_s,
+            );
+        }
+        if let Some(prediction) = self.prediction {
+            values.insert("risk_predicted_time_s".into(), prediction.trip_time_s);
+            values.insert("risk_predicted_exposure_s".into(), prediction.exposure_s);
+            values.insert("risk_predicted_cost_s".into(), prediction.cost_s);
         }
     }
 }

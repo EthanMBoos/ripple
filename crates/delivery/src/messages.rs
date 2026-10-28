@@ -13,6 +13,9 @@ pub const DELIVERED_TOPIC: &str = "Delivered";
 pub const REQUEST_TOPIC: &str = "DeliveryRequest";
 /// What one dispatch decision proposed and what was refused.
 pub const DECISION_TOPIC: &str = "DispatchDecision";
+/// The shared field parameters for a soft avoidance trial.
+pub const SOFT_AVOIDANCE_TOPIC: &str = "SoftAvoidance";
+
 /// An instruction from operations, when the dispatcher announces it.
 pub const DIRECTIVE_TOPIC: &str = "Directive";
 
@@ -154,4 +157,7 @@ pub struct CallRecord {
     pub arrival_s: Option<f64>,
     /// The deadline less the predicted arrival time; negative means late.
     pub slack_s: Option<f64>,
+    /// Predicted cost, separate from the measured flight.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub soft_prediction: Option<crate::planner::SoftPrediction>,
 }

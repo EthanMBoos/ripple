@@ -38,6 +38,184 @@ pub struct View<'a> {
     /// The largest share of a vehicle's endurance left a round trip may use.
     pub range_margin: f64,
     pub dwell_s: f64,
+    pub soft_avoidance: Option<&'a SoftAvoidance>,
+}
+
+/// A static, horizontal severity field. This is a shifted and normalized
+/// exponential, with a finite cutoff; severity is not a probability density.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct SoftAvoidance {
+    pub center_m: [f64; 2],
+    pub peak_severity: f64,
+    pub decay_distance_m: f64,
+    pub radius_m: f64,
+    pub risk_weight: f64,
+}
+
+impl Default for SoftAvoidance {
+    fn default() -> Self {
+        Self {
+            center_m: [1000.0, 0.0],
+            peak_severity: 1.0,
+            decay_distance_m: 200.0,
+            radius_m: 600.0,
+            risk_weight: 5.0,
+        }
+    }
+}
+
+impl SoftAvoidance {
+    pub fn validate(&self) -> Result<()> {
+        ensure!(
+            self.center_m.iter().all(|v| v.is_finite()),
+            "soft center must be finite"
+        );
+        ensure!(
+            [self.radius_m, self.decay_distance_m]
+                .iter()
+                .all(|v| v.is_finite() && *v > 0.0),
+            "soft radius and decay distance must be finite and positive"
+        );
+        ensure!(
+            [self.peak_severity, self.risk_weight]
+                .iter()
+                .all(|v| v.is_finite() && *v >= 0.0),
+            "soft peak severity and risk weight must be finite and nonnegative"
+        );
+        Ok(())
+    }
+
+    pub fn severity(&self, point: Vec3) -> f64 {
+        let distance_m = (point.x - self.center_m[0]).hypot(point.y - self.center_m[1]);
+        if distance_m >= self.radius_m {
+            return 0.0;
+        }
+        // exp_m1 avoids cancellation when the decay distance is large.
+        self.peak_severity
+            * (1.0
+                - (-distance_m / self.decay_distance_m).exp_m1()
+                    / (-self.radius_m / self.decay_distance_m).exp_m1())
+    }
+
+    /// Integrate in time along a straight segment, including stationary
+    /// exposure. Midpoint quadrature resolves the smaller field length scale
+    /// with 20 samples, even when both endpoints are outside the region.
+    pub fn exposure_s(&self, from: Vec3, to: Vec3, duration_s: f64) -> f64 {
+        let path = to - from;
+        let spacing_m = self.radius_m.min(self.decay_distance_m) / 20.0;
+        let steps = (path.xy().norm() / spacing_m).ceil().max(1.0) as usize;
+        (0..steps)
+            .map(|i| self.severity(from + path * ((i as f64 + 0.5) / steps as f64)))
+            .sum::<f64>()
+            * duration_s
+            / steps as f64
+    }
+}
+
+/// Reference planners use the same offered skills and feasibility checks.
+#[derive(Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PlannerKind {
+    #[default]
+    Model,
+    Direct,
+    WaypointSearch,
+}
+
+#[derive(Clone, Copy, Debug, Serialize)]
+pub struct SoftPrediction {
+    pub trip_time_s: f64,
+    pub exposure_s: f64,
+    pub cost_s: f64,
+}
+
+/// Constant-cruise, straight-segment estimate; actual execution is scored
+/// separately from simulation truth, including both directions.
+pub fn soft_prediction(call: &Call, view: &View<'_>) -> Option<SoftPrediction> {
+    let field = view.soft_avoidance?;
+    let vehicle = view
+        .vehicles
+        .iter()
+        .find(|v| v.vehicle_id == call.vehicle_id)?;
+    let request = view.waiting.iter().find(|r| r.id == call.request_id)?;
+    let mut points = vec![vehicle.position_world_m];
+    points.extend(call.via_world_m);
+    points.push(request.site_world_m);
+    points.extend(call.via_world_m);
+    points.push(view.depot_world_m);
+    let mut prediction = SoftPrediction {
+        trip_time_s: 0.0,
+        exposure_s: 0.0,
+        cost_s: 0.0,
+    };
+    for pair in points.windows(2) {
+        let dt_s = (pair[1] - pair[0]).xy().norm() / vehicle.card.cruise_speed_mps;
+        prediction.trip_time_s += dt_s;
+        prediction.exposure_s += field.exposure_s(pair[0], pair[1], dt_s);
+    }
+    prediction.cost_s = prediction.trip_time_s + field.risk_weight * prediction.exposure_s;
+    Some(prediction)
+}
+
+/// Best tested waypoint, not a continuous or unrestricted optimum. The grid
+/// spans the depot, site, and center, padded on all sides by two radii.
+pub fn reference_plan(view: &View<'_>, kind: PlannerKind, grid_steps: u32) -> Plan {
+    let (Some(field), Some(vehicle), Some(request)) = (
+        view.soft_avoidance,
+        view.vehicles.first(),
+        view.waiting.first(),
+    ) else {
+        return Plan::default();
+    };
+    let direct = Call {
+        vehicle_id: vehicle.vehicle_id,
+        request_id: request.id,
+        skill: Some(SkillName::Drop),
+        via_world_m: None,
+    };
+    let mut best: Option<(Call, f64)> = None;
+    let mut consider = |call| {
+        if check(&call, view).is_ok() {
+            let cost = soft_prediction(&call, view).expect("soft route").cost_s;
+            if best.as_ref().is_none_or(|(_, old)| cost < *old) {
+                best = Some((call, cost));
+            }
+        }
+    };
+    consider(direct);
+    if kind == PlannerKind::WaypointSearch {
+        let bounds = |axis: usize| {
+            let values = [
+                view.depot_world_m[axis],
+                request.site_world_m[axis],
+                field.center_m[axis],
+            ];
+            (
+                values.into_iter().fold(f64::INFINITY, f64::min) - 2.0 * field.radius_m,
+                values.into_iter().fold(f64::NEG_INFINITY, f64::max) + 2.0 * field.radius_m,
+            )
+        };
+        let (xmin, xmax) = bounds(0);
+        let (ymin, ymax) = bounds(1);
+        for x in 0..=grid_steps {
+            for y in 0..=grid_steps {
+                consider(Call {
+                    skill: Some(SkillName::DropVia),
+                    via_world_m: Some(Vec3::new(
+                        xmin + (xmax - xmin) * f64::from(x) / f64::from(grid_steps),
+                        ymin + (ymax - ymin) * f64::from(y) / f64::from(grid_steps),
+                        0.0,
+                    )),
+                    ..direct
+                });
+            }
+        }
+    }
+    Plan {
+        calls: best.map(|(call, _)| call).into_iter().collect(),
+        parse_failed: false,
+    }
 }
 
 /// One proposed order. `skill` is `None` when the model named a skill that
@@ -369,6 +547,28 @@ pub fn prompt(view: &View<'_>, limits_in_prompt: bool, omit: &[VehicleInfo]) -> 
             let _ = writeln!(text, "- {instruction}");
         }
     }
+    if let Some(field) = view.soft_avoidance {
+        let _ = writeln!(
+            text,
+            "\nSoft avoidance experiment (one decision, one delivery and return):\n\
+             Complete the delivery and return to the depot. Among successful round trips, \
+             minimize J = T + beta * E, where T is total trip time in seconds and \
+             E = integral r(x(t)) dt over BOTH directions. Unassigned or incomplete trips fail.\n\
+             This static horizontal field allows crossing; it is not a no-fly zone. \
+             With distance d in meters from center ({}, {}) m, \
+             r(d) = A * (exp(-d/ell) - exp(-R/ell)) / (1 - exp(-R/ell)) for d < R; \
+             r(d) = 0 for d >= R. A={}, ell={} m, R={} m, beta={}. \
+             Severity is dimensionless, exposure has units of seconds. \
+             The drop_via waypoint is used outbound AND inbound. \
+             You choose the route; crossing the region will not cause rejection.",
+            field.center_m[0],
+            field.center_m[1],
+            field.peak_severity,
+            field.decay_distance_m,
+            field.radius_m,
+            field.risk_weight
+        );
+    }
     let names: Vec<String> = offered
         .iter()
         .map(|skill| format!("\"{}\"", skill.name.as_str()))
@@ -545,6 +745,33 @@ mod tests {
     use crate::messages::VehicleCard;
 
     #[test]
+    fn soft_field_has_finite_support_and_integrates_crossings_and_hovering() {
+        let field = SoftAvoidance {
+            center_m: [0.0, 0.0],
+            ..SoftAvoidance::default()
+        };
+        assert_eq!(field.severity(Vec3::zeros()), 1.0);
+        assert_eq!(field.severity(Vec3::new(600.0, 0.0, 100.0)), 0.0);
+        assert_eq!(field.severity(Vec3::new(900.0, 0.0, 0.0)), 0.0);
+        assert!(
+            field.severity(Vec3::new(100.0, 0.0, 0.0)) > field.severity(Vec3::new(300.0, 0.0, 0.0))
+        );
+        assert_eq!(field.exposure_s(Vec3::zeros(), Vec3::zeros(), 12.0), 12.0);
+        // Both endpoints lie outside; the integral must still see the center.
+        let q = (-field.radius_m / field.decay_distance_m).exp();
+        let expected = 2.0 / 12.0 * (field.decay_distance_m - field.radius_m * q / (1.0 - q));
+        let measured = field.exposure_s(
+            Vec3::new(-1200.0, 0.0, 0.0),
+            Vec3::new(1200.0, 0.0, 0.0),
+            200.0,
+        );
+        assert!(
+            (measured - expected).abs() < 0.005,
+            "{measured} vs {expected}"
+        );
+    }
+
+    #[test]
     fn no_fly_checks_the_active_part_of_each_flight_leg() {
         let vehicle = Status {
             vehicle_id: 2,
@@ -580,6 +807,7 @@ mod tests {
             skills: &[SkillName::Drop, SkillName::DropVia],
             range_margin: 0.9,
             dwell_s: 0.0,
+            soft_avoidance: None,
         };
         // The outbound leg occupies the zone during (10, 30) seconds,
         // the return during (50, 70); closest approaches are at 20 and 60.

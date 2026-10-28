@@ -1,0 +1,64 @@
+# One planar multirotor trip through a static soft severity field.
+# The dispatcher tells the model the field and broadcasts it to DeliveryScore.
+# Crossing is allowed. Complete the trip, then minimize time + beta * exposure.
+format_version: 1
+name: soft-avoidance
+
+run:
+  end_s: 1800
+  dt_s: 0.1
+  seed: 1
+
+networks: {GlobalNetwork: {}}
+metrics: {DeliveryScore: {}}
+
+entities:
+  depot:
+    team: 1
+    position_m: [0, 0, 0]
+    autonomy:
+      Dispatcher:
+        provider: openai
+        via: cli
+        model: gpt-6-luna
+        sample: 0
+        cache_dir: runs/llm-cache
+        offline: false
+        # model, direct, or waypoint_search. References make no model calls.
+        planner: model
+        waypoint_grid_steps: 40
+        prompt:
+          system: >-
+            You dispatch a medical delivery drone. Complete its delivery and
+            return while minimizing the objective specified in the state.
+            Reply with JSON only, no other text.
+        requests: 1
+        request_window_s: 0
+        urgent_share: 0
+        routine_deadline_s: 1800
+        items: [medicine]
+        skills: [drop, drop_via]
+        soft_avoidance:
+          center_m: [1000, 0]
+          peak_severity: 1
+          decay_distance_m: 200
+          radius_m: 600
+          risk_weight: 5
+        sites:
+          - {name: clinic, position_m: [2000, 0, 0]}
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}
+  courier:
+    team: 1
+    position_m: [0, 0, 0]
+    autonomy:
+      Courier:
+        kind: multirotor
+        cruise_speed_mps: 12
+        endurance_s: 1800
+        # Synthetic horizontal flight: omit climb/descent from this trial.
+        cruise_altitude_m: 0
+        depot_radius_m: 1
+        arrival_radius_m: 1
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {max_speed_mps: 12}}

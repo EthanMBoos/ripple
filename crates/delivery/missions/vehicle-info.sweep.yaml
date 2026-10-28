@@ -1,17 +1,19 @@
-# Seven conditions, matched by mission seed and reply sample: 280 runs.
+# Small trial: seven conditions, one mission seed and one reply sample.
 # No instruction or added system-prompt sentences. Change model below to
 # repeat the experiment for another model. This file does not contain results.
 name: vehicle-info
 base_scenario: delivery.yaml
-seeds: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+seeds: [4]
 parameters:
   run.end_s: 1800
-  entities.depot.autonomy.Dispatcher.model: claude-haiku-5-5
+  entities.depot.autonomy.Dispatcher.provider: openai
+  entities.depot.autonomy.Dispatcher.via: cli
+  entities.depot.autonomy.Dispatcher.model: gpt-6-luna
   entities.depot.autonomy.Dispatcher.directive.kind: none
   entities.depot.autonomy.Dispatcher.enforce_instruction: false
 prefix: entities.depot.autonomy.Dispatcher
 repeat:
-  sample: [0, 1]
+  sample: [0]
 columns: [skills, prompt.additions, prompt.limits, prompt.omit]
 cases:
   - [[drop, land], [], true, []]

@@ -85,9 +85,10 @@ entities:
               Only idle vehicles can be sent. A busy vehicle, including one
               reloading at the depot, cannot be sent and does not count as a
               vehicle kept at the depot, on standby, or in reserve.
-          # Whether each vehicle's line states what it cannot do and its
-          # minimum speed and turn radius.
+          # Show vehicle capabilities, speeds, turn radius, and endurance.
           limits: true
+          # Selectively hide fields; see vehicle-info.sweep.yaml.
+          omit: []
         cache_dir: runs/llm-cache
         command: claude
         requests: 20

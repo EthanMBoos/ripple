@@ -208,6 +208,17 @@ pub fn arrival_s(vehicle: &Status, request: &Request, via_world_m: Option<Vec3>)
     out_m(vehicle, request, via_world_m) / vehicle.card.cruise_speed_mps
 }
 
+/// Vehicle information that can be left out of the decision prompt.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum VehicleInfo {
+    Capabilities,
+    CruiseSpeed,
+    Endurance,
+    MinimumSpeed,
+    TurnRadius,
+}
+
 /// What the model is told before the state, in full: the mission's `prompt`
 /// block. The decision prompt (`prompt` below) adds the state.
 #[derive(Clone, Debug, Deserialize)]
@@ -220,9 +231,10 @@ pub struct PromptConfig {
     pub additions: Vec<String>,
     /// The sentences an addition can add, by name.
     pub sentences: BTreeMap<String, String>,
-    /// Whether each vehicle's line states what it cannot do (hover, land)
-    /// and its minimum speed and turn radius.
+    /// Show vehicle capabilities, speeds, turn radius, and remaining endurance.
     pub limits: bool,
+    /// Omit selected vehicle information when `limits` is true.
+    pub omit: Vec<VehicleInfo>,
 }
 
 impl Default for PromptConfig {
@@ -232,6 +244,7 @@ impl Default for PromptConfig {
             additions: Vec::new(),
             sentences: BTreeMap::new(),
             limits: true,
+            omit: Vec::new(),
         }
     }
 }
@@ -255,7 +268,7 @@ impl PromptConfig {
 
 /// The decision in plain language. Times are minutes and distances kilometers,
 /// rounded, so that the prompt (and the cache key) depends only on the state.
-pub fn prompt(view: &View<'_>, limits_in_prompt: bool) -> String {
+pub fn prompt(view: &View<'_>, limits_in_prompt: bool, omit: &[VehicleInfo]) -> String {
     let km = |m: f64| m / 1000.0;
     let mut text = String::new();
     let _ = writeln!(
@@ -298,20 +311,38 @@ pub fn prompt(view: &View<'_>, limits_in_prompt: bool) -> String {
             km(p.y)
         );
         if limits_in_prompt {
-            let hover = if vehicle.card.min_speed_mps > 0.0 {
-                format!(
-                    "cannot hover or land, minimum speed {:.0} m/s, turn radius {:.0} m",
-                    vehicle.card.min_speed_mps, vehicle.card.turn_radius_m
-                )
-            } else {
-                "can hover and land".to_string()
-            };
-            let _ = write!(
-                text,
-                "; cruise {:.0} m/s; {hover}; {:.1} min of flight left",
-                vehicle.card.cruise_speed_mps,
-                vehicle.endurance_left_s / 60.0
-            );
+            if !omit.contains(&VehicleInfo::CruiseSpeed) {
+                let _ = write!(text, "; cruise {:.0} m/s", vehicle.card.cruise_speed_mps);
+            }
+            let mut limits = Vec::new();
+            if !omit.contains(&VehicleInfo::Capabilities) {
+                limits.push(if vehicle.card.min_speed_mps > 0.0 {
+                    "cannot hover or land".to_string()
+                } else {
+                    "can hover and land".to_string()
+                });
+            }
+            if vehicle.card.min_speed_mps > 0.0 {
+                if !omit.contains(&VehicleInfo::MinimumSpeed) {
+                    limits.push(format!(
+                        "minimum speed {:.0} m/s",
+                        vehicle.card.min_speed_mps
+                    ));
+                }
+                if !omit.contains(&VehicleInfo::TurnRadius) {
+                    limits.push(format!("turn radius {:.0} m", vehicle.card.turn_radius_m));
+                }
+            }
+            if !limits.is_empty() {
+                let _ = write!(text, "; {}", limits.join(", "));
+            }
+            if !omit.contains(&VehicleInfo::Endurance) {
+                let _ = write!(
+                    text,
+                    "; {:.1} min of flight left",
+                    vehicle.endurance_left_s / 60.0
+                );
+            }
         }
         let _ = writeln!(text);
     }
@@ -407,6 +438,7 @@ pub struct ModelPlanner {
     /// The system prompt, from `PromptConfig::system_prompt`.
     pub system: String,
     pub limits_in_prompt: bool,
+    pub omit: Vec<VehicleInfo>,
     pub cache_dir: PathBuf,
     /// The client: run as `command -p --model <model> ...` with the prompt on
     /// stdin, printing the reply. `none` uses only replies already in the
@@ -425,7 +457,7 @@ struct CachedReply {
 
 impl ModelPlanner {
     pub fn plan(&self, view: &View<'_>) -> Result<Plan> {
-        let reply = self.reply(&prompt(view, self.limits_in_prompt))?;
+        let reply = self.reply(&prompt(view, self.limits_in_prompt, &self.omit))?;
         let calls = parse(&reply);
         Ok(Plan {
             parse_failed: calls.is_none(),
@@ -682,6 +714,7 @@ mod tests {
             sample: 0,
             system: "Base.".into(),
             limits_in_prompt: false,
+            omit: Vec::new(),
             cache_dir: folder.join("cache"),
             command: client.display().to_string(),
         };
@@ -712,6 +745,7 @@ mod tests {
             additions: vec!["b".into(), "a".into()],
             sentences: BTreeMap::from([("a".into(), "A.".into()), ("b".into(), "B.".into())]),
             limits: true,
+            omit: Vec::new(),
         };
         assert_eq!(config.system_prompt().unwrap(), "Base. B. A.");
         let missing = PromptConfig {

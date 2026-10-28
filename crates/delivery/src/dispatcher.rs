@@ -160,6 +160,7 @@ impl Plugin for Dispatcher {
                 model: config.model.clone(),
                 sample: config.sample,
                 limits_in_prompt: config.prompt.limits,
+                omit: config.prompt.omit.clone(),
                 system: config.prompt.system_prompt().expect("checked in configure"),
                 cache_dir: config.cache_dir.clone().into(),
                 command: config.command.clone(),

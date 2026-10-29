@@ -1,0 +1,35 @@
+# Does the model adjust its route to the time-exposure tradeoff?
+# Fixed seed, geometry, field, vehicle, and prompt; only beta changes.
+# Four weights x 100 reply samples = 400 trials. Beta=5 reuses baseline
+# samples 1-100; the other weights need 300 new replies on the first run.
+# Sample identifies a cached reply, not a shared API random seed across beta.
+# Compare each weight to soft-avoidance-risk-weight-reference.sweep.yaml.
+name: soft-avoidance-risk-weight
+base_scenario: soft-avoidance.yaml
+seeds: [1]
+parameters:
+  entities.depot.autonomy.Dispatcher.provider: openai
+  entities.depot.autonomy.Dispatcher.via: api
+  entities.depot.autonomy.Dispatcher.model: gpt-6-luna
+  entities.depot.autonomy.Dispatcher.offline: false
+  entities.depot.autonomy.Dispatcher.planner: model
+prefix: entities.depot.autonomy.Dispatcher
+repeat:
+  sample: [
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+    31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+    51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+    61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+    71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+    81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+    91, 92, 93, 94, 95, 96, 97, 98, 99, 100
+  ]
+columns: [soft_avoidance.risk_weight]
+cases:
+  - [0]
+  - [1]
+  - [5]
+  - [20]

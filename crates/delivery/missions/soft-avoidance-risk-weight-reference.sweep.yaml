@@ -1,0 +1,20 @@
+# One deterministic waypoint search per weight; no model calls or repeats.
+# Same mission and objective as soft-avoidance-risk-weight.sweep.yaml.
+# 400 intervals per axis: 401 x 401 waypoints, plus the direct route.
+# Spacing is 11 m in x and 6 m in y, versus 110 m and 60 m previously.
+# This is a finer one-waypoint reference, not a proven global optimum.
+# Join reference and model results by soft_avoidance.risk_weight.
+name: soft-avoidance-risk-weight-reference
+base_scenario: soft-avoidance.yaml
+seeds: [1]
+parameters:
+  entities.depot.autonomy.Dispatcher.planner: waypoint_search
+  entities.depot.autonomy.Dispatcher.waypoint_grid_steps: 400
+  entities.depot.autonomy.Dispatcher.offline: true
+prefix: entities.depot.autonomy.Dispatcher
+columns: [soft_avoidance.risk_weight]
+cases:
+  - [0]
+  - [1]
+  - [5]
+  - [20]

@@ -1,0 +1,14 @@
+# Two deterministic dispatchers x ten request schedules = 20 episodes.
+# Earliest deadline first, then fastest feasible idle vehicle; direct routes
+# versus numerical routing. References make no model calls or sample repeats.
+# The grid is a routing heuristic, not an optimal fleet scheduler.
+name: soft-fleet-reference
+base_scenario: soft-fleet.yaml
+seeds: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+parameters:
+  entities.depot.autonomy.Dispatcher.offline: true
+prefix: entities.depot.autonomy.Dispatcher
+columns: [planner]
+cases:
+  - [direct]
+  - [waypoint_search]

@@ -35,7 +35,8 @@ use crate::directive::{Directive, DirectiveKind};
 use crate::messages::SOFT_AVOIDANCE_TOPIC;
 use crate::messages::{
     ASSIGNMENT_TOPIC, Assignment, DECISION_TOPIC, DELIVERED_TOPIC, DIRECTIVE_TOPIC, Decision,
-    Delivered, Phase, REQUEST_TOPIC, Request, STATUS_TOPIC, Status, VehicleKind,
+    Delivered, Phase, REQUEST_TOPIC, Request, SOFT_FLEET_TOPIC, STATUS_TOPIC, SoftFleet, Status,
+    VehicleKind,
 };
 use crate::planner::SoftAvoidance;
 
@@ -80,6 +81,7 @@ pub struct DeliveryScore {
     breaches: f64,
     breach_s: f64,
     soft_trip: Option<SoftTrip>,
+    soft_fleet: Option<FleetExposure>,
 }
 
 impl Plugin for DeliveryScore {
@@ -111,6 +113,7 @@ impl Plugin for DeliveryScore {
             breaches: 0.0,
             breach_s: 0.0,
             soft_trip: None,
+            soft_fleet: None,
         }
     }
 }
@@ -120,6 +123,9 @@ impl Metrics for DeliveryScore {
         context
             .messages
             .subscribe::<SoftAvoidance>("GlobalNetwork", SOFT_AVOIDANCE_TOPIC)?;
+        context
+            .messages
+            .subscribe::<SoftFleet>("GlobalNetwork", SOFT_FLEET_TOPIC)?;
         context
             .messages
             .subscribe::<Request>("GlobalNetwork", REQUEST_TOPIC)?;
@@ -141,6 +147,23 @@ impl Metrics for DeliveryScore {
     }
 
     fn step(&mut self, context: &mut WorldContext<'_>) -> Result<Update> {
+        for message in context
+            .messages
+            .receive::<SoftFleet>("GlobalNetwork", SOFT_FLEET_TOPIC)?
+        {
+            // Include future requests in the denominator even if the mission
+            // times out before they open. The planner still sees only open ones.
+            for request in &message.value.requests {
+                self.requests.insert(request.id, request.clone());
+            }
+            self.soft_fleet = Some(FleetExposure {
+                field: message.value.field.clone(),
+                request_count: message.value.requests.len(),
+                start_s: message.sent_at_s,
+                finished_s: None,
+                trips: BTreeMap::new(),
+            });
+        }
         for message in context
             .messages
             .receive::<SoftAvoidance>("GlobalNetwork", SOFT_AVOIDANCE_TOPIC)?
@@ -171,6 +194,12 @@ impl Metrics for DeliveryScore {
             if let Some(trip) = &mut self.soft_trip {
                 trip.assignment = Some(**order);
                 trip.start_s = now_s + context.time.dt_s;
+            }
+            if let Some(fleet) = &mut self.soft_fleet {
+                let mut trip = SoftTrip::new(fleet.field.clone());
+                trip.assignment = Some(**order);
+                trip.start_s = now_s + context.time.dt_s;
+                fleet.trips.insert(order.request_id, trip);
             }
             self.request_assigned_s
                 .insert(order.request_id, message.sent_at_s);
@@ -307,6 +336,15 @@ impl Metrics for DeliveryScore {
                     .find(|call| call.outcome == "assigned")
                     .and_then(|call| call.soft_prediction);
             }
+            if let Some(fleet) = &mut self.soft_fleet {
+                for call in &decision.calls {
+                    if call.outcome == "assigned"
+                        && let Some(trip) = fleet.trips.get_mut(&call.request_id)
+                    {
+                        trip.prediction = call.soft_prediction;
+                    }
+                }
+            }
             if self.had_opportunity(&directive, decision) {
                 self.opportunities += 1.0;
             }
@@ -343,27 +381,21 @@ impl Metrics for DeliveryScore {
                 }
             }
         }
-        if let Some(trip) = &mut self.soft_trip {
-            // Truth is at the end of this tick; status is from autonomy at
-            // its start. Stop when the courier confirms delivery AND return.
-            let sample_s = now_s + context.time.dt_s;
-            if let Some(order) = trip.assignment {
-                let Some(entity) = context
-                    .contacts_truth
-                    .iter()
-                    .find(|e| e.id == order.vehicle_id && e.active)
-                else {
-                    return Ok(Update::Stop);
-                };
-                trip.observe(entity.truth.position_world_m, sample_s);
-                let phase = self.fleet.get(&order.vehicle_id).map(|s| s.phase);
-                trip.completed = self.delivered_s.contains_key(&order.request_id)
-                    && matches!(phase, Some(Phase::Reloading | Phase::Idle));
-                if trip.completed || phase == Some(Phase::Lost) {
-                    return Ok(Update::Stop);
-                }
-            } else if trip.decided {
-                // Empty, malformed, or rejected plans are unsuccessful trials.
+        if let Some(trip) = &mut self.soft_trip
+            && (trip.step(context, &self.fleet, &self.delivered_s)
+                || (trip.assignment.is_none() && trip.decided))
+        {
+            // Empty, malformed, or rejected single-trip plans also end a trial.
+            return Ok(Update::Stop);
+        }
+        if let Some(fleet) = &mut self.soft_fleet {
+            for trip in fleet.trips.values_mut().filter(|trip| !trip.finished) {
+                trip.step(context, &self.fleet, &self.delivered_s);
+            }
+            // A return ends only that trip. Other vehicles and future requests
+            // must keep running; empty plans can retry until the time limit.
+            if fleet.complete() {
+                fleet.finished_s = Some(now_s + context.time.dt_s);
                 return Ok(Update::Stop);
             }
         }
@@ -418,6 +450,9 @@ impl Metrics for DeliveryScore {
         }
         if let Some(trip) = &self.soft_trip {
             trip.report(&mut values);
+        }
+        if let Some(fleet) = &self.soft_fleet {
+            fleet.report(&mut values);
         }
         let score = if total_weight > 0.0 {
             on_time_weight / total_weight
@@ -502,6 +537,7 @@ struct SoftTrip {
     assignment: Option<Assignment>,
     decided: bool,
     completed: bool,
+    finished: bool,
     start_s: f64,
     last: Option<(Vec3, f64)>,
     duration_s: f64,
@@ -518,6 +554,7 @@ impl SoftTrip {
             assignment: None,
             decided: false,
             completed: false,
+            finished: false,
             start_s: 0.0,
             last: None,
             duration_s: 0.0,
@@ -526,6 +563,36 @@ impl SoftTrip {
             peak_severity: 0.0,
             prediction: None,
         }
+    }
+
+    /// Truth is at the end of this tick; status is from autonomy at its start.
+    /// Stop integrating at confirmed delivery and return, loss, or removal.
+    fn step(
+        &mut self,
+        context: &WorldContext<'_>,
+        fleet: &BTreeMap<i32, Status>,
+        delivered_s: &BTreeMap<i32, f64>,
+    ) -> bool {
+        let Some(order) = self.assignment else {
+            return false;
+        };
+        let Some(entity) = context
+            .contacts_truth
+            .iter()
+            .find(|e| e.id == order.vehicle_id && e.active)
+        else {
+            self.finished = true;
+            return true;
+        };
+        self.observe(
+            entity.truth.position_world_m,
+            context.time.time_s + context.time.dt_s,
+        );
+        let phase = fleet.get(&order.vehicle_id).map(|s| s.phase);
+        self.completed = delivered_s.contains_key(&order.request_id)
+            && matches!(phase, Some(Phase::Reloading | Phase::Idle));
+        self.finished = self.completed || phase == Some(Phase::Lost);
+        self.finished
     }
 
     fn observe(&mut self, position: Vec3, time_s: f64) {
@@ -569,5 +636,113 @@ impl SoftTrip {
             values.insert("risk_predicted_exposure_s".into(), prediction.exposure_s);
             values.insert("risk_predicted_cost_s".into(), prediction.cost_s);
         }
+    }
+}
+
+/// One entry per assigned request, so simultaneous and repeated trips retain
+/// their own integrals. Idle/reload time is not flight time or exposure.
+struct FleetExposure {
+    field: SoftAvoidance,
+    request_count: usize,
+    start_s: f64,
+    finished_s: Option<f64>,
+    trips: BTreeMap<i32, SoftTrip>,
+}
+
+impl FleetExposure {
+    fn complete(&self) -> bool {
+        self.trips.len() == self.request_count && self.trips.values().all(|trip| trip.completed)
+    }
+
+    fn report(&self, values: &mut BTreeMap<String, f64>) {
+        let flight_time_s: f64 = self.trips.values().map(|t| t.duration_s).sum();
+        let exposure_s: f64 = self.trips.values().map(|t| t.exposure_s).sum();
+        for (name, value) in [
+            ("risk_trips_started", self.trips.len() as f64),
+            (
+                "risk_trips_completed",
+                self.trips.values().filter(|t| t.completed).count() as f64,
+            ),
+            ("risk_fleet_completed", f64::from(self.complete())),
+            ("risk_flight_time_s", flight_time_s),
+            ("risk_exposure_s", exposure_s),
+            (
+                "risk_path_length_m",
+                self.trips.values().map(|t| t.path_length_m).sum(),
+            ),
+            (
+                "risk_peak_severity",
+                self.trips
+                    .values()
+                    .map(|t| t.peak_severity)
+                    .fold(0.0, f64::max),
+            ),
+        ] {
+            values.insert(name.into(), value);
+        }
+        // Keep partial totals for diagnostics, but never score skipping work as
+        // a cheap successful episode. Compare delivery score and counts first.
+        if self.complete() {
+            values.insert(
+                "risk_time_cost_s".into(),
+                flight_time_s + self.field.risk_weight * exposure_s,
+            );
+            if let Some(finished_s) = self.finished_s {
+                values.insert("risk_completion_time_s".into(), finished_s - self.start_s);
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fleet_totals_include_overlapping_and_later_trips_but_not_unserved_work() {
+        let field = SoftAvoidance {
+            center_m: [0.0, 0.0],
+            ..SoftAvoidance::default()
+        };
+        let trip = |start_s, duration_s| {
+            let mut trip = SoftTrip::new(field.clone());
+            trip.start_s = start_s;
+            trip.observe(Vec3::zeros(), start_s);
+            trip.observe(Vec3::zeros(), start_s + duration_s);
+            trip.completed = true;
+            trip.finished = true;
+            trip
+        };
+        let mut fleet = FleetExposure {
+            field: field.clone(),
+            request_count: 3,
+            start_s: 0.0,
+            finished_s: None,
+            trips: BTreeMap::from([(1, trip(0.0, 10.0)), (2, trip(0.0, 20.0))]),
+        };
+        assert!(!fleet.complete(), "the third request has not been assigned");
+        let mut values = BTreeMap::new();
+        fleet.report(&mut values);
+        assert_eq!(values["risk_flight_time_s"], 30.0);
+        assert_eq!(values["risk_exposure_s"], 30.0);
+        assert!(!values.contains_key("risk_time_cost_s"));
+
+        // Later reuse of a vehicle must add to its first trip's exposure.
+        fleet.trips.insert(3, trip(20.0, 15.0));
+        fleet.finished_s = Some(35.0);
+        assert!(fleet.complete());
+        fleet.report(&mut values);
+        assert_eq!(values["risk_trips_completed"], 3.0);
+        assert_eq!(values["risk_flight_time_s"], 45.0);
+        assert_eq!(values["risk_completion_time_s"], 35.0);
+        assert_eq!(values["risk_time_cost_s"], 45.0 + 5.0 * 45.0);
+
+        // A finished but lost trip keeps partial totals without a success cost.
+        fleet.trips.get_mut(&3).unwrap().completed = false;
+        values.clear();
+        fleet.report(&mut values);
+        assert_eq!(values["risk_fleet_completed"], 0.0);
+        assert_eq!(values["risk_exposure_s"], 45.0);
+        assert!(!values.contains_key("risk_time_cost_s"));
     }
 }

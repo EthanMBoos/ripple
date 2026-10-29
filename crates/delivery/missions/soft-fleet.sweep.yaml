@@ -1,0 +1,16 @@
+# Ten request schedules x ten reply samples = 100 model episodes.
+# Each episode can make several model calls. Seed 1/sample 0 are for pilots.
+name: soft-fleet
+base_scenario: soft-fleet.yaml
+seeds: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+parameters:
+  entities.depot.autonomy.Dispatcher.provider: openai
+  entities.depot.autonomy.Dispatcher.via: api
+  entities.depot.autonomy.Dispatcher.model: gpt-6-luna
+  entities.depot.autonomy.Dispatcher.offline: false
+prefix: entities.depot.autonomy.Dispatcher
+repeat:
+  sample: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+columns: [planner]
+cases:
+  - [model]

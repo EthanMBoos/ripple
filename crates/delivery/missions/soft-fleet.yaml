@@ -1,0 +1,88 @@
+# Fleet pilot: two planar multirotors, four seeded requests, one soft field.
+# Sites are sampled with replacement; seeds change requests, not the geometry.
+# Compare on-time score first, deliveries second, then successful fleet cost.
+format_version: 1
+name: soft-fleet
+run:
+  # Allows all four requests to return even if every site draw is distant.
+  end_s: 3000
+  dt_s: 0.1
+  seed: 1
+networks: {GlobalNetwork: {}}
+metrics: {DeliveryScore: {urgent_weight: 2}}
+
+entities:
+  depot:
+    team: 1
+    position_m: [0, 0, 0]
+    autonomy:
+      Dispatcher:
+        provider: openai
+        via: api
+        model: gpt-6-luna
+        sample: 0
+        cache_dir: runs/llm-cache
+        offline: false
+        # direct and waypoint_search use the same greedy dispatch policy.
+        planner: model
+        waypoint_grid_steps: 80
+        soft_fleet: true
+        prompt:
+          system: >-
+            You dispatch a fleet of medical delivery drones. First maximize
+            the on-time delivery score: urgent deliveries count twice as much
+            as routine deliveries. Then maximize total deliveries. Only then
+            minimize the fleet time-exposure cost specified in the state.
+            Each drone carries one package, returns to the depot, and reloads
+            for 60 seconds before it can take another request. Plan using
+            currently available information; additional requests may arrive.
+            Reply with JSON only, no other text.
+        requests: 4
+        request_window_s: 120
+        urgent_share: 0.5
+        urgent_deadline_s: 360
+        routine_deadline_s: 900
+        retry_interval_s: 60
+        items: [medicine]
+        skills: [drop, drop_via]
+        soft_avoidance:
+          center_m: [1000, 0]
+          peak_severity: 1
+          decay_distance_m: 200
+          radius_m: 600
+          risk_weight: 5
+        sites:
+          - {name: nearby south, position_m: [800, -600, 0]}
+          - {name: across field, position_m: [2000, 0, 0]}
+          - {name: distant clinic, position_m: [5000, 800, 0]}
+          - {name: nearby north, position_m: [500, 1000, 0]}
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}
+  fast_long_range:
+    team: 1
+    position_m: [0, 0, 0]
+    autonomy:
+      Courier:
+        kind: multirotor
+        cruise_speed_mps: 18
+        endurance_s: 900
+        cruise_altitude_m: 0
+        depot_radius_m: 1
+        arrival_radius_m: 1
+        reload_s: 60
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {max_speed_mps: 18}}
+  slow_short_range:
+    team: 1
+    position_m: [0, 0, 0]
+    autonomy:
+      Courier:
+        kind: multirotor
+        cruise_speed_mps: 10
+        endurance_s: 450
+        cruise_altitude_m: 0
+        depot_radius_m: 1
+        arrival_radius_m: 1
+        reload_s: 60
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {max_speed_mps: 10}}

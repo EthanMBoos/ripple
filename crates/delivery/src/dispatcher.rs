@@ -26,7 +26,8 @@ use crate::directive::Directive;
 use crate::messages::SOFT_AVOIDANCE_TOPIC;
 use crate::messages::{
     ASSIGNMENT_TOPIC, Assignment, CallRecord, DECISION_TOPIC, DELIVERED_TOPIC, DIRECTIVE_TOPIC,
-    Decision, Delivered, Phase, REQUEST_TOPIC, Request, STATUS_TOPIC, SkillName, Status, Waiting,
+    Decision, Delivered, Phase, REQUEST_TOPIC, Request, SOFT_FLEET_TOPIC, STATUS_TOPIC, SkillName,
+    SoftFleet, Status, Waiting,
 };
 use crate::planner::{self, ModelPlanner, PlannerKind, PromptConfig, SoftAvoidance, View};
 
@@ -86,6 +87,8 @@ pub struct DispatcherConfig {
     /// enforced in code (a reference, not a planner).
     enforce_instruction: bool,
     soft_avoidance: Option<SoftAvoidance>,
+    /// Repeated assignments across a multirotor fleet instead of one trip.
+    soft_fleet: bool,
     planner: PlannerKind,
     waypoint_grid_steps: u32,
 }
@@ -119,6 +122,7 @@ impl Default for DispatcherConfig {
             skills: vec![SkillName::Drop, SkillName::Land],
             enforce_instruction: false,
             soft_avoidance: None,
+            soft_fleet: false,
             planner: PlannerKind::Model,
             waypoint_grid_steps: 40,
         }
@@ -155,6 +159,7 @@ pub struct Dispatcher {
     skills: Vec<SkillName>,
     enforce_instruction: bool,
     soft_avoidance: Option<SoftAvoidance>,
+    soft_fleet: bool,
     planner: PlannerKind,
     waypoint_grid_steps: u32,
     /// Every request of the episode, by opening time; IDs count from 1.
@@ -190,7 +195,10 @@ impl Plugin for Dispatcher {
         if let Some(field) = &config.soft_avoidance {
             field.validate()?;
             ensure!(
-                config.requests == 1 && config.sites.len() == 1 && config.request_window_s == 0.0,
+                config.soft_fleet
+                    || (config.requests == 1
+                        && config.sites.len() == 1
+                        && config.request_window_s == 0.0),
                 "soft avoidance supports one request at time zero and one site"
             );
             ensure!(
@@ -202,6 +210,13 @@ impl Plugin for Dispatcher {
                 "soft avoidance supports drop/drop_via without a hard directive"
             );
         }
+        ensure!(
+            !config.soft_fleet
+                || (config.soft_avoidance.is_some()
+                    && config.requests > 0
+                    && config.sites.iter().all(|s| !s.rooftop)),
+            "soft_fleet needs a soft field, positive request count, and non-rooftop sites"
+        );
         ensure!(
             config.planner == PlannerKind::Model || config.soft_avoidance.is_some(),
             "reference planners require soft_avoidance"
@@ -248,6 +263,7 @@ impl Plugin for Dispatcher {
             skills: config.skills.clone(),
             enforce_instruction: config.enforce_instruction,
             soft_avoidance: config.soft_avoidance.clone(),
+            soft_fleet: config.soft_fleet,
             planner: config.planner,
             waypoint_grid_steps: config.waypoint_grid_steps,
             requests: Vec::new(),
@@ -289,9 +305,20 @@ impl Autonomy for Dispatcher {
         if let Some(field) = &self.soft_avoidance
             && !self.soft_announced
         {
-            context
-                .messages
-                .publish("GlobalNetwork", SOFT_AVOIDANCE_TOPIC, field.clone())?;
+            if self.soft_fleet {
+                context.messages.publish(
+                    "GlobalNetwork",
+                    SOFT_FLEET_TOPIC,
+                    SoftFleet {
+                        field: field.clone(),
+                        requests: self.requests.clone(),
+                    },
+                )?;
+            } else {
+                context
+                    .messages
+                    .publish("GlobalNetwork", SOFT_AVOIDANCE_TOPIC, field.clone())?;
+            }
             self.soft_announced = true;
         }
 
@@ -348,9 +375,12 @@ impl Autonomy for Dispatcher {
         if !view.waiting.is_empty() && idle && due && !self.soft_decided {
             if self.soft_avoidance.is_some() {
                 ensure!(
-                    view.vehicles.len() == 1
-                        && view.vehicles[0].card.kind == crate::messages::VehicleKind::Multirotor,
-                    "soft avoidance supports one multirotor courier"
+                    (self.soft_fleet || view.vehicles.len() == 1)
+                        && view
+                            .vehicles
+                            .iter()
+                            .all(|v| { v.card.kind == crate::messages::VehicleKind::Multirotor }),
+                    "soft avoidance requires multirotor couriers; enable soft_fleet for multiple trips"
                 );
             }
             let plan = match self.planner {
@@ -449,7 +479,7 @@ impl Autonomy for Dispatcher {
                 .publish("GlobalNetwork", DECISION_TOPIC, decision)?;
             self.changed = false;
             self.last_decision_s = now_s;
-            self.soft_decided = self.soft_avoidance.is_some();
+            self.soft_decided = self.soft_avoidance.is_some() && !self.soft_fleet;
         }
         for name in ["velocity_x", "velocity_y", "velocity_z"] {
             io.write(name, 0.0)?;
@@ -481,6 +511,7 @@ impl Dispatcher {
             range_margin: self.range_margin,
             dwell_s: self.dwell_s,
             soft_avoidance: self.soft_avoidance.as_ref(),
+            soft_fleet: self.soft_fleet,
         }
     }
 

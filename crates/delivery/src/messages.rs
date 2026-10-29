@@ -15,6 +15,14 @@ pub const REQUEST_TOPIC: &str = "DeliveryRequest";
 pub const DECISION_TOPIC: &str = "DispatchDecision";
 /// The shared field parameters for a soft avoidance trial.
 pub const SOFT_AVOIDANCE_TOPIC: &str = "SoftAvoidance";
+/// Fleet field and full request schedule, for scoring unopened requests too.
+pub const SOFT_FLEET_TOPIC: &str = "SoftFleet";
+
+#[derive(Clone, Debug, Serialize)]
+pub struct SoftFleet {
+    pub field: crate::planner::SoftAvoidance,
+    pub requests: Vec<Request>,
+}
 
 /// An instruction from operations, when the dispatcher announces it.
 pub const DIRECTIVE_TOPIC: &str = "Directive";

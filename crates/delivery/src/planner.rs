@@ -39,6 +39,7 @@ pub struct View<'a> {
     pub range_margin: f64,
     pub dwell_s: f64,
     pub soft_avoidance: Option<&'a SoftAvoidance>,
+    pub soft_fleet: bool,
 }
 
 /// A static, horizontal severity field. This is a shifted and normalized
@@ -161,6 +162,9 @@ pub fn soft_prediction(call: &Call, view: &View<'_>) -> Option<SoftPrediction> {
 /// Best tested waypoint, not a continuous or unrestricted optimum. The grid
 /// spans the depot, site, and center, padded on all sides by two radii.
 pub fn reference_plan(view: &View<'_>, kind: PlannerKind, grid_steps: u32) -> Plan {
+    if view.soft_fleet {
+        return fleet_reference_plan(view, kind, grid_steps);
+    }
     let (Some(field), Some(vehicle), Some(request)) = (
         view.soft_avoidance,
         view.vehicles.first(),
@@ -168,6 +172,60 @@ pub fn reference_plan(view: &View<'_>, kind: PlannerKind, grid_steps: u32) -> Pl
     ) else {
         return Plan::default();
     };
+    Plan {
+        calls: reference_route(view, vehicle, request, field, kind, grid_steps)
+            .into_iter()
+            .collect(),
+        parse_failed: false,
+    }
+}
+
+/// Earliest deadline first, then fastest feasible idle vehicle. Assignment
+/// order is the same for both references; only waypoint_search adds routing.
+fn fleet_reference_plan(view: &View<'_>, kind: PlannerKind, grid_steps: u32) -> Plan {
+    let Some(field) = view.soft_avoidance else {
+        return Plan::default();
+    };
+    let mut waiting = view.waiting.clone();
+    waiting.sort_by(|a, b| a.deadline_s.total_cmp(&b.deadline_s).then(a.id.cmp(&b.id)));
+    let mut vehicles = view.vehicles.clone();
+    vehicles.retain(|v| v.phase == Phase::Idle && v.request_id.is_none());
+    vehicles.sort_by(|a, b| {
+        b.card
+            .cruise_speed_mps
+            .total_cmp(&a.card.cruise_speed_mps)
+            .then(a.vehicle_id.cmp(&b.vehicle_id))
+    });
+    let mut plan = Plan::default();
+    for request in waiting {
+        for (index, vehicle) in vehicles.iter().enumerate() {
+            let direct = Call {
+                vehicle_id: vehicle.vehicle_id,
+                request_id: request.id,
+                skill: Some(SkillName::Drop),
+                via_world_m: None,
+            };
+            if check(&direct, view).is_err() {
+                continue;
+            }
+            if let Some(call) = reference_route(view, vehicle, request, field, kind, grid_steps) {
+                plan.calls.push(call);
+                vehicles.remove(index);
+                break;
+            }
+        }
+    }
+    plan
+}
+
+fn reference_route(
+    view: &View<'_>,
+    vehicle: &Status,
+    request: &Request,
+    field: &SoftAvoidance,
+    kind: PlannerKind,
+    grid_steps: u32,
+) -> Option<Call> {
     let direct = Call {
         vehicle_id: vehicle.vehicle_id,
         request_id: request.id,
@@ -175,8 +233,15 @@ pub fn reference_plan(view: &View<'_>, kind: PlannerKind, grid_steps: u32) -> Pl
         via_world_m: None,
     };
     let mut best: Option<(Call, f64)> = None;
+    // Routing must not turn an on-time direct fleet delivery into a late one.
+    let preserve_deadline =
+        view.soft_fleet && view.time_s + arrival_s(vehicle, request, None) <= request.deadline_s;
     let mut consider = |call| {
-        if check(&call, view).is_ok() {
+        if check(&call, view).is_ok()
+            && (!preserve_deadline
+                || view.time_s + arrival_s(vehicle, request, call.via_world_m)
+                    <= request.deadline_s)
+        {
             let cost = soft_prediction(&call, view).expect("soft route").cost_s;
             if best.as_ref().is_none_or(|(_, old)| cost < *old) {
                 best = Some((call, cost));
@@ -212,10 +277,7 @@ pub fn reference_plan(view: &View<'_>, kind: PlannerKind, grid_steps: u32) -> Pl
             }
         }
     }
-    Plan {
-        calls: best.map(|(call, _)| call).into_iter().collect(),
-        parse_failed: false,
-    }
+    best.map(|(call, _)| call)
 }
 
 /// One proposed order. `skill` is `None` when the model named a skill that
@@ -548,13 +610,24 @@ pub fn prompt(view: &View<'_>, limits_in_prompt: bool, omit: &[VehicleInfo]) -> 
         }
     }
     if let Some(field) = view.soft_avoidance {
-        let _ = writeln!(
-            text,
-            "\nSoft avoidance experiment (one decision, one delivery and return):\n\
+        let objective = if view.soft_fleet {
+            "Soft avoidance fleet experiment (repeated decisions and trips):\n\
+             First maximize weighted on-time deliveries; then total deliveries; \
+             only then minimize J = T + beta * E across the fleet. T is summed \
+             trip time in seconds, not elapsed mission time; E = sum of integral \
+             r(x(t)) dt over outbound AND return flights of all vehicles. \
+             Unserved requests count against delivery performance. Return every \
+             assigned vehicle to the depot. Busy vehicles cannot be assigned; \
+             returning vehicles become available again after reloading.\n"
+        } else {
+            "Soft avoidance experiment (one decision, one delivery and return):\n\
              Complete the delivery and return to the depot. Among successful round trips, \
              minimize J = T + beta * E, where T is total trip time in seconds and \
-             E = integral r(x(t)) dt over BOTH directions. Unassigned or incomplete trips fail.\n\
-             This static horizontal field allows crossing; it is not a no-fly zone. \
+             E = integral r(x(t)) dt over BOTH directions. Unassigned or incomplete trips fail.\n"
+        };
+        let _ = writeln!(
+            text,
+            "\n{objective}This static horizontal field allows crossing; it is not a no-fly zone. \
              With distance d in meters from center ({}, {}) m, \
              r(d) = A * (exp(-d/ell) - exp(-R/ell)) / (1 - exp(-R/ell)) for d < R; \
              r(d) = 0 for d >= R. A={}, ell={} m, R={} m, beta={}. \
@@ -745,6 +818,80 @@ mod tests {
     use crate::messages::VehicleCard;
 
     #[test]
+    fn fleet_dispatch_prioritizes_deadlines_and_respects_busy_and_range_limits() {
+        let vehicle = |id, speed, endurance| Status {
+            vehicle_id: id,
+            card: VehicleCard {
+                kind: VehicleKind::Multirotor,
+                cruise_speed_mps: speed,
+                min_speed_mps: 0.0,
+                turn_radius_m: 0.0,
+                endurance_s: endurance,
+            },
+            phase: Phase::Idle,
+            position_world_m: Vec3::zeros(),
+            endurance_left_s: endurance,
+            request_id: None,
+        };
+        let fast = vehicle(2, 18.0, 900.0);
+        let slow = vehicle(3, 10.0, 450.0);
+        let near = Request {
+            id: 1,
+            site: "near".into(),
+            site_world_m: Vec3::new(1000.0, 0.0, 0.0),
+            rooftop: false,
+            item: "medicine".into(),
+            units: 1,
+            urgent: false,
+            opened_at_s: 0.0,
+            deadline_s: 900.0,
+        };
+        let far = Request {
+            id: 2,
+            site: "far".into(),
+            site_world_m: Vec3::new(5000.0, 0.0, 0.0),
+            deadline_s: 360.0,
+            ..near.clone()
+        };
+        let field = SoftAvoidance::default();
+        let mut view = View {
+            time_s: 0.0,
+            depot_world_m: Vec3::zeros(),
+            vehicles: vec![&slow, &fast],
+            waiting: vec![&near, &far],
+            instructions: Vec::new(),
+            skills: &[SkillName::Drop, SkillName::DropVia],
+            range_margin: 0.9,
+            dwell_s: 0.0,
+            soft_avoidance: Some(&field),
+            soft_fleet: true,
+        };
+        let plan = reference_plan(&view, PlannerKind::Direct, 4);
+        assert_eq!(plan.calls.len(), 2);
+        assert_eq!((plan.calls[0].vehicle_id, plan.calls[0].request_id), (2, 2));
+        assert_eq!((plan.calls[1].vehicle_id, plan.calls[1].request_id), (3, 1));
+        let busy = Status {
+            phase: Phase::Returning,
+            ..fast
+        };
+        view.vehicles = vec![&busy, &slow];
+        let plan = reference_plan(&view, PlannerKind::WaypointSearch, 4);
+        assert_eq!(plan.calls.len(), 1);
+        assert_eq!((plan.calls[0].vehicle_id, plan.calls[0].request_id), (3, 1));
+
+        // A direct delivery exactly meets its deadline. Numerical routing
+        // cannot sacrifice it to lower the exposure penalty.
+        let tight = Request {
+            deadline_s: 100.0,
+            ..near.clone()
+        };
+        view.waiting = vec![&tight];
+        let plan = reference_plan(&view, PlannerKind::WaypointSearch, 20);
+        assert_eq!(plan.calls.len(), 1);
+        assert!(arrival_s(&slow, &tight, plan.calls[0].via_world_m) <= tight.deadline_s);
+    }
+
+    #[test]
     fn soft_field_has_finite_support_and_integrates_crossings_and_hovering() {
         let field = SoftAvoidance {
             center_m: [0.0, 0.0],
@@ -808,6 +955,7 @@ mod tests {
             range_margin: 0.9,
             dwell_s: 0.0,
             soft_avoidance: None,
+            soft_fleet: false,
         };
         // The outbound leg occupies the zone during (10, 30) seconds,
         // the return during (50, 70); closest approaches are at 20 and 60.

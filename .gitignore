@@ -11,3 +11,8 @@ graphify-out/
 .graphify*/
 .graphify*
 .vscode/settings.json
+
+# The uv environment and the Python package's built module.
+/.venv/
+.pytest_cache/
+*.so

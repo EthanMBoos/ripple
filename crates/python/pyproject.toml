@@ -1,0 +1,32 @@
+# The Python package `ripple`, a member of the uv workspace in the repository
+# root: `uv sync` there builds the Rust module with maturin and installs the
+# `ripple` command into the root's `.venv`; see README.md.
+# TODO: wheels. When the package is ready to hand out, build wheels on CI with
+# maturin for macOS, Linux, and Windows and keep them as GitHub release assets
+# (not PyPI), installed with `uv add` from the asset's URL. That needs the
+# stable ABI (`pyo3/abi3-py310` in `features` below) so one wheel per platform
+# serves every Python version, a project root other than the repository path
+# baked in at build time (src/lib.rs), and an equivalence run of a wheel
+# against the local build. See the book's "The Python bridge" page.
+[build-system]
+requires = ["maturin>=1.9,<2"]
+build-backend = "maturin"
+
+[project]
+name = "ripple"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+ripple = "ripple:main"
+
+[project.optional-dependencies]
+# The learning tasks' Gymnasium and PettingZoo environments (ripple.learning).
+learning = ["gymnasium>=1.0", "pettingzoo>=1.24", "numpy"]
+# Their training scripts (learning/): `uv sync --extra train`.
+train = ["ripple[learning]", "stable-baselines3>=2.3", "torch", "onnx", "onnxscript"]
+
+[tool.maturin]
+module-name = "ripple._native"
+features = ["pyo3/extension-module"]

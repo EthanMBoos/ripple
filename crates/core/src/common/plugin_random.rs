@@ -55,6 +55,11 @@ impl PluginRandom {
     pub fn name(text: &str) -> u64 {
         random::name(text)
     }
+    /// An integer for `key`, to seed a library's own generator (a
+    /// `torch.Generator`, say) so its draws replay like the engine's.
+    pub fn seed(&self, key: &[u64]) -> u64 {
+        self.label(key)
+    }
     /// The uniform number for `key`, strictly inside (0, 1).
     pub fn uniform(&self, key: &[u64]) -> f64 {
         random::uniform(self.label(key))

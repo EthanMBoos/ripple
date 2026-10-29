@@ -2156,16 +2156,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
-name = "learning"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "ripple-core",
- "serde",
- "tract-onnx",
-]
-
-[[package]]
 name = "lexical-core"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4452,7 +4442,6 @@ dependencies = [
  "ardupilot",
  "clap",
  "delivery",
- "learning",
  "png",
  "rerun",
  "ripple-core",
@@ -4479,13 +4468,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "ripple-learning-python"
+name = "ripple-python"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "learning",
+ "delivery",
  "pyo3",
+ "ripple",
  "ripple-core",
+ "serde_yaml_ng",
+ "starter",
+ "tract-onnx",
 ]
 
 [[package]]

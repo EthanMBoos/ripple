@@ -1,0 +1,33 @@
+# Multi-agent RL: three point agents spread out to cover three landmarks,
+# MPE's simple_spread on Ripple's SingleIntegrator. Each seed scatters them
+# differently. Every agent runs the same network. The Spread task
+# (ripple/learning/spread.py) is a Python autonomy: train_spread.py trains it
+# on this mission and the same class flies the trained network, from the
+# repository root:
+#   uv run ripple run crates/python/learning/missions/spread.yaml --viewer
+# Book chapter: "Training a team".
+format_version: 1
+name: Spread
+
+run:
+  end_s: 15
+  dt_s: 0.1
+  seed: 1
+
+entities:
+  team:
+    count: 3
+    team: 1
+    visual_model: sphere
+    position_m: [0, 0, 2]
+    # Standard deviations of 4 m across, none up: the task is flat.
+    position_variance_m2: [16, 16, 0]
+    # Draw the start from the variance (otherwise used only to escape a collision).
+    randomize_every_spawn: true
+    autonomy:
+      Python:
+        class: ripple.learning.spread.Spread
+        landmarks_m: [[-4, -3], [4, -3], [0, 4]]
+        max_speed_mps: 2
+    motion_model:
+      SingleIntegrator: {}

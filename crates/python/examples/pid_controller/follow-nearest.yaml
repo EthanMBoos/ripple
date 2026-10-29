@@ -1,0 +1,41 @@
+# The starter crate's follow-nearest mission with both aircraft flown by a controller
+# written in Python (simple_aircraft_pid.py, beside this file). Team 1 flies east
+# in a straight line; team 2 starts behind it, to the side and higher, and chases.
+format_version: 1
+name: Follow the nearest opponent
+
+run:
+  end_s: 60
+  dt_s: 0.1
+  seed: 1
+end_conditions: [time, one_team_left]
+
+interactions: {SimpleCollision: {}}
+networks: {GlobalNetwork: {}}   # Straight listens on it for a boundary
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  aircraft:
+    position_variance_m2: [100, 100, 0]
+    visual_model: aircraft
+    controller: {Python: {class: simple_aircraft_pid.SimpleAircraftPid}}
+    motion_model: {SimpleAircraft: {}}
+
+entities:
+  target:
+    template: aircraft
+    team: 1
+    position_m: [0, 0, 200]
+    heading_deg: 0
+    autonomy:
+      Straight:
+        speed_mps: 18
+
+  chaser:
+    template: aircraft
+    team: 2
+    position_m: [-300, 150, 220]
+    heading_deg: 0
+    autonomy:
+      FollowNearest:
+        speed_mps: 30

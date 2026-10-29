@@ -15,9 +15,13 @@ crates/cli       ripple: the command line as a library (ripple_cli),
 crates/starter   user plugins, missions, and tests; compiled into `ripple`
 crates/delivery  the paper's medical-delivery pilot: model dispatcher, couriers, score
 crates/ardupilot optional: ArduPlane SITL bridge (`--features ardupilot`)
-crates/learning  optional: RL demos, policies run from ONNX (`--features learning`);
-                 python/ holds the Python module and trainers
+crates/python    the Python package `ripple`: the command with `Python` in
+                 every plugin slot (built by maturin); ripple/learning/ holds
+                 the RL tasks and environments, learning/ their trainers
 ```
+
+The root `pyproject.toml` is the uv workspace that builds `crates/python`
+into `.venv` (`uv sync`), with `.python-version` and `uv.lock` beside it.
 
 ## File layout
 

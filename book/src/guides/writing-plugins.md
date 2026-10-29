@@ -17,7 +17,7 @@ missions use to Rust types, in
 ```rust,ignore
 let mut registry = PluginRegistry::with_builtins();   // stock plugins
 starter::register(&mut registry)?;                    // your plugins
-ripple_cli::main(registry, repo_root)                 // run, sweep, replay
+ripple_cli::main(registry, repo_root, env::args_os())  // run, sweep, replay
 ```
 
 Changing a plugin means rebuilding; `cargo run -- ...` does that for you.
@@ -142,8 +142,8 @@ error at startup, so nothing is silently replaced.
 
 `register_autonomy_with` takes a closure that builds each instance in place of
 `Plugin::new`, for a program that owns the simulation and must hand every
-instance something of its own. The learning demos use it to pass in a Python
-trainer's actions ([Training a single
+instance something of its own. The Python package's training simulation uses
+it to hand each `Python` autonomy its trainer ([Training a single
 agent](training-single-agent.md#the-pieces)).
 
 ## Ports: the control chain
@@ -252,6 +252,51 @@ registers those names. Then:
 1. add it to the workspace `members` in the root `Cargo.toml`;
 2. add `my-lab = { path = "../my-lab" }` to `crates/cli/Cargo.toml`, and call
    `my_lab::register(&mut registry)?;` in `crates/cli/src/main.rs`.
+
+## Your own project
+
+Your plugins can live in a repository of their own, with Ripple as a
+dependency, when you don't want to work inside this one. The command crate
+is a library, so your project's binary is the stock `main.rs` with your
+plugins in place of the starter's and your repository as the project
+folder:
+
+```toml
+# Cargo.toml
+[package]
+name = "my-lab"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ripple-core = { git = "https://github.com/EthanMBoos/ripple" }
+ripple = { git = "https://github.com/EthanMBoos/ripple" }
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+```
+
+```rust,ignore
+// src/main.rs
+use ripple_core::plugin::PluginRegistry;
+
+mod my_autonomy;
+
+fn main() -> anyhow::Result<()> {
+    let mut registry = PluginRegistry::with_builtins();
+    registry.register_autonomy::<my_autonomy::MyAutonomy>("MyAutonomy")?;
+    ripple_cli::main(registry, env!("CARGO_MANIFEST_DIR"), std::env::args_os())
+}
+```
+
+`cargo run -- run my-mission.yaml --headless` then looks the mission up in
+your `missions/`, writes runs to your `runs/` and sweeps to your `sweeps/`,
+and `sweep` and `replay` work the same. Pin the dependency to a commit
+(`rev = "..."`) for a study, so a later change here cannot alter your
+results. `with_builtins` gives you the stock plugins; the starter's and the
+delivery crate's come only if you depend on those crates and call their
+`register`. In Python the same project is `uv add ripple` and a folder of
+missions, pending the wheels ([Plugins in
+Python](python-plugins.md#your-own-project)).
 
 ## A plugin that ships with Ripple
 

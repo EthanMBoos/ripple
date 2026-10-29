@@ -1,31 +1,49 @@
 # Ripple
 
-Multi-robot methods are mostly compared on simulated benchmarks where agents
-are points, observations are exact, and messages always arrive. Ripple is a
-multi-agent robotics simulator in Rust for asking what happens to those
-comparisons once sensing is noisy, messages are lost or late, and the agents
-are real vehicles.
+Ripple is a multi-agent robotics simulator written in Rust for controlled
+comparisons of multi-robot methods. The autonomies, controllers, motion
+models, sensors, estimators, and metrics are each a plugin that can be
+replaced on its own, so one component can be changed while the rest of a
+mission is held fixed. Point agents, multirotors, and fixed-wing aircraft
+share one world and one pipeline for sensing, communication, and estimation.
 
-Three things make that question answerable:
+Three properties make such comparisons possible:
 
 - **Decisions see only belief.** Every agent acts on what it measured or was
-  told, never the true state, so a learned and a classical policy get exactly
-  the same information.
+  told, never the true state, so two methods receive exactly the same
+  information.
 - **Runs are deterministic.** The same mission and seed give byte-identical
-  output at any number of workers, so methods can be compared on exactly the
-  same episodes, and any run can be repeated.
+  output at any number of workers, so methods can be compared on the same
+  episodes, and any run can be repeated or replayed.
 - **Disturbances are settings.** Noise, loss, latency, wind, and vehicle
   dynamics are each a parameter, off by default, that a sweep can vary from
-  none to severe. The models the study uses are [checked](reference/checks.md)
+  none to severe. The built-in models are [checked](reference/checks.md)
   against an independent implementation or published measurements.
 
-It is also built to be read: plugins are ordinary Rust structs, and a new
-model is one file.
+Ripple is also built to be read: a plugin is an ordinary Rust struct or
+Python class, and a new model is one file.
 
 ## Quick start
 
-You need [Rust](https://www.rust-lang.org/tools/install). From the repository
-root, install the `ripple` command:
+Ripple can be used in two ways. Most users write plugins in Python and run
+missions with the Python package. Developers working on the simulator itself
+build the Rust command with cargo.
+
+**Python.** Install [uv](https://docs.astral.sh/uv/) and
+[Rust](https://www.rust-lang.org/tools/install), then run the following from
+the repository root:
+
+```sh
+uv sync      # builds the simulator into .venv (a few minutes)
+uv run ripple run crates/python/examples/follow_nearest/follow-nearest.yaml --headless
+```
+
+This `ripple` is the simulator with one additional plugin in every slot,
+`Python`, which runs a class named in the mission file. [Plugins in
+Python](guides/python-plugins.md) continues from here.
+
+**Rust.** Install Rust, then install the `ripple` command from the
+repository root:
 
 ```sh
 cargo install --path crates/cli --locked
@@ -50,7 +68,9 @@ ripple run missions/waypoints-point-agents.yaml --headless
 ripple replay runs/waypoints-point-agents/run000
 ```
 
-Use `--viewer` instead of `--headless` to watch while it runs.
+Use `--viewer` instead of `--headless` to watch while it runs. Every command
+here also works under `uv run ripple`. A mission without Python plugins
+produces byte-identical output from either command.
 
 ## How a simulation is built
 

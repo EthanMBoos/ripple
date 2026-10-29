@@ -1,9 +1,12 @@
 # Training a single agent
 
-The optional `learning` crate shows reinforcement learning on Ripple: a policy
-trained in Python with Stable-Baselines3, then flown by Ripple from the saved
-network. This chapter trains one Crazyflie to fly to a goal and hold there.
-[Training a team](training-team.md) trains three agents together.
+The Python package's `ripple.learning` shows reinforcement learning on
+Ripple: a task written as one Python autonomy class, trained with
+Stable-Baselines3, then flown by Ripple from the saved network through the
+same class. This chapter trains one Crazyflie to fly to a goal and hold
+there. [Training a team](training-team.md) trains three agents together.
+Read [Plugins in Python](python-plugins.md) first for what a Python autonomy
+is.
 
 ## How to think about it
 
@@ -11,45 +14,52 @@ Two programs share the work:
 
 | | Owns |
 | --- | --- |
-| **Ripple** | The mission, the physics, and what the policy sees: the `HoverPolicy` autonomy's `observe` function. |
-| **Python** | The reward, the learning algorithm, and the training loop: `HoverEnv` (Gymnasium) and `train_hover.py`. |
+| **Ripple** | The mission, the physics, and the stepping. |
+| **The task** | What the policy sees and what its action does: the `Hover` class's `observe` and `act`, a Python autonomy. |
+| **The trainer** | The reward, the learning algorithm, and the training loop: `HoverEnv` (Gymnasium) and `train_hover.py`. |
 
-While Python trains, it steps the simulation itself: it asks Ripple for the
-agent's observation, picks an action, and runs one tick with it. When training
-ends, it saves the policy's network as an ONNX file. A replay runs the same
-mission in `ripple`, where `HoverPolicy` feeds its own observation to that
-network. The observation comes from one Rust function in both cases, so the
-network sees in replay exactly what it saw in training.
+While Python trains, it steps the simulation itself: it asks the task for the
+agent's observation, picks an action, and runs one tick with it, during which
+the same task class, flying as the agent's autonomy, takes that action. When
+training ends, it saves the policy's network as an ONNX file. A replay runs
+the same mission with `ripple run`, where the class feeds its own
+observation to that network. The observation and the action are one class's
+two methods in both cases, so the network sees in replay exactly what it saw
+in training, and the trained and the flown code cannot drift apart.
 
 ## Quick start
 
 You need [uv](https://docs.astral.sh/uv/) and Rust. From the repository root:
 
 ```sh
-cd crates/learning/python
-uv sync --extra train     # builds the Rust module, installs PyTorch and SB3
-uv run train_hover.py     # about 3 minutes; writes ../policies/hover.onnx
-cd ../../..
-cargo run -p ripple --features learning -- run crates/learning/missions/hover.yaml --viewer
+uv sync --extra train                           # builds the Rust module, installs PyTorch and SB3
+uv run crates/python/learning/train_hover.py    # about 3 minutes; writes ripple/learning/policies/hover.onnx
+uv run ripple run crates/python/learning/missions/hover.yaml --viewer
 ```
 
-The repository ships a trained `hover.onnx`, so the last command works
-without training first. Training prints the drone's distance from the goal at
-the end of 20 episodes it never trained on:
+The package ships a trained `hover.onnx`, so the last command works without
+training first. Training prints the drone's distance from the goal at the
+end of 20 episodes it never trained on:
 
 ```text
 distance to goal at the end, 20 new episodes: median 0.033 m, worst 0.126 m
 ```
 
-After changing Rust code in the learning crate, rebuild the module with `uv
-sync --reinstall-package ripple-learning`.
-
 ## The task
 
-`crates/learning/missions/hover.yaml` is an ordinary mission: one Crazyflie
-with `MultirotorVelocityController` and `Multirotor`, as in [Flying a
-multirotor](multirotor.md), starting at a random point a few meters from the
-goal (each mission seed is a different start).
+`crates/python/learning/missions/hover.yaml` is an ordinary mission: one
+Crazyflie with `MultirotorVelocityController` and `Multirotor`, as in
+[Flying a multirotor](multirotor.md), starting at a random point a few
+meters from the goal (each mission seed is a different start), and the
+`Python` autonomy naming the task:
+
+```yaml
+autonomy:
+  Python:
+    class: ripple.learning.hover.Hover
+    goal_m: [0, 0, 5]
+    max_speed_mps: 2
+```
 
 | | |
 | --- | --- |
@@ -64,30 +74,41 @@ learner still values what comes after.
 
 ## The pieces
 
+All under `crates/python`:
+
 | File | What it does |
 | --- | --- |
-| `crates/learning/src/hover.rs` | `HoverPolicy`: `observe`, and the step that turns an action into a velocity command |
-| `crates/learning/src/policy.rs` | Where actions come from: the ONNX network (`tract-onnx`), or the Python trainer |
-| `crates/learning/python/src/lib.rs` | The Python module: load a mission, `observe`, `step` with actions |
-| `crates/learning/python/ripple_learning/hover_env.py` | `HoverEnv`, the Gymnasium environment, with the reward |
-| `crates/learning/python/train_hover.py` | PPO training, a check on new episodes, and the ONNX export |
+| `ripple/learning/hover.py` | `Hover`: `observe`, and `act`, which turns an action into a velocity command |
+| `ripple/learning/__init__.py` | `Task`, the base the tasks share, whose `step` is `act(policy(observe(ctx)))`; `Trainer`, where actions come from while training |
+| `src/network.rs` | `Network`: the ONNX network, run in Rust (`tract-onnx`) |
+| `src/training.rs` | `Simulation`: load a mission, `observe`, `step` with actions |
+| `ripple/learning/hover_env.py` | `HoverEnv`, the Gymnasium environment, with the reward |
+| `learning/train_hover.py` | PPO training, a check on new episodes, and the ONNX export |
 
-Python sends actions in through `PluginRegistry::register_autonomy_with`,
-which builds each autonomy with a closure instead of `Plugin::new`. The Python
-module registers `HoverPolicy` that way, handing every instance the table the
-trainer writes actions to (`learning::register_for_training`). The stock
-`ripple` command registers it normally, so it reads its `policy` file.
+A task's policy is decided once, in `Task.initialize`: with `ctx.trainer`
+present, the policy is the trainer's next action for that entity; without
+it, the policy is the network read from the task's `policy_file` (the shipped
+one) or the mission's `policy` key. The training `Simulation` registers the
+`Python` autonomy through `PluginRegistry::register_autonomy_with`, which
+builds each instance with a closure instead of `Plugin::new`, handing every
+instance the trainer; `ripple run` registers it normally, so no `ctx.trainer`
+exists and the network flies. Between steps, the `Simulation` gets the
+environment's observation from a second instance of the task that it builds
+from the mission's parameters, so `observe` must depend on `ctx` alone and
+keep nothing on `self`; the `Task` docstring says so.
 
 The replayed policy is deterministic: it takes the network's mean action, the
 one SB3 uses with exploration noise off, and clamps it to [-1, 1]. A replay is
-byte-identical from run to run, like any Ripple run.
+byte-identical from run to run and at any worker count, like any Ripple run,
+and the Python tasks fly the shipped networks to the bit as the earlier Rust
+plugins did.
 
 ## Changing the task
 
-- **What the agent sees:** edit `HoverConfig::observe` and the observation
-  size (`OBSERVATION_SIZE` and `HoverEnv`'s `observation_space`). Python picks
-  up the change after the rebuild above. A network trained on the old
-  observation no longer loads: `HoverPolicy` checks the size.
+- **What the agent sees:** edit `Hover.observe` and `observation_size`,
+  nothing else; `HoverEnv` reads the size from the class. No rebuild: the
+  task is Python. A network trained on the old observation no longer loads,
+  since `Network` checks the size.
 - **What counts as good:** edit `HoverEnv.step`'s reward. It is Python only;
   the replay doesn't use it.
 - **Where and how it flies:** edit the mission (goal, start spread, airframe,
@@ -98,23 +119,25 @@ byte-identical from run to run, like any Ripple run.
 A few properties of Ripple let Python drive it one step at a time without
 slowing the simulation down or making setup hard:
 
-- **The simulation runs as compiled code.** Python only calls it. One hover
-  step, with all 25 physics substeps, takes about 36 µs.
-- **One small crossing per step.** Python sends an action of a few numbers
-  and gets an observation of a few numbers back: no copy of the world, no
-  network, no second process.
+- **The simulation runs as compiled code.** Python only calls it, and the
+  task's two methods are the only Python inside a step. One hover step, with
+  all 25 physics substeps, takes about 36 µs, plus a few microseconds for the
+  task ([The Python bridge](../development/python-bridge.md) has the cost).
+- **Small crossings per step.** Python sends an action of a few numbers
+  and gets an observation of a few numbers back, and the task sees a `ctx`
+  of a few floats: no copy of the world, no network, no second process.
 - **Ripple can be stepped from outside.** `Simulation::new` builds a fresh
   episode and `step` advances it one tick. Ripple keeps no global state, so
   many simulations can live in one Python process, and every random number is
   keyed by what it is for, so an episode depends only on its seed.
 - **Building is one command.** `uv sync` compiles the Rust module through
   maturin, with nothing else to install.
-- **Sharing is safe by construction.** Each simulation owns its state, and
-  the one thing Python and the plugins share, the table of actions, is
-  behind a lock. Many environments side by side can't corrupt each other.
+- **Sharing is safe by construction.** Each simulation owns its state and
+  its own `Trainer`, the one thing Python and the autonomies share. Many
+  environments side by side can't corrupt each other.
 - **The network runs in Rust.** `tract-onnx` loads the trained policy with
   no inference runtime to install, and gives the same answer every run.
-- **One observation function.** The same Rust `observe` runs in training, in
+- **One task class.** The same `observe` and `act` run in training, in
   replay, and in the test, so nothing has to be translated between them.
 
 ## How fast is it?
@@ -154,9 +177,9 @@ the same models. It is not built yet; build it when a real task needs it.
 | Choice | Options | Taken, and why |
 | --- | --- | --- |
 | Where training runs | Python with SB3 over PyO3; Rust with Burn | Python: students already know Gymnasium and SB3, and get every algorithm they offer. Burn would mean writing PPO. |
-| Running the trained policy | ONNX Runtime; `tract-onnx`; calling Python from the plugin | `tract-onnx`: pure Rust, nothing to install, and deterministic. Calling Python would make replays depend on it. |
-| Who computes the observation | Python from positions; the Rust plugin | The plugin's `observe`, called from both sides, so training and replay can't drift apart. |
-| How actions get in | A global table; a new context field for every autonomy; a registry closure | The closure (`register_autonomy_with`): one small engine addition, and no other autonomy changes. |
+| Running the trained policy | ONNX Runtime; `tract-onnx`; PyTorch in the task | `tract-onnx`, exposed to the task as `Network`: pure Rust, nothing to install, and deterministic. |
+| Where the task lives | Rust, with a Python window for training (how it began); Python for training with a generated Rust twin for flight; Python for both | Python for both: the point of the demo is students changing a task in Python with the trained and the flown code being one method. The cost is a Python call per agent per decision; the revisit trigger is in [The Python bridge](../development/python-bridge.md). |
+| How actions get in | A global table; a new context field for every autonomy; a registry closure | The closure (`register_autonomy_with`), handing each `Python` autonomy the trainer as `ctx.trainer`: one small engine addition, and no other autonomy changes. |
 | Vehicle and action | Motor speeds; attitude; velocity commands | Velocity commands to the checked Crazyflie controller: it trains in minutes. Motor-level control would be a research project, not a demo. |
 | Rates | 10–100 Hz decisions | 20 Hz decisions, with 500 Hz control and motion (25 substeps), the rate the Crazyflie is checked at. |
 | Reward | Below | −log(distance + 0.1 m). |
@@ -188,5 +211,5 @@ Training is deterministic for one seed on one machine, but sensitive: computing
 the reward in float32 instead of float64 changed seed 0's result from 0.032 m
 to 0.19 m. Compare settings over several seeds, not one run.
 
-`crates/learning/tests/policies.rs` replays the shipped policy in Ripple on
-five more seeds and checks each ends within 0.2 m of the goal.
+`crates/python/tests/test_learning.py` flies the shipped policy on five
+more seeds and checks each ends within 0.2 m of the goal.

@@ -1,0 +1,32 @@
+# The uv workspace. `uv sync` here builds the Python package in crates/python
+# (the simulator as a module, with the `ripple` command) into one `.venv` at
+# the repository root, so `uv run ripple ...` works from the root. The
+# package's own metadata is crates/python/pyproject.toml; this root is not a
+# package, it only names the member and forwards its extras.
+[project]
+name = "ripple-workspace"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["ripple"]
+
+[project.optional-dependencies]
+# `uv sync --extra learning` or `--extra train`: the package's extras.
+learning = ["ripple[learning]"]
+train = ["ripple[train]"]
+
+[dependency-groups]
+# `uv run pytest` runs the package's checks (crates/python/tests);
+# backports.zstd reads the run records (reference/run.py) before Python 3.14.
+dev = ["pytest>=8", "numpy", "backports.zstd; python_version < '3.14'", "ripple[learning]"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["crates/python"]
+
+[tool.uv.sources]
+ripple = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["crates/python/tests"]

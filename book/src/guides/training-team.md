@@ -8,17 +8,14 @@ are the same.
 
 ## Quick start
 
-From the repository root, after `uv sync --extra train` in
-`crates/learning/python`:
+From the repository root, after `uv sync --extra train`:
 
 ```sh
-cd crates/learning/python
-uv run train_spread.py    # about 3 minutes; writes ../policies/spread.onnx
-cd ../../..
-cargo run -p ripple --features learning -- run crates/learning/missions/spread.yaml --viewer
+uv run crates/python/learning/train_spread.py    # about 3 minutes; writes ripple/learning/policies/spread.onnx
+uv run ripple run crates/python/learning/missions/spread.yaml --viewer
 ```
 
-The repository ships a trained `spread.onnx`. Training prints how far the
+The package ships a trained `spread.onnx`. Training prints how far the
 least-covered landmark is from its nearest agent at the end of 20 new
 episodes:
 
@@ -31,8 +28,9 @@ and (0, 4).
 
 ## The task
 
-`crates/learning/missions/spread.yaml` has one entity group with `count: 3`,
-`SingleIntegrator` motion, and the `SpreadPolicy` autonomy. Each mission seed
+`crates/python/learning/missions/spread.yaml` has one entity group with
+`count: 3`, `SingleIntegrator` motion, and the `Python` autonomy running the
+`Spread` task (`class: ripple.learning.spread.Spread`). Each mission seed
 scatters the agents differently, a few meters around the origin.
 
 | | |
@@ -43,19 +41,21 @@ scatters the agents differently, a few meters around the origin.
 | Episode | One run of the mission: 15 s, 150 decisions at 10 Hz |
 
 Teammates are the contacts on the agent's own team that its tracker knows
-(`context.contacts`), so with a noisy contact sensor the policy sees noisy
+(`ctx.contacts`), so with a noisy contact sensor the policy sees noisy
 teammates, in training and in replay. The policy needs every teammate: one the
 tracker has lost, such as one out of a sensor's range, stops the run with an
 error.
 
 ## The pieces
 
+All under `crates/python`:
+
 | File | What it does |
 | --- | --- |
-| `crates/learning/src/spread.rs` | `SpreadPolicy`: `observe` and the step |
-| `crates/learning/python/ripple_learning/spread_env.py` | `SpreadEnv`, a PettingZoo parallel environment, with the reward |
-| `crates/learning/python/ripple_learning/team_vec_env.py` | `TeamVecEnv`: turns copies of the team into SB3's vector environment, one slot per agent |
-| `crates/learning/python/train_spread.py` | PPO training, a check on new episodes, and the ONNX export |
+| `ripple/learning/spread.py` | `Spread`: `observe` and `act` |
+| `ripple/learning/spread_env.py` | `SpreadEnv`, a PettingZoo parallel environment, with the reward |
+| `ripple/learning/team_vec_env.py` | `TeamVecEnv`: turns copies of the team into SB3's vector environment, one slot per agent |
+| `learning/train_spread.py` | PPO training, a check on new episodes, and the ONNX export |
 
 One network for every agent is called parameter sharing. SB3 trains one agent
 at a time, so `TeamVecEnv` presents each agent of each team copy as a separate
@@ -66,7 +66,7 @@ landmarks.
 ## Changing the task
 
 - **More agents:** add landmarks (`landmarks_m`) and raise `count` to match;
-  `SpreadPolicy` requires one agent per landmark. The observation grows by 4
+  `Spread` requires one agent per landmark. The observation grows by 4
   numbers per agent, so train a new network.
 - **Noisy sensing:** give the agents a `NoisyContacts` sensor in the mission,
   with a range that covers the area. The policy sees what the tracker
@@ -101,5 +101,5 @@ landmark is the coordination problem `simple_spread` is known for, and
 methods that train a critic on the whole team's state (MAPPO) target it. The
 shipped policy is seed 0's.
 
-`crates/learning/tests/policies.rs` replays it in Ripple on five more seeds
-and checks every landmark ends within 0.5 m of an agent.
+`crates/python/tests/test_learning.py` flies it on five more seeds and
+checks every landmark ends within 0.5 m of an agent.

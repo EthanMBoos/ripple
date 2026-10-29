@@ -1,0 +1,34 @@
+# The Python package `ripple`: the `ripple` command with one more autonomy,
+# `Python`, that runs a class written in Python. Built by maturin
+# (pyproject.toml), not by Cargo alone; see README.md.
+[package]
+name = "ripple-python"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+# The module is `ripple._native` (pyproject.toml); the target's name must not
+# collide with the `ripple` command's crate in a workspace build.
+name = "ripple_native"
+crate-type = ["cdylib"]
+# No Rust tests here: a test binary would need libpython at run time. The
+# pytest suite in tests/ exercises this module.
+test = false
+doctest = false
+
+[dependencies]
+ripple-core = { path = "../core" }
+# The command line, and the user plugin crates the Rust `ripple` registers.
+ripple = { path = "../cli" }
+starter = { path = "../starter" }
+delivery = { path = "../delivery" }
+anyhow.workspace = true
+serde_yaml_ng.workspace = true
+# maturin turns on pyo3's extension-module feature (pyproject.toml).
+pyo3 = "0.30"
+# Runs a trained policy's ONNX network for the learning tasks (ripple.learning);
+# pure Rust, no inference runtime to install, and deterministic.
+tract-onnx = { version = "0.23", default-features = false }

@@ -203,6 +203,9 @@ sweeps are days of work, and the calls run in parallel over a few days.
 
 ## Engine
 
+- [ ] Later: move `scripts/bulk_run.py` into `ripple sweep --jobs`,
+      `--slurm`, and `ripple collect`, with the batch script kept as the
+      file a cluster user edits; the plan is `docs/SWEEP_CAMPAIGNS.md`.
 - [ ] Later, low priority: accept a new speed baseline. The workload keys
       were renamed, so `perf.py` won't compare until `--accept`. A run on
       2026-10-24 (laptop hot and on low battery, right after a long

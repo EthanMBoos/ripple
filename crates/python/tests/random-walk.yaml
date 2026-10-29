@@ -1,0 +1,23 @@
+# Eight aircraft on the RandomWalk test plugin (random_walk.py, beside this file).
+format_version: 1
+name: Random walk
+
+run:
+  end_s: 20
+  dt_s: 0.1
+  seed: 7
+end_conditions: [time]
+
+entities:
+  walkers:
+    team: 1
+    count: 8
+    position_m: [0, 0, 200]
+    position_variance_m2: [10000, 10000, 0]
+    heading_deg: 0
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+    autonomy:
+      Python:
+        class: random_walk.RandomWalk
+        speed_mps: 25

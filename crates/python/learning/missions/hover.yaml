@@ -1,0 +1,45 @@
+# Single-agent RL: a Crazyflie flies to a goal 5 m up and holds there. Each
+# seed starts it somewhere else within a few meters. The Hover task
+# (ripple/learning/hover.py) is a Python autonomy: train_hover.py trains it
+# on this mission and the same class flies the trained network, from the
+# repository root:
+#   uv run ripple run crates/python/learning/missions/hover.yaml --viewer
+# Book chapter: "Training a single agent".
+format_version: 1
+name: Hover
+
+run:
+  end_s: 10
+  # The policy acts at 20 Hz; the controller and motion run at 500 Hz, the
+  # rate the Crazyflie is checked at (book chapter "Flying a multirotor").
+  dt_s: 0.05
+  motion_multiplier: 25
+  seed: 1
+
+entities:
+  drone:
+    team: 1
+    visual_model: sphere
+    position_m: [0, 0, 5]
+    # Standard deviations of 3 m across and 1 m up.
+    position_variance_m2: [9, 9, 1]
+    # Draw the start from the variance (otherwise used only to escape a collision).
+    randomize_every_spawn: true
+    autonomy:
+      Python:
+        class: ripple.learning.hover.Hover
+        goal_m: [0, 0, 5]
+        max_speed_mps: 2
+        # policy: a trained network other than the shipped one; relative
+        # paths start where `ripple` runs.
+    controller:
+      MultirotorVelocityController:
+        airframe: crazyflie2
+    motion_model:
+      Multirotor:
+        airframe: crazyflie2
+        # Förster's motor lag and rotor drag, as in missions/multirotor-velocity.yaml.
+        motor_time_constant_up_s: 0.0647
+        motor_time_constant_down_s: 0.0647
+        rotor_drag_coefficient: 9.1785e-7
+        rotor_drag_coefficient_axial: 10.311e-7

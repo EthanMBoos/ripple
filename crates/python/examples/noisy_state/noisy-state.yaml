@@ -1,0 +1,41 @@
+# The noisy-state mission with the sensor written in Python (noisy_state.py,
+# beside this file). NoisyState changes belief, never physical truth directly.
+format_version: 1
+name: noisy-state
+
+run:
+  end_s: 20
+  dt_s: 0.1
+  seed: 12345
+
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  aircraft:
+    visual_model: sphere
+    heading_deg: 0
+    velocity_mps: [20, 0, 0]
+    autonomy:
+      Straight:
+        speed_mps: 20
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+    sensors:
+      NoisyState:
+        plugin: Python
+        class: noisy_state.NoisyState
+        loop_rate_hz: 10
+        position_bias_m: [0, 0, 2]
+        position_stddev_m: [0.5, 0.5, 0.5]
+        velocity_stddev_mps: [0.2, 0.2, 0.2]
+
+entities:
+  blue:
+    template: aircraft
+    team: 1
+    position_m: [0, -60, 200]
+  red:
+    template: aircraft
+    team: 2
+    position_m: [0, 60, 200]

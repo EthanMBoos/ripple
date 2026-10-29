@@ -101,6 +101,7 @@ cargo test --workspace
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 python3 -m unittest discover -s reference -p 'test_*.py'   # after checker edits
+uv sync --reinstall-package ripple && uv run pytest     # after Python bridge edits
 ```
 
 The executable is `ripple` (package `ripple`); use `cargo run -p ripple --bin

@@ -1,11 +1,14 @@
 [workspace]
-members = ["crates/core", "crates/cli", "crates/starter", "crates/delivery", "crates/ardupilot", "crates/learning", "crates/learning/python"]
+members = ["crates/core", "crates/cli", "crates/starter", "crates/delivery", "crates/ardupilot", "crates/python"]
 default-members = ["crates/core", "crates/cli"]
 resolver = "2"
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+# The oldest toolchain that builds this (clippy checks it); with this, an
+# older one says so plainly instead of failing on a newer method.
+rust-version = "1.88"
 license = "LGPL-3.0-or-later"
 
 [workspace.dependencies]

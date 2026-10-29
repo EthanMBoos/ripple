@@ -7,6 +7,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use ripple_core::plugin::PluginRegistry;
+use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 mod replay;
@@ -43,19 +44,26 @@ enum Command {
     },
 }
 
-/// Parses the command line and runs the command with `registry`'s plugins.
+/// Parses `args` (the program name first, as `std::env::args_os` gives them)
+/// and runs the command with `registry`'s plugins. The arguments are passed in
+/// rather than read from the process because the Python package's `ripple`
+/// command runs inside an interpreter whose own arguments come first.
 ///
 /// `project_root` is the repository: missions are looked up in its
 /// `missions/`, and runs and sweeps are written to its `runs/` and `sweeps/`.
 /// `--root` overrides it.
-pub fn main(registry: PluginRegistry, project_root: impl AsRef<Path>) -> Result<()> {
+pub fn main(
+    registry: PluginRegistry,
+    project_root: impl AsRef<Path>,
+    args: impl IntoIterator<Item = OsString>,
+) -> Result<()> {
     // Resolve `crates/cli/../..` to a plain path so printed output paths are readable.
     let project_root = project_root
         .as_ref()
         .canonicalize()
         .unwrap_or_else(|_| project_root.as_ref().to_path_buf());
     let project_root = project_root.as_path();
-    match Cli::parse().command {
+    match Cli::parse_from(args).command {
         Command::Run(options) => run::run(options, &registry, project_root)?,
         Command::Sweep(options) => sweep::sweep(options, &registry, project_root)?,
         Command::Replay { path, draw_trails } => replay::replay(&path, draw_trails)?,

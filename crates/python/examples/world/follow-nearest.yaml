@@ -1,0 +1,44 @@
+# The starter crate's follow-nearest mission with the world plugins written in
+# Python (beside this file): the collision interaction, the network every
+# plugin talks on, and the collision metrics.
+format_version: 1
+name: Follow the nearest opponent
+
+run:
+  end_s: 60
+  dt_s: 0.1
+  seed: 1
+end_conditions: [time, one_team_left]
+
+interactions:
+  SimpleCollision: {plugin: Python, class: simple_collision.SimpleCollision}
+networks:   # Straight listens on GlobalNetwork for a boundary, so it keeps the name
+  GlobalNetwork: {plugin: Python, class: global_network.GlobalNetwork}
+metrics:
+  SimpleCollisionMetrics: {plugin: Python, class: collision_metrics.SimpleCollisionMetrics}
+
+templates:
+  aircraft:
+    position_variance_m2: [100, 100, 0]
+    visual_model: aircraft
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+
+entities:
+  target:
+    template: aircraft
+    team: 1
+    position_m: [0, 0, 200]
+    heading_deg: 0
+    autonomy:
+      Straight:
+        speed_mps: 18
+
+  chaser:
+    template: aircraft
+    team: 2
+    position_m: [-300, 150, 220]
+    heading_deg: 0
+    autonomy:
+      FollowNearest:
+        speed_mps: 30

@@ -164,6 +164,10 @@ impl Commands<'_> {
     pub fn substeps(&self) -> usize {
         self.times.len()
     }
+    /// The motion model's input port names, the order `values` uses.
+    pub fn names(&self) -> &[String] {
+        self.names
+    }
     pub fn time(&self, substep: usize) -> StepTime {
         self.times[substep]
     }

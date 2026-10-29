@@ -78,8 +78,8 @@ def missions(root=ROOT):
     """Every runnable mission under missions/ and the user crates, not sweeps.
 
     ArduPilot missions need SITL in Docker and are run by their own study.
-    Learning missions need `--features learning`; crates/learning/tests
-    replays them.
+    The Python package's missions (crates/python) need its command; its
+    pytest suite runs them.
     """
     found = [path for path in sorted((root / "missions").rglob("*"))
              if path.suffix == ".yaml"

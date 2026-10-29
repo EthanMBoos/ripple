@@ -1,0 +1,44 @@
+# The starter crate's follow-nearest mission with both estimators written in
+# Python (pass_through.py, beside this file): the chaser's belief of itself and
+# of its target passes through Python on the way from the perfect sensors to
+# FollowNearest.
+format_version: 1
+name: Follow the nearest opponent
+
+run:
+  end_s: 60
+  dt_s: 0.1
+  seed: 1
+end_conditions: [time, one_team_left]
+
+interactions: {SimpleCollision: {}}
+networks: {GlobalNetwork: {}}   # Straight listens on it for a boundary
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  aircraft:
+    position_variance_m2: [100, 100, 0]
+    visual_model: aircraft
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+    localization: {Python: {class: pass_through.PassThroughState}}
+    tracking: {Python: {class: pass_through.PassThroughContacts}}
+
+entities:
+  target:
+    template: aircraft
+    team: 1
+    position_m: [0, 0, 200]
+    heading_deg: 0
+    autonomy:
+      Straight:
+        speed_mps: 18
+
+  chaser:
+    template: aircraft
+    team: 2
+    position_m: [-300, 150, 220]
+    heading_deg: 0
+    autonomy:
+      FollowNearest:
+        speed_mps: 30

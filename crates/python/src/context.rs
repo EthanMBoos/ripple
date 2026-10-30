@@ -4,14 +4,17 @@
 //! call: the same attributes a Rust plugin's context has, named for the slot
 //! (`bridge.rs` lists them). A plugin answers with plain data too: a dict of
 //! port values, a state as a dict of the fields to change, a contact list.
+use anyhow::{Context as _, Result, anyhow, bail};
 use pyo3::exceptions::{PyAttributeError, PyTypeError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList, PyString, PyTuple};
+use pyo3::types::{PyBool, PyDict, PyInt, PyList, PyString, PyTuple};
 use ripple_core::plugin::{
     Contact as KnownContact, ContactList, MessageEndpoint, PluginRandom, StepTime,
 };
 use ripple_core::{EntitySnapshot, KinematicState, Quaternion, Vec3};
+use serde_json::Value as Json;
 use std::cmp::Ordering;
+use std::sync::{Arc, Mutex};
 
 type Vector = (f64, f64, f64);
 
@@ -441,17 +444,40 @@ fn part(item: &Bound<'_, PyAny>) -> PyResult<u64> {
     ))
 }
 
+/// One delivered message: who sent it, when, and its value as plain data (a
+/// dict, list, number, string, bool, or `None`), the JSON shape the run record
+/// shows for the same message.
+#[pyclass(frozen, get_all, module = "ripple")]
+pub struct Message {
+    pub sender: Py<Endpoint>,
+    pub sent_at_s: f64,
+    pub delivered_at_s: f64,
+    pub value: Py<PyAny>,
+}
+
 /// Everything one call sees, as attributes. Which attributes exist depends on
 /// the slot; asking for one the slot does not have is an `AttributeError`.
+/// `publish` converts a message to JSON there and then, so later changes to
+/// the Python value do not reach it, and queues it; the bridge sends the
+/// queue when the call returns, in the order published.
 #[pyclass(frozen, module = "ripple")]
 pub struct Context {
     attributes: Py<PyDict>,
+    outbox: Arc<Mutex<Vec<Queued>>>,
 }
+/// One message `publish` queued: `(network, topic, value)`.
+pub type Queued = (String, String, Json);
 impl Context {
     pub fn new(attributes: Bound<'_, PyDict>) -> Self {
         Self {
             attributes: attributes.unbind(),
+            outbox: Arc::default(),
         }
+    }
+    /// The queue `publish` fills, shared with the Python object so the
+    /// bridge can take it after the call.
+    pub fn outbox(&self) -> Arc<Mutex<Vec<Queued>>> {
+        Arc::clone(&self.outbox)
     }
     pub fn set<'py>(
         &self,
@@ -464,6 +490,18 @@ impl Context {
 }
 #[pymethods]
 impl Context {
+    /// Queues `value` for `network`/`topic`; it is published when this call
+    /// returns. A value is a dict, list, number, string, bool, or `None`.
+    fn publish(&self, network: &str, topic: &str, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let value = json_from_python(&value)
+            .map_err(|error| PyValueError::new_err(format!("{error:#}")))?;
+        self.outbox.lock().expect("outbox lock").push((
+            network.to_owned(),
+            topic.to_owned(),
+            value,
+        ));
+        Ok(())
+    }
     fn __getattr__(&self, py: Python<'_>, name: &str) -> PyResult<Py<PyAny>> {
         self.attributes
             .bind(py)
@@ -474,4 +512,89 @@ impl Context {
     fn __dir__(&self, py: Python<'_>) -> PyResult<Py<PyList>> {
         Ok(self.attributes.bind(py).keys().unbind())
     }
+}
+
+/// A received message's JSON as plain Python data.
+pub fn json_to_python<'py>(py: Python<'py>, value: &Json) -> Result<Bound<'py, PyAny>> {
+    Ok(match value {
+        Json::Null => py.None().into_bound(py),
+        Json::Bool(flag) => flag.into_pyobject(py)?.to_owned().into_any(),
+        Json::Number(number) => {
+            if let Some(integer) = number.as_i64() {
+                integer.into_pyobject(py)?.into_any()
+            } else if let Some(integer) = number.as_u64() {
+                integer.into_pyobject(py)?.into_any()
+            } else {
+                number
+                    .as_f64()
+                    .context("message numbers are finite")?
+                    .into_pyobject(py)?
+                    .into_any()
+            }
+        }
+        Json::String(text) => text.into_pyobject(py)?.into_any(),
+        Json::Array(items) => {
+            let list = PyList::empty(py);
+            for item in items {
+                list.append(json_to_python(py, item)?)?;
+            }
+            list.into_any()
+        }
+        Json::Object(entries) => {
+            let dict = PyDict::new(py);
+            for (key, item) in entries {
+                dict.set_item(key, json_to_python(py, item)?)?;
+            }
+            dict.into_any()
+        }
+    })
+}
+
+/// A value to publish, as JSON: `None`, bools, ints that fit in 64 bits,
+/// finite floats, strings, lists and tuples, and dicts with string keys.
+/// Anything else is an error naming its type.
+pub fn json_from_python(value: &Bound<'_, PyAny>) -> Result<Json> {
+    if value.is_none() {
+        return Ok(Json::Null);
+    }
+    if let Ok(flag) = value.cast::<PyBool>() {
+        return Ok(Json::Bool(flag.is_true()));
+    }
+    if value.is_instance_of::<PyInt>() {
+        return value
+            .extract::<i64>()
+            .map(Json::from)
+            .map_err(|_| anyhow!("message integers fit in 64 bits"));
+    }
+    if let Ok(number) = value.extract::<f64>() {
+        return serde_json::Number::from_f64(number)
+            .map(Json::Number)
+            .context("message numbers are finite");
+    }
+    if let Ok(text) = value.cast::<PyString>() {
+        return Ok(Json::String(text.to_cow()?.into_owned()));
+    }
+    if let Ok(dict) = value.cast::<PyDict>() {
+        let mut entries = serde_json::Map::new();
+        for (key, item) in dict.iter() {
+            let key = key
+                .cast::<PyString>()
+                .map_err(|_| anyhow!("message dict keys are strings"))?
+                .to_cow()?
+                .into_owned();
+            entries.insert(key, json_from_python(&item)?);
+        }
+        return Ok(Json::Object(entries));
+    }
+    if value.cast::<PyList>().is_ok() || value.cast::<pyo3::types::PyTuple>().is_ok() {
+        return value
+            .try_iter()?
+            .map(|item| json_from_python(&item?))
+            .collect::<Result<Vec<_>>>()
+            .map(Json::Array);
+    }
+    bail!(
+        "a message value is a dict, list, number, string, bool, or None, not {}",
+        value.get_type().name()?
+    )
 }

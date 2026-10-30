@@ -83,6 +83,7 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<context::Endpoint>()?;
     module.add_class::<context::Link>()?;
     module.add_class::<context::Event>()?;
+    module.add_class::<context::Message>()?;
     module.add_class::<network::Network>()?;
     module.add_class::<training::Simulation>()?;
     module.add_class::<context::Random>()

@@ -187,8 +187,12 @@ for message in context.messages.receive::<BoundaryRegion>("GlobalNetwork", "Boun
 }
 ```
 
-GlobalNetwork reaches every plugin, and the engine publishes events such as
-`EntityGenerated` and `NonTeamCollision` on it. Any other network must be
+A message type derives `Serialize` and `Deserialize`, so it round-trips
+through JSON: that is how a plugin written in Python sends and receives it
+([Plugins in Python](python-plugins.md#messages)), and how `--trace`
+records it. GlobalNetwork reaches every plugin, and the engine publishes
+events such as `EntityGenerated` and `NonTeamCollision` on it. Any other
+network must be
 listed in the mission. An autonomy reads a message on the tick after it was
 sent; [How a run works](../concepts/how-a-run-works.md#messages) explains the
 timing.

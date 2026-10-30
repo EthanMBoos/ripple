@@ -18,7 +18,7 @@ pub const SOFT_AVOIDANCE_TOPIC: &str = "SoftAvoidance";
 /// Fleet field and full request schedule, for scoring unopened requests too.
 pub const SOFT_FLEET_TOPIC: &str = "SoftFleet";
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SoftFleet {
     pub field: crate::planner::SoftAvoidance,
     pub requests: Vec<Request>,
@@ -35,7 +35,7 @@ pub enum VehicleKind {
 }
 
 /// What a vehicle can do, as the dispatcher is told it.
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct VehicleCard {
     pub kind: VehicleKind,
     pub cruise_speed_mps: f64,
@@ -47,7 +47,7 @@ pub struct VehicleCard {
     pub endurance_s: f64,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Phase {
     Idle,
@@ -61,7 +61,7 @@ pub enum Phase {
     Lost,
 }
 
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Status {
     pub vehicle_id: i32,
     pub card: VehicleCard,
@@ -92,7 +92,7 @@ impl SkillName {
     }
 }
 
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Assignment {
     pub vehicle_id: i32,
     pub request_id: i32,
@@ -102,14 +102,14 @@ pub struct Assignment {
     pub via_world_m: Option<Vec3>,
 }
 
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Delivered {
     pub vehicle_id: i32,
     pub request_id: i32,
     pub time_s: f64,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Request {
     pub id: i32,
     pub site: String,
@@ -128,7 +128,7 @@ pub struct Request {
 /// One dispatch decision in full: what the planner saw, what it proposed, and
 /// what became of each call. Rerun a case with `--trace` to read them
 /// (crates/delivery/trace.py).
-#[derive(Clone, Debug, Default, Serialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Decision {
     pub time_s: f64,
     /// Instructions in force, as shown to the model.
@@ -141,7 +141,7 @@ pub struct Decision {
     pub calls: Vec<CallRecord>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Waiting {
     pub request_id: i32,
     pub site: String,
@@ -149,7 +149,7 @@ pub struct Waiting {
     pub deadline_s: f64,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CallRecord {
     pub vehicle_id: i32,
     /// `None` when the model named a skill that doesn't exist.

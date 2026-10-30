@@ -27,6 +27,8 @@ starter = { path = "../starter" }
 delivery = { path = "../delivery" }
 anyhow.workspace = true
 serde_yaml_ng.workspace = true
+# Messages cross the bridge as JSON, the mailbox's form for them.
+serde_json.workspace = true
 # maturin turns on pyo3's extension-module feature (pyproject.toml).
 pyo3 = "0.30"
 # Runs a trained policy's ONNX network for the learning tasks (ripple.learning);

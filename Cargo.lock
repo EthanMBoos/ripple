@@ -4476,6 +4476,7 @@ dependencies = [
  "pyo3",
  "ripple",
  "ripple-core",
+ "serde_json",
  "serde_yaml_ng",
  "starter",
  "tract-onnx",

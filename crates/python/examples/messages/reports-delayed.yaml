@@ -1,0 +1,38 @@
+# The reports mission with the network written in Python and delaying every
+# message 0.3 s (examples/world/global_network.py), so the count shows the
+# delivery times the metrics plugin sees.
+format_version: 1
+name: reports-delayed
+
+run:
+  end_s: 5
+  dt_s: 0.1
+  seed: 1
+
+networks:
+  GlobalNetwork: {plugin: Python, class: global_network.GlobalNetwork, delay_s: 0.3}
+metrics:
+  ReportCount: {plugin: Python, class: report_count.ReportCount}
+
+templates:
+  agent:
+    visual_model: sphere
+    position_variance_m2: [0, 0, 0]
+    autonomy:
+      Reporter: {plugin: Python, class: reporter.Reporter, velocity_mps: [1, 0, 0]}
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}
+
+entities:
+  blue:
+    template: agent
+    team: 1
+    position_m: [0, -2, 0]
+  red:
+    template: agent
+    team: 2
+    position_m: [0, 2, 0]
+  green:
+    template: agent
+    team: 2
+    position_m: [0, 6, 0]

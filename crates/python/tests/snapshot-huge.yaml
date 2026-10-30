@@ -1,0 +1,23 @@
+# One point agent publishes a dict then changes it (snapshot.py, beside this
+# file); the metrics plugin records what arrived.
+format_version: 1
+name: snapshot-huge
+
+run:
+  end_s: 1
+  dt_s: 0.1
+  seed: 1
+
+networks: {GlobalNetwork: {}}
+metrics:
+  Received: {plugin: Python, class: snapshot.Received}
+
+entities:
+  agent:
+    team: 1
+    position_m: [0, 0, 0]
+    position_variance_m2: [0, 0, 0]
+    autonomy:
+      Mutating: {plugin: Python, class: snapshot.Mutating, huge: true}
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}

@@ -3,7 +3,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::Result;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     common::{SpatialIndex, Terrain, TruthContacts},
@@ -26,7 +26,7 @@ pub use trace::TraceSink;
 
 use generation::Generator;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum EventKind {
     EntityGenerated,
     EntityRemoved,
@@ -49,7 +49,7 @@ impl EventKind {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Event {
     pub time_s: f64,
     pub kind: EventKind,

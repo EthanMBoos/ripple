@@ -3,7 +3,7 @@ use anyhow::Result;
 use ripple_core::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Population {
     pub entity_count: usize,
 }

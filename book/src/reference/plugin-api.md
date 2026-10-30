@@ -221,7 +221,9 @@ for message in context.messages.receive::<Population>("ExampleNetwork", "populat
 }
 ```
 
-- Payload types derive `serde::Serialize`, so `--trace` can record them.
+- Payload types derive `serde::Serialize` and `serde::Deserialize`, so
+  `--trace` can record them and a plugin written in Python can send and
+  receive them as JSON; `subscribe` requires both.
 - `receive` drains this subscriber's own queue and nobody else's. Each
   message has `sender`, `sent_at_s`, `delivered_at_s`, and `value`.
 - A wrong payload type, or a network the mission doesn't list, is an error.

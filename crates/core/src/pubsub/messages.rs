@@ -3,8 +3,8 @@ use crate::{
     common::{PluginRandom, TruthContacts},
     plugin::{StepTime, Update},
 };
-use anyhow::{Result, ensure};
-use serde::Serialize;
+use anyhow::{Context as _, Result, ensure};
+use serde::{Serialize, de::DeserializeOwned};
 use serde_json::Value;
 use std::{
     any::{Any, TypeId},
@@ -28,16 +28,66 @@ pub struct Message<T> {
 type Channel = (String, String);
 type Payload = Arc<dyn Any + Send + Sync>;
 type PayloadSerializer = fn(&Payload) -> Result<Value>;
+type PayloadDeserializer = fn(&Value) -> Result<Payload>;
 
 fn serialize_payload<T: Serialize + 'static>(value: &Payload) -> Result<Value> {
     Ok(serde_json::to_value(
         value.downcast_ref::<T>().expect("payload type changed"),
     )?)
 }
+fn deserialize_payload<T: DeserializeOwned + Send + Sync + 'static>(
+    value: &Value,
+) -> Result<Payload> {
+    let typed: T = serde_json::from_value(value.clone())
+        .with_context(|| format!("message does not fit {}", std::any::type_name::<T>()))?;
+    Ok(Arc::new(typed))
+}
+
+/// What a subscriber expects on a channel: its message type, and the two
+/// conversions that let a message cross between a typed Rust payload and a
+/// JSON `Value`. A subscription to `Value` itself takes any message on the
+/// channel as JSON; a `Value` published on the channel (a plugin written in
+/// Python sends these) is turned into the subscriber's type on delivery. Every
+/// subscribed type therefore round-trips through JSON, the shape the run
+/// record already shows.
+#[derive(Clone, Copy)]
+struct Subscription {
+    type_id: TypeId,
+    to_json: PayloadSerializer,
+    from_json: PayloadDeserializer,
+}
+impl Subscription {
+    fn of<T: Serialize + DeserializeOwned + Send + Sync + 'static>() -> Self {
+        Self {
+            type_id: TypeId::of::<T>(),
+            to_json: serialize_payload::<T>,
+            from_json: deserialize_payload::<T>,
+        }
+    }
+    /// The payload and its serializer as this subscriber receives them, converted
+    /// across the JSON boundary when the publisher's type is not its own.
+    fn deliver(&self, publication: &Publication) -> Result<(Payload, PayloadSerializer)> {
+        let published = publication.value.as_ref().type_id();
+        if published == self.type_id {
+            Ok((Arc::clone(&publication.value), publication.serialize))
+        } else if self.type_id == TypeId::of::<Value>() {
+            let json = (publication.serialize)(&publication.value)?;
+            Ok((Arc::new(json), serialize_payload::<Value>))
+        } else if published == TypeId::of::<Value>() {
+            let json = publication
+                .value
+                .downcast_ref::<Value>()
+                .expect("payload type changed");
+            Ok(((self.from_json)(json)?, self.to_json))
+        } else {
+            anyhow::bail!("message type mismatch")
+        }
+    }
+}
 /// Each channel's subscribers (per entity, for same-entity routing), in mailbox
-/// order: the mailbox's index and the message type it expects. The entity comes
-/// first in the key so most comparisons are of integers, not channel names.
-type Subscribers<'a> = BTreeMap<(Option<i32>, &'a Channel), Vec<(usize, TypeId)>>;
+/// order: the mailbox's index and what it expects. The entity comes first in
+/// the key so most comparisons are of integers, not channel names.
+type Subscribers<'a> = BTreeMap<(Option<i32>, &'a Channel), Vec<(usize, Subscription)>>;
 
 // Message counts, not byte limits. Fail clearly instead of silently losing data.
 // Keep these ordinary constants until a real experiment needs per-queue tuning.
@@ -61,11 +111,14 @@ struct Envelope {
     delivered_at_s: f64,
     value: Payload,
     serialize: PayloadSerializer,
+    /// For the trace, from the payload as published: conversion to JSON
+    /// for a subscriber would lose which entities an event names.
+    event_ids: Option<Vec<i32>>,
 }
 
 /// One mailbox per plugin instance. Multicast shares immutable payloads, never plugin state.
 pub struct Messages {
-    subscriptions: BTreeMap<Channel, TypeId>,
+    subscriptions: BTreeMap<Channel, Subscription>,
     inbox: BTreeMap<Channel, Vec<Envelope>>,
     outbox: Vec<Publication>,
     outbox_capacity: usize,
@@ -90,7 +143,10 @@ impl Messages {
             ..Self::default()
         }
     }
-    pub fn subscribe<T: Send + Sync + 'static>(
+    /// A message type must round-trip through JSON (`Serialize` and
+    /// `Deserialize`), so that a message published as JSON by a plugin written
+    /// in Python reaches a Rust subscriber as its type; see [`Subscription`].
+    pub fn subscribe<T: Serialize + DeserializeOwned + Send + Sync + 'static>(
         &mut self,
         network: &str,
         topic: &str,
@@ -102,11 +158,11 @@ impl Messages {
         let channel = (network.to_owned(), topic.to_owned());
         if let Some(previous) = self.subscriptions.get(&channel) {
             ensure!(
-                *previous == TypeId::of::<T>(),
+                previous.type_id == TypeId::of::<T>(),
                 "subscription changed message type: {network}/{topic}"
             );
         }
-        self.subscriptions.insert(channel, TypeId::of::<T>());
+        self.subscriptions.insert(channel, Subscription::of::<T>());
         Ok(())
     }
     pub fn publish<T: Serialize + Send + Sync + 'static>(
@@ -150,7 +206,9 @@ impl Messages {
     ) -> Result<Vec<Message<T>>> {
         let channel = (network.to_owned(), topic.to_owned());
         ensure!(
-            self.subscriptions.get(&channel) == Some(&TypeId::of::<T>()),
+            self.subscriptions
+                .get(&channel)
+                .is_some_and(|subscription| subscription.type_id == TypeId::of::<T>()),
             "missing or differently typed subscription: {network}/{topic}"
         );
         self.inbox
@@ -319,11 +377,11 @@ impl NetworkContext<'_, '_> {
                 } else {
                     None
                 };
-                for (channel, expected_type) in &mailbox.messages.subscriptions {
+                for (channel, subscription) in &mailbox.messages.subscriptions {
                     subscribers
                         .entry((entity, channel))
                         .or_default()
-                        .push((index, *expected_type));
+                        .push((index, *subscription));
                 }
             }
         }
@@ -342,14 +400,15 @@ impl NetworkContext<'_, '_> {
             let receivers = subscribers
                 .get(&(group, &publication.channel))
                 .map_or(&[][..], Vec::as_slice);
-            for &(index, expected_type) in receivers {
+            for &(index, subscription) in receivers {
                 let mailbox = &self.mailboxes[index];
-                ensure!(
-                    expected_type == publication.value.as_ref().type_id(),
-                    "message type mismatch on {}/{}",
-                    publication.channel.0,
-                    publication.channel.1
-                );
+                let event_ids = event_ids(&publication.value);
+                let (value, serialize) = subscription.deliver(&publication).with_context(|| {
+                    format!(
+                        "message on {}/{} to {:?}",
+                        publication.channel.0, publication.channel.1, mailbox.endpoint
+                    )
+                })?;
                 let link = Transmission {
                     time: self.time,
                     sender: &sender,
@@ -374,8 +433,8 @@ impl NetworkContext<'_, '_> {
                             topic: publication.channel.1.clone(),
                             sender: sender.clone(),
                             receiver: mailbox.endpoint.clone(),
-                            entity_ids: event_ids(&publication.value),
-                            payload: (publication.serialize)(&publication.value)?,
+                            entity_ids: event_ids.clone(),
+                            payload: serialize(&value)?,
                             deliver_at_s: Some(delivered_at_s),
                         });
                     }
@@ -391,8 +450,9 @@ impl NetworkContext<'_, '_> {
                             sender: sender.clone(),
                             sent_at_s: publication.sent_at_s,
                             delivered_at_s,
-                            value: Arc::clone(&publication.value),
-                            serialize: publication.serialize,
+                            value,
+                            serialize,
+                            event_ids,
                         },
                     });
                 }
@@ -434,7 +494,7 @@ impl NetworkContext<'_, '_> {
                         topic: message.channel.1.clone(),
                         sender: message.envelope.sender.clone(),
                         receiver: receiver.endpoint.clone(),
-                        entity_ids: event_ids(&message.envelope.value),
+                        entity_ids: message.envelope.event_ids.clone(),
                         payload: (message.envelope.serialize)(&message.envelope.value)?,
                         deliver_at_s: None,
                     });
@@ -479,6 +539,14 @@ mod tests {
         fn phase(
             &mut self,
             time_s: f64,
+            run: impl FnOnce(&mut NetworkContext<'_, '_>) -> Result<Update>,
+        ) -> Result<()> {
+            self.traced_phase(time_s, None, run)
+        }
+        fn traced_phase(
+            &mut self,
+            time_s: f64,
+            trace: Option<&mut NetworkTrace>,
             run: impl FnOnce(&mut NetworkContext<'_, '_>) -> Result<Update>,
         ) -> Result<()> {
             let endpoint = MessageEndpoint {
@@ -526,7 +594,7 @@ mod tests {
                 scheduled: &mut self.scheduled,
                 random: PluginRandom::new(1, 0, "test"),
                 routed: false,
-                trace: None,
+                trace,
             })?;
             Ok(())
         }
@@ -691,6 +759,131 @@ mod tests {
     }
 
     #[test]
+    fn a_json_subscriber_receives_a_typed_message_as_json() -> Result<()> {
+        // A subscription to `Value` takes any message on the channel as JSON:
+        // the subscribers of `test/sample` expect i32, and this one JSON.
+        let mut mailboxes = TestMailboxes::new()?;
+        mailboxes.other_entity = Messages::default();
+        mailboxes
+            .other_entity
+            .subscribe::<Value>("test", "sample")?;
+        mailboxes.sender.publish("test", "sample", 7_i32)?;
+        mailboxes.phase(0.0, |context| {
+            context.route(|_, _| Ok(Delivery::After { delay_s: 0.0 }))
+        })?;
+        let typed = mailboxes.same_entity.receive::<i32>("test", "sample")?;
+        let json = mailboxes.other_entity.receive::<Value>("test", "sample")?;
+        assert_eq!(*typed[0].value, 7);
+        assert_eq!(*json[0].value, Value::from(7));
+        Ok(())
+    }
+
+    #[test]
+    fn the_trace_keeps_an_events_entity_ids_for_a_json_subscriber() -> Result<()> {
+        // The trace names which entities an event is about; converting the
+        // event to JSON for a Python subscriber must not lose that, delayed
+        // or not.
+        let mut mailboxes = TestMailboxes::new()?;
+        mailboxes.same_entity = Messages::default();
+        mailboxes.other_entity = Messages::default();
+        mailboxes
+            .same_entity
+            .subscribe::<crate::Event>("test", "sample")?;
+        mailboxes
+            .other_entity
+            .subscribe::<Value>("test", "sample")?;
+        mailboxes.sender.publish(
+            "test",
+            "sample",
+            crate::Event {
+                time_s: 0.0,
+                kind: crate::EventKind::TeamCollision,
+                entity_ids: vec![1, 2],
+            },
+        )?;
+        let mut trace = NetworkTrace::default();
+        mailboxes.traced_phase(0.0, Some(&mut trace), |context| {
+            context.route(|link, _| {
+                Ok(Delivery::After {
+                    delay_s: if link.receiver.entity_id == Some(2) {
+                        0.25
+                    } else {
+                        0.0
+                    },
+                })
+            })
+        })?;
+        mailboxes.traced_phase(0.3, Some(&mut trace), |context| {
+            context.route(|_, _| Ok(Delivery::After { delay_s: 0.0 }))
+        })?;
+        let ids: Vec<_> = trace
+            .deliveries
+            .iter()
+            .map(|record| (record.receiver.entity_id, record.entity_ids.clone()))
+            .collect();
+        // The delayed delivery is recorded when scheduled, then the two
+        // deliveries as they land.
+        assert_eq!(
+            ids,
+            vec![
+                (Some(2), Some(vec![1, 2])),
+                (Some(1), Some(vec![1, 2])),
+                (Some(2), Some(vec![1, 2])),
+            ]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn a_json_message_reaches_a_typed_subscriber_as_its_type() -> Result<()> {
+        // What a plugin written in Python publishes: a JSON value that fits
+        // the subscriber's type, converted at routing, delayed or not.
+        let mut mailboxes = TestMailboxes::new()?;
+        mailboxes.sender.publish("test", "sample", Value::from(5))?;
+        mailboxes.sender.publish("test", "sample", Value::from(6))?;
+        // The first publication (sequence 0) is delayed to every subscriber.
+        mailboxes.phase(0.0, |context| {
+            context.route(|link, _| {
+                Ok(Delivery::After {
+                    delay_s: if link.sequence == 0 { 0.25 } else { 0.0 },
+                })
+            })
+        })?;
+        let first: Vec<i32> = mailboxes
+            .same_entity
+            .receive::<i32>("test", "sample")?
+            .iter()
+            .map(|message| *message.value)
+            .collect();
+        assert_eq!(first, vec![6]);
+        mailboxes.phase(0.3, |context| {
+            context.route(|_, _| Ok(Delivery::After { delay_s: 0.0 }))
+        })?;
+        let delayed = mailboxes.same_entity.receive::<i32>("test", "sample")?;
+        assert_eq!((*delayed[0].value, delayed[0].delivered_at_s), (5, 0.3));
+        Ok(())
+    }
+
+    #[test]
+    fn a_json_message_of_the_wrong_shape_is_an_error_naming_the_channel() -> Result<()> {
+        let mut mailboxes = TestMailboxes::new()?;
+        mailboxes
+            .sender
+            .publish("test", "sample", Value::from("not an integer"))?;
+        let error = mailboxes
+            .phase(0.0, |context| {
+                context.route(|_, _| Ok(Delivery::After { delay_s: 0.0 }))
+            })
+            .unwrap_err();
+        let text = format!("{error:#}");
+        assert!(
+            text.contains("test/sample") && text.contains("i32"),
+            "{text}"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn network_plugins_can_publish_and_receive_messages() -> Result<()> {
         let mut mailboxes = TestMailboxes::new()?;
         mailboxes.phase(0.0, |context| {
@@ -787,6 +980,7 @@ mod tests {
                     delivered_at_s: 100.0,
                     value: Arc::new(42_i32),
                     serialize: serialize_payload::<i32>,
+                    event_ids: None,
                 },
             });
         }

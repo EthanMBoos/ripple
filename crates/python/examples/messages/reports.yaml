@@ -1,0 +1,37 @@
+# Messages between Python plugins: three point agents report their position
+# every tick (reporter.py) and a metrics plugin counts the reports
+# (report_count.py), over the built-in GlobalNetwork.
+format_version: 1
+name: reports
+
+run:
+  end_s: 5
+  dt_s: 0.1
+  seed: 1
+
+networks: {GlobalNetwork: {}}
+metrics:
+  ReportCount: {plugin: Python, class: report_count.ReportCount}
+
+templates:
+  agent:
+    visual_model: sphere
+    position_variance_m2: [0, 0, 0]
+    autonomy:
+      Reporter: {plugin: Python, class: reporter.Reporter, velocity_mps: [1, 0, 0]}
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}
+
+entities:
+  blue:
+    template: agent
+    team: 1
+    position_m: [0, -2, 0]
+  red:
+    template: agent
+    team: 2
+    position_m: [0, 2, 0]
+  green:
+    template: agent
+    team: 2
+    position_m: [0, 6, 0]

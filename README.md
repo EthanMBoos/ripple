@@ -21,8 +21,9 @@ repository root:
 
 ```sh
 uv sync                 # builds the simulator into .venv (a few minutes)
-uv run ripple run crates/python/examples/follow_nearest/follow-nearest.yaml --headless
-uv run ripple replay runs/follow-nearest/run000
+source .venv/bin/activate
+ripple run crates/python/examples/follow_nearest/follow-nearest.yaml --headless
+ripple replay runs/follow-nearest/run000
 ```
 
 A plugin is a Python class in the same directory as the mission that names
@@ -31,10 +32,13 @@ an example of each plugin type and notes which types are better written in
 Rust for speed. [Training a single
 agent](book/src/guides/training-single-agent.md) trains a policy with
 reinforcement learning and flies it.
+For scripts and CI, `uv run ripple ...` selects the same environment without
+activating it first.
 
 ### Rust
 
-Install Rust. From the repository root:
+Install Rust. If you activated `.venv` above, run `deactivate` first so
+`ripple` resolves to the Rust executable. From the repository root:
 
 ```sh
 cargo install --path crates/cli --locked

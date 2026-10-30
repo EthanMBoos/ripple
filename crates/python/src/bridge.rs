@@ -30,27 +30,39 @@
 //! Interactions, networks, and metrics also get `initialize(ctx)` with the
 //! world's `time`, `contacts_truth`, `entity_teams`, and `terrain`.
 //!
+//! Every slot but the network can also exchange messages: a class attribute
+//! `subscriptions = [(network, topic), ...]` subscribes before `initialize`,
+//! `ctx.messages[(network, topic)]` lists what arrived since the last call,
+//! and `ctx.publish(network, topic, value)` sends plain data. A message is
+//! JSON on the wire (`serde_json::Value` in the mailbox), so a Rust plugin's
+//! message arrives as the dict the run record shows, and a dict of that shape
+//! reaches a Rust subscriber as its type; the mailbox converts at routing.
+//! The network slot's `route` runs once per link, not once per tick, so it
+//! gets no mailbox of its own here.
+//!
 //! Worker threads call into Python under its lock, which serializes the calls
 //! but not their order, so a plugin keeps everything on `self` and draws
 //! random numbers from `ctx.random`; see the "Plugins in Python" chapter.
-use anyhow::{Context as _, Result, anyhow, bail};
+use anyhow::{Context as _, Result, anyhow, bail, ensure};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyString};
 use ripple_core::plugin::EntityInfo;
 use ripple_core::plugin::{
     AgentContext, Autonomy, Commands, ContactList, Controller, Delivery, Frame, Input, Inputs,
-    Interaction, InteractionContext, Localization, LocalizationContext, MetricReport, Metrics,
-    MotionContext, MotionModel, Network, NetworkContext, Plugin, PluginIo, PluginParams,
+    Interaction, InteractionContext, Localization, LocalizationContext, Messages, MetricReport,
+    Metrics, MotionContext, MotionModel, Network, NetworkContext, Plugin, PluginIo, PluginParams,
     PluginRandom, Port, Ports, ReadingKind, Sensor, SensorContext, StepTime, TeamMetrics, Tracking,
     TrackingContext, Transmission, Unit, Update, WorldContext,
 };
 use ripple_core::{Event, EventKind, KinematicState, Vec3};
+use serde_json::Value as Json;
 use serde_yaml_ng::{Mapping, Value};
 use std::collections::BTreeMap;
+use std::sync::Mutex;
 
 use crate::context::{
-    Command, Contact, Context, Endpoint, Entity, Link, Nearby, Random, Sample, State, Terrain,
-    Time, WorldEntity, contact_list, kinematic_state,
+    Command, Contact, Context, Endpoint, Entity, Link, Message, Nearby, Queued, Random, Sample,
+    State, Terrain, Time, WorldEntity, contact_list, json_to_python, kinematic_state,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -82,10 +94,13 @@ const EVENT_KINDS: [EventKind; 6] = [
 pub struct PythonReading(pub Py<PyAny>);
 
 pub struct PythonConfig {
+    slot: Slot,
     class_path: String,
     class: Py<PyAny>,
     /// The constructor's keyword arguments, from the mission.
     params: Py<PyDict>,
+    /// The channels the class subscribes to, sorted, from `subscriptions`.
+    subscriptions: Vec<(String, String)>,
     ports: Ports,
     /// A controller's input port names, read into `ctx.inputs` each step.
     port_inputs: Vec<String>,
@@ -99,9 +114,11 @@ pub struct PythonConfig {
 
 /// What every slot shares: the class, its parameters, and the object.
 pub struct Bridge {
+    slot: Slot,
     class_path: String,
     class: Py<PyAny>,
     params: Py<PyDict>,
+    subscriptions: Vec<(String, String)>,
     port_inputs: Vec<String>,
     reading_kind: ReadingKind,
     readings: Vec<(String, ReadingKind)>,
@@ -322,15 +339,18 @@ fn configure(params: &PluginParams<'_>, slot: Slot) -> Result<PythonConfig> {
             }
             Slot::Interaction | Slot::Metrics => {}
         }
+        let subscriptions = declared_subscriptions(&class, slot)?;
         let params = PyDict::new(py);
         for (key, value) in &values {
             let key = key.as_str().context("parameter keys must be strings")?;
             params.set_item(key, to_python(py, value)?)?;
         }
         Ok(PythonConfig {
+            slot,
             class_path: class_path.clone(),
             class: class.unbind(),
             params: params.unbind(),
+            subscriptions,
             ports,
             port_inputs,
             reading_kind,
@@ -344,9 +364,11 @@ fn configure(params: &PluginParams<'_>, slot: Slot) -> Result<PythonConfig> {
 impl Bridge {
     fn new(config: &PythonConfig) -> Self {
         Python::attach(|py| Self {
+            slot: config.slot,
             class_path: config.class_path.clone(),
             class: config.class.clone_ref(py),
             params: config.params.clone_ref(py),
+            subscriptions: config.subscriptions.clone(),
             port_inputs: config.port_inputs.clone(),
             reading_kind: config.reading_kind,
             readings: config.readings.clone(),
@@ -432,6 +454,65 @@ impl Bridge {
         Ok(inputs)
     }
 
+    // Messages, for every slot with a mailbox.
+
+    /// Subscribes to the declared channels, as JSON, before `initialize`.
+    fn subscribe(&self, messages: &mut Messages) -> Result<()> {
+        for (network, topic) in &self.subscriptions {
+            messages.subscribe::<Json>(network, topic)?;
+        }
+        Ok(())
+    }
+
+    /// `ctx.messages`: what arrived on each declared channel since the last
+    /// call, keyed `(network, topic)`, in delivery order. Taken from the
+    /// mailbox here, so a message is seen once.
+    fn received<'py>(
+        &self,
+        py: Python<'py>,
+        messages: &mut Messages,
+    ) -> Result<Bound<'py, PyDict>> {
+        let received = PyDict::new(py);
+        for (network, topic) in &self.subscriptions {
+            let mut delivered = Vec::new();
+            for message in messages.receive::<Json>(network, topic)? {
+                delivered.push(Message {
+                    sender: Py::new(py, Endpoint::new(&message.sender))?,
+                    sent_at_s: message.sent_at_s,
+                    delivered_at_s: message.delivered_at_s,
+                    value: json_to_python(py, &message.value)?.unbind(),
+                });
+            }
+            received.set_item((network, topic), PyList::new(py, delivered)?)?;
+        }
+        Ok(received)
+    }
+
+    /// Publishes what the call queued with `ctx.publish`, in order.
+    fn send(&self, outbox: &Mutex<Vec<Queued>>, messages: &mut Messages) -> Result<()> {
+        for (network, topic, value) in outbox.lock().expect("outbox lock").drain(..) {
+            messages.publish(&network, &topic, value)?;
+        }
+        Ok(())
+    }
+
+    /// Calls `method(ctx)` with `ctx.messages` filled from the mailbox and
+    /// sends what the call published; the slot's own answer comes back.
+    fn call_with_messages<'py>(
+        &self,
+        py: Python<'py>,
+        object: &Bound<'py, PyAny>,
+        method: &str,
+        ctx: Context,
+        messages: &mut Messages,
+    ) -> Result<Option<Bound<'py, PyAny>>> {
+        ctx.set(py, "messages", self.received(py, messages)?)?;
+        let outbox = ctx.outbox();
+        let answer = self.call(py, object, method, ctx)?;
+        self.send(&outbox, messages)?;
+        Ok(answer)
+    }
+
     // Autonomy and controller.
 
     fn agent_context(
@@ -452,10 +533,11 @@ impl Bridge {
     }
 
     fn initialize_agent(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
+        self.subscribe(context.messages)?;
         Python::attach(|py| -> Result<()> {
             let object = self.construct(py)?;
             let ctx = self.agent_context(py, context, None)?;
-            self.call(py, &object, "initialize", ctx)?;
+            self.call_with_messages(py, &object, "initialize", ctx, context.messages)?;
             Ok(())
         })
         .with_context(|| self.describe(context.entity.id))
@@ -465,7 +547,9 @@ impl Bridge {
         Python::attach(|py| -> Result<Update> {
             let object = self.object(py)?;
             let ctx = self.agent_context(py, context, Some(io))?;
-            let Some(result) = self.call(py, object, "step", ctx)? else {
+            let Some(result) =
+                self.call_with_messages(py, object, "step", ctx, context.messages)?
+            else {
                 return Ok(Update::Applied);
             };
             let writes = result
@@ -517,10 +601,13 @@ impl Bridge {
     }
 
     fn initialize_sensor(&mut self, context: &mut SensorContext<'_>) -> Result<()> {
+        self.subscribe(context.messages)?;
         Python::attach(|py| -> Result<()> {
             let object = self.construct(py)?;
             let ctx = self.sensor_context(py, context)?;
-            if let Some(reading) = self.call(py, &object, "initialize", ctx)? {
+            if let Some(reading) =
+                self.call_with_messages(py, &object, "initialize", ctx, context.messages)?
+            {
                 self.publish(context, reading)?;
             }
             Ok(())
@@ -532,7 +619,9 @@ impl Bridge {
         Python::attach(|py| -> Result<Update> {
             let object = self.object(py)?;
             let ctx = self.sensor_context(py, context)?;
-            if let Some(reading) = self.call(py, object, "step", ctx)? {
+            if let Some(reading) =
+                self.call_with_messages(py, object, "step", ctx, context.messages)?
+            {
                 self.publish(context, reading)?;
             }
             Ok(Update::Applied)
@@ -612,10 +701,13 @@ impl Bridge {
     }
 
     fn initialize_localization(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
+        self.subscribe(context.messages)?;
         Python::attach(|py| -> Result<()> {
             let object = self.construct(py)?;
             let ctx = self.localization_context(py, context)?;
-            if let Some(state) = self.call(py, &object, "initialize", ctx)? {
+            if let Some(state) =
+                self.call_with_messages(py, &object, "initialize", ctx, context.messages)?
+            {
                 *context.state = kinematic_state(context.state, &state)?;
             }
             Ok(())
@@ -627,7 +719,9 @@ impl Bridge {
         Python::attach(|py| -> Result<Update> {
             let object = self.object(py)?;
             let ctx = self.localization_context(py, context)?;
-            if let Some(state) = self.call(py, object, "step", ctx)? {
+            if let Some(state) =
+                self.call_with_messages(py, object, "step", ctx, context.messages)?
+            {
                 *context.state = kinematic_state(context.state, &state)?;
             }
             Ok(Update::Applied)
@@ -645,10 +739,13 @@ impl Bridge {
     }
 
     fn initialize_tracking(&mut self, context: &mut TrackingContext<'_>) -> Result<()> {
+        self.subscribe(context.messages)?;
         Python::attach(|py| -> Result<()> {
             let object = self.construct(py)?;
             let ctx = self.tracking_context(py, context)?;
-            if let Some(contacts) = self.call(py, &object, "initialize", ctx)? {
+            if let Some(contacts) =
+                self.call_with_messages(py, &object, "initialize", ctx, context.messages)?
+            {
                 let estimate_s = context.time.time_s + context.time.dt_s;
                 *context.contacts = contact_list(&contacts, estimate_s)?;
             }
@@ -661,7 +758,9 @@ impl Bridge {
         Python::attach(|py| -> Result<Update> {
             let object = self.object(py)?;
             let ctx = self.tracking_context(py, context)?;
-            if let Some(contacts) = self.call(py, object, "step", ctx)? {
+            if let Some(contacts) =
+                self.call_with_messages(py, object, "step", ctx, context.messages)?
+            {
                 let estimate_s = context.time.time_s + context.time.dt_s;
                 *context.contacts = contact_list(&contacts, estimate_s)?;
             }
@@ -691,10 +790,13 @@ impl Bridge {
     }
 
     fn initialize_motion(&mut self, context: &mut MotionContext<'_>) -> Result<()> {
+        self.subscribe(context.messages)?;
         Python::attach(|py| -> Result<()> {
             let object = self.construct(py)?;
             let ctx = self.motion_context(py, context, None)?;
-            if let Some(truth) = self.call(py, &object, "initialize", ctx)? {
+            if let Some(truth) =
+                self.call_with_messages(py, &object, "initialize", ctx, context.messages)?
+            {
                 *context.truth = kinematic_state(context.truth, &truth)?;
             }
             Ok(())
@@ -710,7 +812,9 @@ impl Bridge {
         Python::attach(|py| -> Result<Update> {
             let object = self.object(py)?;
             let ctx = self.motion_context(py, context, Some(io))?;
-            if let Some(truth) = self.call(py, object, "step", ctx)? {
+            if let Some(truth) =
+                self.call_with_messages(py, object, "step", ctx, context.messages)?
+            {
                 *context.truth = kinematic_state(context.truth, &truth)?;
             }
             Ok(Update::Applied)
@@ -740,10 +844,21 @@ impl Bridge {
     }
 
     fn initialize_world(&mut self, context: &mut WorldContext<'_>) -> Result<()> {
+        self.subscribe(context.messages)?;
         Python::attach(|py| -> Result<()> {
             let object = self.construct(py)?;
             let ctx = self.world_context(py, context)?;
-            self.call(py, &object, "initialize", ctx)?;
+            if self.slot == Slot::Network {
+                // A network has no step of its own; see the module doc.
+                let outbox = ctx.outbox();
+                self.call(py, &object, "initialize", ctx)?;
+                ensure!(
+                    outbox.lock().expect("outbox lock").is_empty(),
+                    "a Python network cannot publish messages"
+                );
+            } else {
+                self.call_with_messages(py, &object, "initialize", ctx, context.messages)?;
+            }
             Ok(())
         })
         .with_context(|| self.describe_world())
@@ -762,7 +877,8 @@ impl Bridge {
                 .collect::<PyResult<Vec<_>>>()?;
             attributes.set_item("entities", PyList::new(py, entities)?)?;
             attributes.set_item("nearby", Nearby::new(context.entities))?;
-            match self.call(py, object, "step", Context::new(attributes))? {
+            let ctx = Context::new(attributes);
+            match self.call_with_messages(py, object, "step", ctx, context.messages)? {
                 Some(effects) => apply_effects(context, &effects),
                 None => Ok(Update::Applied),
             }
@@ -829,7 +945,7 @@ impl Bridge {
             let object = self.object(py)?;
             let ctx = self.world_context(py, context)?;
             ctx.set(py, "events", PyList::new(py, events)?)?;
-            self.call(py, object, "step", ctx)?;
+            self.call_with_messages(py, object, "step", ctx, context.messages)?;
             Ok(Update::Applied)
         })
         .with_context(|| self.describe_world())
@@ -1084,6 +1200,36 @@ fn frame_from(text: &str) -> Result<Frame> {
         "model" => Frame::Model,
         other => bail!("unknown frame '{other}' (world, body, model, none)"),
     })
+}
+
+/// The class's optional `subscriptions` attribute: `(network, topic)` pairs,
+/// in any iterable. Sorted and deduplicated, so a set declares the same
+/// channels in the same order in every process.
+fn declared_subscriptions(class: &Bound<'_, PyAny>, slot: Slot) -> Result<Vec<(String, String)>> {
+    let Ok(declared) = class.getattr("subscriptions") else {
+        return Ok(Vec::new());
+    };
+    let mut subscriptions: Vec<(String, String)> = declared
+        .try_iter()
+        .and_then(|channels| {
+            channels
+                .map(|channel| channel?.extract::<(String, String)>())
+                .collect()
+        })
+        .context("`subscriptions` is a list of (network, topic) pairs")?;
+    subscriptions.sort();
+    subscriptions.dedup();
+    if slot == Slot::Network && !subscriptions.is_empty() {
+        bail!("a Python network cannot subscribe to messages");
+    }
+    if slot == Slot::Metrics {
+        for (network, topic) in &subscriptions {
+            if network == "GlobalNetwork" && EVENT_KINDS.iter().any(|kind| kind.topic() == topic) {
+                bail!("`ctx.events` already carries {network}/{topic}");
+            }
+        }
+    }
+    Ok(subscriptions)
 }
 
 /// A mission value as a Python object: numbers, strings, booleans, lists, dicts.

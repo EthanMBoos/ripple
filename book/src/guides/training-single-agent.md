@@ -33,8 +33,9 @@ You need [uv](https://docs.astral.sh/uv/) and Rust. From the repository root:
 
 ```sh
 uv sync --extra train                           # builds the Rust module, installs PyTorch and SB3
-uv run crates/python/learning/train_hover.py    # about 3 minutes; writes ripple/learning/policies/hover.onnx
-uv run ripple run crates/python/learning/missions/hover.yaml --viewer
+source .venv/bin/activate
+python crates/python/learning/train_hover.py    # about 3 minutes; writes ripple/learning/policies/hover.onnx
+ripple run crates/python/learning/missions/hover.yaml --viewer
 ```
 
 The package ships a trained `hover.onnx`, so the last command works without

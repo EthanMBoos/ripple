@@ -40,7 +40,7 @@ impl Default for SitlStateConfig {
 }
 
 /// One state sample in ArduPilot's frames and units.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct SitlSample {
     pub position_ned_m: Vec3,
     pub velocity_ned_mps: Vec3,

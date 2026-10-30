@@ -8,11 +8,12 @@ are the same.
 
 ## Quick start
 
-From the repository root, after `uv sync --extra train`:
+From the repository root, after the setup in
+[Training a single agent](training-single-agent.md#quick-start):
 
 ```sh
-uv run crates/python/learning/train_spread.py    # about 3 minutes; writes ripple/learning/policies/spread.onnx
-uv run ripple run crates/python/learning/missions/spread.yaml --viewer
+python crates/python/learning/train_spread.py    # about 3 minutes; writes ripple/learning/policies/spread.onnx
+ripple run crates/python/learning/missions/spread.yaml --viewer
 ```
 
 The package ships a trained `spread.onnx`. Training prints how far the

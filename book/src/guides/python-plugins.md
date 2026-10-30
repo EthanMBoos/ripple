@@ -19,16 +19,17 @@ repository root:
 
 ```sh
 uv sync      # builds the Rust module into .venv; a few minutes the first time
-uv run ripple run crates/python/examples/follow_nearest/follow-nearest.yaml --headless
-uv run ripple replay runs/follow-nearest/run000
+source .venv/bin/activate
+ripple run crates/python/examples/follow_nearest/follow-nearest.yaml --headless
+ripple replay runs/follow-nearest/run000
 ```
 
 `uv sync` fetches the Python version in `.python-version` and maturin, builds
 the module, and installs the `ripple` command into the root's `.venv`. It is
 the same command line as the Rust `ripple`, with one more plugin in every
 slot, `Python`. The examples below are under `crates/python/examples`, and
-the commands run from the repository root (uv finds the root from any
-directory inside it).
+the commands run from the repository root. For scripts and CI,
+`uv run ripple ...` selects the environment without activation.
 A mission with no Python plugin gives the same record from either. After
 changing Rust code, rebuild with `uv sync --reinstall-package ripple`.
 
@@ -163,7 +164,7 @@ controller: {Python: {class: simple_aircraft_pid.SimpleAircraftPid}}
 ```
 
 ```sh
-uv run ripple run crates/python/examples/pid_controller/follow-nearest.yaml --headless
+ripple run crates/python/examples/pid_controller/follow-nearest.yaml --headless
 ```
 
 It produces the same frames as the Rust controller on the starter's mission,
@@ -248,9 +249,9 @@ chase with the chaser's belief of itself and of its target passing through
 Python. The three run with:
 
 ```sh
-uv run ripple run crates/python/examples/noisy_state/noisy-state.yaml --headless
-uv run ripple run crates/python/examples/dead_reckoning/dead-reckoning.yaml --headless
-uv run ripple run crates/python/examples/pass_through/follow-nearest.yaml --headless
+ripple run crates/python/examples/noisy_state/noisy-state.yaml --headless
+ripple run crates/python/examples/dead_reckoning/dead-reckoning.yaml --headless
+ripple run crates/python/examples/pass_through/follow-nearest.yaml --headless
 ```
 
 Each matches its Rust original in entities, frames, events, and summary, and
@@ -319,8 +320,8 @@ metrics:
 ```
 
 ```sh
-uv run ripple run crates/python/examples/single_integrator/waypoints-point-agents.yaml --headless
-uv run ripple run crates/python/examples/world/follow-nearest.yaml --headless
+ripple run crates/python/examples/single_integrator/waypoints-point-agents.yaml --headless
+ripple run crates/python/examples/world/follow-nearest.yaml --headless
 ```
 
 ### Which slots to keep in Rust
@@ -359,6 +360,70 @@ So, for a research mission:
 The rule of thumb from [Speed](#speed) holds for all of them: about 3
 microseconds per call plus the Python body. If a plugin outgrows that, write
 it in Rust in the starter crate; the mission changes one line.
+
+## Messages
+
+Every slot but the network can publish and subscribe, like a Rust plugin
+([Writing plugins](writing-plugins.md#messages)). A class attribute names
+the channels it reads, `ctx.messages` holds what arrived, and `ctx.publish`
+sends:
+
+```python
+class ReportCount:
+    subscriptions = [("GlobalNetwork", "Report")]
+
+    def step(self, ctx):
+        for message in ctx.messages[("GlobalNetwork", "Report")]:
+            ...   # message.sender, .sent_at_s, .delivered_at_s, .value
+
+
+class Reporter:
+    def step(self, ctx):
+        ctx.publish("GlobalNetwork", "Report",
+                    {"tick": ctx.time.tick, "position": list(ctx.state.position)})
+        return {...}
+```
+
+The bridge subscribes before `initialize`, so a message can arrive from the
+first tick. `ctx.messages` has an entry for every declared channel, empty
+or not, with the messages in delivery order; they are taken from the
+mailbox, so each is seen once. `publish` copies the value as JSON there
+and then, so changing it afterwards changes nothing, and the bridge sends
+the queue when the call returns, in order; it works in `initialize` too. A
+value is a dict, list, number, string, bool, or `None`, with integers that
+fit in 64 bits; anything else is an error naming its type. A `sender` has
+`entity_id` (`None` for a world plugin) and `plugin`.
+
+A message is JSON on its way through the mailbox, which is how it crosses
+to and from Rust. A Rust plugin's message arrives as the dict the run
+record shows for it: the built-in `Boundary` interaction's `BoundaryRegion`
+is `{"center_world_m": [x, y, z], "lengths_m": [x, y, z]}`, and a Python
+metrics plugin subscribed to `("GlobalNetwork", "Boundary")` gets exactly
+that. The other way, a dict of that shape published on the channel reaches
+the Rust `Straight` autonomies as a `BoundaryRegion`; a dict of another
+shape stops the run in the network phase with an error naming the channel
+and the type. The conversion happens at routing, only for a message that
+crosses, so a mission without Python plugins pays nothing. Delays are the
+network's, as for any message: a Python network that answers 0.3 s delivers
+0.3 s later, and `delivered_at_s` says so. A Python metrics plugin keeps
+`ctx.events`; subscribing to one of the engine's event channels is an error
+at load, since the events are already there.
+
+`examples/messages` has the four cases: `reports.yaml`, three `Reporter`
+autonomies counted by a `ReportCount` metrics plugin; `reports-delayed.yaml`,
+the same through a Python network with a delay; `boundary-log.yaml`, the
+stock networks mission with a Python metrics plugin logging the Rust
+boundary; and `boundary-from-python.yaml`, that mission with the boundary
+published from Python, which flies the Rust aircraft byte for byte as the
+stock mission does:
+
+```sh
+ripple run crates/python/examples/messages/reports.yaml --headless
+ripple run crates/python/examples/messages/boundary-from-python.yaml --headless
+```
+
+A Python network has no mailbox of its own: its `route` runs once per link,
+not once per tick, so there is no step in which it could read or send.
 
 ## Three rules
 
@@ -401,7 +466,8 @@ them, no packaging:
 ```sh
 uv init my-lab && cd my-lab
 uv add ripple --from <the release asset's URL>     # pending
-uv run ripple run my-mission.yaml --headless
+source .venv/bin/activate
+ripple run my-mission.yaml --headless
 ```
 
 with runs and sweeps written under `my-lab/`. The Rust side of the same
@@ -448,8 +514,8 @@ tutorial does; the mission changes one line.
 
 ## Challenges
 
-The bridge covers every slot; what it does not do yet, and projects of a few
-days each that build on it (messages between Python plugins, a GTSAM
-smoother, `pytorch_mppi` under a serial scheduler, a lossy network, a motion
-model worth its cost), are listed with the design notes in [The Python
+The bridge covers every slot and messages between them; what it does not
+do yet, and projects of a few days each that build on it (a GTSAM smoother,
+`pytorch_mppi` under a serial scheduler, a lossy network, a motion model
+worth its cost), are listed with the design notes in [The Python
 bridge](../development/python-bridge.md).

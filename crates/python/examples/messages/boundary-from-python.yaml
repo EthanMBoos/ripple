@@ -1,0 +1,56 @@
+# The stock networks-local-global mission with the boundary published from
+# Python (boundary.py): the Rust Straight autonomies turn on it exactly as
+# they do on the Rust Boundary interaction's message.
+format_version: 1
+name: boundary-from-python
+
+run:
+  end_s: 30
+  dt_s: 0.1
+  seed: 12345
+
+interactions:
+  Boundary:
+    plugin: Python
+    class: boundary.Boundary
+    center_m: [0, 0, 200]
+    lengths_m: [600, 600, 400]
+  GroundCollision:
+    team: all
+  SimpleCollision:
+    collision_range_m: 2
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  aircraft:
+    visual_model: sphere
+    velocity_mps: [20, 0, 0]
+    autonomy:
+      Straight:
+        speed_mps: 20
+        enable_boundary_control: true
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+    sensors: {NoisyState: {}}
+
+entities:
+  blue:
+    template: aircraft
+    team: 1
+    position_m: [250, 0, 200]
+    heading_deg: 0
+  red:
+    template: aircraft
+    team: 2
+    position_m: [-250, 0, 200]
+    heading_deg: 180
+  low:
+    template: aircraft
+    team: 3
+    position_m: [0, -100, 1]
+    heading_deg: 0
+    pitch_deg: 20
+    autonomy:
+      Straight:
+        speed_mps: 20

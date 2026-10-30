@@ -124,7 +124,7 @@ pub enum PlannerKind {
     WaypointSearch,
 }
 
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct SoftPrediction {
     pub trip_time_s: f64,
     pub exposure_s: f64,

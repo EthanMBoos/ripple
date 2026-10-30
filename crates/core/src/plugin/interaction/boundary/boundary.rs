@@ -11,7 +11,7 @@ use crate::scenario::PluginConfig;
 
 pub const BOUNDARY_TOPIC: &str = "Boundary";
 
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct BoundaryRegion {
     pub center_world_m: Vec3,
     pub lengths_m: Vec3,

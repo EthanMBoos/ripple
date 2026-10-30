@@ -52,7 +52,7 @@ or a dict of the fields to change, a contact list is a list of `Contact`s or
 dicts). A sensor's `other` reading is carried as the Python object itself,
 so only a Python estimator can read it. A metrics plugin is subscribed by
 the bridge to the engine's six event topics and gets them as `ctx.events`,
-since a Python plugin cannot subscribe to messages itself yet.
+typed, beside whatever channels its own `subscriptions` name.
 
 The engine does not know Python is involved: the slot, `loop_rate_hz`, the
 port and reading checks, the mailbox, and the random keys are the bridge
@@ -77,8 +77,39 @@ the same noise; the tests use this.
   global generator and drawing from it. A library that needs a global
   (`pytorch_mppi`'s `torch.randn`) needs the engine to run those steps on
   one thread in entity order, a scheduler change deferred to that challenge.
-- **No messages yet.** The mailbox is subscribe-first and keyed by a Rust
-  type, so Python messages are a small design of their own, listed below.
+- **Messages cross as JSON, converted at routing.** The mailbox keys a
+  subscription by a Rust type and already carries a serializer for every
+  payload, for the run record. A subscription to `serde_json::Value` takes
+  any message on its channel as JSON, and a `Value` published on a channel
+  is turned into a Rust subscriber's type when it is routed, so Python
+  plugins publish dicts and read dicts, and the Rust side is untouched. The
+  conversion happens in the network phase, on the coordinator, only for a
+  message that crosses, so determinism and the no-messages fast path are
+  as they were (2026-10-29). The one rule it adds for Rust: a subscribed
+  message type derives `Deserialize` as well as `Serialize`, so every
+  message round-trips through JSON; a dozen types gained the derive with no
+  behavior change, checked by the equivalence run. Options and why: convert
+  at publish, rejected because every Rust message would be serialized
+  whether or not a Python subscriber exists, taxing the all-Rust missions;
+  convert inside the plugin call, rejected because engine work would run
+  on a worker thread under the Python call; a marker type or second
+  subscribe method for JSON, rejected because a `Value` subscription is an
+  ordinary one, so `receive`, the queues, and the limits need no case; an
+  opt-in for Rust plugins to accept JSON, rejected because a plugin written
+  without it would silently not hear a Python one; typed Python classes
+  generated from the Rust types, rejected as the compatibility layer the
+  rules warn against, since the record already shows every shape. On the
+  Python side, `subscriptions` is a class attribute (checked at load, like
+  `ports`), sorted so a set declares the same channels in every process;
+  `ctx.publish` converts to JSON at the call, so a value the plugin reuses
+  and changes afterwards is sent as it was, and the bridge drains the queue
+  after the call, rather than returning messages from `step`, which already
+  returns the slot's answer, or handing Python a live mailbox, which would
+  hold the borrow across the call. The trace's `entity_ids` come from the
+  payload as published, since an event converted to JSON for a Python
+  subscriber no longer downcasts to `Event`. The network slot has no mailbox of its own: `route` runs per link,
+  so a step-time `ctx` would need semantics of its own, for a case nothing
+  in the repository has.
 - **Interactions answer with effects, not handles.** An interaction's
   entities are copied into Python as read-only objects, and the class
   returns a dict of effects by entity id (health, forces, truth, events,
@@ -215,11 +246,6 @@ an observation before the first action exists.
 Projects for students, each a few days, in rough order of size. None is
 designed here.
 
-- **Messages between Python plugins.** Dicts on a network and topic. The
-  mailbox is subscribe-first and keyed by a Rust type, so a subscription
-  type and a subscribe call in `initialize` are needed. A message a Rust
-  plugin reads is typed, so reaching one needs that type's `Deserialize`.
-  Once this exists, a Python metrics plugin can subscribe for itself.
 - **A [GTSAM](https://gtsam.org) smoother as a localization.** A factor
   graph over the fixes and the commanded velocities in `ctx.commands`,
   marginalized each step into the belief; compare it with dead reckoning on

@@ -35,15 +35,17 @@ the repository root:
 
 ```sh
 uv sync      # builds the simulator into .venv (a few minutes)
-uv run ripple run crates/python/examples/follow_nearest/follow-nearest.yaml --headless
+source .venv/bin/activate
+ripple run crates/python/examples/follow_nearest/follow-nearest.yaml --headless
 ```
 
 This `ripple` is the simulator with one additional plugin in every slot,
 `Python`, which runs a class named in the mission file. [Plugins in
 Python](guides/python-plugins.md) continues from here.
 
-**Rust.** Install Rust, then install the `ripple` command from the
-repository root:
+**Rust.** Install Rust. If you activated `.venv` above, run `deactivate`
+first so `ripple` resolves to the Rust executable. Then install the command
+from the repository root:
 
 ```sh
 cargo install --path crates/cli --locked
@@ -68,9 +70,10 @@ ripple run missions/waypoints-point-agents.yaml --headless
 ripple replay runs/waypoints-point-agents/run000
 ```
 
-Use `--viewer` instead of `--headless` to watch while it runs. Every command
-here also works under `uv run ripple`. A mission without Python plugins
-produces byte-identical output from either command.
+Use `--viewer` instead of `--headless` to watch while it runs. In scripts,
+`uv run ripple ...` selects the Python environment without activating it.
+A mission without Python plugins produces byte-identical output from either
+command.
 
 ## How a simulation is built
 

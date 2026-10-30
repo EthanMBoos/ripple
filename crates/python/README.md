@@ -23,7 +23,8 @@ each matching its original on the same mission: the book tutorial's
 (`examples/single_integrator`), the starter's `DeadReckoning`
 (`examples/dead_reckoning`), the default `PassThrough` estimators
 (`examples/pass_through`), and `SimpleCollision`, `GlobalNetwork`, and
-`SimpleCollisionMetrics` together (`examples/world`). The book chapter
+`SimpleCollisionMetrics` together (`examples/world`); `examples/messages`
+sends messages between Python plugins and across to Rust ones. The book chapter
 "Plugins in Python" walks through them and says which slots to keep in Rust
 for speed.
 
@@ -31,15 +32,16 @@ From the repository root, the uv workspace whose one member this is:
 
 ```sh
 uv sync                          # builds the Rust module into .venv, a few minutes the first time
-uv run ripple run crates/python/examples/follow_nearest/follow-nearest.yaml --headless
-uv run pytest                    # the checks in tests/
+source .venv/bin/activate
+ripple run crates/python/examples/follow_nearest/follow-nearest.yaml --headless
+pytest                           # the checks in tests/
 ```
 
 You need [uv](https://docs.astral.sh/uv/) and Rust (`rustup`); uv fetches
 the Python version in the root's `.python-version` and maturin itself. After
 changing Rust code, rebuild the module with `uv sync --reinstall-package
-ripple`. The commands also work from inside this directory, since uv finds
-the workspace root.
+ripple`. The example path assumes you run from the repository root.
+For scripts, `uv run ripple ...` selects the environment without activation.
 
 - `src/lib.rs`: the module `ripple._native`; `main` builds the registry (the
   same plugins as the Rust `ripple`, plus `Python`) and calls the Rust

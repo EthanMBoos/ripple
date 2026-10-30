@@ -8,9 +8,7 @@
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 
-use crate::plugin::{
-    AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{AgentContext, Autonomy, Frame, PluginIo, PluginParams, Port, Ports, Unit};
 
 pub const START_AUCTION_TOPIC: &str = "StartAuction";
 pub const BID_AUCTION_TOPIC: &str = "BidAuction";
@@ -61,10 +59,10 @@ pub struct AuctionAssign {
     best_bid: Option<AuctionBid>,
 }
 
-impl Plugin for AuctionAssign {
+impl Autonomy for AuctionAssign {
     type Config = AuctionAssignConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<AuctionAssignConfig> {
+    fn configure(params: &PluginParams) -> Result<AuctionAssignConfig> {
         let config: AuctionAssignConfig = params.parse()?;
         ensure!(
             config.auction_duration_s >= 0.0,
@@ -95,10 +93,8 @@ impl Plugin for AuctionAssign {
         }
         ports
     }
-}
 
-impl Autonomy for AuctionAssign {
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> {
         context
             .messages
             .subscribe::<AuctionStart>(&self.network, START_AUCTION_TOPIC)?;
@@ -108,7 +104,7 @@ impl Autonomy for AuctionAssign {
         Ok(())
     }
 
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         for message in context
             .messages
             .receive::<AuctionStart>(&self.network, START_AUCTION_TOPIC)?
@@ -169,6 +165,6 @@ impl Autonomy for AuctionAssign {
         for name in ["velocity_x", "velocity_y", "velocity_z"] {
             io.write(name, 0.0)?;
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }

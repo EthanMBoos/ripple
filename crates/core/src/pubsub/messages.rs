@@ -1,7 +1,7 @@
 //! Plugin-owned mailboxes; only the coordinator routes immutable message payloads.
 use crate::{
     common::{PluginRandom, TruthContacts},
-    plugin::{StepTime, Update},
+    plugin::StepTime,
 };
 use anyhow::{Result, ensure};
 use serde::Serialize;
@@ -266,7 +266,7 @@ impl NetworkContext<'_, '_> {
     pub fn route(
         &mut self,
         decide: impl FnMut(&Transmission<'_>, &PluginRandom) -> Result<Delivery>,
-    ) -> Result<Update> {
+    ) -> Result<()> {
         self.route_links(false, decide)
     }
     /// Like `route`, for a network that delivers only between plugins of the same
@@ -275,14 +275,14 @@ impl NetworkContext<'_, '_> {
     pub fn route_within_entity(
         &mut self,
         decide: impl FnMut(&Transmission<'_>, &PluginRandom) -> Result<Delivery>,
-    ) -> Result<Update> {
+    ) -> Result<()> {
         self.route_links(true, decide)
     }
     fn route_links(
         &mut self,
         within_entity: bool,
         mut decide: impl FnMut(&Transmission<'_>, &PluginRandom) -> Result<Delivery>,
-    ) -> Result<Update> {
+    ) -> Result<()> {
         ensure!(!self.routed, "network may route once per phase");
         self.routed = true;
         // Publisher order is stable entity/slot order, never worker completion order.
@@ -445,7 +445,7 @@ impl NetworkContext<'_, '_> {
             }
         }
         *self.scheduled = pending;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -453,7 +453,7 @@ impl NetworkContext<'_, '_> {
 mod tests {
     use super::*;
     use crate::plugin::{
-        Network, Plugin, PluginParams,
+        Network, PluginParams,
         network::{GlobalNetwork, LocalNetwork},
     };
 
@@ -479,7 +479,7 @@ mod tests {
         fn phase(
             &mut self,
             time_s: f64,
-            run: impl FnOnce(&mut NetworkContext<'_, '_>) -> Result<Update>,
+            run: impl FnOnce(&mut NetworkContext<'_, '_>) -> Result<()>,
         ) -> Result<()> {
             let endpoint = MessageEndpoint {
                 entity_id: None,
@@ -708,7 +708,7 @@ mod tests {
                     .value,
                 9
             );
-            Ok(Update::Applied)
+            Ok(())
         })?;
         Ok(())
     }

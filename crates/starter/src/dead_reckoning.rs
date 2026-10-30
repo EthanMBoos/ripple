@@ -4,9 +4,7 @@
 //! This is the estimator from the book's "Your first localization estimator" tutorial.
 
 use anyhow::{Context, Result, ensure};
-use ripple_core::plugin::{
-    Input, Localization, LocalizationContext, Plugin, PluginParams, ReadingKind, Update,
-};
+use ripple_core::plugin::{Input, Localization, LocalizationContext, PluginParams, ReadingKind};
 use ripple_core::{KinematicState, Vec3};
 use serde::Deserialize;
 
@@ -29,10 +27,10 @@ pub struct DeadReckoning {
     speed_gain: f64,
 }
 
-impl Plugin for DeadReckoning {
+impl Localization for DeadReckoning {
     type Config = DeadReckoningConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<DeadReckoningConfig> {
+    fn configure(params: &PluginParams) -> Result<DeadReckoningConfig> {
         let config: DeadReckoningConfig = params.parse()?;
         ensure!(
             config.speed_gain >= 0.0,
@@ -51,10 +49,8 @@ impl Plugin for DeadReckoning {
         // A full-state reading; only its position is used.
         vec![Input::new("fix", ReadingKind::State)]
     }
-}
 
-impl Localization for DeadReckoning {
-    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut LocalizationContext) -> Result<()> {
         // Start from the first fix, at rest. Attitude is not estimated.
         let fix = context
             .inputs
@@ -67,7 +63,7 @@ impl Localization for DeadReckoning {
         Ok(())
     }
 
-    fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut LocalizationContext) -> Result<()> {
         // Predict: move by the velocity the motion model was told to fly, on each substep.
         for substep in 0..context.commands.substeps() {
             let commanded_world_mps = Vec3::new(
@@ -85,6 +81,6 @@ impl Localization for DeadReckoning {
         if let Some(fix) = context.inputs.fresh::<KinematicState>("fix")? {
             context.state.position_world_m = fix.value.position_world_m;
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }

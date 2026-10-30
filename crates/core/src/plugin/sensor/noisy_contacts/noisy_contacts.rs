@@ -11,8 +11,7 @@ use anyhow::Result;
 use super::noisy_state::StateNoise;
 use crate::math::KinematicState;
 use crate::plugin::{
-    Contact, ContactList, Plugin, PluginParams, PluginRandom, ReadingKind, Sensor, SensorContext,
-    Update,
+    Contact, ContactList, PluginParams, PluginRandom, ReadingKind, Sensor, SensorContext,
 };
 
 /// Takes NoisyState's parameters: a bias and standard deviation per axis for
@@ -21,10 +20,10 @@ pub struct NoisyContacts {
     noise: StateNoise,
 }
 
-impl Plugin for NoisyContacts {
+impl Sensor for NoisyContacts {
     type Config = StateNoise;
 
-    fn configure(params: &PluginParams<'_>) -> Result<StateNoise> {
+    fn configure(params: &PluginParams) -> Result<StateNoise> {
         let noise: StateNoise = params.parse()?;
         noise.validate()?;
         Ok(noise)
@@ -37,10 +36,8 @@ impl Plugin for NoisyContacts {
     fn reading_kind(_config: &StateNoise) -> ReadingKind {
         ReadingKind::Contacts
     }
-}
 
-impl Sensor for NoisyContacts {
-    fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut SensorContext) -> Result<()> {
         // Every other live entity is measured, however far away: an ideal sensor.
         // A real one would have range and field of view.
         // A range-limited sensor should ask `context.contacts_truth.within(position,
@@ -64,7 +61,7 @@ impl Sensor for NoisyContacts {
             });
         }
         context.publish_reading(ContactList::from(reading))?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -86,7 +83,7 @@ mod tests {
     use super::super::noisy_state::StateNoise;
     use super::NoisyContacts;
     use crate::math::{KinematicState, Vec3};
-    use crate::plugin::{Plugin, PluginParams, PluginRandom};
+    use crate::plugin::{PluginParams, PluginRandom, Sensor};
 
     fn sensor(stddev: f64) -> NoisyContacts {
         NoisyContacts::new(&StateNoise {

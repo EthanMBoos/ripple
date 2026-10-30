@@ -5,7 +5,7 @@
 use anyhow::{Context, Result};
 use serde::Deserialize;
 
-use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
+use crate::plugin::{Interaction, InteractionContext, Update};
 use crate::{Entity, EventKind, Vec3};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
@@ -28,7 +28,8 @@ impl Default for GroundCollisionParams {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Deserialize)]
+#[serde(try_from = "GroundCollisionParams")]
 pub struct GroundCollisionConfig {
     height_world_m: f64,
     startup_collisions: bool,
@@ -39,11 +40,11 @@ pub struct GroundCollision {
     config: GroundCollisionConfig,
 }
 
-impl Plugin for GroundCollision {
-    type Config = GroundCollisionConfig;
-
-    fn configure(params: &PluginParams<'_>) -> Result<GroundCollisionConfig> {
-        let params: GroundCollisionParams = params.parse()?;
+// The mission's parameters become the config through serde's `try_from`, so
+// the trait's default `configure` (`params.parse()`) fits this plugin too.
+impl TryFrom<GroundCollisionParams> for GroundCollisionConfig {
+    type Error = anyhow::Error;
+    fn try_from(params: GroundCollisionParams) -> Result<Self> {
         let team_id = match params.team.as_str() {
             "all" => None,
             team => Some(
@@ -57,19 +58,21 @@ impl Plugin for GroundCollision {
             team_id,
         })
     }
+}
+
+impl Interaction for GroundCollision {
+    type Config = GroundCollisionConfig;
 
     fn new(config: &GroundCollisionConfig) -> Self {
         Self { config: *config }
     }
-}
 
-impl Interaction for GroundCollision {
     fn collision_exists(&self, _entities: &[Entity], position_world_m: Vec3) -> bool {
         // Startup candidates have no team filter here.
         self.config.startup_collisions && position_world_m.z <= self.config.height_world_m
     }
 
-    fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut InteractionContext) -> Result<Update> {
         for index in 0..context.entities.len() {
             let entity = &mut context.entities[index];
             if entity.health() <= 0

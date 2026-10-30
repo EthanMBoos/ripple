@@ -10,9 +10,7 @@ use nalgebra::UnitQuaternion;
 use serde::Deserialize;
 
 use crate::math::{KinematicState, Quaternion, Vec3};
-use crate::plugin::{
-    Plugin, PluginParams, PluginRandom, ReadingKind, Sensor, SensorContext, Update,
-};
+use crate::plugin::{PluginParams, PluginRandom, ReadingKind, Sensor, SensorContext};
 
 /// Gaussian measurement error, shared by NoisyState and NoisyContacts so both
 /// take the same parameters, keys, and attitude perturbation. Each error has a
@@ -34,10 +32,10 @@ pub struct NoisyState {
     noise: StateNoise,
 }
 
-impl Plugin for NoisyState {
+impl Sensor for NoisyState {
     type Config = StateNoise;
 
-    fn configure(params: &PluginParams<'_>) -> Result<StateNoise> {
+    fn configure(params: &PluginParams) -> Result<StateNoise> {
         let noise: StateNoise = params.parse()?;
         noise.validate()?;
         Ok(noise)
@@ -50,21 +48,19 @@ impl Plugin for NoisyState {
     fn reading_kind(_config: &StateNoise) -> ReadingKind {
         ReadingKind::State
     }
-}
 
-impl Sensor for NoisyState {
     /// The first reading, sampled like every later one, so the first decision
     /// sees noise too. It is taken in the tick of the sensor phase's next
     /// reading, so it has its own key.
-    fn initialize(&mut self, context: &mut SensorContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut SensorContext) -> Result<()> {
         let measured = self.measure(context.truth, &context.random, FIRST_READING)?;
         context.publish_reading(measured)
     }
 
-    fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut SensorContext) -> Result<()> {
         let measured = self.measure(context.truth, &context.random, SENSOR_PHASE_READING)?;
         context.publish_reading(measured)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -159,7 +155,7 @@ impl StateNoise {
 mod tests {
     use super::{FIRST_READING, NoisyState, SENSOR_PHASE_READING, StateNoise};
     use crate::math::{EulerAngles, KinematicState, Quaternion, Vec3};
-    use crate::plugin::{Plugin, PluginParams, PluginRandom};
+    use crate::plugin::{PluginParams, PluginRandom, Sensor};
 
     fn sensor(stddev: f64) -> NoisyState {
         NoisyState::new(&StateNoise {

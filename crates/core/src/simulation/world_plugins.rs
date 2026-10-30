@@ -228,7 +228,7 @@ impl WorldPlugins {
         entities: &mut [Entity],
         simulator: &mut Messages,
         mut trace: Option<&mut NetworkTrace>,
-    ) -> Result<bool> {
+    ) -> Result<()> {
         let names: Vec<_> = self.networks.iter().map(|slot| slot.name.clone()).collect();
         let simulator_endpoint = MessageEndpoint {
             entity_id: None,
@@ -267,7 +267,6 @@ impl WorldPlugins {
         for mailbox in &mailboxes {
             mailbox.messages.validate_networks(&names)?;
         }
-        let mut stop = false;
         for (name, endpoint, plugin, scheduled, random) in network_steps {
             let mut context = NetworkContext {
                 time,
@@ -280,12 +279,11 @@ impl WorldPlugins {
                 routed: false,
                 trace: trace.as_deref_mut(),
             };
-            let update = plugin
+            plugin
                 .step(&mut context)
                 .with_context(|| format!("network '{name}'"))?;
-            stop |= update == Update::Stop;
         }
-        Ok(stop)
+        Ok(())
     }
     pub fn metrics(
         &mut self,

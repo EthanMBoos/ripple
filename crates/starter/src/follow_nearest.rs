@@ -4,7 +4,7 @@
 
 use anyhow::{Result, ensure};
 use ripple_core::plugin::{
-    AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
+    AgentContext, Autonomy, Frame, PluginIo, PluginParams, Port, Ports, Unit,
 };
 use serde::Deserialize;
 
@@ -25,10 +25,10 @@ pub struct FollowNearest {
     speed_mps: f64,
 }
 
-impl Plugin for FollowNearest {
+impl Autonomy for FollowNearest {
     type Config = FollowNearestConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<FollowNearestConfig> {
+    fn configure(params: &PluginParams) -> Result<FollowNearestConfig> {
         let config: FollowNearestConfig = params.parse()?;
         ensure!(
             config.speed_mps > 0.0,
@@ -53,10 +53,8 @@ impl Plugin for FollowNearest {
                 Frame::None,
             ))
     }
-}
 
-impl Autonomy for FollowNearest {
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         // Input: our own estimated state and the contacts we know about.
         let own_position_world_m = context.state.position_world_m;
 
@@ -94,6 +92,6 @@ impl Autonomy for FollowNearest {
         io.write("desired_heading", heading_world_rad)?;
         io.write("desired_altitude", altitude_world_m)?;
         io.write("desired_speed", self.speed_mps)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }

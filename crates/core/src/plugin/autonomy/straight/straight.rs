@@ -8,9 +8,7 @@ use serde::Deserialize;
 
 use crate::math::{self, Vec3};
 use crate::plugin::interaction::{BOUNDARY_TOPIC, BoundaryRegion};
-use crate::plugin::{
-    AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{AgentContext, Autonomy, Frame, PluginIo, Port, Ports, Unit};
 
 const ALTITUDE: &str = "desired_altitude";
 const SPEED: &str = "desired_speed";
@@ -40,12 +38,8 @@ pub struct Straight {
     boundary: Option<BoundaryRegion>,
 }
 
-impl Plugin for Straight {
+impl Autonomy for Straight {
     type Config = StraightConfig;
-
-    fn configure(params: &PluginParams<'_>) -> Result<StraightConfig> {
-        params.parse()
-    }
 
     fn new(config: &StraightConfig) -> Self {
         Self {
@@ -62,10 +56,8 @@ impl Plugin for Straight {
             .output(Port::new(SPEED, Unit::MetersPerSecond, Frame::None))
             .output(Port::new(HEADING, Unit::Radians, Frame::World))
     }
-}
 
-impl Autonomy for Straight {
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> {
         let forward_world_m = context
             .state
             .orientation_world_from_body
@@ -78,7 +70,7 @@ impl Autonomy for Straight {
         Ok(())
     }
 
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         for message in context
             .messages
             .receive::<BoundaryRegion>("GlobalNetwork", BOUNDARY_TOPIC)?
@@ -111,13 +103,14 @@ impl Autonomy for Straight {
         io.write(ALTITUDE, self.goal_world_m.z)?;
         io.write(SPEED, desired_speed_mps)?;
         io.write(HEADING, desired_heading_world_rad)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Plugin, PluginParams, Straight};
+    use super::{Autonomy, Straight};
+    use crate::plugin::PluginParams;
 
     #[test]
     fn configured_speed_is_copied_into_independent_autonomy_instances() -> anyhow::Result<()> {

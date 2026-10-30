@@ -7,8 +7,8 @@ use ripple_core::plugin::autonomy::{
     START_AUCTION_TOPIC,
 };
 use ripple_core::plugin::{
-    AgentContext, Autonomy, ContactList, Frame, Interaction, InteractionContext, Plugin, PluginIo,
-    PluginParams, PluginRegistry, Port, Ports, Sensor, SensorContext, Unit, Update,
+    AgentContext, Autonomy, ContactList, Frame, Interaction, InteractionContext, PluginIo,
+    PluginRegistry, Port, Ports, Sensor, SensorContext, Unit, Update,
 };
 use ripple_core::{Mission, Params, Simulation};
 use serde::Deserialize;
@@ -23,11 +23,10 @@ struct ContactFollower {
     follow: bool,
 }
 
-impl Plugin for ContactFollower {
+/// Moves at the believed x position of the first contact it knows (tracking's
+/// belief, from NoisyContacts).
+impl Autonomy for ContactFollower {
     type Config = ContactFollowerConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<ContactFollowerConfig> {
-        params.parse()
-    }
     fn new(config: &ContactFollowerConfig) -> Self {
         Self {
             follow: config.follow,
@@ -36,12 +35,8 @@ impl Plugin for ContactFollower {
     fn ports(_: &ContactFollowerConfig) -> Ports {
         Ports::default().output(Port::new("velocity_x", Unit::MetersPerSecond, Frame::World))
     }
-}
 
-/// Moves at the believed x position of the first contact it knows (tracking's
-/// belief, from NoisyContacts).
-impl Autonomy for ContactFollower {
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let mut velocity_mps = 0.0;
         if self.follow
             && context.entity.id == 1
@@ -50,7 +45,7 @@ impl Autonomy for ContactFollower {
             velocity_mps = contact.state.position_world_m.x;
         }
         io.write("velocity_x", velocity_mps)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -72,20 +67,15 @@ struct Observer {
     trace: AuctionTrace,
 }
 
-impl Plugin for Observer {
+impl Sensor for Observer {
     type Config = ();
-    fn configure(params: &PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
     fn new(_: &()) -> Self {
         Self {
             trace: AuctionTrace::default(),
         }
     }
-}
 
-impl Sensor for Observer {
-    fn initialize(&mut self, context: &mut SensorContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut SensorContext) -> Result<()> {
         context
             .messages
             .subscribe::<AuctionStart>("SphereNetwork", START_AUCTION_TOPIC)?;
@@ -96,7 +86,7 @@ impl Sensor for Observer {
             .messages
             .subscribe::<AuctionResult>("SphereNetwork", RESULT_AUCTION_TOPIC)
     }
-    fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut SensorContext) -> Result<()> {
         for message in context
             .messages
             .receive::<AuctionStart>("SphereNetwork", START_AUCTION_TOPIC)?
@@ -118,7 +108,7 @@ impl Sensor for Observer {
         context.publish_reading(ObserverReading {
             trace: self.trace.clone(),
         })?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -136,19 +126,15 @@ impl Default for RemoveContactsConfig {
 struct RemoveContacts {
     at_s: f64,
 }
-impl Plugin for RemoveContacts {
+impl Interaction for RemoveContacts {
     type Config = RemoveContactsConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<RemoveContactsConfig> {
-        params.parse()
-    }
     fn new(config: &RemoveContactsConfig) -> Self {
         Self {
             at_s: config.remove_at_s,
         }
     }
-}
-impl Interaction for RemoveContacts {
-    fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
+
+    fn step(&mut self, context: &mut InteractionContext) -> Result<Update> {
         if context.time.time_s >= self.at_s {
             for entity in context.entities.iter_mut() {
                 if entity.id() != 1 {

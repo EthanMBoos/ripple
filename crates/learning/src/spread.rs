@@ -9,8 +9,7 @@ use crate::policy::{Policy, TrainerActions};
 use anyhow::{Result, ensure};
 use ripple_core::KinematicState;
 use ripple_core::plugin::{
-    AgentContext, Autonomy, Contact, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit,
-    Update,
+    AgentContext, Autonomy, Contact, Frame, PluginIo, PluginParams, Port, Ports, Unit,
 };
 use serde::Deserialize;
 use std::path::PathBuf;
@@ -98,10 +97,10 @@ impl SpreadPolicy {
     }
 }
 
-impl Plugin for SpreadPolicy {
+impl Autonomy for SpreadPolicy {
     type Config = SpreadConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<SpreadConfig> {
+    fn configure(params: &PluginParams) -> Result<SpreadConfig> {
         let config: SpreadConfig = params.parse()?;
         ensure!(
             !config.landmarks_m.is_empty(),
@@ -128,14 +127,12 @@ impl Plugin for SpreadPolicy {
         }
         ports
     }
-}
 
-impl Autonomy for SpreadPolicy {
-    fn initialize(&mut self, _: &mut AgentContext<'_>) -> Result<()> {
+    fn initialize(&mut self, _: &mut AgentContext) -> Result<()> {
         self.policy.load(self.config.observation_size())
     }
 
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let observation = self.config.observe(
             context.state,
             context.entity.team_id,
@@ -151,6 +148,6 @@ impl Autonomy for SpreadPolicy {
         io.write("velocity_x", action[0] as f64 * speed_mps)?;
         io.write("velocity_y", action[1] as f64 * speed_mps)?;
         io.write("velocity_z", 0.0)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }

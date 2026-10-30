@@ -11,7 +11,7 @@
 use learning::{HoverConfig, SpreadConfig, SpreadPolicy, TrainerActions, hover, spread};
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
-use ripple_core::plugin::{Plugin, PluginParams, PluginRegistry};
+use ripple_core::plugin::{Autonomy, PluginParams, PluginRegistry};
 use ripple_core::{Entity, Mission, Params};
 use std::collections::BTreeMap;
 use std::path::PathBuf;

@@ -73,10 +73,10 @@ learner still values what comes after.
 | `crates/learning/python/train_hover.py` | PPO training, a check on new episodes, and the ONNX export |
 
 Python sends actions in through `PluginRegistry::register_autonomy_with`,
-which builds each autonomy with a closure instead of `Plugin::new`. The Python
-module registers `HoverPolicy` that way, handing every instance the table the
-trainer writes actions to (`learning::register_for_training`). The stock
-`ripple` command registers it normally, so it reads its `policy` file.
+which builds each autonomy with a closure instead of `Autonomy::new`. The
+Python module registers `HoverPolicy` that way, handing every instance the
+table the trainer writes actions to (`learning::register_for_training`). The
+stock `ripple` command registers it normally, so it reads its `policy` file.
 
 The replayed policy is deterministic: it takes the network's mean action, the
 one SB3 uses with exploration noise off, and clamps it to [-1, 1]. A replay is

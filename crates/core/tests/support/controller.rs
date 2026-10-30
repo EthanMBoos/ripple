@@ -17,11 +17,8 @@ impl Default for ScaleSpeedConfig {
 pub struct ScaleSpeed {
     gain: f64,
 }
-impl Plugin for ScaleSpeed {
+impl Controller for ScaleSpeed {
     type Config = ScaleSpeedConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<ScaleSpeedConfig> {
-        params.parse()
-    }
     fn new(config: &ScaleSpeedConfig) -> Self {
         Self { gain: config.gain }
     }
@@ -29,11 +26,10 @@ impl Plugin for ScaleSpeed {
         let speed = Port::new("speed", Unit::MetersPerSecond, Frame::World);
         Ports::default().input(speed.clone()).output(speed)
     }
-}
-impl Controller for ScaleSpeed {
-    fn step(&mut self, _: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+
+    fn step(&mut self, _: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let speed_world_mps = io.read("speed")?;
         io.write("speed", self.gain * speed_world_mps)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }

@@ -26,7 +26,7 @@ use anyhow::{Context, Result, ensure};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 
-use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update, WorldContext};
+use crate::plugin::{Interaction, InteractionContext, Update, WorldContext};
 use crate::{Entity, EventKind, Quaternion, Terrain, Vec3};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
@@ -53,7 +53,8 @@ impl Default for TerrainCollisionParams {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
+#[serde(try_from = "TerrainCollisionParams")]
 pub struct TerrainCollisionConfig {
     clearance_m: f64,
     startup_collisions: bool,
@@ -69,43 +70,6 @@ pub struct TerrainCollision {
     /// Where each live, checked entity was at the end of the last step, and
     /// its attitude.
     last_pose: BTreeMap<i32, (Vec3, Quaternion)>,
-}
-
-impl Plugin for TerrainCollision {
-    type Config = TerrainCollisionConfig;
-
-    fn configure(params: &PluginParams<'_>) -> Result<TerrainCollisionConfig> {
-        let params: TerrainCollisionParams = params.parse()?;
-        ensure!(
-            params.clearance_m.is_finite() && params.clearance_m >= 0.0,
-            "TerrainCollision clearance_m must be zero or more"
-        );
-        let team_id = match params.team.as_str() {
-            "all" => None,
-            team => Some(
-                team.parse()
-                    .context("TerrainCollision team must be 'all' or an integer")?,
-            ),
-        };
-        Ok(TerrainCollisionConfig {
-            clearance_m: params.clearance_m,
-            startup_collisions: params.enable_startup_collisions,
-            team_id,
-            structure_points_body_m: params
-                .structure_points_frd_m
-                .iter()
-                .map(|&[forward, right, down]| Vec3::new(forward, -right, -down))
-                .collect(),
-        })
-    }
-
-    fn new(config: &TerrainCollisionConfig) -> Self {
-        Self {
-            config: config.clone(),
-            terrain: None,
-            last_pose: BTreeMap::new(),
-        }
-    }
 }
 
 impl TerrainCollision {
@@ -183,8 +147,47 @@ impl TerrainCollision {
     }
 }
 
+// The mission's parameters become the config through serde's `try_from`, so
+// the trait's default `configure` (`params.parse()`) fits this plugin too.
+impl TryFrom<TerrainCollisionParams> for TerrainCollisionConfig {
+    type Error = anyhow::Error;
+    fn try_from(params: TerrainCollisionParams) -> Result<Self> {
+        ensure!(
+            params.clearance_m.is_finite() && params.clearance_m >= 0.0,
+            "TerrainCollision clearance_m must be zero or more"
+        );
+        let team_id = match params.team.as_str() {
+            "all" => None,
+            team => Some(
+                team.parse()
+                    .context("TerrainCollision team must be 'all' or an integer")?,
+            ),
+        };
+        Ok(TerrainCollisionConfig {
+            clearance_m: params.clearance_m,
+            startup_collisions: params.enable_startup_collisions,
+            team_id,
+            structure_points_body_m: params
+                .structure_points_frd_m
+                .iter()
+                .map(|&[forward, right, down]| Vec3::new(forward, -right, -down))
+                .collect(),
+        })
+    }
+}
+
 impl Interaction for TerrainCollision {
-    fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()> {
+    type Config = TerrainCollisionConfig;
+
+    fn new(config: &TerrainCollisionConfig) -> Self {
+        Self {
+            config: config.clone(),
+            terrain: None,
+            last_pose: BTreeMap::new(),
+        }
+    }
+
+    fn initialize(&mut self, context: &mut WorldContext) -> Result<()> {
         let terrain = context
             .terrain
             .context("TerrainCollision needs the mission to name a terrain")?;
@@ -202,7 +205,7 @@ impl Interaction for TerrainCollision {
         self.config.startup_collisions && self.clearance_left_m(position_world_m) <= 0.0
     }
 
-    fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut InteractionContext) -> Result<Update> {
         let last_pose = std::mem::take(&mut self.last_pose);
         for index in 0..context.entities.len() {
             let entity = &context.entities[index];

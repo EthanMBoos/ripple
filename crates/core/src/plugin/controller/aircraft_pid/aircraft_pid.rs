@@ -12,9 +12,7 @@ use serde::Deserialize;
 use crate::Vec3;
 use crate::common::{AngleGains, LengthGains, Pid, PidGains, SpeedGains};
 use crate::plugin::motion::FixedWingAirframe;
-use crate::plugin::{
-    AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{AgentContext, Controller, Frame, PluginIo, Port, Ports, Unit};
 
 /// Mission parameters. `airframe` loads the gains and attitude limits tuned
 /// for that aircraft, which any key below overrides; without it the mission
@@ -37,7 +35,8 @@ struct AircraftPidParams {
     wind_mps: [f64; 3],
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
+#[serde(try_from = "AircraftPidParams")]
 pub struct AircraftPidConfig {
     heading: PidGains,
     altitude: PidGains,
@@ -126,11 +125,11 @@ pub struct AircraftPidController {
     wind_world_mps: Vec3,
 }
 
-impl Plugin for AircraftPidController {
-    type Config = AircraftPidConfig;
-
-    fn configure(params: &PluginParams<'_>) -> Result<AircraftPidConfig> {
-        let params: AircraftPidParams = params.parse()?;
+// The mission's parameters become the config through serde's `try_from`, so
+// the trait's default `configure` (`params.parse()`) fits this plugin too.
+impl TryFrom<AircraftPidParams> for AircraftPidConfig {
+    type Error = anyhow::Error;
+    fn try_from(params: AircraftPidParams) -> Result<Self> {
         let profile = params.airframe.map(airframe_settings);
         let missing = |key: &str| {
             format!(
@@ -181,6 +180,10 @@ impl Plugin for AircraftPidController {
         );
         Ok(config)
     }
+}
+
+impl Controller for AircraftPidController {
+    type Config = AircraftPidConfig;
 
     fn new(config: &AircraftPidConfig) -> Self {
         Self {
@@ -215,10 +218,8 @@ impl Plugin for AircraftPidController {
             .output(Port::new("aileron", Unit::Radians, Frame::Model))
             .output(Port::new("rudder", Unit::Radians, Frame::Model))
     }
-}
 
-impl Controller for AircraftPidController {
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let state = context.state;
         let attitude = state.orientation_world_from_body;
         // Use the supplied substep interval, not the full mission tick, so the
@@ -257,7 +258,7 @@ impl Controller for AircraftPidController {
         io.write("aileron", aileron_rad.clamp(-1.0, 1.0))?;
         io.write("throttle", throttle.clamp(-1.0, 1.0))?;
         io.write("rudder", 0.0)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -266,8 +267,8 @@ mod tests {
     use super::AircraftPidController;
     use crate::KinematicState;
     use crate::plugin::{
-        AgentContext, Controller, EntityInfo, KnownContacts, Messages, Plugin, PluginIo,
-        PluginParams, PluginRandom, StepTime,
+        AgentContext, Controller, EntityInfo, KnownContacts, Messages, PluginIo, PluginParams,
+        PluginRandom, StepTime,
     };
 
     #[test]

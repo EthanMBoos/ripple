@@ -30,9 +30,7 @@ use serde::Deserialize;
 
 use crate::math::{self, Vec3};
 use crate::plugin::motion::{Airframe, AirframeName, AirframeOverrides, RotorParams};
-use crate::plugin::{
-    AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{AgentContext, Controller, Frame, PluginIo, Port, Ports, Unit};
 
 const VELOCITY_PORTS: [&str; 3] = ["velocity_x", "velocity_y", "velocity_z"];
 
@@ -119,7 +117,8 @@ fn default_gains(airframe: Option<AirframeName>) -> Gains {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
+#[serde(try_from = "MultirotorVelocityParams")]
 pub struct MultirotorVelocityConfig {
     airframe: Airframe,
     gains: Gains,
@@ -135,11 +134,11 @@ pub struct MultirotorVelocityController {
     yaw_world_from_body_rad: Option<f64>,
 }
 
-impl Plugin for MultirotorVelocityController {
-    type Config = MultirotorVelocityConfig;
-
-    fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
-        let params: MultirotorVelocityParams = params.parse()?;
+// The mission's parameters become the config through serde's `try_from`, so
+// the trait's default `configure` (`params.parse()`) fits this plugin too.
+impl TryFrom<MultirotorVelocityParams> for MultirotorVelocityConfig {
+    type Error = anyhow::Error;
+    fn try_from(params: MultirotorVelocityParams) -> Result<Self> {
         let airframe = Airframe::new(
             params.airframe,
             AirframeOverrides {
@@ -196,6 +195,10 @@ impl Plugin for MultirotorVelocityController {
             thrust_from_wrench,
         })
     }
+}
+
+impl Controller for MultirotorVelocityController {
+    type Config = MultirotorVelocityConfig;
 
     fn new(config: &Self::Config) -> Self {
         Self {
@@ -215,10 +218,8 @@ impl Plugin for MultirotorVelocityController {
         }
         ports
     }
-}
 
-impl Controller for MultirotorVelocityController {
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let dt_s = context.time.dt_s;
         let belief = context.state;
         let airframe = &self.config.airframe;
@@ -301,7 +302,7 @@ impl Controller for MultirotorVelocityController {
             let thrust_n = thrust_n.clamp(min_thrust_n, max_thrust_n);
             io.write(&rotor.port, (thrust_n / airframe.thrust_coefficient).sqrt())?;
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -358,7 +359,7 @@ mod tests {
 
     use super::{MultirotorVelocityController, desired_attitude, vee};
     use crate::math::Vec3;
-    use crate::plugin::{Plugin, PluginParams};
+    use crate::plugin::{Controller, PluginParams};
 
     fn configure(params: &[(&str, &str)]) -> Result<super::MultirotorVelocityConfig> {
         MultirotorVelocityController::configure(&PluginParams::pairs(params))

@@ -28,10 +28,7 @@ use serde::Deserialize;
 
 use crate::{
     math::{self, EulerAngles, KinematicState, Quaternion, Vec3},
-    plugin::{
-        Frame, MotionContext, MotionModel, Plugin, PluginIo, PluginParams, Port, Ports, Unit,
-        Update,
-    },
+    plugin::{Frame, MotionContext, MotionModel, PluginIo, Port, Ports, Unit},
 };
 
 /// Gravity, as FixedWing6DOF's.
@@ -65,7 +62,8 @@ enum SimpleAirframe {
     Rascal,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
+#[serde(try_from = "SimpleAircraftParams")]
 pub struct AircraftConfig {
     min_speed_mps: f64,
     max_speed_mps: f64,
@@ -175,11 +173,11 @@ pub struct SimpleAircraft {
     config: AircraftConfig,
 }
 
-impl Plugin for SimpleAircraft {
-    type Config = AircraftConfig;
-
-    fn configure(params: &PluginParams<'_>) -> Result<AircraftConfig> {
-        let params: SimpleAircraftParams = params.parse()?;
+// The mission's parameters become the config through serde's `try_from`, so
+// the trait's default `configure` (`params.parse()`) fits this plugin too.
+impl TryFrom<SimpleAircraftParams> for AircraftConfig {
+    type Error = anyhow::Error;
+    fn try_from(params: SimpleAircraftParams) -> Result<Self> {
         let base = params
             .airframe
             .map_or_else(AircraftConfig::generic, AircraftConfig::airframe);
@@ -229,6 +227,10 @@ impl Plugin for SimpleAircraft {
         );
         Ok(config)
     }
+}
+
+impl MotionModel for SimpleAircraft {
+    type Config = AircraftConfig;
 
     fn new(config: &AircraftConfig) -> Self {
         Self {
@@ -246,25 +248,23 @@ impl Plugin for SimpleAircraft {
                 Frame::Model,
             ))
     }
-}
 
-impl MotionModel for SimpleAircraft {
     /// Brings the initial truth within the limits, with velocity along the
     /// heading and climb angle, and at rest (no commanded rates yet).
-    fn initialize(&mut self, context: &mut MotionContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut MotionContext) -> Result<()> {
         let state = self.limited(AircraftState::from_truth(context.truth));
         self.write_truth(context.truth, state, AircraftControl::default());
         Ok(())
     }
 
-    fn step(&mut self, context: &mut MotionContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut MotionContext, io: &mut PluginIo) -> Result<()> {
         let control = AircraftControl {
             throttle: io.read("throttle")?,
             roll_rate_radps: io.read("roll_rate")?,
             pitch_rate_radps: io.read("pitch_rate")?,
         };
         self.integrate(context.truth, control, context.time.dt_s)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -476,9 +476,10 @@ impl AircraftState {
 
 #[cfg(test)]
 mod tests {
-    use super::{AircraftControl, AircraftState, Plugin, PluginParams, SimpleAircraft};
-    use super::{MotionModel, aircraft_derivative};
+    use super::aircraft_derivative;
+    use super::{AircraftControl, AircraftState, MotionModel, SimpleAircraft};
     use crate::math::{EulerAngles, KinematicState, Quaternion, Vec3};
+    use crate::plugin::PluginParams;
     use crate::plugin::{EntityInfo, Messages, MotionContext, PluginIo, StepTime};
 
     fn aircraft() -> anyhow::Result<SimpleAircraft> {

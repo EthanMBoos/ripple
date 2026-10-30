@@ -52,9 +52,7 @@ use nalgebra::{Matrix3, UnitQuaternion};
 use serde::Deserialize;
 
 use crate::math::{self, KinematicState, Vec3};
-use crate::plugin::{
-    Frame, MotionContext, MotionModel, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{Frame, MotionContext, MotionModel, PluginIo, Port, Ports, Unit};
 
 use dynamics::{RotorcraftState, derivative};
 use rotor::{MotorLag, RotorAerodynamics, RotorCoefficients, rotor_loads};
@@ -96,7 +94,8 @@ struct MultirotorParams {
     rolling_moment_coefficient: f64,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
+#[serde(try_from = "MultirotorParams")]
 pub struct MultirotorConfig {
     airframe: Airframe,
     inverse_inertia: Matrix3<f64>,
@@ -116,11 +115,11 @@ pub struct Multirotor {
     rotor_speeds_radps: Vec<f64>,
 }
 
-impl Plugin for Multirotor {
-    type Config = MultirotorConfig;
-
-    fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
-        let params: MultirotorParams = params.parse()?;
+// The mission's parameters become the config through serde's `try_from`, so
+// the trait's default `configure` (`params.parse()`) fits this plugin too.
+impl TryFrom<MultirotorParams> for MultirotorConfig {
+    type Error = anyhow::Error;
+    fn try_from(params: MultirotorParams) -> Result<Self> {
         let airframe = Airframe::new(
             params.airframe,
             AirframeOverrides {
@@ -165,6 +164,10 @@ impl Plugin for Multirotor {
         );
         Ok(config)
     }
+}
+
+impl MotionModel for Multirotor {
+    type Config = MultirotorConfig;
 
     fn new(config: &Self::Config) -> Self {
         Self {
@@ -182,16 +185,14 @@ impl Plugin for Multirotor {
         }
         ports
     }
-}
 
-impl MotionModel for Multirotor {
-    fn step(&mut self, context: &mut MotionContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut MotionContext, io: &mut PluginIo) -> Result<()> {
         let rotors = &self.config.airframe.rotors;
         for (rotor, command_radps) in rotors.iter().zip(&mut self.motor_commands_radps) {
             *command_radps = io.read(&rotor.port)?;
         }
         self.integrate(context.truth, context.time.dt_s)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -308,7 +309,7 @@ mod tests {
 
     use super::Multirotor;
     use crate::math::{EulerAngles, KinematicState, Quaternion, Vec3};
-    use crate::plugin::{Plugin, PluginParams};
+    use crate::plugin::{MotionModel, PluginParams};
 
     /// Parameters as (key, YAML value) pairs.
     fn multirotor(params: &[(&str, &str)]) -> Result<Multirotor> {

@@ -1,6 +1,6 @@
 //! Selected options have direct checks, not a second plugin validation framework.
 use crate::plugin::{
-    Plugin, PluginParams,
+    Autonomy, Controller, Interaction, MotionModel, PluginParams,
     autonomy::{Straight, WaypointFollower},
     controller::SimpleAircraftControllerPid,
     interaction::{Boundary, GroundCollision, WaypointBroadcast},

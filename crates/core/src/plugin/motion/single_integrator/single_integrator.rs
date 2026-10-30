@@ -13,9 +13,7 @@ use anyhow::{Result, ensure};
 use serde::Deserialize;
 
 use crate::math::{EulerAngles, Quaternion, Vec3};
-use crate::plugin::{
-    Frame, MotionContext, MotionModel, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{Frame, MotionContext, MotionModel, PluginIo, Port, Ports, Unit};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -38,12 +36,8 @@ pub struct SingleIntegrator {
     max_speed_mps: f64,
 }
 
-impl Plugin for SingleIntegrator {
+impl MotionModel for SingleIntegrator {
     type Config = SingleIntegratorConfig;
-
-    fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
-        params.parse()
-    }
 
     fn new(config: &Self::Config) -> Self {
         Self {
@@ -57,10 +51,8 @@ impl Plugin for SingleIntegrator {
             .input(Port::new("velocity_y", Unit::MetersPerSecond, Frame::World))
             .input(Port::new("velocity_z", Unit::MetersPerSecond, Frame::World))
     }
-}
 
-impl MotionModel for SingleIntegrator {
-    fn initialize(&mut self, context: &mut MotionContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut MotionContext) -> Result<()> {
         context.truth.velocity_world_mps = Vec3::zeros();
         context.truth.orientation_world_from_body = Quaternion::from_euler(EulerAngles {
             yaw_world_from_body_rad: context
@@ -72,7 +64,7 @@ impl MotionModel for SingleIntegrator {
         Ok(())
     }
 
-    fn step(&mut self, context: &mut MotionContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut MotionContext, io: &mut PluginIo) -> Result<()> {
         let desired_velocity_mps = Vec3::new(
             io.read("velocity_x")?,
             io.read("velocity_y")?,
@@ -99,16 +91,14 @@ impl MotionModel for SingleIntegrator {
             state.position_world_m.iter().all(|value| value.is_finite()),
             "SingleIntegrator produced nonfinite position"
         );
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{SingleIntegrator, SingleIntegratorConfig};
-    use crate::plugin::{
-        EntityInfo, Messages, MotionContext, MotionModel, Plugin, PluginIo, StepTime,
-    };
+    use crate::plugin::{EntityInfo, Messages, MotionContext, MotionModel, PluginIo, StepTime};
     use crate::{KinematicState, Vec3};
 
     #[test]

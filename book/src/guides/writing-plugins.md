@@ -59,23 +59,24 @@ pub struct MyConfig { /* mission parameters */ }
 impl Default for MyConfig { /* the value of each parameter a mission omits */ }
 pub struct MyPlugin { /* per-entity state that persists between ticks */ }
 
-impl Plugin for MyPlugin {
+impl Autonomy for MyPlugin {           // or Controller, MotionModel, Sensor, ...
+    // How it is built, while the mission loads.
     type Config = MyConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<MyConfig> { /* parse, validate */ }
+    fn configure(params: &PluginParams) -> Result<MyConfig> { /* optional: validate */ }
     fn new(config: &MyConfig) -> Self { /* fresh state for one instance */ }
     fn ports(config: &MyConfig) -> Ports { /* inputs and outputs, if any */ }
-}
 
-impl Autonomy for MyPlugin {           // or Controller, MotionModel, Sensor, ...
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> { /* optional */ }
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> { /* each tick */ }
+    // What it does, each tick.
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> { /* optional */ }
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> { /* each tick */ }
     fn close(&mut self, time: StepTime) -> Result<()> { /* optional: once, at the end */ }
 }
 ```
 
-- **Configuration is separate from state.** `configure` runs once per mission
-  and rejects bad values with a clear error. `new` runs once per instance, so
-  each vehicle gets its own state.
+- **Configuration is separate from state.** `configure` runs once per mission.
+  Its default parses the config struct; write your own only to reject bad
+  values with a clear error. `new` runs once per instance, so each vehicle
+  gets its own state.
 - **The context is borrowed, not stored.** Each call gets a short-lived
   context. Keep only your own configuration and state in the struct.
 - **No threads, locks, or shared state.** The engine runs entities in
@@ -103,7 +104,7 @@ impl Default for StraightConfig {
     }
 }
 
-fn configure(params: &PluginParams<'_>) -> Result<StraightConfig> {
+fn configure(params: &PluginParams) -> Result<StraightConfig> {
     let config: StraightConfig = params.parse()?;
     ensure!(config.speed_mps >= 0.0, "speed_mps must be nonnegative");
     Ok(config)
@@ -141,7 +142,7 @@ Use the call for its type: `register_autonomy`, `register_controller`,
 error at startup, so nothing is silently replaced.
 
 `register_autonomy_with` takes a closure that builds each instance in place of
-`Plugin::new`, for a program that owns the simulation and must hand every
+`Autonomy::new`, for a program that owns the simulation and must hand every
 instance something of its own. The learning demos use it to pass in a Python
 trainer's actions ([Training a single
 agent](training-single-agent.md#the-pieces)).
@@ -195,11 +196,14 @@ timing.
 
 ## Returning from `step`
 
-- `Ok(Update::Applied)`: normal.
-- `Ok(Update::Stop)`: ask to end the run. The current tick still finishes.
+- `Ok(())`: normal.
 - `Err(...)`: something went wrong, such as an invalid state or a nonfinite
   number. The run stops and the error names your plugin. Use
   `ensure!(condition, "message")` for these checks.
+
+An interaction or a metrics plugin returns `Ok(Update::Applied)` instead, or
+`Ok(Update::Stop)` to end the run after this tick. The entity slots and
+networks cannot end a run.
 
 ## When an autonomy grows
 

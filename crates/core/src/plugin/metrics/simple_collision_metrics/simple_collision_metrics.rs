@@ -8,9 +8,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use anyhow::Result;
 use serde::Deserialize;
 
-use crate::plugin::{
-    MetricReport, Metrics, Plugin, PluginParams, TeamMetrics, Update, WorldContext,
-};
+use crate::plugin::{MetricReport, Metrics, TeamMetrics, Update, WorldContext};
 use crate::{Event, EventKind};
 
 // Subscription and consumption order must stay the same.
@@ -58,12 +56,8 @@ pub struct SimpleCollisionMetrics {
     scores: BTreeMap<i32, Score>,
 }
 
-impl Plugin for SimpleCollisionMetrics {
+impl Metrics for SimpleCollisionMetrics {
     type Config = CollisionWeights;
-
-    fn configure(params: &PluginParams<'_>) -> Result<CollisionWeights> {
-        params.parse()
-    }
 
     fn new(weights: &CollisionWeights) -> Self {
         Self {
@@ -71,10 +65,8 @@ impl Plugin for SimpleCollisionMetrics {
             scores: BTreeMap::new(),
         }
     }
-}
 
-impl Metrics for SimpleCollisionMetrics {
-    fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut WorldContext) -> Result<()> {
         for kind in EVENT_KINDS {
             context
                 .messages
@@ -83,7 +75,7 @@ impl Metrics for SimpleCollisionMetrics {
         Ok(())
     }
 
-    fn step(&mut self, context: &mut WorldContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut WorldContext) -> Result<Update> {
         for kind in EVENT_KINDS {
             let messages = context
                 .messages
@@ -183,7 +175,7 @@ impl Metrics for SimpleCollisionMetrics {
 
 #[cfg(test)]
 mod tests {
-    use super::{CollisionWeights, Metrics, Plugin, Score, SimpleCollisionMetrics};
+    use super::{CollisionWeights, Metrics, Score, SimpleCollisionMetrics};
     use std::collections::BTreeMap;
 
     #[test]

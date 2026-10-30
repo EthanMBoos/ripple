@@ -16,7 +16,7 @@
 use anyhow::{Context, Result, ensure};
 use ripple_core::Vec3;
 use ripple_core::plugin::{
-    AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
+    AgentContext, Autonomy, Frame, PluginIo, PluginParams, Port, Ports, Unit,
 };
 use serde::Deserialize;
 
@@ -94,10 +94,15 @@ pub struct Courier {
     endurance_left_s: f64,
 }
 
-impl Plugin for Courier {
+/// Distance in the horizontal plane.
+fn horizontal_m(a: Vec3, b: Vec3) -> f64 {
+    (a.x - b.x).hypot(a.y - b.y)
+}
+
+impl Autonomy for Courier {
     type Config = CourierConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<CourierConfig> {
+    fn configure(params: &PluginParams) -> Result<CourierConfig> {
         let config: CourierConfig = params.parse()?;
         config
             .kind
@@ -156,21 +161,14 @@ impl Plugin for Courier {
             .output(Port::new("velocity_y", Unit::MetersPerSecond, Frame::World))
             .output(Port::new("velocity_z", Unit::MetersPerSecond, Frame::World))
     }
-}
 
-/// Distance in the horizontal plane.
-fn horizontal_m(a: Vec3, b: Vec3) -> f64 {
-    (a.x - b.x).hypot(a.y - b.y)
-}
-
-impl Autonomy for Courier {
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> {
         context
             .messages
             .subscribe::<Assignment>("GlobalNetwork", ASSIGNMENT_TOPIC)
     }
 
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let now_s = context.time.time_s;
         let position_world_m = context.state.position_world_m;
         let id = context.entity.id;
@@ -284,7 +282,7 @@ impl Autonomy for Courier {
                 request_id: self.carrying,
             },
         )?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 

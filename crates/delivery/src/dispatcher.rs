@@ -16,8 +16,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use anyhow::{Result, ensure};
 use ripple_core::Vec3;
 use ripple_core::plugin::{
-    AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, PluginRandom, Port, Ports, Unit,
-    Update,
+    AgentContext, Autonomy, Frame, PluginIo, PluginParams, PluginRandom, Port, Ports, Unit,
 };
 use serde::Deserialize;
 
@@ -177,10 +176,10 @@ pub struct Dispatcher {
     soft_decided: bool,
 }
 
-impl Plugin for Dispatcher {
+impl Autonomy for Dispatcher {
     type Config = DispatcherConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<DispatcherConfig> {
+    fn configure(params: &PluginParams) -> Result<DispatcherConfig> {
         let config: DispatcherConfig = params.parse()?;
         ensure!(!config.sites.is_empty(), "Dispatcher needs sites");
         ensure!(!config.items.is_empty(), "Dispatcher needs items");
@@ -286,10 +285,8 @@ impl Plugin for Dispatcher {
         }
         ports
     }
-}
 
-impl Autonomy for Dispatcher {
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> {
         context
             .messages
             .subscribe::<Status>("GlobalNetwork", STATUS_TOPIC)?;
@@ -300,7 +297,7 @@ impl Autonomy for Dispatcher {
         Ok(())
     }
 
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let now_s = context.time.time_s;
         if let Some(field) = &self.soft_avoidance
             && !self.soft_announced
@@ -484,7 +481,7 @@ impl Autonomy for Dispatcher {
         for name in ["velocity_x", "velocity_y", "velocity_z"] {
             io.write(name, 0.0)?;
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 

@@ -21,9 +21,7 @@
 use anyhow::{Result, ensure};
 use serde::Deserialize;
 
-use crate::plugin::{
-    AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{AgentContext, Controller, Frame, PluginIo, PluginParams, Port, Ports, Unit};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -46,10 +44,10 @@ pub struct AircraftVelocityController {
     altitude_world_m: f64,
 }
 
-impl Plugin for AircraftVelocityController {
+impl Controller for AircraftVelocityController {
     type Config = AircraftVelocityConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<AircraftVelocityConfig> {
+    fn configure(params: &PluginParams) -> Result<AircraftVelocityConfig> {
         let config: AircraftVelocityConfig = params.parse()?;
         ensure!(
             config.max_altitude_error_m >= 0.0,
@@ -79,10 +77,8 @@ impl Plugin for AircraftVelocityController {
                 Frame::None,
             ))
     }
-}
 
-impl Controller for AircraftVelocityController {
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> {
         self.heading_world_rad = context
             .state
             .orientation_world_from_body
@@ -91,7 +87,7 @@ impl Controller for AircraftVelocityController {
         Ok(())
     }
 
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let velocity_x_mps = io.read("velocity_x")?;
         let velocity_y_mps = io.read("velocity_y")?;
         let velocity_z_mps = io.read("velocity_z")?;
@@ -108,6 +104,6 @@ impl Controller for AircraftVelocityController {
         io.write("desired_heading", self.heading_world_rad)?;
         io.write("desired_altitude", self.altitude_world_m)?;
         io.write("desired_speed", speed_mps)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }

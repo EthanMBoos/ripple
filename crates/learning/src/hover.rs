@@ -8,7 +8,7 @@ use crate::policy::{Policy, TrainerActions};
 use anyhow::{Result, ensure};
 use ripple_core::KinematicState;
 use ripple_core::plugin::{
-    AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
+    AgentContext, Autonomy, Frame, PluginIo, PluginParams, Port, Ports, Unit,
 };
 use serde::Deserialize;
 use std::path::PathBuf;
@@ -69,10 +69,10 @@ impl HoverPolicy {
     }
 }
 
-impl Plugin for HoverPolicy {
+impl Autonomy for HoverPolicy {
     type Config = HoverConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<HoverConfig> {
+    fn configure(params: &PluginParams) -> Result<HoverConfig> {
         let config: HoverConfig = params.parse()?;
         ensure!(
             config.max_speed_mps > 0.0,
@@ -95,14 +95,12 @@ impl Plugin for HoverPolicy {
         }
         ports
     }
-}
 
-impl Autonomy for HoverPolicy {
-    fn initialize(&mut self, _: &mut AgentContext<'_>) -> Result<()> {
+    fn initialize(&mut self, _: &mut AgentContext) -> Result<()> {
         self.policy.load(OBSERVATION_SIZE)
     }
 
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let observation = self.config.observe(context.state);
         let action = self.policy.act(context.entity.id, &observation)?;
         ensure!(
@@ -113,6 +111,6 @@ impl Autonomy for HoverPolicy {
         for (name, value) in PORTS.into_iter().zip(action) {
             io.write(name, value as f64 * self.config.max_speed_mps)?;
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }

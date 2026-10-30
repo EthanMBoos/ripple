@@ -1,6 +1,6 @@
 //! A communication model: configurable fixed delay or complete packet loss.
 use anyhow::{Result, ensure};
-use ripple_core::plugin::{Delivery, Network, NetworkContext, Plugin, PluginParams, Update};
+use ripple_core::plugin::{Delivery, Network, NetworkContext, PluginParams};
 use serde::Deserialize;
 
 #[derive(Clone, Copy, Default, Deserialize)]
@@ -12,9 +12,9 @@ pub struct RadioConfig {
 pub struct ExampleNetwork {
     config: RadioConfig,
 }
-impl Plugin for ExampleNetwork {
+impl Network for ExampleNetwork {
     type Config = RadioConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
+    fn configure(params: &PluginParams) -> Result<Self::Config> {
         let config: RadioConfig = params.parse()?;
         ensure!(config.delay_s >= 0.0, "delay_s must be nonnegative");
         Ok(config)
@@ -22,9 +22,8 @@ impl Plugin for ExampleNetwork {
     fn new(config: &Self::Config) -> Self {
         Self { config: *config }
     }
-}
-impl Network for ExampleNetwork {
-    fn step(&mut self, context: &mut NetworkContext<'_, '_>) -> Result<Update> {
+
+    fn step(&mut self, context: &mut NetworkContext) -> Result<()> {
         context.route(|_link, _random| {
             if self.config.drop_messages {
                 Ok(Delivery::Drop)

@@ -82,7 +82,7 @@ Paths are relative to `crates/core/src/`.
 | `common/terrain.rs`, `common/waypoints.rs` | Terrain heights and imagery; waypoint routes |
 | [pubsub/messages.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/pubsub/messages.rs) | Publications, subscriber queues, and delivery |
 | [record.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/record.rs), `proto/record.proto` | MCAP channels and embedded protobuf schema |
-| [plugin.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin.rs) | The shared plugin API: `Plugin`, `PluginParams`, `StepTime`, `EntityInfo`, `Update`, `AgentContext`, `WorldContext` |
+| [plugin.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin.rs) | The shared plugin API: `PluginParams`, `StepTime`, `EntityInfo`, `Update`, `AgentContext`, `WorldContext`, and why each category trait is shaped as it is |
 | `plugin/<category>.rs` | One category's interface, its context, and its built-ins |
 | [plugin/registry.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/plugin/registry.rs) | `PluginRegistry`, typed factories, and the list of built-in names |
 | `plugin/<category>/<plugin>/<plugin>.rs` | One built-in model; its parameter struct's `Default` holds the mission defaults |

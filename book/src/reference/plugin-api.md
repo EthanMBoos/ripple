@@ -8,22 +8,39 @@ live in `crates/core/src/plugin/<category>.rs`.
 
 ## Traits
 
-Every plugin implements `Plugin`, which says how it is built, and one
-category trait, which says what it does each tick. The two are independent:
-the engine stores each plugin as its category trait (`Box<dyn Autonomy>`),
-and everything `Plugin` answers is read from the concrete type while the
-mission loads.
+Every plugin implements one trait, its category's. Its first half says how
+the plugin is built and is read from the concrete type while the mission
+loads; its second half is what the plugin does each tick, which is all the
+engine keeps (`Box<dyn Autonomy>`). The first half is marked `where Self:
+Sized` for that reason; `crates/core/src/plugin.rs` explains.
 
 ```rust,ignore
-pub trait Plugin: Send + Sized + 'static {
-    type Config;
-    fn configure(params: &PluginParams<'_>) -> Result<Self::Config>;
+pub trait Autonomy: Send {
+    // How it is built; each is `where Self: Sized`.
+    type Config: DeserializeOwned;
+    fn configure(params: &PluginParams) -> Result<Self::Config> { params.parse() }
     fn new(config: &Self::Config) -> Self;
     fn ports(config: &Self::Config) -> Ports { Ports::default() }
-    fn reading_kind(config: &Self::Config) -> ReadingKind { ReadingKind::Other }  // sensors
-    fn inputs(config: &Self::Config) -> Vec<Input> { Vec::new() }                  // estimators
+
+    // What it does.
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> { Ok(()) }
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()>;
+    fn close(&mut self, time: StepTime) -> Result<()> { Ok(()) }
 }
 ```
+
+The other traits have the same shape with their own context. Their build
+halves differ in one method: `Controller` and `MotionModel` also have
+`ports`; `Sensor` has `reading_kind` instead, the kind of reading it
+publishes; `Localization` and `Tracking` have `inputs`, the readings they
+read; `Interaction`, `Network`, and `Metrics` have only `Config`,
+`configure`, and `new`.
+
+`Config` must deserialize from the mission's parameters. A config that is
+built from them rather than read as is, such as an airframe table filled in
+from a name, derives `Deserialize` with `#[serde(try_from = "MyParams")]`
+and converts in `TryFrom`; the built-in aircraft and multirotor models show
+it.
 
 Every category trait has an `initialize`, a required `step`, and an
 optional `close`. `initialize` is optional everywhere except `Localization`.
@@ -45,8 +62,9 @@ yet", so it needs no setting.
 | `Network` | `WorldContext` | `NetworkContext` | |
 | `Metrics` | `WorldContext` | `WorldContext` | `report` |
 
-`step` returns `Ok(Update::Applied)`, `Ok(Update::Stop)` to end the run after
-this tick, or an error, which stops the run and names the plugin.
+`step` returns `Ok(())` or an error, which stops the run and names the
+plugin. An interaction's or a metrics plugin's `step` returns
+`Ok(Update::Applied)`, or `Ok(Update::Stop)` to end the run after this tick.
 
 `close` runs exactly once: when the entity is removed, when the run ends, or
 when it fails. It must tolerate a plugin whose `initialize` never finished,
@@ -76,13 +94,13 @@ it.
 
 ## Ports and state
 
-`Plugin::ports` declares named inputs and outputs, each with a `Unit` and a
-`Frame`. Autonomy outputs feed controller inputs, and controller outputs feed
-motion inputs; the engine checks every connection (name, unit, frame) before
-the run starts and hands each step a `PluginIo` for `read` and `write`. Names
-are owned strings, so they can come from configuration
-(`format!("motor_{index}")`). `Port` is `Clone` but not `Copy`, so build
-declarations inside `ports`.
+`ports` on `Autonomy`, `Controller`, and `MotionModel` declares named
+inputs and outputs, each with a `Unit` and a `Frame`. Autonomy outputs feed
+controller inputs, and controller outputs feed motion inputs; the engine
+checks every connection (name, unit, frame) before the run starts and hands
+each step a `PluginIo` for `read` and `write`. Names are owned strings, so
+they can come from configuration (`format!("motor_{index}")`). `Port` is
+`Clone` but not `Copy`, so build declarations inside `ports`.
 
 `KinematicState` holds `position_world_m`, `velocity_world_mps`, and
 `angular_velocity_world_radps` in the local East-North-Up world frame, and
@@ -100,19 +118,18 @@ default to `PassThrough`. They run every tick after delivery, localization
 first; autonomy and controllers see the result on their next step.
 
 ```rust,ignore
-impl Plugin for DeadReckoning {
-    // ...configure, new...
+impl Localization for DeadReckoning {
+    // ...Config, new...
     // The readings this estimator reads; the mission's `inputs` picks each sensor.
     fn inputs(_: &Config) -> Vec<Input> {
         vec![Input::new("fix", ReadingKind::Other)]
     }
-}
-impl Localization for DeadReckoning {
-    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
+
+    fn initialize(&mut self, context: &mut LocalizationContext) -> Result<()> {
         // Set the first belief from startup readings or a known prior.
         Ok(())
     }
-    fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut LocalizationContext) -> Result<()> {
         // Predict from what the motion model read on each substep...
         for substep in 0..context.commands.substeps() {
             let speed_mps = context.commands.get(substep, "speed")?;
@@ -123,14 +140,14 @@ impl Localization for DeadReckoning {
         if let Some(fix) = context.inputs.fresh::<PositionFix>("fix")? {
             context.state.position_world_m = fix.value.position_world_m;
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 ```
 
 - **Readings.** A sensor hands each sample to its entity's estimators with
   `context.publish_reading(value)`, keyed by the sensor's name in the mission.
-  `Plugin::reading_kind` says what it holds: `State` (a `KinematicState`),
+  The sensor's `reading_kind` says what it holds: `State` (a `KinematicState`),
   `Contacts` (a `ContactList`), or `Other` (any type, checked when read).
   `inputs.latest` returns the newest reading; `inputs.fresh` only one that
   arrived since the last estimation step.

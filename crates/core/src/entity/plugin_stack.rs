@@ -304,7 +304,6 @@ impl CompiledStack {
             command_names,
             command_values: Vec::new(),
             command_times: Vec::new(),
-            stop_requested: false,
             closed: false,
         }
     }
@@ -418,11 +417,11 @@ impl<T: ?Sized> Slot<T> {
         time: StepTime,
         state: &KinematicState,
         contacts: KnownContacts<'_>,
-        step: impl FnOnce(&mut T, &mut AgentContext<'_>, &mut PluginIo) -> Result<Update>,
-    ) -> Result<Update> {
+        step: impl FnOnce(&mut T, &mut AgentContext<'_>, &mut PluginIo) -> Result<()>,
+    ) -> Result<()> {
         // A rate-limited plugin's dt is the time since it last ran.
         let Some(elapsed_s) = self.rate.due(time.dt_s) else {
-            return Ok(Update::Applied);
+            return Ok(());
         };
         let time = StepTime {
             dt_s: elapsed_s,
@@ -469,13 +468,7 @@ pub(crate) struct PluginStack {
     command_names: Vec<String>,
     command_values: Vec<f64>,
     command_times: Vec<StepTime>,
-    pub stop_requested: bool,
     closed: bool,
-}
-fn handle_update(update: Update, stop_requested: &mut bool) {
-    if update == Update::Stop {
-        *stop_requested = true;
-    }
 }
 impl PluginStack {
     /// Motion, then sensors. Estimators and decision plugins
@@ -658,10 +651,7 @@ impl PluginStack {
     pub fn autonomy(&mut self, entity: EntityInfo, time: StepTime) -> Result<()> {
         let contacts = KnownContacts::new(&self.contacts, entity.id);
         for autonomy in &mut self.autonomies {
-            handle_update(
-                autonomy.agent_step(entity, time, &self.belief, contacts, Autonomy::step)?,
-                &mut self.stop_requested,
-            );
+            autonomy.agent_step(entity, time, &self.belief, contacts, Autonomy::step)?;
             // Source order resolves multiple autonomy writers deterministically.
             self.outputs.extend(
                 autonomy
@@ -678,10 +668,7 @@ impl PluginStack {
         let mut upstream = &self.outputs;
         for controller in &mut self.controllers {
             controller.io.receive(upstream)?;
-            handle_update(
-                controller.agent_step(entity, time, &self.belief, contacts, Controller::step)?,
-                &mut self.stop_requested,
-            );
+            controller.agent_step(entity, time, &self.belief, contacts, Controller::step)?;
             upstream = &controller.io.outputs;
         }
         Ok(())
@@ -703,8 +690,7 @@ impl PluginStack {
         self.command_values.extend(self.motion.io.input_values());
         self.command_times.push(time);
         self.motion.messages.time_s = time.time_s;
-        let update = self
-            .motion
+        self.motion
             .plugin
             .step(
                 &mut MotionContext {
@@ -718,7 +704,6 @@ impl PluginStack {
                 &mut self.motion.io,
             )
             .with_context(|| format!("step '{}' on entity {}", self.motion.name, entity.id))?;
-        handle_update(update, &mut self.stop_requested);
         Ok(())
     }
     pub fn sensors(
@@ -734,7 +719,7 @@ impl PluginStack {
             if sensor.rate.due(time.dt_s).is_none() {
                 continue;
             }
-            let update = sensor
+            sensor
                 .plugin
                 .step(&mut SensorContext {
                     entity,
@@ -748,7 +733,6 @@ impl PluginStack {
                     pending: &mut self.pending,
                 })
                 .with_context(|| format!("step '{}' on entity {}", sensor.name, entity.id))?;
-            handle_update(update, &mut self.stop_requested);
         }
         Ok(())
     }
@@ -779,8 +763,7 @@ impl PluginStack {
             now_s: time.time_s + time.dt_s,
         };
         self.localization.messages.time_s = time.time_s;
-        let update = self
-            .localization
+        self.localization
             .plugin
             .step(&mut LocalizationContext {
                 entity,
@@ -798,10 +781,8 @@ impl PluginStack {
             .with_context(|| {
                 format!("step '{}' on entity {}", self.localization.name, entity.id)
             })?;
-        handle_update(update, &mut self.stop_requested);
         self.tracking.messages.time_s = time.time_s;
-        let update = self
-            .tracking
+        self.tracking
             .plugin
             .step(&mut TrackingContext {
                 entity,
@@ -813,7 +794,6 @@ impl PluginStack {
                 contacts: &mut self.contacts,
             })
             .with_context(|| format!("step '{}' on entity {}", self.tracking.name, entity.id))?;
-        handle_update(update, &mut self.stop_requested);
         self.readings.clear_fresh();
         self.command_values.clear();
         self.command_times.clear();

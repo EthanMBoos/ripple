@@ -7,9 +7,7 @@ use serde::Deserialize;
 
 use crate::common::{WAYPOINT_TOPIC, WaypointList};
 use crate::math::{self, Vec3};
-use crate::plugin::{
-    AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{AgentContext, Autonomy, Frame, PluginIo, PluginParams, Port, Ports, Unit};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Clone, Deserialize)]
@@ -41,10 +39,10 @@ pub struct WaypointFollower {
     repeat: bool,
 }
 
-impl Plugin for WaypointFollower {
+impl Autonomy for WaypointFollower {
     type Config = WaypointFollowerConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
+    fn configure(params: &PluginParams) -> Result<Self::Config> {
         let config: WaypointFollowerConfig = params.parse()?;
         ensure!(
             config.speed_mps > 0.0 && config.arrival_radius_m > 0.0,
@@ -76,16 +74,14 @@ impl Plugin for WaypointFollower {
             .output(Port::new("velocity_y", Unit::MetersPerSecond, Frame::World))
             .output(Port::new("velocity_z", Unit::MetersPerSecond, Frame::World))
     }
-}
 
-impl Autonomy for WaypointFollower {
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> {
         context
             .messages
             .subscribe::<WaypointList>("GlobalNetwork", WAYPOINT_TOPIC)
     }
 
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         for message in context
             .messages
             .receive::<WaypointList>("GlobalNetwork", WAYPOINT_TOPIC)?
@@ -122,7 +118,7 @@ impl Autonomy for WaypointFollower {
         io.write("velocity_x", velocity_world_mps.x)?;
         io.write("velocity_y", velocity_world_mps.y)?;
         io.write("velocity_z", velocity_world_mps.z)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 

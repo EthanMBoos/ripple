@@ -48,8 +48,9 @@ Keep YAML strict with `deny_unknown_fields`. A Serde default means a field may
 intentionally be omitted, not that an old format still needs to work.
 
 Use `Result::Err` with an explanation for an operation that could not be
-completed, including numerical failures. Plugin updates use `Update::Applied` or
-`Update::Stop` for successful completion or a normal stop request. The command
+completed, including numerical failures. An interaction or metrics step
+answers `Update::Applied` or `Update::Stop` for successful completion or a
+normal stop request. The command
 can use `anyhow`; it does not need a custom error framework. This split between
 operational failure and a completed result is visible in
 [Cargo](https://github.com/rust-lang/cargo),
@@ -79,11 +80,11 @@ Use the same reading order in every concrete plugin module:
    imports.
 3. Port/event constants, named configuration, and state/measurement types.
 4. The plugin struct, which owns its per-instance state.
-5. `impl Plugin`: configuration parsing, construction, and the optional
-   load-time facts (`ports`; `reading_kind` for sensors; `inputs` for
-   estimators).
-6. The category implementation: optional initialization, then step,
-   reporting, and an optional close.
+5. The category implementation, build half first: `Config`, `configure`
+   when it validates, `new`, and the load-time facts (`ports`;
+   `reading_kind` for sensors; `inputs` for estimators).
+6. Then its per-tick half: optional initialization, step, reporting, and an
+   optional close.
 7. Private model/conversion helpers, followed by module tests.
 
 Separate structs, implementation blocks, and functions with a blank line. Keep
@@ -125,8 +126,8 @@ different from sharing mutable plugin state.
 Type aliases should name a useful concept, not conceal ownership. Keep `&` and
 `&mut` visible at call boundaries and use inferred lifetimes where appropriate.
 Do not tie an outer borrow and a context's internal lifetime to the same named
-lifetime merely to shorten a signature. A plain `&mut SensorContext<'_>` is
-preferable to an alias that obscures this distinction.
+lifetime merely to shorten a signature. A plain `&mut SensorContext`, its
+lifetime elided, is preferable to an alias that obscures this distinction.
 
 Use standard rustfmt and Clippy; do not introduce nightly formatting options or
 globally compress code onto longer lines. Readability refactors must preserve

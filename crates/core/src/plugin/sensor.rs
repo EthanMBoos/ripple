@@ -3,10 +3,11 @@ use crate::{
     KinematicState,
     common::{PluginRandom, TruthContacts},
     plugin::estimator::ContactList,
-    plugin::{EntityInfo, StepTime, Update},
+    plugin::{EntityInfo, PluginParams, StepTime},
     pubsub::Messages,
 };
 use anyhow::{Result, ensure};
+use serde::de::DeserializeOwned;
 use std::any::TypeId;
 
 mod readings;
@@ -50,12 +51,37 @@ impl SensorContext<'_> {
     }
 }
 
-/// What its readings contain is declared by `Plugin::reading_kind`.
 pub trait Sensor: Send {
-    fn initialize(&mut self, _context: &mut SensorContext<'_>) -> Result<()> {
+    // How it is built, answered from the concrete type while the mission
+    // loads. `where Self: Sized` keeps these out of `Box<dyn Sensor>`, which
+    // only steps; see the module doc in `plugin.rs`.
+    /// Immutable, validated configuration, parsed once per mission and shared
+    /// by every instance.
+    type Config: DeserializeOwned + Send + Sync + 'static
+    where
+        Self: Sized;
+    /// Parses the mission's parameters; override it to check them.
+    fn configure(params: &PluginParams) -> Result<Self::Config>
+    where
+        Self: Sized,
+    {
+        params.parse()
+    }
+    fn new(config: &Self::Config) -> Self
+    where
+        Self: Sized;
+    /// What its readings contain; see `ReadingKind`.
+    fn reading_kind(_config: &Self::Config) -> ReadingKind
+    where
+        Self: Sized,
+    {
+        ReadingKind::Other
+    }
+
+    fn initialize(&mut self, _context: &mut SensorContext) -> Result<()> {
         Ok(())
     }
-    fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update>;
+    fn step(&mut self, context: &mut SensorContext) -> Result<()>;
     fn close(&mut self, _time: StepTime) -> Result<()> {
         Ok(())
     }

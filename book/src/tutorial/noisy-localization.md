@@ -85,10 +85,10 @@ pub struct DeadReckoning {
     speed_gain: f64,
 }
 
-impl Plugin for DeadReckoning {
+impl Localization for DeadReckoning {
     type Config = DeadReckoningConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<DeadReckoningConfig> {
+    fn configure(params: &PluginParams) -> Result<DeadReckoningConfig> {
         let config: DeadReckoningConfig = params.parse()?;
         ensure!(
             config.speed_gain >= 0.0,
@@ -107,10 +107,8 @@ impl Plugin for DeadReckoning {
         // A full-state reading; only its position is used.
         vec![Input::new("fix", ReadingKind::State)]
     }
-}
 
-impl Localization for DeadReckoning {
-    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut LocalizationContext) -> Result<()> {
         // Start from the first fix, at rest. Attitude is not estimated.
         let fix = context
             .inputs
@@ -123,7 +121,7 @@ impl Localization for DeadReckoning {
         Ok(())
     }
 
-    fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut LocalizationContext) -> Result<()> {
         // Predict: move by the velocity the motion model was told to fly, on each substep.
         for substep in 0..context.commands.substeps() {
             let commanded_world_mps = Vec3::new(
@@ -141,21 +139,21 @@ impl Localization for DeadReckoning {
         if let Some(fix) = context.inputs.fresh::<KinematicState>("fix")? {
             context.state.position_world_m = fix.value.position_world_m;
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 ```
 
-The configuration and `impl Plugin` have the same shape as in the autonomy
-tutorial, plus one method:
+The configuration and the build half of the impl have the same shape as in
+the autonomy tutorial, plus one method:
 
 - **`inputs`** declares the readings the estimator needs. Here that is one
   input, named `fix`, which takes readings of a full state
   (`ReadingKind::State`). The estimator doesn't name a sensor; the mission
-  decides which sensor feeds `fix` (see below). It sits in `impl Plugin`
-  because it is settled while the mission loads, like `ports`.
+  decides which sensor feeds `fix` (see below). It sits with `new` and
+  `configure` because it is settled while the mission loads, like `ports`.
 
-What is new is `impl Localization`:
+What is new is the per-tick half:
 
 - **`initialize`** runs once, before any decision, and sets the first belief.
   `inputs.latest` returns the most recent reading for an input. There is no

@@ -14,23 +14,19 @@ pub struct PositionSensorConfig {
 pub struct PositionSensor {
     bias_m: f64,
 }
-impl Plugin for PositionSensor {
+impl Sensor for PositionSensor {
     type Config = PositionSensorConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<PositionSensorConfig> {
-        params.parse()
-    }
     fn new(config: &PositionSensorConfig) -> Self {
         Self {
             bias_m: config.bias_m,
         }
     }
-}
-impl Sensor for PositionSensor {
-    fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
+
+    fn step(&mut self, context: &mut SensorContext) -> Result<()> {
         let measured_x_world_m = context.truth.position_world_m.x + self.bias_m;
         context.publish_reading(PositionReading {
             x_world_m: measured_x_world_m,
         })?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }

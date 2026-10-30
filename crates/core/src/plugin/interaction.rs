@@ -3,10 +3,11 @@
 use crate::{
     Entity, Event, EventKind, Vec3,
     common::SpatialIndex,
-    plugin::{StepTime, Update, WorldContext},
+    plugin::{PluginParams, StepTime, Update, WorldContext},
     pubsub::Messages,
 };
 use anyhow::Result;
+use serde::de::DeserializeOwned;
 
 pub struct InteractionContext<'a> {
     pub time: StepTime,
@@ -32,13 +33,32 @@ impl InteractionContext<'_> {
 }
 
 pub trait Interaction: Send {
-    fn initialize(&mut self, _context: &mut WorldContext<'_>) -> Result<()> {
+    // How it is built, answered from the concrete type while the mission
+    // loads. `where Self: Sized` keeps these out of `Box<dyn Interaction>`, which
+    // only steps; see the module doc in `plugin.rs`.
+    /// Immutable, validated configuration, parsed once per mission and shared
+    /// by every instance.
+    type Config: DeserializeOwned + Send + Sync + 'static
+    where
+        Self: Sized;
+    /// Parses the mission's parameters; override it to check them.
+    fn configure(params: &PluginParams) -> Result<Self::Config>
+    where
+        Self: Sized,
+    {
+        params.parse()
+    }
+    fn new(config: &Self::Config) -> Self
+    where
+        Self: Sized;
+
+    fn initialize(&mut self, _context: &mut WorldContext) -> Result<()> {
         Ok(())
     }
     fn collision_exists(&self, _entities: &[Entity], _position_world_m: Vec3) -> bool {
         false
     }
-    fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update>;
+    fn step(&mut self, context: &mut InteractionContext) -> Result<Update>;
     fn close(&mut self, _time: StepTime) -> Result<()> {
         Ok(())
     }

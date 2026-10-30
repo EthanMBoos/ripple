@@ -5,9 +5,7 @@
 use anyhow::Result;
 use serde::Deserialize;
 
-use crate::plugin::{
-    AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{AgentContext, Autonomy, Frame, PluginIo, PluginParams, Port, Ports, Unit};
 
 const PORTS: [&str; 3] = ["velocity_x", "velocity_y", "velocity_z"];
 
@@ -31,10 +29,10 @@ pub struct ConstantVelocity {
     velocity_world_mps: [f64; 3],
 }
 
-impl Plugin for ConstantVelocity {
+impl Autonomy for ConstantVelocity {
     type Config = [f64; 3];
 
-    fn configure(params: &PluginParams<'_>) -> Result<[f64; 3]> {
+    fn configure(params: &PluginParams) -> Result<[f64; 3]> {
         let params: ConstantVelocityParams = params.parse()?;
         Ok(params.velocity_mps)
     }
@@ -52,13 +50,11 @@ impl Plugin for ConstantVelocity {
         }
         ports
     }
-}
 
-impl Autonomy for ConstantVelocity {
-    fn step(&mut self, _: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, _: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         for (name, value) in PORTS.into_iter().zip(self.velocity_world_mps) {
             io.write(name, value)?;
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }

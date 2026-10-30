@@ -5,7 +5,7 @@ use anyhow::{Result, ensure};
 use serde::Deserialize;
 
 use crate::common::{WAYPOINT_TOPIC, WaypointList};
-use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
+use crate::plugin::{Interaction, InteractionContext, PluginParams, Update};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -33,10 +33,10 @@ pub struct WaypointBroadcast {
     update_at_s: f64,
 }
 
-impl Plugin for WaypointBroadcast {
+impl Interaction for WaypointBroadcast {
     type Config = WaypointBroadcastConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
+    fn configure(params: &PluginParams) -> Result<Self::Config> {
         let config: WaypointBroadcastConfig = params.parse()?;
         ensure!(
             config.update_waypoints_m.is_some() == config.update_at_s.is_some(),
@@ -53,10 +53,8 @@ impl Plugin for WaypointBroadcast {
             update_at_s: config.update_at_s.unwrap_or(0.0),
         }
     }
-}
 
-impl Interaction for WaypointBroadcast {
-    fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut InteractionContext) -> Result<Update> {
         // Known limitation (the same publish-once pattern as Boundary):
         // entities spawned later never receive the route and keep their own configured one.
         // A possible fix is republishing the current route when an entity is generated.

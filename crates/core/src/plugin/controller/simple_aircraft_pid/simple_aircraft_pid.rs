@@ -13,9 +13,7 @@
 use anyhow::Result;
 use serde::Deserialize;
 
-use crate::plugin::{
-    AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{AgentContext, Controller, Frame, PluginIo, Port, Ports, Unit};
 use crate::{
     common::{AngleGains, LengthGains, Pid, SpeedGains},
     math,
@@ -62,12 +60,8 @@ pub struct SimpleAircraftControllerPid {
     speed_pid: Pid,
 }
 
-impl Plugin for SimpleAircraftControllerPid {
+impl Controller for SimpleAircraftControllerPid {
     type Config = ControllerConfig;
-
-    fn configure(params: &PluginParams<'_>) -> Result<ControllerConfig> {
-        params.parse()
-    }
 
     fn new(config: &ControllerConfig) -> Self {
         Self {
@@ -94,10 +88,8 @@ impl Plugin for SimpleAircraftControllerPid {
                 Frame::Model,
             ))
     }
-}
 
-impl Controller for SimpleAircraftControllerPid {
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let desired_heading_world_rad = io.read("desired_heading")?;
         let desired_altitude_world_m = io.read("desired_altitude")?;
         let desired_speed_mps = io.read("desired_speed")?;
@@ -123,13 +115,14 @@ impl Controller for SimpleAircraftControllerPid {
         io.write("throttle", throttle)?;
         io.write("roll_rate", roll_rate_radps)?;
         io.write("pitch_rate", pitch_rate_radps)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Plugin, PluginParams, SimpleAircraftControllerPid};
+    use super::{Controller, SimpleAircraftControllerPid};
+    use crate::plugin::PluginParams;
 
     #[test]
     fn a_mission_pid_replaces_only_that_loop() -> anyhow::Result<()> {

@@ -1,6 +1,31 @@
-//! The plugin API: the shared lifecycle, configuration, and contexts here; each
-//! category's interface and built-ins in `plugin/<category>.rs`; registration
-//! in `plugin/registry.rs`. Authors import everything from `ripple_core::plugin`.
+//! The plugin API: the shared configuration and contexts here; each
+//! category's trait and built-ins in `plugin/<category>.rs`; registration in
+//! `plugin/registry.rs`. Authors import everything from `ripple_core::plugin`.
+//!
+//! A plugin is one type with one trait, its category's (`Autonomy`, `Sensor`,
+//! ...). The trait has two halves. The first says how the plugin is built:
+//! `Config`, `configure`, `new`, and the facts the engine needs before any
+//! instance exists (`ports`, `inputs`, `reading_kind`). The second is what it
+//! does each tick: `initialize`, `step`, `close`.
+//!
+//! Why the engine holds plugins as trait objects (`Box<dyn Autonomy>`). The
+//! mission file names the plugin at run time, and this crate is compiled
+//! before user plugin crates exist, so the code that steps a vehicle is
+//! written once for a list of plugins it cannot see. A plugin is written in
+//! its own crate without editing core, and a mission is a file changed
+//! without recompiling. Drop either goal and an enum of every plugin with a
+//! `match` would be plainer.
+//!
+//! Why the first half is marked `where Self: Sized`. A trait object can only
+//! carry methods that take `self`; it cannot name an associated type, call a
+//! constructor, or return `Self`. Marking those items `where Self: Sized`
+//! leaves them out of the object, so the trait can still be boxed. They are
+//! answered once from the concrete type, by `PluginRegistry::register_*`
+//! while the mission loads, and the box built there only ever steps. The
+//! alternative is one `init(&mut self, params)` on an empty object, which
+//! would parse per instance and could not check ports before anything is
+//! spawned. `Config` is parsed and checked once per mission and shared by
+//! every instance; a plugin's own fields are per-entity state.
 pub mod autonomy;
 pub mod controller;
 pub mod estimator;
@@ -103,49 +128,6 @@ impl<'a> PluginParams<'a> {
     }
 }
 
-/// How a plugin is built: its configuration, parsed and checked once per
-/// mission, and the facts the engine needs before any instance exists. What a
-/// plugin does each tick is its category trait (`Autonomy`, `Sensor`, ...),
-/// which does not extend this one.
-///
-/// Why the engine holds plugins as trait objects (`Box<dyn Autonomy>`). Two
-/// facts force it: the mission file names the plugin at run time, after the
-/// program is compiled, and this crate is compiled before user plugin crates
-/// exist, so the code that steps a vehicle is written once for a list of
-/// plugins it cannot see. Those are design goals, not accidents: a plugin is
-/// written in its own crate without editing core, and a mission is a file
-/// changed without recompiling. Drop either and an enum of every plugin with
-/// a `match` would be plainer.
-///
-/// Why two traits. Through a trait object there is no way to call a
-/// constructor or name the concrete type's config, so building is its own
-/// trait, answered from the concrete type while the mission loads. The
-/// alternative is one trait with `init(&mut self, params)` on an empty
-/// object, which would parse per instance and could not check ports before
-/// anything is spawned.
-///
-/// `reading_kind` and `inputs` sit here, next to `ports`, because they depend
-/// on the configuration; only a few categories override them. `close` lives
-/// on each category trait because it is called through the box.
-pub trait Plugin: Send + Sized + 'static {
-    /// Immutable, validated configuration, distinct from per-entity state.
-    type Config: Send + Sync + 'static;
-    fn configure(params: &PluginParams<'_>) -> Result<Self::Config>;
-    fn new(config: &Self::Config) -> Self;
-    fn ports(_config: &Self::Config) -> Ports {
-        Ports::default()
-    }
-    /// Sensors: what their readings contain; see `ReadingKind`.
-    fn reading_kind(_config: &Self::Config) -> ReadingKind {
-        ReadingKind::Other
-    }
-    /// Estimators: the readings they read; a mission's `inputs` selects each
-    /// one's sensor.
-    fn inputs(_config: &Self::Config) -> Vec<Input> {
-        Vec::new()
-    }
-}
-
 #[derive(Clone, Copy, Debug)]
 pub struct StepTime {
     /// Reference phase time, not wall time.
@@ -165,6 +147,9 @@ pub struct EntityInfo {
     pub group_index: i32,
 }
 
+/// What an interaction's or a metrics plugin's `step` answers: `Stop` ends the
+/// run after this tick (`TerminationReason::PluginRequestedStop`). The entity
+/// slots and networks have no such answer; their `step` returns `Result<()>`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Update {
     Applied,

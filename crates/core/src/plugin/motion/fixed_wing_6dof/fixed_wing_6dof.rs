@@ -51,9 +51,7 @@ use serde::Deserialize;
 
 use crate::Terrain;
 use crate::math::{self, KinematicState, Vec3};
-use crate::plugin::{
-    Frame, MotionContext, MotionModel, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{Frame, MotionContext, MotionModel, PluginIo, Port, Ports, Unit};
 
 use aerodynamics::{Aerodynamics, Airframe};
 pub(crate) use airframe::FixedWingAirframe;
@@ -199,7 +197,8 @@ impl Default for FixedWingParams {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
+#[serde(try_from = "FixedWingParams")]
 pub struct FixedWingConfig {
     mass_kg: f64,
     gravity_mps2: f64,
@@ -246,11 +245,11 @@ pub struct FixedWing6Dof {
     launch: LaunchState,
 }
 
-impl Plugin for FixedWing6Dof {
-    type Config = FixedWingConfig;
-
-    fn configure(params: &PluginParams<'_>) -> Result<FixedWingConfig> {
-        let params: FixedWingParams = params.parse()?;
+// The mission's parameters become the config through serde's `try_from`, so
+// the trait's default `configure` (`params.parse()`) fits this plugin too.
+impl TryFrom<FixedWingParams> for FixedWingConfig {
+    type Error = anyhow::Error;
+    fn try_from(params: FixedWingParams) -> Result<Self> {
         let vehicle = vehicle(&params)?;
         ensure!(
             vehicle.elevator_limits_rad[0] <= vehicle.elevator_limits_rad[1]
@@ -316,6 +315,10 @@ impl Plugin for FixedWing6Dof {
         );
         Ok(config)
     }
+}
+
+impl MotionModel for FixedWing6Dof {
+    type Config = FixedWingConfig;
 
     fn new(config: &FixedWingConfig) -> Self {
         Self {
@@ -335,10 +338,8 @@ impl Plugin for FixedWing6Dof {
             .input(Port::new("aileron", Unit::Radians, Frame::Model))
             .input(Port::new("rudder", Unit::Radians, Frame::Model))
     }
-}
 
-impl MotionModel for FixedWing6Dof {
-    fn initialize(&mut self, context: &mut MotionContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut MotionContext) -> Result<()> {
         // The inherited ground model puts flat ground at z = 0, which terrain
         // replaces; with both, an aircraft over a valley below z = 0 would be
         // pushed up in mid-air.
@@ -357,7 +358,7 @@ impl MotionModel for FixedWing6Dof {
         Ok(())
     }
 
-    fn step(&mut self, context: &mut MotionContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut MotionContext, io: &mut PluginIo) -> Result<()> {
         let control = Control {
             throttle: io.read("throttle")?,
             elevator_rad: io.read("elevator")?,
@@ -378,7 +379,7 @@ impl MotionModel for FixedWing6Dof {
             context.time.time_s,
             context.time.dt_s,
         )?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -764,11 +765,8 @@ fn inertia(rows: [[f64; 3]; 3], slug_ft2: bool) -> Result<Matrix3<f64>> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Control, FixedWing6Dof};
-    use crate::{
-        KinematicState,
-        plugin::{Plugin, PluginParams},
-    };
+    use super::{Control, FixedWing6Dof, MotionModel};
+    use crate::{KinematicState, plugin::PluginParams};
     use nalgebra::{Matrix3, Vector3};
 
     #[test]

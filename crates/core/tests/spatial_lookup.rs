@@ -4,7 +4,7 @@ use anyhow::Result;
 use ripple_core::{
     EntityGroupConfig, EventKind, PluginConfig, RunConfig, ScenarioConfig, Simulation,
     SpatialLookup, Vec3,
-    plugin::{Interaction, InteractionContext, Plugin, PluginParams, PluginRegistry, Update},
+    plugin::{Interaction, InteractionContext, PluginParams, PluginRegistry, Update},
 };
 
 /// Three agents in a row, 3 m apart, with a 5 m collision range: the first and
@@ -104,17 +104,16 @@ fn a_grid_needs_a_positive_cell_width() -> Result<()> {
 
 /// A test interaction that moves the entity with id 1 onto the entity with id 2.
 struct MoveOnto;
-impl Plugin for MoveOnto {
+impl Interaction for MoveOnto {
     type Config = ();
-    fn configure(_params: &PluginParams<'_>) -> Result<()> {
+    fn configure(_params: &PluginParams) -> Result<()> {
         Ok(())
     }
     fn new(_config: &()) -> Self {
         Self
     }
-}
-impl Interaction for MoveOnto {
-    fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
+
+    fn step(&mut self, context: &mut InteractionContext) -> Result<Update> {
         let target = context.entities.iter().find(|entity| entity.id() == 2);
         let target_world_m = target.map(|entity| entity.truth().position_world_m);
         let mover = context.entities.iter_mut().find(|entity| entity.id() == 1);

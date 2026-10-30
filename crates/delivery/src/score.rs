@@ -26,9 +26,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::{Result, ensure};
 use ripple_core::Vec3;
-use ripple_core::plugin::{
-    MetricReport, Metrics, Plugin, PluginParams, TeamMetrics, Update, WorldContext,
-};
+use ripple_core::plugin::{MetricReport, Metrics, PluginParams, TeamMetrics, Update, WorldContext};
 use serde::Deserialize;
 
 use crate::directive::{Directive, DirectiveKind};
@@ -84,10 +82,10 @@ pub struct DeliveryScore {
     soft_fleet: Option<FleetExposure>,
 }
 
-impl Plugin for DeliveryScore {
+impl Metrics for DeliveryScore {
     type Config = DeliveryScoreConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<DeliveryScoreConfig> {
+    fn configure(params: &PluginParams) -> Result<DeliveryScoreConfig> {
         let config: DeliveryScoreConfig = params.parse()?;
         ensure!(
             config.urgent_weight > 0.0,
@@ -116,10 +114,8 @@ impl Plugin for DeliveryScore {
             soft_fleet: None,
         }
     }
-}
 
-impl Metrics for DeliveryScore {
-    fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut WorldContext) -> Result<()> {
         context
             .messages
             .subscribe::<SoftAvoidance>("GlobalNetwork", SOFT_AVOIDANCE_TOPIC)?;
@@ -146,7 +142,7 @@ impl Metrics for DeliveryScore {
             .subscribe::<Status>("GlobalNetwork", STATUS_TOPIC)
     }
 
-    fn step(&mut self, context: &mut WorldContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut WorldContext) -> Result<Update> {
         for message in context
             .messages
             .receive::<SoftFleet>("GlobalNetwork", SOFT_FLEET_TOPIC)?
@@ -569,7 +565,7 @@ impl SoftTrip {
     /// Stop integrating at confirmed delivery and return, loss, or removal.
     fn step(
         &mut self,
-        context: &WorldContext<'_>,
+        context: &WorldContext,
         fleet: &BTreeMap<i32, Status>,
         delivered_s: &BTreeMap<i32, f64>,
     ) -> bool {

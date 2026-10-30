@@ -9,12 +9,13 @@
 use std::{any::Any, sync::Arc};
 
 use anyhow::{Context, Result};
+use serde::de::DeserializeOwned;
 
 use crate::{
     EntitySnapshot, KinematicState, Vec3,
     common::{PluginRandom, is_within},
     plugin::sensor::{ReadingKind, Readings},
-    plugin::{EntityInfo, StepTime, Update},
+    plugin::{EntityInfo, PluginParams, StepTime},
     pubsub::Messages,
 };
 
@@ -207,23 +208,73 @@ pub struct TrackingContext<'a> {
 }
 
 /// Maintains the entity's own state from readings and the commands it issued.
-/// Its readings are declared by `Plugin::inputs`.
 pub trait Localization: Send {
+    // How it is built, answered from the concrete type while the mission
+    // loads. `where Self: Sized` keeps these out of `Box<dyn Localization>`, which
+    // only steps; see the module doc in `plugin.rs`.
+    /// Immutable, validated configuration, parsed once per mission and shared
+    /// by every instance.
+    type Config: DeserializeOwned + Send + Sync + 'static
+    where
+        Self: Sized;
+    /// Parses the mission's parameters; override it to check them.
+    fn configure(params: &PluginParams) -> Result<Self::Config>
+    where
+        Self: Sized,
+    {
+        params.parse()
+    }
+    fn new(config: &Self::Config) -> Self
+    where
+        Self: Sized;
+    /// The readings it reads; a mission's `inputs` selects each one's sensor.
+    fn inputs(_config: &Self::Config) -> Vec<Input>
+    where
+        Self: Sized,
+    {
+        Vec::new()
+    }
+
     /// Set the initial belief, from the startup readings, before any decision runs.
-    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()>;
-    fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update>;
+    fn initialize(&mut self, context: &mut LocalizationContext) -> Result<()>;
+    fn step(&mut self, context: &mut LocalizationContext) -> Result<()>;
     fn close(&mut self, _time: StepTime) -> Result<()> {
         Ok(())
     }
 }
 
 /// Maintains the contacts the entity knows about, using localization's pose.
-/// Its readings are declared by `Plugin::inputs`.
 pub trait Tracking: Send {
-    fn initialize(&mut self, _context: &mut TrackingContext<'_>) -> Result<()> {
+    // How it is built, answered from the concrete type while the mission
+    // loads. `where Self: Sized` keeps these out of `Box<dyn Tracking>`, which
+    // only steps; see the module doc in `plugin.rs`.
+    /// Immutable, validated configuration, parsed once per mission and shared
+    /// by every instance.
+    type Config: DeserializeOwned + Send + Sync + 'static
+    where
+        Self: Sized;
+    /// Parses the mission's parameters; override it to check them.
+    fn configure(params: &PluginParams) -> Result<Self::Config>
+    where
+        Self: Sized,
+    {
+        params.parse()
+    }
+    fn new(config: &Self::Config) -> Self
+    where
+        Self: Sized;
+    /// The readings it reads; a mission's `inputs` selects each one's sensor.
+    fn inputs(_config: &Self::Config) -> Vec<Input>
+    where
+        Self: Sized,
+    {
+        Vec::new()
+    }
+
+    fn initialize(&mut self, _context: &mut TrackingContext) -> Result<()> {
         Ok(())
     }
-    fn step(&mut self, context: &mut TrackingContext<'_>) -> Result<Update>;
+    fn step(&mut self, context: &mut TrackingContext) -> Result<()>;
     fn close(&mut self, _time: StepTime) -> Result<()> {
         Ok(())
     }

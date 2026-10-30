@@ -4,8 +4,7 @@
 //! converges as the step shrinks, and refuses a step too long for its dampers.
 use anyhow::Result;
 use ripple_core::plugin::{
-    AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, PluginRegistry, Port, Ports,
-    Unit, Update,
+    AgentContext, Controller, Frame, PluginIo, PluginRegistry, Port, Ports, Unit,
 };
 use ripple_core::{
     EntityGroupConfig, PluginConfig, RunConfig, ScenarioConfig, Simulation, SimulationFrame, Vec3,
@@ -62,11 +61,8 @@ struct FixedInputs {
     rudder_rad: f64,
 }
 
-impl Plugin for FixedInputs {
+impl Controller for FixedInputs {
     type Config = FixedInputsConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<FixedInputsConfig> {
-        params.parse()
-    }
     fn new(config: &FixedInputsConfig) -> Self {
         Self {
             rudder_rad: config.rudder,
@@ -79,15 +75,13 @@ impl Plugin for FixedInputs {
             .output(Port::new("aileron", Unit::Radians, Frame::Model))
             .output(Port::new("rudder", Unit::Radians, Frame::Model))
     }
-}
 
-impl Controller for FixedInputs {
-    fn step(&mut self, _context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, _context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         for port in ["throttle", "elevator", "aileron"] {
             io.write(port, 0.0)?;
         }
         io.write("rudder", self.rudder_rad)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 

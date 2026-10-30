@@ -88,12 +88,15 @@ pub struct FollowNearest {
     speed_mps: f64,
 }
 
-impl Plugin for FollowNearest {
+impl Autonomy for FollowNearest {
     type Config = FollowNearestConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<FollowNearestConfig> {
+    fn configure(params: &PluginParams) -> Result<FollowNearestConfig> {
         let config: FollowNearestConfig = params.parse()?;
-        ensure!(config.speed_mps > 0.0, "FollowNearest speed must be positive");
+        ensure!(
+            config.speed_mps > 0.0,
+            "FollowNearest speed must be positive"
+        );
         Ok(config)
     }
 
@@ -113,10 +116,8 @@ impl Plugin for FollowNearest {
                 Frame::None,
             ))
     }
-}
 
-impl Autonomy for FollowNearest {
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         // Input: our own estimated state and the contacts we know about.
         let own_position_world_m = context.state.position_world_m;
 
@@ -154,7 +155,7 @@ impl Autonomy for FollowNearest {
         io.write("desired_heading", heading_world_rad)?;
         io.write("desired_altitude", altitude_world_m)?;
         io.write("desired_speed", self.speed_mps)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 ```
@@ -170,7 +171,10 @@ impl Autonomy for FollowNearest {
   gets its own copy. This plugin only needs the speed. A plugin that remembers
   things between ticks, such as a PID controller's integral, keeps them here.
 
-### `impl Plugin`: how it is built
+### How it is built
+
+The first half of `impl Autonomy` runs while the mission loads, before any
+vehicle exists:
 
 | Method | When it runs | What it does here |
 | --- | --- | --- |
@@ -183,7 +187,7 @@ stops the mission immediately with a clear error. You won't discover it halfway
 through a run. So does a typo: `sped: 30` is rejected as an unknown field
 instead of silently leaving the speed at 25.
 
-### `impl Autonomy`: the decision
+### The decision
 
 `step` runs once per tick. It follows the same three stages as every plugin in
 this project:
@@ -201,7 +205,7 @@ Both are *belief*. With no sensors they are perfect, measured at the end of the
 previous tick; add a noisy sensor and the same code acts on noisy estimates,
 without changes. See [Belief vs truth](../concepts/belief-vs-truth.md).
 
-`Update::Applied` means "the step succeeded". Returning `Err(...)` stops the
+`Ok(())` means "the step succeeded". Returning `Err(...)` stops the
 simulation and names this plugin in the error. Use it for real failures, not
 for "no target found".
 
@@ -413,9 +417,8 @@ entities.chaser.autonomy.FollowNearest.speed_mps:=22 --viewer`.
 
 ## What you learned
 
-- A plugin is a configuration struct, a state struct, `impl Plugin` for
-  how it is built, and one category trait (here `impl Autonomy`) for the
-  per-tick work.
+- A plugin is a configuration struct, a state struct, and one trait (here
+  `impl Autonomy`): how it is built, then the per-tick work.
 - Ports connect the plugin stack and are checked before the mission runs.
 - Parameters are a serde struct with a `Default`. Mission values override the
   defaults, and unknown keys are errors.

@@ -341,7 +341,7 @@ impl Simulation {
         trace: Option<&mut Trace<'_>>,
     ) -> Result<()> {
         let mut network_trace = trace.as_ref().map(|_| NetworkTrace::default());
-        self.world_stop |= self.world.networks(
+        self.world.networks(
             time,
             TruthContacts::new(contacts, nearby),
             &mut self.entities,
@@ -374,8 +374,6 @@ impl Simulation {
             &self.entity_teams,
             self.terrain.as_ref(),
         )?;
-        // Retain a stop request even when its entity is removed in this same tick.
-        self.world_stop |= self.entities.iter().any(Entity::stop_requested);
         Ok(())
     }
 
@@ -405,7 +403,7 @@ impl Simulation {
     }
 
     fn reached_end_condition(&self) -> Option<TerminationReason> {
-        if self.world_stop || self.entities.iter().any(Entity::stop_requested) {
+        if self.world_stop {
             return Some(TerminationReason::PluginRequestedStop);
         }
         if self.end_conditions.time

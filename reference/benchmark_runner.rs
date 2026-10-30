@@ -18,42 +18,34 @@ const TOPIC: &str = "StateWithCovariance";
 /// Publishes the entity's true state on LocalNetwork every step: the message
 /// SCRIMMAGE's NoisyState sends, so both simulators route the same traffic.
 struct StateBroadcast;
-impl Plugin for StateBroadcast {
+impl Sensor for StateBroadcast {
     type Config = ();
-    fn configure(params: &PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
     fn new(_: &()) -> Self {
         Self
     }
-}
-impl Sensor for StateBroadcast {
-    fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
+
+    fn step(&mut self, context: &mut SensorContext) -> Result<()> {
         let state = context.truth.clone();
         context.messages.publish(NETWORK, TOPIC, state)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
 /// Subscribes to StateBroadcast's messages and discards them, as SCRIMMAGE's
 /// Straight does with NoisyState's.
 struct StateListener;
-impl Plugin for StateListener {
+impl Autonomy for StateListener {
     type Config = ();
-    fn configure(params: &PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
     fn new(_: &()) -> Self {
         Self
     }
-}
-impl Autonomy for StateListener {
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
+
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> {
         context.messages.subscribe::<KinematicState>(NETWORK, TOPIC)
     }
-    fn step(&mut self, context: &mut AgentContext<'_>, _io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, _io: &mut PluginIo) -> Result<()> {
         context.messages.receive::<KinematicState>(NETWORK, TOPIC)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 

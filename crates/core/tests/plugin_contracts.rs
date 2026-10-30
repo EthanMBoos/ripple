@@ -177,16 +177,12 @@ fn all_world_plugin_categories_resolve_through_the_registry() -> Result<()> {
 }
 
 struct FailingInteraction;
-impl ripple_core::plugin::Plugin for FailingInteraction {
+impl ripple_core::plugin::Interaction for FailingInteraction {
     type Config = ();
-    fn configure(params: &ripple_core::plugin::PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
     fn new(_: &()) -> Self {
         Self
     }
-}
-impl ripple_core::plugin::Interaction for FailingInteraction {
+
     fn step(
         &mut self,
         context: &mut ripple_core::plugin::InteractionContext<'_>,
@@ -215,16 +211,12 @@ fn world_plugin_failure_terminates_the_run_and_closes_other_plugins() -> Result<
 }
 
 struct StopInteraction;
-impl ripple_core::plugin::Plugin for StopInteraction {
+impl ripple_core::plugin::Interaction for StopInteraction {
     type Config = ();
-    fn configure(params: &ripple_core::plugin::PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
     fn new(_: &()) -> Self {
         Self
     }
-}
-impl ripple_core::plugin::Interaction for StopInteraction {
+
     fn step(
         &mut self,
         context: &mut ripple_core::plugin::InteractionContext<'_>,
@@ -257,21 +249,17 @@ fn world_plugin_stop_emits_terminal_frame_and_closes_once() -> Result<()> {
 }
 
 struct PanicNetwork;
-impl ripple_core::plugin::Plugin for PanicNetwork {
+impl ripple_core::plugin::Network for PanicNetwork {
     type Config = ();
     // Stands in for ExampleNetwork under the same name, so it ignores that network's parameters.
-    fn configure(_: &ripple_core::plugin::PluginParams<'_>) -> Result<()> {
+    fn configure(_: &ripple_core::plugin::PluginParams) -> Result<()> {
         Ok(())
     }
     fn new(_: &()) -> Self {
         Self
     }
-}
-impl ripple_core::plugin::Network for PanicNetwork {
-    fn step(
-        &mut self,
-        _: &mut ripple_core::plugin::NetworkContext<'_, '_>,
-    ) -> Result<ripple_core::plugin::Update> {
+
+    fn step(&mut self, _: &mut ripple_core::plugin::NetworkContext<'_, '_>) -> Result<()> {
         panic!("intentional network panic");
     }
 }

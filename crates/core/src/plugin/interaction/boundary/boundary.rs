@@ -6,7 +6,7 @@ use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 
 use crate::Vec3;
-use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
+use crate::plugin::{Interaction, InteractionContext, PluginParams, Update};
 use crate::scenario::PluginConfig;
 
 pub const BOUNDARY_TOPIC: &str = "Boundary";
@@ -67,10 +67,10 @@ pub struct Boundary {
     published: bool,
 }
 
-impl Plugin for Boundary {
+impl Interaction for Boundary {
     type Config = BoundaryConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<BoundaryConfig> {
+    fn configure(params: &PluginParams) -> Result<BoundaryConfig> {
         let config: BoundaryConfig = params.parse()?;
         ensure!(
             config.lengths_m.iter().all(|length| *length > 0.0),
@@ -89,10 +89,8 @@ impl Plugin for Boundary {
             published: false,
         }
     }
-}
 
-impl Interaction for Boundary {
-    fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut InteractionContext) -> Result<Update> {
         // Published once: entities spawned after the first tick never receive the
         // boundary. Only matters if a mission spawns late.
         if !self.published {

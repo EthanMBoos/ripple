@@ -13,7 +13,7 @@
 
 use anyhow::{Result, ensure};
 use nalgebra::{Matrix3, Rotation3, UnitQuaternion};
-use ripple_core::plugin::{Plugin, PluginParams, Sensor, SensorContext, Update};
+use ripple_core::plugin::{PluginParams, Sensor, SensorContext};
 use ripple_core::{KinematicState, Vec3};
 use serde::{Deserialize, Serialize};
 
@@ -63,10 +63,10 @@ pub struct SitlState {
     previous_time_s: Option<f64>,
 }
 
-impl Plugin for SitlState {
+impl Sensor for SitlState {
     type Config = SitlStateConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<SitlStateConfig> {
+    fn configure(params: &PluginParams) -> Result<SitlStateConfig> {
         let config: SitlStateConfig = params.parse()?;
         ensure!(
             config.gravity_mps2 > 0.0,
@@ -83,16 +83,14 @@ impl Plugin for SitlState {
             previous_time_s: None,
         }
     }
-}
 
-impl Sensor for SitlState {
-    fn initialize(&mut self, context: &mut SensorContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut SensorContext) -> Result<()> {
         // Startup truth is the state before the first motion step.
         self.previous_velocity_world_mps = context.truth.velocity_world_mps;
         Ok(())
     }
 
-    fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut SensorContext) -> Result<()> {
         if let Some(previous_time_s) = self.previous_time_s {
             let elapsed_s = context.time.time_s - previous_time_s;
             ensure!(
@@ -117,7 +115,7 @@ impl Sensor for SitlState {
         context
             .messages
             .publish("LocalNetwork", SITL_STATE_TOPIC, sample)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 

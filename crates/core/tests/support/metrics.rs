@@ -1,9 +1,7 @@
 //! Statistics from delivered messages; no access to an interaction's private state.
 use super::interaction::Population;
 use anyhow::Result;
-use ripple_core::plugin::{
-    MetricReport, Metrics, Plugin, PluginParams, StepTime, TeamMetrics, Update, WorldContext,
-};
+use ripple_core::plugin::{MetricReport, Metrics, StepTime, TeamMetrics, Update, WorldContext};
 use std::collections::BTreeMap;
 
 pub struct PopulationMetrics {
@@ -12,11 +10,8 @@ pub struct PopulationMetrics {
     steps: usize,
     closed: bool,
 }
-impl Plugin for PopulationMetrics {
+impl Metrics for PopulationMetrics {
     type Config = ();
-    fn configure(params: &PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
     fn new(_config: &()) -> Self {
         Self {
             samples: 0,
@@ -25,14 +20,13 @@ impl Plugin for PopulationMetrics {
             closed: false,
         }
     }
-}
-impl Metrics for PopulationMetrics {
-    fn initialize(&mut self, context: &mut WorldContext<'_>) -> Result<()> {
+
+    fn initialize(&mut self, context: &mut WorldContext) -> Result<()> {
         context
             .messages
             .subscribe::<Population>("ExampleNetwork", "population")
     }
-    fn step(&mut self, context: &mut WorldContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut WorldContext) -> Result<Update> {
         for message in context
             .messages
             .receive::<Population>("ExampleNetwork", "population")?

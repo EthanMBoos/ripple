@@ -5,9 +5,7 @@
 use anyhow::{Result, ensure};
 use serde::Deserialize;
 
-use crate::plugin::{
-    AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{AgentContext, Controller, Frame, PluginIo, Port, Ports, Unit};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -26,7 +24,8 @@ impl Default for MotorSpeedsParams {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
+#[serde(try_from = "MotorSpeedsParams")]
 pub struct MotorSpeedsConfig {
     commands: Vec<MotorCommand>,
 }
@@ -41,11 +40,11 @@ pub struct MotorSpeeds {
     config: MotorSpeedsConfig,
 }
 
-impl Plugin for MotorSpeeds {
-    type Config = MotorSpeedsConfig;
-
-    fn configure(params: &PluginParams<'_>) -> Result<Self::Config> {
-        let params: MotorSpeedsParams = params.parse()?;
+// The mission's parameters become the config through serde's `try_from`, so
+// the trait's default `configure` (`params.parse()`) fits this plugin too.
+impl TryFrom<MotorSpeedsParams> for MotorSpeedsConfig {
+    type Error = anyhow::Error;
+    fn try_from(params: MotorSpeedsParams) -> Result<Self> {
         let mut commands = Vec::new();
         for (index, speed_radps) in params.speeds_radps.into_iter().enumerate() {
             commands.push(MotorCommand {
@@ -59,6 +58,10 @@ impl Plugin for MotorSpeeds {
         );
         Ok(MotorSpeedsConfig { commands })
     }
+}
+
+impl Controller for MotorSpeeds {
+    type Config = MotorSpeedsConfig;
 
     fn new(config: &Self::Config) -> Self {
         Self {
@@ -77,13 +80,11 @@ impl Plugin for MotorSpeeds {
         }
         ports
     }
-}
 
-impl Controller for MotorSpeeds {
-    fn step(&mut self, _: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, _: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         for command in &self.config.commands {
             io.write(&command.port, command.speed_radps)?;
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }

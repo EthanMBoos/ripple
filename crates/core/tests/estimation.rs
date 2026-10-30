@@ -54,19 +54,8 @@ struct LogConfig {
 struct Witness {
     log: String,
 }
-impl Plugin for Witness {
-    type Config = LogConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<LogConfig> {
-        params.parse()
-    }
-    fn new(config: &LogConfig) -> Self {
-        Self {
-            log: config.log.clone(),
-        }
-    }
-}
 impl Witness {
-    fn record(&self, context: &AgentContext<'_>) {
+    fn record(&self, context: &AgentContext) {
         let seen = Seen {
             time_s: context.time.time_s,
             entity_id: context.entity.id,
@@ -85,13 +74,20 @@ impl Witness {
     }
 }
 impl Autonomy for Witness {
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
+    type Config = LogConfig;
+    fn new(config: &LogConfig) -> Self {
+        Self {
+            log: config.log.clone(),
+        }
+    }
+
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> {
         self.record(context);
         Ok(())
     }
-    fn step(&mut self, context: &mut AgentContext<'_>, _: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, _: &mut PluginIo) -> Result<()> {
         self.record(context);
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -99,11 +95,8 @@ impl Autonomy for Witness {
 struct CommandLog {
     log: String,
 }
-impl Plugin for CommandLog {
+impl Localization for CommandLog {
     type Config = LogConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<LogConfig> {
-        params.parse()
-    }
     fn new(config: &LogConfig) -> Self {
         Self {
             log: config.log.clone(),
@@ -112,13 +105,12 @@ impl Plugin for CommandLog {
     fn inputs(_: &LogConfig) -> Vec<Input> {
         vec![Input::new("state", ReadingKind::State)]
     }
-}
-impl Localization for CommandLog {
-    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
+
+    fn initialize(&mut self, context: &mut LocalizationContext) -> Result<()> {
         assert_eq!(context.commands.substeps(), 0);
         self.step(context).map(|_| ())
     }
-    fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut LocalizationContext) -> Result<()> {
         let commands = &context.commands;
         let speeds = (0..commands.substeps())
             .map(|substep| commands.get(substep, "speed"))
@@ -135,7 +127,7 @@ impl Localization for CommandLog {
         if let Some(reading) = context.inputs.latest::<KinematicState>("state")? {
             *context.state = reading.value.clone();
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
@@ -143,11 +135,8 @@ impl Localization for CommandLog {
 struct Echo {
     log: String,
 }
-impl Plugin for Echo {
+impl Localization for Echo {
     type Config = LogConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<LogConfig> {
-        params.parse()
-    }
     fn new(config: &LogConfig) -> Self {
         Self {
             log: config.log.clone(),
@@ -156,13 +145,12 @@ impl Plugin for Echo {
     fn inputs(_: &LogConfig) -> Vec<Input> {
         vec![Input::new("state", ReadingKind::State)]
     }
-}
-impl Localization for Echo {
-    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
+
+    fn initialize(&mut self, context: &mut LocalizationContext) -> Result<()> {
         context.messages.subscribe::<f64>("LocalNetwork", "echo")?;
         self.step(context).map(|_| ())
     }
-    fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut LocalizationContext) -> Result<()> {
         let received: Vec<f64> = context
             .messages
             .receive::<f64>("LocalNetwork", "echo")?
@@ -181,51 +169,43 @@ impl Localization for Echo {
         if let Some(reading) = context.inputs.latest::<KinematicState>("state")? {
             *context.state = reading.value.clone();
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
 /// Localization that asks its state input for the wrong type of reading.
 struct WrongType;
-impl Plugin for WrongType {
+impl Localization for WrongType {
     type Config = ();
-    fn configure(params: &PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
     fn new(_: &()) -> Self {
         Self
     }
     fn inputs(_: &()) -> Vec<Input> {
         vec![Input::new("state", ReadingKind::State)]
     }
-}
-impl Localization for WrongType {
-    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
+
+    fn initialize(&mut self, context: &mut LocalizationContext) -> Result<()> {
         context.inputs.latest::<ContactList>("state")?;
         Ok(())
     }
-    fn step(&mut self, _: &mut LocalizationContext<'_>) -> Result<Update> {
-        Ok(Update::Applied)
+    fn step(&mut self, _: &mut LocalizationContext) -> Result<()> {
+        Ok(())
     }
 }
 
 /// Autonomy whose initialization panics.
 struct PanicOnStart;
-impl Plugin for PanicOnStart {
+impl Autonomy for PanicOnStart {
     type Config = ();
-    fn configure(params: &PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
     fn new(_: &()) -> Self {
         Self
     }
-}
-impl Autonomy for PanicOnStart {
-    fn initialize(&mut self, _: &mut AgentContext<'_>) -> Result<()> {
+
+    fn initialize(&mut self, _: &mut AgentContext) -> Result<()> {
         panic!("intentional initialization panic");
     }
-    fn step(&mut self, _: &mut AgentContext<'_>, _: &mut PluginIo) -> Result<Update> {
-        Ok(Update::Applied)
+    fn step(&mut self, _: &mut AgentContext, _: &mut PluginIo) -> Result<()> {
+        Ok(())
     }
 }
 
@@ -233,11 +213,8 @@ impl Autonomy for PanicOnStart {
 struct PositionWitness {
     log: String,
 }
-impl Plugin for PositionWitness {
+impl Controller for PositionWitness {
     type Config = LogConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<LogConfig> {
-        params.parse()
-    }
     fn new(config: &LogConfig) -> Self {
         Self {
             log: config.log.clone(),
@@ -247,9 +224,8 @@ impl Plugin for PositionWitness {
         let speed = Port::new("speed", Unit::MetersPerSecond, Frame::World);
         Ports::default().input(speed.clone()).output(speed)
     }
-}
-impl Controller for PositionWitness {
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         POSITIONS
             .lock()
             .unwrap()
@@ -257,7 +233,7 @@ impl Controller for PositionWitness {
             .or_default()
             .push(context.state.position_world_m.x);
         io.write("speed", io.read("speed")?)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 

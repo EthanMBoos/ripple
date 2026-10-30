@@ -10,9 +10,7 @@
 use anyhow::{Result, ensure};
 use serde::Deserialize;
 
-use crate::plugin::{
-    Delivery, Network, NetworkContext, Plugin, PluginParams, PluginRandom, Transmission, Update,
-};
+use crate::plugin::{Delivery, Network, NetworkContext, PluginParams, PluginRandom, Transmission};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -50,10 +48,10 @@ pub struct SphereNetwork {
     delay_s: f64,
 }
 
-impl Plugin for SphereNetwork {
+impl Network for SphereNetwork {
     type Config = SphereNetworkConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<SphereNetworkConfig> {
+    fn configure(params: &PluginParams) -> Result<SphereNetworkConfig> {
         let config: SphereNetworkConfig = params.parse()?;
         ensure!(
             config.range_m >= 0.0,
@@ -84,10 +82,8 @@ impl Plugin for SphereNetwork {
             delay_s: config.delay_s,
         }
     }
-}
 
-impl Network for SphereNetwork {
-    fn step(&mut self, context: &mut NetworkContext<'_, '_>) -> Result<Update> {
+    fn step(&mut self, context: &mut NetworkContext) -> Result<()> {
         context.route(|link, random| {
             let entity = |id: Option<i32>| i64::from(id.unwrap_or(0)) as u64;
             let key = [
@@ -153,10 +149,8 @@ impl SphereNetwork {
 
 #[cfg(test)]
 mod tests {
-    use super::SphereNetwork;
-    use crate::plugin::{
-        MessageEndpoint, Plugin, PluginParams, StepTime, Transmission, TruthContacts,
-    };
+    use super::{Network, SphereNetwork};
+    use crate::plugin::{MessageEndpoint, PluginParams, StepTime, Transmission, TruthContacts};
     use crate::{EntitySnapshot, KinematicState, Vec3};
 
     fn reachable(

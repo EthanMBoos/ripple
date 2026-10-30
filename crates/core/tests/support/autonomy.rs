@@ -17,11 +17,8 @@ impl Default for DriveToGoalConfig {
 pub struct DriveToGoal {
     goal_world_m: f64,
 }
-impl Plugin for DriveToGoal {
+impl Autonomy for DriveToGoal {
     type Config = DriveToGoalConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<DriveToGoalConfig> {
-        params.parse()
-    }
     fn new(config: &DriveToGoalConfig) -> Self {
         Self {
             goal_world_m: config.goal_world_m,
@@ -30,11 +27,10 @@ impl Plugin for DriveToGoal {
     fn ports(_: &DriveToGoalConfig) -> Ports {
         Ports::default().output(Port::new("speed", Unit::MetersPerSecond, Frame::World))
     }
-}
-impl Autonomy for DriveToGoal {
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let reached_goal = context.state.position_world_m.x >= self.goal_world_m;
         io.write("speed", if reached_goal { 0.0 } else { 2.0 })?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }

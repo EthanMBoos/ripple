@@ -2,11 +2,12 @@
 use crate::{
     KinematicState, Vec3,
     common::Terrain,
-    plugin::{EntityInfo, StepTime, Update},
-    ports::PluginIo,
+    plugin::{EntityInfo, PluginParams, StepTime},
+    ports::{PluginIo, Ports},
     pubsub::Messages,
 };
 use anyhow::Result;
+use serde::de::DeserializeOwned;
 
 pub struct MotionContext<'a> {
     pub messages: &'a mut Messages,
@@ -24,10 +25,35 @@ pub struct MotionContext<'a> {
 }
 
 pub trait MotionModel: Send {
-    fn initialize(&mut self, _context: &mut MotionContext<'_>) -> Result<()> {
+    // How it is built, answered from the concrete type while the mission
+    // loads. `where Self: Sized` keeps these out of `Box<dyn MotionModel>`, which
+    // only steps; see the module doc in `plugin.rs`.
+    /// Immutable, validated configuration, parsed once per mission and shared
+    /// by every instance.
+    type Config: DeserializeOwned + Send + Sync + 'static
+    where
+        Self: Sized;
+    /// Parses the mission's parameters; override it to check them.
+    fn configure(params: &PluginParams) -> Result<Self::Config>
+    where
+        Self: Sized,
+    {
+        params.parse()
+    }
+    fn new(config: &Self::Config) -> Self
+    where
+        Self: Sized;
+    fn ports(_config: &Self::Config) -> Ports
+    where
+        Self: Sized,
+    {
+        Ports::default()
+    }
+
+    fn initialize(&mut self, _context: &mut MotionContext) -> Result<()> {
         Ok(())
     }
-    fn step(&mut self, context: &mut MotionContext<'_>, io: &mut PluginIo) -> Result<Update>;
+    fn step(&mut self, context: &mut MotionContext, io: &mut PluginIo) -> Result<()>;
     fn close(&mut self, _time: StepTime) -> Result<()> {
         Ok(())
     }

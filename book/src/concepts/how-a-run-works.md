@@ -119,7 +119,7 @@ step()   after an end condition: closes every plugin once and returns
 step()   returns nothing; the run is over
 ```
 
-A run ends at its end time, when a plugin returns `Update::Stop` (the tick
+A run ends at its end time, when an interaction or metrics plugin returns `Update::Stop` (the tick
 still finishes), when no entities remain, or when one team is left, as the
 mission's end conditions choose. A plugin error stops the run, and the message
 names the plugin. Every plugin is closed exactly once, whether its entity was

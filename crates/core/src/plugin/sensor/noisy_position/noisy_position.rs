@@ -7,7 +7,7 @@ use serde::Deserialize;
 
 use crate::{
     Vec3,
-    plugin::{Plugin, PluginParams, Sensor, SensorContext, Update},
+    plugin::{PluginParams, Sensor, SensorContext},
 };
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
@@ -37,10 +37,10 @@ pub struct NoisyPosition {
     stddev_m: f64,
 }
 
-impl Plugin for NoisyPosition {
+impl Sensor for NoisyPosition {
     type Config = SensorConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<SensorConfig> {
+    fn configure(params: &PluginParams) -> Result<SensorConfig> {
         let config: SensorConfig = params.parse()?;
         ensure!(config.stddev_m >= 0.0, "stddev_m must be nonnegative");
         Ok(config)
@@ -52,10 +52,8 @@ impl Plugin for NoisyPosition {
             stddev_m: config.stddev_m,
         }
     }
-}
 
-impl Sensor for NoisyPosition {
-    fn step(&mut self, context: &mut SensorContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut SensorContext) -> Result<()> {
         let ideal_position_world_m = context.truth.position_world_m;
 
         // Each axis's error is the number keyed by that axis (0, 1, 2) at this
@@ -72,15 +70,15 @@ impl Sensor for NoisyPosition {
             position_world_m: measured_position_world_m,
         };
         context.publish_reading(observation)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{NoisyPosition, Plugin, PositionObservation, Sensor, SensorConfig, SensorContext};
+    use super::{NoisyPosition, PositionObservation, Sensor, SensorConfig, SensorContext};
     use crate::plugin::{
-        EntityInfo, Messages, PluginRandom, ReadingKind, Readings, StepTime, TruthContacts, Update,
+        EntityInfo, Messages, PluginRandom, ReadingKind, Readings, StepTime, TruthContacts,
     };
     use crate::{KinematicState, Vec3};
 
@@ -114,7 +112,7 @@ mod tests {
             truth.position_world_m + Vec3::from(config.bias_m) + expected_noise_world_m;
         let mut messages = Messages::default();
         let mut pending = Readings::default();
-        let update = sensor.step(&mut SensorContext {
+        sensor.step(&mut SensorContext {
             messages: &mut messages,
             entity: EntityInfo {
                 id: 1,
@@ -133,7 +131,6 @@ mod tests {
             kind: ReadingKind::Other,
             pending: &mut pending,
         })?;
-        assert_eq!(update, Update::Applied);
         let observation = pending
             .get::<PositionObservation>("gps")?
             .expect("sensor output");

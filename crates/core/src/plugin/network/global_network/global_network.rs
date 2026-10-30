@@ -8,7 +8,7 @@
 use anyhow::{Result, ensure};
 use serde::Deserialize;
 
-use crate::plugin::{Delivery, Network, NetworkContext, Plugin, PluginParams, Update};
+use crate::plugin::{Delivery, Network, NetworkContext, PluginParams};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Default, Deserialize)]
@@ -21,10 +21,10 @@ pub struct GlobalNetwork {
     delay_s: f64,
 }
 
-impl Plugin for GlobalNetwork {
+impl Network for GlobalNetwork {
     type Config = GlobalNetworkConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<GlobalNetworkConfig> {
+    fn configure(params: &PluginParams) -> Result<GlobalNetworkConfig> {
         let config: GlobalNetworkConfig = params.parse()?;
         ensure!(
             config.delay_s.is_finite() && config.delay_s >= 0.0,
@@ -38,10 +38,8 @@ impl Plugin for GlobalNetwork {
             delay_s: config.delay_s,
         }
     }
-}
 
-impl Network for GlobalNetwork {
-    fn step(&mut self, context: &mut NetworkContext<'_, '_>) -> Result<Update> {
+    fn step(&mut self, context: &mut NetworkContext) -> Result<()> {
         let delay_s = self.delay_s;
         context.route(|_link, _random| Ok(Delivery::After { delay_s }))
     }
@@ -49,7 +47,7 @@ impl Network for GlobalNetwork {
 
 #[cfg(test)]
 mod tests {
-    use super::{GlobalNetwork, Plugin, PluginParams};
+    use super::{GlobalNetwork, Network, PluginParams};
 
     #[test]
     fn negative_delays_and_old_delay_keys_are_errors() {

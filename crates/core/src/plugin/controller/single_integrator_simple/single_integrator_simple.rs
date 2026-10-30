@@ -3,17 +3,12 @@
 
 use anyhow::Result;
 
-use crate::plugin::{
-    AgentContext, Controller, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
-};
+use crate::plugin::{AgentContext, Controller, Frame, PluginIo, Port, Ports, Unit};
 
 pub struct SingleIntegratorControllerSimple;
 
-impl Plugin for SingleIntegratorControllerSimple {
+impl Controller for SingleIntegratorControllerSimple {
     type Config = ();
-    fn configure(params: &PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
     fn new(_: &()) -> Self {
         Self
     }
@@ -25,13 +20,11 @@ impl Plugin for SingleIntegratorControllerSimple {
         }
         ports
     }
-}
 
-impl Controller for SingleIntegratorControllerSimple {
-    fn step(&mut self, _: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, _: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         for name in ["velocity_x", "velocity_y", "velocity_z"] {
             io.write(name, io.read(name)?)?;
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }

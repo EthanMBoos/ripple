@@ -287,10 +287,6 @@ impl Entity {
             .estimate(self.info(), time, &self.truth, perfect_contacts)
     }
 
-    pub(crate) fn stop_requested(&self) -> bool {
-        self.plugins.stop_requested
-    }
-
     pub(crate) fn snapshot(&self) -> EntitySnapshot {
         EntitySnapshot {
             id: self.id,

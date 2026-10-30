@@ -13,11 +13,8 @@ pub struct EastFixConfig {
 pub struct EastFix {
     initial_x_world_m: f64,
 }
-impl Plugin for EastFix {
+impl Localization for EastFix {
     type Config = EastFixConfig;
-    fn configure(params: &PluginParams<'_>) -> Result<EastFixConfig> {
-        params.parse()
-    }
     fn new(config: &EastFixConfig) -> Self {
         Self {
             initial_x_world_m: config.initial_x_world_m,
@@ -26,16 +23,15 @@ impl Plugin for EastFix {
     fn inputs(_: &EastFixConfig) -> Vec<Input> {
         vec![Input::new("fix", ReadingKind::Other)]
     }
-}
-impl Localization for EastFix {
-    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
+
+    fn initialize(&mut self, context: &mut LocalizationContext) -> Result<()> {
         context.state.position_world_m.x = self.initial_x_world_m;
         Ok(())
     }
-    fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut LocalizationContext) -> Result<()> {
         if let Some(fix) = context.inputs.fresh::<PositionReading>("fix")? {
             context.state.position_world_m.x = fix.value.x_world_m;
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }

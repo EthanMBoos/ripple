@@ -22,7 +22,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::{Mutex, Once};
 
 use anyhow::{Context, Result, ensure};
-use ripple_core::plugin::{Plugin, PluginParams, motion::FixedWing6Dof};
+use ripple_core::plugin::{MotionModel, PluginParams, motion::FixedWing6Dof};
 use ripple_core::{ScenarioConfig, Terrain};
 
 use crate::ardupilot_bridge::ArduPilotBridgeConfig;

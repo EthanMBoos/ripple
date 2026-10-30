@@ -25,8 +25,7 @@ use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result, bail, ensure};
 use ripple_core::plugin::{
-    AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, StepTime, Unit,
-    Update,
+    AgentContext, Autonomy, Frame, PluginIo, PluginParams, Port, Ports, StepTime, Unit,
 };
 use serde::Deserialize;
 
@@ -140,10 +139,10 @@ struct MotionInputs {
     rudder_rad: f64,
 }
 
-impl Plugin for ArduPilotBridge {
+impl Autonomy for ArduPilotBridge {
     type Config = ArduPilotBridgeConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<ArduPilotBridgeConfig> {
+    fn configure(params: &PluginParams) -> Result<ArduPilotBridgeConfig> {
         let config: ArduPilotBridgeConfig = params.parse()?;
         ensure!(
             config.first_frame_timeout_s > 0.0 && config.frame_timeout_s > 1.0,
@@ -190,10 +189,8 @@ impl Plugin for ArduPilotBridge {
             .output(Port::new("aileron", Unit::Radians, Frame::Model))
             .output(Port::new("rudder", Unit::Radians, Frame::Model))
     }
-}
 
-impl Autonomy for ArduPilotBridge {
-    fn initialize(&mut self, context: &mut AgentContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> {
         context
             .messages
             .subscribe::<SitlSample>("LocalNetwork", SITL_STATE_TOPIC)?;
@@ -203,7 +200,7 @@ impl Autonomy for ArduPilotBridge {
         Ok(())
     }
 
-    fn step(&mut self, context: &mut AgentContext<'_>, io: &mut PluginIo) -> Result<Update> {
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         if let Some(previous_time_s) = self.previous_time_s {
             let elapsed_s = context.time.time_s - previous_time_s;
             ensure!(
@@ -249,7 +246,7 @@ impl Autonomy for ArduPilotBridge {
         io.write("elevator", inputs.elevator_rad)?;
         io.write("aileron", inputs.aileron_rad)?;
         io.write("rudder", inputs.rudder_rad)?;
-        Ok(Update::Applied)
+        Ok(())
     }
 
     fn close(&mut self, _time: StepTime) -> Result<()> {

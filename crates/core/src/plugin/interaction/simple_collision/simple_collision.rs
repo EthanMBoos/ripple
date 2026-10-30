@@ -8,7 +8,7 @@
 use anyhow::{Result, ensure};
 use serde::Deserialize;
 
-use crate::plugin::{Interaction, InteractionContext, Plugin, PluginParams, Update};
+use crate::plugin::{Interaction, InteractionContext, PluginParams, Update};
 use crate::{Entity, EventKind, Vec3};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
@@ -40,10 +40,10 @@ pub struct SimpleCollision {
     config: CollisionConfig,
 }
 
-impl Plugin for SimpleCollision {
+impl Interaction for SimpleCollision {
     type Config = CollisionConfig;
 
-    fn configure(params: &PluginParams<'_>) -> Result<CollisionConfig> {
+    fn configure(params: &PluginParams) -> Result<CollisionConfig> {
         let config: CollisionConfig = params.parse()?;
         ensure!(
             config.collision_range_m >= 0.0 && config.startup_collision_range_m >= 0.0,
@@ -57,9 +57,7 @@ impl Plugin for SimpleCollision {
             config: config.clone(),
         }
     }
-}
 
-impl Interaction for SimpleCollision {
     fn collision_exists(&self, entities: &[Entity], position_world_m: Vec3) -> bool {
         entities.iter().any(|entity| {
             let separation_world_m = position_world_m - entity.truth().position_world_m;
@@ -71,7 +69,7 @@ impl Interaction for SimpleCollision {
         })
     }
 
-    fn step(&mut self, context: &mut InteractionContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut InteractionContext) -> Result<Update> {
         if self.config.startup_collisions_only {
             return Ok(Update::Applied);
         }

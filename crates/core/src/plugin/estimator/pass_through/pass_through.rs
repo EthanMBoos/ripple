@@ -6,7 +6,7 @@
 //! the `tracking` slot it is `PassThroughContacts`, which copies a contacts
 //! reading (input `contacts`) into the known contacts. They are two structs
 //! rather than one because a struct names the readings it needs in its one
-//! `Plugin::inputs`, and these two jobs need different readings. With the
+//! `inputs`, and these two jobs need different readings. With the
 //! default perfect measurement each makes belief equal truth at the next
 //! decision. Between a slow sensor's readings it keeps the last one.
 //!
@@ -20,18 +20,13 @@ use anyhow::{Context, Result};
 
 use crate::KinematicState;
 use crate::plugin::{
-    ContactList, Input, Localization, LocalizationContext, Plugin, PluginParams, ReadingKind,
-    Tracking, TrackingContext, Update,
+    ContactList, Input, Localization, LocalizationContext, ReadingKind, Tracking, TrackingContext,
 };
 
 pub struct PassThroughState;
 
-impl Plugin for PassThroughState {
+impl Localization for PassThroughState {
     type Config = ();
-
-    fn configure(params: &PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
 
     fn new(_config: &()) -> Self {
         Self
@@ -40,10 +35,8 @@ impl Plugin for PassThroughState {
     fn inputs(_config: &()) -> Vec<Input> {
         vec![Input::new("state", ReadingKind::State)]
     }
-}
 
-impl Localization for PassThroughState {
-    fn initialize(&mut self, context: &mut LocalizationContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut LocalizationContext) -> Result<()> {
         // The initial belief must come from a reading; there is no fallback to truth.
         let reading = context
             .inputs
@@ -53,22 +46,18 @@ impl Localization for PassThroughState {
         Ok(())
     }
 
-    fn step(&mut self, context: &mut LocalizationContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut LocalizationContext) -> Result<()> {
         if let Some(reading) = context.inputs.fresh::<KinematicState>("state")? {
             *context.state = reading.value.clone();
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
 pub struct PassThroughContacts;
 
-impl Plugin for PassThroughContacts {
+impl Tracking for PassThroughContacts {
     type Config = ();
-
-    fn configure(params: &PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
 
     fn new(_config: &()) -> Self {
         Self
@@ -77,18 +66,16 @@ impl Plugin for PassThroughContacts {
     fn inputs(_config: &()) -> Vec<Input> {
         vec![Input::new("contacts", ReadingKind::Contacts)]
     }
-}
 
-impl Tracking for PassThroughContacts {
-    fn initialize(&mut self, context: &mut TrackingContext<'_>) -> Result<()> {
+    fn initialize(&mut self, context: &mut TrackingContext) -> Result<()> {
         // No reading yet means no known contacts.
         self.step(context).map(|_| ())
     }
 
-    fn step(&mut self, context: &mut TrackingContext<'_>) -> Result<Update> {
+    fn step(&mut self, context: &mut TrackingContext) -> Result<()> {
         if let Some(reading) = context.inputs.fresh::<ContactList>("contacts")? {
             *context.contacts = reading.value.clone();
         }
-        Ok(Update::Applied)
+        Ok(())
     }
 }

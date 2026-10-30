@@ -12,37 +12,29 @@ static CALLS: Mutex<Vec<(f64, f64)>> = Mutex::new(Vec::new());
 
 /// Records when it runs and the dt it is given; writes nothing.
 struct ClockLog;
-impl Plugin for ClockLog {
+impl Autonomy for ClockLog {
     type Config = ();
-    fn configure(params: &PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
     fn new(_: &()) -> Self {
         Self
     }
-}
-impl Autonomy for ClockLog {
-    fn step(&mut self, context: &mut AgentContext<'_>, _io: &mut PluginIo) -> Result<Update> {
+
+    fn step(&mut self, context: &mut AgentContext, _io: &mut PluginIo) -> Result<()> {
         let time = context.time;
         CALLS.lock().unwrap().push((time.time_s, time.dt_s));
-        Ok(Update::Applied)
+        Ok(())
     }
 }
 
 /// Keeps the state it starts with.
 struct Still;
-impl Plugin for Still {
+impl MotionModel for Still {
     type Config = ();
-    fn configure(params: &PluginParams<'_>) -> Result<()> {
-        params.parse()
-    }
     fn new(_: &()) -> Self {
         Self
     }
-}
-impl MotionModel for Still {
-    fn step(&mut self, _context: &mut MotionContext<'_>, _io: &mut PluginIo) -> Result<Update> {
-        Ok(Update::Applied)
+
+    fn step(&mut self, _context: &mut MotionContext, _io: &mut PluginIo) -> Result<()> {
+        Ok(())
     }
 }
 

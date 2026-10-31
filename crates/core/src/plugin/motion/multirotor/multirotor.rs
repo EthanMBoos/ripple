@@ -199,88 +199,25 @@ impl MotionModel for Multirotor {
 impl Multirotor {
     fn integrate(&mut self, truth: &mut KinematicState, dt_s: f64) -> Result<()> {
         self.state.read_truth(truth);
-        let config = &self.config;
-        let airframe = &config.airframe;
+        let airframe = &self.config.airframe;
         // omega_min is an armed motor's idle speed: it still pushes and
         // twists, continuously with the speeds above it.
-        let commands_radps: Vec<f64> = self
-            .motor_commands_radps
-            .iter()
-            .map(|command| {
-                command.clamp(
-                    airframe.min_rotor_speed_radps,
-                    airframe.max_rotor_speed_radps,
-                )
-            })
-            .collect();
+        let mut commands_radps = Vec::with_capacity(self.motor_commands_radps.len());
+        for command_radps in &self.motor_commands_radps {
+            commands_radps.push(command_radps.clamp(
+                airframe.min_rotor_speed_radps,
+                airframe.max_rotor_speed_radps,
+            ));
+        }
         if self.rotor_speeds_radps.is_empty() {
             self.rotor_speeds_radps = commands_radps.clone();
         }
-        let start_speeds_radps = &self.rotor_speeds_radps;
-        let coefficients = RotorCoefficients {
-            thrust_coefficient: airframe.thrust_coefficient,
-            torque_coefficient: airframe.torque_coefficient,
-            aerodynamics: config.aerodynamics,
-        };
 
-        // Every load is recomputed from each RK4 stage's state and time, so the
-        // step keeps RK4's accuracy.
-        let accelerations =
-            |elapsed_s: f64, state: &RotorcraftState| -> (Vec3, Vec3) {
-                let mut rotor_force_body_n = Vec3::zeros();
-                let mut rotor_moment_body_nm = Vec3::zeros();
-                for (index, rotor) in airframe.rotors.iter().enumerate() {
-                    let speed_radps = config.motor_lag.speed_radps(
-                        start_speeds_radps[index],
-                        commands_radps[index],
-                        elapsed_s,
-                    );
-                    let loads = rotor_loads(
-                        rotor,
-                        &coefficients,
-                        speed_radps,
-                        state.velocity_body_mps,
-                        state.rates_body_radps,
-                    );
-                    rotor_force_body_n += loads.force_body_n;
-                    rotor_moment_body_nm += loads.moment_body_nm;
-                }
-                let weight_body_n =
-                    UnitQuaternion::new_normalize(state.attitude).inverse_transform_vector(
-                        &Vec3::new(0.0, 0.0, -airframe.mass_kg * airframe.gravity_mps2),
-                    );
-                let velocity_body_mps = state.velocity_body_mps;
-                let drag_body_n = velocity_body_mps
-                    * (-0.5 * config.body_drag_coefficient * velocity_body_mps.norm());
-                // Not modeled, each a zero in the sums below. Ground effect adds
-                // thrust within about a rotor diameter of the ground; it needs height
-                // over rotor radius and a measured or published correction. Downwash
-                // between rotors and onto the body needs a wake model or measured data.
-                // A rotor's gyroscopic torque (J_r w x body rates) and its spin-up
-                // reaction (J_r dw/dt) need the rotor's inertia J_r.
-                let ground_effect_body_n = Vec3::zeros();
-                let downwash_body_n = Vec3::zeros();
-                let rotor_gyroscopic_body_nm = Vec3::zeros();
-                let spin_up_reaction_body_nm = Vec3::zeros();
-                let force_body_n = rotor_force_body_n
-                    + weight_body_n
-                    + drag_body_n
-                    + ground_effect_body_n
-                    + downwash_body_n;
-                let moment_body_nm =
-                    rotor_moment_body_nm + rotor_gyroscopic_body_nm + spin_up_reaction_body_nm;
-                let rates = state.rates_body_radps;
-                (
-                    force_body_n / airframe.mass_kg,
-                    config.inverse_inertia
-                        * (moment_body_nm - rates.cross(&(airframe.inertia_kgm2 * rates))),
-                )
-            };
         let mut coordinates = self.state.coordinates();
         math::rk4_timed(&mut coordinates, dt_s, |elapsed_s, coordinates| {
             let stage = RotorcraftState::from_coordinates(*coordinates);
             let (acceleration_body_mps2, angular_acceleration_body_radps2) =
-                accelerations(elapsed_s, &stage);
+                self.accelerations(&stage, &commands_radps, elapsed_s);
             derivative(
                 stage,
                 acceleration_body_mps2,
@@ -291,15 +228,74 @@ impl Multirotor {
             coordinates.iter().all(|value| value.is_finite()),
             "Multirotor integration produced nonfinite state"
         );
-        for (speed_radps, command_radps) in self.rotor_speeds_radps.iter_mut().zip(&commands_radps)
-        {
-            *speed_radps = config
-                .motor_lag
-                .speed_radps(*speed_radps, *command_radps, dt_s);
+        for index in 0..self.rotor_speeds_radps.len() {
+            self.rotor_speeds_radps[index] = self.config.motor_lag.speed_radps(
+                self.rotor_speeds_radps[index],
+                commands_radps[index],
+                dt_s,
+            );
         }
         self.state = RotorcraftState::from_coordinates(coordinates);
         self.state.write_truth(truth);
         Ok(())
+    }
+
+    /// The body-frame linear and angular accelerations `elapsed_s` into the
+    /// step, from the stage's state and the clamped commands. Every load is
+    /// recomputed from each RK4 stage's state and time, so the step keeps
+    /// RK4's accuracy.
+    fn accelerations(
+        &self,
+        state: &RotorcraftState,
+        commands_radps: &[f64],
+        elapsed_s: f64,
+    ) -> (Vec3, Vec3) {
+        let config = &self.config;
+        let airframe = &config.airframe;
+        // Symbols, as in the model's description: the body's velocity and
+        // rates, mass, gravity, and the inertia tensor.
+        let (v, omega) = (state.velocity_body_mps, state.rates_body_radps);
+        let (m, g) = (airframe.mass_kg, airframe.gravity_mps2);
+        let inertia = airframe.inertia_kgm2;
+        let coefficients = RotorCoefficients {
+            thrust_coefficient: airframe.thrust_coefficient,
+            torque_coefficient: airframe.torque_coefficient,
+            aerodynamics: config.aerodynamics,
+        };
+
+        // The rotors' loads, summed, each at its speed this far into the step.
+        let mut rotor_force_n = Vec3::zeros();
+        let mut rotor_moment_nm = Vec3::zeros();
+        for index in 0..airframe.rotors.len() {
+            let omega_i = config.motor_lag.speed_radps(
+                self.rotor_speeds_radps[index],
+                commands_radps[index],
+                elapsed_s,
+            );
+            let loads = rotor_loads(&airframe.rotors[index], &coefficients, omega_i, v, omega);
+            rotor_force_n += loads.force_body_n;
+            rotor_moment_nm += loads.moment_body_nm;
+        }
+        let weight_n = UnitQuaternion::new_normalize(state.attitude)
+            .inverse_transform_vector(&Vec3::new(0.0, 0.0, -m * g));
+        let drag_n = v * (-0.5 * config.body_drag_coefficient * v.norm());
+        // Not modeled, each a zero in the sums below. Ground effect adds
+        // thrust within about a rotor diameter of the ground; it needs height
+        // over rotor radius and a measured or published correction. Downwash
+        // between rotors and onto the body needs a wake model or measured data.
+        // A rotor's gyroscopic torque (J_r omega_i x omega) and its spin-up
+        // reaction (J_r d omega_i / dt) need the rotor's inertia J_r.
+        let ground_effect_n = Vec3::zeros();
+        let downwash_n = Vec3::zeros();
+        let rotor_gyroscopic_nm = Vec3::zeros();
+        let spin_up_reaction_nm = Vec3::zeros();
+        let force_n = rotor_force_n + weight_n + drag_n + ground_effect_n + downwash_n;
+        let moment_nm = rotor_moment_nm + rotor_gyroscopic_nm + spin_up_reaction_nm;
+        // Newton and Euler: a = F / m, and I omega_dot = M - omega x (I omega).
+        (
+            force_n / m,
+            config.inverse_inertia * (moment_nm - omega.cross(&(inertia * omega))),
+        )
     }
 }
 

@@ -469,10 +469,15 @@ impl FixedWingConfig {
         terrain: Option<&Terrain>,
         dt_s: f64,
     ) -> (Vec3, Vec3) {
+        // Symbols, as in the model's description: the body's velocity and
+        // rates in the model frame, mass, gravity, and the inertia tensor.
+        let (v, omega) = (state.velocity_model_mps, state.rates_model_radps);
+        let (m, g) = (self.mass_kg, self.gravity_mps2);
+        let inertia = self.inertia_kgm2;
         let rotation = UnitQuaternion::new_normalize(state.attitude_model);
         let wind_model_mps = rotation.inverse_transform_vector(&flip_yz(self.wind_world_mps));
         // Velocity through the air: ground velocity minus the air's (the wind's).
-        let air_velocity_model_mps = state.velocity_model_mps - wind_model_mps;
+        let air_velocity_model_mps = v - wind_model_mps;
         let airframe = Airframe {
             air_density_kgpm3: self.air_density_kgpm3,
             wing_span_m: self.wing_span_m,
@@ -480,18 +485,12 @@ impl FixedWingConfig {
             mean_chord_m: self.mean_chord_m,
             oswald_efficiency: self.oswald_efficiency,
         };
-        let mut loads = self.aerodynamics.loads(
-            &airframe,
-            air_velocity_model_mps,
-            state.rates_model_radps,
-            control,
-        );
-        let weight_model_n = rotation.inverse_transform_vector(&Vec3::new(
-            0.0,
-            0.0,
-            self.mass_kg * self.gravity_mps2,
-        ));
-        let thrust_model_n = Vec3::new(self.thrust_n(control.throttle), 0.0, 0.0);
+        let mut loads = self
+            .aerodynamics
+            .loads(&airframe, air_velocity_model_mps, omega, control);
+        // Weight m g, down in the world and rotated into the model frame.
+        let weight_n = rotation.inverse_transform_vector(&Vec3::new(0.0, 0.0, m * g));
+        let thrust_n = Vec3::new(self.thrust_n(control.throttle), 0.0, 0.0);
         // Not modeled, each a zero in the sums below. Propeller slipstream
         // speeds the air over the wing root and tail; it needs the propeller's
         // induced velocity (momentum theory or measured wake data). Propeller
@@ -499,15 +498,12 @@ impl FixedWingConfig {
         // inertia. Ground effect raises lift and cuts induced drag within about
         // a span of the ground; it needs height over span and a measured or
         // published correction.
-        let slipstream_model_n = Vec3::zeros();
-        let ground_effect_model_n = Vec3::zeros();
-        let propeller_moment_model_nm = Vec3::zeros();
-        loads.force_model_n = weight_model_n
-            + thrust_model_n
-            + loads.force_model_n
-            + slipstream_model_n
-            + ground_effect_model_n;
-        loads.moment_model_nm += propeller_moment_model_nm;
+        let slipstream_n = Vec3::zeros();
+        let ground_effect_n = Vec3::zeros();
+        let propeller_moment_nm = Vec3::zeros();
+        loads.force_model_n =
+            weight_n + thrust_n + loads.force_model_n + slipstream_n + ground_effect_n;
+        loads.moment_model_nm += propeller_moment_nm;
 
         if !self.landing_gear.is_empty() {
             let (force_model_n, moment_model_nm) = landing_gear::loads(
@@ -526,7 +522,7 @@ impl FixedWingConfig {
             // Inherited ground model: damping is only 40 N*s/m, not mass-scaled.
             // This is not a validated landing model for the default eight-tonne
             // aircraft; `landing_gear` is the real ground contact.
-            let ground_force_n = (-400.0 * self.mass_kg * state.position_world_m.z
+            let ground_force_n = (-400.0 * m * state.position_world_m.z
                 - 40.0 * state.velocity_world_mps.z)
                 .max(0.0);
             loads.force_model_n +=
@@ -537,11 +533,10 @@ impl FixedWingConfig {
             loads.moment_model_nm = Vec3::zeros();
         }
         loads.force_model_n.x += catapult_force_n;
-        let rates = state.rates_model_radps;
+        // Newton and Euler: a = F / m, and I omega_dot = M - omega x (I omega).
         (
-            loads.force_model_n / self.mass_kg,
-            self.inverse_inertia
-                * (loads.moment_model_nm - rates.cross(&(self.inertia_kgm2 * rates))),
+            loads.force_model_n / m,
+            self.inverse_inertia * (loads.moment_model_nm - omega.cross(&(inertia * omega))),
         )
     }
 

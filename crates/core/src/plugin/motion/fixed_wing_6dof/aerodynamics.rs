@@ -94,19 +94,26 @@ impl Aerodynamics {
         if airspeed_mps.abs() < f64::EPSILON {
             airspeed_mps = 0.00001;
         }
-        let alpha_rad = air_velocity_model_mps.z.atan2(air_velocity_model_mps.x);
-        let beta_rad = (air_velocity_model_mps.y / airspeed_mps)
-            .clamp(-1.0, 1.0)
-            .asin();
-        let twice_speed_mps = 2.0 * airspeed_mps;
-        let wing_span_m = airframe.wing_span_m;
-        let mean_chord_m = airframe.mean_chord_m;
-        let aspect_ratio = wing_span_m / mean_chord_m;
-        let pressure_area_n =
-            airframe.air_density_kgpm3 * airspeed_mps.powi(2) * airframe.wing_area_m2 / 2.0;
-        let p_radps = rates_model_radps.x;
-        let q_radps = rates_model_radps.y;
-        let r_radps = rates_model_radps.z;
+        // Symbols, as in the coefficient equations: airspeed, angle of
+        // attack, sideslip, the body rates, the control deflections, span,
+        // mean chord, and dynamic pressure times wing area (q-bar S).
+        let v = airspeed_mps;
+        let alpha = air_velocity_model_mps.z.atan2(air_velocity_model_mps.x);
+        let beta = (air_velocity_model_mps.y / v).clamp(-1.0, 1.0).asin();
+        let (p, q, r) = (
+            rates_model_radps.x,
+            rates_model_radps.y,
+            rates_model_radps.z,
+        );
+        let (delta_e, delta_a, delta_r) = (
+            control.elevator_rad,
+            control.aileron_rad,
+            control.rudder_rad,
+        );
+        let (b, c) = (airframe.wing_span_m, airframe.mean_chord_m);
+        let aspect_ratio = b / c;
+        let two_v = 2.0 * v;
+        let qbar_s = airframe.air_density_kgpm3 * v.powi(2) * airframe.wing_area_m2 / 2.0;
 
         // Linear lift, unless the mission gives a lift table, whose peak and
         // fall past the critical angle model a stall.
@@ -114,54 +121,52 @@ impl Aerodynamics {
         // spin, and drag ignores sideslip. A deep stall or flying far sideways
         // is treated as already a failure; the model is not meant to recover
         // from it faithfully.
-        let lift_alpha = if self.lift_table.is_empty() {
-            self.c_lift_0 + self.c_lift_alpha * alpha_rad
+        let c_lift_of_alpha = if self.lift_table.is_empty() {
+            self.c_lift_0 + self.c_lift_alpha * alpha
         } else {
-            interpolate_clamped(&self.lift_table, alpha_rad)
+            interpolate_clamped(&self.lift_table, alpha)
         };
-        let lift_coefficient = lift_alpha
-            + self.c_lift_q * q_radps * mean_chord_m / twice_speed_mps
-            + self.c_lift_elevator * control.elevator_rad;
-        let lift_n = lift_coefficient * pressure_area_n;
+        let c_lift =
+            c_lift_of_alpha + self.c_lift_q * q * c / two_v + self.c_lift_elevator * delta_e;
+        let lift_n = c_lift * qbar_s;
         // Likewise drag, whose table can rise steeply past the stall.
-        let drag_alpha = if self.drag_table.is_empty() {
-            self.c_drag_0 + self.c_drag_alpha * alpha_rad.abs()
+        let c_drag_of_alpha = if self.drag_table.is_empty() {
+            self.c_drag_0 + self.c_drag_alpha * alpha.abs()
         } else {
-            interpolate_clamped(&self.drag_table, alpha_rad)
+            interpolate_clamped(&self.drag_table, alpha)
         };
-        let drag_n = (drag_alpha
-            + lift_coefficient * lift_coefficient
-                / (PI * aspect_ratio * airframe.oswald_efficiency)
-            + self.c_drag_elevator * control.elevator_rad.abs())
-            * pressure_area_n;
-        let side_n = (self.c_side_beta * beta_rad + self.c_side_rudder * control.rudder_rad)
-            * pressure_area_n;
+        let drag_n = (c_drag_of_alpha
+            + c_lift * c_lift / (PI * aspect_ratio * airframe.oswald_efficiency)
+            + self.c_drag_elevator * delta_e.abs())
+            * qbar_s;
+        let side_n = (self.c_side_beta * beta + self.c_side_rudder * delta_r) * qbar_s;
+        // Wind axes to the model's forward/right/down axes.
         let force_model_n = Vec3::new(
-            lift_n * alpha_rad.sin() - drag_n * alpha_rad.cos() - side_n * beta_rad.sin(),
-            side_n * beta_rad.cos(),
-            -lift_n * alpha_rad.cos() - drag_n * alpha_rad.sin(),
+            lift_n * alpha.sin() - drag_n * alpha.cos() - side_n * beta.sin(),
+            side_n * beta.cos(),
+            -lift_n * alpha.cos() - drag_n * alpha.sin(),
         );
 
-        let roll_nm = (self.c_roll_beta * beta_rad
-            + self.c_roll_p * p_radps * wing_span_m / twice_speed_mps
-            + self.c_roll_r * r_radps * wing_span_m / twice_speed_mps
-            + self.c_roll_aileron * control.aileron_rad
-            + self.c_roll_rudder * control.rudder_rad)
-            * pressure_area_n
-            * wing_span_m;
+        let roll_nm = (self.c_roll_beta * beta
+            + self.c_roll_p * p * b / two_v
+            + self.c_roll_r * r * b / two_v
+            + self.c_roll_aileron * delta_a
+            + self.c_roll_rudder * delta_r)
+            * qbar_s
+            * b;
         let pitch_nm = (self.c_pitch_0
-            + self.c_pitch_alpha * alpha_rad
-            + self.c_pitch_q * q_radps * mean_chord_m / twice_speed_mps
-            + self.c_pitch_elevator * control.elevator_rad)
-            * pressure_area_n
-            * mean_chord_m;
-        let yaw_nm = (self.c_yaw_beta * beta_rad
-            + self.c_yaw_p * p_radps * wing_span_m / twice_speed_mps
-            + self.c_yaw_r * r_radps * wing_span_m / twice_speed_mps
-            + self.c_yaw_aileron * control.aileron_rad
-            + self.c_yaw_rudder * control.rudder_rad)
-            * pressure_area_n
-            * wing_span_m;
+            + self.c_pitch_alpha * alpha
+            + self.c_pitch_q * q * c / two_v
+            + self.c_pitch_elevator * delta_e)
+            * qbar_s
+            * c;
+        let yaw_nm = (self.c_yaw_beta * beta
+            + self.c_yaw_p * p * b / two_v
+            + self.c_yaw_r * r * b / two_v
+            + self.c_yaw_aileron * delta_a
+            + self.c_yaw_rudder * delta_r)
+            * qbar_s
+            * b;
         Loads {
             force_model_n,
             moment_model_nm: Vec3::new(roll_nm, pitch_nm, yaw_nm),

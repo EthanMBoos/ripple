@@ -93,23 +93,29 @@ pub(super) fn rotor_loads(
     velocity_body_mps: Vec3,
     rates_body_radps: Vec3,
 ) -> RotorLoads {
-    let axis = rotor.thrust_axis_body;
-    let speed_squared = speed_radps * speed_radps;
+    // Symbols, as in RotorS: the rotor's speed, axis, and offset from the
+    // center of mass, its thrust and torque coefficients, and the body's
+    // velocity and rates.
+    let (omega_i, e_i, r_i) = (speed_radps, rotor.thrust_axis_body, rotor.offset_body_m);
+    let (c_t, c_q) = (
+        coefficients.thrust_coefficient,
+        coefficients.torque_coefficient,
+    );
+    let (v, omega) = (velocity_body_mps, rates_body_radps);
+    let omega_i_sq = omega_i * omega_i;
 
-    // Thrust along the rotor axis, applied at the hub, and the reaction to
-    // the air's drag on the blades, about the axis (RotorS's "drag torque",
-    // moment constant c_Q / c_T).
-    let thrust_n = coefficients.thrust_coefficient * speed_squared;
-    let thrust_force_body_n = axis * thrust_n;
-    let reaction_torque_body_nm =
-        axis * (rotor.direction.reaction_sign() * coefficients.torque_coefficient * speed_squared);
+    // Thrust c_T omega_i^2 along the rotor axis, applied at the hub, and the
+    // reaction to the air's drag on the blades, c_Q omega_i^2 about the axis
+    // (RotorS's "drag torque", moment constant c_Q / c_T).
+    let thrust_n = e_i * (c_t * omega_i_sq);
+    let reaction_torque_nm = e_i * (rotor.direction.reaction_sign() * c_q * omega_i_sq);
     let mut loads = RotorLoads {
-        force_body_n: thrust_force_body_n,
-        moment_body_nm: rotor.offset_body_m.cross(&thrust_force_body_n) + reaction_torque_body_nm,
+        force_body_n: thrust_n,
+        moment_body_nm: r_i.cross(&thrust_n) + reaction_torque_nm,
     };
 
     // Not modeled here: thrust change with inflow (climb or forward speed),
-    // which would scale `thrust_n` and needs a measured thrust curve against
+    // which would scale the thrust and needs a measured thrust curve against
     // airspeed, and wind. Ground effect, downwash, and the rotor's
     // gyroscopic and spin-up torques are named zeros in multirotor.rs.
     let aerodynamics = coefficients.aerodynamics;
@@ -117,22 +123,22 @@ pub(super) fn rotor_loads(
         return loads;
     }
 
-    // The hub's velocity: RotorS reads the rotor link's own velocity, which
-    // includes the body's rotation.
-    let hub_velocity_body_mps = velocity_body_mps + rates_body_radps.cross(&rotor.offset_body_m);
-    let axial_speed_mps = hub_velocity_body_mps.dot(&axis);
-    let edgewise_velocity_body_mps = hub_velocity_body_mps - axis * axial_speed_mps;
-    let speed_magnitude_radps = speed_radps.abs();
+    // The hub's velocity v + omega x r_i: RotorS reads the rotor link's own
+    // velocity, which includes the body's rotation.
+    let hub_velocity = v + omega.cross(&r_i);
+    let axial_speed = hub_velocity.dot(&e_i);
+    let edgewise_velocity = hub_velocity - e_i * axial_speed;
+    let abs_omega_i = omega_i.abs();
 
-    // RotorS adds this at the rotor link, so it also pitches and rolls the
-    // body (r x F).
-    let rotor_drag_body_n = edgewise_velocity_body_mps
-        * (-speed_magnitude_radps * aerodynamics.drag_coefficient)
-        + axis * (-speed_magnitude_radps * aerodynamics.axial_drag_coefficient * axial_speed_mps);
-    let rolling_moment_body_nm = edgewise_velocity_body_mps
-        * (-speed_magnitude_radps * aerodynamics.rolling_moment_coefficient);
-    loads.force_body_n += rotor_drag_body_n;
-    loads.moment_body_nm += rotor.offset_body_m.cross(&rotor_drag_body_n) + rolling_moment_body_nm;
+    // Rotor drag -|omega_i| c_D across the axis (and Forster's axial term
+    // along it). RotorS adds it at the rotor link, so it also pitches and
+    // rolls the body (r_i x F).
+    let rotor_drag_n = edgewise_velocity * (-abs_omega_i * aerodynamics.drag_coefficient)
+        + e_i * (-abs_omega_i * aerodynamics.axial_drag_coefficient * axial_speed);
+    let rolling_moment_nm =
+        edgewise_velocity * (-abs_omega_i * aerodynamics.rolling_moment_coefficient);
+    loads.force_body_n += rotor_drag_n;
+    loads.moment_body_nm += r_i.cross(&rotor_drag_n) + rolling_moment_nm;
     loads
 }
 

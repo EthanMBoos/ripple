@@ -260,12 +260,59 @@ let kalman_gain_k = ...;
 
 This retains recognizable `F`, `Q`, `H`, `S`, and `K` without requiring the
 reader to remember a single-letter variable. Public interfaces always use
-descriptive names.
+descriptive names. The one place a bare symbol is right is inside a
+derivative or loads function that opens with a symbols block; see
+[Writing physics](#writing-physics).
 
 Comments should explain the physical model, convention, approximation, or
 reason for a step. They should not merely translate the following Rust line
 into English. A compact equation in a comment is useful only after the plain
 meaning is established.
+
+## Writing physics
+
+The reader of a motion model or controller is a controls engineer checking
+the code against a paper, not a Rust programmer. Inside the function that
+holds the equations, write them the way the paper does.
+
+- **Open with a symbols block.** Bind the paper's symbols to the named
+  fields once, in one `let`, with a comment that names each one, then write
+  the equations in those symbols. The long frame-and-unit names stay on the
+  structs, the contexts, and the outputs, so frames and units are still
+  stated at every boundary. A symbol that is computed rather than bound gets
+  its own `let` with a name. ASCII only: `phi`, `theta`, `qbar_s`.
+
+  ```rust
+  // Symbols, as in the model's description: roll, pitch, and yaw of the
+  // body in the world frame, speed along the velocity, and gravity.
+  let (phi, theta, psi, v, g) = (
+      state.roll_world_from_body_rad,
+      state.pitch_world_from_body_rad,
+      state.yaw_world_from_body_rad,
+      state.speed_mps,
+      GRAVITY_MPS2,
+  );
+  // A coordinated turn: the lift's horizontal part turns the velocity at
+  // g tan(phi) / v. Banked right (positive phi), it turns right.
+  let yaw_rate = -g * phi.tan() / v;
+  ```
+
+- **Loops, not iterator chains.** A sum over rotors is a `for` loop with
+  `+=`; a clamp over commands is a loop over the array. Index the loop when
+  the equations are indexed; the workspace turns off clippy's
+  `needless_range_loop` so that it can. Iterator chains stay in registry,
+  parsing, and output code, where the reader is a programmer.
+- **Named functions, not closures.** Loads that RK4 evaluates at every
+  stage are a function with a name and a signature, `fn accelerations(..)
+  -> (Vec3, Vec3)`, and the RK4 call site is the only closure. A limit or
+  friction rule is a small named function, not a closure in the middle of
+  the equations.
+- **Comments in the code's symbols.** When a comment gives the equation,
+  it uses the symbols of the line below it, so the two can be read against
+  each other.
+
+The pass that applied this to the built-in models, and what it left alone
+and why, is recorded in `docs/PHYSICS_READABILITY.md`.
 
 ## Sensor models have explicit boundaries
 

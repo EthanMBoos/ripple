@@ -203,10 +203,13 @@ pub(super) fn loads(
         let roll = heading.normalize();
         let side = normal.cross(&roll);
         let (roll_speed, side_speed) = (velocity.dot(&roll), velocity.dot(&side));
-        let stopping_force =
-            |speed: f64, limit_n: f64| (-mass_share_kg * speed / dt_s).clamp(-limit_n, limit_n);
         let load_n = contact.normal_force_n;
-        let roll_force_n = stopping_force(roll_speed, contact.wheel.rolling_friction * load_n);
+        let roll_force_n = stopping_force(
+            roll_speed,
+            contact.wheel.rolling_friction * load_n,
+            mass_share_kg,
+            dt_s,
+        );
         let side_force_n = if contact.wheel.castered {
             0.0
         } else {
@@ -216,13 +219,19 @@ pub(super) fn loads(
                 0.0
             };
             let limit = side_friction(contact.wheel.static_friction, slip_deg).abs();
-            stopping_force(side_speed, limit * load_n)
+            stopping_force(side_speed, limit * load_n, mass_share_kg, dt_s)
         };
         let force_n = load_n * normal + roll_force_n * roll + side_force_n * side;
         force_model_n += force_n;
         moment_model_nm += contact.wheel.position_m().cross(&force_n);
     }
     (force_model_n, moment_model_nm)
+}
+
+/// The force that stops `speed_mps` within one step for this wheel's share of
+/// the mass, up to `limit_n` either way.
+fn stopping_force(speed_mps: f64, limit_n: f64, mass_share_kg: f64, dt_s: f64) -> f64 {
+    (-mass_share_kg * speed_mps / dt_s).clamp(-limit_n, limit_n)
 }
 
 /// Side friction coefficient at a slip angle: Pacejka's Magic Formula with

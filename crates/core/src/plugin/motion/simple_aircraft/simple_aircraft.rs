@@ -362,61 +362,62 @@ const AT_LIMIT: f64 = 1e-9;
 // below, perf.py's substeps-512 workload (one worker, ten substeps) ran in
 // 0.92 s against 0.78 s for the build before the acceleration and climb
 // limits; with both changes, 0.79 s. Rerun perf.py after changing this.
+// The limit rule `held` below was a closure here; as a plain function with
+// no inline hint, substeps-512 at one worker alternated old and new seven
+// times: 0.775 s against 0.792 s, so the optimizer inlines it unasked.
 #[inline]
 fn aircraft_derivative(
     state: AircraftState,
     control: AircraftControl,
     config: &AircraftConfig,
 ) -> [f64; 7] {
-    let horizontal_speed_mps = state.speed_mps * state.pitch_world_from_body_rad.cos();
-    // A coordinated turn: the lift's horizontal part, g tan(roll) per unit
-    // mass, turns the velocity at g tan(roll) / speed. Banked right (positive
-    // roll), it turns right: heading decreases.
-    let yaw_rate_world_radps =
-        -GRAVITY_MPS2 * state.roll_world_from_body_rad.tan() / state.speed_mps;
-    // A value at a limit stays there while the command pushes it outward.
-    // "At" allows for rounding: truth stores attitude as a quaternion, and
-    // reading an angle back from it can land a bit inside the limit.
-    let held = |value: f64, min: f64, max: f64, rate: f64| {
-        if (value >= max - AT_LIMIT && rate > 0.0) || (value <= min + AT_LIMIT && rate < 0.0) {
-            0.0
-        } else {
-            rate
-        }
-    };
-    let max_roll_rad = config.max_roll_rad;
-    let (min_pitch_rad, max_pitch_rad) = config.pitch_limits_rad(state.speed_mps);
+    // Symbols, as in the model's description: roll, pitch, and yaw of the
+    // body in the world frame, speed along the velocity, and gravity.
+    let (phi, theta, psi, v, g) = (
+        state.roll_world_from_body_rad,
+        state.pitch_world_from_body_rad,
+        state.yaw_world_from_body_rad,
+        state.speed_mps,
+        GRAVITY_MPS2,
+    );
+    let horizontal_speed = v * theta.cos();
+    // A coordinated turn: the lift's horizontal part, g tan(phi) per unit
+    // mass, turns the velocity at g tan(phi) / v. Banked right (positive
+    // phi), it turns right: heading decreases.
+    let yaw_rate = -g * phi.tan() / v;
+    let (min_pitch, max_pitch) = config.pitch_limits_rad(v);
     // The throttle scale, within the acceleration limits.
     // max/min, not f64::clamp, whose check that its bounds are in order
     // (it can panic) costs speed here; see the DEVNOTE above.
-    let acceleration_mps2 = (control.throttle / 5.0)
+    let acceleration = (control.throttle / 5.0)
         .max(-config.max_deceleration_mps2)
         .min(config.max_acceleration_mps2);
 
     [
-        horizontal_speed_mps * state.yaw_world_from_body_rad.cos(),
-        horizontal_speed_mps * state.yaw_world_from_body_rad.sin(),
-        -state.pitch_world_from_body_rad.sin() * state.speed_mps,
+        horizontal_speed * psi.cos(),
+        horizontal_speed * psi.sin(),
+        -theta.sin() * v,
         held(
-            state.roll_world_from_body_rad,
-            -max_roll_rad,
-            max_roll_rad,
+            phi,
+            -config.max_roll_rad,
+            config.max_roll_rad,
             control.roll_rate_radps,
         ),
-        held(
-            state.pitch_world_from_body_rad,
-            min_pitch_rad,
-            max_pitch_rad,
-            control.pitch_rate_radps,
-        ),
-        yaw_rate_world_radps,
-        held(
-            state.speed_mps,
-            config.min_speed_mps,
-            config.max_speed_mps,
-            acceleration_mps2,
-        ),
+        held(theta, min_pitch, max_pitch, control.pitch_rate_radps),
+        yaw_rate,
+        held(v, config.min_speed_mps, config.max_speed_mps, acceleration),
     ]
+}
+
+/// A value at a limit stays there while the command pushes it outward.
+/// "At" allows for rounding: truth stores attitude as a quaternion, and
+/// reading an angle back from it can land a bit inside the limit.
+fn held(value: f64, min: f64, max: f64, rate: f64) -> f64 {
+    if (value >= max - AT_LIMIT && rate > 0.0) || (value <= min + AT_LIMIT && rate < 0.0) {
+        0.0
+    } else {
+        rate
+    }
 }
 
 impl AircraftState {

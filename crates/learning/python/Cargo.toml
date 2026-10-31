@@ -23,3 +23,6 @@ learning = { path = ".." }
 anyhow.workspace = true
 # maturin turns on pyo3's extension-module feature (pyproject.toml).
 pyo3 = "0.30"
+
+[lints]
+workspace = true

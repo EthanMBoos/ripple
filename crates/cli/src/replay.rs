@@ -36,6 +36,7 @@ pub(crate) fn replay(path: &Path, draw_trails: bool) -> Result<()> {
         viewer.log_terrain(&terrain)?;
     }
     viewer.log_boundaries(&boundaries)?;
+    viewer.log_delivery(&record::read_scenario(&record_path)?)?;
     for (index, frame) in frames.iter().enumerate() {
         viewer.log_frame(index, frame)?;
     }

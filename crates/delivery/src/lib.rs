@@ -26,6 +26,7 @@ mod score;
 mod skill;
 pub use courier::Courier;
 pub use dispatcher::Dispatcher;
+pub use planner::SoftAvoidance;
 pub use score::DeliveryScore;
 
 /// Adds this crate's plugins to `registry`.

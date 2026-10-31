@@ -1,7 +1,9 @@
 //! Rerun observes the run; playback and debug panels never change simulation state.
-use anyhow::{Result, ensure};
+use anyhow::{Context, Result, ensure};
+use delivery::SoftAvoidance;
 use rerun::{RecordingStream, RecordingStreamBuilder};
-use ripple_core::{SimulationFrame, Terrain, plugin::interaction::BoundaryRegion};
+use ripple_core::{SimulationFrame, Terrain, Vec3, plugin::interaction::BoundaryRegion};
+use serde::Deserialize;
 use std::{collections::BTreeSet, path::Path, time::Duration};
 
 mod blueprint;
@@ -10,6 +12,20 @@ mod terrain;
 mod trails;
 
 use trails::Trails;
+
+/// Read only the display fields; the Dispatcher owns mission validation.
+#[derive(Default, Deserialize)]
+#[serde(default)]
+struct DeliveryOverlay {
+    sites: Vec<Site>,
+    soft_avoidance: Option<SoftAvoidance>,
+}
+
+#[derive(Deserialize)]
+struct Site {
+    name: String,
+    position_m: [f32; 3],
+}
 
 pub(crate) struct Viewer {
     recording: RecordingStream,
@@ -153,6 +169,190 @@ impl Viewer {
                 .with_radii([rerun::Radius::new_ui_points(1.0)]),
         )?;
         Ok(())
+    }
+
+    pub fn log_delivery(&mut self, scenario: &serde_json::Value) -> Result<()> {
+        for (group_index, group) in scenario["entities"]
+            .as_array()
+            .context("scenario has no entity groups")?
+            .iter()
+            .enumerate()
+        {
+            for (plugin_index, plugin) in group["autonomy"]
+                .as_array()
+                .context("entity group has no autonomy list")?
+                .iter()
+                .enumerate()
+            {
+                if plugin["name"] != "Dispatcher" {
+                    continue;
+                }
+                let overlay: DeliveryOverlay = serde_json::from_value(plugin["params"].clone())?;
+                let path = format!("delivery/{group_index}/{plugin_index}");
+                let depot = serde_json::from_value(group["position_m"].clone())?;
+                self.log_landmark(
+                    &format!("{path}/depot"),
+                    depot,
+                    "Depot",
+                    [250, 195, 65],
+                    8.0,
+                )?;
+                for (index, site) in overlay.sites.iter().enumerate() {
+                    self.log_landmark(
+                        &format!("{path}/sites/{index}"),
+                        site.position_m,
+                        &site.name,
+                        [60, 220, 170],
+                        8.0,
+                    )?;
+                }
+                if let Some(field) = overlay.soft_avoidance {
+                    field.validate()?;
+                    self.log_severity(&path, &field)?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn log_landmark(
+        &mut self,
+        path: &str,
+        position_m: [f32; 3],
+        label: &str,
+        color: [u8; 3],
+        radius_ui: f32,
+    ) -> Result<()> {
+        self.widen_range(position_m);
+        self.recording.log_static(
+            format!("world/{path}"),
+            &rerun::Points3D::new([position_m])
+                .with_colors([color])
+                .with_radii([rerun::Radius::new_ui_points(radius_ui)])
+                .with_labels([label])
+                .with_show_labels(true),
+        )?;
+        self.recording.log_static(
+            format!("map/{path}"),
+            &rerun::Points2D::new([map::project(position_m)])
+                .with_colors([color])
+                .with_radii([rerun::Radius::new_ui_points(radius_ui)])
+                .with_labels([label])
+                .with_show_labels(true),
+        )?;
+        Ok(())
+    }
+
+    fn log_severity(&mut self, path: &str, field: &SoftAvoidance) -> Result<()> {
+        // One sampled texture for both views, using the scorer's exact equation.
+        // Colors are relative to this field's peak (reported in the label).
+        const SIDE: u32 = 256;
+        let [east_m, north_m] = field.center_m;
+        let radius_m = field.radius_m;
+        let pixel_m = 2.0 * radius_m / f64::from(SIDE);
+        let mut pixels = Vec::with_capacity((SIDE * SIDE * 4) as usize);
+        for row in 0..SIDE {
+            for column in 0..SIDE {
+                let point = Vec3::new(
+                    east_m - radius_m + (f64::from(column) + 0.5) * pixel_m,
+                    north_m + radius_m - (f64::from(row) + 0.5) * pixel_m,
+                    0.0,
+                );
+                let severity = field.severity(point);
+                let fraction = if field.peak_severity > 0.0 {
+                    severity / field.peak_severity
+                } else {
+                    0.0
+                };
+                let alpha = if severity > 0.0 {
+                    45.0 + 170.0 * fraction
+                } else {
+                    0.0
+                };
+                pixels.extend([255, (200.0 - 150.0 * fraction) as u8, 40, alpha as u8]);
+            }
+        }
+        let west = (east_m - radius_m) as f32;
+        let east = (east_m + radius_m) as f32;
+        let south = (north_m - radius_m) as f32;
+        let north = (north_m + radius_m) as f32;
+        self.widen_range([west, south, 0.0]);
+        self.widen_range([east, north, 0.0]);
+        self.recording.log_static(
+            format!("map/{path}/severity"),
+            &rerun::Transform3D::from_translation_scale(
+                [west, -north, 0.0],
+                rerun::Scale3D::uniform(pixel_m as f32),
+            ),
+        )?;
+        self.recording.log_static(
+            format!("map/{path}/severity"),
+            // Explicit opacity selects Rerun's blended image pass; relying on
+            // texture alpha alone can leave an opaque black rectangle behind it.
+            &rerun::Image::from_rgba32(pixels.clone(), [SIDE, SIDE])
+                .with_opacity(0.85)
+                .with_draw_order(-5.0),
+        )?;
+        // The field is horizontal and independent of altitude. Draw its footprint
+        // just below z=0 so it does not obscure planar couriers and their trails.
+        // Clip the geometry to a disk: Rerun's mesh renderer ignores texture alpha.
+        let circle: Vec<_> = (0..=128)
+            .map(|index| {
+                let angle = std::f64::consts::TAU * f64::from(index) / 128.0;
+                [angle.cos(), angle.sin()]
+            })
+            .collect();
+        let boundary: Vec<_> = circle
+            .iter()
+            .map(|[x, y]| {
+                [
+                    (east_m + radius_m * x) as f32,
+                    (north_m + radius_m * y) as f32,
+                    0.0,
+                ]
+            })
+            .collect();
+        if field.peak_severity > 0.0 {
+            let vertices = std::iter::once([east_m as f32, north_m as f32, -0.5])
+                .chain(boundary[..128].iter().map(|p| [p[0], p[1], -0.5]));
+            let texcoords = std::iter::once([0.5, 0.5]).chain(
+                circle[..128]
+                    .iter()
+                    .map(|[x, y]| [(0.5 + 0.5 * x) as f32, (0.5 - 0.5 * y) as f32]),
+            );
+            self.recording.log_static(
+                format!("world/{path}/severity"),
+                &rerun::Mesh3D::new(vertices)
+                    .with_triangle_indices((0..128).map(|i| [0, i + 1, (i + 1) % 128 + 1]))
+                    .with_vertex_texcoords(texcoords)
+                    .with_albedo_texture(
+                        rerun::datatypes::ImageFormat::rgba8([SIDE, SIDE]),
+                        pixels,
+                    ),
+            )?;
+        }
+        self.recording.log_static(
+            format!("world/{path}/cutoff"),
+            &rerun::LineStrips3D::new([boundary.clone()])
+                .with_colors([[255, 160, 50]])
+                .with_radii([rerun::Radius::new_ui_points(1.5)]),
+        )?;
+        self.recording.log_static(
+            format!("map/{path}/cutoff"),
+            &rerun::LineStrips2D::new([boundary.into_iter().map(map::project)])
+                .with_colors([[255, 160, 50]])
+                .with_radii([rerun::Radius::new_ui_points(1.5)]),
+        )?;
+        self.log_landmark(
+            &format!("{path}/field_label"),
+            [east_m as f32, (north_m + radius_m * 1.4) as f32, 0.0],
+            &format!(
+                "Soft danger: peak {}; cutoff {radius_m} m",
+                field.peak_severity
+            ),
+            [255, 160, 50],
+            0.0,
+        )
     }
 
     pub fn log_frame(&mut self, index: usize, frame: &SimulationFrame) -> Result<()> {

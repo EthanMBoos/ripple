@@ -212,6 +212,119 @@ sweeps are days of work, and the calls run in parallel over a few days.
       nothing recorded rules out a small code cost since then. To settle it,
       time the 2026-10-14 build and `main` alternately, plugged in and cool,
       then accept.
+- [ ] Make the Rascal fly like JSBSim's Rascal, with a JSBSim check as the
+      proof. The goal is a path match: from the same start, with the same held
+      surfaces, Ripple's `airframe: rascal` flies where ArduPilot's JSBSim
+      Rascal flies. Not flight truth; neither model was fitted to the aircraft.
+      No second small-UAV reference exists in a form worth pinning (Beard and
+      McLain's `mavsim_public` is a student template whose force and derivative
+      functions are TODO blocks, checked 2026-11-02), so these JSBSim glides are
+      also the fixed wing's path-level check.
+      Where the model lives (checked 2026-11-02): the `jsbsim` package (1.3.3,
+      Python 3.12 under uv, pinned as Crazyflow is) runs it but ships no UAV;
+      the files are in ArduPilot's repo, `Tools/autotest/aircraft/Rascal/`
+      (`Rascal.xml`, `Engines/Zenoah_G-26A.xml`, which is an electric motor of
+      2207 W despite its name, and the `18x8` propeller), last touched at commit
+      `5628b8d2`. Fetch them at that commit into the run folder; commit nothing
+      of ArduPilot's. JSBSim stays out of the build.
+      Step 1, the check, before any model change: `reference/jsbsim_check.py`
+      with a helper under `reference/jsbsim/`, a `HeldControls` controller
+      (constant throttle and surface angles, MotorSpeeds's fixed-wing twin), and
+      a test in `aerodynamics.rs` that reads a grid fixture like
+      `rotors_motor_samples`. Part A: loads at a grid of airspeed, angle of
+      attack, sideslip, rates, and deflections, read from JSBSim's property tree
+      after `run_ic` (its induced drag lags a frame, but the initial-condition
+      run resolves it; holding the state for more frames changed no load to
+      1e-16 in the prototype). JSBSim's moment about its reference point and
+      about the CG, and its alpha-dot and sideslip-drag terms, are read
+      separately, so the terms Ripple lacks are sized one at a time. Prediction
+      to test: at the points where the equations coincide (zero sideslip,
+      elevator not negative, JSBSim's numbers in the mission keys) Ripple agrees
+      to rounding; a miss is a finding to explain, not a tolerance to widen.
+      Part B: 5 s open-loop glides at 1 ms from a steady glide at 20 m/s
+      (JSBSim's own trim fails on this aircraft, since the propeller's speed is
+      a state and its steady-state engine solver diverges; a three-unknown
+      Newton step on JSBSim's held-state accelerations converges in four
+      iterations), held, then elevator, aileron, and rudder steps. Throttle is
+      zero on both sides, where JSBSim's propeller sits at 0 rpm and adds
+      nothing. Release-only suite check `jsbsim-rascal`. Step 1 reports the
+      residuals of the flown `rascal` on the grid and in the glides, by cause.
+      Step 2, the model: add the smallest set of terms Step 1's measurements
+      justify, each a mission key that is zero or off unless set, so every
+      mission without it is byte-identical (prove with `equivalence.py`); the
+      `rascal` preset then sets the values the measurements call for.
+      Candidates, read from `Rascal.xml`, with sizes at 20 m/s estimated from
+      the file and to be confirmed by Step 1:
+      - loads applied at an aerodynamic reference point, 1 in aft and 4 in below
+        the CG, with the moment transferred to the CG; lift's arm adds about
+        -0.36 to the pitch-stiffness coefficient (Ripple's is -0.5) and about 1
+        degree to the trim elevator. Expected to be the largest term;
+      - alpha-dot pitch damping, coefficient -7, beside the -12 pitch-rate
+        damping; faster decay of pitch transients only;
+      - a constant yaw moment, 0.0007 (0.5 N m); hands-off yaw and roll drift,
+        trimmed by under a degree of rudder;
+      - the elevator drag's form, 0.03 times elevator over 0.30 with its sign
+        kept, so up-elevator reduces drag. A defect in the file. If the measured
+        path needs it, add it as a named JSBSim-compatibility key, not as a
+        silent part of the ordinary preset (about 2 m of altitude over a 5 s
+        glide at the trim elevator, estimated);
+      - a drag table against sideslip (0.05 at 0.26 rad);
+      - aileron and elevator power as Mach tables (1.7% and 1.3% lower at 20
+        m/s);
+      - the exact wind-to-body rotation at sideslip; the inherited form drops
+        the drag's sideslip terms (3% of side force at 0.1 rad). This is a port
+        fix, so it goes on `benchmarking-edits` too, with proof.
+      Preset numbers to take from JSBSim rather than keep: the mass with its 1.5
+      lb of fuel (6.58 kg, not 5.91) and the inertia with it, span 2.795 m, the
+      lift and drag tables, induced drag as 0.04 C_L^2, the elevator's -0.35 to
+      +0.30 range. Record every change in `REFERENCE_NOTES.md`. The SCRIMMAGE
+      comparison keeps the Rascal without C++ gaining any of these terms: only
+      the wind-to-body fix goes to `benchmarking-edits`, as a defect fix of
+      shared equations; the rest stay Rust-only, like the tables and the landing
+      gear, and the JSBSim check is their verification. The compared
+      `fixed-wing-rascal` mission overrides them off (zero coefficients, no
+      tables, no reference offset), so it keeps checking the port of SCRIMMAGE's
+      equations with the Rascal's numbers, which `scrimmage_xml.py` writes out
+      as it does now; the number changes need no C++ change. The same holds when
+      the A-4D fixtures move to the Rascal.
+      Step 3, the proof: rerun the check. Set the glide tolerance from the
+      residual sources before running (JSBSim's Adams-Bashforth integrators
+      against RK4 at 1 ms, its rotating round Earth, about 4 cm over 5 s, and
+      its one-frame lag in alpha-dot), not from the result.
+      Later, if powered flight should match too: a propeller model from the
+      `18x8` tables with the 2207 W motor, replacing the constant 0 to 25 N
+      thrust, plus its torque and P-factor. Not needed for the study; the PID
+      flies thrust, not a propeller.
+- [ ] Add `airframe: aerosonde`, a lighter aircraft to fly: Beard and McLain's
+      Aerosonde from `mavsim_public`'s `parameters/aerosonde_parameters.py` at
+      commit `10363e0e` (11 kg; the older `mavsim_template_files` copy says 13.5
+      kg, so cite the one used). Beard's terms without a FixedWing6DOF key
+      (pitch-rate and elevator drag, side force from aileron and rudder, the
+      blended stall curve) are dropped and listed in the doc comment. Checked by
+      no run code: no complete, pinned implementation of that model exists to
+      compare against, so the doc comment says so. No AircraftPIDController gain
+      set until a mission flies it under the PID.
+- [ ] Later: FixedWing6DOF's ground spring defaults on (flat ground at z = 0,
+      a spring of 400 times mass per metre, damping of 40 N s/m that is not
+      mass-scaled). The landing gear replaced it, so default it off and point
+      at GroundCollision and the gear. The XML writer already carries the
+      flag, so the comparison follows.
+- [ ] Retire the A-4D. It is SCRIMMAGE's default aircraft and exists here
+      only as a comparison fixture (`fixed-wing-a4`, the generated and
+      long-horizon scenarios, three reference inputs, a terrain test, and
+      the controller gain set the Rascal's overrides sit on); a fighter jet
+      has no other place in a small-UAS simulator. This does not wait for
+      the comparison: `reference/scrimmage_xml.py` already writes the
+      Rascal's numbers into SCRIMMAGE's XML and `fixed-wing-rascal` is in
+      the agreement matrix. Move each fixture to the Rascal (generated
+      speeds 15 to 30 m/s instead of 150 to 250), fold the base gains into
+      the Rascal's PID set, drop the a4d airframe and gains, and rerun the
+      suite so the C++ references regenerate against the Rascal.
+- [ ] When the comparison is retired: drop the mission-file shapes kept
+      only so SCRIMMAGE's XML round-trips, listed under "Left behind when
+      the comparison is retired" in `REFERENCE_NOTES.md` (spawn spread as a
+      variance, generation one step early, PID gain order, the spawn flag's
+      name).
 
 ## Not planned
 

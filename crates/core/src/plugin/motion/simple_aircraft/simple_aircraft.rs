@@ -27,7 +27,7 @@ use anyhow::{Result, ensure};
 use serde::Deserialize;
 
 use crate::{
-    math::{self, EulerAngles, KinematicState, Quaternion, Vec3},
+    math::{self, EulerAngles, Integrable, KinematicState, Quaternion, Vec3},
     plugin::{Frame, MotionContext, MotionModel, PluginIo, Port, Ports, Unit},
 };
 
@@ -168,6 +168,16 @@ struct AircraftState {
     speed_mps: f64,
 }
 
+/// The rate of each field of `AircraftState`.
+#[derive(Clone, Copy)]
+struct AircraftRate {
+    velocity_world_mps: Vec3,
+    roll_rate_radps: f64,
+    pitch_rate_radps: f64,
+    yaw_rate_radps: f64,
+    acceleration_mps2: f64,
+}
+
 #[derive(Clone, Debug)]
 pub struct SimpleAircraft {
     config: AircraftConfig,
@@ -304,22 +314,17 @@ impl SimpleAircraft {
             ),
         };
 
-        let mut coordinates = state.coordinates();
-        math::rk4(&mut coordinates, dt_s, |coordinates| {
-            aircraft_derivative(
-                AircraftState::from_coordinates(*coordinates),
-                limited_control,
-                &self.config,
-            )
+        let state = math::rk4(state, dt_s, |stage| {
+            aircraft_derivative(stage, limited_control, &self.config)
         });
         ensure!(
-            coordinates.iter().all(|value| value.is_finite()),
+            state.is_finite(),
             "SimpleAircraft integration produced nonfinite state"
         );
 
         // A step that reaches a limit can pass it before the derivative holds;
         // the limits apply again so truth never holds a state beyond them.
-        let state = self.limited(AircraftState::from_coordinates(coordinates));
+        let state = self.limited(state);
         self.write_truth(truth, state, limited_control);
         Ok(())
     }
@@ -332,18 +337,15 @@ impl SimpleAircraft {
         state: AircraftState,
         control: AircraftControl,
     ) {
-        let [
-            vx,
-            vy,
-            vz,
-            roll_rate_radps,
-            pitch_rate_radps,
-            yaw_rate_radps,
-            _,
-        ] = aircraft_derivative(state, control, &self.config);
+        let rate = aircraft_derivative(state, control, &self.config);
+        let (roll_rate_radps, pitch_rate_radps, yaw_rate_radps) = (
+            rate.roll_rate_radps,
+            rate.pitch_rate_radps,
+            rate.yaw_rate_radps,
+        );
         truth.position_world_m = state.position_world_m;
         truth.orientation_world_from_body = state.orientation_world_from_body();
-        truth.velocity_world_mps = Vec3::new(vx, vy, vz);
+        truth.velocity_world_mps = rate.velocity_world_mps;
         // Euler rates in world axes, for attitude = yaw * pitch * roll: yaw turns
         // about up, pitch about the yawed y axis, roll about the nose.
         let (sin_yaw, cos_yaw) = state.yaw_world_from_body_rad.sin_cos();
@@ -365,12 +367,15 @@ const AT_LIMIT: f64 = 1e-9;
 // The limit rule `held` below was a closure here; as a plain function with
 // no inline hint, substeps-512 at one worker alternated old and new seven
 // times: 0.775 s against 0.792 s, so the optimizer inlines it unasked.
+// The state then went through RK4 as this struct instead of a `[f64; 7]`
+// (`Integrable`); the same alternation gave 0.762 s against 0.773 s.
+/// The equations of motion: the rate of each state field.
 #[inline]
 fn aircraft_derivative(
     state: AircraftState,
     control: AircraftControl,
     config: &AircraftConfig,
-) -> [f64; 7] {
+) -> AircraftRate {
     // Symbols, as in the model's description: roll, pitch, and yaw of the
     // body in the world frame, speed along the velocity, and gravity.
     let (phi, theta, psi, v, g) = (
@@ -393,20 +398,22 @@ fn aircraft_derivative(
         .max(-config.max_deceleration_mps2)
         .min(config.max_acceleration_mps2);
 
-    [
-        horizontal_speed * psi.cos(),
-        horizontal_speed * psi.sin(),
-        -theta.sin() * v,
-        held(
+    AircraftRate {
+        velocity_world_mps: Vec3::new(
+            horizontal_speed * psi.cos(),
+            horizontal_speed * psi.sin(),
+            -theta.sin() * v,
+        ),
+        roll_rate_radps: held(
             phi,
             -config.max_roll_rad,
             config.max_roll_rad,
             control.roll_rate_radps,
         ),
-        held(theta, min_pitch, max_pitch, control.pitch_rate_radps),
-        yaw_rate,
-        held(v, config.min_speed_mps, config.max_speed_mps, acceleration),
-    ]
+        pitch_rate_radps: held(theta, min_pitch, max_pitch, control.pitch_rate_radps),
+        yaw_rate_radps: yaw_rate,
+        acceleration_mps2: held(v, config.min_speed_mps, config.max_speed_mps, acceleration),
+    }
 }
 
 /// A value at a limit stays there while the command pushes it outward.
@@ -434,36 +441,16 @@ impl AircraftState {
         }
     }
 
-    // Numerical integration coordinates are defined only at this conversion boundary.
-    fn coordinates(self) -> [f64; 7] {
-        [
-            self.position_world_m.x,
-            self.position_world_m.y,
-            self.position_world_m.z,
-            self.roll_world_from_body_rad,
-            self.pitch_world_from_body_rad,
-            self.yaw_world_from_body_rad,
-            self.speed_mps,
-        ]
-    }
-
-    fn from_coordinates(coordinates: [f64; 7]) -> Self {
-        let [
-            x_world_m,
-            y_world_m,
-            z_world_m,
-            roll_world_from_body_rad,
-            pitch_world_from_body_rad,
-            yaw_world_from_body_rad,
-            speed_mps,
-        ] = coordinates;
-        Self {
-            position_world_m: Vec3::new(x_world_m, y_world_m, z_world_m),
-            roll_world_from_body_rad,
-            pitch_world_from_body_rad,
-            yaw_world_from_body_rad,
-            speed_mps,
-        }
+    fn is_finite(self) -> bool {
+        self.position_world_m.iter().all(|value| value.is_finite())
+            && [
+                self.roll_world_from_body_rad,
+                self.pitch_world_from_body_rad,
+                self.yaw_world_from_body_rad,
+                self.speed_mps,
+            ]
+            .iter()
+            .all(|value| value.is_finite())
     }
 
     fn orientation_world_from_body(self) -> Quaternion {
@@ -472,6 +459,20 @@ impl AircraftState {
             pitch_world_from_body_rad: self.pitch_world_from_body_rad,
             yaw_world_from_body_rad: self.yaw_world_from_body_rad,
         })
+    }
+}
+
+impl Integrable for AircraftState {
+    type Rate = AircraftRate;
+    fn plus_scaled(self, scale: f64, rate: AircraftRate) -> Self {
+        Self {
+            position_world_m: self.position_world_m + scale * rate.velocity_world_mps,
+            roll_world_from_body_rad: self.roll_world_from_body_rad + scale * rate.roll_rate_radps,
+            pitch_world_from_body_rad: self.pitch_world_from_body_rad
+                + scale * rate.pitch_rate_radps,
+            yaw_world_from_body_rad: self.yaw_world_from_body_rad + scale * rate.yaw_rate_radps,
+            speed_mps: self.speed_mps + scale * rate.acceleration_mps2,
+        }
     }
 }
 
@@ -585,10 +586,15 @@ mod tests {
             speed_mps: 20.0,
             ..AircraftState::default()
         };
-        let derivative = aircraft_derivative(state, AircraftControl::default(), &config);
-        let expected = [20.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
-        for (actual, expected) in derivative.into_iter().zip(expected) {
-            assert!((actual - expected).abs() < 1e-12);
+        let rate = aircraft_derivative(state, AircraftControl::default(), &config);
+        assert!((rate.velocity_world_mps - Vec3::new(20.0, 0.0, 0.0)).norm() < 1e-12);
+        for angle_or_speed_rate in [
+            rate.roll_rate_radps,
+            rate.pitch_rate_radps,
+            rate.yaw_rate_radps,
+            rate.acceleration_mps2,
+        ] {
+            assert!(angle_or_speed_rate.abs() < 1e-12);
         }
         Ok(())
     }

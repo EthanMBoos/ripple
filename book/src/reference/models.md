@@ -74,8 +74,9 @@ describes it and the other checks.
   Checked in the comparison.
 - **FixedWing6DOF** is a rigid-body aircraft under aerodynamic forces from
   linear stability derivatives, integrated with RK4. Two aircraft are built
-  in: `airframe: a4d` (the A-4D Skyhawk, from Nelson) and `airframe: rascal`
-  (ArduPilot's JSBSim Rascal); any key overrides one value, and without an
+  in: `airframe: rascal` (ArduPilot's JSBSim Rascal) and `airframe: a4d`
+  (the A-4D Skyhawk from Nelson, SCRIMMAGE's default, kept as the C++
+  comparison's fixture); any key overrides one value, and without an
   airframe the mission gives every number. Optional: `lift_table` and
   `drag_table` so the wing stalls, `landing_gear` (see
   [Terrain](../guides/terrain.md#landing-gear)), steady `wind_mps`, and a

@@ -35,11 +35,10 @@
 //! is the tested Rascal setting.
 
 use anyhow::{Result, ensure};
-use nalgebra::UnitQuaternion;
 use serde::Deserialize;
 
-use super::dynamics::{AircraftState, flip_yz};
-use crate::{Terrain, Vec3};
+use super::dynamics::{AircraftState, enu_from_ned, ned_from_enu};
+use crate::{Quaternion, Terrain, Vec3};
 
 /// The furthest RK4 stays stable along the negative real axis: a damper
 /// with `dt × damping / mass` beyond this grows instead of settling.
@@ -123,18 +122,18 @@ pub(super) fn check_step(wheels: &[Wheel], mass_kg: f64, dt_s: f64) -> Result<()
 /// A wheel touching the ground, before friction.
 struct Contact<'a> {
     wheel: &'a Wheel,
-    /// Upward ground normal, model axes.
-    normal_model: Vec3,
-    /// The wheel point's velocity, model axes.
-    velocity_model_mps: Vec3,
+    /// Upward ground normal, body (FRD) axes.
+    normal_frd: Vec3,
+    /// The wheel point's velocity, body (FRD) axes.
+    velocity_frd_mps: Vec3,
     normal_force_n: f64,
 }
 
-/// The gear's force and moment about the centre of gravity, model axes.
+/// The gear's force and moment about the centre of gravity, body (FRD) axes.
 pub(super) fn loads(
     wheels: &[Wheel],
     state: &AircraftState,
-    rotation: &UnitQuaternion<f64>,
+    rotation: Quaternion,
     terrain: Option<&Terrain>,
     rudder_rad: f64,
     mass_kg: f64,
@@ -142,10 +141,10 @@ pub(super) fn loads(
 ) -> (Vec3, Vec3) {
     let mut contacts = Vec::new();
     for wheel in wheels {
-        let offset_model_m = wheel.position_m();
-        // Model world axes are east, south, down; flip_yz turns them to ENU.
+        let offset_frd_m = wheel.position_m();
+        // The terrain is in the engine's east/north/up frame.
         let position_m =
-            state.position_world_m + flip_yz(rotation.transform_vector(&offset_model_m));
+            enu_from_ned(state.position_ned_m + rotation.rotate_body_to_world(offset_frd_m));
         let (ground_z, normal_world) = match terrain {
             Some(terrain) => (
                 terrain.ground_height(position_m.x, position_m.y),
@@ -157,34 +156,33 @@ pub(super) fn loads(
         if height_m >= 0.0 {
             continue;
         }
-        let normal_model = rotation.inverse_transform_vector(&flip_yz(normal_world));
+        let normal_frd = rotation.rotate_world_to_body(ned_from_enu(normal_world));
         // How far the strut (the model down axis) points into the ground.
-        let strut_projection = -normal_model.z;
+        let strut_projection = -normal_frd.z;
         if strut_projection <= 0.0 {
             continue;
         }
-        let velocity_model_mps =
-            state.velocity_model_mps + state.rates_model_radps.cross(&offset_model_m);
+        let velocity_frd_mps = state.velocity_frd_mps + state.rates_frd_radps.cross(&offset_frd_m);
         let compression_m = -height_m * normal_world.z / strut_projection;
         let max_speed_mps = compression_m / dt_s;
-        let compression_speed_mps = (-velocity_model_mps.dot(&normal_model) / strut_projection)
+        let compression_speed_mps = (-velocity_frd_mps.dot(&normal_frd) / strut_projection)
             .clamp(-max_speed_mps, max_speed_mps);
         let strut_force_n = (wheel.spring_n_per_m * compression_m
             + wheel.damping_n_s_per_m * compression_speed_mps)
             .max(0.0);
         contacts.push(Contact {
             wheel,
-            normal_model,
-            velocity_model_mps,
+            normal_frd,
+            velocity_frd_mps,
             normal_force_n: strut_force_n / strut_projection,
         });
     }
 
-    let (mut force_model_n, mut moment_model_nm) = (Vec3::zeros(), Vec3::zeros());
+    let (mut force_frd_n, mut moment_frd_nm) = (Vec3::zeros(), Vec3::zeros());
     let mass_share_kg = mass_kg / contacts.len().max(1) as f64;
     for contact in &contacts {
-        let normal = contact.normal_model;
-        let velocity = contact.velocity_model_mps;
+        let normal = contact.normal_frd;
+        let velocity = contact.velocity_frd_mps;
         let along_ground = velocity - velocity.dot(&normal) * normal;
         // Rolling direction: the wheel's heading on the ground, or for a
         // castered wheel the way it is moving. Steering turns it about the
@@ -222,10 +220,10 @@ pub(super) fn loads(
             stopping_force(side_speed, limit * load_n, mass_share_kg, dt_s)
         };
         let force_n = load_n * normal + roll_force_n * roll + side_force_n * side;
-        force_model_n += force_n;
-        moment_model_nm += contact.wheel.position_m().cross(&force_n);
+        force_frd_n += force_n;
+        moment_frd_nm += contact.wheel.position_m().cross(&force_n);
     }
-    (force_model_n, moment_model_nm)
+    (force_frd_n, moment_frd_nm)
 }
 
 /// The force that stops `speed_mps` within one step for this wheel's share of

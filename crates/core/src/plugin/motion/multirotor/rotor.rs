@@ -77,18 +77,14 @@ pub(super) struct RotorLoads {
     pub moment_body_nm: Vec3,
 }
 
-pub(super) struct RotorCoefficients {
-    pub thrust_coefficient: f64,
-    pub torque_coefficient: f64,
-    pub aerodynamics: RotorAerodynamics,
-}
-
 /// Loads from one rotor turning at `speed_radps`, on a body moving at
 /// `velocity_body_mps` and rotating at `rates_body_radps` (both relative to
 /// still air).
 pub(super) fn rotor_loads(
     rotor: &Rotor,
-    coefficients: &RotorCoefficients,
+    thrust_coefficient: f64,
+    torque_coefficient: f64,
+    aerodynamics: RotorAerodynamics,
     speed_radps: f64,
     velocity_body_mps: Vec3,
     rates_body_radps: Vec3,
@@ -97,10 +93,7 @@ pub(super) fn rotor_loads(
     // center of mass, its thrust and torque coefficients, and the body's
     // velocity and rates.
     let (omega_i, e_i, r_i) = (speed_radps, rotor.thrust_axis_body, rotor.offset_body_m);
-    let (c_t, c_q) = (
-        coefficients.thrust_coefficient,
-        coefficients.torque_coefficient,
-    );
+    let (c_t, c_q) = (thrust_coefficient, torque_coefficient);
     let (v, omega) = (velocity_body_mps, rates_body_radps);
     let omega_i_sq = omega_i * omega_i;
 
@@ -118,7 +111,6 @@ pub(super) fn rotor_loads(
     // which would scale the thrust and needs a measured thrust curve against
     // airspeed, and wind. Ground effect, downwash, and the rotor's
     // gyroscopic and spin-up torques are named zeros in multirotor.rs.
-    let aerodynamics = coefficients.aerodynamics;
     if aerodynamics.is_off() {
         return loads;
     }
@@ -147,7 +139,7 @@ mod tests {
     use serde_json::Value;
 
     use super::super::airframe::{Direction, Rotor};
-    use super::{MotorLag, RotorAerodynamics, RotorCoefficients, rotor_loads};
+    use super::{MotorLag, RotorAerodynamics, rotor_loads};
     use crate::math::{Quaternion, Vec3};
 
     fn vector(value: &Value) -> Vec3 {
@@ -197,16 +189,12 @@ mod tests {
                 offset_body_m: vector(&case["offset_body_m"]),
                 thrust_axis_body: attitude.rotate_body_to_world(Vec3::new(0.0, 0.0, 1.0)),
             };
-            let coefficients = RotorCoefficients {
-                thrust_coefficient: case["thrust_coefficient"].as_f64().unwrap(),
-                torque_coefficient: case["torque_coefficient"].as_f64().unwrap(),
-                aerodynamics: RotorAerodynamics {
-                    drag_coefficient: case["rotor_drag_coefficient"].as_f64().unwrap(),
-                    axial_drag_coefficient: 0.0,
-                    rolling_moment_coefficient: case["rolling_moment_coefficient"]
-                        .as_f64()
-                        .unwrap(),
-                },
+            let thrust_coefficient = case["thrust_coefficient"].as_f64().unwrap();
+            let torque_coefficient = case["torque_coefficient"].as_f64().unwrap();
+            let aerodynamics = RotorAerodynamics {
+                drag_coefficient: case["rotor_drag_coefficient"].as_f64().unwrap(),
+                axial_drag_coefficient: 0.0,
+                rolling_moment_coefficient: case["rolling_moment_coefficient"].as_f64().unwrap(),
             };
             let lag = MotorLag {
                 time_constant_up_s: case["time_constant_up_s"].as_f64().unwrap(),
@@ -217,7 +205,9 @@ mod tests {
                 let speed_radps = sample["speed_used_radps"].as_f64().unwrap();
                 let loads = rotor_loads(
                     &rotor,
-                    &coefficients,
+                    thrust_coefficient,
+                    torque_coefficient,
+                    aerodynamics,
                     speed_radps,
                     vehicle.rotate_world_to_body(vector(&sample["velocity_world_mps"])),
                     vehicle.rotate_world_to_body(vector(&sample["angular_velocity_world_radps"])),
@@ -234,7 +224,7 @@ mod tests {
                     (speed_after_radps - sample["speed_after_radps"].as_f64().unwrap()).abs();
                 // Relative to the sample's own size: RotorS stores the shaft
                 // speed divided by its slowdown factor (10), which rounds.
-                let thrust_n = coefficients.thrust_coefficient * speed_radps * speed_radps;
+                let thrust_n = thrust_coefficient * speed_radps * speed_radps;
                 let arm_m = rotor.offset_body_m.norm();
                 assert!(
                     force_error_n <= 1e-12 * thrust_n,

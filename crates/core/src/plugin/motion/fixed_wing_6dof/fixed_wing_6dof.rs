@@ -2,7 +2,8 @@
 //!
 //! Derived from SCRIMMAGE: motion/FixedWing6DOF (GTRI, LGPL-3.0-or-later).
 //! Motion phase: read throttle and surface angles, update entity truth.
-//! Private body axes are forward/right/down; public truth remains ENU world.
+//! Private frames are the aerospace ones, forward/right/down body and
+//! north/east/down world; public truth is the engine's ENU and forward/left/up.
 //! The two-aircraft mission checks the port, not trimmed flight or ArduPilot readiness.
 //!
 //! Fidelity
@@ -27,7 +28,7 @@
 //!   tables); subsonic flight, since nothing changes with Mach; near the flight
 //!   condition an aircraft's derivatives were taken at (the Rascal around 20
 //!   m/s).
-//! - Not modeled (named zeros in `accelerations`): propeller slipstream over
+//! - Not modeled (named zeros in `derivative`): propeller slipstream over
 //!   the wing and tail, propeller torque and gyroscopic moments, and ground
 //!   effect. Also: separate wing stalls (so no spin), drag from sideslip,
 //!   unsteady aerodynamics (no alpha-dot derivatives),
@@ -46,17 +47,17 @@ mod dynamics;
 mod landing_gear;
 
 use anyhow::{Context, Result, bail, ensure};
-use nalgebra::{Matrix3, UnitQuaternion};
+use nalgebra::Matrix3;
 use serde::Deserialize;
 
 use crate::Terrain;
-use crate::math::{self, KinematicState, Vec3};
+use crate::math::{self, KinematicState, Quaternion, Vec3};
 use crate::plugin::{Frame, MotionContext, MotionModel, PluginIo, Port, Ports, Unit};
 
-use aerodynamics::{Aerodynamics, Airframe};
+use aerodynamics::Aerodynamics;
 pub(crate) use airframe::FixedWingAirframe;
 use airframe::Vehicle;
-use dynamics::{AircraftState, derivative, flip_yz};
+use dynamics::{AircraftRate, AircraftState, ned_from_enu};
 use landing_gear::Wheel;
 
 const SLUG_FT_SQ_TO_KGM2: f64 = 1.35581795;
@@ -204,11 +205,6 @@ pub struct FixedWingConfig {
     gravity_mps2: f64,
     inertia_kgm2: Matrix3<f64>,
     inverse_inertia: Matrix3<f64>,
-    air_density_kgpm3: f64,
-    wing_span_m: f64,
-    wing_area_m2: f64,
-    mean_chord_m: f64,
-    oswald_efficiency: f64,
     wind_world_mps: Vec3,
     min_throttle: f64,
     max_throttle: f64,
@@ -273,11 +269,6 @@ impl TryFrom<FixedWingParams> for FixedWingConfig {
             gravity_mps2: params.gravity_mps2,
             inertia_kgm2,
             inverse_inertia,
-            air_density_kgpm3: params.air_density_kgpm3,
-            wing_span_m: vehicle.wing_span_m,
-            wing_area_m2: vehicle.wing_area_m2,
-            mean_chord_m: vehicle.mean_chord_m,
-            oswald_efficiency: vehicle.oswald_efficiency,
             wind_world_mps: Vec3::from(params.wind_mps),
             min_throttle: params.min_throttle,
             max_throttle: params.max_throttle,
@@ -286,7 +277,12 @@ impl TryFrom<FixedWingParams> for FixedWingConfig {
             elevator_limits_rad: vehicle.elevator_limits_rad,
             aileron_limits_rad: vehicle.aileron_limits_rad,
             rudder_limits_rad: vehicle.rudder_limits_rad,
-            aerodynamics: Aerodynamics::new(&vehicle, &params.lift_table, &params.drag_table),
+            aerodynamics: Aerodynamics::new(
+                &vehicle,
+                params.air_density_kgpm3,
+                &params.lift_table,
+                &params.drag_table,
+            ),
             enable_ground_spring: params.enable_ground_spring,
             landing_gear: params.landing_gear,
             enable_launcher: params.enable_launcher,
@@ -295,13 +291,13 @@ impl TryFrom<FixedWingParams> for FixedWingConfig {
             launch_speed_mps: params.launch_speed_mps,
         };
         ensure!(
-            config.mass_kg > 0.0
-                && config.air_density_kgpm3 >= 0.0
-                && config.gravity_mps2 >= 0.0
-                && config.wing_span_m > 0.0
-                && config.wing_area_m2 > 0.0
-                && config.mean_chord_m > 0.0
-                && config.oswald_efficiency > 0.0,
+            vehicle.mass_kg > 0.0
+                && params.air_density_kgpm3 >= 0.0
+                && params.gravity_mps2 >= 0.0
+                && vehicle.wing_span_m > 0.0
+                && vehicle.wing_area_m2 > 0.0
+                && vehicle.mean_chord_m > 0.0
+                && vehicle.oswald_efficiency > 0.0,
             "FixedWing6DOF requires positive mass and geometry, nonnegative air density and gravity"
         );
         ensure!(
@@ -409,22 +405,14 @@ impl FixedWing6Dof {
         };
         // Forces and moments are recomputed from each RK4 stage's state; holding
         // them at the start-of-step state would make the step first order.
-        let mut coordinates = AircraftState::from_truth(truth).coordinates();
-        math::rk4(&mut coordinates, dt_s, |coordinates| {
-            let stage = AircraftState::from_coordinates(*coordinates);
-            let (acceleration_model_mps2, angular_acceleration_model_radps2) =
-                config.accelerations(&stage, control, flying, catapult_force_n, terrain, dt_s);
-            derivative(
-                stage,
-                acceleration_model_mps2,
-                angular_acceleration_model_radps2,
-            )
+        let state = math::rk4(AircraftState::from_truth(truth), dt_s, |stage| {
+            config.derivative(&stage, control, flying, catapult_force_n, terrain, dt_s)
         });
         ensure!(
-            coordinates.iter().all(|value| value.is_finite()),
+            state.is_finite(),
             "FixedWing6DOF integration produced nonfinite state"
         );
-        AircraftState::from_coordinates(coordinates).write_truth(truth);
+        state.write_truth(truth);
         Ok(())
     }
 
@@ -459,8 +447,8 @@ impl FixedWingConfig {
         self.enable_launcher.then_some(self.launch_at_s)
     }
 
-    /// Linear and angular acceleration in the model frame for one state.
-    fn accelerations(
+    /// The equations of motion: the rate of each state field for one stage.
+    fn derivative(
         &self,
         state: &AircraftState,
         control: Control,
@@ -468,28 +456,26 @@ impl FixedWingConfig {
         catapult_force_n: f64,
         terrain: Option<&Terrain>,
         dt_s: f64,
-    ) -> (Vec3, Vec3) {
+    ) -> AircraftRate {
         // Symbols, as in the model's description: the body's velocity and
-        // rates in the model frame, mass, gravity, and the inertia tensor.
-        let (v, omega) = (state.velocity_model_mps, state.rates_model_radps);
+        // rates, the attitude quaternion, mass, gravity, and the inertia
+        // tensor.
+        let (v, omega, q) = (
+            state.velocity_frd_mps,
+            state.rates_frd_radps,
+            state.attitude_ned_from_frd,
+        );
         let (m, g) = (self.mass_kg, self.gravity_mps2);
         let inertia = self.inertia_kgm2;
-        let rotation = UnitQuaternion::new_normalize(state.attitude_model);
-        let wind_model_mps = rotation.inverse_transform_vector(&flip_yz(self.wind_world_mps));
+        let rotation = q.normalized();
+        let wind_frd_mps = rotation.rotate_world_to_body(ned_from_enu(self.wind_world_mps));
         // Velocity through the air: ground velocity minus the air's (the wind's).
-        let air_velocity_model_mps = v - wind_model_mps;
-        let airframe = Airframe {
-            air_density_kgpm3: self.air_density_kgpm3,
-            wing_span_m: self.wing_span_m,
-            wing_area_m2: self.wing_area_m2,
-            mean_chord_m: self.mean_chord_m,
-            oswald_efficiency: self.oswald_efficiency,
-        };
+        let air_velocity_frd_mps = v - wind_frd_mps;
         let mut loads = self
             .aerodynamics
-            .loads(&airframe, air_velocity_model_mps, omega, control);
-        // Weight m g, down in the world and rotated into the model frame.
-        let weight_n = rotation.inverse_transform_vector(&Vec3::new(0.0, 0.0, m * g));
+            .loads(air_velocity_frd_mps, omega, control);
+        // Weight m g, down in NED.
+        let weight_n = rotation.rotate_world_to_body(Vec3::new(0.0, 0.0, m * g));
         let thrust_n = Vec3::new(self.thrust_n(control.throttle), 0.0, 0.0);
         // Not modeled, each a zero in the sums below. Propeller slipstream
         // speeds the air over the wing root and tail; it needs the propeller's
@@ -501,43 +487,55 @@ impl FixedWingConfig {
         let slipstream_n = Vec3::zeros();
         let ground_effect_n = Vec3::zeros();
         let propeller_moment_nm = Vec3::zeros();
-        loads.force_model_n =
-            weight_n + thrust_n + loads.force_model_n + slipstream_n + ground_effect_n;
-        loads.moment_model_nm += propeller_moment_nm;
+        loads.force_frd_n =
+            weight_n + thrust_n + loads.force_frd_n + slipstream_n + ground_effect_n;
+        loads.moment_frd_nm += propeller_moment_nm;
 
         if !self.landing_gear.is_empty() {
-            let (force_model_n, moment_model_nm) = landing_gear::loads(
+            let (force_frd_n, moment_frd_nm) = landing_gear::loads(
                 &self.landing_gear,
                 state,
-                &rotation,
+                rotation,
                 terrain,
                 control.rudder_rad,
                 self.mass_kg,
                 dt_s,
             );
-            loads.force_model_n += force_model_n;
-            loads.moment_model_nm += moment_model_nm;
+            loads.force_frd_n += force_frd_n;
+            loads.moment_frd_nm += moment_frd_nm;
         }
-        if self.enable_ground_spring && state.position_world_m.z < 0.0 {
+        let (depth_m, sink_mps) = (state.position_ned_m.z, state.velocity_ned_mps.z);
+        if self.enable_ground_spring && depth_m > 0.0 {
             // Inherited ground model: damping is only 40 N*s/m, not mass-scaled.
             // This is not a validated landing model for the default eight-tonne
             // aircraft; `landing_gear` is the real ground contact.
-            let ground_force_n = (-400.0 * m * state.position_world_m.z
-                - 40.0 * state.velocity_world_mps.z)
-                .max(0.0);
-            loads.force_model_n +=
-                rotation.inverse_transform_vector(&Vec3::new(0.0, 0.0, -ground_force_n));
+            let ground_force_n = (400.0 * m * depth_m + 40.0 * sink_mps).max(0.0);
+            loads.force_frd_n +=
+                rotation.rotate_world_to_body(Vec3::new(0.0, 0.0, -ground_force_n));
         }
         if !flying {
-            loads.force_model_n = Vec3::zeros();
-            loads.moment_model_nm = Vec3::zeros();
+            loads.force_frd_n = Vec3::zeros();
+            loads.moment_frd_nm = Vec3::zeros();
         }
-        loads.force_model_n.x += catapult_force_n;
+        loads.force_frd_n.x += catapult_force_n;
         // Newton and Euler: a = F / m, and I omega_dot = M - omega x (I omega).
-        (
-            loads.force_model_n / m,
-            self.inverse_inertia * (loads.moment_model_nm - omega.cross(&(inertia * omega))),
-        )
+        let acceleration = loads.force_frd_n / m;
+        let angular_acceleration =
+            self.inverse_inertia * (loads.moment_frd_nm - omega.cross(&(inertia * omega)));
+        // q_dot = 1/2 q (0, omega)
+        let q_dot = Quaternion {
+            w: -0.5 * (q.x * omega.x + q.y * omega.y + q.z * omega.z),
+            x: 0.5 * (q.w * omega.x + q.y * omega.z - q.z * omega.y),
+            y: 0.5 * (q.w * omega.y + q.z * omega.x - q.x * omega.z),
+            z: 0.5 * (q.w * omega.z + q.x * omega.y - q.y * omega.x),
+        };
+        AircraftRate {
+            acceleration_frd_mps2: v.cross(&omega) + acceleration,
+            angular_acceleration_frd_radps2: angular_acceleration,
+            acceleration_ned_mps2: rotation.rotate_body_to_world(acceleration),
+            velocity_ned_mps: rotation.rotate_body_to_world(v),
+            attitude_rate: q_dot,
+        }
     }
 
     fn thrust_n(&self, throttle: f64) -> f64 {

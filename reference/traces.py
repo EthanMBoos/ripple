@@ -46,7 +46,16 @@ from compare import (ANGULAR_VELOCITY_TOLERANCE_RADPS, ORIENTATION_TOLERANCE_RAD
                      POSITION_TOLERANCE_M, VELOCITY_TOLERANCE_MPS, distance,
                      orientation_distance_rad)
 
-OUTPUT_TOLERANCE = 1e-8  # Absolute; largest observed 2.2e-11 with commands up to ~1000.
+# Absolute. Largest observed 2.2e-11 with commands up to ~1000 while FixedWing6DOF
+# mirrored SCRIMMAGE's arithmetic; 1.7e-8 (an elevator command, 1,000 s, four
+# aircraft) since it moved to the north/east/down frame. See compare.py.
+OUTPUT_TOLERANCE = 1e-6
+# A heading is compared modulo a full turn: the Straight and WaypointFollower
+# autonomies' desired_heading wraps to 2*pi or to 0 on the sign of a
+# rounding-sized sideways velocity, which is the same heading. The control
+# surfaces are radians too, but small angles that never near a full turn.
+ANGLE_PORTS = {"desired_heading"}
+TAU = 2.0 * math.pi
 TIME_DIGITS = 9  # Ticks are keyed by time rounded to nanoseconds.
 
 
@@ -309,6 +318,8 @@ def compare_traces(reference_records, candidate_records, pre_start_removed=(), f
         expected, actual = ref_outputs[key], outputs[key]
         if math.isfinite(expected) and math.isfinite(actual):
             error = abs(expected - actual)
+            if key[3] in ANGLE_PORTS:
+                error = min(error, abs(error - TAU))
         else:  # Equal infinities, or NaN on both sides, match.
             same_nan = math.isnan(expected) and math.isnan(actual)
             error = 0.0 if expected == actual or same_nan else math.inf

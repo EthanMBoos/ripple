@@ -213,7 +213,7 @@ are compared by delivery only.
 | `delivery` | A message reaches a subscriber | Per tick, receiver, network, and topic: senders and event entity IDs, in order |
 | `publication` (C++), `reading` (Rust) | A sensor measures own state or contacts; C++ publishes it, Rust hands it to estimators | Paired by tick and sensor: contact IDs in order; state within frame tolerances. C++'s deliveries of the publication are skipped and counted |
 | `belief` | Each entity when its frame is logged | Within frame tolerances |
-| `output` | Each autonomy/controller port after the last substep | Within 1e-8 absolute |
+| `output` | Each autonomy/controller port after the last substep | Within 1e-6 absolute; `desired_heading` modulo a full turn |
 
 Endpoints are `[entity ID or null, plugin]` using C++ names (sensors carry their
 order index, as in `NoisyState0`). Non-finite numbers are written as the strings
@@ -363,10 +363,15 @@ directories are created automatically; existing reports are never overwritten.
 Exit codes are 0 for a match, 1 for a mismatch, and 2 for invalid inputs or I/O
 errors. Invalid inputs do not produce a comparison report.
 
-Tolerances are set from measured agreement, not inherited: position 1e-8 m,
-velocity 1e-8 m/s, orientation 1e-9 rad, angular velocity 1e-9 rad/s, timestamp
-1e-9 s, and summary values 1e-6 (C++ prints six decimals). The largest measured
-differences are 1.4e-10 m, 9.6e-11 m/s, 2.2e-12 rad, and 8.9e-12 rad/s. The
+Tolerances are set from measured agreement, not inherited: position 1e-6 m,
+velocity 1e-6 m/s, orientation 1e-7 rad, angular velocity 1e-7 rad/s, timestamp
+1e-9 s, and summary values 1e-6 (C++ prints six decimals). While every ported
+model mirrored SCRIMMAGE's arithmetic the limits were a hundredth of these and
+the largest measured differences were 1.4e-10 m, 9.6e-11 m/s, 2.2e-12 rad, and
+8.9e-12 rad/s. Since FixedWing6DOF moved to the north/east/down frame
+(2026-10-31) its agreement is ordinary rounding growth, 7.3e-8 m at worst over
+1,000 s, and the limits were widened to keep 13x headroom; `compare.py` records
+the measurements and the planted-bug study was rerun at the new limits. The
 original comparator used 0.01 m and 1e-3, which let a sub-micrometre spawn
 defect through (`sensitivity.py`). Frames are paired by index, retaining
 repeated terminal timestamps; entities and summary rows are matched by ID.

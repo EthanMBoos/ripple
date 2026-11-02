@@ -1,4 +1,4 @@
-//! FixedWing6DOF's coefficient equations in the forward/right/down model frame.
+//! FixedWing6DOF's coefficient equations in the forward/right/down body frame.
 //! GTRI SCRIMMAGE reference: FixedWing6DOF.cpp (LGPL-3.0-or-later).
 
 use std::f64::consts::PI;
@@ -36,23 +36,25 @@ pub(super) struct Aerodynamics {
     c_yaw_rudder: f64,
     lift_table: Vec<[f64; 2]>,
     drag_table: Vec<[f64; 2]>,
-}
-
-pub(super) struct Airframe {
-    pub air_density_kgpm3: f64,
-    pub wing_span_m: f64,
-    pub wing_area_m2: f64,
-    pub mean_chord_m: f64,
-    pub oswald_efficiency: f64,
+    air_density_kgpm3: f64,
+    wing_span_m: f64,
+    wing_area_m2: f64,
+    mean_chord_m: f64,
+    oswald_efficiency: f64,
 }
 
 pub(super) struct Loads {
-    pub force_model_n: Vec3,
-    pub moment_model_nm: Vec3,
+    pub force_frd_n: Vec3,
+    pub moment_frd_nm: Vec3,
 }
 
 impl Aerodynamics {
-    pub(super) fn new(vehicle: &Vehicle, lift_table: &[[f64; 2]], drag_table: &[[f64; 2]]) -> Self {
+    pub(super) fn new(
+        vehicle: &Vehicle,
+        air_density_kgpm3: f64,
+        lift_table: &[[f64; 2]],
+        drag_table: &[[f64; 2]],
+    ) -> Self {
         let params = vehicle;
         Self {
             c_drag_0: params.c_drag_0,
@@ -80,17 +82,21 @@ impl Aerodynamics {
             c_yaw_rudder: params.c_yaw_rudder,
             lift_table: lift_table.to_vec(),
             drag_table: drag_table.to_vec(),
+            air_density_kgpm3,
+            wing_span_m: vehicle.wing_span_m,
+            wing_area_m2: vehicle.wing_area_m2,
+            mean_chord_m: vehicle.mean_chord_m,
+            oswald_efficiency: vehicle.oswald_efficiency,
         }
     }
 
     pub fn loads(
         &self,
-        airframe: &Airframe,
-        air_velocity_model_mps: Vec3,
-        rates_model_radps: Vec3,
+        air_velocity_frd_mps: Vec3,
+        rates_frd_radps: Vec3,
         control: Control,
     ) -> Loads {
-        let mut airspeed_mps = air_velocity_model_mps.norm();
+        let mut airspeed_mps = air_velocity_frd_mps.norm();
         if airspeed_mps.abs() < f64::EPSILON {
             airspeed_mps = 0.00001;
         }
@@ -98,22 +104,18 @@ impl Aerodynamics {
         // attack, sideslip, the body rates, the control deflections, span,
         // mean chord, and dynamic pressure times wing area (q-bar S).
         let v = airspeed_mps;
-        let alpha = air_velocity_model_mps.z.atan2(air_velocity_model_mps.x);
-        let beta = (air_velocity_model_mps.y / v).clamp(-1.0, 1.0).asin();
-        let (p, q, r) = (
-            rates_model_radps.x,
-            rates_model_radps.y,
-            rates_model_radps.z,
-        );
+        let alpha = air_velocity_frd_mps.z.atan2(air_velocity_frd_mps.x);
+        let beta = (air_velocity_frd_mps.y / v).clamp(-1.0, 1.0).asin();
+        let (p, q, r) = (rates_frd_radps.x, rates_frd_radps.y, rates_frd_radps.z);
         let (delta_e, delta_a, delta_r) = (
             control.elevator_rad,
             control.aileron_rad,
             control.rudder_rad,
         );
-        let (b, c) = (airframe.wing_span_m, airframe.mean_chord_m);
+        let (b, c) = (self.wing_span_m, self.mean_chord_m);
         let aspect_ratio = b / c;
         let two_v = 2.0 * v;
-        let qbar_s = airframe.air_density_kgpm3 * v.powi(2) * airframe.wing_area_m2 / 2.0;
+        let qbar_s = self.air_density_kgpm3 * v.powi(2) * self.wing_area_m2 / 2.0;
 
         // Linear lift, unless the mission gives a lift table, whose peak and
         // fall past the critical angle model a stall.
@@ -136,12 +138,12 @@ impl Aerodynamics {
             interpolate_clamped(&self.drag_table, alpha)
         };
         let drag_n = (c_drag_of_alpha
-            + c_lift * c_lift / (PI * aspect_ratio * airframe.oswald_efficiency)
+            + c_lift * c_lift / (PI * aspect_ratio * self.oswald_efficiency)
             + self.c_drag_elevator * delta_e.abs())
             * qbar_s;
         let side_n = (self.c_side_beta * beta + self.c_side_rudder * delta_r) * qbar_s;
         // Wind axes to the model's forward/right/down axes.
-        let force_model_n = Vec3::new(
+        let force_frd_n = Vec3::new(
             lift_n * alpha.sin() - drag_n * alpha.cos() - side_n * beta.sin(),
             side_n * beta.cos(),
             -lift_n * alpha.cos() - drag_n * alpha.sin(),
@@ -168,8 +170,8 @@ impl Aerodynamics {
             * qbar_s
             * b;
         Loads {
-            force_model_n,
-            moment_model_nm: Vec3::new(roll_nm, pitch_nm, yaw_nm),
+            force_frd_n,
+            moment_frd_nm: Vec3::new(roll_nm, pitch_nm, yaw_nm),
         }
     }
 }
@@ -194,37 +196,35 @@ fn interpolate_clamped(table: &[[f64; 2]], x: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::super::airframe::{FixedWingAirframe, Vehicle};
-    use super::{Aerodynamics, Airframe, Control, interpolate_clamped};
+    use super::{Aerodynamics, Control, interpolate_clamped};
     use crate::math::Vec3;
 
-    /// The A-4D's coefficients, as a base the tests change.
-    fn a4d() -> Vehicle {
-        FixedWingAirframe::A4d
+    /// The A-4D's coefficients on the Rascal's wing, as a base the tests
+    /// change.
+    fn a4d(oswald_efficiency: f64) -> Vehicle {
+        let mut vehicle = FixedWingAirframe::A4d
             .vehicle()
-            .expect("the A-4D profile parses")
+            .expect("the A-4D profile parses");
+        vehicle.wing_span_m = 2.7;
+        vehicle.wing_area_m2 = 0.982;
+        vehicle.mean_chord_m = 0.351;
+        vehicle.oswald_efficiency = oswald_efficiency;
+        vehicle
     }
 
     #[test]
     fn lift_table_stalls_past_its_peak_and_matches_linear_lift_below() {
-        let mut linear_vehicle = a4d();
+        let mut linear_vehicle = a4d(0.9);
         linear_vehicle.c_lift_0 = 0.25;
         linear_vehicle.c_lift_alpha = 5.0;
-        let linear = Aerodynamics::new(&linear_vehicle, &[], &[]);
+        let linear = Aerodynamics::new(&linear_vehicle, 1.225, &[], &[]);
         let lift_table = [[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]];
-        let table = Aerodynamics::new(&a4d(), &lift_table, &[]);
-        let airframe = Airframe {
-            air_density_kgpm3: 1.225,
-            wing_span_m: 2.7,
-            wing_area_m2: 0.982,
-            mean_chord_m: 0.351,
-            oswald_efficiency: 0.9,
-        };
+        let table = Aerodynamics::new(&a4d(0.9), 1.225, &lift_table, &[]);
         // Lift is the force against the air's up component, at 15 m/s.
         let lift_n = |aerodynamics: &Aerodynamics, alpha_rad: f64| {
             let air_velocity = Vec3::new(alpha_rad.cos(), 0.0, alpha_rad.sin()) * 15.0;
-            let loads =
-                aerodynamics.loads(&airframe, air_velocity, Vec3::zeros(), Control::default());
-            -loads.force_model_n.z * alpha_rad.cos() + loads.force_model_n.x * alpha_rad.sin()
+            let loads = aerodynamics.loads(air_velocity, Vec3::zeros(), Control::default());
+            -loads.force_frd_n.z * alpha_rad.cos() + loads.force_frd_n.x * alpha_rad.sin()
         };
         assert!((lift_n(&linear, 0.1) - lift_n(&table, 0.1)).abs() < 1e-9);
         assert!(lift_n(&table, 0.4) < lift_n(&table, 0.23));
@@ -234,10 +234,10 @@ mod tests {
     #[test]
     fn drag_table_rises_past_the_stall_where_induced_drag_falls() {
         let lift_table = [[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]];
-        let mut lift_only_vehicle = a4d();
+        let mut lift_only_vehicle = a4d(0.995);
         lift_only_vehicle.c_drag_0 = 0.028;
         lift_only_vehicle.c_drag_alpha = 0.0;
-        let lift_only = Aerodynamics::new(&lift_only_vehicle, &lift_table, &[]);
+        let lift_only = Aerodynamics::new(&lift_only_vehicle, 1.225, &lift_table, &[]);
         let drag_table = [
             [-1.57, 1.5],
             [-0.26, 0.056],
@@ -245,20 +245,12 @@ mod tests {
             [0.26, 0.056],
             [1.57, 1.5],
         ];
-        let with_drag = Aerodynamics::new(&a4d(), &lift_table, &drag_table);
-        let airframe = Airframe {
-            air_density_kgpm3: 1.225,
-            wing_span_m: 2.7,
-            wing_area_m2: 0.982,
-            mean_chord_m: 0.351,
-            oswald_efficiency: 0.995,
-        };
+        let with_drag = Aerodynamics::new(&a4d(0.995), 1.225, &lift_table, &drag_table);
         // Drag is the force along the air's direction, at 15 m/s.
         let drag_n = |aerodynamics: &Aerodynamics, alpha_rad: f64| {
             let air_velocity = Vec3::new(alpha_rad.cos(), 0.0, alpha_rad.sin()) * 15.0;
-            let loads =
-                aerodynamics.loads(&airframe, air_velocity, Vec3::zeros(), Control::default());
-            -loads.force_model_n.x * alpha_rad.cos() - loads.force_model_n.z * alpha_rad.sin()
+            let loads = aerodynamics.loads(air_velocity, Vec3::zeros(), Control::default());
+            -loads.force_frd_n.x * alpha_rad.cos() - loads.force_frd_n.z * alpha_rad.sin()
         };
         assert!((drag_n(&lift_only, 0.0) - drag_n(&with_drag, 0.0)).abs() < 1e-9);
         // Past the stall, lift and with it induced drag fall; the table rises.

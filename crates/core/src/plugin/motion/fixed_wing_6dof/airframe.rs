@@ -17,6 +17,7 @@ use super::inertia;
 pub(crate) enum FixedWingAirframe {
     /// Douglas A-4D Skyhawk, from Nelson, *Flight Stability and Automatic
     /// Control*, 2nd ed., p. 405, with Pratt and McGhee's NPSNET model.
+    /// SCRIMMAGE's default aircraft, kept as the C++ comparison's fixture.
     A4d,
     /// Rascal 110 RC plane, from ArduPilot's JSBSim Rascal.
     Rascal,

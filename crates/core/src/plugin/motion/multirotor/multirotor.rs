@@ -24,7 +24,7 @@
 //!   measured range for the Crazyflie (thrust fit within 10.4% from command
 //!   8000 up). Drag terms are linear fits at the airspeeds Förster's wind
 //!   tunnel reached (about 1.5 to 4 m/s).
-//! - Not modeled (named zeros in `integrate`; inflow in `rotor.rs`): ground
+//! - Not modeled (named zeros in `derivative`; inflow in `rotor.rs`): ground
 //!   effect, rotor and body interference, inflow (thrust change with climb or
 //!   forward speed), rotor gyroscopic and spin-up torques, wind, battery sag,
 //!   and contact
@@ -48,14 +48,14 @@ mod rotor;
 pub(crate) use airframe::{Airframe, AirframeName, AirframeOverrides, RotorParams};
 
 use anyhow::{Context, Result, ensure};
-use nalgebra::{Matrix3, UnitQuaternion};
+use nalgebra::Matrix3;
 use serde::Deserialize;
 
-use crate::math::{self, KinematicState, Vec3};
+use crate::math::{self, KinematicState, Quaternion, Vec3};
 use crate::plugin::{Frame, MotionContext, MotionModel, PluginIo, Port, Ports, Unit};
 
-use dynamics::{RotorcraftState, derivative};
-use rotor::{MotorLag, RotorAerodynamics, RotorCoefficients, rotor_loads};
+use dynamics::{RotorcraftRate, RotorcraftState};
+use rotor::{MotorLag, RotorAerodynamics, rotor_loads};
 
 /// Mission parameters. `airframe` names a measured vehicle whose numbers
 /// the other vehicle keys may override; without it, the mission gives every
@@ -102,7 +102,7 @@ pub struct MultirotorConfig {
     /// Quadratic body drag, D = 0.5 c_D |V| V.
     body_drag_coefficient: f64,
     motor_lag: MotorLag,
-    aerodynamics: RotorAerodynamics,
+    rotor_aerodynamics: RotorAerodynamics,
 }
 
 pub struct Multirotor {
@@ -137,6 +137,11 @@ impl TryFrom<MultirotorParams> for MultirotorConfig {
             .inertia_kgm2
             .try_inverse()
             .context("Multirotor inertia must be invertible")?;
+        let rotor_aerodynamics = RotorAerodynamics {
+            drag_coefficient: params.rotor_drag_coefficient,
+            axial_drag_coefficient: params.rotor_drag_coefficient_axial,
+            rolling_moment_coefficient: params.rolling_moment_coefficient,
+        };
         let config = MultirotorConfig {
             airframe,
             inverse_inertia,
@@ -145,14 +150,10 @@ impl TryFrom<MultirotorParams> for MultirotorConfig {
                 time_constant_up_s: params.motor_time_constant_up_s,
                 time_constant_down_s: params.motor_time_constant_down_s,
             },
-            aerodynamics: RotorAerodynamics {
-                drag_coefficient: params.rotor_drag_coefficient,
-                axial_drag_coefficient: params.rotor_drag_coefficient_axial,
-                rolling_moment_coefficient: params.rolling_moment_coefficient,
-            },
+            rotor_aerodynamics,
         };
         let lag = config.motor_lag;
-        let aerodynamics = config.aerodynamics;
+        let aerodynamics = config.rotor_aerodynamics;
         ensure!(
             config.body_drag_coefficient >= 0.0
                 && lag.time_constant_up_s >= 0.0
@@ -213,19 +214,11 @@ impl Multirotor {
             self.rotor_speeds_radps = commands_radps.clone();
         }
 
-        let mut coordinates = self.state.coordinates();
-        math::rk4_timed(&mut coordinates, dt_s, |elapsed_s, coordinates| {
-            let stage = RotorcraftState::from_coordinates(*coordinates);
-            let (acceleration_body_mps2, angular_acceleration_body_radps2) =
-                self.accelerations(&stage, &commands_radps, elapsed_s);
-            derivative(
-                stage,
-                acceleration_body_mps2,
-                angular_acceleration_body_radps2,
-            )
+        let state = math::rk4_timed(self.state, dt_s, |elapsed_s, stage| {
+            self.derivative(&stage, &commands_radps, elapsed_s)
         });
         ensure!(
-            coordinates.iter().all(|value| value.is_finite()),
+            state.is_finite(),
             "Multirotor integration produced nonfinite state"
         );
         for index in 0..self.rotor_speeds_radps.len() {
@@ -235,33 +228,34 @@ impl Multirotor {
                 dt_s,
             );
         }
-        self.state = RotorcraftState::from_coordinates(coordinates);
+        self.state = state;
         self.state.write_truth(truth);
         Ok(())
     }
 
-    /// The body-frame linear and angular accelerations `elapsed_s` into the
-    /// step, from the stage's state and the clamped commands. Every load is
-    /// recomputed from each RK4 stage's state and time, so the step keeps
-    /// RK4's accuracy.
-    fn accelerations(
+    /// The equations of motion: the rate of each state field, `elapsed_s`
+    /// into the step, from the stage's state and the clamped commands. Every
+    /// load is recomputed from each RK4 stage's state and time, so the step
+    /// keeps RK4's accuracy.
+    fn derivative(
         &self,
         state: &RotorcraftState,
         commands_radps: &[f64],
         elapsed_s: f64,
-    ) -> (Vec3, Vec3) {
+    ) -> RotorcraftRate {
         let config = &self.config;
         let airframe = &config.airframe;
         // Symbols, as in the model's description: the body's velocity and
-        // rates, mass, gravity, and the inertia tensor.
-        let (v, omega) = (state.velocity_body_mps, state.rates_body_radps);
+        // rates, the attitude quaternion, mass, gravity, and the inertia
+        // tensor.
+        let (v, omega, q) = (
+            state.velocity_body_mps,
+            state.rates_body_radps,
+            state.attitude,
+        );
         let (m, g) = (airframe.mass_kg, airframe.gravity_mps2);
         let inertia = airframe.inertia_kgm2;
-        let coefficients = RotorCoefficients {
-            thrust_coefficient: airframe.thrust_coefficient,
-            torque_coefficient: airframe.torque_coefficient,
-            aerodynamics: config.aerodynamics,
-        };
+        let rotation = q.normalized();
 
         // The rotors' loads, summed, each at its speed this far into the step.
         let mut rotor_force_n = Vec3::zeros();
@@ -272,12 +266,20 @@ impl Multirotor {
                 commands_radps[index],
                 elapsed_s,
             );
-            let loads = rotor_loads(&airframe.rotors[index], &coefficients, omega_i, v, omega);
+            let loads = rotor_loads(
+                &airframe.rotors[index],
+                airframe.thrust_coefficient,
+                airframe.torque_coefficient,
+                config.rotor_aerodynamics,
+                omega_i,
+                v,
+                omega,
+            );
             rotor_force_n += loads.force_body_n;
             rotor_moment_nm += loads.moment_body_nm;
         }
-        let weight_n = UnitQuaternion::new_normalize(state.attitude)
-            .inverse_transform_vector(&Vec3::new(0.0, 0.0, -m * g));
+        // Weight m g, down in the world and rotated into the body frame.
+        let weight_n = rotation.rotate_world_to_body(Vec3::new(0.0, 0.0, -m * g));
         let drag_n = v * (-0.5 * config.body_drag_coefficient * v.norm());
         // Not modeled, each a zero in the sums below. Ground effect adds
         // thrust within about a rotor diameter of the ground; it needs height
@@ -292,10 +294,22 @@ impl Multirotor {
         let force_n = rotor_force_n + weight_n + drag_n + ground_effect_n + downwash_n;
         let moment_nm = rotor_moment_nm + rotor_gyroscopic_nm + spin_up_reaction_nm;
         // Newton and Euler: a = F / m, and I omega_dot = M - omega x (I omega).
-        (
-            force_n / m,
-            config.inverse_inertia * (moment_nm - omega.cross(&(inertia * omega))),
-        )
+        let acceleration = force_n / m;
+        let angular_acceleration =
+            config.inverse_inertia * (moment_nm - omega.cross(&(inertia * omega)));
+        // q_dot = 1/2 q (0, omega)
+        let q_dot = Quaternion {
+            w: -0.5 * (q.x * omega.x + q.y * omega.y + q.z * omega.z),
+            x: 0.5 * (q.w * omega.x + q.y * omega.z - q.z * omega.y),
+            y: 0.5 * (q.w * omega.y + q.z * omega.x - q.x * omega.z),
+            z: 0.5 * (q.w * omega.z + q.x * omega.y - q.y * omega.x),
+        };
+        RotorcraftRate {
+            acceleration_body_mps2: v.cross(&omega) + acceleration,
+            angular_acceleration_body_radps2: angular_acceleration,
+            velocity_world_mps: rotation.rotate_body_to_world(v),
+            attitude_rate: q_dot,
+        }
     }
 }
 
@@ -378,7 +392,15 @@ mod tests {
         let mut limit_truth = KinematicState::default();
         high.integrate(&mut high_truth, 0.001)?;
         limit.integrate(&mut limit_truth, 0.001)?;
-        assert_eq!(high.state.coordinates(), limit.state.coordinates());
+        assert_eq!(high_truth.position_world_m, limit_truth.position_world_m);
+        assert_eq!(
+            high_truth.velocity_world_mps,
+            limit_truth.velocity_world_mps
+        );
+        assert_eq!(
+            high_truth.angular_velocity_world_radps,
+            limit_truth.angular_velocity_world_radps
+        );
         assert!(high_truth.angular_velocity_world_radps.z > 0.0);
         Ok(())
     }
@@ -579,7 +601,7 @@ mod tests {
         model.config.airframe.rotors.truncate(1);
         model.config.airframe.rotors[0].offset_body_m = Vec3::new(0.2, 0.0, 0.0);
         model.config.airframe.torque_coefficient = 0.0;
-        model.config.aerodynamics.drag_coefficient = 1e-4;
+        model.config.rotor_aerodynamics.drag_coefficient = 1e-4;
         model.motor_commands_radps = vec![1000.0];
         let mut truth = KinematicState {
             angular_velocity_world_radps: Vec3::new(0.0, 0.0, 2.0),

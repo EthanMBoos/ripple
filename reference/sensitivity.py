@@ -77,8 +77,8 @@ DEFECTS = [
      "heading_pid: AngleGains {\n                kp: 1.0,",
      "heading_pid: AngleGains {\n                kp: 1.01,"),
     ("SimpleAircraft yaw rate 0.1% high", CORE + "plugin/motion/simple_aircraft/simple_aircraft.rs",
-     "-GRAVITY_MPS2 * state.roll_world_from_body_rad.tan() / state.speed_mps;",
-     "-GRAVITY_MPS2 * state.roll_world_from_body_rad.tan() / state.speed_mps * 1.001;"),
+     "let yaw_rate = -g * phi.tan() / v;",
+     "let yaw_rate = -g * phi.tan() / v * 1.001;"),
 ]
 
 

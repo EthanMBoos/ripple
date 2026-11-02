@@ -682,6 +682,63 @@ on the comparison branch and in Rust together. New plugins, such as new
 fixed-wing and boat models, should be written to be correct, not to match
 these.
 
+**Attitude in the 6DOF models (2026-10-31).** FixedWing6DOF and Multirotor
+integrate their attitude as four numbers and rotate vectors with it. They
+held it as nalgebra's quaternion, normalized before each rotation with
+nalgebra's calls, and copied it to and from truth's `math::Quaternion`
+component by component. They now hold `math::Quaternion`; each model's one
+`derivative` function normalizes it once and rotates with that, and
+`write_truth` normalizes what truth receives. The derivative is
+`q_dot = 1/2 q (0, omega)`. SCRIMMAGE's carried a `lambda q` term,
+`lambda = 1 - |q|^2`, from the NPSNET paper (Cooke, Zyda, Pratt, and McGhee,
+1992) that pulls the integrated length back toward one from inside the ODE;
+it has no physical effect (the length is renormalized anyway, as in JSBSim),
+but it is arithmetic the comparison can see: with the term dropped in Ripple
+alone the fixed wing's agreement moved from 1e-8 m to 2.3e-5 m within 3 s
+and 20 of 100 generated scenarios failed. It is therefore dropped on both
+sides, `benchmarking-edits` commit `42dae573d` ("Drop the quaternion
+length-correction term from FixedWing6DOF and Multirotor"), and the
+comparison reruns against that. Of the 40 missions the equivalence scan
+runs, only the seven that fly these models changed, and every other mission
+is byte-identical to the build before. Six of the seven moved by at most
+2e-8 m in position and 3e-10 in the quaternion over their 2 to 60 s; the
+hour-long 6DOF delivery mission, whose planner replans from what it sees,
+drifted to 5 cm and 3e-3 by its end from the same last-bit start.
+`math::Quaternion` gained `normalized()`, addition, scaling, and the
+Hamilton product, tested against nalgebra in `math/tests.rs`. With the term
+dropped on both sides, the full suite passes: cpp-agreement 15 of 15
+(worst 9.9e-9 m), cpp-generated 100 of 100 (worst 3.5e-11 m), cpp-long 10
+of 10 agree throughout (worst 7.2e-8 m), all 12 planted checker bugs
+caught, and the multirotor, Rascal, simple aircraft, RotorS, and Crazyflow
+model checks pass.
+
+**FixedWing6DOF in textbook frames (2026-10-31).** SCRIMMAGE's FixedWing6DOF
+works in a forward/right/down body frame and an east/south/down world frame,
+and converts to the engine's forward/left/up and east/north/up by flipping
+y and z on both sides. That frame is nobody's convention, but its reason is
+sound: a half-turn about x is a sign flip of quaternion components, exact in
+floating point, so the conversion each step costs nothing in agreement. Ripple
+now holds the model in the aerospace frames, forward/right/down body and
+north/east/down world, and converts at the truth boundary with the standard
+swap of the horizontal axes and a half-turn about the north-east diagonal
+(`dynamics.rs`). That quaternion has 1/sqrt(2) in it, so the attitude rounds
+twice a step, and the model's agreement with SCRIMMAGE became ordinary
+rounding growth rather than bit-mirroring: 9.9e-9 m after the 60 s Rascal
+case (3e-13 m before), and 7.3e-8 m after a 1,000 s four-aircraft case that
+a one-bit nudge of Rust itself also diverges (`cpp-long`, `divergence.py`).
+Every other compared model is unchanged. The comparison tolerances were
+widened a hundredfold to 1e-6 m, 1e-6 m/s, 1e-7 rad, and 1e-7 rad/s, with
+the measurements recorded in `reference/compare.py`. At the new limits the
+agreement matrix passes 15 of 15, the 100 generated scenarios 100 of 100
+(worst 3.6e-11 m), and the planted-bug study catches 12 of 12; the
+SimpleAircraft yaw-rate defect in `sensitivity.py` was repointed at the
+symbols-pass text, which it had silently stopped matching. `traces.py` now
+compares the `desired_heading` output modulo a full turn, because the
+Straight autonomy's heading wraps to 2*pi or to 0 on the sign of a
+rounding-sized sideways velocity, which is not a difference in heading. The
+checker names that port itself; carrying each port's unit through the core
+into the trace, for a comparison that is to be retired, was not worth it.
+
 **Integrators for new motion models.** For smooth-flight models such as the
 planned fixed-wing and boat, start with RK4 that recomputes forces and moments
 from each stage's state, and verify convergence. Choose another integrator when

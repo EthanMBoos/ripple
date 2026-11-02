@@ -19,13 +19,22 @@ from frames import read_frames
 
 # Set from measured agreement, not inherited. In the 2026-09-25 campaign the
 # largest differences in passing runs were 3.7e-10 m (a 100 s fixed-wing run),
-# 9.6e-11 m/s, 2.2e-12 rad, and 8.9e-12 rad/s: the position limit has 27x
-# headroom and still catches sub-micrometre defects (the original comparator
-# used 0.01 m and 1e-3, which let one through).
-POSITION_TOLERANCE_M = 1e-8
-VELOCITY_TOLERANCE_MPS = 1e-8
-ORIENTATION_TOLERANCE_RAD = 1e-9
-ANGULAR_VELOCITY_TOLERANCE_RADPS = 1e-9
+# 9.6e-11 m/s, 2.2e-12 rad, and 8.9e-12 rad/s, and the limits were 1e-8 m,
+# 1e-8 m/s, 1e-9 rad, and 1e-9 rad/s: 27x headroom, still catching
+# sub-micrometre defects (the original comparator used 0.01 m and 1e-3, which
+# let one through). That agreement came from mirroring SCRIMMAGE's arithmetic
+# bit for bit. On 2026-10-31 FixedWing6DOF moved to the textbook north/east/down
+# frame, whose conversion from the engine's east/north/up rounds every step
+# where SCRIMMAGE's east/south/down flip was exact, and its agreement became
+# ordinary rounding growth: 9.9e-9 m on the 60 s Rascal and, on a 1,000 s
+# four-aircraft case that a one-bit nudge of Rust itself also diverges, 7.3e-8 m,
+# 5.3e-8 m/s, 2.5e-9 rad, and 5.1e-9 rad/s. The limits are 100x the old ones:
+# 13x headroom over that worst case, and the planted-bug study was rerun at
+# these limits (reference/README.md, checker-sensitivity).
+POSITION_TOLERANCE_M = 1e-6
+VELOCITY_TOLERANCE_MPS = 1e-6
+ORIENTATION_TOLERANCE_RAD = 1e-7
+ANGULAR_VELOCITY_TOLERANCE_RADPS = 1e-7
 TIMESTAMP_TOLERANCE_S = 1e-9
 SUMMARY_TOLERANCE = 1e-6  # C++ summaries print six decimal places; Ripple's are exact.
 

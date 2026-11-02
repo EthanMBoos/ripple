@@ -94,6 +94,17 @@ class TraceComparisonTests(unittest.TestCase):
         self.assertEqual(result.max_output_error_port, "Straight.desired_speed")
         self.assertEqual(result.mismatch_count, 3)
 
+    def test_a_heading_a_full_turn_apart_matches_and_a_speed_does_not(self):
+        # A heading that wrapped to 2*pi on one side and 0 on the other.
+        reference = self.base() + [output(0.0, 1, "desired_heading", 0.0)]
+        wrapped = self.base() + [output(0.0, 1, "desired_heading", traces.TAU)]
+        result = traces.compare_traces(reference, wrapped)
+        self.assertEqual(result.max_output_error, 0.0)
+        self.assertTrue(result.passed)
+        speed = self.base()
+        speed[4] = output(0.0, 1, "desired_speed", 20.0 + traces.TAU)
+        self.assertFalse(traces.compare_traces(self.base(), speed).passed)
+
     def test_cpp_publications_pair_with_rust_readings(self):
         def states(x, ids, cov=None):
             states = [{"id": i, "p": [x, 0, 0], "v": [0, 0, 0], "q": [1, 0, 0, 0],

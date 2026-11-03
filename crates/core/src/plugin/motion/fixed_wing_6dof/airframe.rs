@@ -182,6 +182,13 @@ const LB: f64 = 0.45359237;
 /// with up-elevator, a defect of the file; `signed_elevator_drag` restores
 /// it for the comparison). The thrust range (0 to 25 N) has no JSBSim
 /// counterpart: JSBSim turns a propeller.
+///
+/// Upgrade, weeks, not needed for the study: powered flight from the file's
+/// propeller, JSBSim's `18x8` tables (thrust and power coefficients against
+/// advance ratio) turned by its 2207 W motor, replacing the constant 0 to
+/// 25 N, plus the propeller's torque and P-factor. The PID flies thrust, not
+/// a propeller, so the study never needs it; the Aerosonde shows the shape
+/// (`motion/aerosonde/propeller.rs`).
 fn rascal() -> Result<Vehicle> {
     let (span_m, chord_m) = (9.17 * FT, 1.15 * FT);
     // The fueled center of mass, from the 13 lb airframe at (36.4, 0, 4) in

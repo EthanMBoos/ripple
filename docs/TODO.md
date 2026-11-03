@@ -213,13 +213,6 @@ sweeps are days of work, and the calls run in parallel over a few days.
       mission; it is a contract test of Ripple's own courier and controller,
       not a check against anything outside. Call it a simulated arrival: the
       Land skill fires on distance and dwell, never on ground contact.
-- [ ] Later, weeks, not needed for the study: powered flight for the Rascal,
-      a propeller model from JSBSim's `18x8` tables with the 2207 W motor,
-      replacing the constant 0 to 25 N thrust, plus its torque and
-      P-factor. The PID flies thrust, not a propeller, so the study never
-      needs it. Also, if the glides should match closer than 5 cm: a standard
-      atmosphere as a mission key that is off by default, so a long descent
-      changes the air density as it does in JSBSim.
 
 ## Not planned
 

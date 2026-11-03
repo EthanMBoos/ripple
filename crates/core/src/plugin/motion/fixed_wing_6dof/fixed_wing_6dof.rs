@@ -182,6 +182,11 @@ impl Default for FixedWingParams {
             gravity_mps2: 9.81,
             inertia_slug_ft2: None,
             inertia_kgm2: None,
+            // Constant. Upgrade, if the glides should match JSBSim closer
+            // than their 2 to 4 cm: a standard atmosphere as a mission key,
+            // off by default, so a long descent raises the air density as it
+            // does in JSBSim (the density's rise over a 5 s glide moves the
+            // end by up to 0.16 m, `paper/data/jsbsim-rascal/summary.md`).
             air_density_kgpm3: 1.225,
             wing_span_m: None,
             wing_area_m2: None,

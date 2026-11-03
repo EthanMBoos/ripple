@@ -165,9 +165,9 @@ struct FixedWingParams {
     signed_elevator_drag: bool,
     /// Environment: the speed of sound, for the Mach tables only.
     speed_of_sound_mps: f64,
-    enable_ground_spring: bool,
     /// Wheels that roll on the ground (YAML only; see `landing_gear.rs`).
-    /// Replaces the flat spring, so `enable_ground_spring` must be false.
+    /// Without them the model has no ground: GroundCollision or
+    /// TerrainCollision removes an aircraft that reaches it.
     landing_gear: Vec<Wheel>,
     enable_launcher: bool,
     launch_at_s: f64,
@@ -233,7 +233,6 @@ impl Default for FixedWingParams {
             signed_elevator_drag: false,
             // The standard atmosphere's sea-level value.
             speed_of_sound_mps: 340.294,
-            enable_ground_spring: true,
             landing_gear: Vec::new(),
             enable_launcher: false,
             launch_at_s: 30.0,
@@ -259,7 +258,6 @@ pub struct FixedWingConfig {
     aileron_limits_rad: [f64; 2],
     rudder_limits_rad: [f64; 2],
     aerodynamics: Aerodynamics,
-    enable_ground_spring: bool,
     landing_gear: Vec<Wheel>,
     enable_launcher: bool,
     launch_at_s: f64,
@@ -297,10 +295,6 @@ impl TryFrom<FixedWingParams> for FixedWingConfig {
                 && vehicle.aileron_limits_rad[0] <= vehicle.aileron_limits_rad[1]
                 && vehicle.rudder_limits_rad[0] <= vehicle.rudder_limits_rad[1],
             "FixedWing6DOF requires each min_*_rad <= max_*_rad"
-        );
-        ensure!(
-            params.landing_gear.is_empty() || !params.enable_ground_spring,
-            "FixedWing6DOF: set enable_ground_spring to false with landing_gear; the wheels replace it"
         );
         check_table("lift_table", "alpha_rad", "C_L", &vehicle.lift_table)?;
         check_table("drag_table", "alpha_rad", "C_D", &vehicle.drag_table)?;
@@ -350,7 +344,6 @@ impl TryFrom<FixedWingParams> for FixedWingConfig {
                 params.speed_of_sound_mps,
                 params.signed_elevator_drag,
             ),
-            enable_ground_spring: params.enable_ground_spring,
             landing_gear: params.landing_gear,
             enable_launcher: params.enable_launcher,
             launch_at_s: params.launch_at_s,
@@ -403,14 +396,6 @@ impl MotionModel for FixedWing6Dof {
     }
 
     fn initialize(&mut self, context: &mut MotionContext) -> Result<()> {
-        // The inherited ground model puts flat ground at z = 0, which terrain
-        // replaces; with both, an aircraft over a valley below z = 0 would be
-        // pushed up in mid-air.
-        ensure!(
-            context.terrain.is_none() || !self.config.enable_ground_spring,
-            "FixedWing6DOF: set enable_ground_spring to false when terrain is configured; \
-             add TerrainCollision to remove aircraft that hit terrain"
-        );
         if let Some(terrain) = context.terrain {
             ensure!(
                 self.config.landing_gear.is_empty() || terrain.missing_samples() == 0,
@@ -568,14 +553,6 @@ impl FixedWingConfig {
             );
             force_n += gear_force_n;
             gear_moment_nm = moment_nm;
-        }
-        let (depth_m, sink_mps) = (state.position_ned_m.z, state.velocity_ned_mps.z);
-        if self.enable_ground_spring && depth_m > 0.0 {
-            // Inherited ground model: damping is only 40 N*s/m, not mass-scaled.
-            // This is not a validated landing model for the default eight-tonne
-            // aircraft; `landing_gear` is the real ground contact.
-            let ground_force_n = (400.0 * m * depth_m + 40.0 * sink_mps).max(0.0);
-            force_n += rotation.rotate_world_to_body(Vec3::new(0.0, 0.0, -ground_force_n));
         }
         if !flying {
             force_n = Vec3::zeros();

@@ -3,7 +3,7 @@
   "mission": "<checkout>/missions/verification/aircraft-substeps-spawning.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "8f35f1c156054d69e352d000bca40843a7b0fd463f77c9f40275f78a30516377",
+    "input_sha256": "90dac9c2455927cdb38f52a07a6b9a1dfda08916ec729cf94738c89420b0d574",
     "xml_sha256": "e81c2c05d230f87039356f17438502a8530634953ec9b1990ea8c1f1c1e5b289",
     "effective_sha256": "d05e892ada07d27fd16426e8eea8c5a29944a860c4a5cc0a98ffc4769b866fbf",
     "run_overrides": {
@@ -32,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-11-03_00-23-20",
+  "cpp_log_directory": "cpp/logs/2026-11-03_11-17-05",
   "cpp_output_hashes": {
     "frames.bin": "0604cdff277ccead47055496f23d87eac5f433b30cc00f4daacf9a73d4c2f096",
     "summary.csv": "95c0678548759ec6f4d1501648b949dc524f528791bd6eb6320d0f2c986d5835"
@@ -60,7 +60,7 @@
     "/summary": true,
     "metadata": true
   },
-  "recording_sha256": "ded437e374021f6948ff7ad4d18b9b6526d30ee303b0d6c0bbdb48005151e689",
+  "recording_sha256": "074b4f34d567bb02734fc81e2c647db63ee74b567b224aaeb218fcfc9d76c13a",
   "trace_equality": {
     "/entities": true,
     "/frames": true,

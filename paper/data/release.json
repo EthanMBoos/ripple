@@ -7,7 +7,7 @@
       "passed": true,
       "note": "no workload slower than the baseline",
       "date": "2026-11-03",
-      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
+      "source_sha256": "1f8fab32cf3ec9f110b8f1027d2e351d2665e900a9a03b1d6163e11a0dd0b15d",
       "evidence": "paper/data/speed-regression/"
     },
     "rust-tests": {
@@ -16,8 +16,8 @@
       "criterion": "every test passes, no lint or format finding",
       "passed": true,
       "note": "",
-      "date": "2026-11-02",
-      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
+      "date": "2026-11-03",
+      "source_sha256": "1f8fab32cf3ec9f110b8f1027d2e351d2665e900a9a03b1d6163e11a0dd0b15d",
       "evidence": null
     },
     "rust-determinism": {
@@ -26,8 +26,8 @@
       "criterion": "byte-identical frames, events, and summaries on every mission and workload",
       "passed": true,
       "note": "44 missions, 0 differing",
-      "date": "2026-11-02",
-      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
+      "date": "2026-11-03",
+      "source_sha256": "1f8fab32cf3ec9f110b8f1027d2e351d2665e900a9a03b1d6163e11a0dd0b15d",
       "evidence": "paper/data/rust-determinism/"
     },
     "cpp-agreement": {
@@ -36,8 +36,8 @@
       "criterion": "states within tolerance, identical deliveries, summaries equal or explained, C++ instrumentation and Rust variants byte-identical",
       "passed": true,
       "note": "15 of 15 pass",
-      "date": "2026-11-02",
-      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
+      "date": "2026-11-03",
+      "source_sha256": "1f8fab32cf3ec9f110b8f1027d2e351d2665e900a9a03b1d6163e11a0dd0b15d",
       "evidence": "paper/data/cpp-agreement/"
     },
     "cpp-generated": {

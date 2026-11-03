@@ -212,7 +212,7 @@ networks:
 templates:
   robot:
     position_m: [0, 0, 0]
-    position_variance_m2: [0, 0, 0]
+    position_stddev_m: [0, 0, 0]
     visual_model: sphere
     autonomy:
       WaypointFollower:

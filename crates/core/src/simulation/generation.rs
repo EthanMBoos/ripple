@@ -101,12 +101,14 @@ impl Simulation {
             SpawnField::Heading,
             0,
             spawn.heading_world_deg,
-            spawn.heading_variance_deg2.sqrt(),
+            spawn.heading_stddev_deg,
         );
         let mut position_world_m = origin_world_m;
 
-        if self.startup_collision_exists(position_world_m) || spawn.randomize_every_spawn {
-            let stddev_world_m = spawn.position_variance_world_m2.map(f64::sqrt);
+        // A spread is always sampled; an exact start only moves off something
+        // already there.
+        let stddev_world_m = spawn.position_stddev_world_m;
+        if stddev_world_m != Vec3::zeros() || self.startup_collision_exists(position_world_m) {
             let mut found_free_position = false;
 
             for attempt in 0..1_000_000 {

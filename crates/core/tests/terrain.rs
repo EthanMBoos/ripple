@@ -165,9 +165,9 @@ fn flying_onto_the_grid_does_not_mix_the_ground_outside_with_the_edge() -> Resul
 }
 
 #[test]
-fn fixed_wing_refuses_its_flat_ground_model_with_terrain() -> Result<()> {
+fn fixed_wing_flies_a_terrain_mission() -> Result<()> {
     let terrain = ridge("terrain-fixed-wing", false)?;
-    let scenario = |use_ground_model: bool| -> Result<ScenarioConfig> {
+    let scenario = || -> Result<ScenarioConfig> {
         Ok(ScenarioConfig {
             run: RunConfig {
                 dt_s: 0.01,
@@ -187,29 +187,21 @@ fn fixed_wing_refuses_its_flat_ground_model_with_terrain() -> Result<()> {
                 velocity_mps: Vec3::new(220.0, 0.0, 0.0),
                 visual_model: "sphere".into(),
                 autonomy: vec![
-                    PluginConfig::new("Straight").with_params(serde_json::json!({"speed_mps": 220}))?,
+                    PluginConfig::new("Straight")
+                        .with_params(serde_json::json!({"speed_mps": 220}))?,
                 ],
                 controller: vec![
                     PluginConfig::new("AircraftPIDController")
                         .with_params(serde_json::json!({"airframe": "a4d"}))?,
                 ],
-                motion_model: PluginConfig::new("FixedWing6DOF").with_params(
-                    serde_json::json!({"airframe": "a4d", "enable_ground_spring": use_ground_model}),
-                )?,
+                motion_model: PluginConfig::new("FixedWing6DOF")
+                    .with_params(serde_json::json!({"airframe": "a4d"}))?,
                 ..EntityGroupConfig::default()
             }],
             ..ScenarioConfig::default()
         })
     };
-    let error = Simulation::new(scenario(true)?, &PluginRegistry::with_builtins(), 1)
-        .err()
-        .expect("flat ground with terrain");
-    assert!(
-        format!("{error:#}")
-            .contains("set enable_ground_spring to false when terrain is configured"),
-        "{error:#}"
-    );
-    let mut simulation = Simulation::new(scenario(false)?, &PluginRegistry::with_builtins(), 1)?;
+    let mut simulation = Simulation::new(scenario()?, &PluginRegistry::with_builtins(), 1)?;
     while simulation.step()?.is_some() {}
     fs::remove_dir_all(terrain.parent().unwrap())?;
     Ok(())

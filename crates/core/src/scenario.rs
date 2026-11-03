@@ -174,13 +174,14 @@ pub struct EntityGroupConfig {
     pub count: usize,
     pub spawn: Option<Spawn>,
     pub position_m: Vec3,
-    pub position_variance_m2: Vec3,
+    /// Standard deviation of the start positions; an entity with a spread is
+    /// always sampled around `position_m`.
+    pub position_stddev_m: Vec3,
     pub heading_deg: f64,
-    pub heading_variance_deg2: f64,
+    pub heading_stddev_deg: f64,
     pub roll_deg: f64,
     pub pitch_deg: f64,
     pub velocity_mps: Vec3,
-    pub randomize_every_spawn: bool,
     #[serde(deserialize_with = "crate::mission::plugins")]
     pub autonomy: Vec<PluginConfig>,
     #[serde(deserialize_with = "crate::mission::plugins")]
@@ -208,13 +209,12 @@ impl Default for EntityGroupConfig {
             count: 1,
             spawn: None,
             position_m: Vec3::zeros(),
-            position_variance_m2: Vec3::zeros(),
+            position_stddev_m: Vec3::zeros(),
             heading_deg: 0.0,
-            heading_variance_deg2: 0.0,
+            heading_stddev_deg: 0.0,
             roll_deg: 0.0,
             pitch_deg: 0.0,
             velocity_mps: Vec3::zeros(),
-            randomize_every_spawn: false,
             autonomy: Vec::new(),
             controller: Vec::new(),
             // Construction rejects a missing model rather than choosing physics implicitly.
@@ -340,22 +340,22 @@ impl EntityGroupConfig {
             self.position_m
                 .iter()
                 .chain(self.velocity_mps.iter())
-                .chain(self.position_variance_m2.iter())
+                .chain(self.position_stddev_m.iter())
                 .all(|value| value.is_finite())
                 && [
                     self.heading_deg,
-                    self.heading_variance_deg2,
+                    self.heading_stddev_deg,
                     self.roll_deg,
                     self.pitch_deg
                 ]
                 .iter()
                 .all(|value| value.is_finite()),
-            "entity position, velocity, attitude and variances must be finite"
+            "entity position, velocity, attitude and spreads must be finite"
         );
         ensure!(
-            self.position_variance_m2.iter().all(|value| *value >= 0.0)
-                && self.heading_variance_deg2 >= 0.0,
-            "spawn variances must be nonnegative"
+            self.position_stddev_m.iter().all(|value| *value >= 0.0)
+                && self.heading_stddev_deg >= 0.0,
+            "spawn spreads must be nonnegative"
         );
         if let Some(spawn) = &self.spawn {
             ensure!(

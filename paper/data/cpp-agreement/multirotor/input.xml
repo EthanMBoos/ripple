@@ -24,7 +24,7 @@
     <variance_heading>0.0</variance_heading>
     <roll>0.0</roll>
     <pitch>0.0</pitch>
-    <use_variance_all_ents>false</use_variance_all_ents>
+    <use_variance_all_ents>true</use_variance_all_ents>
     <autonomy speed="0">Straight</autonomy>
     <controller speeds="821.5838362577492 821.5838362577492 821.5838362577492 821.5838362577492">MotorSpeeds</controller>
     <motion_model c_D="0.058" c_Q="2.284e-07" c_T="5.45e-06" mass="1.5" omega_max="1200" omega_min="346.41" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model>
@@ -47,7 +47,7 @@
     <variance_heading>0.0</variance_heading>
     <roll>5.0</roll>
     <pitch>8.0</pitch>
-    <use_variance_all_ents>false</use_variance_all_ents>
+    <use_variance_all_ents>true</use_variance_all_ents>
     <autonomy speed="0">Straight</autonomy>
     <controller speeds="821.5838362577492 821.5838362577492 821.5838362577492 821.5838362577492">MotorSpeeds</controller>
     <motion_model c_D="0.058" c_Q="2.284e-07" c_T="5.45e-06" mass="1.5" omega_max="1200" omega_min="346.41" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model>
@@ -70,7 +70,7 @@
     <variance_heading>0.0</variance_heading>
     <roll>3.0</roll>
     <pitch>0.0</pitch>
-    <use_variance_all_ents>false</use_variance_all_ents>
+    <use_variance_all_ents>true</use_variance_all_ents>
     <autonomy speed="0">Straight</autonomy>
     <controller speeds="820 821 823 822">MotorSpeeds</controller>
     <motion_model c_D="0.058" c_Q="2.284e-07" c_T="5.45e-06" mass="1.5" omega_max="1200" omega_min="346.41" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" rotor_config="[CCW 0 -0.175 0 0 0 0] [CCW 0 0.175 0 0 0 0] [CW 0.175 0 0 0 0 0] [CW -0.175 0 0 0 0 0]">Multirotor</motion_model>
@@ -93,7 +93,7 @@
     <variance_heading>0.0</variance_heading>
     <roll>0.0</roll>
     <pitch>0.0</pitch>
-    <use_variance_all_ents>false</use_variance_all_ents>
+    <use_variance_all_ents>true</use_variance_all_ents>
     <autonomy speed="0">Straight</autonomy>
     <controller speeds="680 680 680 680 680 680">MotorSpeeds</controller>
     <motion_model c_D="0.058" c_Q="2.284e-07" c_T="5.45e-06" mass="1.5" omega_max="1200" omega_min="346.41" inertia_matrix="[0.0122 0 0] [0 0.0122 0] [0 0 0.0244]" rotor_config="[CW 0.2 0 0 0 0 0] [CCW 0.1 0.17320508075688773 0 0 0 0] [CW -0.1 0.17320508075688773 0 0 0 0] [CCW -0.2 0 0 0 0 0] [CW -0.1 -0.17320508075688773 0 0 0 0] [CCW 0.1 -0.17320508075688773 0 0 0 0]">Multirotor</motion_model>

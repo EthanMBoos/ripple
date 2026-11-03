@@ -4,8 +4,8 @@
   "passed": true,
   "input": {
     "input_sha256": "ae2ad5f4e80f331939941c2c4efeead784d3d580caa15549634f1cf9bde4dc5d",
-    "xml_sha256": "ca44b64de07ac776f7233cd15f4fa0a6ee9c56aeef8f5c20df2193c9a8f51247",
-    "effective_sha256": "7dde9f3a4278cbdee50be184443b7ef52d24901afb12bb8e2611212aff51f4e2",
+    "xml_sha256": "e681cefda3c9aea5a0878436ea1fa0e91e14f823ea9e6d9fc5d8bba890e2b06d",
+    "effective_sha256": "2fe60f847bb75d33edf62a77a6cd721063ddcaed9d95bc8d4b8896df2328ff31",
     "run_overrides": {
       "enable_gui": "false",
       "network_gui": "false",
@@ -32,7 +32,7 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-11-03_00-23-32",
+  "cpp_log_directory": "cpp/logs/2026-11-03_11-17-18",
   "cpp_output_hashes": {
     "frames.bin": "0bf63a8d6b9cd5c770c089fea9c9908aad2b3759d55a877ae1a72defaac17ff9",
     "summary.csv": "63ab66b50b669faae85cb8ba2c786f8f315386fc8f758130148eb979e980d67d"
@@ -60,7 +60,7 @@
     "/summary": true,
     "metadata": true
   },
-  "recording_sha256": "1095bafe97d4b2be3cbed52c873ad7a77db42ed395745bda9d71a31bfb3f849f",
+  "recording_sha256": "7e4b015f90c89aba84e7aabb3a9ae7462b5952de39a1ab14506f2d51821dee3f",
   "trace_equality": {
     "/entities": true,
     "/frames": true,

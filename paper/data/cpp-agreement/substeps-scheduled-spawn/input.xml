@@ -28,7 +28,7 @@
     <variance_heading>0.0</variance_heading>
     <roll>5.0</roll>
     <pitch>3.0</pitch>
-    <use_variance_all_ents>true</use_variance_all_ents>
+    <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy speed="24" loop_rate="5.0">Straight</autonomy>
     <controller loop_rate="20.0">SimpleAircraftControllerPID</controller>
     <motion_model>SimpleAircraft</motion_model>

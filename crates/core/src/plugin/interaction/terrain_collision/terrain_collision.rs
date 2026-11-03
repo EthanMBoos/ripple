@@ -19,9 +19,6 @@
 //! motion model's landing gear) are not a collision, a nose or wingtip strike
 //! is. Each point moves in a straight line from its last position, so a fast
 //! rotation within one step is only approximated.
-//!
-//! FixedWing6DOF's own flat ground at `z = 0` (`enable_ground_spring`) must be off
-//! in terrain missions; FixedWing6DOF refuses to start otherwise.
 use anyhow::{Context, Result, ensure};
 use serde::Deserialize;
 use std::collections::BTreeMap;

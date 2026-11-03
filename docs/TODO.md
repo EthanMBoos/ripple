@@ -203,6 +203,80 @@ sweeps are days of work, and the calls run in parallel over a few days.
 
 ## Engine
 
+- [ ] Bring the Crazyflie's checks to the Rascal's level of rigor
+      (`reference/crazyflow_check.py`, `reference/rotors_motor.py`, against
+      `reference/jsbsim_check.py`). Two days. The outcome to reach: the
+      common physics agrees with Crazyflow; RotorS-style drag agrees with
+      RotorS at the rotor and the vehicle-load level; the flight difference
+      from Crazyflow's lumped drag is measured and explained. No physics
+      option goes into Multirotor for the test's sake; adaptations live in
+      the harness. In parts:
+      - Confirm what the 4 m drag difference is. With rotor drag on, Ripple
+        and Crazyflow end 4 m apart over 3 s (`paper/data/crazyflow-crazyflie`),
+        reported and not judged because the forms differ. The kept run says
+        it is the spin: the unequal commands spin the vehicle up at a steady
+        0.72 rad/s² in both without drag (0.73, 1.45, 2.17 rad/s at 1, 2,
+        3 s); Crazyflow's drag matrix, a force at the center of mass, leaves
+        that spin untouched (the same three numbers), while Ripple's RotorS
+        drag acts at each hub on the hub's own velocity, rotation included,
+        so its moments damp it (0.57, 0.91, 1.05 rad/s), and the tilted
+        thrust takes the two apart (Ripple at -3.8 m, Crazyflow at -7.5 m by
+        3 s). That is a reading, not a test. Crazyflow's dynamics take an
+        external force and torque, so `reference/crazyflow/integrate.py` can
+        compute Ripple's hub drag from Crazyflow's state each step and feed
+        it in: once as the force alone, once with its torque. If the first
+        spins like no-drag and the second damps to Ripple's rate, the
+        explanation stands; the drag case then keeps its measured, explained
+        difference, and the fed-in run joins the common-physics agreement
+        (it checks integration of a model we wrote, like the no-drag case,
+        not a second opinion on the drag).
+      - A whole-vehicle loads grid: held states (attitude, velocity, body
+        rates, every motor commanded, unequal speeds among them) where
+        Ripple's summed force and moment about its center of mass, from
+        Multirotor's own derivative, are compared with Crazyflow's force and
+        moment function (common physics) and with the sum of RotorS's rotor
+        loads (drag on). Summing six calls of Ripple's per-rotor function
+        would pass with the assembly, the hub offsets, or the frame
+        conversion wrong, so the production derivative is what is compared.
+        Errors scaled by the individual rotor loads, not the net, since at
+        hover the net moment is near zero. The Firefly goes through the same
+        grid with its own numbers (0.215 m arms, six hubs 0.037 m up, its
+        drag coefficient and motor lag; the RotorS case today uses RotorS's
+        defaults, 0.17 m and 1.0e-4), with forward motion to its 12 m/s
+        cruise and a climb among the held states. Samples pinned as a
+        committed fixture that a unit test reads, as
+        `jsbsim_rascal_samples.json` is; the release check regenerates them.
+        RotorS today covers one rotor at a time. Alongside, a small test
+        that asserts the Firefly preset's six positions, order, and spin
+        directions, inertia, coefficients, speed limit, and the 1.545 kg
+        from the modeled parts against the pinned xacro, so an edit to the
+        preset shows.
+      - Flights inside the valid range: several starts and command sets
+        (hover, climb, yaw, a tilt), 3 to 5 s, that stay airborne (the
+        current drag flight starts at 2 m and is at -3.8 m by 3 s, through a
+        ground the model does not have; `multirotor.rs` claims flight away
+        from the ground). Report the speeds, rates, and command range
+        reached. Keep the spinning case as a labeled stress case.
+      - Limits set before the comparison, from the check's own
+        sensitivities (Crazyflow and Ripple each at a finer step), for
+        position, attitude, and rates, not a fixed 1e-6 m on position
+        alone.
+      Record the results under a "Checked against Crazyflow" bullet in
+      `REFERENCE_NOTES.md` like the JSBSim one, with the before numbers. No
+      RotorS or Gazebo flight: the harness compiles RotorS's motor code
+      without either, a flight would mostly compare controllers and contact
+      models, and a trajectory mismatch could not be attributed the way a
+      load mismatch can.
+- [ ] One short Courier run on the Firefly, as a test in `crates/delivery`
+      with a fixed assignment and no model call: a Firefly sent from the
+      depot to a nearby rooftop, approaching at its 12 m/s cruise, entering
+      the 3 m arrival radius, completing the dwell, and returning. Check the
+      phase transitions, the delivery event, a finite trajectory, and an
+      altitude and speed envelope. Half a day. This is the link
+      `delivery-firefly.yaml` relies on, tested without an hour-long
+      mission; it is a contract test of Ripple's own courier and controller,
+      not a check against anything outside. Call it a simulated arrival: the
+      Land skill fires on distance and dwell, never on ground contact.
 - [ ] Later, weeks, not needed for the study: powered flight for the Rascal,
       a propeller model from JSBSim's `18x8` tables with the 2207 W motor,
       replacing the constant 0 to 25 N thrust, plus its torque and
@@ -219,34 +293,6 @@ sweeps are days of work, and the calls run in parallel over a few days.
       no run code: no complete, pinned implementation of that model exists to
       compare against, so the doc comment says so. No AircraftPIDController gain
       set until a mission flies it under the PID.
-- [ ] Later: FixedWing6DOF's ground spring defaults on (flat ground at z = 0,
-      a spring of 400 times mass per metre, damping of 40 N s/m that is not
-      mass-scaled). The landing gear replaced it, so default it off and point
-      at GroundCollision and the gear. The XML writer already carries the
-      flag, so the comparison follows.
-- [ ] Drop SCRIMMAGE's mission shapes where the XML writer can carry the
-      difference instead (`reference/scrimmage_xml.py`), keeping the
-      comparison. Two now, half a day each:
-      - Spawn spread as a standard deviation in metres and degrees
-        (`position_variance_m2`, `heading_variance_deg2` become
-        `position_stddev_m`, `heading_stddev_deg`). Rust already takes the
-        square root before sampling; the writer squares the key for
-        SCRIMMAGE, which takes the root again, exact for the round values the
-        missions use. Ten missions, `perf.py`, and `generate_scenarios.py`
-        carry the keys.
-      - One spawn rule instead of `randomize_every_spawn`: an entity with a
-        spread is always sampled around its start, a zero spread is exact.
-        The writer sets `use_variance_all_ents` to true. The six missions
-        that give a spread without the flag change (their first entity
-        leaves the exact start), the C++ references regenerate in the suite,
-        and sweeps on those missions must be rerun.
-      Staying: PID gains are already named (`kp`, `ki`, `kd`,
-      `integrate_within_deg`), and the band keeps degrees, the unit a mission
-      author thinks in; generation one step before the start is a timing
-      rule, and holding it in Python would mean shifting SCRIMMAGE's clock
-      and every schedule by a step in the XML and the comparator, so it waits
-      for the comparison to retire. Update "Left behind when the comparison
-      is retired" in `REFERENCE_NOTES.md` to match.
 
 ## Not planned
 

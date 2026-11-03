@@ -169,7 +169,7 @@ entities:
       batch_size: 1
     position_m: [10.123456789, -3.000000123, 0]
     heading_deg: 90
-    heading_variance_deg2: 100
+    heading_stddev_deg: 10
     motion_model:
       Still:
 ",
@@ -262,8 +262,7 @@ entities:
     team: 2
     count: 2
     position_m: [50, 0, 0]
-    position_variance_m2: [100, 100, 0]
-    randomize_every_spawn: true
+    position_stddev_m: [10, 10, 0]
     motion_model:
       Still:
 {extra_target}"

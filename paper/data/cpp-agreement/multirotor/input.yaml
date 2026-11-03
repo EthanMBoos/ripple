@@ -14,7 +14,7 @@ metrics: {SimpleCollisionMetrics: {}}
 
 templates:
   hovering_quad:
-    position_variance_m2: [100, 100, 0]
+    position_stddev_m: [10, 10, 0]
     visual_model: sphere
     autonomy:
       Straight:

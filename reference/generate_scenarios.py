@@ -6,7 +6,7 @@
 
 Each mission is a seeded draw over: timestep, horizon, motion substeps, entity
 families (SimpleAircraft, SingleIntegrator, FixedWing6DOF), start states, update
-rates, spawn schedules and positional variance, sensor biases (zero noise), and
+rates, spawn schedules and position spreads, sensor biases (zero noise), and
 interactions (SimpleCollision, GroundCollision, Boundary). Every choice is
 comparable: spawn draws are keyed on both sides (SCRIMMAGE_KEYED_RANDOM=1),
 sensor noise is zero, and FixedWing6DOF runs without substeps. Missions are
@@ -90,16 +90,14 @@ def mission(rng, index, horizon=None):
         count = rng.randint(1, 3)
         position = [rng.uniform(-500, 500), rng.uniform(-500, 500),
                     rng.uniform(100, 300) if not fixed_wing else rng.uniform(800, 1200)]
-        variance = [rng.choice([0, 0, 25, 100]), rng.choice([0, 0, 25, 100]), 0]
+        spread = [rng.choice([0, 0, 5, 10]), rng.choice([0, 0, 5, 10]), 0]
         if collisions:
-            # Entities sharing a start need variance for collision-free placement.
-            variance = [max(value, 400) for value in variance[:2]] + [0]
+            # Entities sharing a start need a spread for collision-free placement.
+            spread = [max(value, 20) for value in spread[:2]] + [0]
         group = {"team": rng.randint(1, 3), "count": count, "visual_model": "sphere",
                  "position_m": [fmt(value) for value in position],
-                 "position_variance_m2": variance,
-                 "heading_variance_deg2": rng.choice([0, 0, 25])}
-        if rng.random() < 0.3:
-            group["randomize_every_spawn"] = True
+                 "position_stddev_m": spread,
+                 "heading_stddev_deg": rng.choice([0, 0, 5])}
         if rng.random() < 0.35:
             group["spawn"] = {"rate_hz": fmt(rng.uniform(0.5, 4)), "batch_size": rng.randint(1, 2),
                               "start_s": fmt(rng.uniform(0, 1)),

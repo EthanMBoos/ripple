@@ -209,7 +209,7 @@ unless set) is where the coefficients act relative to the center of mass;
 the moment about the center of mass adds that arm crossed with the force.
 `signed_elevator_drag` (off) takes the elevator drag from the signed
 deflection, as JSBSim's Rascal file does, instead of its size; it belongs to
-no airframe. `enable_ground_spring` (on by default) is a flat spring at
-z = 0, which `landing_gear` or terrain replaces; `enable_launcher` with
-`launch_at_s`, `launch_speed_mps`, and `launch_acceleration_mps2` is a
-catapult.
+no airframe. The model has no ground of its own: GroundCollision or
+TerrainCollision removes an aircraft that reaches the ground, and
+`landing_gear` lets it roll on it. `enable_launcher` with `launch_at_s`,
+`launch_speed_mps`, and `launch_acceleration_mps2` is a catapult.

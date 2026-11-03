@@ -21,7 +21,7 @@ Local `z = 0` is the terrain's origin altitude above sea level (300 m for
 McMillan). So an agent at `z = 100`
 flies 400 m above sea level, and the ground there is `height_at` metres above or
 below `z = 0`. Place agents above the ground: a spawn position below it is
-redrawn within the group's position variance, and with no variance the run
+redrawn within the group's position spread, and with no spread the run
 stops with "unable to find collision-free spawn position".
 
 "Sea level" is whatever vertical reference the elevation data uses: USGS
@@ -66,11 +66,8 @@ The viewer draws the terrain as triangles through the samples (skipping some on
 large grids), while collisions use the smooth interpolated surface, so an agent
 that looks like it touches the drawn ground may not quite, and the reverse.
 
-FixedWing6DOF has its own flat ground at `z = 0` (`enable_ground_spring`, on by
-default), which would push aircraft up in mid-air over valleys below `z = 0`.
-It refuses to start in a terrain mission unless `enable_ground_spring` is false;
-add TerrainCollision to remove aircraft that hit the terrain, or give it
-landing gear.
+No motion model has a ground of its own: add TerrainCollision to remove
+aircraft that hit the terrain, or give FixedWing6DOF landing gear.
 
 Not modelled: trees and buildings (the McMillan data is bare ground), terrain
 blocking sensors, and terrain beyond the grid.
@@ -88,7 +85,6 @@ JSBSim Rascal (`Rascal.xml`):
 motion_model:
   FixedWing6DOF:
     airframe: rascal
-    enable_ground_spring: false      # the wheels replace the flat spring
     landing_gear:
       # forward, right, down from the centre of gravity (m)
       - {position_frd_m: [0.084, -0.328, 0.434], spring_n_per_m: 7005, damping_n_s_per_m: 1459,
@@ -154,9 +150,9 @@ Four choices follow:
 
 - **One shared ground.** Collision, the viewer, and later ground reactions
   all read the same `Terrain`, so they can never disagree about where the
-  ground is. That is also why FixedWing6DOF refuses
-  its old flat-ground spring when terrain is configured: two definitions of the
-  ground would push aircraft up in mid-air over valleys below `z = 0`.
+  ground is. FixedWing6DOF's inherited flat spring at `z = 0` went for the
+  same reason: two definitions of the ground would push aircraft up in
+  mid-air over valleys below `z = 0`.
 - **Crash by default.** The research this simulator serves is mostly
   airborne: swarms, routes, and sensing over terrain. For that, "remove the
   agent when it hits the ground" is the whole requirement, and it works for

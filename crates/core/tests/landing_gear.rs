@@ -46,7 +46,6 @@ fn rascal_motion(gear: serde_json::Value) -> serde_json::Value {
     json!({
         "airframe": "rascal",
         "c_yaw_0": 0.0,
-        "enable_ground_spring": false,
         "landing_gear": gear,
     })
 }

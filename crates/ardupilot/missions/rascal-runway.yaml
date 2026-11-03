@@ -84,7 +84,6 @@ entities:
         # The Rascal 110: ArduPilot's JSBSim Rascal (see airframe.rs).
         airframe: rascal
         enable_launcher: false
-        enable_ground_spring: false
         landing_gear:
           # forward, right, down from the centre of gravity (m); JSBSim's Rascal
           - {position_frd_m: [0.084, -0.328, 0.434], spring_n_per_m: 7005, damping_n_s_per_m: 1459,

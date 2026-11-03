@@ -20,12 +20,11 @@ entities:
       batch_size: 1
       time_stddev_s: 0.02
     position_m: [10, 20, 200]
-    position_variance_m2: [4, 4, 1]
+    position_stddev_m: [2, 2, 1]
     heading_deg: 30
-    heading_variance_deg2: 9
+    heading_stddev_deg: 3
     roll_deg: 5
     pitch_deg: 3
-    randomize_every_spawn: true
     visual_model: sphere
     autonomy:
       Straight:

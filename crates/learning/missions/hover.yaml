@@ -21,9 +21,8 @@ entities:
     visual_model: sphere
     position_m: [0, 0, 5]
     # Standard deviations of 3 m across and 1 m up.
-    position_variance_m2: [9, 9, 1]
+    position_stddev_m: [3, 3, 1]
     # Draw the start from the variance (otherwise used only to escape a collision).
-    randomize_every_spawn: true
     autonomy:
       HoverPolicy:
         goal_m: [0, 0, 5]

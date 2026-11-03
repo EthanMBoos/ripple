@@ -16,7 +16,7 @@ entities:
   defaults:
     team: 1
     position_m: [0, 0, 100]
-    position_variance_m2: [100, 100, 0]
+    position_stddev_m: [10, 10, 0]
     autonomy: {Straight: {}}
     controller: {SimpleAircraftControllerPID: {}}
     motion_model: {SimpleAircraft: {}}
@@ -24,7 +24,7 @@ entities:
   values:
     team: 2
     position_m: [100, 0, 100]
-    position_variance_m2: [100, 100, 0]
+    position_stddev_m: [10, 10, 0]
     autonomy:
       Straight:
         speed_mps: 26

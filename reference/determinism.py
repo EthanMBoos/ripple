@@ -38,8 +38,8 @@ CLI_VARIANTS = [("w1", ["--workers", "1", "--headless"]),
 LOOKUP_VARIANTS = [("scan-w1", 1, None), ("scan-w8", 8, None), ("grid5-w1", 1, 5),
                    ("grid5-w8", 8, 5), ("grid0.7-w2", 2, 0.7), ("grid50-w2", 2, 50),
                    ("grid1000-w1", 1, 1000)]
-# Crowded collision missions: (position variance m^2, agents).
-CROWDED = [(100, 512), (400, 1024), (2500, 2048)]
+# Crowded collision missions: (position spread m, agents).
+CROWDED = [(10, 512), (20, 1024), (50, 2048)]
 
 
 def cases(scratch):
@@ -54,10 +54,10 @@ def cases(scratch):
             path = perf.write_mission(scratch / f"perf-{name}-{agents}.yaml",
                                       perf.workload(name, agents))
             found.append((f"perf {name}-{agents}", path, True, False))
-    for variance, agents in CROWDED:
-        path = perf.write_mission(scratch / f"crowded-{variance}-{agents}.yaml",
-                                  perf.workload("collision", agents, variance=variance))
-        found.append((f"crowded collision, variance {variance} m^2, {agents} agents",
+    for spread, agents in CROWDED:
+        path = perf.write_mission(scratch / f"crowded-{spread}-{agents}.yaml",
+                                  perf.workload("collision", agents, spread=spread))
+        found.append((f"crowded collision, spread {spread} m, {agents} agents",
                       path, True, False))
     path = perf.write_mission(scratch / "traced-contacts-16.yaml",
                               perf.workload("sensing", 16, end=0.5))

@@ -17,7 +17,7 @@ entities:
     team: 1
     visual_model: zephyr-blue
     position_m: [-900, 0, 195]
-    position_variance_m2: [20, 20, 10]
+    position_stddev_m: [4.5, 4.5, 3.2]
     heading_deg: 0
     autonomy:
       Straight:
@@ -29,7 +29,7 @@ entities:
     visual_model: zephyr-red
     count: 0
     position_m: [50, 0, 200]
-    position_variance_m2: [20, 20, 20]
+    position_stddev_m: [4.5, 4.5, 4.5]
     heading_deg: 180
     autonomy:
       Straight:

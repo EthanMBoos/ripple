@@ -17,13 +17,13 @@
     <generate_start_time>0.0</generate_start_time>
     <generate_time_variance>0.0</generate_time_variance>
     <x>-1000.0</x>
-    <variance_x>20.0</variance_x>
+    <variance_x>0.0</variance_x>
     <vx>0.0</vx>
     <y>0.0</y>
-    <variance_y>20.0</variance_y>
+    <variance_y>0.0</variance_y>
     <vy>0.0</vy>
     <z>200.0</z>
-    <variance_z>10.0</variance_z>
+    <variance_z>0.0</variance_z>
     <vz>0.0</vz>
     <heading>0.0</heading>
     <variance_heading>0.0</variance_heading>
@@ -44,13 +44,13 @@
     <generate_start_time>0.0</generate_start_time>
     <generate_time_variance>0.1</generate_time_variance>
     <x>1000.0</x>
-    <variance_x>20.0</variance_x>
+    <variance_x>0.0</variance_x>
     <vx>0.0</vx>
     <y>0.0</y>
-    <variance_y>20.0</variance_y>
+    <variance_y>0.0</variance_y>
     <vy>0.0</vy>
     <z>200.0</z>
-    <variance_z>10.0</variance_z>
+    <variance_z>0.0</variance_z>
     <vz>0.0</vz>
     <heading>180.0</heading>
     <variance_heading>0.0</variance_heading>

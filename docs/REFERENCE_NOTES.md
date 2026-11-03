@@ -279,10 +279,16 @@ comparison has proven what it needs to, they go.
 
 | What | Where | Replaced by |
 | --- | --- | --- |
-| Spawn spread given as a variance (`position_variance_m2`, `heading_variance_deg2`) | `entity.rs`, `scenario.rs` | A standard deviation in metres and degrees |
 | The first entities are created one step before the start time (generation runs at start − dt) | `simulation.rs` | Generation at the start time |
-| SCRIMMAGE's mission shapes: `randomize_every_spawn` (its `use_variance_all_ents`); PID gains in its order, with the integral band in degrees | `simulation/generation.rs`, `common/pid.rs` | Named gains and one spawn rule |
 | SCRIMMAGE's XML, written from a run's recorded scenario | `reference/scrimmage_xml.py`, `reference/scenario.py` | Nothing |
+
+Gone already (2026-11-03), with the XML writer carrying the difference: the
+spawn spread is a standard deviation (`position_stddev_m`,
+`heading_stddev_deg`; the writer squares it into SCRIMMAGE's variances), and
+an entity with a spread is always sampled around its start, where SCRIMMAGE's
+`use_variance_all_ents` chose (the writer sets it when the spread is
+nonzero). PID gains were already named; the integral band keeps degrees,
+SCRIMMAGE's unit and a mission author's.
 
 ## Core defects fixed on both sides
 
@@ -837,11 +843,13 @@ local `z = 0` is the terrain's origin altitude. There is nothing in C++ to
 compare it with.
 
 FixedWing6DOF's `landing_gear` and TerrainCollision's `structure_points_frd_m`
-are Rust-only too: C++ ground contact was the flat spring at `z = 0`
-(`use_ground_model`, Ripple's `enable_ground_spring`), which stays unchanged
-for the comparison missions. The
-gear follows JSBSim's FGLGear wheels (`landing_gear.rs`), so the comparison
-does not cover it; its own tests do (`crates/core/tests/landing_gear.rs`).
+are Rust-only too. C++ ground contact is a flat spring at `z = 0`
+(`use_ground_model`, 400 times the mass per metre and 40 N s/m of damping);
+Ripple dropped its copy on 2026-11-03, since the collision interactions and
+the gear are its ground, and `reference/scrimmage_xml.py` turns SCRIMMAGE's
+off in every compared mission. The gear follows JSBSim's FGLGear wheels
+(`landing_gear.rs`), so the comparison does not cover it; its own tests do
+(`crates/core/tests/landing_gear.rs`).
 
 FixedWing6DOF's `lift_table` and `drag_table` are Rust-only as well. C++ lift is
 linear in angle of attack (`C_L0 + C_L_alpha * alpha`) at any angle, so it never

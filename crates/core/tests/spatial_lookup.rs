@@ -47,7 +47,7 @@ fn chain(spatial_lookup: SpatialLookup) -> Result<ScenarioConfig> {
                 id: None,
                 count: 400,
                 position_m: Vec3::new(50_000.0, 0.0, 0.0),
-                position_variance_m2: Vec3::new(1e8, 1e8, 0.0),
+                position_stddev_m: Vec3::new(1e4, 1e4, 0.0),
                 ..agent(1, 0.0)?
             },
         ],

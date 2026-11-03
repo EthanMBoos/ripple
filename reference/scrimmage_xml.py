@@ -7,7 +7,7 @@ into the XML SCRIMMAGE reads, so both simulators run the same mission:
     write(scenario.recorded(run), "mission.xml")
 
 Every entity value is written, since SCRIMMAGE's defaults differ from Ripple's
-(spawn variance 100 m² against 0, sensor noise 5 m against none). Plugin
+(spawn spread 10 m against 0, sensor noise 5 m against none). Plugin
 parameters are written as the mission gives them; a parameter left out takes
 each simulator's own default, so a mission writes out any whose defaults differ
 (see docs/REFERENCE_NOTES.md). SCRIMMAGE has no estimators or terrain, so a
@@ -54,6 +54,10 @@ RUST_ONLY = {"FixedWing6DOF": {
     "aero_reference_frd_m": [0, 0, 0], "c_pitch_alpha_dot": 0, "c_yaw_0": 0,
     "lift_table": [], "drag_table": [], "sideslip_drag_table": [],
     "aileron_power_mach_table": [], "elevator_power_mach_table": []}}
+# SCRIMMAGE terms Ripple no longer has, held off in every compared mission:
+# its flat ground spring at z = 0 (the collision interactions and the landing
+# gear are Ripple's ground).
+RETIRED = {"FixedWing6DOF": {"use_ground_model": False}}
 # SCRIMMAGE's noise keys: `<prefix>_<axis>="bias stddev"`, from the named fields.
 NOISE_KEYS = (("pos_noise", "position_bias_m", "position_stddev_m"),
               ("vel_noise", "velocity_bias_mps", "velocity_stddev_mps"),
@@ -146,7 +150,7 @@ KEYS = {
         "c_pitch_elevator": "C_M_delta_elevator",
         "c_yaw_beta": "C_N_beta", "c_yaw_p": "C_NP", "c_yaw_r": "C_NR",
         "c_yaw_aileron": "C_N_delta_aileron", "c_yaw_rudder": "C_N_delta_rudder",
-        "enable_ground_spring": "use_ground_model", "enable_launcher": "use_launcher",
+        "enable_launcher": "use_launcher",
         "launch_at_s": "launch_time", "launch_acceleration_mps2": "launch_accel",
         "launch_speed_mps": "launch_speed"},
 }
@@ -193,7 +197,8 @@ def plugin(parent, tag, config, label_attribute="instance"):
     if given.pop("signed_elevator_drag", False):
         raise ValueError(f"{config['name']} signed_elevator_drag: SCRIMMAGE has no such form; "
                          "set it to False")
-    params = {**profile, **scrimmage_keys(config["name"], given)}
+    params = {**profile, **RETIRED.get(config["name"], {}),
+              **scrimmage_keys(config["name"], given)}
     if tag == "sensor" and config["name"] in NOISY_SENSORS:
         for prefix, bias, stddev in NOISE_KEYS:
             biases = params.pop(bias, [0, 0, 0])
@@ -258,16 +263,19 @@ def mission(scenario):
             element(entity, "generate_start_time", spawn["start_s"])
             # SCRIMMAGE calls this a variance, but reads it as a standard deviation.
             element(entity, "generate_time_variance", spawn["time_stddev_s"])
-        for axis, position, variance, velocity in zip(
-                "xyz", group["position_m"], group["position_variance_m2"], group["velocity_mps"]):
+        # SCRIMMAGE takes the spread as a variance, and samples every entity
+        # only when told to; Ripple samples whenever there is a spread.
+        spread = group["position_stddev_m"]
+        for axis, position, stddev, velocity in zip(
+                "xyz", group["position_m"], spread, group["velocity_mps"]):
             element(entity, axis, position)
-            element(entity, f"variance_{axis}", variance)
+            element(entity, f"variance_{axis}", stddev * stddev)
             element(entity, f"v{axis}", velocity)
         element(entity, "heading", group["heading_deg"])
-        element(entity, "variance_heading", group["heading_variance_deg2"])
+        element(entity, "variance_heading", group["heading_stddev_deg"] ** 2)
         element(entity, "roll", group["roll_deg"])
         element(entity, "pitch", group["pitch_deg"])
-        element(entity, "use_variance_all_ents", group["randomize_every_spawn"])
+        element(entity, "use_variance_all_ents", any(stddev != 0 for stddev in spread))
         for slot, tag in (("autonomy", "autonomy"), ("controller", "controller"),
                           ("sensors", "sensor")):
             for config in group[slot]:

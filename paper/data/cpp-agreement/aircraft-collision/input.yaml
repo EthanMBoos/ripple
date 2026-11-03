@@ -19,7 +19,6 @@ entities:
     health: 1
     count: 1
     position_m: [-1000, 0, 200]
-    position_variance_m2: [20, 20, 10]
     heading_deg: 0
     spawn:
       rate_hz: 0.5
@@ -36,7 +35,6 @@ entities:
     health: 1
     count: 1
     position_m: [1000, 0, 200]
-    position_variance_m2: [20, 20, 10]
     heading_deg: 180
     spawn:
       rate_hz: 0.5

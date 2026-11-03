@@ -37,6 +37,26 @@ entities:
             for 60 seconds before it can take another request. Plan using
             currently available information; additional requests may arrive.
             Reply with JSON only, no other text.
+          # Appended to the state; placeholders use the soft_avoidance values below.
+          soft_avoidance: >-
+            Soft avoidance fleet experiment (repeated decisions and trips):
+
+            First maximize weighted on-time deliveries; then total deliveries;
+            only then minimize J = T + beta * E across the fleet. T is summed
+            trip time in seconds, not elapsed mission time; E = sum of integral
+            r(x(t)) dt over outbound AND return flights of all vehicles.
+            Unserved requests count against delivery performance. Return every
+            assigned vehicle to the depot. Busy vehicles cannot be assigned;
+            returning vehicles become available again after reloading.
+
+            This static horizontal field allows crossing; it is not a no-fly zone.
+            With distance d in meters from center ({center_x_m}, {center_y_m}) m,
+            r(d) = A * (exp(-d/ell) - exp(-R/ell)) / (1 - exp(-R/ell)) for d < R;
+            r(d) = 0 for d >= R. A={peak_severity}, ell={decay_distance_m} m,
+            R={radius_m} m, beta={risk_weight}.
+            Severity is dimensionless, exposure has units of seconds.
+            The drop_via waypoint is used outbound AND inbound.
+            You choose the route; crossing the region will not cause rejection.
         requests: 4
         request_window_s: 120
         urgent_share: 0.5

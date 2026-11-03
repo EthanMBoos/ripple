@@ -194,6 +194,11 @@ impl Autonomy for Dispatcher {
         if let Some(field) = &config.soft_avoidance {
             field.validate()?;
             ensure!(
+                config.planner != PlannerKind::Model
+                    || !config.prompt.soft_avoidance.trim().is_empty(),
+                "soft avoidance model experiments need prompt.soft_avoidance"
+            );
+            ensure!(
                 config.soft_fleet
                     || (config.requests == 1
                         && config.sites.len() == 1
@@ -241,6 +246,7 @@ impl Autonomy for Dispatcher {
                 sample: config.sample,
                 limits_in_prompt: config.prompt.limits,
                 omit: config.prompt.omit.clone(),
+                soft_avoidance_prompt: config.prompt.soft_avoidance.clone(),
                 system: config.prompt.system_prompt().expect("checked in configure"),
                 cache_dir: config.cache_dir.clone().into(),
                 client: config.client().expect("checked in configure"),

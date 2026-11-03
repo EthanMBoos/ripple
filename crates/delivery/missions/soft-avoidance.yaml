@@ -32,6 +32,22 @@ entities:
             You dispatch a medical delivery drone. Complete its delivery and
             return while minimizing the objective specified in the state.
             Reply with JSON only, no other text.
+          # Appended to the state; placeholders use the soft_avoidance values below.
+          soft_avoidance: >-
+            Soft avoidance experiment (one decision, one delivery and return):
+
+            Complete the delivery and return to the depot. Among successful round trips,
+            minimize J = T + beta * E, where T is total trip time in seconds and
+            E = integral r(x(t)) dt over BOTH directions. Unassigned or incomplete trips fail.
+
+            This static horizontal field allows crossing; it is not a no-fly zone.
+            With distance d in meters from center ({center_x_m}, {center_y_m}) m,
+            r(d) = A * (exp(-d/ell) - exp(-R/ell)) / (1 - exp(-R/ell)) for d < R;
+            r(d) = 0 for d >= R. A={peak_severity}, ell={decay_distance_m} m,
+            R={radius_m} m, beta={risk_weight}.
+            Severity is dimensionless, exposure has units of seconds.
+            The drop_via waypoint is used outbound AND inbound.
+            You choose the route; crossing the region will not cause rejection.
         requests: 1
         request_window_s: 0
         urgent_share: 0

@@ -470,6 +470,8 @@ pub struct PromptConfig {
     pub additions: Vec<String>,
     /// The sentences an addition can add, by name.
     pub sentences: BTreeMap<String, String>,
+    /// Soft-field instructions appended to the state, with field placeholders.
+    pub soft_avoidance: String,
     /// Show vehicle capabilities, speeds, turn radius, and remaining endurance.
     pub limits: bool,
     /// Omit selected vehicle information when `limits` is true.
@@ -482,6 +484,7 @@ impl Default for PromptConfig {
             system: String::new(),
             additions: Vec::new(),
             sentences: BTreeMap::new(),
+            soft_avoidance: String::new(),
             limits: true,
             omit: Vec::new(),
         }
@@ -507,7 +510,12 @@ impl PromptConfig {
 
 /// The decision in plain language. Times are minutes and distances kilometers,
 /// rounded, so that the prompt (and the cache key) depends only on the state.
-pub fn prompt(view: &View<'_>, limits_in_prompt: bool, omit: &[VehicleInfo]) -> String {
+pub fn prompt(
+    view: &View<'_>,
+    limits_in_prompt: bool,
+    omit: &[VehicleInfo],
+    soft_avoidance: &str,
+) -> String {
     let km = |m: f64| m / 1000.0;
     let mut text = String::new();
     let _ = writeln!(
@@ -610,37 +618,14 @@ pub fn prompt(view: &View<'_>, limits_in_prompt: bool, omit: &[VehicleInfo]) -> 
         }
     }
     if let Some(field) = view.soft_avoidance {
-        let objective = if view.soft_fleet {
-            "Soft avoidance fleet experiment (repeated decisions and trips):\n\
-             First maximize weighted on-time deliveries; then total deliveries; \
-             only then minimize J = T + beta * E across the fleet. T is summed \
-             trip time in seconds, not elapsed mission time; E = sum of integral \
-             r(x(t)) dt over outbound AND return flights of all vehicles. \
-             Unserved requests count against delivery performance. Return every \
-             assigned vehicle to the depot. Busy vehicles cannot be assigned; \
-             returning vehicles become available again after reloading.\n"
-        } else {
-            "Soft avoidance experiment (one decision, one delivery and return):\n\
-             Complete the delivery and return to the depot. Among successful round trips, \
-             minimize J = T + beta * E, where T is total trip time in seconds and \
-             E = integral r(x(t)) dt over BOTH directions. Unassigned or incomplete trips fail.\n"
-        };
-        let _ = writeln!(
-            text,
-            "\n{objective}This static horizontal field allows crossing; it is not a no-fly zone. \
-             With distance d in meters from center ({}, {}) m, \
-             r(d) = A * (exp(-d/ell) - exp(-R/ell)) / (1 - exp(-R/ell)) for d < R; \
-             r(d) = 0 for d >= R. A={}, ell={} m, R={} m, beta={}. \
-             Severity is dimensionless, exposure has units of seconds. \
-             The drop_via waypoint is used outbound AND inbound. \
-             You choose the route; crossing the region will not cause rejection.",
-            field.center_m[0],
-            field.center_m[1],
-            field.peak_severity,
-            field.decay_distance_m,
-            field.radius_m,
-            field.risk_weight
-        );
+        let instructions = soft_avoidance
+            .replace("{center_x_m}", &field.center_m[0].to_string())
+            .replace("{center_y_m}", &field.center_m[1].to_string())
+            .replace("{peak_severity}", &field.peak_severity.to_string())
+            .replace("{decay_distance_m}", &field.decay_distance_m.to_string())
+            .replace("{radius_m}", &field.radius_m.to_string())
+            .replace("{risk_weight}", &field.risk_weight.to_string());
+        let _ = writeln!(text, "\n{instructions}");
     }
     let names: Vec<String> = offered
         .iter()
@@ -711,6 +696,7 @@ pub struct ModelPlanner {
     pub system: String,
     pub limits_in_prompt: bool,
     pub omit: Vec<VehicleInfo>,
+    pub soft_avoidance_prompt: String,
     pub cache_dir: PathBuf,
     pub client: Client,
     /// Use only the replies already in the folder; a missing one is an error.
@@ -736,7 +722,12 @@ fn first_client() -> String {
 
 impl ModelPlanner {
     pub fn plan(&self, view: &View<'_>) -> Result<Plan> {
-        let reply = self.reply(&prompt(view, self.limits_in_prompt, &self.omit))?;
+        let reply = self.reply(&prompt(
+            view,
+            self.limits_in_prompt,
+            &self.omit,
+            &self.soft_avoidance_prompt,
+        ))?;
         let calls = parse(&reply);
         Ok(Plan {
             parse_failed: calls.is_none(),
@@ -1074,6 +1065,7 @@ mod tests {
             system: "Base.".into(),
             limits_in_prompt: false,
             omit: Vec::new(),
+            soft_avoidance_prompt: String::new(),
             cache_dir: folder.join("cache"),
             client: Client::ClaudeCli {
                 command: client.display().to_string(),
@@ -1106,6 +1098,7 @@ mod tests {
             system: "Base.".into(),
             additions: vec!["b".into(), "a".into()],
             sentences: BTreeMap::from([("a".into(), "A.".into()), ("b".into(), "B.".into())]),
+            soft_avoidance: String::new(),
             limits: true,
             omit: Vec::new(),
         };

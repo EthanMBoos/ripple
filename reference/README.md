@@ -40,8 +40,8 @@ check failed. Every script also runs on its own; its docstring says how.
 | `multirotor-control` | quick | MultirotorVelocityController step responses and step-size convergence (`multirotor_control.py`) | the commands; each vehicle's rotor drag; 20 substeps | whole velocity error within 5%; drag tilt within 2%; step responses within 5 mm |
 | `simple-aircraft-fit` | quick | SimpleAircraft's `rascal` limits flown against FixedWing6DOF's Rascal (`simple_aircraft_fit.py`) | the Rascal under AircraftPIDController | every number within 5% (or 0.2) |
 | `rascal-control` | quick | AircraftPIDController's `rascal` settings: altitude D after upsets, steps under each attitude limit (`rascal_control.py`) | the commands; the `a4d` limits | D changes error under 1 cm; steps settle, pitch under 25 degrees |
-| `rotors-motor` | release | Multirotor motor lag and rotor loads (`rotors_motor.py`) | RotorS's motor-plugin source in Docker | every sample within 1e-12 relative |
-| `crazyflow-crazyflie` | release | Multirotor's Crazyflie against Crazyflow's dynamics (`crazyflow_check.py`) | Crazyflow, pinned, via uv | no-drag case within 1e-6 m |
+| `rotors-motor` | release | Multirotor motor lag and rotor loads, one rotor at a time, and the Crazyflie's and Firefly's whole-vehicle loads at held states (`rotors_motor.py`) | RotorS's motor-plugin source in Docker | every sample within 1e-12 relative and equal to the fixture |
+| `crazyflow-crazyflie` | release | Crazyflie and Firefly loads at held states, and five Crazyflie flights, against Crazyflow's dynamics (`crazyflow_check.py`) | Crazyflow, pinned, via uv | every held state within 1e-12 of the rotor loads and equal to the fixture; every flight without drag, and with Ripple's hub drag fed into Crazyflow, within limits set from the step-size sensitivities (1e-9 m, 1e-9 m/s, 1e-10 rad, 1e-10 rad/s) |
 | `jsbsim-rascal` | release | FixedWing6DOF's Rascal against ArduPilot's JSBSim Rascal: loads at 378 held states, and 5 s open-loop glides (`jsbsim_check.py`) | JSBSim 1.3.3 via uv, on ArduPilot's Rascal files at a pinned commit | every sample to rounding and equal to the fixture; every glide within 0.2 m in JSBSim's elevator-drag form |
 | `stall-landing` | release | stall tables in ArduPlane's Rascal landing (`stall_landing.py`) | the mission without tables | the repeat is byte-identical |
 
@@ -139,7 +139,7 @@ resolved from this checkout, so the suite runs the same from any directory name.
 | `rascal_control.py` | The Rascal's controller settings |
 | `simple_aircraft_fit.py` | SimpleAircraft's `rascal` limits, fit to and checked against the Rascal |
 | `jsbsim_check.py`, `jsbsim/` | FixedWing6DOF's Rascal against JSBSim; `jsbsim/` drives JSBSim on ArduPilot's Rascal files |
-| `multirotor_control.py`, `rotors_motor.py`, `rotors/`, `crazyflow_check.py`, `crazyflow/` | Multirotor checks; `rotors/` builds RotorS's motor-plugin source with a stand-in for Gazebo; `crazyflow/` runs Crazyflow's dynamics |
+| `multirotor_control.py`, `rotors_motor.py`, `rotors/`, `crazyflow_check.py`, `crazyflow/`, `multirotor_grid.py` | Multirotor checks; `rotors/` builds RotorS's motor-plugin source with a stand-in for Gazebo; `crazyflow/` runs Crazyflow's dynamics; `multirotor_grid.py` holds the vehicles and the held states both loads checks share |
 | `Dockerfile`, `fixtures/` | The C++ reference build and its command-test plugins |
 | `rust.Dockerfile`, `benchmark_runner.rs` | Rust on Linux, for the platform check and benchmarks |
 | `tests/` | Tests for these tools, run without Docker |
@@ -483,15 +483,37 @@ reference rather than an earlier revision of this project:
 - `rotors_motor.py`: Multirotor's motor lag and rotor loads against RotorS's
   own motor-plugin code (`rotors/`: an extractor that copies RotorS's
   `FirstOrderFilter` and `UpdateForcesAndMoments` verbatim from a pinned
-  commit, and a harness with stand-in Gazebo links). It writes the samples
-  that the Rust test `rotors_motor_samples` reproduces; `--update-fixture`
-  replaces the committed copy.
-- `crazyflow_check.py`: the `crazyflie2` preset flown open loop in Ripple and
-  in Crazyflow's `first_principles` dynamics (an independent implementation,
-  given the same constants through `crazyflow/integrate.py`), with rotor drag
+  commit, and a harness with stand-in Gazebo links), one rotor at a time
+  with RotorS's default coefficients and the Crazyflie's and Firefly's; then
+  the `crazyflie2` and `firefly` presets whole, drag on, at the held states
+  of `multirotor_grid.py` (attitude, velocity, body rates, every rotor's
+  speed, unequal among them), each rotor through RotorS's code and the loads
+  summed about the center of mass. It writes the samples that the Rust tests
+  `rotors_motor_samples` (one rotor) and `rotors_vehicle_samples` (the
+  vehicle, from Multirotor's own derivative) reproduce, with errors scaled
+  by the individual rotor loads; `--update-fixture` replaces the committed
+  copy.
+- `crazyflow_check.py`: first the `crazyflie2` and `firefly` presets at the
+  same held states against Crazyflow's `first_principles` dynamics with no
+  drag on either side (`crazyflow/loads.py`; the Rust test
+  `crazyflow_loads_samples` reproduces the samples from Multirotor's own
+  derivative, and `--update-fixture` replaces the committed copy). Then the
+  `crazyflie2` preset flown open loop in Ripple and in Crazyflow (an
+  independent implementation, given the same constants through
+  `crazyflow/integrate.py`): four airborne flights at near-hover commands
+  (hover, climb, yaw, tilt; 4 s from 5 m) and the spin-up stress case (3 s
+  from 2 m, through a ground the model does not have), each with rotor drag
   off (must agree to integration precision) and on (Ripple's per-rotor drag
-  against Crazyflow's lumped drag matrix; reported). Crazyflow runs in a uv
-  environment at a pinned commit; `--python` uses an existing one.
+  against Crazyflow's lumped drag matrix; reported), and with Ripple's hub
+  drag computed from Crazyflow's state and fed through Crazyflow's
+  disturbance inputs as force and moment (must agree to integration
+  precision; the stress case also feeds the force alone, and Crazyflow's spin
+  must then stay its no-drag spin). The limits are constants set from the
+  step-size sensitivities, Ripple at a quarter step and Crazyflow at half,
+  which every run measures again and must stay under. Each flight reports
+  the altitude, speed, rates, and command range it reached, and the spin at
+  each whole second on both sides. Crazyflow runs in a uv environment at a
+  pinned commit; `--python` uses an existing one.
 - `jsbsim_check.py`: FixedWing6DOF's Rascal against ArduPilot's JSBSim Rascal,
   run by JSBSim itself (the `jsbsim` package, pinned, in a uv environment;
   `jsbsim/rascal.py` drives it on ArduPilot's files, fetched at a pinned

@@ -14,9 +14,11 @@
 //!   derived from his fits there; RotorS's Firefly hexacopter, from its
 //!   model file; or a vehicle the mission gives in full.
 //! - Validated against: RotorS's motor-plugin source, sample by sample, for
-//!   motor lag and per-rotor loads (`reference/rotors_motor.py`); Crazyflow's
-//!   first-principles dynamics with the Crazyflie numbers
-//!   (`reference/crazyflow_check.py`); Förster's drag, by the steady tilt in
+//!   motor lag and per-rotor loads, and summed over the Crazyflie's and
+//!   Firefly's rotors at held states (`reference/rotors_motor.py`);
+//!   Crazyflow's first-principles dynamics, both vehicles' loads at the same
+//!   held states and five Crazyflie flights (`reference/crazyflow_check.py`);
+//!   Förster's drag, by the steady tilt in
 //!   closed loop (`reference/multirotor_control.py`). Matching a source is not matching a vehicle: nothing here has been
 //!   compared with real flights.
 //! - Valid range: near-hover and moderate flight of a rigid quad or hexa in
@@ -316,8 +318,10 @@ impl Multirotor {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use serde_json::{Value, json};
 
     use super::Multirotor;
+    use super::dynamics::RotorcraftState;
     use crate::math::{EulerAngles, KinematicState, Quaternion, Vec3};
     use crate::plugin::{MotionModel, PluginParams};
 
@@ -613,5 +617,145 @@ mod tests {
         let yaw_rate = 2.0 + yaw_moment_nm * 1e-6;
         assert!((truth.angular_velocity_world_radps.z - yaw_rate).abs() < 1e-9);
         Ok(())
+    }
+
+    fn vector(value: &Value) -> Vec3 {
+        Vec3::new(
+            value[0].as_f64().unwrap(),
+            value[1].as_f64().unwrap(),
+            value[2].as_f64().unwrap(),
+        )
+    }
+
+    fn quaternion(value: &Value) -> Quaternion {
+        Quaternion {
+            w: value[0].as_f64().unwrap(),
+            x: value[1].as_f64().unwrap(),
+            y: value[2].as_f64().unwrap(),
+            z: value[3].as_f64().unwrap(),
+        }
+    }
+
+    /// The rotors' force and moment about the center of mass at a held
+    /// state (attitude, world velocity, body rates, every rotor's speed),
+    /// from `derivative` itself with Newton and Euler undone: F = m (a - v x
+    /// w) less the weight, M = I alpha + w x (I w). Body frame.
+    fn held_rotor_loads(model: &mut Multirotor, sample: &Value) -> (Vec3, Vec3) {
+        let attitude = quaternion(&sample["attitude_wxyz"]);
+        let rotation = attitude.normalized();
+        let rates = vector(&sample["rates_body_radps"]);
+        let velocity = rotation.rotate_world_to_body(vector(&sample["velocity_world_mps"]));
+        let speeds: Vec<f64> = sample["speeds_radps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|speed| speed.as_f64().unwrap())
+            .collect();
+        let state = RotorcraftState {
+            velocity_body_mps: velocity,
+            rates_body_radps: rates,
+            position_world_m: Vec3::zeros(),
+            attitude,
+        };
+        // No motor lag in these fixtures: each rotor turns at its command.
+        model.rotor_speeds_radps = speeds.clone();
+        let rate = model.derivative(&state, &speeds, 0.0);
+        let airframe = &model.config.airframe;
+        let inertia = airframe.inertia_kgm2;
+        let weight_n = rotation.rotate_world_to_body(Vec3::new(
+            0.0,
+            0.0,
+            -airframe.mass_kg * airframe.gravity_mps2,
+        ));
+        let force_n =
+            (rate.acceleration_body_mps2 - velocity.cross(&rates)) * airframe.mass_kg - weight_n;
+        let moment_nm =
+            inertia * rate.angular_acceleration_body_radps2 + rates.cross(&(inertia * rates));
+        (force_n, moment_nm)
+    }
+
+    /// Every vehicle of a fixture of held states, configured by its mission
+    /// keys, against the fixture's reference loads, each error as a fraction
+    /// of the individual rotor loads (their sizes summed), since at hover
+    /// the net moment is near zero. Returns the sample count and the largest
+    /// force and moment errors.
+    fn check_held_loads(fixture: &Value, limit: f64) -> (usize, f64, f64) {
+        let mut largest_force: f64 = 0.0;
+        let mut largest_moment: f64 = 0.0;
+        let mut count = 0;
+        for (name, vehicle) in fixture["vehicles"].as_object().unwrap() {
+            let config =
+                Multirotor::configure(&PluginParams::yaml(&vehicle["mission_keys"].to_string()))
+                    .expect("the keys parse");
+            let mut model = Multirotor::new(&config);
+            for (index, sample) in vehicle["samples"].as_array().unwrap().iter().enumerate() {
+                let (force_n, moment_nm) = held_rotor_loads(&mut model, sample);
+                let force_error = (force_n - vector(&sample["force_body_n"])).norm()
+                    / sample["force_scale_n"].as_f64().unwrap();
+                let moment_error = (moment_nm - vector(&sample["moment_body_nm"])).norm()
+                    / sample["moment_scale_nm"].as_f64().unwrap();
+                assert!(
+                    force_error <= limit,
+                    "{name} sample {index}: force error {force_error:e} of the rotor loads"
+                );
+                assert!(
+                    moment_error <= limit,
+                    "{name} sample {index}: moment error {moment_error:e} of the rotor loads"
+                );
+                largest_force = largest_force.max(force_error);
+                largest_moment = largest_moment.max(moment_error);
+                count += 1;
+            }
+        }
+        assert!(count > 0);
+        (count, largest_force, largest_moment)
+    }
+
+    /// Crazyflow's force and moment (reference/crazyflow/loads.py, no drag)
+    /// at the held states of reference/multirotor_grid.py, reproduced by
+    /// the `crazyflie2` and `firefly` presets through `derivative`: the
+    /// common physics, whole vehicle. Prints the largest errors for
+    /// reference/crazyflow_check.py.
+    #[test]
+    fn crazyflow_loads_samples() {
+        // Rounding in the frame conversions and in undoing Newton and Euler.
+        const LIMIT: f64 = 1e-12;
+        let text = match std::env::var("RIPPLE_CRAZYFLOW_SAMPLES") {
+            Ok(path) => std::fs::read_to_string(path).expect("samples file"),
+            Err(_) => include_str!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/fixtures/crazyflow_loads_samples.json"
+            ))
+            .to_string(),
+        };
+        let fixture: Value = serde_json::from_str(&text).expect("samples JSON");
+        let (samples, force, moment) = check_held_loads(&fixture, LIMIT);
+        println!(
+            "CRAZYFLOW_ERRORS {}",
+            json!({"samples": samples, "limit": LIMIT, "force": force, "moment": moment})
+        );
+    }
+
+    /// The sum of RotorS's rotor loads (reference/rotors_motor.py, rotor
+    /// drag and the rolling moment on) at the same held states, reproduced
+    /// the same way. One rotor at a time (`rotor.rs`) cannot check the
+    /// assembly, the hub offsets, or the frame conversion; this does.
+    #[test]
+    fn rotors_vehicle_samples() {
+        const LIMIT: f64 = 1e-12;
+        let text = match std::env::var("RIPPLE_ROTORS_SAMPLES") {
+            Ok(path) => std::fs::read_to_string(path).expect("samples file"),
+            Err(_) => include_str!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/fixtures/rotors_motor_samples.json"
+            ))
+            .to_string(),
+        };
+        let fixture: Value = serde_json::from_str(&text).expect("samples JSON");
+        let (samples, force, moment) = check_held_loads(&fixture, LIMIT);
+        println!(
+            "ROTORS_VEHICLE_ERRORS {}",
+            json!({"samples": samples, "limit": LIMIT, "force": force, "moment": moment})
+        );
     }
 }

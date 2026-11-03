@@ -318,15 +318,22 @@ CHECKS = [
           "every SimpleAircraft number within 5% (or 0.2) of the Rascal's",
           (QUICK, RELEASE), script_check("simple_aircraft_fit.py", "simple-aircraft-fit"),
           keep_named("results.json", "summary.md")),
-    Check("rotors-motor", "Multirotor's motor lag and rotor loads against RotorS, sample by sample",
+    Check("rotors-motor", "Multirotor's motor lag and rotor loads against RotorS, sample by sample, "
+          "and the Crazyflie's and Firefly's whole-vehicle loads against the sum of RotorS's rotor "
+          "loads at held states",
           "RotorS's motor-plugin source (ethz-asl/rotors_simulator), compiled in Docker",
           "every sample within 1e-12 relative; samples equal the committed fixture",
           (RELEASE,), script_check("rotors_motor.py", "rotors-motor"),
           keep_named("report.json")),
-    Check("crazyflow-crazyflie", "Multirotor's Crazyflie against Crazyflow's first-principles "
-          "dynamics, same constants and motor commands",
+    Check("crazyflow-crazyflie", "Multirotor's Crazyflie and Firefly loads at held states against "
+          "Crazyflow's first-principles dynamics, and the Crazyflie flown against it in five "
+          "open-loop flights (four airborne near hover, one spin-up stress case) with the same "
+          "constants and motor commands",
           "Crazyflow (learnsyslab/crazyflow, pinned), run with uv",
-          "without rotor drag, within 1e-6 m and 1e-6 rad over 3 s; the drag difference is reported",
+          "every held state within 1e-12 of the rotor loads and equal to the committed fixture; "
+          "every flight without rotor drag, and with Ripple's hub drag fed into Crazyflow, within "
+          "limits set from the step-size sensitivities (1e-9 m, 1e-9 m/s, 1e-10 rad, 1e-10 rad/s), "
+          "which each run measures again; the lumped-drag difference is reported",
           (RELEASE,), script_check("crazyflow_check.py", "crazyflow-crazyflie"),
           keep_named("results.json")),
     Check("jsbsim-rascal", "FixedWing6DOF's Rascal against ArduPilot's JSBSim Rascal: loads at a "

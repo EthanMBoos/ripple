@@ -718,8 +718,20 @@ RK4 stage; at the end of a step it equals RotorS's filter output. RotorS
 applies drag at the rotor link, which Gazebo turns into an r x F moment, and
 reads the link's own velocity, which includes the body's rotation; Rust does
 both. `reference/rotors_motor.py` compiles RotorS's own filter and
-`UpdateForcesAndMoments` against stand-in Gazebo links and compares 480
-samples: largest errors 3.6e-15 N, 6.7e-16 N m, and 4.5e-13 rad/s.
+`UpdateForcesAndMoments` against stand-in Gazebo links and compares 720
+one-rotor samples (RotorS's default coefficients, the Crazyflie's, and the
+Firefly's, on a level and a tilted rotor): largest errors 3.6e-15 N, 6.7e-16
+N m, and 4.5e-13 rad/s. One rotor at a time cannot check the assembly, the
+hub offsets, or the frame conversion, so since 2026-11-03 the same run also
+puts the `crazyflie2` and `firefly` presets whole through RotorS's code,
+drag and the rolling moment on, at 432 held states (`multirotor_grid.py`:
+four attitudes, four or five velocities including the Firefly's 12 m/s
+cruise and a 2 m/s climb, four body rates, and three sets of rotor speeds,
+equal to widely unequal), each rotor at its held speed and the loads summed
+about the center of mass; Multirotor's own derivative, Newton and Euler
+undone, reproduces the sums to 2.6e-16 (force) and 3.0e-16 (moment) of the
+individual rotor loads (`rotors_vehicle_samples`). The samples are a
+committed fixture the tests read offline.
 
 Each effect is off unless the mission sets its key, for any vehicle, as
 for FixedWing6DOF's stall tables and landing gear. With every effect at zero,
@@ -742,6 +754,51 @@ The `firefly` preset copies RotorS's Firefly model file at the commit the
 choices made in copying it (mass from the model's parts, the body's
 inertia, gains per airframe). Its motor lag, drag, and rolling moment are
 written by missions, like the Crazyflie's.
+
+**Checked against Crazyflow (2026-11-03).** `reference/crazyflow_check.py`
+(check `crazyflow-crazyflie`, evidence in `paper/data/crazyflow-crazyflie/`)
+compares Multirotor with Crazyflow's `first_principles` dynamics in two
+ways. Loads: the `crazyflie2` and `firefly` presets whole through Crazyflow
+with no drag on either side, at the 432 held states the RotorS check uses
+(`multirotor_grid.py`; Crazyflow takes the Firefly's six rotors through a 3
+by 6 mixing matrix); Multirotor's own derivative reproduces Crazyflow's
+force and moment to 6.1e-16 and 1.1e-16 of the individual rotor loads
+(`crazyflow_loads_samples`, a committed fixture). The Firefly's hub height
+is invisible to both without drag, as it should be: untilted thrust at a
+raised hub makes the same moment. Flights: the Crazyflie open loop from the
+same start with the same constant commands, Ripple at 1 ms and Crazyflow at
+0.1 ms, five of them: four airborne at commands within 2% of hover, 4 s
+from 5 m (a drift at 1 m/s, a climb, a slow yaw spin-up to 0.48 rad/s, and
+a held 6 degree tilt that reaches 2.5 m/s), and the first check's case
+kept as a labeled stress case (3 s from 2 m, four unequal commands that
+spin it to 2.2 rad/s at 15.7 m/s, through a ground the model does not
+have). Without rotor drag the two agree to 3.6e-12 m and 1.3e-13 rad over
+every flight. With Ripple's RotorS drag on and Crazyflow's lumped drag
+matrix at Förster's values, the flights that spin differ, 1.1 m on the yaw
+flight and 3.96 m on the stress case, while the flights without rotation
+agree to 1e-13 m. The difference is the spin: Crazyflow's drag, a force at
+the center of mass, leaves the rotation untouched (the stress case at 0.73,
+1.45, 2.17 rad/s at 1, 2, 3 s, its no-drag numbers), while Ripple's drag
+acts at each hub on the hub's own velocity, rotation included, so its
+moments damp the spin (0.57, 0.91, 1.05 rad/s), and the thrust then tilts
+the two apart. Confirmed by feeding Ripple's hub drag, computed from
+Crazyflow's own state at every stage, through Crazyflow's disturbance
+inputs with its drag matrix zero (`crazyflow/integrate.py`): as a force
+alone, Crazyflow's rotation is bit-identical to its no-drag rotation and
+the stress paths still end 3.96 m apart; as force and moment, the equations
+are Ripple's and every flight agrees to 1.2e-12 m and 8.6e-14 rad. The pass
+limits were set before the comparison from the check's own step-size
+sensitivities, measured on each flight's fed-in variant: Ripple at a
+quarter step moves at most 3.9e-12 m, 9.1e-12 m/s, 1.5e-13 rad, and
+2.1e-13 rad/s, and Crazyflow at half its step 3.5e-13 m, 3.2e-13 m/s,
+8.1e-14 rad, and 3.2e-14 rad/s, so the agreement above is the step's own
+resolution. The limits are a hundred times the larger, rounded up to a
+power of ten (1e-9 m, 1e-9 m/s, 1e-10 rad, 1e-10 rad/s); every run measures
+the sensitivities again and fails if one exceeds its limit. Before, the
+check flew the stress case alone against a fixed 1e-6 m and 1e-6 rad, and
+its attitude measure was acos of the quaternion dot product, which cannot
+resolve under about 3e-8 rad (it read 4.2e-8 rad); it is now the chord
+form, as `compare.py`'s.
 
 ## Ported models keep C++ numerics; new models do not
 

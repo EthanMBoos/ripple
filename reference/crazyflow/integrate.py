@@ -10,6 +10,13 @@ with classical RK4 at a fine step, renormalizing the quaternion after each
 step as Crazyflow's warning asks. Only Crazyflow's derivative is used; the
 integrator here is plain RK4, so differences are the models', not the
 integrators'.
+
+With `hub_drag` in the case, Ripple's per-rotor (RotorS) drag is computed
+from Crazyflow's state at every stage and handed to Crazyflow through its
+disturbance inputs: the summed drag force at the center of mass, and, when
+`hub_drag.torque` is true, the moment the hub offsets make. Crazyflow's own
+drag matrix is then zero. That makes the two models the same equations, so
+the run checks integration, not a second opinion on the drag.
 """
 import json
 import math
@@ -21,6 +28,25 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 RPM_PER_RADPS = 60.0 / (2.0 * math.pi)
+
+
+def hub_drag_loads(case, rotation, velocity_world, rates_body):
+    """Ripple's rotor drag (rotor.rs `rotor_loads`) from Crazyflow's state:
+    the force and moment in the body frame, summed over the rotors, each at
+    its commanded speed. The rotors' axes are the body's up."""
+    in_plane, axial = case["hub_drag"]["in_plane"], case["hub_drag"]["axial"]
+    velocity_body = rotation.apply(velocity_world, inverse=True)
+    force = np.zeros(3)
+    moment = np.zeros(3)
+    axis = np.array([0.0, 0.0, 1.0])
+    for offset, speed_radps in zip(np.array(case["rotor_offsets_m"]), case["commands_radps"]):
+        hub_velocity = velocity_body + np.cross(rates_body, offset)
+        axial_speed = hub_velocity @ axis
+        edgewise = hub_velocity - axis * axial_speed
+        drag = -abs(speed_radps) * (in_plane * edgewise + axial * axial_speed * axis)
+        force += drag
+        moment += np.cross(offset, drag)
+    return force, moment
 
 
 def main():
@@ -45,6 +71,7 @@ def main():
         rotor_dyn_coef=np.zeros(4),
     )
     command_rpm = np.array(case["commands_radps"]) * RPM_PER_RADPS
+    hub_drag = case.get("hub_drag")
 
     w, x, y, z = case["orientation_wxyz"]
     state = dict(pos=np.array(case["position_m"], dtype=float),
@@ -53,8 +80,17 @@ def main():
                  ang_vel=np.zeros(3))
 
     def derivative(s):
+        force_world, torque_world = None, None
+        if hub_drag:
+            # Crazyflow takes both disturbances in the world frame.
+            rotation = Rotation.from_quat(s["quat"])
+            force_body, moment_body = hub_drag_loads(case, rotation, s["vel"], s["ang_vel"])
+            force_world = rotation.apply(force_body)
+            if hub_drag["torque"]:
+                torque_world = rotation.apply(moment_body)
         pos_dot, quat_dot, vel_dot, ang_vel_dot, _ = dynamics(
-            s["pos"], s["quat"], s["vel"], s["ang_vel"], command_rpm, None, **params)
+            s["pos"], s["quat"], s["vel"], s["ang_vel"], command_rpm, None,
+            force_world, torque_world, **params)
         return dict(pos=pos_dot, quat=quat_dot, vel=vel_dot, ang_vel=ang_vel_dot)
 
     def add(s, k, h):

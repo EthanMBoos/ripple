@@ -29,7 +29,7 @@ class CrazyflowCheckTests(unittest.TestCase):
     def test_an_empty_reference_cannot_pass(self):
         frames = [frame(crazyflow_check.DT_S * (step + 1), (0.0, 0.0, 0.0)) for step in range(3001)]
         with self.assertRaises(ValueError):
-            crazyflow_check.compare("no-drag", frames, [])
+            crazyflow_check.compare("no-drag", 3.0, frames, [])
 
 
 if __name__ == "__main__":

@@ -64,6 +64,9 @@ pub trait MotionModel: Send {
 mod aircraft_state;
 
 // Built-ins selected by missions.
+#[path = "motion/aerosonde/aerosonde.rs"]
+mod aerosonde;
+pub use aerosonde::Aerosonde;
 #[path = "motion/fixed_wing_6dof/fixed_wing_6dof.rs"]
 mod fixed_wing_6dof;
 pub use fixed_wing_6dof::FixedWing6Dof;

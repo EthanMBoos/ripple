@@ -266,6 +266,7 @@ fn register_builtins(registry: &mut PluginRegistry) -> Result<()> {
     )?;
     registry.register_motion::<motion::SimpleAircraft>("SimpleAircraft")?;
     registry.register_motion::<motion::FixedWing6Dof>("FixedWing6DOF")?;
+    registry.register_motion::<motion::Aerosonde>("Aerosonde")?;
     registry.register_controller::<controller::AircraftPidController>("AircraftPIDController")?;
     registry.register_controller::<controller::AircraftVelocityController>(
         "AircraftVelocityController",

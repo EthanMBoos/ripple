@@ -312,6 +312,17 @@ CHECKS = [
           "rascal limits every step settles and pitch stays under 25 degrees",
           (QUICK, RELEASE), script_check("rascal_control.py", "rascal-control"),
           keep_named("results.json", "summary.md")),
+    Check("aerosonde-book", "the Aerosonde against a second transcription of Beard and McLain's "
+          "equations: loads, thrust, torque, propeller speed, and the equations of motion's "
+          "accelerations at held states, sample by sample, and the longitudinal trim at 25 m/s flown "
+          "open loop with its lateral residual",
+          "the script's own transcription of the book's chapter 4 and the addendum's propeller, with "
+          "the pinned parameter file's numbers; no second implementation exists, so two "
+          "transcriptions agreeing is the check",
+          "every sample within the Rust test's limit and equal to the committed fixture; the mission "
+          "equals the trim; altitude within 1 mm and airspeed within 1 mm/s over 10 s",
+          (QUICK, RELEASE), script_check("aerosonde_check.py", "aerosonde-book"),
+          keep_named("results.json", "summary.md")),
     Check("simple-aircraft-fit", "SimpleAircraft's rascal limits against FixedWing6DOF's Rascal: "
           "speeds, acceleration, climb, descent, turn rate, and attitude rates",
           "FixedWing6DOF's Rascal under AircraftPIDController",

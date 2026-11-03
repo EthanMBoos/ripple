@@ -87,6 +87,25 @@ describes it and the other checks.
   convergence (`rk4_loads.py`), and the Rascal against ArduPilot's JSBSim
   Rascal run in JSBSim, loads to rounding and 5 s glides within 0.2 m
   (`jsbsim_check.py`). Its parameters are [below](#fixedwing6dof-parameters).
+- **Aerosonde** is Beard and McLain's Aerosonde from *Small Unmanned
+  Aircraft* chapter 4 as written, with the authors' addendum's motor and
+  propeller, as its own model: its lift blends into a flat plate past the
+  stall, its induced drag squares the linear lift, its side force has rate
+  and aileron terms, and its thrust comes from the throttle's voltage
+  through the propeller's speed and the fitted thrust and torque
+  polynomials. `airframe: aerosonde` fills every number from the authors'
+  parameter file at a pinned commit (the book's educational 11 kg
+  aircraft, not the 25 kg Aerosonde); any key overrides one value, and
+  without an airframe the mission gives every number. The same four inputs
+  as FixedWing6DOF, so AircraftPIDController connects to it, but no gain set
+  exists for it. Optional: steady `wind_mps`. Not modelled: the book's
+  Dryden gusts, propeller slipstream and gyroscopic moments, ground effect,
+  a ground, motor dynamics, and an altitude-dependent atmosphere. Checked
+  against a second transcription of the book's equations at held states,
+  loads and accelerations alike, and its longitudinal trim flown open loop
+  (`aerosonde_check.py`); there is no second implementation to check
+  against, so two transcriptions agreeing is the check. Its parameters are
+  [below](#aerosonde-parameters).
 - **Multirotor** is a rigid-body multirotor with thrust and torque growing
   with rotor speed squared, RK4, and two built-in vehicles: a Crazyflie 2.0
   (`airframe: crazyflie2`) and RotorS's Firefly hexacopter
@@ -213,3 +232,29 @@ no airframe. The model has no ground of its own: GroundCollision or
 TerrainCollision removes an aircraft that reaches the ground, and
 `landing_gear` lets it roll on it. `enable_launcher` with `launch_at_s`,
 `launch_speed_mps`, and `launch_acceleration_mps2` is a catapult.
+
+## Aerosonde parameters
+
+`airframe: aerosonde` fills every vehicle key; any key the mission gives
+overrides one value. Without an airframe the mission gives them all. The
+environment keys are `air_density_kgpm3`, `gravity_mps2`, and `wind_mps`,
+with FixedWing6DOF's defaults (the parameter file's air is 1.2682 kg/m³,
+which `missions/aerosonde.yaml` sets).
+
+| Keys | Meaning |
+| --- | --- |
+| `mass_kg`, `inertia_kgm2` | mass; inertia as three rows, with the product of inertia entered as −J_xz off the diagonal |
+| `wing_span_m` (b), `wing_area_m2` (S), `mean_chord_m` (c̄), `oswald_efficiency` (e) | geometry; the induced drag is (C_L0 + C_Lα α)² / (π e AR) |
+| `c_lift_0`, `c_lift_alpha`, `c_lift_q`, `c_lift_elevator` | C_L0, C_Lα, C_Lq, C_Lδe |
+| `stall_blend_rate` (M), `stall_alpha_rad` (α₀) | the sigmoid that blends the linear lift into a flat plate's past the stall |
+| `c_drag_p`, `c_drag_q`, `c_drag_elevator` | C_Dp, the parasitic drag of the parabolic form; C_Dq; C_Dδe, from the signed deflection |
+| `c_pitch_0`, `c_pitch_alpha`, `c_pitch_q`, `c_pitch_elevator` | C_m0, C_mα, C_mq, C_mδe |
+| `c_side_0`, `c_side_beta`, `c_side_p`, `c_side_r`, `c_side_aileron`, `c_side_rudder` | C_Y0, C_Yβ, C_Yp, C_Yr, C_Yδa, C_Yδr |
+| `c_roll_0` ... `c_roll_rudder`, `c_yaw_0` ... `c_yaw_rudder` | C_ℓ and C_n likewise |
+| `propeller_diameter_m`, `max_voltage_v` | the propeller, and the battery's voltage at full throttle |
+| `motor_speed_constant_vspr` (KV), `motor_torque_constant_nmpa` (KQ), `motor_resistance_ohm`, `no_load_current_a` | the motor |
+| `c_thrust_2`, `c_thrust_1`, `c_thrust_0`, `c_torque_2`, `c_torque_1`, `c_torque_0` | thrust and torque coefficients as quadratics in advance ratio |
+
+The rates enter nondimensionalized, as p b / 2V, q c̄ / 2V, and r b / 2V. The
+surfaces have no deflection limits, since the book gives none; the throttle
+is 0 to 1, the range the motor's voltage is defined on.

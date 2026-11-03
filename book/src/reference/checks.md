@@ -24,6 +24,12 @@ vehicle.
 - **The Crazyflie's parameters** are its published identification: mass,
   inertia, and drag as measured, thrust within 10.4% across the measured
   range.
+- **The Aerosonde** matches a second transcription of Beard and McLain's
+  equations at 432 held states, loads and accelerations, to rounding, and
+  flies its longitudinal trim open loop for 10 s within 1 mm of altitude,
+  with the lateral residual its surfaces leave reported. The authors' code
+  stubs the equations, so two transcriptions agreeing is the check, not a
+  second implementation.
 - **The kinematic aircraft** (SimpleAircraft with `airframe: rascal`) is
   flown through the same maneuvers as the 6-DOF Rascal: speeds, acceleration,
   climb, descent, and turn rate agree within 3%.

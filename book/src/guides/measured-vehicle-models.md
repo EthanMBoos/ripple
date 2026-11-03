@@ -20,6 +20,9 @@ local copy can be fetched and read.
   equation number.
 - The Rascal's come from ArduPilot's JSBSim `Rascal.xml`, at a pinned commit.
 - The rotor effects come from RotorS's motor plugin at commit `cd813b7`.
+- The Aerosonde's come from Beard and McLain's parameter file in
+  `mavsim_public` at commit `10363e0e`, with the equations cited from the
+  book and the authors' addendum by section.
 
 ## 2. New aircraft or new model?
 
@@ -110,6 +113,14 @@ Pick the strongest check the source allows:
 3. **Against a prediction from the measurements.**
    `reference/multirotor_control.py` checks that the Crazyflie leans into its
    measured rotor drag by the predicted angle.
+4. **Against a second transcription of the source's equations**, when the
+   source publishes equations and numbers but no runnable code. The
+   Aerosonde's authors stub their force and motor functions, so
+   `reference/aerosonde_check.py` holds its own transcription of the book's
+   chapters and compares the Rust at held states, loads and accelerations,
+   then flies the trim it solves. Two transcriptions agreeing shows neither
+   misread the other, not that either matches the book; say so in the
+   header and keep looking for a second implementation or flight data.
 
 Turn the check into a script with a pass criterion, register it in
 `reference/suite.py`, and keep its results with `--retain` so they land in

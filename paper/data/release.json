@@ -160,6 +160,16 @@
       "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
       "evidence": "paper/data/rascal-control/"
     },
+    "aerosonde-book": {
+      "purpose": "the Aerosonde against a second transcription of Beard and McLain's equations: loads, thrust, torque, propeller speed, and the equations of motion's accelerations at held states, sample by sample, and the longitudinal trim at 25 m/s flown open loop with its lateral residual",
+      "reference": "the script's own transcription of the book's chapter 4 and the addendum's propeller, with the pinned parameter file's numbers; no second implementation exists, so two transcriptions agreeing is the check",
+      "criterion": "every sample within the Rust test's limit and equal to the committed fixture; the mission equals the trim; altitude within 1 mm and airspeed within 1 mm/s over 10 s",
+      "passed": true,
+      "note": "",
+      "date": "2026-11-03",
+      "source_sha256": "6a5f00c270782c594e0d9c304e2b3b7710cb06cb41b91287e4754f083888e931",
+      "evidence": "paper/data/aerosonde-book/"
+    },
     "simple-aircraft-fit": {
       "purpose": "SimpleAircraft's rascal limits against FixedWing6DOF's Rascal: speeds, acceleration, climb, descent, turn rate, and attitude rates",
       "reference": "FixedWing6DOF's Rascal under AircraftPIDController",

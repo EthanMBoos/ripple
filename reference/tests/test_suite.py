@@ -98,7 +98,8 @@ class SuiteTests(unittest.TestCase):
         self.assertEqual(result.code, 0, result.summary)
         self.assertEqual(list(result.summary["checks"]),
                          ["speed-regression", "rust-tests", "rust-determinism", "cpp-agreement",
-                          "multirotor-control", "rascal-control", "simple-aircraft-fit"])
+                          "multirotor-control", "rascal-control", "aerosonde-book",
+                      "simple-aircraft-fit"])
         self.assertNotIn("summarize.py", result.steps)
         self.assertTrue(result.kept_old)
 
@@ -106,7 +107,8 @@ class SuiteTests(unittest.TestCase):
         result = self.run_suite(["--retain"])
         self.assertEqual(result.code, 0, result.summary)
         self.assertFalse(result.kept_old)
-        self.assertEqual(result.retained, ["cpp-agreement", "multirotor-control", "rascal-control",
+        self.assertEqual(result.retained, ["aerosonde-book", "cpp-agreement", "multirotor-control",
+                                           "rascal-control",
                                            "rust-determinism", "simple-aircraft-fit",
                                            "speed-regression"])
         self.assertEqual(result.steps[-1], "summarize.py")

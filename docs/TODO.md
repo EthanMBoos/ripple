@@ -220,15 +220,6 @@ sweeps are days of work, and the calls run in parallel over a few days.
       needs it. Also, if the glides should match closer than 5 cm: a standard
       atmosphere as a mission key that is off by default, so a long descent
       changes the air density as it does in JSBSim.
-- [ ] Add `airframe: aerosonde`, a lighter aircraft to fly: Beard and McLain's
-      Aerosonde from `mavsim_public`'s `parameters/aerosonde_parameters.py` at
-      commit `10363e0e` (11 kg; the older `mavsim_template_files` copy says 13.5
-      kg, so cite the one used). Beard's terms without a FixedWing6DOF key
-      (pitch-rate and elevator drag, side force from aileron and rudder, the
-      blended stall curve) are dropped and listed in the doc comment. Checked by
-      no run code: no complete, pinned implementation of that model exists to
-      compare against, so the doc comment says so. No AircraftPIDController gain
-      set until a mission flies it under the PID.
 
 ## Not planned
 

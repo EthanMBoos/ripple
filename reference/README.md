@@ -40,6 +40,7 @@ check failed. Every script also runs on its own; its docstring says how.
 | `multirotor-control` | quick | MultirotorVelocityController step responses and step-size convergence (`multirotor_control.py`) | the commands; each vehicle's rotor drag; 20 substeps | whole velocity error within 5%; drag tilt within 2%; step responses within 5 mm |
 | `simple-aircraft-fit` | quick | SimpleAircraft's `rascal` limits flown against FixedWing6DOF's Rascal (`simple_aircraft_fit.py`) | the Rascal under AircraftPIDController | every number within 5% (or 0.2) |
 | `rascal-control` | quick | AircraftPIDController's `rascal` settings: altitude D after upsets, steps under each attitude limit (`rascal_control.py`) | the commands; the `a4d` limits | D changes error under 1 cm; steps settle, pitch under 25 degrees |
+| `aerosonde-book` | quick | the Aerosonde's loads, thrust, torque, propeller speed, and accelerations at 432 held states, and its longitudinal trim at 25 m/s flown open loop for 10 s with its lateral residual (`aerosonde_check.py`) | the script's own transcription of Beard and McLain's equations with the pinned parameter file's numbers; no second implementation, so two transcriptions agreeing is the check | every sample to rounding and equal to the fixture; the mission equals the trim; altitude within 1 mm and airspeed within 1 mm/s |
 | `rotors-motor` | release | Multirotor motor lag and rotor loads, one rotor at a time, and the Crazyflie's and Firefly's whole-vehicle loads at held states (`rotors_motor.py`) | RotorS's motor-plugin source in Docker | every sample within 1e-12 relative and equal to the fixture |
 | `crazyflow-crazyflie` | release | Crazyflie and Firefly loads at held states, and five Crazyflie flights, against Crazyflow's dynamics (`crazyflow_check.py`) | Crazyflow, pinned, via uv | every held state within 1e-12 of the rotor loads and equal to the fixture; every flight without drag, and with Ripple's hub drag fed into Crazyflow, within limits set from the step-size sensitivities (1e-9 m, 1e-9 m/s, 1e-10 rad, 1e-10 rad/s) |
 | `jsbsim-rascal` | release | FixedWing6DOF's Rascal against ArduPilot's JSBSim Rascal: loads at 378 held states, and 5 s open-loop glides (`jsbsim_check.py`) | JSBSim 1.3.3 via uv, on ArduPilot's Rascal files at a pinned commit | every sample to rounding and equal to the fixture; every glide within 0.2 m in JSBSim's elevator-drag form |
@@ -139,6 +140,7 @@ resolved from this checkout, so the suite runs the same from any directory name.
 | `rascal_control.py` | The Rascal's controller settings |
 | `simple_aircraft_fit.py` | SimpleAircraft's `rascal` limits, fit to and checked against the Rascal |
 | `jsbsim_check.py`, `jsbsim/` | FixedWing6DOF's Rascal against JSBSim; `jsbsim/` drives JSBSim on ArduPilot's Rascal files |
+| `aerosonde_check.py` | The Aerosonde against a second transcription of Beard and McLain's equations: held states, the longitudinal trim, and the open-loop flight |
 | `multirotor_control.py`, `rotors_motor.py`, `rotors/`, `crazyflow_check.py`, `crazyflow/`, `multirotor_grid.py` | Multirotor checks; `rotors/` builds RotorS's motor-plugin source with a stand-in for Gazebo; `crazyflow/` runs Crazyflow's dynamics; `multirotor_grid.py` holds the vehicles and the held states both loads checks share |
 | `Dockerfile`, `fixtures/` | The C++ reference build and its command-test plugins |
 | `rust.Dockerfile`, `benchmark_runner.rs` | Rust on Linux, for the platform check and benchmarks |
@@ -529,6 +531,29 @@ reference rather than an earlier revision of this project:
   0.2 m in JSBSim's form, a tolerance set from three sensitivities it also
   reports (JSBSim at a finer step, Ripple at a finer step, Ripple at the air
   density of the glide's end).
+- `aerosonde_check.py`: the Aerosonde against Beard and McLain's equations.
+  The pinned `mavsim_public` repository stubs its force and motor functions,
+  so there is no second implementation to run: the script holds its own
+  transcription of the book's chapter 4, the addendum's motor and
+  propeller, and chapter 3's equations of motion, with the parameter file's
+  numbers (`--fetch` downloads the file at the pinned commit, checks its
+  hash, and compares every number). Part A writes the aerodynamic force and
+  moment, the propeller's thrust, torque, and speed, and the body and
+  angular accelerations at tilted attitudes at 432 held states into samples
+  that the Rust test `book_samples` reproduces to rounding, with the
+  fixture's mass, inertia, and geometry against the airframe's; the
+  committed fixture in `crates/core/tests/fixtures/` must equal fresh
+  samples (`--update-fixture` replaces it). Part B solves the longitudinal
+  trim for level flight at 25 m/s from the transcription (the ailerons and
+  rudder balance the roll and yaw moments and leave a side force of about
+  0.06 N, the lateral residual, reported), requires `missions/aerosonde.yaml`
+  to equal what it writes from that trim (`--update-mission` rewrites it),
+  flies it open loop with `HeldControls` for 10 s, and requires the
+  altitude and airspeed to drift less than 1 mm and 1 mm/s (the first run
+  measured 2.5e-5 m and 6.1e-6 m/s; the residual drifts it 0.3 m sideways);
+  the flight at a quarter of the step is reported beside it. Two
+  transcriptions agreeing shows neither misread the other, not that either
+  matches the book.
 - `rascal_control.py`: the measurements behind AircraftPIDController's
   `rascal` settings: the altitude derivative gain after upsets at three step
   sizes, and heading, altitude, and speed steps under the `a4d` and `rascal`

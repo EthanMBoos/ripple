@@ -101,28 +101,29 @@ impl AircraftConfig {
             // Fit to FixedWing6DOF's Rascal under AircraftPIDController (both
             // `airframe: rascal`) by `reference/simple_aircraft_fit.py`
             // (evidence in paper/data/simple-aircraft-fit), rounded to 0.1:
-            // the steady level speed at full throttle (38.1 m/s); the slowest
+            // the steady level speed at full throttle (35.3 m/s); the slowest
             // steady speed holding altitude, over speeds asked from 7 to 14 m/s
-            // (9.0); the largest change of speed over 1 s speeding up and
-            // slowing from 20 m/s (2.8, 1.2 m/s^2); steady climb and descent at
-            // 20 m/s asked (5.8, 9.7 m/s); the largest roll and pitch rates
-            // (31, 52 deg/s). The Rascal holds 47 degrees of bank but turns at
-            // 26.3 deg/s, 13% slower than a coordinated turn at that bank; 43
-            // degrees is the bank that gives 26.3 deg/s here, and a bank only
-            // sets the turn rate here. The pitch limit only has to let climb and
-            // descent bind at cruise (asin(9.7 / 20) is 29 degrees). Rerun that
-            // script after changing either model or these numbers.
+            // (11.0); the largest change of speed over 1 s speeding up and
+            // slowing from 20 m/s (2.3, 1.3 m/s^2); steady climb and descent at
+            // 20 m/s asked (4.0, 10.1 m/s); the largest roll and pitch rates
+            // (33.4, 50.1 deg/s). The Rascal holds 49 degrees of bank but turns
+            // at 30.2 deg/s, 8% slower than a coordinated turn at that bank;
+            // 46.5 degrees is the bank that gives 30.2 deg/s here, and a bank
+            // only sets the turn rate here. The pitch limit only has to let
+            // climb and descent bind at cruise (asin(10.1 / 20) is 30.3
+            // degrees). Rerun that script after changing either model or these
+            // numbers.
             SimpleAirframe::Rascal => Self {
-                min_speed_mps: 9.0,
-                max_speed_mps: 38.1,
-                max_roll_rad: math::deg_to_rad(43.0),
-                max_pitch_rad: math::deg_to_rad(30.0),
-                max_roll_rate_radps: math::deg_to_rad(31.0),
-                max_pitch_rate_radps: math::deg_to_rad(52.0),
-                max_acceleration_mps2: 2.8,
-                max_deceleration_mps2: 1.2,
-                max_climb_rate_mps: 5.8,
-                max_descent_rate_mps: 9.7,
+                min_speed_mps: 11.0,
+                max_speed_mps: 35.3,
+                max_roll_rad: math::deg_to_rad(46.5),
+                max_pitch_rad: math::deg_to_rad(32.0),
+                max_roll_rate_radps: math::deg_to_rad(33.4),
+                max_pitch_rate_radps: math::deg_to_rad(50.1),
+                max_acceleration_mps2: 2.3,
+                max_deceleration_mps2: 1.3,
+                max_climb_rate_mps: 4.0,
+                max_descent_rate_mps: 10.1,
             },
         }
     }

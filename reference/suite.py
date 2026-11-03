@@ -329,6 +329,14 @@ CHECKS = [
           "without rotor drag, within 1e-6 m and 1e-6 rad over 3 s; the drag difference is reported",
           (RELEASE,), script_check("crazyflow_check.py", "crazyflow-crazyflie"),
           keep_named("results.json")),
+    Check("jsbsim-rascal", "FixedWing6DOF's Rascal against ArduPilot's JSBSim Rascal: loads at a "
+          "grid of held states, sample by sample, and 5 s open-loop glides",
+          "JSBSim (the jsbsim package, pinned, run with uv) on ArduPilot's Rascal files at a "
+          "pinned commit",
+          "every grid sample within the Rust test's limit and equal to the committed fixture; "
+          "every glide within 0.2 m in JSBSim's elevator-drag form",
+          (RELEASE,), script_check("jsbsim_check.py", "jsbsim-rascal"),
+          keep_named("results.json", "summary.md")),
     Check("stall-landing", "whether stall tables change ArduPlane's Rascal landing",
           "the same mission without tables, and a repeat of it",
           "the repeat is byte-identical", (RELEASE,), script_check("stall_landing.py", "stall-landing"),

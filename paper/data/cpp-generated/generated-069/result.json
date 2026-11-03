@@ -4,8 +4,8 @@
   "passed": true,
   "input": {
     "input_sha256": "801a038220eb543c044b15b4cfa6fef7be572a772f4fe0645b6547d8399554d9",
-    "xml_sha256": "9986314a37ba814f899856506bde7ebe7a078c671085f11238d6335876f2b008",
-    "effective_sha256": "74dd399001038216cd01ea15105b0322d0c02f6a63530db375fcf151aa84b07d",
+    "xml_sha256": "69ca226113f0e8e9ef9ded1f1bd9cec5f51f36eb3cb87b6d8ba90e63e3fecb5b",
+    "effective_sha256": "76328033418185949d17f30bcdcd6ec888663bc761b5f14fecbc76354e3cc59f",
     "run_overrides": {
       "enable_gui": "false",
       "network_gui": "false",
@@ -32,59 +32,72 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-15_11-26-38",
+  "cpp_log_directory": "cpp/logs/2026-11-03_00-29-32",
   "cpp_output_hashes": {
-    "frames.bin": "ff4ce2d02f9c03aa65747ae4797240949fb89b23ac15125b78ce24e44718171b",
+    "frames.bin": "973e939f82647d61f9ff4047f96335c3e26b3dc7c9fc864ce67da9d10dc9f5f5",
     "summary.csv": "9cde337548867bfe708ed0b996ea3c62034489e7f0a74d1052d8b78677d1ad91"
   },
   "worker_equality": {
     "2": {
-      "frames.bin": true,
-      "events.json": true,
-      "summary.csv": true
+      "/entities": true,
+      "/frames": true,
+      "/events": true,
+      "/summary": true,
+      "metadata": true
     },
     "8": {
-      "frames.bin": true,
-      "events.json": true,
-      "summary.csv": true
+      "/entities": true,
+      "/frames": true,
+      "/events": true,
+      "/summary": true,
+      "metadata": true
     }
   },
   "recording_equality": {
-    "frames.bin": true,
-    "events.json": true,
-    "summary.csv": true
+    "/entities": true,
+    "/frames": true,
+    "/events": true,
+    "/summary": true,
+    "metadata": true
   },
-  "recording_sha256": "1186f6334dce617e44fa15debedc2ac1cff8041e5e421f90114efb2fd2107f37",
+  "recording_sha256": "2fe370f9b13cdd09f85bfeabc436e0527b2a735c40ea20e7f8190288b95e485c",
   "trace_equality": {
-    "frames.bin": true,
-    "events.json": true,
-    "summary.csv": true
+    "/entities": true,
+    "/frames": true,
+    "/events": true,
+    "/summary": true,
+    "metadata": true
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "c98b13897a2b3bb4a1297efa8fec976efb210c54da87172ed1484fb31daa039c",
-      "events.json": "ba8debc49ff8d04f41d294e143b437f08f6b881f484ce130f3bdd21e3fd64a3e",
-      "summary.csv": "9cde337548867bfe708ed0b996ea3c62034489e7f0a74d1052d8b78677d1ad91"
+      "/entities": "d839c8fc3126973bb1fba8f314266d8f6b46f1fc9b1257562f6d26511a042fa5",
+      "/frames": "a24308ff4ff7096437c4ad366a0852a8e51e01c20f039ae77858782c4946e6f6",
+      "/events": "eb83966c1db4dce8b2af1cdac0e0737d4531a53b9688145965ce860c6396fcf5",
+      "/summary": "83b37c3bece98a35ab5f2090c70bb2cbc0aff1baca8910cb07ee746e674af5eb"
     },
     "rust-2": {
-      "frames.bin": "c98b13897a2b3bb4a1297efa8fec976efb210c54da87172ed1484fb31daa039c",
-      "events.json": "ba8debc49ff8d04f41d294e143b437f08f6b881f484ce130f3bdd21e3fd64a3e",
-      "summary.csv": "9cde337548867bfe708ed0b996ea3c62034489e7f0a74d1052d8b78677d1ad91"
+      "/entities": "d839c8fc3126973bb1fba8f314266d8f6b46f1fc9b1257562f6d26511a042fa5",
+      "/frames": "a24308ff4ff7096437c4ad366a0852a8e51e01c20f039ae77858782c4946e6f6",
+      "/events": "eb83966c1db4dce8b2af1cdac0e0737d4531a53b9688145965ce860c6396fcf5",
+      "/summary": "83b37c3bece98a35ab5f2090c70bb2cbc0aff1baca8910cb07ee746e674af5eb"
     },
     "rust-8": {
-      "frames.bin": "c98b13897a2b3bb4a1297efa8fec976efb210c54da87172ed1484fb31daa039c",
-      "events.json": "ba8debc49ff8d04f41d294e143b437f08f6b881f484ce130f3bdd21e3fd64a3e",
-      "summary.csv": "9cde337548867bfe708ed0b996ea3c62034489e7f0a74d1052d8b78677d1ad91"
+      "/entities": "d839c8fc3126973bb1fba8f314266d8f6b46f1fc9b1257562f6d26511a042fa5",
+      "/frames": "a24308ff4ff7096437c4ad366a0852a8e51e01c20f039ae77858782c4946e6f6",
+      "/events": "eb83966c1db4dce8b2af1cdac0e0737d4531a53b9688145965ce860c6396fcf5",
+      "/summary": "83b37c3bece98a35ab5f2090c70bb2cbc0aff1baca8910cb07ee746e674af5eb"
     },
     "rust-rerun": {
-      "frames.bin": "c98b13897a2b3bb4a1297efa8fec976efb210c54da87172ed1484fb31daa039c",
-      "events.json": "ba8debc49ff8d04f41d294e143b437f08f6b881f484ce130f3bdd21e3fd64a3e",
-      "summary.csv": "9cde337548867bfe708ed0b996ea3c62034489e7f0a74d1052d8b78677d1ad91"
+      "/entities": "d839c8fc3126973bb1fba8f314266d8f6b46f1fc9b1257562f6d26511a042fa5",
+      "/frames": "a24308ff4ff7096437c4ad366a0852a8e51e01c20f039ae77858782c4946e6f6",
+      "/events": "eb83966c1db4dce8b2af1cdac0e0737d4531a53b9688145965ce860c6396fcf5",
+      "/summary": "83b37c3bece98a35ab5f2090c70bb2cbc0aff1baca8910cb07ee746e674af5eb"
     },
     "rust-trace": {
-      "frames.bin": "c98b13897a2b3bb4a1297efa8fec976efb210c54da87172ed1484fb31daa039c",
-      "events.json": "ba8debc49ff8d04f41d294e143b437f08f6b881f484ce130f3bdd21e3fd64a3e",
-      "summary.csv": "9cde337548867bfe708ed0b996ea3c62034489e7f0a74d1052d8b78677d1ad91"
+      "/entities": "d839c8fc3126973bb1fba8f314266d8f6b46f1fc9b1257562f6d26511a042fa5",
+      "/frames": "a24308ff4ff7096437c4ad366a0852a8e51e01c20f039ae77858782c4946e6f6",
+      "/events": "eb83966c1db4dce8b2af1cdac0e0737d4531a53b9688145965ce860c6396fcf5",
+      "/summary": "83b37c3bece98a35ab5f2090c70bb2cbc0aff1baca8910cb07ee746e674af5eb"
     }
   },
   "comparison": {
@@ -92,10 +105,10 @@
     "reference_frames": 301,
     "candidate_frames": 301,
     "compared_entity_states": 3131,
-    "max_position_error_m": 7.211725245339815e-12,
-    "max_velocity_error_mps": 4.346826217472979e-12,
-    "max_orientation_error_rad": 1.5237373439289593e-13,
-    "max_angular_velocity_error_radps": 5.687969769891161e-13,
+    "max_position_error_m": 8.516843965784004e-12,
+    "max_velocity_error_mps": 6.514261895078231e-12,
+    "max_orientation_error_rad": 7.281902600227675e-13,
+    "max_angular_velocity_error_radps": 1.6909128392678778e-12,
     "max_timestamp_error_s": 0.0,
     "mismatch_count": 0,
     "first_mismatches": [],
@@ -108,14 +121,14 @@
     "outputs": 21840,
     "sensor_states": 0,
     "skipped_sensor_deliveries": 0,
-    "max_belief_position_error_m": 7.211725245339815e-12,
-    "max_belief_velocity_error_mps": 4.346826217472979e-12,
-    "max_belief_orientation_error_rad": 1.5237373439289593e-13,
-    "max_belief_angular_velocity_error_radps": 5.687969769891161e-13,
+    "max_belief_position_error_m": 8.516843965784004e-12,
+    "max_belief_velocity_error_mps": 6.514261895078231e-12,
+    "max_belief_orientation_error_rad": 7.281902600227675e-13,
+    "max_belief_angular_velocity_error_radps": 1.6909128392678778e-12,
     "max_payload_position_error_m": 0.0,
     "max_payload_velocity_error_mps": 0.0,
     "max_payload_orientation_error_rad": 0.0,
-    "max_output_error": 8.962830477798889e-13,
+    "max_output_error": 6.046274592108603e-13,
     "max_output_error_port": "AircraftPIDController.elevator",
     "excluded_pre_start_records": 0,
     "delivery_mismatches": 0,

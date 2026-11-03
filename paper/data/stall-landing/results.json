@@ -3,57 +3,64 @@
   "repeat_byte_identical": true,
   "mission": "crates/ardupilot/missions/rascal-runway.yaml",
   "tables": {
-    "linear": {},
-    "linear-repeat": {},
+    "linear": {
+      "lift_table": "[]",
+      "drag_table": "[]"
+    },
+    "linear-repeat": {
+      "lift_table": "[]",
+      "drag_table": "[]"
+    },
     "lift": {
-      "lift_table": "[[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]"
+      "lift_table": "[[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]",
+      "drag_table": "[]"
     },
     "lift-drag": {
       "lift_table": "[[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]",
       "drag_table": "[[-1.57, 1.5], [-0.26, 0.056], [0.0, 0.028], [0.26, 0.056], [1.57, 1.5]]"
     }
   },
-  "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+  "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
   "results": {
     "linear": {
-      "touchdown_time_s": 172.602,
-      "touchdown_ground_speed_mps": 15.38,
-      "touchdown_sink_mps": 1.06,
-      "max_bounce_height_m": 2.25,
-      "max_rollout_offset_m": 1.44,
-      "final_offset_m": 0.63,
-      "max_alpha_airborne_deg": 11.8,
-      "max_alpha_on_ground_deg": 14.6
+      "touchdown_time_s": 174.667,
+      "touchdown_ground_speed_mps": 14.0,
+      "touchdown_sink_mps": 1.7,
+      "max_bounce_height_m": 0.82,
+      "max_rollout_offset_m": 3.17,
+      "final_offset_m": 0.9,
+      "max_alpha_airborne_deg": 7.7,
+      "max_alpha_on_ground_deg": 14.3
     },
     "linear-repeat": {
-      "touchdown_time_s": 172.602,
-      "touchdown_ground_speed_mps": 15.38,
-      "touchdown_sink_mps": 1.06,
-      "max_bounce_height_m": 2.25,
-      "max_rollout_offset_m": 1.44,
-      "final_offset_m": 0.63,
-      "max_alpha_airborne_deg": 11.8,
-      "max_alpha_on_ground_deg": 14.6
+      "touchdown_time_s": 174.667,
+      "touchdown_ground_speed_mps": 14.0,
+      "touchdown_sink_mps": 1.7,
+      "max_bounce_height_m": 0.82,
+      "max_rollout_offset_m": 3.17,
+      "final_offset_m": 0.9,
+      "max_alpha_airborne_deg": 7.7,
+      "max_alpha_on_ground_deg": 14.3
     },
     "lift": {
-      "touchdown_time_s": 172.595,
-      "touchdown_ground_speed_mps": 15.38,
-      "touchdown_sink_mps": 1.09,
-      "max_bounce_height_m": 2.26,
-      "max_rollout_offset_m": 1.49,
-      "final_offset_m": 0.6,
-      "max_alpha_airborne_deg": 11.9,
-      "max_alpha_on_ground_deg": 14.8
+      "touchdown_time_s": 174.66,
+      "touchdown_ground_speed_mps": 14.0,
+      "touchdown_sink_mps": 1.72,
+      "max_bounce_height_m": 0.79,
+      "max_rollout_offset_m": 2.95,
+      "final_offset_m": 0.81,
+      "max_alpha_airborne_deg": 7.5,
+      "max_alpha_on_ground_deg": 14.3
     },
     "lift-drag": {
-      "touchdown_time_s": 173.0,
-      "touchdown_ground_speed_mps": 15.04,
-      "touchdown_sink_mps": 0.86,
-      "max_bounce_height_m": 2.06,
-      "max_rollout_offset_m": 1.8,
-      "final_offset_m": 0.79,
-      "max_alpha_airborne_deg": 10.0,
-      "max_alpha_on_ground_deg": 14.5
+      "touchdown_time_s": 174.928,
+      "touchdown_ground_speed_mps": 13.48,
+      "touchdown_sink_mps": 1.67,
+      "max_bounce_height_m": 0.39,
+      "max_rollout_offset_m": 2.3,
+      "final_offset_m": 0.73,
+      "max_alpha_airborne_deg": 8.6,
+      "max_alpha_on_ground_deg": 14.3
     }
   }
 }

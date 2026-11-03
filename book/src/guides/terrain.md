@@ -119,8 +119,8 @@ their moments are recomputed at every RK4 stage.
 - **Results are close to first order in the step,** not RK4's fourth, because
   contact switches on and off and JSBSim's rules are written per step. A
   drop's lowest point changes by under 2 mm from 0.0025 s to 0.0003 s.
-- **No stall unless the mission adds the optional `lift_table` and
-  `drag_table`** (JSBSim's Rascal values are in the ArduPilot chapter).
+- **No stall without `lift_table` and `drag_table`** (the `rascal` airframe
+  carries JSBSim's, listed in the ArduPilot chapter; the A-4D has none).
   Without them, lift at the high angles
   of a takeoff roll or a flare is too optimistic. Either way, an aircraft
   rolling backwards meets the air at 180°, outside any table's data, and the

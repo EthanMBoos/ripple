@@ -28,13 +28,16 @@ NOISY_SENSORS = ("NoisyState", "NoisyContacts")
 AIRFRAMES = {
     ("FixedWing6DOF", "rascal"): {
         "gravity_magnitude": 9.81, "air_density": 1.225,
-        "inertia_matrix_slug_ft_sq": "[ 1.95 0.0 0.0 ] [ 0.0 1.55 0.0 ] [ 0.0 0.0 1.91 ]",
+        "inertia_matrix_slug_ft_sq": "[ 1.960082815452557 0.0 -6.843056086570756e-05 ] "
+                                     "[ 0.0 1.5600832798805415 0.0 ] "
+                                     "[ -6.843056086570756e-05 0.0 1.9100004644279847 ]",
         "thrust_min": 0.0, "thrust_max": 25.0,
-        "delta_elevator_min": -0.30, "delta_elevator_max": 0.30,
+        "delta_elevator_min": -0.35, "delta_elevator_max": 0.30,
         "delta_aileron_min": -0.35, "delta_aileron_max": 0.35,
         "delta_rudder_min": -0.35, "delta_rudder_max": 0.35,
-        "mass": 5.91, "wing_span": 2.7, "surface_area_of_wing": 0.982, "chord_length": 0.351,
-        "C_D0": 0.028, "C_D_alpha": 0.0,
+        "mass": 6.577089365, "wing_span": 2.795016, "surface_area_of_wing": 0.9819851328000001,
+        "chord_length": 0.35052, "efficiency_factor": 0.9979726529753524,
+        "C_D0": 0.028, "C_D_alpha": 0.0, "C_D_delta_elevator_": 0.1,
         "C_L0": 0.25, "C_L_alpha": 5, "C_LQ": 0.0, "C_L_alpha_dot": 0.0,
         "C_L_delta_elevator": 0.2, "C_Y_beta": -1.0, "C_Y_delta_rudder": 0.0,
         "C_L_beta": -0.1, "C_LP": -0.4, "C_LR": 0.15, "C_L_delta_aileron": 0.13,
@@ -43,6 +46,14 @@ AIRFRAMES = {
         "C_NR": -0.15, "C_N_delta_aileron": -0.03, "C_N_delta_rudder": -0.05,
     },
 }
+# FixedWing6DOF keys SCRIMMAGE has no equation for, with the value that turns
+# each off. A compared mission sets them off over the `rascal` airframe
+# (which has them on), and they are not written out; any other value is an
+# error, since SCRIMMAGE could not fly it.
+RUST_ONLY = {"FixedWing6DOF": {
+    "aero_reference_frd_m": [0, 0, 0], "c_pitch_alpha_dot": 0, "c_yaw_0": 0,
+    "lift_table": [], "drag_table": [], "sideslip_drag_table": [],
+    "aileron_power_mach_table": [], "elevator_power_mach_table": []}}
 # SCRIMMAGE's noise keys: `<prefix>_<axis>="bias stddev"`, from the named fields.
 NOISE_KEYS = (("pos_noise", "position_bias_m", "position_stddev_m"),
               ("vel_noise", "velocity_bias_mps", "velocity_stddev_mps"),
@@ -170,7 +181,19 @@ def scrimmage_keys(name, params):
 
 def plugin(parent, tag, config, label_attribute="instance"):
     profile = AIRFRAMES.get((config["name"], config["params"].get("airframe")), {})
-    params = {**profile, **scrimmage_keys(config["name"], config["params"])}
+    given = dict(config["params"])
+    for key, off in RUST_ONLY.get(config["name"], {}).items():
+        if key in given:
+            if given.pop(key) != off:
+                raise ValueError(f"{config['name']} {key}: SCRIMMAGE has no such term; set it to {off}")
+        elif config["params"].get("airframe") == "rascal":
+            raise ValueError(f"{config['name']} {key}: the rascal airframe sets it, which SCRIMMAGE "
+                             f"cannot fly; set it to {off}")
+    given.pop("speed_of_sound_mps", None)  # only the Mach tables read it
+    if given.pop("signed_elevator_drag", False):
+        raise ValueError(f"{config['name']} signed_elevator_drag: SCRIMMAGE has no such form; "
+                         "set it to False")
+    params = {**profile, **scrimmage_keys(config["name"], given)}
     if tag == "sensor" and config["name"] in NOISY_SENSORS:
         for prefix, bias, stddev in NOISE_KEYS:
             biases = params.pop(bias, [0, 0, 0])

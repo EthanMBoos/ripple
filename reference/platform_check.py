@@ -4,8 +4,8 @@
     python3 reference/platform_check.py --output runs/platform000 [--mission-dir DIR]
 
 Builds the ripple CLI natively (here, macOS/arm64) and in a linux/amd64
-container (the cli target of reference/rust.Dockerfile), runs every curated mission (and any
---mission-dir missions) at 1 and 8 workers with the comparison trace, and
+container (the cli target of reference/rust.Dockerfile), runs every mission but
+the delivery crate's (and any --mission-dir missions) at 1 and 8 workers with the comparison trace, and
 compares MCAP channel payloads and result metadata byte for byte.
 Different CPU architectures, operating systems, and math libraries can change
 floating-point results; this shows whether they do for this code. Standard
@@ -30,7 +30,9 @@ IMAGE = f"{IMAGE_PREFIX}-platform"
 
 
 def missions(extra):
-    found = project.missions()
+    # The delivery missions ask a language model through a CLI or an API key
+    # the container has neither of; this check is about the arithmetic.
+    found = [mission for mission in project.missions() if "delivery" not in mission.parts]
     if extra:
         found += sorted(extra.glob("*.yaml"))
     return found

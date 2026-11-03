@@ -3,9 +3,9 @@
   "mission": "<checkout>/missions/verification/aircraft-long-horizon.yaml",
   "passed": true,
   "input": {
-    "input_sha256": "5342aa6802d2f089674eb130100163cd50f876101a2b617b99b770373d94013e",
-    "xml_sha256": "c397c59b174c8b77f01c87dacf107e9fda11365092dd19028e6397f2f434e2ae",
-    "effective_sha256": "57bd878a66003fdfaa6419fcc7f255cc22333320712a5a37cc55dcffd98d6cc9",
+    "input_sha256": "358250d3c9b54769cb38276cabc0c04f0ebcebfbad0113816b7be238aa1e01c1",
+    "xml_sha256": "6b18779c98ea6191ba2614f1e7f76374fd39645ca414d8a39b8cf05ee7656ab6",
+    "effective_sha256": "52354e47da90876a4074f218fad5e30c62ba084c52537894904eed2e26a84297",
     "run_overrides": {
       "enable_gui": "false",
       "network_gui": "false",
@@ -32,59 +32,72 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-15_11-21-15",
+  "cpp_log_directory": "cpp/logs/2026-11-03_00-23-16",
   "cpp_output_hashes": {
     "frames.bin": "0bd815906401d7c60d771188107c29abbb96dd9ba79eb951ce9178f2d6dfe638",
     "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
   },
   "worker_equality": {
     "2": {
-      "frames.bin": true,
-      "events.json": true,
-      "summary.csv": true
+      "/entities": true,
+      "/frames": true,
+      "/events": true,
+      "/summary": true,
+      "metadata": true
     },
     "8": {
-      "frames.bin": true,
-      "events.json": true,
-      "summary.csv": true
+      "/entities": true,
+      "/frames": true,
+      "/events": true,
+      "/summary": true,
+      "metadata": true
     }
   },
   "recording_equality": {
-    "frames.bin": true,
-    "events.json": true,
-    "summary.csv": true
+    "/entities": true,
+    "/frames": true,
+    "/events": true,
+    "/summary": true,
+    "metadata": true
   },
-  "recording_sha256": "7c00674e1ff031d01827927ecb3fd2d2292fe70ec884e2ac0e13aa112c9d3cf0",
+  "recording_sha256": "6a88a072c602359ccd5d4be912e158d08f2a1734b0e4ab9177c123f4f28f09fb",
   "trace_equality": {
-    "frames.bin": true,
-    "events.json": true,
-    "summary.csv": true
+    "/entities": true,
+    "/frames": true,
+    "/events": true,
+    "/summary": true,
+    "metadata": true
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
-      "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
-      "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
+      "/entities": "5075081fac485b64851906134eb8538fae65c483aac8fb2d3428f7c0dfd8d6ed",
+      "/frames": "c2c50e45d5bb4b5cfe4cea0cc53734ff64d108b4563d1269596cb19fb955d9f5",
+      "/events": "87fa14b831586ecb2db3c8aa160697950536b7385b6c931b05c46604add929cd",
+      "/summary": "1efea5c3b8593d31a006bdd39f8cd8daa0a98f901c405c59d5ac5e887d93a744"
     },
     "rust-2": {
-      "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
-      "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
-      "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
+      "/entities": "5075081fac485b64851906134eb8538fae65c483aac8fb2d3428f7c0dfd8d6ed",
+      "/frames": "c2c50e45d5bb4b5cfe4cea0cc53734ff64d108b4563d1269596cb19fb955d9f5",
+      "/events": "87fa14b831586ecb2db3c8aa160697950536b7385b6c931b05c46604add929cd",
+      "/summary": "1efea5c3b8593d31a006bdd39f8cd8daa0a98f901c405c59d5ac5e887d93a744"
     },
     "rust-8": {
-      "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
-      "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
-      "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
+      "/entities": "5075081fac485b64851906134eb8538fae65c483aac8fb2d3428f7c0dfd8d6ed",
+      "/frames": "c2c50e45d5bb4b5cfe4cea0cc53734ff64d108b4563d1269596cb19fb955d9f5",
+      "/events": "87fa14b831586ecb2db3c8aa160697950536b7385b6c931b05c46604add929cd",
+      "/summary": "1efea5c3b8593d31a006bdd39f8cd8daa0a98f901c405c59d5ac5e887d93a744"
     },
     "rust-rerun": {
-      "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
-      "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
-      "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
+      "/entities": "5075081fac485b64851906134eb8538fae65c483aac8fb2d3428f7c0dfd8d6ed",
+      "/frames": "c2c50e45d5bb4b5cfe4cea0cc53734ff64d108b4563d1269596cb19fb955d9f5",
+      "/events": "87fa14b831586ecb2db3c8aa160697950536b7385b6c931b05c46604add929cd",
+      "/summary": "1efea5c3b8593d31a006bdd39f8cd8daa0a98f901c405c59d5ac5e887d93a744"
     },
     "rust-trace": {
-      "frames.bin": "9185b807aa3ec87fef861fd1ddc4a5ee55f76bc40bb95f19b0f966723ad594a2",
-      "events.json": "e12e699357069c05bf20a91a49cdce765950d367dd062e4dd89df6a61258ef1a",
-      "summary.csv": "80b79b50a4c881d51fb0eac394151e8ca8f271f5684d32cf0a380d77e6e4b909"
+      "/entities": "5075081fac485b64851906134eb8538fae65c483aac8fb2d3428f7c0dfd8d6ed",
+      "/frames": "c2c50e45d5bb4b5cfe4cea0cc53734ff64d108b4563d1269596cb19fb955d9f5",
+      "/events": "87fa14b831586ecb2db3c8aa160697950536b7385b6c931b05c46604add929cd",
+      "/summary": "1efea5c3b8593d31a006bdd39f8cd8daa0a98f901c405c59d5ac5e887d93a744"
     }
   },
   "comparison": {

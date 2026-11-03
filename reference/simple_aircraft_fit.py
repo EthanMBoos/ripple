@@ -20,7 +20,7 @@ measures:
 - turn: the turn rate in a 180 degree turn while the bank is held (within half
   a degree of the largest bank held for 1 s), and the bank that gives that
   rate in a coordinated turn, atan(rate x speed / g). The Rascal turns about
-  13% slower than a coordinated turn at its own bank; SimpleAircraft's bank
+  8% slower than a coordinated turn at its own bank; SimpleAircraft's bank
   limit is this effective bank, since SimpleAircraft's bank only sets its
   turn rate;
 - roll and pitch rates: the largest change of each over 0.1 s in those runs.

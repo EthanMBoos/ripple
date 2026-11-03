@@ -80,19 +80,19 @@ fn a_zero_command_keeps_the_heading_and_slows_to_the_minimum_speed() -> Result<(
     let last = frames.last().unwrap();
     assert!(heading_deg(last).abs() < 0.5, "{}", heading_deg(last));
     // The Rascal's minimum speed, and still level.
-    assert!((speed_mps(last) - 9.0).abs() < 1e-6, "{}", speed_mps(last));
+    assert!((speed_mps(last) - 11.0).abs() < 1e-6, "{}", speed_mps(last));
     assert!((last.entities[0].truth.position_world_m.z - 300.0).abs() < 1.0);
     Ok(())
 }
 
 #[test]
 fn speed_and_climb_stop_at_the_aircrafts_limits() -> Result<()> {
-    // 60 m/s and a 20 m/s climb: beyond the Rascal's 38.1 m/s and 5.8 m/s.
+    // 60 m/s and a 20 m/s climb: beyond the Rascal's 35.3 m/s and 4.0 m/s.
     let frames = fly("velocity-limits", [60.0, 0.0, 20.0], 40.0)?;
     let last = frames.last().unwrap();
-    assert!((speed_mps(last) - 38.1).abs() < 1e-6, "{}", speed_mps(last));
+    assert!((speed_mps(last) - 35.3).abs() < 1e-6, "{}", speed_mps(last));
     let climb_mps = last.entities[0].truth.velocity_world_mps.z;
-    assert!((climb_mps - 5.8).abs() < 1e-6, "{climb_mps}");
+    assert!((climb_mps - 4.0).abs() < 1e-6, "{climb_mps}");
     Ok(())
 }
 
@@ -105,12 +105,12 @@ fn a_reversal_turns_no_faster_than_the_bank_limit_allows() -> Result<()> {
         "{}",
         heading_deg(last)
     );
-    // A coordinated turn at the 43 degree bank limit: g tan(bank) / speed.
+    // A coordinated turn at the 46.5 degree bank limit: g tan(bank) / speed.
     let mut fastest_degps = 0.0_f64;
     for frame in &frames {
         let truth = &frame.entities[0].truth;
         let limit_degps =
-            (9.81 * 43_f64.to_radians().tan() / truth.velocity_world_mps.norm()).to_degrees();
+            (9.81 * 46.5_f64.to_radians().tan() / truth.velocity_world_mps.norm()).to_degrees();
         let rate_degps = truth.angular_velocity_world_radps.z.abs().to_degrees();
         assert!(
             rate_degps <= limit_degps + 1e-6,

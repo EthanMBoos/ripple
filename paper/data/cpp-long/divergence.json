@@ -60,17 +60,17 @@
       "case": "generated-007",
       "end_s": 100.0,
       "cpp_vs_rust_exceeds_tolerance_at_s": null,
-      "rust_vs_nudged_rust_exceeds_tolerance_at_s": 14.790000000000001,
-      "cpp_vs_rust_final_m": 2.5617636865888657e-09,
-      "rust_vs_nudged_rust_final_m": 2.1593291201140183e-07
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 6.947837871669484e-10,
+      "rust_vs_nudged_rust_final_m": 2.4931800470196714e-09
     },
     {
       "case": "generated-008",
       "end_s": 100.0,
       "cpp_vs_rust_exceeds_tolerance_at_s": null,
       "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
-      "cpp_vs_rust_final_m": 2.39682484845697e-11,
-      "rust_vs_nudged_rust_final_m": 1.0783788827880488e-09
+      "cpp_vs_rust_final_m": 1.6783073085301064e-10,
+      "rust_vs_nudged_rust_final_m": 1.3587323681939991e-09
     },
     {
       "case": "generated-009",

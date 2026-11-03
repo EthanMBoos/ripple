@@ -48,6 +48,9 @@ pub use aircraft_pid::AircraftPidController;
 #[path = "controller/aircraft_velocity/aircraft_velocity.rs"]
 mod aircraft_velocity;
 pub use aircraft_velocity::AircraftVelocityController;
+#[path = "controller/held_controls/held_controls.rs"]
+mod held_controls;
+pub use held_controls::HeldControls;
 #[path = "controller/motor_speeds/motor_speeds.rs"]
 mod motor_speeds;
 pub use motor_speeds::MotorSpeeds;

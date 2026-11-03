@@ -10,36 +10,43 @@
 //! - Source: a rigid body under aerodynamic forces and moments built from
 //!   linear stability derivatives (lift, drag, side force, roll, pitch, yaw),
 //!   induced drag from an Oswald efficiency, and thrust linear in throttle;
-//!   RK4 with every load evaluated at each stage. Optional lift and drag
-//!   tables against angle of attack follow JSBSim's `<table>`, and optional
-//!   landing gear follows JSBSim's FGLGear (`landing_gear.rs`). Aircraft
-//!   numbers come from `airframe.rs`: the A-4D (Nelson) or the Rascal
-//!   (ArduPilot's JSBSim Rascal), or a mission gives them in full.
+//!   RK4 with every load evaluated at each stage. Beyond SCRIMMAGE's
+//!   equations, each off unless the airframe or mission sets it: lift, drag,
+//!   and sideslip-drag tables and Mach tables for the control powers, all
+//!   read like a JSBSim `<table>`; loads applied at an aerodynamic reference
+//!   point, with the moment transferred to the center of mass; alpha-dot
+//!   pitch damping; a constant yaw moment; and JSBSim's signed elevator
+//!   drag. Optional landing gear follows JSBSim's FGLGear
+//!   (`landing_gear.rs`). Aircraft numbers come from `airframe.rs`: the A-4D
+//!   (Nelson) or the Rascal (ArduPilot's JSBSim Rascal, with its tables and
+//!   terms), or a mission gives them in full.
 //! - Validated against: SCRIMMAGE's FixedWing6DOF on both aircraft
-//!   (`fixed-wing-6dof.yaml`, `fixed-wing-6dof-rascal.yaml`); step-size
-//!   convergence (`reference/rk4_loads.py`); the landing gear's resting
-//!   height, drops, slopes, friction stops, and convergence
-//!   (`crates/core/tests/landing_gear.rs`); and closed-loop flight by
-//!   ArduPlane, takeoff to landing, repeated byte for byte
-//!   (`reference/stall_landing.py`). Not against JSBSim's own simulation or
-//!   any flight data.
-//! - Valid range: attached flow at small sideslip and moderate angle of
-//!   attack, where linear derivatives hold (past the stall only with the
-//!   tables); subsonic flight, since nothing changes with Mach; near the flight
-//!   condition an aircraft's derivatives were taken at (the Rascal around 20
-//!   m/s).
+//!   (`fixed-wing-6dof.yaml`, `fixed-wing-6dof-rascal.yaml`, the latter with
+//!   the Rascal's extra terms off); step-size convergence
+//!   (`reference/rk4_loads.py`); the landing gear's resting height, drops,
+//!   slopes, friction stops, and convergence
+//!   (`crates/core/tests/landing_gear.rs`); closed-loop flight by ArduPlane,
+//!   takeoff to landing, repeated byte for byte (`reference/stall_landing.py`);
+//!   and the Rascal against ArduPilot's JSBSim Rascal run in JSBSim: loads
+//!   to rounding at 378 held states (`jsbsim_rascal_samples` in
+//!   `aerodynamics.rs`) and 5 s open-loop glides within a set tolerance
+//!   (`reference/jsbsim_check.py`). Not against any flight data.
+//! - Valid range: attached flow at moderate angle of attack, where linear
+//!   derivatives or the tables hold (past the stall only with the tables);
+//!   subsonic flight, since only the control powers change with Mach; near
+//!   the flight condition an aircraft's derivatives were taken at (the
+//!   Rascal around 20 m/s).
 //! - Not modeled (named zeros in `derivative`): propeller slipstream over
 //!   the wing and tail, propeller torque and gyroscopic moments, and ground
-//!   effect. Also: separate wing stalls (so no spin), drag from sideslip,
-//!   unsteady aerodynamics (no alpha-dot derivatives),
-//!   engine and propeller dynamics (thrust follows throttle at once),
-//!   compressibility, fuel burn, and gusts.
-//! - To go further: evaluate the Rascal in JSBSim at fixed states and over
-//!   short runs, for a second evaluator of the same aircraft; a propeller
-//!   model from measured data (thrust and torque against advance ratio, as
-//!   published for small propellers) would replace the linear thrust and fill
-//!   the slipstream and torque zeros; a measured lift and moment change near
-//!   the ground would fill ground effect.
+//!   effect. Also: separate wing stalls (so no spin), unsteady aerodynamics
+//!   beyond the alpha-dot pitch damping, engine and propeller dynamics
+//!   (thrust follows throttle at once), compressibility beyond the Mach
+//!   tables, fuel burn, an altitude-dependent atmosphere, and gusts.
+//! - To go further: a propeller model from measured data (thrust and torque
+//!   against advance ratio, as published for small propellers) would replace
+//!   the linear thrust and fill the slipstream and torque zeros; a measured
+//!   lift and moment change near the ground would fill ground effect; a
+//!   standard atmosphere would let long descents change the air density.
 
 mod aerodynamics;
 mod airframe;
@@ -118,17 +125,46 @@ struct FixedWingParams {
     c_yaw_r: Option<f64>,
     c_yaw_aileron: Option<f64>,
     c_yaw_rudder: Option<f64>,
+    // The tables and terms below are off (empty or zero) unless the airframe
+    // or the mission sets them; a mission without an airframe may leave them
+    // out.
+    /// Where the coefficients act, relative to the center of mass,
+    /// `[forward, right, down]` in meters; the moment about the center of
+    /// mass adds this arm crossed with the force. Zero applies the loads at
+    /// the center of mass.
+    aero_reference_frd_m: Option<[f64; 3]>,
+    /// Pitch damping from the rate of change of angle of attack, C_m_alphadot,
+    /// per radian, entering as alpha_dot c / 2V.
+    c_pitch_alpha_dot: Option<f64>,
+    /// Yaw moment coefficient at zero sideslip, rates, and deflection, C_n0.
+    c_yaw_0: Option<f64>,
     /// Lift coefficient against angle of attack, as `[alpha_rad, C_L]` rows
     /// sorted by angle (YAML only). Replaces `c_lift_0 + c_lift_alpha * alpha`, so a
     /// lift that peaks and falls past the critical angle models a stall;
     /// interpolated linearly and held at the end values, like a JSBSim table.
-    /// Empty (the default) keeps linear lift.
-    lift_table: Vec<[f64; 2]>,
+    /// Empty keeps linear lift.
+    lift_table: Option<Vec<[f64; 2]>>,
     /// Drag coefficient against angle of attack, as `[alpha_rad, C_D]` rows
     /// sorted by angle (YAML only), read like `lift_table`. Replaces
     /// `c_drag_0 + c_drag_alpha * |alpha|`, so drag can rise steeply past the stall;
-    /// induced and elevator drag are still added. Empty keeps the linear drag.
-    drag_table: Vec<[f64; 2]>,
+    /// induced, elevator, and sideslip drag are still added. Empty keeps the
+    /// linear drag.
+    drag_table: Option<Vec<[f64; 2]>>,
+    /// Drag coefficient added from sideslip, as `[beta_rad, C_D]` rows sorted
+    /// by angle (YAML only). Empty adds none.
+    sideslip_drag_table: Option<Vec<[f64; 2]>>,
+    /// Aileron roll power against Mach, as `[mach, C_l_delta_a]` rows (YAML
+    /// only), replacing `c_roll_aileron`; and the elevator's pitch power
+    /// likewise, replacing `c_pitch_elevator`. Mach is airspeed over
+    /// `speed_of_sound_mps`. Empty keeps the constant.
+    aileron_power_mach_table: Option<Vec<[f64; 2]>>,
+    elevator_power_mach_table: Option<Vec<[f64; 2]>>,
+    /// The elevator's drag from the signed deflection (up-elevator reduces
+    /// it), as JSBSim's Rascal file has it, instead of from its size. A
+    /// JSBSim-compatibility form, not part of any airframe.
+    signed_elevator_drag: bool,
+    /// Environment: the speed of sound, for the Mach tables only.
+    speed_of_sound_mps: f64,
     enable_ground_spring: bool,
     /// Wheels that roll on the ground (YAML only; see `landing_gear.rs`).
     /// Replaces the flat spring, so `enable_ground_spring` must be false.
@@ -186,8 +222,17 @@ impl Default for FixedWingParams {
             c_yaw_r: None,
             c_yaw_aileron: None,
             c_yaw_rudder: None,
-            lift_table: Vec::new(),
-            drag_table: Vec::new(),
+            aero_reference_frd_m: None,
+            c_pitch_alpha_dot: None,
+            c_yaw_0: None,
+            lift_table: None,
+            drag_table: None,
+            sideslip_drag_table: None,
+            aileron_power_mach_table: None,
+            elevator_power_mach_table: None,
+            signed_elevator_drag: false,
+            // The standard atmosphere's sea-level value.
+            speed_of_sound_mps: 340.294,
             enable_ground_spring: true,
             landing_gear: Vec::new(),
             enable_launcher: false,
@@ -257,8 +302,30 @@ impl TryFrom<FixedWingParams> for FixedWingConfig {
             params.landing_gear.is_empty() || !params.enable_ground_spring,
             "FixedWing6DOF: set enable_ground_spring to false with landing_gear; the wheels replace it"
         );
-        check_alpha_table("lift_table", "C_L", &params.lift_table)?;
-        check_alpha_table("drag_table", "C_D", &params.drag_table)?;
+        check_table("lift_table", "alpha_rad", "C_L", &vehicle.lift_table)?;
+        check_table("drag_table", "alpha_rad", "C_D", &vehicle.drag_table)?;
+        check_table(
+            "sideslip_drag_table",
+            "beta_rad",
+            "C_D",
+            &vehicle.sideslip_drag_table,
+        )?;
+        check_table(
+            "aileron_power_mach_table",
+            "mach",
+            "C_l_delta_a",
+            &vehicle.aileron_power_mach_table,
+        )?;
+        check_table(
+            "elevator_power_mach_table",
+            "mach",
+            "C_m_delta_e",
+            &vehicle.elevator_power_mach_table,
+        )?;
+        ensure!(
+            params.speed_of_sound_mps > 0.0,
+            "FixedWing6DOF speed_of_sound_mps must be positive"
+        );
         landing_gear::check_wheels(&params.landing_gear)?;
         let inertia_kgm2 = vehicle.inertia_kgm2;
         let inverse_inertia = inertia_kgm2
@@ -280,8 +347,8 @@ impl TryFrom<FixedWingParams> for FixedWingConfig {
             aerodynamics: Aerodynamics::new(
                 &vehicle,
                 params.air_density_kgpm3,
-                &params.lift_table,
-                &params.drag_table,
+                params.speed_of_sound_mps,
+                params.signed_elevator_drag,
             ),
             enable_ground_spring: params.enable_ground_spring,
             landing_gear: params.landing_gear,
@@ -471,9 +538,9 @@ impl FixedWingConfig {
         let wind_frd_mps = rotation.rotate_world_to_body(ned_from_enu(self.wind_world_mps));
         // Velocity through the air: ground velocity minus the air's (the wind's).
         let air_velocity_frd_mps = v - wind_frd_mps;
-        let mut loads = self
+        let aero_force_n = self
             .aerodynamics
-            .loads(air_velocity_frd_mps, omega, control);
+            .force(air_velocity_frd_mps, omega, control);
         // Weight m g, down in NED.
         let weight_n = rotation.rotate_world_to_body(Vec3::new(0.0, 0.0, m * g));
         let thrust_n = Vec3::new(self.thrust_n(control.throttle), 0.0, 0.0);
@@ -487,12 +554,10 @@ impl FixedWingConfig {
         let slipstream_n = Vec3::zeros();
         let ground_effect_n = Vec3::zeros();
         let propeller_moment_nm = Vec3::zeros();
-        loads.force_frd_n =
-            weight_n + thrust_n + loads.force_frd_n + slipstream_n + ground_effect_n;
-        loads.moment_frd_nm += propeller_moment_nm;
-
+        let mut force_n = weight_n + thrust_n + aero_force_n + slipstream_n + ground_effect_n;
+        let mut gear_moment_nm = Vec3::zeros();
         if !self.landing_gear.is_empty() {
-            let (force_frd_n, moment_frd_nm) = landing_gear::loads(
+            let (gear_force_n, moment_nm) = landing_gear::loads(
                 &self.landing_gear,
                 state,
                 rotation,
@@ -501,8 +566,8 @@ impl FixedWingConfig {
                 self.mass_kg,
                 dt_s,
             );
-            loads.force_frd_n += force_frd_n;
-            loads.moment_frd_nm += moment_frd_nm;
+            force_n += gear_force_n;
+            gear_moment_nm = moment_nm;
         }
         let (depth_m, sink_mps) = (state.position_ned_m.z, state.velocity_ned_mps.z);
         if self.enable_ground_spring && depth_m > 0.0 {
@@ -510,18 +575,32 @@ impl FixedWingConfig {
             // This is not a validated landing model for the default eight-tonne
             // aircraft; `landing_gear` is the real ground contact.
             let ground_force_n = (400.0 * m * depth_m + 40.0 * sink_mps).max(0.0);
-            loads.force_frd_n +=
-                rotation.rotate_world_to_body(Vec3::new(0.0, 0.0, -ground_force_n));
+            force_n += rotation.rotate_world_to_body(Vec3::new(0.0, 0.0, -ground_force_n));
         }
         if !flying {
-            loads.force_frd_n = Vec3::zeros();
-            loads.moment_frd_nm = Vec3::zeros();
+            force_n = Vec3::zeros();
         }
-        loads.force_frd_n.x += catapult_force_n;
-        // Newton and Euler: a = F / m, and I omega_dot = M - omega x (I omega).
-        let acceleration = loads.force_frd_n / m;
+        force_n.x += catapult_force_n;
+        // Newton: a = F / m. The angle of attack's rate follows from the
+        // body's acceleration, so the aerodynamic moment comes after the
+        // force.
+        let acceleration = force_n / m;
+        let alpha_dot_radps =
+            aerodynamics::alpha_dot_radps(air_velocity_frd_mps, v.cross(&omega) + acceleration);
+        let mut moment_nm = self.aerodynamics.moment(
+            air_velocity_frd_mps,
+            omega,
+            control,
+            alpha_dot_radps,
+            aero_force_n,
+        ) + propeller_moment_nm
+            + gear_moment_nm;
+        if !flying {
+            moment_nm = Vec3::zeros();
+        }
+        // Euler: I omega_dot = M - omega x (I omega).
         let angular_acceleration =
-            self.inverse_inertia * (loads.moment_frd_nm - omega.cross(&(inertia * omega)));
+            self.inverse_inertia * (moment_nm - omega.cross(&(inertia * omega)));
         // q_dot = 1/2 q (0, omega)
         let q_dot = Quaternion {
             w: -0.5 * (q.x * omega.x + q.y * omega.y + q.z * omega.z),
@@ -551,15 +630,15 @@ impl FixedWingConfig {
     }
 }
 
-/// An angle-of-attack table is empty (unused) or has two or more finite rows
-/// in increasing angle.
-fn check_alpha_table(key: &str, coefficient: &str, table: &[[f64; 2]]) -> Result<()> {
+/// A table is empty (unused) or has two or more finite rows in increasing
+/// abscissa.
+fn check_table(key: &str, abscissa: &str, coefficient: &str, table: &[[f64; 2]]) -> Result<()> {
     ensure!(
         table.is_empty()
             || (table.len() >= 2
                 && table.iter().flatten().all(|value| value.is_finite())
                 && table.windows(2).all(|rows| rows[0][0] < rows[1][0])),
-        "FixedWing6DOF {key} needs at least two finite [alpha_rad, {coefficient}] rows in increasing angle"
+        "FixedWing6DOF {key} needs at least two finite [{abscissa}, {coefficient}] rows in increasing {abscissa}"
     );
     Ok(())
 }
@@ -737,7 +816,41 @@ fn vehicle(params: &FixedWingParams) -> Result<Vehicle> {
             params.c_yaw_rudder,
             preset.map(|v| v.c_yaw_rudder),
         )?,
+        // Off unless the mission or the airframe sets them.
+        aero_reference_frd_m: params
+            .aero_reference_frd_m
+            .map(Vec3::from)
+            .or(preset.map(|v| v.aero_reference_frd_m))
+            .unwrap_or_default(),
+        c_pitch_alpha_dot: params
+            .c_pitch_alpha_dot
+            .or(preset.map(|v| v.c_pitch_alpha_dot))
+            .unwrap_or_default(),
+        c_yaw_0: params
+            .c_yaw_0
+            .or(preset.map(|v| v.c_yaw_0))
+            .unwrap_or_default(),
+        lift_table: table(&params.lift_table, preset.map(|v| &v.lift_table)),
+        drag_table: table(&params.drag_table, preset.map(|v| &v.drag_table)),
+        sideslip_drag_table: table(
+            &params.sideslip_drag_table,
+            preset.map(|v| &v.sideslip_drag_table),
+        ),
+        aileron_power_mach_table: table(
+            &params.aileron_power_mach_table,
+            preset.map(|v| &v.aileron_power_mach_table),
+        ),
+        elevator_power_mach_table: table(
+            &params.elevator_power_mach_table,
+            preset.map(|v| &v.elevator_power_mach_table),
+        ),
     })
+}
+
+/// The mission's table (an empty one turns the airframe's off), else the
+/// airframe's, else none.
+fn table(given: &Option<Vec<[f64; 2]>>, preset: Option<&Vec<[f64; 2]>>) -> Vec<[f64; 2]> {
+    given.as_ref().or(preset).cloned().unwrap_or_default()
 }
 
 /// Three rows, in slug ft^2 (`slug_ft2`) or kg m^2, as kg m^2.
@@ -857,14 +970,14 @@ mod tests {
     {
         // The Rascal in full, every vehicle key, with C_MQ changed.
         let full = [
-            ("mass_kg", "5.91"),
-            ("wing_span_m", "2.70"),
-            ("wing_area_m2", "0.982"),
-            ("mean_chord_m", "0.351"),
-            ("oswald_efficiency", "0.995"),
+            ("mass_kg", "6.577089365"),
+            ("wing_span_m", "2.795016"),
+            ("wing_area_m2", "0.9819851328000001"),
+            ("mean_chord_m", "0.35052"),
+            ("oswald_efficiency", "0.9979726529753524"),
             ("min_thrust_n", "0"),
             ("max_thrust_n", "25"),
-            ("min_elevator_rad", "-0.30"),
+            ("min_elevator_rad", "-0.35"),
             ("max_elevator_rad", "0.30"),
             ("min_aileron_rad", "-0.35"),
             ("max_aileron_rad", "0.35"),
@@ -872,7 +985,7 @@ mod tests {
             ("max_rudder_rad", "0.35"),
             ("c_drag_0", "0.028"),
             ("c_drag_alpha", "0"),
-            ("c_drag_elevator", "0.01"),
+            ("c_drag_elevator", "0.1"),
             ("c_lift_0", "0.25"),
             ("c_lift_alpha", "5"),
             ("c_lift_q", "0"),
@@ -893,6 +1006,26 @@ mod tests {
             ("c_yaw_r", "-0.15"),
             ("c_yaw_aileron", "-0.03"),
             ("c_yaw_rudder", "-0.05"),
+            (
+                "aero_reference_frd_m",
+                "[-0.02550510344827574, 0, 0.08611366379310344]",
+            ),
+            ("c_pitch_alpha_dot", "-7"),
+            ("c_yaw_0", "0.0007"),
+            (
+                "lift_table",
+                "[[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]",
+            ),
+            (
+                "drag_table",
+                "[[-1.57, 1.5], [-0.26, 0.056], [0.0, 0.028], [0.26, 0.056], [1.57, 1.5]]",
+            ),
+            (
+                "sideslip_drag_table",
+                "[[-1.57, 1.23], [-0.26, 0.05], [0.0, 0.0], [0.26, 0.05], [1.57, 1.23]]",
+            ),
+            ("aileron_power_mach_table", "[[0.0, 0.13], [2.0, 0.057]]"),
+            ("elevator_power_mach_table", "[[0.0, -0.5], [2.0, -0.275]]"),
         ];
         let resolve = |text: &str| -> anyhow::Result<_> {
             super::vehicle(&PluginParams::yaml(text).parse()?)
@@ -900,7 +1033,11 @@ mod tests {
         let full: String = full
             .iter()
             .map(|(key, value)| format!("{key}: {value}\n"))
-            .chain(["inertia_slug_ft2: [[1.95, 0, 0], [0, 1.55, 0], [0, 0, 1.91]]".into()])
+            .chain([
+                "inertia_slug_ft2: [[1.960082815452557, 0, -6.843056086570756e-05], \
+                 [0, 1.5600832798805415, 0], [-6.843056086570756e-05, 0, 1.9100004644279847]]"
+                    .into(),
+            ])
             .collect();
         let from_name = resolve("{airframe: rascal, c_pitch_q: -10}")?;
         assert_eq!(from_name, resolve(&full)?);

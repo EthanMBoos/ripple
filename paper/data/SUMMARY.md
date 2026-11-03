@@ -10,13 +10,13 @@ Every check of `reference/suite.py` in this release, on 3 different sources (`re
 | --- | --- | --- | --- |
 | `speed-regression` | Rust speed and memory have not regressed | reference/perf_baseline.json, accepted on the same machine and toolchain | passed; no workload slower than the baseline |
 | `rust-tests` | Rust unit, integration, and mission regression tests; formatting; lints; tests of these checking tools | expected values in the tests | passed |
-| `rust-determinism` | worker counts, recording, tracing, and spatial lookup method change no output | the one-worker run | passed; 39 missions, 0 differing |
+| `rust-determinism` | worker counts, recording, tracing on shipped missions, and spatial lookup method change no output | the one-worker run | passed; 44 missions, 0 differing |
 | `cpp-agreement` | behaviour matches C++ SCRIMMAGE on the curated missions (reference/missions.txt) | C++ SCRIMMAGE in Docker: the unmodified and comparison branches | passed; 15 of 15 pass |
 | `cpp-generated` | agreement over 100 random scenarios (seed 1) | C++ SCRIMMAGE | passed; 100 of 100 pass |
 | `cpp-long` | agreement over ten 1,000 s scenarios (seed 7), and whether late divergence is the port or the dynamics | C++ SCRIMMAGE; Rust after one-ulp nudges | passed; 10 of 10 agree throughout |
 | `cpp-noise` | sensor noise matches sample for sample, and by distribution | C++ SCRIMMAGE NoisyContacts samples | passed; samples agree; distributions agree |
 | `checker-sensitivity` | the C++ comparison catches plausible porting bugs | cpp-agreement's saved C++ runs | passed; 12 of 12 planted bugs caught |
-| `rust-platform` | Linux/amd64 and native builds agree | the native build | passed; largest position difference 2.3678883310186693e-12 m |
+| `rust-platform` | Linux/amd64 and native builds agree | the native build | passed; largest position difference 1.6435515470676547e-12 m |
 | `speed-cpp-container` | C++ and Rust speed and memory in one Linux container | C++ SCRIMMAGE comparison branch, same container | passed |
 | `speed-cpp-native` | C++ and Rust speed and memory on bare-metal macOS | native C++ SCRIMMAGE comparison branch | passed |
 | `speed-spatial` | collision checking cost with the scan and with grids | the scan, which tests every contact | passed |
@@ -27,6 +27,7 @@ Every check of `reference/suite.py` in this release, on 3 different sources (`re
 | `simple-aircraft-fit` | SimpleAircraft's rascal limits against FixedWing6DOF's Rascal: speeds, acceleration, climb, descent, turn rate, and attitude rates | FixedWing6DOF's Rascal under AircraftPIDController | passed |
 | `rotors-motor` | Multirotor's motor lag and rotor loads against RotorS, sample by sample | RotorS's motor-plugin source (ethz-asl/rotors_simulator), compiled in Docker | passed |
 | `crazyflow-crazyflie` | Multirotor's Crazyflie against Crazyflow's first-principles dynamics, same constants and motor commands | Crazyflow (learnsyslab/crazyflow, pinned), run with uv | passed |
+| `jsbsim-rascal` | FixedWing6DOF's Rascal against ArduPilot's JSBSim Rascal: loads at a grid of held states, sample by sample, and 5 s open-loop glides | JSBSim (the jsbsim package, pinned, run with uv) on ArduPilot's Rascal files at a pinned commit | passed |
 | `stall-landing` | whether stall tables change ArduPlane's Rascal landing | the same mission without tables, and a repeat of it | passed |
 
 ## Agreement with SCRIMMAGE
@@ -41,15 +42,15 @@ Each curated mission (`reference/missions.txt`) against the comparison branch. L
 | `substeps-scheduled-spawn` | substeps, rates, two spawn schedules | 176 | 1.4e-14 | 2.1e-14 | 1.8e-15 | 7 | 0 | 1014 | 1.8e-14 | match (summary explained by the scoring rule) |
 | `noisy-state-bias` | NoisyState bias, belief feedback | 31 | 7.1e-15 | 1.0e-14 | 2.3e-15 | 1 | 30 | 180 | 3.6e-14 | match |
 | `world-networks` | Boundary, GroundCollision, networks | 604 | 1.3e-12 | 3.5e-13 | 1.8e-14 | 8 | 602 | 3612 | 6.3e-14 | match (summary explained by the scoring rule) |
-| `fixed-wing-a4` | FixedWing6DOF, AircraftPID, wind | 2002 | 6.9e-13 | 8.8e-14 | 4.1e-15 | 2 | 0 | 14000 | 5.0e-13 | match |
-| `fixed-wing-rascal` | FixedWing6DOF Rascal, upset, glide | 18003 | 2.3e-13 | 7.3e-14 | 4.0e-15 | 3 | 0 | 126000 | 8.1e-14 | match |
-| `multirotor` | Multirotor (4 and 6 rotors) | 16004 | 4.9e-12 | 5.9e-12 | 3.3e-13 | 4 | 0 | 72000 | 0 | match |
+| `fixed-wing-a4` | FixedWing6DOF, AircraftPID, wind | 2002 | 1.2e-12 | 8.2e-12 | 2.3e-13 | 2 | 0 | 14000 | 1.3e-12 | match |
+| `fixed-wing-rascal` | FixedWing6DOF Rascal, upset, glide | 18003 | 1.0e-8 | 4.6e-10 | 2.3e-11 | 3 | 0 | 126000 | 1.0e-13 | match |
+| `multirotor` | Multirotor (4 and 6 rotors) | 16004 | 4.7e-12 | 5.3e-12 | 3.2e-13 | 4 | 0 | 72000 | 0 | match |
 | `single-integrator` | SingleIntegrator command paths | 255 | 0 | 0 | 0 | 5 | 0 | 1500 | 0 | match |
 | `noisy-contacts-bias` | NoisyContacts bias, attitude, covariance | 93 | 0 | 1.2e-14 | 1.3e-15 | 3 | 180 | 540 | 9.1e-15 | match |
 | `sphere-network-auction` | SphereNetwork reach, AuctionAssign | 426 | 0 | 0 | 0 | 22 | 0 | 2520 | 0 | match |
 | `sphere-network-loss` | SphereNetwork loss, keyed draws | 568 | 0 | 0 | 0 | 27 | 0 | 3360 | 0 | match |
 | `collision-boundary` | SimpleCollision range boundary | 108 | 0 | 0 | 0 | 14 | 0 | 624 | 0 | match (summary explained by the scoring rule) |
-| `multirotor-fixes` | Multirotor fixes: initial velocity, rotor tilt, idle | 6003 | 3.7e-13 | 3.6e-13 | 2.8e-14 | 3 | 0 | 24000 | 0 | match |
+| `multirotor-fixes` | Multirotor fixes: initial velocity, rotor tilt, idle | 6003 | 3.4e-13 | 3.9e-13 | 4.0e-14 | 3 | 0 | 24000 | 0 | match |
 
 ## Generated scenarios
 
@@ -60,8 +61,8 @@ Each curated mission (`reference/missions.txt`) against the comparison branch. L
 | Scenarios passing | 100 of 100 |
 | Compared entity states | 67,697 |
 | Compared deliveries / outputs | 701 / 435,745 |
-| Largest position / velocity error | 2.8e-11 m / 3.2e-11 m/s |
-| Largest attitude / output error | 5.9e-13 rad / 2.4e-12 |
+| Largest position / velocity error | 5.8e-11 m / 4.1e-11 m/s |
+| Largest attitude / output error | 7.2e-12 rad / 2.5e-11 |
 | Summaries identical / explained | 48 / 52 |
 | Scenarios with collisions | 51 |
 | Scenarios with ground | 37 |
@@ -85,8 +86,8 @@ When SCRIMMAGE and Ripple first differ by more than 1e-8 m and, as a control, wh
 | `generated-004` | 1000 s | never | never | 7.3e-12 |
 | `generated-005` | 1000 s | never | never | 0 |
 | `generated-006` | 1000 s | never | never | 1.3e-11 |
-| `generated-007` | 100 s | never | 14.8 s | 2.6e-9 |
-| `generated-008` | 100 s | never | never | 2.4e-11 |
+| `generated-007` | 100 s | never | never | 6.9e-10 |
+| `generated-008` | 100 s | never | never | 1.7e-10 |
 | `generated-009` | 1000 s | never | never | 9.1e-12 |
 
 ## Sensor noise
@@ -115,12 +116,12 @@ The 3,600 measured states agree one for one, to 1.3e-13 m. NoisyContacts error d
 | network delivers one tick late | 15 | summary, trace |
 | SphereNetwork range becomes inclusive | 1 | trace |
 | SimpleCollision range becomes inclusive | 1 | frames, summary, trace |
-| sensor attitude errors applied in yaw-pitch-roll order | 2 | frames, trace |
+| sensor attitude errors applied in yaw-pitch-roll order | 2 | trace |
 | NoisyState reports zero angular velocity | 2 | trace |
 | SphereNetwork loss key swaps sender and receiver | 1 | trace |
 | SingleIntegrator yaw swaps atan2 arguments | 2 | frames, trace |
-| heading PID proportional gain 1% high | 5 | frames, trace |
-| SimpleAircraft yaw rate 0.1% high | 5 | frames, trace |
+| heading PID proportional gain 1% high | 4 | frames, trace |
+| SimpleAircraft yaw rate 0.1% high | 4 | frames, trace |
 
 ## Collision checking cost
 
@@ -153,6 +154,6 @@ ArduPlane's runway landing with and without stall tables: speed and sink rate at
 
 | Lift and drag | Speed (m/s) | Sink (m/s) | Bounce (m) | Offset (m) | Alpha (deg) |
 | --- | --- | --- | --- | --- | --- |
-| Linear | 15.38 | 1.06 | 2.25 | 1.44 | 11.8 |
-| Lift table | 15.38 | 1.09 | 2.26 | 1.49 | 11.9 |
-| Both tables | 15.04 | 0.86 | 2.06 | 1.80 | 10.0 |
+| Linear | 14.00 | 1.70 | 0.82 | 3.17 | 7.7 |
+| Lift table | 14.00 | 1.72 | 0.79 | 2.95 | 7.5 |
+| Both tables | 13.48 | 1.67 | 0.39 | 2.30 | 8.6 |

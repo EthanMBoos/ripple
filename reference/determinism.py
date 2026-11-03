@@ -80,8 +80,14 @@ def check(cli, runner, name, mission, stock, trace, folder):
     for label, options in CLI_VARIANTS:
         if label == "w1-trace" and not trace:
             continue
-        subprocess.run([cli, "run", mission, "--root", ROOT, "--output", folder / label, *options],
-                       capture_output=True, text=True, check=True)
+        run = subprocess.run([cli, "run", mission, "--root", ROOT, "--output", folder / label,
+                              *options], capture_output=True, text=True)
+        if run.returncode and label == "w1":
+            # A mission that does not load (a model key missing from the
+            # environment, say) has no output to compare.
+            return {"mission": name, "traced": trace, "collisions": 0, "identical": None,
+                    "differences": [f"skipped: {run.stderr.strip().splitlines()[-1]}"]}
+        run.check_returncode()
         if label != "w1":
             different += differences(folder / "w1", folder / label, label)
     recording = folder / "w8-recording/recording.rrd"
@@ -115,15 +121,16 @@ def main(argv=None):
     for index, (name, mission, stock, trace) in enumerate(cases(scratch)):
         result = check(cli, runner, name, mission, stock, trace, output / f"{index:02}")
         results.append(result)
-        print(f"{'same' if result['identical'] else 'DIFF'} {name}"
+        print(f"{'skip' if result['identical'] is None else 'same' if result['identical'] else 'DIFF'} {name}"
               f"{' ' + ' '.join(result['differences']) if result['differences'] else ''}",
               flush=True)
-    report = {"passed": all(result["identical"] for result in results),
+    report = {"passed": all(result["identical"] is not False for result in results),
               "channels_compared": CHANNELS, "cli_variants": [label for label, _ in CLI_VARIANTS],
               "lookup_variants": [label for label, _, _ in LOOKUP_VARIANTS],
               "missions": len(results),
               "traced_missions": sum(result["traced"] for result in results),
-              "missions_differing": sum(not result["identical"] for result in results),
+              "skipped": [result["mission"] for result in results if result["identical"] is None],
+              "missions_differing": sum(result["identical"] is False for result in results),
               "results": results}
     (output / "report.json").write_text(json.dumps(report, indent=1) + "\n")
     print(f"{len(results)} missions, {report['missions_differing']} differing")

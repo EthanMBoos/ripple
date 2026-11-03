@@ -270,6 +270,7 @@ fn register_builtins(registry: &mut PluginRegistry) -> Result<()> {
     registry.register_controller::<controller::AircraftVelocityController>(
         "AircraftVelocityController",
     )?;
+    registry.register_controller::<controller::HeldControls>("HeldControls")?;
     registry.register_motion::<motion::Multirotor>("Multirotor")?;
     registry.register_controller::<controller::MotorSpeeds>("MotorSpeeds")?;
     registry.register_controller::<controller::MultirotorVelocityController>(

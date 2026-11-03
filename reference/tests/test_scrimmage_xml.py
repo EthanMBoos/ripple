@@ -44,12 +44,22 @@ class ScrimmageXmlTests(unittest.TestCase):
 
     def test_a_named_airframe_is_written_out_under_the_missions_own_values(self):
         mission = scenario()
+        off = {key: value for key, value in scrimmage_xml.RUST_ONLY["FixedWing6DOF"].items()}
         mission["entities"][0]["motion_model"] = plugin(
-            "FixedWing6DOF", airframe="rascal", thrust_max=30)
+            "FixedWing6DOF", airframe="rascal", thrust_max=30, **off)
         motion = scrimmage_xml.mission(mission).find("entity/motion_model")
-        self.assertEqual(motion.get("mass"), "5.91")
-        self.assertEqual(motion.get("delta_elevator_max"), "0.3")
+        self.assertEqual(motion.get("mass"), "6.577089365")
+        self.assertEqual(motion.get("delta_elevator_min"), "-0.35")
         self.assertEqual(motion.get("thrust_max"), "30")
+        self.assertNotIn("lift_table", motion.attrib)
+        # The Rascal's own tables and terms cannot be written out.
+        mission["entities"][0]["motion_model"] = plugin("FixedWing6DOF", airframe="rascal")
+        with self.assertRaises(ValueError):
+            scrimmage_xml.mission(mission)
+        mission["entities"][0]["motion_model"] = plugin(
+            "FixedWing6DOF", airframe="rascal", **{**off, "c_yaw_0": 0.0007})
+        with self.assertRaises(ValueError):
+            scrimmage_xml.mission(mission)
         # An airframe SCRIMMAGE's defaults already match is left as named.
         mission["entities"][0]["motion_model"] = plugin("FixedWing6DOF", airframe="a4d")
         motion = scrimmage_xml.mission(mission).find("entity/motion_model")

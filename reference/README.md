@@ -42,6 +42,7 @@ check failed. Every script also runs on its own; its docstring says how.
 | `rascal-control` | quick | AircraftPIDController's `rascal` settings: altitude D after upsets, steps under each attitude limit (`rascal_control.py`) | the commands; the `a4d` limits | D changes error under 1 cm; steps settle, pitch under 25 degrees |
 | `rotors-motor` | release | Multirotor motor lag and rotor loads (`rotors_motor.py`) | RotorS's motor-plugin source in Docker | every sample within 1e-12 relative |
 | `crazyflow-crazyflie` | release | Multirotor's Crazyflie against Crazyflow's dynamics (`crazyflow_check.py`) | Crazyflow, pinned, via uv | no-drag case within 1e-6 m |
+| `jsbsim-rascal` | release | FixedWing6DOF's Rascal against ArduPilot's JSBSim Rascal: loads at 378 held states, and 5 s open-loop glides (`jsbsim_check.py`) | JSBSim 1.3.3 via uv, on ArduPilot's Rascal files at a pinned commit | every sample to rounding and equal to the fixture; every glide within 0.2 m in JSBSim's elevator-drag form |
 | `stall-landing` | release | stall tables in ArduPlane's Rascal landing (`stall_landing.py`) | the mission without tables | the repeat is byte-identical |
 
 A check that needs another runs it first (`checker-sensitivity` needs
@@ -113,8 +114,11 @@ Shipped missions and a small generated contact case use the trace; large
 generated workloads omit it because recording every agent's contacts at every
 tick makes enormous files. Entity,
 frame, event, summary, and recorded trace channel payloads must be identical,
-as must the recorded scenario and result metadata. The report goes to
-`runs/equivalenceNNN/`; it is development evidence, not release evidence.
+as must the recorded scenario and result metadata. A mission neither
+executable can load (the delivery missions that ask a model over its API,
+without that key in the environment) is skipped and listed, here and in
+`determinism.py`. The report goes to `runs/equivalenceNNN/`; it is
+development evidence, not release evidence.
 
 Names and paths live in one place, [project.py](project.py): the package and
 executable names, Docker image prefix, and the runs and evidence folders, all
@@ -134,6 +138,7 @@ resolved from this checkout, so the suite runs the same from any directory name.
 | `rk4_loads.py`, `stall_landing.py`, `inputs/` | Focused studies and their input missions |
 | `rascal_control.py` | The Rascal's controller settings |
 | `simple_aircraft_fit.py` | SimpleAircraft's `rascal` limits, fit to and checked against the Rascal |
+| `jsbsim_check.py`, `jsbsim/` | FixedWing6DOF's Rascal against JSBSim; `jsbsim/` drives JSBSim on ArduPilot's Rascal files |
 | `multirotor_control.py`, `rotors_motor.py`, `rotors/`, `crazyflow_check.py`, `crazyflow/` | Multirotor checks; `rotors/` builds RotorS's motor-plugin source with a stand-in for Gazebo; `crazyflow/` runs Crazyflow's dynamics |
 | `Dockerfile`, `fixtures/` | The C++ reference build and its command-test plugins |
 | `rust.Dockerfile`, `benchmark_runner.rs` | Rust on Linux, for the platform check and benchmarks |
@@ -188,6 +193,9 @@ The checker builds two committed branches of `../scrimmage`:
   rate-limited plugins, NoisyState, SimpleAircraft, and the wind sign
   ([reference
   notes](../docs/REFERENCE_NOTES.md#core-defects-fixed-on-both-sides)).
+  FixedWing6DOF rotates its wind-axis forces into the body frame exactly
+  ([reference
+  notes](../docs/REFERENCE_NOTES.md#wind-to-body-rotation-a-c-simplification-fixed-on-the-comparison-branch)).
   Every mission's frame timestamps change, so no mission's output matches the
   reference.
 
@@ -484,6 +492,21 @@ reference rather than an earlier revision of this project:
   off (must agree to integration precision) and on (Ripple's per-rotor drag
   against Crazyflow's lumped drag matrix; reported). Crazyflow runs in a uv
   environment at a pinned commit; `--python` uses an existing one.
+- `jsbsim_check.py`: FixedWing6DOF's Rascal against ArduPilot's JSBSim Rascal,
+  run by JSBSim itself (the `jsbsim` package, pinned, in a uv environment;
+  `jsbsim/rascal.py` drives it on ArduPilot's files, fetched at a pinned
+  commit and checked against pinned hashes). Part A reads JSBSim's loads at
+  378 held states into samples that the Rust test `jsbsim_rascal_samples`
+  reproduces to rounding from the `rascal` airframe in JSBSim's
+  elevator-drag form (`signed_elevator_drag`), with the size of each term
+  beyond the textbook equations read from JSBSim's per-function values; the
+  committed fixture in `crates/core/tests/fixtures/` must equal fresh
+  samples (`--update-fixture` replaces it). Part B flies 5 s open-loop
+  glides from JSBSim's trimmed glide, held and with surface steps, in Ripple
+  with `HeldControls`, in JSBSim's form and as flown, and must stay within
+  0.2 m in JSBSim's form, a tolerance set from three sensitivities it also
+  reports (JSBSim at a finer step, Ripple at a finer step, Ripple at the air
+  density of the glide's end).
 - `rascal_control.py`: the measurements behind AircraftPIDController's
   `rascal` settings: the altitude derivative gain after upsets at three step
   sizes, and heading, altitude, and speed steps under the `a4d` and `rascal`

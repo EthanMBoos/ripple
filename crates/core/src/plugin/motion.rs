@@ -59,6 +59,10 @@ pub trait MotionModel: Send {
     }
 }
 
+// The aircraft state the fixed-wing models integrate, in the aerospace frames.
+#[path = "motion/aircraft_state.rs"]
+mod aircraft_state;
+
 // Built-ins selected by missions.
 #[path = "motion/fixed_wing_6dof/fixed_wing_6dof.rs"]
 mod fixed_wing_6dof;

@@ -50,7 +50,6 @@
 
 mod aerodynamics;
 mod airframe;
-mod dynamics;
 mod landing_gear;
 
 use anyhow::{Context, Result, bail, ensure};
@@ -61,10 +60,10 @@ use crate::Terrain;
 use crate::math::{self, KinematicState, Quaternion, Vec3};
 use crate::plugin::{Frame, MotionContext, MotionModel, PluginIo, Port, Ports, Unit};
 
+use super::aircraft_state::{AircraftRate, AircraftState, ned_from_enu};
 use aerodynamics::Aerodynamics;
 pub(crate) use airframe::FixedWingAirframe;
 use airframe::Vehicle;
-use dynamics::{AircraftRate, AircraftState, ned_from_enu};
 use landing_gear::Wheel;
 
 const SLUG_FT_SQ_TO_KGM2: f64 = 1.35581795;

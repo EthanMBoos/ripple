@@ -37,7 +37,7 @@
 use anyhow::{Result, ensure};
 use serde::Deserialize;
 
-use super::dynamics::{AircraftState, enu_from_ned, ned_from_enu};
+use crate::plugin::motion::aircraft_state::{AircraftState, enu_from_ned, ned_from_enu};
 use crate::{Quaternion, Terrain, Vec3};
 
 /// The furthest RK4 stays stable along the negative real axis: a damper

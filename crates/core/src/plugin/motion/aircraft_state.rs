@@ -1,6 +1,8 @@
-//! Integration state in the aerospace frames: forward/right/down body and
-//! north/east/down world. Truth is the engine's forward/left/up and
-//! east/north/up; `from_truth` and `write_truth` convert.
+//! The fixed-wing models' integration state in the aerospace frames:
+//! forward/right/down body and north/east/down world. Truth is the engine's
+//! forward/left/up and east/north/up; `from_truth` and `write_truth` convert.
+//! Plumbing only, no equations: each model's force and derivative functions
+//! are in its own files.
 
 use std::f64::consts::FRAC_1_SQRT_2;
 

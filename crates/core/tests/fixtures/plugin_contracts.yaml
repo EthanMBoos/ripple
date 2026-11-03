@@ -25,8 +25,7 @@ entities:
   agents:
     team: 1
     count: 8
-    position_m: [0, 0, -1]
-    position_variance_m2: [100, 100, 0]
+    position_m: [0, 0, -1]  # exact: the tests check where every agent ends
     visual_model: sphere
     autonomy:
       DriveToGoal:

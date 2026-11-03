@@ -23,7 +23,6 @@ entities:
     heading_deg: 30
     roll_deg: 5
     pitch_deg: 3
-    randomize_every_spawn: true
     visual_model: sphere
     autonomy:
       Straight:

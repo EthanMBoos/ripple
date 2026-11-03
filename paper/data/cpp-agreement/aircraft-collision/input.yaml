@@ -6,7 +6,7 @@ run:
   end_s: 100
   dt_s: 0.1
   seed: 2147483648
-end_conditions: [time, all_dead]
+end_conditions: [time, no_entities]
 
 interactions: {SimpleCollision: {}}
 networks: {LocalNetwork: {}, GlobalNetwork: {}}
@@ -15,12 +15,10 @@ metrics: {SimpleCollisionMetrics: {}}
 entities:
   blue:
     team: 1
-    color: [77, 77, 255]
     visual_model: zephyr-blue
     health: 1
     count: 1
     position_m: [-1000, 0, 200]
-    position_variance_m2: [20, 20, 10]
     heading_deg: 0
     spawn:
       rate_hz: 0.5
@@ -33,12 +31,10 @@ entities:
 
   red:
     team: 2
-    color: [255, 0, 0]
     visual_model: zephyr-red
     health: 1
     count: 1
     position_m: [1000, 0, 200]
-    position_variance_m2: [20, 20, 10]
     heading_deg: 180
     spawn:
       rate_hz: 0.5

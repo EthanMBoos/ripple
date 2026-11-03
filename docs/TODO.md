@@ -203,15 +203,32 @@ sweeps are days of work, and the calls run in parallel over a few days.
 
 ## Engine
 
-- [ ] Later, low priority: accept a new speed baseline. The workload keys
-      were renamed, so `perf.py` won't compare until `--accept`. A run on
-      2026-10-24 (laptop hot and on low battery, right after a long
-      equivalence run) had every 1-worker case 2-13% slower than the
-      2026-10-14 baseline and most 8-worker cases faster; three 1-worker
-      collision cases went past the 10% limit. Most likely the machine, but
-      nothing recorded rules out a small code cost since then. To settle it,
-      time the 2026-10-14 build and `main` alternately, plugged in and cool,
-      then accept.
+- [ ] One short Courier run on the Firefly, as a test in `crates/delivery`
+      with a fixed assignment and no model call: a Firefly sent from the
+      depot to a nearby rooftop, approaching at its 12 m/s cruise, entering
+      the 3 m arrival radius, completing the dwell, and returning. Check the
+      phase transitions, the delivery event, a finite trajectory, and an
+      altitude and speed envelope. Half a day. This is the link
+      `delivery-firefly.yaml` relies on, tested without an hour-long
+      mission; it is a contract test of Ripple's own courier and controller,
+      not a check against anything outside. Call it a simulated arrival: the
+      Land skill fires on distance and dwell, never on ground contact.
+- [ ] Later, weeks, not needed for the study: powered flight for the Rascal,
+      a propeller model from JSBSim's `18x8` tables with the 2207 W motor,
+      replacing the constant 0 to 25 N thrust, plus its torque and
+      P-factor. The PID flies thrust, not a propeller, so the study never
+      needs it. Also, if the glides should match closer than 5 cm: a standard
+      atmosphere as a mission key that is off by default, so a long descent
+      changes the air density as it does in JSBSim.
+- [ ] Add `airframe: aerosonde`, a lighter aircraft to fly: Beard and McLain's
+      Aerosonde from `mavsim_public`'s `parameters/aerosonde_parameters.py` at
+      commit `10363e0e` (11 kg; the older `mavsim_template_files` copy says 13.5
+      kg, so cite the one used). Beard's terms without a FixedWing6DOF key
+      (pitch-rate and elevator drag, side force from aileron and rudder, the
+      blended stall curve) are dropped and listed in the doc comment. Checked by
+      no run code: no complete, pinned implementation of that model exists to
+      compare against, so the doc comment says so. No AircraftPIDController gain
+      set until a mission flies it under the PID.
 
 ## Not planned
 

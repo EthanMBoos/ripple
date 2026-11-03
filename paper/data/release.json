@@ -6,8 +6,8 @@
       "criterion": "no workload's median outside the baseline's range and over 10% slower",
       "passed": true,
       "note": "no workload slower than the baseline",
-      "date": "2026-10-12",
-      "source_sha256": "c534d4f90c4f79b106e184155d2db5aed1ee079dbb34fa1ff78662ccb93facc1",
+      "date": "2026-11-03",
+      "source_sha256": "1f8fab32cf3ec9f110b8f1027d2e351d2665e900a9a03b1d6163e11a0dd0b15d",
       "evidence": "paper/data/speed-regression/"
     },
     "rust-tests": {
@@ -16,18 +16,18 @@
       "criterion": "every test passes, no lint or format finding",
       "passed": true,
       "note": "",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-03",
+      "source_sha256": "1f8fab32cf3ec9f110b8f1027d2e351d2665e900a9a03b1d6163e11a0dd0b15d",
       "evidence": null
     },
     "rust-determinism": {
-      "purpose": "worker counts, recording, tracing, and spatial lookup method change no output",
+      "purpose": "worker counts, recording, tracing on shipped missions, and spatial lookup method change no output",
       "reference": "the one-worker run",
       "criterion": "byte-identical frames, events, and summaries on every mission and workload",
       "passed": true,
-      "note": "39 missions, 0 differing",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "note": "44 missions, 0 differing",
+      "date": "2026-11-03",
+      "source_sha256": "1f8fab32cf3ec9f110b8f1027d2e351d2665e900a9a03b1d6163e11a0dd0b15d",
       "evidence": "paper/data/rust-determinism/"
     },
     "cpp-agreement": {
@@ -36,8 +36,8 @@
       "criterion": "states within tolerance, identical deliveries, summaries equal or explained, C++ instrumentation and Rust variants byte-identical",
       "passed": true,
       "note": "15 of 15 pass",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-03",
+      "source_sha256": "1f8fab32cf3ec9f110b8f1027d2e351d2665e900a9a03b1d6163e11a0dd0b15d",
       "evidence": "paper/data/cpp-agreement/"
     },
     "cpp-generated": {
@@ -46,8 +46,8 @@
       "criterion": "as cpp-agreement, all 100 pass",
       "passed": true,
       "note": "100 of 100 pass",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-02",
+      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
       "evidence": "paper/data/cpp-generated/"
     },
     "cpp-long": {
@@ -56,8 +56,8 @@
       "criterion": "every run finishes cleanly with explained summaries; divergence is reported",
       "passed": true,
       "note": "10 of 10 agree throughout",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-02",
+      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
       "evidence": "paper/data/cpp-long/"
     },
     "cpp-noise": {
@@ -76,8 +76,8 @@
       "criterion": "an unmodified control passes; every planted bug is caught",
       "passed": true,
       "note": "12 of 12 planted bugs caught",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-02",
+      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
       "evidence": "paper/data/checker-sensitivity/"
     },
     "rust-platform": {
@@ -85,9 +85,9 @@
       "reference": "the native build",
       "criterion": "runs complete; differences are reported",
       "passed": true,
-      "note": "largest position difference 2.3678883310186693e-12 m",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "note": "largest position difference 1.6435515470676547e-12 m",
+      "date": "2026-11-03",
+      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
       "evidence": "paper/data/rust-platform/"
     },
     "speed-cpp-container": {
@@ -136,8 +136,8 @@
       "criterion": "runs complete; errors reported",
       "passed": true,
       "note": "",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-02",
+      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
       "evidence": "paper/data/rk4-loads/"
     },
     "multirotor-control": {
@@ -146,8 +146,8 @@
       "criterion": "every velocity error within 5% over the last second, Crazyflie drag tilt within 2%, 5 substeps within 5 mm",
       "passed": true,
       "note": "",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-02",
+      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
       "evidence": "paper/data/multirotor-control/"
     },
     "rascal-control": {
@@ -156,8 +156,8 @@
       "criterion": "altitude D changes the error under 1 cm; under the rascal limits every step settles and pitch stays under 25 degrees",
       "passed": true,
       "note": "",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-02",
+      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
       "evidence": "paper/data/rascal-control/"
     },
     "simple-aircraft-fit": {
@@ -166,29 +166,39 @@
       "criterion": "every SimpleAircraft number within 5% (or 0.2) of the Rascal's",
       "passed": true,
       "note": "",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-02",
+      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
       "evidence": "paper/data/simple-aircraft-fit/"
     },
     "rotors-motor": {
-      "purpose": "Multirotor's motor lag and rotor loads against RotorS, sample by sample",
+      "purpose": "Multirotor's motor lag and rotor loads against RotorS, sample by sample, and the Crazyflie's and Firefly's whole-vehicle loads against the sum of RotorS's rotor loads at held states",
       "reference": "RotorS's motor-plugin source (ethz-asl/rotors_simulator), compiled in Docker",
       "criterion": "every sample within 1e-12 relative; samples equal the committed fixture",
       "passed": true,
       "note": "",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-03",
+      "source_sha256": "eb7027d0255ed248cebcda3aad0775a8a57431bcfcf4d7b5b2d17c6c97baaf56",
       "evidence": "paper/data/rotors-motor/"
     },
     "crazyflow-crazyflie": {
-      "purpose": "Multirotor's Crazyflie against Crazyflow's first-principles dynamics, same constants and motor commands",
+      "purpose": "Multirotor's Crazyflie and Firefly loads at held states against Crazyflow's first-principles dynamics, and the Crazyflie flown against it in five open-loop flights (four airborne near hover, one spin-up stress case) with the same constants and motor commands",
       "reference": "Crazyflow (learnsyslab/crazyflow, pinned), run with uv",
-      "criterion": "without rotor drag, within 1e-6 m and 1e-6 rad over 3 s; the drag difference is reported",
+      "criterion": "every held state within 1e-12 of the rotor loads and equal to the committed fixture; every flight without rotor drag, and with Ripple's hub drag fed into Crazyflow, within limits set from the step-size sensitivities (1e-9 m, 1e-9 m/s, 1e-10 rad, 1e-10 rad/s), which each run measures again; the lumped-drag difference is reported",
       "passed": true,
       "note": "",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-03",
+      "source_sha256": "b1bc48150f7ede1afaed4ef09b1a9b06a2106b22bc7d2212c5b5b2c5618e750d",
       "evidence": "paper/data/crazyflow-crazyflie/"
+    },
+    "jsbsim-rascal": {
+      "purpose": "FixedWing6DOF's Rascal against ArduPilot's JSBSim Rascal: loads at a grid of held states, sample by sample, and 5 s open-loop glides",
+      "reference": "JSBSim (the jsbsim package, pinned, run with uv) on ArduPilot's Rascal files at a pinned commit",
+      "criterion": "every grid sample within the Rust test's limit and equal to the committed fixture; every glide within 0.2 m in JSBSim's elevator-drag form",
+      "passed": true,
+      "note": "",
+      "date": "2026-11-02",
+      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
+      "evidence": "paper/data/jsbsim-rascal/"
     },
     "stall-landing": {
       "purpose": "whether stall tables change ArduPlane's Rascal landing",
@@ -196,8 +206,8 @@
       "criterion": "the repeat is byte-identical",
       "passed": true,
       "note": "",
-      "date": "2026-10-15",
-      "source_sha256": "464729f08e76e021dff631f79e4dbfca3037dbe22a2751aa1cd5259fe878cbd1",
+      "date": "2026-11-02",
+      "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
       "evidence": "paper/data/stall-landing/"
     }
   },
@@ -207,13 +217,13 @@
       "cpp_baseline": {
         "branch": "Ubuntu-24.04",
         "commit": "4bdf41fb06facaea358d478d9a07aa4d77fcac27",
-        "image": "sha256:e0be30a91cca2cbf35399f5599682156be5a2b5aab35ae512573d02ac58a66dc",
+        "image": "sha256:74cba8d50900c97609317a4bef97bfda1a9d841119de681101b02f685f3081f6",
         "platform": "linux/amd64"
       },
       "cpp": {
         "branch": "benchmarking-edits",
-        "commit": "6b136c137bd3b9a111ee660fd12bf55c8ececc63",
-        "image": "sha256:c72c58a6b5c7006a54ed7556f97957e227e9a1408794bae835b49b167f28fb7a",
+        "commit": "3f7b6a9f82808a29634977a6c1580ffd011435c8",
+        "image": "sha256:233188606344697030fb1cc386d59e1cc51d764f3b7c35caac8c92a2f985f912",
         "platform": "linux/amd64"
       }
     }

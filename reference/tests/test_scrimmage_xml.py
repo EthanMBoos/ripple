@@ -15,6 +15,13 @@ class ScrimmageXmlTests(unittest.TestCase):
             self.assertEqual(entity.findtext(tag), value, tag)
         self.assertIsNone(entity.find("generate_rate"))
 
+    def test_a_spread_is_scrimmage_variance_sampled_for_every_entity(self):
+        mission = scenario()
+        mission["entities"][0]["position_stddev_m"] = [3.0, 0.0, 0.0]
+        entity = scrimmage_xml.mission(mission).find("entity")
+        self.assertEqual(entity.findtext("variance_x"), "9.0")
+        self.assertEqual(entity.findtext("use_variance_all_ents"), "true")
+
     def test_plugins_keep_their_parameters_order_and_names(self):
         root = scrimmage_xml.mission(scenario())
         self.assertEqual([(node.text, node.get("name")) for node in root.findall("network")],
@@ -44,16 +51,28 @@ class ScrimmageXmlTests(unittest.TestCase):
 
     def test_a_named_airframe_is_written_out_under_the_missions_own_values(self):
         mission = scenario()
+        off = {key: value for key, value in scrimmage_xml.RUST_ONLY["FixedWing6DOF"].items()}
         mission["entities"][0]["motion_model"] = plugin(
-            "FixedWing6DOF", airframe="rascal", thrust_max=30)
+            "FixedWing6DOF", airframe="rascal", thrust_max=30, **off)
         motion = scrimmage_xml.mission(mission).find("entity/motion_model")
-        self.assertEqual(motion.get("mass"), "5.91")
-        self.assertEqual(motion.get("delta_elevator_max"), "0.3")
+        self.assertEqual(motion.get("mass"), "6.577089365")
+        # SCRIMMAGE's flat ground spring, which Ripple no longer has, is off.
+        self.assertEqual(motion.get("use_ground_model"), "false")
+        self.assertEqual(motion.get("delta_elevator_min"), "-0.35")
         self.assertEqual(motion.get("thrust_max"), "30")
+        self.assertNotIn("lift_table", motion.attrib)
+        # The Rascal's own tables and terms cannot be written out.
+        mission["entities"][0]["motion_model"] = plugin("FixedWing6DOF", airframe="rascal")
+        with self.assertRaises(ValueError):
+            scrimmage_xml.mission(mission)
+        mission["entities"][0]["motion_model"] = plugin(
+            "FixedWing6DOF", airframe="rascal", **{**off, "c_yaw_0": 0.0007})
+        with self.assertRaises(ValueError):
+            scrimmage_xml.mission(mission)
         # An airframe SCRIMMAGE's defaults already match is left as named.
         mission["entities"][0]["motion_model"] = plugin("FixedWing6DOF", airframe="a4d")
         motion = scrimmage_xml.mission(mission).find("entity/motion_model")
-        self.assertEqual(motion.attrib, {"airframe": "a4d"})
+        self.assertEqual(motion.attrib, {"airframe": "a4d", "use_ground_model": "false"})
 
     def test_structured_vehicle_values_become_scrimmage_rows(self):
         mission = scenario()
@@ -72,7 +91,8 @@ class ScrimmageXmlTests(unittest.TestCase):
         mission["entities"][0]["motion_model"] = plugin(
             "FixedWing6DOF", airframe="a4d", c_roll_p=-0.4, wind_mps=[1, 2, 0], mass_kg=9)
         motion = scrimmage_xml.mission(mission).find("entity/motion_model")
-        self.assertEqual(list(motion.attrib), ["C_LP", "airframe", "mass", "wind_E", "wind_N"])
+        self.assertEqual(list(motion.attrib),
+                         ["use_ground_model", "C_LP", "airframe", "mass", "wind_E", "wind_N"])
         self.assertEqual((motion.get("C_LP"), motion.get("wind_N")), ("-0.4", "2"))
         mission["entities"][0]["controller"] = [plugin("SimpleAircraftControllerPID", altitude_pid={
             "kp": 1, "ki": 0, "kd": 0.8, "integrate_within_m": 1})]

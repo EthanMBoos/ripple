@@ -28,10 +28,9 @@ pub struct EntitySnapshot {
 #[derive(Clone, Debug)]
 pub(crate) struct SpawnConfig {
     pub position_world_m: Vec3,
-    pub position_variance_world_m2: Vec3,
+    pub position_stddev_world_m: Vec3,
     pub heading_world_deg: f64,
-    pub heading_variance_deg2: f64,
-    pub randomize_every_spawn: bool,
+    pub heading_stddev_deg: f64,
     pub requested_id: Option<i32>,
 }
 
@@ -50,10 +49,9 @@ impl EntityDefinition {
         Ok(Self {
             spawn: SpawnConfig {
                 position_world_m: config.position_m,
-                position_variance_world_m2: config.position_variance_m2,
+                position_stddev_world_m: config.position_stddev_m,
                 heading_world_deg: config.heading_deg,
-                heading_variance_deg2: config.heading_variance_deg2,
-                randomize_every_spawn: config.randomize_every_spawn,
+                heading_stddev_deg: config.heading_stddev_deg,
                 requested_id: config.id,
             },
             team_id: config.team,

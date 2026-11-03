@@ -44,13 +44,12 @@ BASELINE = ROOT / "reference/perf_baseline.json"
 NOISE = 0.10
 
 
-def mission(agents, end, multiplier=1, controller_rate=0, variance=0, interactions=None,
+def mission(agents, end, multiplier=1, controller_rate=0, spread=0, interactions=None,
             spawn=None, sensors=None, autonomy=None):
     """A YAML mission (written as JSON, which YAML reads) of `agents` aircraft
     flying straight at 200 m, every one with its own random start."""
     aircraft = {"team": 1, "count": agents, "position_m": [0, 0, 200],
-                "position_variance_m2": [variance, variance, 0],
-                "randomize_every_spawn": True}
+                "position_stddev_m": [spread, spread, 0]}
     if spawn:
         aircraft["spawn"] = spawn
     aircraft.update({
@@ -80,18 +79,18 @@ WORKLOADS = {
         end=60, sensors={"NoisyState": NOISE_5_5_1, "NoisyContacts": NOISE_5_5_1})),
     # Churn spreads its agents so collisions happen; the others above start together.
     "churn": ("scheduled spawning with collision removal", (64, 512), dict(
-        end=200, variance=2500,
+        end=200, spread=50,
         # Aircraft hold 200 m, so this ground check costs time but never removes.
         interactions={**COLLISION, "GroundCollision": {"ground_altitude_m": 150}},
         spawn={"rate_hz": 20, "batch_size": 4})),
     # Aircraft spread over about a kilometre, so few collide and the population
     # stays nearly constant: this measures the every-pair collision check itself.
     "collision": ("pairwise collision checks among active aircraft", (256, 1024), dict(
-        end=20, variance=1_000_000, interactions=COLLISION)),
+        end=20, spread=1000, interactions=COLLISION)),
     # The same mission, with spatial queries answered by a grid of 5 m cells
     # (`grid_cell_m`, passed to the runner) instead of a scan. Output is identical.
     "collision-grid": ("collision with a 5 m spatial grid", (256, 1024), dict(
-        end=20, variance=1_000_000, interactions=COLLISION, grid_cell_m=5)),
+        end=20, spread=1000, interactions=COLLISION, grid_cell_m=5)),
 }
 
 WORKERS = (1, 8)

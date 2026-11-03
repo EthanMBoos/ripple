@@ -1,9 +1,10 @@
 {
  "passed": true,
- "files_compared": [
-  "frames.bin",
-  "events.json",
-  "summary.csv"
+ "channels_compared": [
+  "/entities",
+  "/frames",
+  "/events",
+  "/summary"
  ],
  "cli_variants": [
   "w1",
@@ -21,240 +22,323 @@
   "grid50-w2",
   "grid1000-w1"
  ],
- "missions": 39,
+ "missions": 44,
+ "traced_missions": 31,
+ "skipped": [
+  "crates/delivery/missions/soft-avoidance.yaml",
+  "crates/delivery/missions/soft-fleet.yaml"
+ ],
  "missions_differing": 0,
  "results": [
   {
    "mission": "missions/auction-sphere.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/fixed-wing-6dof-rascal.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/fixed-wing-6dof.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/multirotor-velocity.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/multirotor.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/networks-local-global.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/noisy-contacts.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/noisy-state.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/straight-no-gui.yaml",
-   "collisions": 1,
+   "traced": true,
+   "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/terrain-mcmillan.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/verification/aircraft-long-horizon.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/verification/aircraft-substeps-scheduled.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/verification/aircraft-substeps-spawning.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/verification/collision-boundary.yaml",
+   "traced": true,
    "collisions": 2,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "missions/verification/mpe-simple-spread.yaml",
-   "collisions": 0,
-   "identical": true,
-   "differences": []
-  },
-  {
    "mission": "missions/verification/multirotor-fixes.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/verification/noisy-contacts-bias.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/verification/noisy-contacts-noise.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/verification/noisy-state-bias.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/verification/single-integrator.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/verification/sphere-network-auction.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/verification/sphere-network-loss.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/waypoints-aircraft.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "missions/waypoints-point-agents.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
+   "mission": "crates/delivery/missions/delivery-6dof.yaml",
+   "traced": true,
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "crates/delivery/missions/delivery-firefly.yaml",
+   "traced": true,
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "crates/delivery/missions/delivery.yaml",
+   "traced": true,
+   "collisions": 0,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "crates/delivery/missions/soft-avoidance.yaml",
+   "traced": true,
+   "collisions": 0,
+   "identical": null,
+   "differences": [
+    "skipped:     1: set OPENAI_API_KEY in the environment to ask openai via api, or set offline: true to replay saved replies"
+   ]
+  },
+  {
+   "mission": "crates/delivery/missions/soft-fleet.yaml",
+   "traced": true,
+   "collisions": 0,
+   "identical": null,
+   "differences": [
+    "skipped:     1: set OPENAI_API_KEY in the environment to ask openai via api, or set offline: true to replay saved replies"
+   ]
+  },
+  {
    "mission": "crates/starter/missions/dead-reckoning.yaml",
+   "traced": true,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "crates/starter/missions/follow-nearest.yaml",
+   "traced": true,
    "collisions": 1,
    "identical": true,
    "differences": []
   },
   {
    "mission": "perf motion-64",
+   "traced": false,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "perf motion-512",
+   "traced": false,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "perf substeps-64",
+   "traced": false,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "perf substeps-512",
+   "traced": false,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "perf sensing-32",
+   "traced": false,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "perf sensing-128",
+   "traced": false,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "perf churn-64",
+   "traced": false,
    "collisions": 6,
    "identical": true,
    "differences": []
   },
   {
    "mission": "perf churn-512",
+   "traced": false,
    "collisions": 151,
    "identical": true,
    "differences": []
   },
   {
    "mission": "perf collision-256",
+   "traced": false,
    "collisions": 0,
    "identical": true,
    "differences": []
   },
   {
    "mission": "perf collision-1024",
+   "traced": false,
    "collisions": 6,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "crowded collision, variance 100 m^2, 512 agents",
+   "mission": "crowded collision, spread 10 m, 512 agents",
+   "traced": false,
    "collisions": 234,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "crowded collision, variance 400 m^2, 1024 agents",
+   "mission": "crowded collision, spread 20 m, 1024 agents",
+   "traced": false,
    "collisions": 459,
    "identical": true,
    "differences": []
   },
   {
-   "mission": "crowded collision, variance 2500 m^2, 2048 agents",
+   "mission": "crowded collision, spread 50 m, 2048 agents",
+   "traced": false,
    "collisions": 792,
+   "identical": true,
+   "differences": []
+  },
+  {
+   "mission": "traced contacts on 16 aircraft",
+   "traced": true,
+   "collisions": 0,
    "identical": true,
    "differences": []
   }

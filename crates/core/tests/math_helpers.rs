@@ -29,8 +29,7 @@ fn construct_and_step_linear_and_angular_controllers() {
 
 #[test]
 fn integrate_constant_acceleration() {
-    let mut position_and_velocity = [0.0, 1.0];
-    rk4(&mut position_and_velocity, 0.5, |state| [state[1], 2.0]);
+    let position_and_velocity = rk4([0.0, 1.0], 0.5, |state| [state[1], 2.0]);
     assert!((position_and_velocity[0] - 0.75).abs() < 1e-12);
     assert!((position_and_velocity[1] - 2.0).abs() < 1e-12);
 }

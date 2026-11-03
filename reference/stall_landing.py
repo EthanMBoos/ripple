@@ -5,12 +5,13 @@
 
 Flies crates/ardupilot/missions/rascal-runway.yaml (takeoff, circuit, and
 landing under ArduPlane SITL, which `ripple run` starts in Docker) four times:
-"linear", the mission as committed (C++'s linear lift and zero-lift drag);
-"linear-repeat", the same again, which must write byte-identical frames,
-events, and summaries, so differences between variants are effects of the
-tables; "lift", with JSBSim's Rascal `lift_table` added; and "lift-drag", with
-`lift_table` and `drag_table` (values in book/src/guides/ardupilot.md). The
-tables go into copies of the mission. Writes OUTPUT/results.json and
+"linear", the mission with the `rascal` airframe's lift and drag tables
+turned off (C++'s linear lift and zero-lift drag); "linear-repeat", the same
+again, which must write byte-identical frames, events, and summaries, so
+differences between variants are effects of the tables; "lift", with JSBSim's
+Rascal `lift_table` alone; and "lift-drag", with `lift_table` and `drag_table`
+(the airframe's own; values in book/src/guides/ardupilot.md). The table keys
+go into copies of the mission. Writes OUTPUT/results.json and
 OUTPUT/summary.md. Needs Docker and Cargo; builds `ripple` with
 `--features ardupilot`.
 
@@ -35,7 +36,11 @@ from project import BINARY, PACKAGE, ROOT, source_identity
 MISSION = ROOT / "crates/ardupilot/missions/rascal-runway.yaml"
 LIFT_TABLE = "[[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]"
 DRAG_TABLE = "[[-1.57, 1.5], [-0.26, 0.056], [0.0, 0.028], [0.26, 0.056], [1.57, 1.5]]"
-VARIANTS = {"linear": {}, "linear-repeat": {}, "lift": {"lift_table": LIFT_TABLE},
+# The `rascal` airframe carries JSBSim's lift and drag tables; an empty table
+# restores the linear coefficients.
+VARIANTS = {"linear": {"lift_table": "[]", "drag_table": "[]"},
+            "linear-repeat": {"lift_table": "[]", "drag_table": "[]"},
+            "lift": {"lift_table": LIFT_TABLE, "drag_table": "[]"},
             "lift-drag": {"lift_table": LIFT_TABLE, "drag_table": DRAG_TABLE}}
 FILES = ("run.mcap",)
 START_EN_M = (-121.657, -290.181)

@@ -8,7 +8,6 @@
   <metrics>SimpleCollisionMetrics</metrics>
   <entity>
     <team_id>1</team_id>
-    <color>255 255 255</color>
     <visual_model>sphere</visual_model>
     <health>1</health>
     <count>1</count>
@@ -28,11 +27,10 @@
     <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy speed="220">Straight</autonomy>
     <controller airframe="a4d">AircraftPIDController</controller>
-    <motion_model airframe="a4d">FixedWing6DOF</motion_model>
+    <motion_model use_ground_model="false" airframe="a4d">FixedWing6DOF</motion_model>
   </entity>
   <entity>
     <team_id>2</team_id>
-    <color>255 255 255</color>
     <visual_model>sphere</visual_model>
     <health>1</health>
     <count>1</count>
@@ -52,6 +50,6 @@
     <use_variance_all_ents>false</use_variance_all_ents>
     <autonomy speed="220">Straight</autonomy>
     <controller airframe="a4d">AircraftPIDController</controller>
-    <motion_model airframe="a4d" wind_E="-3" wind_N="2">FixedWing6DOF</motion_model>
+    <motion_model use_ground_model="false" airframe="a4d" wind_E="-3" wind_N="2">FixedWing6DOF</motion_model>
   </entity>
 </runscript>

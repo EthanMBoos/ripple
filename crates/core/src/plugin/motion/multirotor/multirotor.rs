@@ -14,9 +14,11 @@
 //!   derived from his fits there; RotorS's Firefly hexacopter, from its
 //!   model file; or a vehicle the mission gives in full.
 //! - Validated against: RotorS's motor-plugin source, sample by sample, for
-//!   motor lag and per-rotor loads (`reference/rotors_motor.py`); Crazyflow's
-//!   first-principles dynamics with the Crazyflie numbers
-//!   (`reference/crazyflow_check.py`); Förster's drag, by the steady tilt in
+//!   motor lag and per-rotor loads, and summed over the Crazyflie's and
+//!   Firefly's rotors at held states (`reference/rotors_motor.py`);
+//!   Crazyflow's first-principles dynamics, both vehicles' loads at the same
+//!   held states and five Crazyflie flights (`reference/crazyflow_check.py`);
+//!   Förster's drag, by the steady tilt in
 //!   closed loop (`reference/multirotor_control.py`). Matching a source is not matching a vehicle: nothing here has been
 //!   compared with real flights.
 //! - Valid range: near-hover and moderate flight of a rigid quad or hexa in
@@ -24,7 +26,7 @@
 //!   measured range for the Crazyflie (thrust fit within 10.4% from command
 //!   8000 up). Drag terms are linear fits at the airspeeds Förster's wind
 //!   tunnel reached (about 1.5 to 4 m/s).
-//! - Not modeled (named zeros in `integrate`; inflow in `rotor.rs`): ground
+//! - Not modeled (named zeros in `derivative`; inflow in `rotor.rs`): ground
 //!   effect, rotor and body interference, inflow (thrust change with climb or
 //!   forward speed), rotor gyroscopic and spin-up torques, wind, battery sag,
 //!   and contact
@@ -48,14 +50,14 @@ mod rotor;
 pub(crate) use airframe::{Airframe, AirframeName, AirframeOverrides, RotorParams};
 
 use anyhow::{Context, Result, ensure};
-use nalgebra::{Matrix3, UnitQuaternion};
+use nalgebra::Matrix3;
 use serde::Deserialize;
 
-use crate::math::{self, KinematicState, Vec3};
+use crate::math::{self, KinematicState, Quaternion, Vec3};
 use crate::plugin::{Frame, MotionContext, MotionModel, PluginIo, Port, Ports, Unit};
 
-use dynamics::{RotorcraftState, derivative};
-use rotor::{MotorLag, RotorAerodynamics, RotorCoefficients, rotor_loads};
+use dynamics::{RotorcraftRate, RotorcraftState};
+use rotor::{MotorLag, RotorAerodynamics, rotor_loads};
 
 /// Mission parameters. `airframe` names a measured vehicle whose numbers
 /// the other vehicle keys may override; without it, the mission gives every
@@ -102,7 +104,7 @@ pub struct MultirotorConfig {
     /// Quadratic body drag, D = 0.5 c_D |V| V.
     body_drag_coefficient: f64,
     motor_lag: MotorLag,
-    aerodynamics: RotorAerodynamics,
+    rotor_aerodynamics: RotorAerodynamics,
 }
 
 pub struct Multirotor {
@@ -137,6 +139,11 @@ impl TryFrom<MultirotorParams> for MultirotorConfig {
             .inertia_kgm2
             .try_inverse()
             .context("Multirotor inertia must be invertible")?;
+        let rotor_aerodynamics = RotorAerodynamics {
+            drag_coefficient: params.rotor_drag_coefficient,
+            axial_drag_coefficient: params.rotor_drag_coefficient_axial,
+            rolling_moment_coefficient: params.rolling_moment_coefficient,
+        };
         let config = MultirotorConfig {
             airframe,
             inverse_inertia,
@@ -145,14 +152,10 @@ impl TryFrom<MultirotorParams> for MultirotorConfig {
                 time_constant_up_s: params.motor_time_constant_up_s,
                 time_constant_down_s: params.motor_time_constant_down_s,
             },
-            aerodynamics: RotorAerodynamics {
-                drag_coefficient: params.rotor_drag_coefficient,
-                axial_drag_coefficient: params.rotor_drag_coefficient_axial,
-                rolling_moment_coefficient: params.rolling_moment_coefficient,
-            },
+            rotor_aerodynamics,
         };
         let lag = config.motor_lag;
-        let aerodynamics = config.aerodynamics;
+        let aerodynamics = config.rotor_aerodynamics;
         ensure!(
             config.body_drag_coefficient >= 0.0
                 && lag.time_constant_up_s >= 0.0
@@ -199,115 +202,126 @@ impl MotionModel for Multirotor {
 impl Multirotor {
     fn integrate(&mut self, truth: &mut KinematicState, dt_s: f64) -> Result<()> {
         self.state.read_truth(truth);
-        let config = &self.config;
-        let airframe = &config.airframe;
+        let airframe = &self.config.airframe;
         // omega_min is an armed motor's idle speed: it still pushes and
         // twists, continuously with the speeds above it.
-        let commands_radps: Vec<f64> = self
-            .motor_commands_radps
-            .iter()
-            .map(|command| {
-                command.clamp(
-                    airframe.min_rotor_speed_radps,
-                    airframe.max_rotor_speed_radps,
-                )
-            })
-            .collect();
+        let mut commands_radps = Vec::with_capacity(self.motor_commands_radps.len());
+        for command_radps in &self.motor_commands_radps {
+            commands_radps.push(command_radps.clamp(
+                airframe.min_rotor_speed_radps,
+                airframe.max_rotor_speed_radps,
+            ));
+        }
         if self.rotor_speeds_radps.is_empty() {
             self.rotor_speeds_radps = commands_radps.clone();
         }
-        let start_speeds_radps = &self.rotor_speeds_radps;
-        let coefficients = RotorCoefficients {
-            thrust_coefficient: airframe.thrust_coefficient,
-            torque_coefficient: airframe.torque_coefficient,
-            aerodynamics: config.aerodynamics,
-        };
 
-        // Every load is recomputed from each RK4 stage's state and time, so the
-        // step keeps RK4's accuracy.
-        let accelerations =
-            |elapsed_s: f64, state: &RotorcraftState| -> (Vec3, Vec3) {
-                let mut rotor_force_body_n = Vec3::zeros();
-                let mut rotor_moment_body_nm = Vec3::zeros();
-                for (index, rotor) in airframe.rotors.iter().enumerate() {
-                    let speed_radps = config.motor_lag.speed_radps(
-                        start_speeds_radps[index],
-                        commands_radps[index],
-                        elapsed_s,
-                    );
-                    let loads = rotor_loads(
-                        rotor,
-                        &coefficients,
-                        speed_radps,
-                        state.velocity_body_mps,
-                        state.rates_body_radps,
-                    );
-                    rotor_force_body_n += loads.force_body_n;
-                    rotor_moment_body_nm += loads.moment_body_nm;
-                }
-                let weight_body_n =
-                    UnitQuaternion::new_normalize(state.attitude).inverse_transform_vector(
-                        &Vec3::new(0.0, 0.0, -airframe.mass_kg * airframe.gravity_mps2),
-                    );
-                let velocity_body_mps = state.velocity_body_mps;
-                let drag_body_n = velocity_body_mps
-                    * (-0.5 * config.body_drag_coefficient * velocity_body_mps.norm());
-                // Not modeled, each a zero in the sums below. Ground effect adds
-                // thrust within about a rotor diameter of the ground; it needs height
-                // over rotor radius and a measured or published correction. Downwash
-                // between rotors and onto the body needs a wake model or measured data.
-                // A rotor's gyroscopic torque (J_r w x body rates) and its spin-up
-                // reaction (J_r dw/dt) need the rotor's inertia J_r.
-                let ground_effect_body_n = Vec3::zeros();
-                let downwash_body_n = Vec3::zeros();
-                let rotor_gyroscopic_body_nm = Vec3::zeros();
-                let spin_up_reaction_body_nm = Vec3::zeros();
-                let force_body_n = rotor_force_body_n
-                    + weight_body_n
-                    + drag_body_n
-                    + ground_effect_body_n
-                    + downwash_body_n;
-                let moment_body_nm =
-                    rotor_moment_body_nm + rotor_gyroscopic_body_nm + spin_up_reaction_body_nm;
-                let rates = state.rates_body_radps;
-                (
-                    force_body_n / airframe.mass_kg,
-                    config.inverse_inertia
-                        * (moment_body_nm - rates.cross(&(airframe.inertia_kgm2 * rates))),
-                )
-            };
-        let mut coordinates = self.state.coordinates();
-        math::rk4_timed(&mut coordinates, dt_s, |elapsed_s, coordinates| {
-            let stage = RotorcraftState::from_coordinates(*coordinates);
-            let (acceleration_body_mps2, angular_acceleration_body_radps2) =
-                accelerations(elapsed_s, &stage);
-            derivative(
-                stage,
-                acceleration_body_mps2,
-                angular_acceleration_body_radps2,
-            )
+        let state = math::rk4_timed(self.state, dt_s, |elapsed_s, stage| {
+            self.derivative(&stage, &commands_radps, elapsed_s)
         });
         ensure!(
-            coordinates.iter().all(|value| value.is_finite()),
+            state.is_finite(),
             "Multirotor integration produced nonfinite state"
         );
-        for (speed_radps, command_radps) in self.rotor_speeds_radps.iter_mut().zip(&commands_radps)
-        {
-            *speed_radps = config
-                .motor_lag
-                .speed_radps(*speed_radps, *command_radps, dt_s);
+        for index in 0..self.rotor_speeds_radps.len() {
+            self.rotor_speeds_radps[index] = self.config.motor_lag.speed_radps(
+                self.rotor_speeds_radps[index],
+                commands_radps[index],
+                dt_s,
+            );
         }
-        self.state = RotorcraftState::from_coordinates(coordinates);
+        self.state = state;
         self.state.write_truth(truth);
         Ok(())
+    }
+
+    /// The equations of motion: the rate of each state field, `elapsed_s`
+    /// into the step, from the stage's state and the clamped commands. Every
+    /// load is recomputed from each RK4 stage's state and time, so the step
+    /// keeps RK4's accuracy.
+    fn derivative(
+        &self,
+        state: &RotorcraftState,
+        commands_radps: &[f64],
+        elapsed_s: f64,
+    ) -> RotorcraftRate {
+        let config = &self.config;
+        let airframe = &config.airframe;
+        // Symbols, as in the model's description: the body's velocity and
+        // rates, the attitude quaternion, mass, gravity, and the inertia
+        // tensor.
+        let (v, omega, q) = (
+            state.velocity_body_mps,
+            state.rates_body_radps,
+            state.attitude,
+        );
+        let (m, g) = (airframe.mass_kg, airframe.gravity_mps2);
+        let inertia = airframe.inertia_kgm2;
+        let rotation = q.normalized();
+
+        // The rotors' loads, summed, each at its speed this far into the step.
+        let mut rotor_force_n = Vec3::zeros();
+        let mut rotor_moment_nm = Vec3::zeros();
+        for index in 0..airframe.rotors.len() {
+            let omega_i = config.motor_lag.speed_radps(
+                self.rotor_speeds_radps[index],
+                commands_radps[index],
+                elapsed_s,
+            );
+            let loads = rotor_loads(
+                &airframe.rotors[index],
+                airframe.thrust_coefficient,
+                airframe.torque_coefficient,
+                config.rotor_aerodynamics,
+                omega_i,
+                v,
+                omega,
+            );
+            rotor_force_n += loads.force_body_n;
+            rotor_moment_nm += loads.moment_body_nm;
+        }
+        // Weight m g, down in the world and rotated into the body frame.
+        let weight_n = rotation.rotate_world_to_body(Vec3::new(0.0, 0.0, -m * g));
+        let drag_n = v * (-0.5 * config.body_drag_coefficient * v.norm());
+        // Not modeled, each a zero in the sums below. Ground effect adds
+        // thrust within about a rotor diameter of the ground; it needs height
+        // over rotor radius and a measured or published correction. Downwash
+        // between rotors and onto the body needs a wake model or measured data.
+        // A rotor's gyroscopic torque (J_r omega_i x omega) and its spin-up
+        // reaction (J_r d omega_i / dt) need the rotor's inertia J_r.
+        let ground_effect_n = Vec3::zeros();
+        let downwash_n = Vec3::zeros();
+        let rotor_gyroscopic_nm = Vec3::zeros();
+        let spin_up_reaction_nm = Vec3::zeros();
+        let force_n = rotor_force_n + weight_n + drag_n + ground_effect_n + downwash_n;
+        let moment_nm = rotor_moment_nm + rotor_gyroscopic_nm + spin_up_reaction_nm;
+        // Newton and Euler: a = F / m, and I omega_dot = M - omega x (I omega).
+        let acceleration = force_n / m;
+        let angular_acceleration =
+            config.inverse_inertia * (moment_nm - omega.cross(&(inertia * omega)));
+        // q_dot = 1/2 q (0, omega)
+        let q_dot = Quaternion {
+            w: -0.5 * (q.x * omega.x + q.y * omega.y + q.z * omega.z),
+            x: 0.5 * (q.w * omega.x + q.y * omega.z - q.z * omega.y),
+            y: 0.5 * (q.w * omega.y + q.z * omega.x - q.x * omega.z),
+            z: 0.5 * (q.w * omega.z + q.x * omega.y - q.y * omega.x),
+        };
+        RotorcraftRate {
+            acceleration_body_mps2: v.cross(&omega) + acceleration,
+            angular_acceleration_body_radps2: angular_acceleration,
+            velocity_world_mps: rotation.rotate_body_to_world(v),
+            attitude_rate: q_dot,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use serde_json::{Value, json};
 
     use super::Multirotor;
+    use super::dynamics::RotorcraftState;
     use crate::math::{EulerAngles, KinematicState, Quaternion, Vec3};
     use crate::plugin::{MotionModel, PluginParams};
 
@@ -382,7 +396,15 @@ mod tests {
         let mut limit_truth = KinematicState::default();
         high.integrate(&mut high_truth, 0.001)?;
         limit.integrate(&mut limit_truth, 0.001)?;
-        assert_eq!(high.state.coordinates(), limit.state.coordinates());
+        assert_eq!(high_truth.position_world_m, limit_truth.position_world_m);
+        assert_eq!(
+            high_truth.velocity_world_mps,
+            limit_truth.velocity_world_mps
+        );
+        assert_eq!(
+            high_truth.angular_velocity_world_radps,
+            limit_truth.angular_velocity_world_radps
+        );
         assert!(high_truth.angular_velocity_world_radps.z > 0.0);
         Ok(())
     }
@@ -583,7 +605,7 @@ mod tests {
         model.config.airframe.rotors.truncate(1);
         model.config.airframe.rotors[0].offset_body_m = Vec3::new(0.2, 0.0, 0.0);
         model.config.airframe.torque_coefficient = 0.0;
-        model.config.aerodynamics.drag_coefficient = 1e-4;
+        model.config.rotor_aerodynamics.drag_coefficient = 1e-4;
         model.motor_commands_radps = vec![1000.0];
         let mut truth = KinematicState {
             angular_velocity_world_radps: Vec3::new(0.0, 0.0, 2.0),
@@ -595,5 +617,145 @@ mod tests {
         let yaw_rate = 2.0 + yaw_moment_nm * 1e-6;
         assert!((truth.angular_velocity_world_radps.z - yaw_rate).abs() < 1e-9);
         Ok(())
+    }
+
+    fn vector(value: &Value) -> Vec3 {
+        Vec3::new(
+            value[0].as_f64().unwrap(),
+            value[1].as_f64().unwrap(),
+            value[2].as_f64().unwrap(),
+        )
+    }
+
+    fn quaternion(value: &Value) -> Quaternion {
+        Quaternion {
+            w: value[0].as_f64().unwrap(),
+            x: value[1].as_f64().unwrap(),
+            y: value[2].as_f64().unwrap(),
+            z: value[3].as_f64().unwrap(),
+        }
+    }
+
+    /// The rotors' force and moment about the center of mass at a held
+    /// state (attitude, world velocity, body rates, every rotor's speed),
+    /// from `derivative` itself with Newton and Euler undone: F = m (a - v x
+    /// w) less the weight, M = I alpha + w x (I w). Body frame.
+    fn held_rotor_loads(model: &mut Multirotor, sample: &Value) -> (Vec3, Vec3) {
+        let attitude = quaternion(&sample["attitude_wxyz"]);
+        let rotation = attitude.normalized();
+        let rates = vector(&sample["rates_body_radps"]);
+        let velocity = rotation.rotate_world_to_body(vector(&sample["velocity_world_mps"]));
+        let speeds: Vec<f64> = sample["speeds_radps"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|speed| speed.as_f64().unwrap())
+            .collect();
+        let state = RotorcraftState {
+            velocity_body_mps: velocity,
+            rates_body_radps: rates,
+            position_world_m: Vec3::zeros(),
+            attitude,
+        };
+        // No motor lag in these fixtures: each rotor turns at its command.
+        model.rotor_speeds_radps = speeds.clone();
+        let rate = model.derivative(&state, &speeds, 0.0);
+        let airframe = &model.config.airframe;
+        let inertia = airframe.inertia_kgm2;
+        let weight_n = rotation.rotate_world_to_body(Vec3::new(
+            0.0,
+            0.0,
+            -airframe.mass_kg * airframe.gravity_mps2,
+        ));
+        let force_n =
+            (rate.acceleration_body_mps2 - velocity.cross(&rates)) * airframe.mass_kg - weight_n;
+        let moment_nm =
+            inertia * rate.angular_acceleration_body_radps2 + rates.cross(&(inertia * rates));
+        (force_n, moment_nm)
+    }
+
+    /// Every vehicle of a fixture of held states, configured by its mission
+    /// keys, against the fixture's reference loads, each error as a fraction
+    /// of the individual rotor loads (their sizes summed), since at hover
+    /// the net moment is near zero. Returns the sample count and the largest
+    /// force and moment errors.
+    fn check_held_loads(fixture: &Value, limit: f64) -> (usize, f64, f64) {
+        let mut largest_force: f64 = 0.0;
+        let mut largest_moment: f64 = 0.0;
+        let mut count = 0;
+        for (name, vehicle) in fixture["vehicles"].as_object().unwrap() {
+            let config =
+                Multirotor::configure(&PluginParams::yaml(&vehicle["mission_keys"].to_string()))
+                    .expect("the keys parse");
+            let mut model = Multirotor::new(&config);
+            for (index, sample) in vehicle["samples"].as_array().unwrap().iter().enumerate() {
+                let (force_n, moment_nm) = held_rotor_loads(&mut model, sample);
+                let force_error = (force_n - vector(&sample["force_body_n"])).norm()
+                    / sample["force_scale_n"].as_f64().unwrap();
+                let moment_error = (moment_nm - vector(&sample["moment_body_nm"])).norm()
+                    / sample["moment_scale_nm"].as_f64().unwrap();
+                assert!(
+                    force_error <= limit,
+                    "{name} sample {index}: force error {force_error:e} of the rotor loads"
+                );
+                assert!(
+                    moment_error <= limit,
+                    "{name} sample {index}: moment error {moment_error:e} of the rotor loads"
+                );
+                largest_force = largest_force.max(force_error);
+                largest_moment = largest_moment.max(moment_error);
+                count += 1;
+            }
+        }
+        assert!(count > 0);
+        (count, largest_force, largest_moment)
+    }
+
+    /// Crazyflow's force and moment (reference/crazyflow/loads.py, no drag)
+    /// at the held states of reference/multirotor_grid.py, reproduced by
+    /// the `crazyflie2` and `firefly` presets through `derivative`: the
+    /// common physics, whole vehicle. Prints the largest errors for
+    /// reference/crazyflow_check.py.
+    #[test]
+    fn crazyflow_loads_samples() {
+        // Rounding in the frame conversions and in undoing Newton and Euler.
+        const LIMIT: f64 = 1e-12;
+        let text = match std::env::var("RIPPLE_CRAZYFLOW_SAMPLES") {
+            Ok(path) => std::fs::read_to_string(path).expect("samples file"),
+            Err(_) => include_str!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/fixtures/crazyflow_loads_samples.json"
+            ))
+            .to_string(),
+        };
+        let fixture: Value = serde_json::from_str(&text).expect("samples JSON");
+        let (samples, force, moment) = check_held_loads(&fixture, LIMIT);
+        println!(
+            "CRAZYFLOW_ERRORS {}",
+            json!({"samples": samples, "limit": LIMIT, "force": force, "moment": moment})
+        );
+    }
+
+    /// The sum of RotorS's rotor loads (reference/rotors_motor.py, rotor
+    /// drag and the rolling moment on) at the same held states, reproduced
+    /// the same way. One rotor at a time (`rotor.rs`) cannot check the
+    /// assembly, the hub offsets, or the frame conversion; this does.
+    #[test]
+    fn rotors_vehicle_samples() {
+        const LIMIT: f64 = 1e-12;
+        let text = match std::env::var("RIPPLE_ROTORS_SAMPLES") {
+            Ok(path) => std::fs::read_to_string(path).expect("samples file"),
+            Err(_) => include_str!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/tests/fixtures/rotors_motor_samples.json"
+            ))
+            .to_string(),
+        };
+        let fixture: Value = serde_json::from_str(&text).expect("samples JSON");
+        let (samples, force, moment) = check_held_loads(&fixture, LIMIT);
+        println!(
+            "ROTORS_VEHICLE_ERRORS {}",
+            json!({"samples": samples, "limit": LIMIT, "force": force, "moment": moment})
+        );
     }
 }

@@ -4,8 +4,8 @@
   "passed": true,
   "input": {
     "input_sha256": "439cf33a2bf28443795beac88838f063b52339beb2450dca915dacf3b366b93c",
-    "xml_sha256": "b2feba03ec5167b47b5d9029889b05b90445fe734b32eee4c3ff9374c6188000",
-    "effective_sha256": "f2195bca309c42e79e745ad2c24f01d3c88195f69092ee7085ff0af847ee8b80",
+    "xml_sha256": "367ace7ff6d6e873e1623e38c29806690f671837e9ec13e050cbd107cd31a7ae",
+    "effective_sha256": "167843b5caadc0e804f3630aacbca2b508feaab5bcae8acecad6d6fc4bb3acd6",
     "run_overrides": {
       "enable_gui": "false",
       "network_gui": "false",
@@ -32,59 +32,72 @@
     "frames.bin": false,
     "summary.csv": false
   },
-  "cpp_log_directory": "cpp/logs/2026-10-15_11-25-20",
+  "cpp_log_directory": "cpp/logs/2026-11-03_00-28-04",
   "cpp_output_hashes": {
     "frames.bin": "04badd27b23f0934b2c603f93a80249ab6aef5471eb0be9f0678692d60b268cf",
     "summary.csv": "009d5efaa8cb0cc5e0fec08a2cb9031ca57b2798cc6baec676b52fa9055af3a9"
   },
   "worker_equality": {
     "2": {
-      "frames.bin": true,
-      "events.json": true,
-      "summary.csv": true
+      "/entities": true,
+      "/frames": true,
+      "/events": true,
+      "/summary": true,
+      "metadata": true
     },
     "8": {
-      "frames.bin": true,
-      "events.json": true,
-      "summary.csv": true
+      "/entities": true,
+      "/frames": true,
+      "/events": true,
+      "/summary": true,
+      "metadata": true
     }
   },
   "recording_equality": {
-    "frames.bin": true,
-    "events.json": true,
-    "summary.csv": true
+    "/entities": true,
+    "/frames": true,
+    "/events": true,
+    "/summary": true,
+    "metadata": true
   },
-  "recording_sha256": "aa406b630530ff46fc5642bd6b651f889b833020eec54f55e9065c0af6509552",
+  "recording_sha256": "4e79fd0c17d19671e05661a58e8b95d093f1fe29bbce128d66f77215f6350efb",
   "trace_equality": {
-    "frames.bin": true,
-    "events.json": true,
-    "summary.csv": true
+    "/entities": true,
+    "/frames": true,
+    "/events": true,
+    "/summary": true,
+    "metadata": true
   },
   "rust_output_hashes": {
     "rust-1": {
-      "frames.bin": "282022733e57e72a13ef071b53bddfa0c92fba7c76c6cb96f239533cd8997739",
-      "events.json": "7058ad4f86786f2389139fd9aec95d705361cf9c7f655a223a227a0b4b9780e0",
-      "summary.csv": "4d2ce1aff84deb4aa3413dcaaad146c4ad5a1e43056a6aaf461f213d5523a74b"
+      "/entities": "d6978e1b95945ac1f317c1531fff59029393343a6fa32869eb27bdd179ed6a46",
+      "/frames": "67e1d7cc4cf23cd7f3375bfdaea9d68c363087d6308f86dcf63401112b19d063",
+      "/events": "0bbd90ee2e5d8ed2caedb30b42727395d30f4de5b4b7ee1f72494ffd3de04eb2",
+      "/summary": "b263dfe4b283877f3b2a510d189cadb59912756b3d6200dc9f5e1e12d3f6c2af"
     },
     "rust-2": {
-      "frames.bin": "282022733e57e72a13ef071b53bddfa0c92fba7c76c6cb96f239533cd8997739",
-      "events.json": "7058ad4f86786f2389139fd9aec95d705361cf9c7f655a223a227a0b4b9780e0",
-      "summary.csv": "4d2ce1aff84deb4aa3413dcaaad146c4ad5a1e43056a6aaf461f213d5523a74b"
+      "/entities": "d6978e1b95945ac1f317c1531fff59029393343a6fa32869eb27bdd179ed6a46",
+      "/frames": "67e1d7cc4cf23cd7f3375bfdaea9d68c363087d6308f86dcf63401112b19d063",
+      "/events": "0bbd90ee2e5d8ed2caedb30b42727395d30f4de5b4b7ee1f72494ffd3de04eb2",
+      "/summary": "b263dfe4b283877f3b2a510d189cadb59912756b3d6200dc9f5e1e12d3f6c2af"
     },
     "rust-8": {
-      "frames.bin": "282022733e57e72a13ef071b53bddfa0c92fba7c76c6cb96f239533cd8997739",
-      "events.json": "7058ad4f86786f2389139fd9aec95d705361cf9c7f655a223a227a0b4b9780e0",
-      "summary.csv": "4d2ce1aff84deb4aa3413dcaaad146c4ad5a1e43056a6aaf461f213d5523a74b"
+      "/entities": "d6978e1b95945ac1f317c1531fff59029393343a6fa32869eb27bdd179ed6a46",
+      "/frames": "67e1d7cc4cf23cd7f3375bfdaea9d68c363087d6308f86dcf63401112b19d063",
+      "/events": "0bbd90ee2e5d8ed2caedb30b42727395d30f4de5b4b7ee1f72494ffd3de04eb2",
+      "/summary": "b263dfe4b283877f3b2a510d189cadb59912756b3d6200dc9f5e1e12d3f6c2af"
     },
     "rust-rerun": {
-      "frames.bin": "282022733e57e72a13ef071b53bddfa0c92fba7c76c6cb96f239533cd8997739",
-      "events.json": "7058ad4f86786f2389139fd9aec95d705361cf9c7f655a223a227a0b4b9780e0",
-      "summary.csv": "4d2ce1aff84deb4aa3413dcaaad146c4ad5a1e43056a6aaf461f213d5523a74b"
+      "/entities": "d6978e1b95945ac1f317c1531fff59029393343a6fa32869eb27bdd179ed6a46",
+      "/frames": "67e1d7cc4cf23cd7f3375bfdaea9d68c363087d6308f86dcf63401112b19d063",
+      "/events": "0bbd90ee2e5d8ed2caedb30b42727395d30f4de5b4b7ee1f72494ffd3de04eb2",
+      "/summary": "b263dfe4b283877f3b2a510d189cadb59912756b3d6200dc9f5e1e12d3f6c2af"
     },
     "rust-trace": {
-      "frames.bin": "282022733e57e72a13ef071b53bddfa0c92fba7c76c6cb96f239533cd8997739",
-      "events.json": "7058ad4f86786f2389139fd9aec95d705361cf9c7f655a223a227a0b4b9780e0",
-      "summary.csv": "4d2ce1aff84deb4aa3413dcaaad146c4ad5a1e43056a6aaf461f213d5523a74b"
+      "/entities": "d6978e1b95945ac1f317c1531fff59029393343a6fa32869eb27bdd179ed6a46",
+      "/frames": "67e1d7cc4cf23cd7f3375bfdaea9d68c363087d6308f86dcf63401112b19d063",
+      "/events": "0bbd90ee2e5d8ed2caedb30b42727395d30f4de5b4b7ee1f72494ffd3de04eb2",
+      "/summary": "b263dfe4b283877f3b2a510d189cadb59912756b3d6200dc9f5e1e12d3f6c2af"
     }
   },
   "comparison": {
@@ -125,7 +138,7 @@
   "summary_differences": [
     "summary team 2, flight_time: reference 4.2, candidate 9.0",
     "summary team 3, flight_time: reference 3.85, candidate 8.65",
-    "summary team 3, flight_time_norm: reference 2.75, candidate 2.883333"
+    "summary team 3, flight_time_norm: reference 2.75, candidate 2.8833333333333333"
   ],
   "summary_agreement": "explained_by_scoring_rules",
   "pre_start_removed": []

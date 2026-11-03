@@ -174,8 +174,8 @@ values: for example, a heavier vehicle than the controller believes.
 
 | Check | Against | Result |
 | --- | --- | --- |
-| `rotors-motor` | RotorS's own motor-plugin source, compiled in Docker | 480 samples within 4e-15 N |
-| `crazyflow-crazyflie` | Crazyflow's first-principles dynamics, same constants and commands | 3e-12 m over 3 s with drag off; with drag on they differ by design (Ripple's drag acts at each hub) |
+| `rotors-motor` | RotorS's own motor-plugin source, compiled in Docker | 720 one-rotor samples within 4e-15 N; the Crazyflie and Firefly whole, drag on, at 432 held states within 3e-16 of the rotor loads |
+| `crazyflow-crazyflie` | Crazyflow's first-principles dynamics, same constants and commands | the Crazyflie and Firefly whole at the same 432 held states within 7e-16 of the rotor loads; five Crazyflie flights (four airborne near hover, one spin-up stress case) within 4e-12 m and 2e-13 rad with drag off, and with Ripple's hub drag fed into Crazyflow as force and moment; Crazyflow's lumped drag differs on the spinning flights by design (Ripple's drag acts at each hub) |
 | `multirotor-control` | the commands; each vehicle's rotor drag | settles; steady tilt at 1 m/s matches the drag: Crazyflie 1.456 against 1.455 degrees, Firefly 0.994 against 0.994 |
 | unit tests in `airframe.rs`, `rotor.rs`, `multirotor.rs` | Förster's fits, the Firefly's hover and margin, closed-form cases | |
 
@@ -231,11 +231,16 @@ here so it can be revisited.
    the whole run, so the fixed-wing aircraft also integrate at 500 Hz in this
    mission; with a stand-in planner on seed 4 the two missions' scores were
    identical.
-7. **The RotorS motor check needs no Firefly case.** Its `rotors-defaults`
-   case already uses RotorS's default motor plugin values, which are the
-   Firefly's (c_T, moment constant, both time constants, rolling moment);
-   only the rotor drag differs, 8.06e-5 against 1.0e-4, and the drag is
-   linear in it.
+7. **The RotorS motor check runs the Firefly's own numbers.** Its
+   `rotors-defaults` case uses RotorS's default motor plugin values, which
+   are the Firefly's but for the rotor drag (8.06e-5 against 1.0e-4), so at
+   first the Firefly had no case of its own. It now has one with its
+   coefficients, and the whole vehicle, six hubs 0.037 m up on 0.215 m arms,
+   goes through RotorS's code at held states that include the 12 m/s cruise
+   and a climb (`reference/multirotor_grid.py`), against the sum of the
+   rotor loads; the common physics is checked the same way against
+   Crazyflow. A unit test in `airframe.rs` holds the preset to the model
+   file's numbers.
 8. **Step-size convergence: the cruise is reported, not held to 5 mm.** The
    control check holds every step-response vehicle within 5 mm of its
    20-substep run (the Firefly's are within 2.2 mm). The 12 m/s cruise flies

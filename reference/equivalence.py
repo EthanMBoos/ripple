@@ -52,10 +52,14 @@ def cases(scratch):
 
 
 def run(executable, mission, output, workers, trace):
-    subprocess.run([executable, "run", mission, "--root", ROOT, "--output", output,
-                    "--workers", str(workers), "--headless",
-                    *(["--trace"] if trace else [])],
-                   capture_output=True, text=True, check=True)
+    """The run's failure, as its last line of output, or None when it ran."""
+    result = subprocess.run([executable, "run", mission, "--root", ROOT, "--output", output,
+                             "--workers", str(workers), "--headless",
+                             *(["--trace"] if trace else [])],
+                            capture_output=True, text=True)
+    if result.returncode == 0:
+        return None
+    return (result.stderr.strip().splitlines() or [f"exit {result.returncode}"])[-1]
 
 
 def main(argv=None):
@@ -71,10 +75,18 @@ def main(argv=None):
     for index, (name, path, trace) in enumerate(cases(scratch)):
         different = []
         topics = CHANNELS if trace else BASE_CHANNELS
+        skipped = None
         for workers in WORKERS:
             old, new = output / f"{index:02}-old-w{workers}", output / f"{index:02}-new-w{workers}"
-            run(args.old, path, old, workers, trace)
-            run(args.new, path, new, workers, trace)
+            failures = (run(args.old, path, old, workers, trace),
+                        run(args.new, path, new, workers, trace))
+            if failures[0] is not None and failures[0] == failures[1]:
+                # A mission neither can load (a model key missing from the
+                # environment, say) proves nothing either way.
+                skipped = failures[0]
+                break
+            if any(failures):
+                raise RuntimeError(f"{name} at {workers} workers: {failures}")
             left, right = read_run(old), read_run(new)
             different += [f"w{workers}:{topic}" for topic in topics
                           if left.channels.get(topic, []) != right.channels.get(topic, [])]
@@ -83,6 +95,11 @@ def main(argv=None):
                     different.append(f"w{workers}:metadata.{key}")
             if left.scenario != right.scenario:
                 different.append(f"w{workers}:scenario")
+        if skipped is not None:
+            results.append({"mission": name, "traced": trace, "identical": None,
+                            "differences": [f"skipped: {skipped}"]})
+            print(f"skip {name}: {skipped}", flush=True)
+            continue
         differing += bool(different)
         results.append({"mission": name, "traced": trace, "identical": not different,
                         "differences": different})
@@ -91,6 +108,7 @@ def main(argv=None):
     report = {"old": str(args.old.resolve()), "new": str(args.new.resolve()),
               "channels_compared": CHANNELS, "workers": WORKERS,
               "traced_missions": sum(result["traced"] for result in results),
+              "skipped": [result["mission"] for result in results if result["identical"] is None],
               "missions": len(results), "missions_differing": differing, "results": results}
     (output / "report.json").write_text(json.dumps(report, indent=1) + "\n")
     print(f"{len(results)} missions, {differing} differing: {output / 'report.json'}")

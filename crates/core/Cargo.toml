@@ -19,3 +19,6 @@ sha2 = "0.10"
 name = "reference"
 path = "../../reference/benchmark_runner.rs"
 harness = false
+
+[lints]
+workspace = true

@@ -57,8 +57,9 @@ describes it and the other checks.
   study model error. No position hold or yaw command. Checked by
   `multirotor_control.py`; see [Flying a multirotor](../guides/multirotor.md).
 - **SingleIntegratorControllerSimple** passes a velocity command to
-  SingleIntegrator, and **MotorSpeeds** writes constant rotor speeds
-  (`speeds_radps`) for tests.
+  SingleIntegrator. For tests, **MotorSpeeds** writes constant rotor speeds
+  (`speeds_radps`) and **HeldControls** a constant `throttle` and
+  `elevator_rad`, `aileron_rad`, and `rudder_rad`.
 
 ## Motion
 
@@ -74,15 +75,18 @@ describes it and the other checks.
   Checked in the comparison.
 - **FixedWing6DOF** is a rigid-body aircraft under aerodynamic forces from
   linear stability derivatives, integrated with RK4. Two aircraft are built
-  in: `airframe: a4d` (the A-4D Skyhawk, from Nelson) and `airframe: rascal`
-  (ArduPilot's JSBSim Rascal); any key overrides one value, and without an
-  airframe the mission gives every number. Optional: `lift_table` and
-  `drag_table` so the wing stalls, `landing_gear` (see
-  [Terrain](../guides/terrain.md#landing-gear)), steady `wind_mps`, and a
-  catapult. Not modelled: propeller effects, ground effect, spins, unsteady
-  aerodynamics, engine dynamics, and gusts. Checked in the comparison on both
-  aircraft and for step-size convergence (`rk4_loads.py`).
-  Its parameters are [below](#fixedwing6dof-parameters).
+  in: `airframe: rascal` (ArduPilot's JSBSim Rascal, with its tables, its
+  aerodynamic reference point, and its extra terms) and `airframe: a4d`
+  (the A-4D Skyhawk from Nelson, SCRIMMAGE's default, kept as the C++
+  comparison's fixture); any key overrides one value, and without an
+  airframe the mission gives every number. Optional: tables so the wing
+  stalls, `landing_gear` (see [Terrain](../guides/terrain.md#landing-gear)),
+  steady `wind_mps`, and a catapult. Not modelled: propeller effects, ground
+  effect, spins, engine dynamics, an altitude-dependent atmosphere, and
+  gusts. Checked in the comparison on both aircraft, for step-size
+  convergence (`rk4_loads.py`), and the Rascal against ArduPilot's JSBSim
+  Rascal run in JSBSim, loads to rounding and 5 s glides within 0.2 m
+  (`jsbsim_check.py`). Its parameters are [below](#fixedwing6dof-parameters).
 - **Multirotor** is a rigid-body multirotor with thrust and torque growing
   with rotor speed squared, RK4, and two built-in vehicles: a Crazyflie 2.0
   (`airframe: crazyflie2`) and RotorS's Firefly hexacopter
@@ -169,7 +173,7 @@ all.
 | `wing_span_m` (b), `wing_area_m2` (S), `mean_chord_m` (c̄), `oswald_efficiency` (e) | geometry; induced drag is C_L² / (π e AR), AR = b / c̄ |
 | `min_thrust_n`, `max_thrust_n`; `min_throttle`, `max_throttle` | thrust, linear in throttle between them |
 | `min_elevator_rad` ... `max_rudder_rad` | control surface limits |
-| `air_density_kgpm3`, `gravity_mps2`, `wind_mps` | environment: 1.225, 9.81, and `[east, north, up]` of zero by default |
+| `air_density_kgpm3`, `speed_of_sound_mps`, `gravity_mps2`, `wind_mps` | environment: 1.225, 340.294, 9.81, and `[east, north, up]` of zero by default |
 
 Each coefficient is a stability or control derivative, per radian and
 dimensionless, in the notation of Beard and McLain (*Small Unmanned Aircraft*,
@@ -187,13 +191,25 @@ nondimensionalized, as p b / 2V, q c̄ / 2V, and r b / 2V.
 | `c_roll_aileron`, `c_roll_rudder` | C_ℓδa, C_ℓδr | roll from the ailerons and the rudder |
 | `c_pitch_0`, `c_pitch_alpha` | C_m0, C_mα | pitching moment at zero α; static stability (negative is stable) |
 | `c_pitch_q`, `c_pitch_elevator` | C_mq, C_mδe | pitch damping; elevator authority |
-| `c_yaw_beta` | C_nβ | weathercock stability: yaw from sideslip |
+| `c_pitch_alpha_dot` | C_mα̇ | pitch damping from the rate of change of α, entering as α̇ c̄ / 2V (zero unless set) |
+| `c_yaw_0`, `c_yaw_beta` | C_n0, C_nβ | yaw at zero sideslip (zero unless set); weathercock stability: yaw from sideslip |
 | `c_yaw_p`, `c_yaw_r` | C_np, C_nr | yaw from roll rate; yaw damping |
 | `c_yaw_aileron`, `c_yaw_rudder` | C_nδa, C_nδr | adverse yaw from the ailerons; rudder authority |
 
-`lift_table` and `drag_table` (rows of `[alpha_rad, C]`) replace `c_lift_0 +
-c_lift_alpha α` and `c_drag_0 + c_drag_alpha |α|`, so the wing can stall;
-induced and elevator drag are still added. `enable_ground_spring` (on by
-default) is a flat spring at z = 0, which `landing_gear` or terrain replaces;
-`enable_launcher` with `launch_at_s`, `launch_speed_mps`, and
-`launch_acceleration_mps2` is a catapult.
+Tables, each rows of `[x, C]` interpolated and held at the ends like a JSBSim
+`<table>`, and each empty unless the airframe or the mission sets it (an
+empty table in the mission turns the airframe's off): `lift_table` and
+`drag_table` against `alpha_rad` replace `c_lift_0 + c_lift_alpha α` and
+`c_drag_0 + c_drag_alpha |α|`, so the wing can stall, with induced, elevator,
+and sideslip drag still added; `sideslip_drag_table` against `beta_rad` adds
+drag from sideslip; `aileron_power_mach_table` and
+`elevator_power_mach_table` against Mach replace `c_roll_aileron` and
+`c_pitch_elevator`. `aero_reference_frd_m` (`[forward, right, down]`, zero
+unless set) is where the coefficients act relative to the center of mass;
+the moment about the center of mass adds that arm crossed with the force.
+`signed_elevator_drag` (off) takes the elevator drag from the signed
+deflection, as JSBSim's Rascal file does, instead of its size; it belongs to
+no airframe. The model has no ground of its own: GroundCollision or
+TerrainCollision removes an aircraft that reaches the ground, and
+`landing_gear` lets it roll on it. `enable_launcher` with `launch_at_s`,
+`launch_speed_mps`, and `launch_acceleration_mps2` is a catapult.

@@ -19,9 +19,8 @@ entities:
     visual_model: sphere
     position_m: [0, 0, 2]
     # Standard deviations of 4 m across, none up: the task is flat.
-    position_variance_m2: [16, 16, 0]
+    position_stddev_m: [4, 4, 0]
     # Draw the start from the variance (otherwise used only to escape a collision).
-    randomize_every_spawn: true
     autonomy:
       SpreadPolicy:
         landmarks_m: [[-4, -3], [4, -3], [0, 4]]

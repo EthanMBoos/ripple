@@ -54,7 +54,6 @@ entities:
     team: 1
     visual_model: zephyr-blue
     position_m: [-1000, 0, 200]
-    position_variance_m2: [20, 20, 10]
     heading_deg: 0
     spawn:
       rate_hz: 0.5
@@ -100,11 +99,10 @@ Worker count and the viewer are command-line choices (`--workers`,
 | `id` | assigned | a fixed entity ID |
 | `count` | 1 | entities in total |
 | `position_m` | `[0, 0, 0]` | start position |
-| `position_variance_m2` | `[0, 0, 0]` | spread of start positions (variances, m²) |
+| `position_stddev_m` | `[0, 0, 0]` | spread of start positions (standard deviations, m); an entity with a spread is always sampled around `position_m`, one without is placed there exactly unless that spot is already taken |
 | `heading_deg`, `roll_deg`, `pitch_deg` | 0 | start attitude |
-| `heading_variance_deg2` | 0 | spread of start headings |
+| `heading_stddev_deg` | 0 | spread of start headings (standard deviation) |
 | `velocity_mps` | `[0, 0, 0]` | start velocity |
-| `randomize_every_spawn` | false | draw every start position from the spread; otherwise only when `position_m` is already taken |
 | `spawn.rate_hz` | required in `spawn` | batches per second |
 | `spawn.batch_size` | required in `spawn` | entities per batch |
 | `spawn.start_s` | 0 | first batch time |

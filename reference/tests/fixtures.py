@@ -17,9 +17,9 @@ _SCENARIO = {
     "entities": [{
         "label": "blue", "team": 1, "visual_model": "aircraft",
         "health": 1, "id": None, "count": 64, "spawn": None,
-        "position_m": [23.0, 0.0, 200.0], "position_variance_m2": [0.0, 0.0, 0.0],
-        "heading_deg": 0.0, "heading_variance_deg2": 0.0, "roll_deg": 0.0, "pitch_deg": 0.0,
-        "velocity_mps": [0.0, 0.0, 0.0], "randomize_every_spawn": False,
+        "position_m": [23.0, 0.0, 200.0], "position_stddev_m": [0.0, 0.0, 0.0],
+        "heading_deg": 0.0, "heading_stddev_deg": 0.0, "roll_deg": 0.0, "pitch_deg": 0.0,
+        "velocity_mps": [0.0, 0.0, 0.0],
         "autonomy": [plugin("Straight", speed_mps=27)],
         "controller": [plugin("SimpleAircraftControllerPID", heading_pid={
             "kp": 1, "ki": 0.01, "kd": 2, "integrate_within_deg": 9})],

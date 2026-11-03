@@ -82,6 +82,7 @@ entities:
     motion_model:
       FixedWing6DOF:
         lift_table: [[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]
+        drag_table: []
         # The Rascal 110: ArduPilot's JSBSim Rascal (see airframe.rs).
         airframe: rascal
         enable_launcher: false

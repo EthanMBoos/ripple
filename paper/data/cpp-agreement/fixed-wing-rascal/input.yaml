@@ -1,8 +1,10 @@
 # FixedWing6DOF as the Rascal 110 RC plane (the built-in `rascal` airframe,
-# from ArduPilot's JSBSim Rascal): the airframe planned for ArduPlane SITL.
-#
-# Known limits: no stall behavior, so keep to moderate-angle flight around
-# 20 m/s; thrust_max 25 N has no source in the JSBSim model. See
+# from ArduPilot's JSBSim Rascal), compared with SCRIMMAGE. The airframe's
+# tables and the terms SCRIMMAGE's equations lack are set off here, so the
+# comparison checks the shared equations with the Rascal's numbers; the
+# JSBSim check (reference/jsbsim_check.py) covers the terms. Without the
+# tables there is no stall, so keep to moderate-angle flight around 20 m/s;
+# thrust_max 25 N has no source in the JSBSim model. See
 # book/src/guides/ardupilot.md.
 #
 # Aircraft: PID from a level start, PID recovering from a roll/pitch upset, and
@@ -36,6 +38,15 @@ templates:
     motion_model:
       FixedWing6DOF:
         airframe: rascal
+        # SCRIMMAGE has none of these; off, so the two fly the same equations.
+        aero_reference_frd_m: [0, 0, 0]
+        c_pitch_alpha_dot: 0
+        c_yaw_0: 0
+        lift_table: []
+        drag_table: []
+        sideslip_drag_table: []
+        aileron_power_mach_table: []
+        elevator_power_mach_table: []
 
 entities:
   level:

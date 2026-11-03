@@ -1,9 +1,9 @@
 {
-  "check": "<checkout>/runs/suite002/cpp-agreement",
+  "check": "<checkout>/runs/suite023/cpp-agreement",
   "defects": [
     {
       "name": "controller substeps receive the full step dt",
-      "file": "crates/core/src/simcontrol.rs",
+      "file": "crates/core/src/simulation.rs",
       "detected": true,
       "missions": {
         "substeps-random-spawn": [
@@ -18,7 +18,7 @@
     },
     {
       "name": "frame timestamp labels the time after the step",
-      "file": "crates/core/src/simcontrol.rs",
+      "file": "crates/core/src/simulation.rs",
       "detected": true,
       "missions": {
         "aircraft-collision": [
@@ -184,7 +184,6 @@
           "trace"
         ],
         "noisy-state-bias": [
-          "frames",
           "trace"
         ]
       }
@@ -236,10 +235,6 @@
           "frames",
           "trace"
         ],
-        "noisy-state-bias": [
-          "frames",
-          "trace"
-        ],
         "substeps-random-spawn": [
           "frames",
           "trace"
@@ -260,10 +255,6 @@
       "detected": true,
       "missions": {
         "noisy-contacts-bias": [
-          "frames",
-          "trace"
-        ],
-        "noisy-state-bias": [
           "frames",
           "trace"
         ],

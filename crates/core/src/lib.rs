@@ -12,7 +12,7 @@ mod simulation;
 
 pub use common::{AngleGains, GeographicOrigin, LengthGains, Pid, PidGains, SpeedGains, Terrain};
 pub use entity::{Entity, EntitySnapshot};
-pub use math::{EulerAngles, KinematicState, Quaternion, Vec3, rk4};
+pub use math::{EulerAngles, Integrable, KinematicState, Quaternion, Vec3, rk4};
 pub use mission::{Mission, Params};
 pub use scenario::{
     EndConditions, EntityGroupConfig, PluginConfig, RunConfig, ScenarioConfig, SpatialLookup, Spawn,

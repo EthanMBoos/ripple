@@ -279,10 +279,16 @@ comparison has proven what it needs to, they go.
 
 | What | Where | Replaced by |
 | --- | --- | --- |
-| Spawn spread given as a variance (`position_variance_m2`, `heading_variance_deg2`) | `entity.rs`, `scenario.rs` | A standard deviation in metres and degrees |
 | The first entities are created one step before the start time (generation runs at start − dt) | `simulation.rs` | Generation at the start time |
-| SCRIMMAGE's mission shapes: `randomize_every_spawn` (its `use_variance_all_ents`); PID gains in its order, with the integral band in degrees | `simulation/generation.rs`, `common/pid.rs` | Named gains and one spawn rule |
 | SCRIMMAGE's XML, written from a run's recorded scenario | `reference/scrimmage_xml.py`, `reference/scenario.py` | Nothing |
+
+Gone already (2026-11-03), with the XML writer carrying the difference: the
+spawn spread is a standard deviation (`position_stddev_m`,
+`heading_stddev_deg`; the writer squares it into SCRIMMAGE's variances), and
+an entity with a spread is always sampled around its start, where SCRIMMAGE's
+`use_variance_all_ents` chose (the writer sets it when the spread is
+nonzero). PID gains were already named; the integral band keeps degrees,
+SCRIMMAGE's unit and a mission author's.
 
 ## Core defects fixed on both sides
 
@@ -390,14 +396,14 @@ Details worth knowing:
   25 m/s and 30 degrees. `turning_radius`, `speed_target`, and
   `radius_slope_per_speed` are gone on both sides; the generated scenarios vary
   the bank limit instead, and `divergence.py` nudges it.
-- **SimpleAircraft's `rascal`.** The Rascal holds 47 degrees of bank but turns
-  at 26.3 deg/s, 13% slower than a coordinated turn at that bank (it doesn't
+- **SimpleAircraft's `rascal`.** The Rascal holds 49 degrees of bank but turns
+  at 30.2 deg/s, 8% slower than a coordinated turn at that bank (it doesn't
   fly perfectly coordinated). SimpleAircraft's bank only sets its turn rate, so
-  its bank limit is 43 degrees, the bank that gives 26.3 deg/s. Its pitch
-  limit, 30 degrees, only has to let the climb and descent limits bind at
+  its bank limit is 46.5 degrees, the bank that gives 30.2 deg/s. Its pitch
+  limit, 32 degrees, only has to let the climb and descent limits bind at
   cruise: SimpleAircraft keeps its speed in a climb or dive (it has no energy
-  model), where the Rascal slows to 17.4 m/s climbing and speeds up to
-  32 m/s descending.
+  model), where the Rascal slows to about 12 m/s climbing (19 degrees of
+  pitch for 4.0 m/s of climb).
 - **SCRIMMAGE's noise keys.** The comparison writes the named fields as
   `pos_noise_*`, `vel_noise_*`, and `orient_noise_*`, every axis given, since a
   SCRIMMAGE sensor without them measures with 5 m of horizontal noise.
@@ -501,6 +507,29 @@ Computing forces once per step is not wrong in itself. JSBSim does it at
 reuse past derivatives, for translation by default. What was wrong here was
 the mismatch: four RK4 stages with first-order forces, unmentioned.
 
+## Wind-to-body rotation: a C++ simplification, fixed on the comparison branch
+
+SCRIMMAGE's FixedWing6DOF brought lift L, drag D, and side force Y into the
+body frame as (L sin a - D cos a - Y sin b, Y cos b, -L cos a - D sin a),
+with a the angle of attack and b the sideslip: lift and drag rotated by a
+alone, the side force by b alone. The rotation from the wind axes
+(-D, Y, -L) to the body axes is by b about the down axis and then by a about
+the right axis, which gives (-D cos a cos b - Y cos a sin b + L sin a,
+-D sin b + Y cos b, -D sin a cos b - Y sin a sin b - L cos a). The inherited
+form drops the drag's sideslip components (D sin b sideways) and the side
+force's angle-of-attack components. On the Rascal at 0.15 rad of sideslip
+the difference is 0.028 of q S, measured by `reference/jsbsim_check.py` as
+the `wind_to_body` term (the helper computes both forms from JSBSim's
+wind-axis forces). Fixed on 2026-11-02 in Rust (`aerodynamics.rs`, `force`)
+and on `benchmarking-edits` (commit `3f7b6a9f8`, `FixedWing6DOF.cpp`): with
+the exact rotation and the Rascal's other terms, Ripple reproduces JSBSim's
+body-axis force and moment at every one of 378 held states to 8.5e-16 of
+q S. Every FixedWing6DOF mission's output changes wherever there is
+sideslip. Against the fixed branch the C++ matrix's two fixed-wing cases
+agree to 1.2e-12 m (A-4D) and 1.0e-8 m (Rascal), the Rascal's being the
+rounding growth over its 60 s that the frame move of 2026-10-31 brought
+(9.9e-9 m before this fix).
+
 ## Fixed wing: built-in aircraft instead of C++'s default
 
 C++ FixedWing6DOF's defaults (`FixedWing6DOF.xml`) are the A-4D Skyhawk; the
@@ -517,26 +546,66 @@ AircraftPIDController takes the same `airframe` for its gains and limits.
   scenarios). C++ ignores the key, so the C++ comparison is unchanged: on
   2026-10-12 `fixed-wing-a4` and `fixed-wing-rascal` agreed to 6.9e-13 m and
   2.3e-13 m, as before.
-- **The Rascal's numbers** match JSBSim's `Rascal.xml` (tables read at zero
-  angle of attack and low Mach) except: mass 5.91 kg (JSBSim's 13 lb is 5.90
-  kg); span 2.70 m (JSBSim 2.795 m); C_D_alpha 0 (JSBSim's drag table rises
-  about 0.11 per rad); induced drag through efficiency 0.995, inherited from
-  the A-4D default (JSBSim states 0.04 C_L^2); elevator drag 0.01 times
-  |elevator| in radians (C++ never reads its file's 0.03, and JSBSim's 0.03
-  multiplies the signed normalized deflection, elevator / 0.30, so units and
-  sign treatment differ too); elevator limits +-0.30 rad (JSBSim's elevator
-  moves -0.35 to +0.30; aileron and rudder +-0.35 match). These are inherited
-  modeling choices, kept because they are what has been flown. Its thrust
-  range (0 to 25 N) has no JSBSim counterpart. Every mission flies these
-  radian limits. C++'s `FixedWing6DOF-Rascal.xml` sets every surface limit to
-  +-1 ("use normalized actuators for rascal model", `2cab6d1190`, 2018), but
-  FixedWing6DOF never converts a normalized command: it multiplies the clamped
-  deflection straight into per-radian coefficients, so +-1 is +-1 rad, about
-  3x the real travel. `fixed-wing-6dof-rascal.yaml` kept those limits until
-  2026-10-14; with the radian limits its level and glide aircraft fly
-  identical paths and its upset aircraft differs by at most 2.89 m. The
-  comparison writes the Rascal's numbers out for C++, which has no airframe
-  profiles (`reference/scrimmage_xml.py`).
+- **The Rascal's numbers are JSBSim's `Rascal.xml`, as JSBSim resolves
+  them (since 2026-11-02).** The file's geometry (span 9.17 ft, area 10.57
+  ft^2, chord 1.15 ft), its 13 lb airframe with the 1.5 lb tank full (14.5
+  lb) and the inertia JSBSim computes about the fueled center of mass, its
+  lift, drag, and sideslip-drag tables, induced drag 0.04 C_L^2 as an Oswald
+  efficiency, the elevator's drag 0.03 per unit of normalized deflection
+  (0.1 per radian), its elevator range -0.35 to +0.30 rad, the aileron and
+  elevator powers as tables against Mach, the loads at its aerodynamic
+  reference point 1.0 in aft and 3.4 in below the fueled center of mass,
+  alpha-dot pitch damping -7, and a constant yaw moment 0.0007. Until then
+  the preset was SCRIMMAGE's hand copy of the file: mass 5.91 kg, span 2.70
+  m, no tables, efficiency 0.995, elevator drag 0.01 per radian, elevator
+  limits +-0.30, loads at the center of mass, no alpha-dot, no constant yaw,
+  no sideslip drag, constant control powers. One form of the file is kept
+  out of the preset: its elevator drag falls with up-elevator (the signed
+  normalized deflection), a defect of the file that the mission key
+  `signed_elevator_drag` restores for the comparison. The thrust range (0 to
+  25 N) has no JSBSim counterpart. Every mission flies these radian limits.
+  C++'s `FixedWing6DOF-Rascal.xml` sets every surface limit to +-1 ("use
+  normalized actuators for rascal model", `2cab6d1190`, 2018), but
+  FixedWing6DOF never converts a normalized command: it multiplies the
+  clamped deflection straight into per-radian coefficients, so +-1 is +-1
+  rad, about 3x the real travel. `fixed-wing-6dof-rascal.yaml` kept those
+  limits until 2026-10-14. The comparison writes the Rascal's numbers out for
+  C++, which has no airframe profiles (`reference/scrimmage_xml.py`), and
+  the compared mission sets the terms SCRIMMAGE lacks off (the reference
+  point, alpha-dot, the constant yaw, every table), which the writer checks
+  and drops; so the comparison still checks the shared equations with the
+  Rascal's numbers, and the JSBSim check covers the terms.
+- **Checked against JSBSim (2026-11-02).** `reference/jsbsim_check.py` runs
+  ArduPilot's `Rascal.xml` in JSBSim 1.3.3 (check `jsbsim-rascal`, evidence
+  in `paper/data/jsbsim-rascal/`). At 378 held states (12 to 30 m/s, angle
+  of attack -0.3 to 0.3 rad, sideslip to 0.15 rad, rates, deflections), the
+  `rascal` airframe in JSBSim's elevator-drag form reproduces JSBSim's force
+  and moment to 8.5e-16 of q S and 3.3e-17 of q S b, with JSBSim's rate of
+  change of angle of attack given; as flown, the elevator drag's sign leaves
+  0.040 of q S. The terms beyond the textbook equations, as the largest over
+  the grid in q S (forces) or q S b (moments): the elevator drag's sign
+  0.040, alpha-dot pitch damping 0.029, drag from sideslip 0.029, the exact
+  wind-to-body rotation 0.028, the reference-point arm 0.012, the Mach
+  tables 0.0010, the constant yaw 0.0007. In 5 s open-loop glides at 1 ms
+  from JSBSim's Newton-trimmed glide at 20 m/s (held, elevator +0.05,
+  aileron 0.1, rudder 0.1), flown north at the equator with JSBSim's air
+  density, speed of sound, and resting acceleration, Ripple in JSBSim's form
+  ends 2.0, 3.6, 2.5, and 1.9 cm from JSBSim's path, within 1e-3 rad in
+  attitude; as flown, 4.8, 1.0, 4.0, and 4.7 m, the elevator drag's sign
+  alone. The pass limit, 0.2 m on JSBSim's form, was set before the run from
+  the sensitivities the check measures: JSBSim at a tenth of its step 0.2 to
+  7.6 mm; Ripple at a quarter of its step under 10 nm; Ripple at the air
+  density of the glide's end 45 to 158 mm, a bound on the constant-density
+  simplification (JSBSim's density rises 0.1% over the 10 m of descent).
+  Before the model change the same glides ended 30 to 54 m off, mostly from
+  the reference-point arm (2.4 degrees of trim elevator), then the elevator
+  drag's sign. Two things learned on the way: JSBSim's
+  `position/distance-from-start-*` properties are great-circle magnitudes,
+  so the helper signs them from the coordinates (the first rerun read a
+  westward drift as 39 m of error with the attitude agreeing to 2.5e-4
+  rad); and JSBSim's alpha-dot uses the body acceleration of the same frame,
+  which Ripple computes from the force before the moment at every RK4
+  stage.
 - **AircraftPIDController's `rascal` settings** are `a4d`'s gains with
   ArduPlane's attitude limits (`ROLL_LIMIT_DEG` 45, `PITCH_MAX` 20,
   `ArduPlane/config.h` at `ccdfd945aefb`). Measured on the Rascal at 20 m/s
@@ -649,8 +718,20 @@ RK4 stage; at the end of a step it equals RotorS's filter output. RotorS
 applies drag at the rotor link, which Gazebo turns into an r x F moment, and
 reads the link's own velocity, which includes the body's rotation; Rust does
 both. `reference/rotors_motor.py` compiles RotorS's own filter and
-`UpdateForcesAndMoments` against stand-in Gazebo links and compares 480
-samples: largest errors 3.6e-15 N, 6.7e-16 N m, and 4.5e-13 rad/s.
+`UpdateForcesAndMoments` against stand-in Gazebo links and compares 720
+one-rotor samples (RotorS's default coefficients, the Crazyflie's, and the
+Firefly's, on a level and a tilted rotor): largest errors 3.6e-15 N, 6.7e-16
+N m, and 4.5e-13 rad/s. One rotor at a time cannot check the assembly, the
+hub offsets, or the frame conversion, so since 2026-11-03 the same run also
+puts the `crazyflie2` and `firefly` presets whole through RotorS's code,
+drag and the rolling moment on, at 432 held states (`multirotor_grid.py`:
+four attitudes, four or five velocities including the Firefly's 12 m/s
+cruise and a 2 m/s climb, four body rates, and three sets of rotor speeds,
+equal to widely unequal), each rotor at its held speed and the loads summed
+about the center of mass; Multirotor's own derivative, Newton and Euler
+undone, reproduces the sums to 2.6e-16 (force) and 3.0e-16 (moment) of the
+individual rotor loads (`rotors_vehicle_samples`). The samples are a
+committed fixture the tests read offline.
 
 Each effect is off unless the mission sets its key, for any vehicle, as
 for FixedWing6DOF's stall tables and landing gear. With every effect at zero,
@@ -674,6 +755,51 @@ choices made in copying it (mass from the model's parts, the body's
 inertia, gains per airframe). Its motor lag, drag, and rolling moment are
 written by missions, like the Crazyflie's.
 
+**Checked against Crazyflow (2026-11-03).** `reference/crazyflow_check.py`
+(check `crazyflow-crazyflie`, evidence in `paper/data/crazyflow-crazyflie/`)
+compares Multirotor with Crazyflow's `first_principles` dynamics in two
+ways. Loads: the `crazyflie2` and `firefly` presets whole through Crazyflow
+with no drag on either side, at the 432 held states the RotorS check uses
+(`multirotor_grid.py`; Crazyflow takes the Firefly's six rotors through a 3
+by 6 mixing matrix); Multirotor's own derivative reproduces Crazyflow's
+force and moment to 6.1e-16 and 1.1e-16 of the individual rotor loads
+(`crazyflow_loads_samples`, a committed fixture). The Firefly's hub height
+is invisible to both without drag, as it should be: untilted thrust at a
+raised hub makes the same moment. Flights: the Crazyflie open loop from the
+same start with the same constant commands, Ripple at 1 ms and Crazyflow at
+0.1 ms, five of them: four airborne at commands within 2% of hover, 4 s
+from 5 m (a drift at 1 m/s, a climb, a slow yaw spin-up to 0.48 rad/s, and
+a held 6 degree tilt that reaches 2.5 m/s), and the first check's case
+kept as a labeled stress case (3 s from 2 m, four unequal commands that
+spin it to 2.2 rad/s at 15.7 m/s, through a ground the model does not
+have). Without rotor drag the two agree to 3.6e-12 m and 1.3e-13 rad over
+every flight. With Ripple's RotorS drag on and Crazyflow's lumped drag
+matrix at Förster's values, the flights that spin differ, 1.1 m on the yaw
+flight and 3.96 m on the stress case, while the flights without rotation
+agree to 1e-13 m. The difference is the spin: Crazyflow's drag, a force at
+the center of mass, leaves the rotation untouched (the stress case at 0.73,
+1.45, 2.17 rad/s at 1, 2, 3 s, its no-drag numbers), while Ripple's drag
+acts at each hub on the hub's own velocity, rotation included, so its
+moments damp the spin (0.57, 0.91, 1.05 rad/s), and the thrust then tilts
+the two apart. Confirmed by feeding Ripple's hub drag, computed from
+Crazyflow's own state at every stage, through Crazyflow's disturbance
+inputs with its drag matrix zero (`crazyflow/integrate.py`): as a force
+alone, Crazyflow's rotation is bit-identical to its no-drag rotation and
+the stress paths still end 3.96 m apart; as force and moment, the equations
+are Ripple's and every flight agrees to 1.2e-12 m and 8.6e-14 rad. The pass
+limits were set before the comparison from the check's own step-size
+sensitivities, measured on each flight's fed-in variant: Ripple at a
+quarter step moves at most 3.9e-12 m, 9.1e-12 m/s, 1.5e-13 rad, and
+2.1e-13 rad/s, and Crazyflow at half its step 3.5e-13 m, 3.2e-13 m/s,
+8.1e-14 rad, and 3.2e-14 rad/s, so the agreement above is the step's own
+resolution. The limits are a hundred times the larger, rounded up to a
+power of ten (1e-9 m, 1e-9 m/s, 1e-10 rad, 1e-10 rad/s); every run measures
+the sensitivities again and fails if one exceeds its limit. Before, the
+check flew the stress case alone against a fixed 1e-6 m and 1e-6 rad, and
+its attitude measure was acos of the quaternion dot product, which cannot
+resolve under about 3e-8 rad (it read 4.2e-8 rad); it is now the chord
+form, as `compare.py`'s.
+
 ## Ported models keep C++ numerics; new models do not
 
 Ported plugins reproduce the C++ implementation, including its numerical
@@ -681,6 +807,63 @@ shortcuts, so comparisons stay exact; where a shortcut is a defect, it is fixed
 on the comparison branch and in Rust together. New plugins, such as new
 fixed-wing and boat models, should be written to be correct, not to match
 these.
+
+**Attitude in the 6DOF models (2026-10-31).** FixedWing6DOF and Multirotor
+integrate their attitude as four numbers and rotate vectors with it. They
+held it as nalgebra's quaternion, normalized before each rotation with
+nalgebra's calls, and copied it to and from truth's `math::Quaternion`
+component by component. They now hold `math::Quaternion`; each model's one
+`derivative` function normalizes it once and rotates with that, and
+`write_truth` normalizes what truth receives. The derivative is
+`q_dot = 1/2 q (0, omega)`. SCRIMMAGE's carried a `lambda q` term,
+`lambda = 1 - |q|^2`, from the NPSNET paper (Cooke, Zyda, Pratt, and McGhee,
+1992) that pulls the integrated length back toward one from inside the ODE;
+it has no physical effect (the length is renormalized anyway, as in JSBSim),
+but it is arithmetic the comparison can see: with the term dropped in Ripple
+alone the fixed wing's agreement moved from 1e-8 m to 2.3e-5 m within 3 s
+and 20 of 100 generated scenarios failed. It is therefore dropped on both
+sides, `benchmarking-edits` commit `42dae573d` ("Drop the quaternion
+length-correction term from FixedWing6DOF and Multirotor"), and the
+comparison reruns against that. Of the 40 missions the equivalence scan
+runs, only the seven that fly these models changed, and every other mission
+is byte-identical to the build before. Six of the seven moved by at most
+2e-8 m in position and 3e-10 in the quaternion over their 2 to 60 s; the
+hour-long 6DOF delivery mission, whose planner replans from what it sees,
+drifted to 5 cm and 3e-3 by its end from the same last-bit start.
+`math::Quaternion` gained `normalized()`, addition, scaling, and the
+Hamilton product, tested against nalgebra in `math/tests.rs`. With the term
+dropped on both sides, the full suite passes: cpp-agreement 15 of 15
+(worst 9.9e-9 m), cpp-generated 100 of 100 (worst 3.5e-11 m), cpp-long 10
+of 10 agree throughout (worst 7.2e-8 m), all 12 planted checker bugs
+caught, and the multirotor, Rascal, simple aircraft, RotorS, and Crazyflow
+model checks pass.
+
+**FixedWing6DOF in textbook frames (2026-10-31).** SCRIMMAGE's FixedWing6DOF
+works in a forward/right/down body frame and an east/south/down world frame,
+and converts to the engine's forward/left/up and east/north/up by flipping
+y and z on both sides. That frame is nobody's convention, but its reason is
+sound: a half-turn about x is a sign flip of quaternion components, exact in
+floating point, so the conversion each step costs nothing in agreement. Ripple
+now holds the model in the aerospace frames, forward/right/down body and
+north/east/down world, and converts at the truth boundary with the standard
+swap of the horizontal axes and a half-turn about the north-east diagonal
+(`dynamics.rs`). That quaternion has 1/sqrt(2) in it, so the attitude rounds
+twice a step, and the model's agreement with SCRIMMAGE became ordinary
+rounding growth rather than bit-mirroring: 9.9e-9 m after the 60 s Rascal
+case (3e-13 m before), and 7.3e-8 m after a 1,000 s four-aircraft case that
+a one-bit nudge of Rust itself also diverges (`cpp-long`, `divergence.py`).
+Every other compared model is unchanged. The comparison tolerances were
+widened a hundredfold to 1e-6 m, 1e-6 m/s, 1e-7 rad, and 1e-7 rad/s, with
+the measurements recorded in `reference/compare.py`. At the new limits the
+agreement matrix passes 15 of 15, the 100 generated scenarios 100 of 100
+(worst 3.6e-11 m), and the planted-bug study catches 12 of 12; the
+SimpleAircraft yaw-rate defect in `sensitivity.py` was repointed at the
+symbols-pass text, which it had silently stopped matching. `traces.py` now
+compares the `desired_heading` output modulo a full turn, because the
+Straight autonomy's heading wraps to 2*pi or to 0 on the sign of a
+rounding-sized sideways velocity, which is not a difference in heading. The
+checker names that port itself; carrying each port's unit through the core
+into the trace, for a comparison that is to be retired, was not worth it.
 
 **Integrators for new motion models.** For smooth-flight models such as the
 planned fixed-wing and boat, start with RK4 that recomputes forces and moments
@@ -717,11 +900,13 @@ local `z = 0` is the terrain's origin altitude. There is nothing in C++ to
 compare it with.
 
 FixedWing6DOF's `landing_gear` and TerrainCollision's `structure_points_frd_m`
-are Rust-only too: C++ ground contact was the flat spring at `z = 0`
-(`use_ground_model`, Ripple's `enable_ground_spring`), which stays unchanged
-for the comparison missions. The
-gear follows JSBSim's FGLGear wheels (`landing_gear.rs`), so the comparison
-does not cover it; its own tests do (`crates/core/tests/landing_gear.rs`).
+are Rust-only too. C++ ground contact is a flat spring at `z = 0`
+(`use_ground_model`, 400 times the mass per metre and 40 N s/m of damping);
+Ripple dropped its copy on 2026-11-03, since the collision interactions and
+the gear are its ground, and `reference/scrimmage_xml.py` turns SCRIMMAGE's
+off in every compared mission. The gear follows JSBSim's FGLGear wheels
+(`landing_gear.rs`), so the comparison does not cover it; its own tests do
+(`crates/core/tests/landing_gear.rs`).
 
 FixedWing6DOF's `lift_table` and `drag_table` are Rust-only as well. C++ lift is
 linear in angle of attack (`C_L0 + C_L_alpha * alpha`) at any angle, so it never

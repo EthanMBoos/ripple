@@ -21,8 +21,9 @@ out of the default build.
   that leaves outputs byte-identical, and fixes for documented C++ defects (the
   substep order, AircraftPIDController, the RK4 loads in FixedWing6DOF and
   Multirotor, Multirotor's velocity, moment arms, and idle thrust, the core
-  defects, SimpleAircraft's turn, and SingleIntegrator's `max_speed`; see
-  `docs/REFERENCE_NOTES.md`).
+  defects, SimpleAircraft's turn, SingleIntegrator's `max_speed`, the
+  6DOF models' quaternion length-correction term, and FixedWing6DOF's
+  wind-to-body rotation; see `docs/REFERENCE_NOTES.md`).
 - User research plugins live in workspace user crates such as `crates/starter`,
   registered in `crates/cli/src/main.rs`; keep the starter building and tested.
 - Missions are YAML, read into the typed `ScenarioConfig`. The SCRIMMAGE

@@ -1,27 +1,23 @@
-//! Multirotor integration coordinates: forward/left/up body, ENU world.
+//! Multirotor integration state: forward/left/up body, ENU world.
 //! Unlike FixedWing6DOF, this model needs no body-axis flips.
 
-use nalgebra::{Quaternion as BodyQuaternion, UnitQuaternion};
+use crate::math::{Integrable, KinematicState, Quaternion, Vec3};
 
-use crate::math::{KinematicState, Quaternion, Vec3};
-
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub(super) struct RotorcraftState {
     pub velocity_body_mps: Vec3,
     pub rates_body_radps: Vec3,
     pub position_world_m: Vec3,
-    pub attitude: BodyQuaternion<f64>,
+    pub attitude: Quaternion,
 }
 
-impl Default for RotorcraftState {
-    fn default() -> Self {
-        Self {
-            velocity_body_mps: Vec3::zeros(),
-            rates_body_radps: Vec3::zeros(),
-            position_world_m: Vec3::zeros(),
-            attitude: BodyQuaternion::identity(),
-        }
-    }
+/// The rate of each field of `RotorcraftState`.
+#[derive(Clone, Copy)]
+pub(super) struct RotorcraftRate {
+    pub acceleration_body_mps2: Vec3,
+    pub angular_acceleration_body_radps2: Vec3,
+    pub velocity_world_mps: Vec3,
+    pub attitude_rate: Quaternion,
 }
 
 impl RotorcraftState {
@@ -30,78 +26,44 @@ impl RotorcraftState {
     /// velocity moves the vehicle, and world and body velocity cannot drift
     /// apart.
     pub fn read_truth(&mut self, truth: &KinematicState) {
-        let attitude = truth.orientation_world_from_body;
-        self.attitude = BodyQuaternion::new(attitude.w, attitude.x, attitude.y, attitude.z);
-        let rotation = UnitQuaternion::new_normalize(self.attitude);
-        self.velocity_body_mps = rotation.inverse_transform_vector(&truth.velocity_world_mps);
-        self.rates_body_radps =
-            rotation.inverse_transform_vector(&truth.angular_velocity_world_radps);
+        self.attitude = truth.orientation_world_from_body;
+        let rotation = self.attitude.normalized();
+        self.velocity_body_mps = rotation.rotate_world_to_body(truth.velocity_world_mps);
+        self.rates_body_radps = rotation.rotate_world_to_body(truth.angular_velocity_world_radps);
         self.position_world_m = truth.position_world_m;
     }
 
     pub fn write_truth(self, truth: &mut KinematicState) {
-        let rotation = UnitQuaternion::new_normalize(self.attitude);
-        let attitude = rotation.quaternion();
-        truth.orientation_world_from_body = Quaternion {
-            w: attitude.w,
-            x: attitude.i,
-            y: attitude.j,
-            z: attitude.k,
-        };
+        let rotation = self.attitude.normalized();
+        truth.orientation_world_from_body = rotation;
         truth.position_world_m = self.position_world_m;
-        truth.velocity_world_mps = rotation.transform_vector(&self.velocity_body_mps);
-        truth.angular_velocity_world_radps = rotation.transform_vector(&self.rates_body_radps);
+        truth.velocity_world_mps = rotation.rotate_body_to_world(self.velocity_body_mps);
+        truth.angular_velocity_world_radps = rotation.rotate_body_to_world(self.rates_body_radps);
     }
 
-    // Flatten only at the RK4 boundary; physical equations use the named fields.
-    pub fn coordinates(self) -> [f64; 13] {
-        let velocity = self.velocity_body_mps;
-        let rates = self.rates_body_radps;
-        let position = self.position_world_m;
-        let attitude = self.attitude;
+    pub fn is_finite(self) -> bool {
+        let q = self.attitude;
         [
-            velocity.x, velocity.y, velocity.z, rates.x, rates.y, rates.z, position.x, position.y,
-            position.z, attitude.w, attitude.i, attitude.j, attitude.k,
+            self.velocity_body_mps,
+            self.rates_body_radps,
+            self.position_world_m,
         ]
-    }
-
-    pub fn from_coordinates(coordinates: [f64; 13]) -> Self {
-        let [u, v, w, p, q, r, x, y, z, qw, qx, qy, qz] = coordinates;
-        Self {
-            velocity_body_mps: Vec3::new(u, v, w),
-            rates_body_radps: Vec3::new(p, q, r),
-            position_world_m: Vec3::new(x, y, z),
-            attitude: BodyQuaternion::new(qw, qx, qy, qz),
-        }
+        .iter()
+        .all(|vector| vector.iter().all(|value| value.is_finite()))
+            && [q.w, q.x, q.y, q.z].iter().all(|value| value.is_finite())
     }
 }
 
-pub(super) fn derivative(
-    state: RotorcraftState,
-    acceleration_body_mps2: Vec3,
-    angular_acceleration_body_radps2: Vec3,
-) -> [f64; 13] {
-    let rates = state.rates_body_radps;
-    let attitude = state.attitude;
-    let qw = attitude.w;
-    let qx = attitude.i;
-    let qy = attitude.j;
-    let qz = attitude.k;
-    let lambda = 1.0 - (qw * qw + qx * qx + qy * qy + qz * qz);
-    let attitude_derivative = BodyQuaternion::new(
-        -0.5 * (qx * rates.x + qy * rates.y + qz * rates.z) + lambda * qw,
-        0.5 * (qw * rates.x + qy * rates.z - qz * rates.y) + lambda * qx,
-        0.5 * (qw * rates.y + qz * rates.x - qx * rates.z) + lambda * qy,
-        0.5 * (qw * rates.z + qx * rates.y - qy * rates.x) + lambda * qz,
-    );
-    let rotation = UnitQuaternion::new_normalize(attitude);
-    RotorcraftState {
-        velocity_body_mps: state.velocity_body_mps.cross(&rates) + acceleration_body_mps2,
-        rates_body_radps: angular_acceleration_body_radps2,
-        position_world_m: rotation.transform_vector(&state.velocity_body_mps),
-        attitude: attitude_derivative,
+impl Integrable for RotorcraftState {
+    type Rate = RotorcraftRate;
+    fn plus_scaled(self, scale: f64, rate: RotorcraftRate) -> Self {
+        Self {
+            velocity_body_mps: self.velocity_body_mps + scale * rate.acceleration_body_mps2,
+            rates_body_radps: self.rates_body_radps + scale * rate.angular_acceleration_body_radps2,
+            position_world_m: self.position_world_m + scale * rate.velocity_world_mps,
+            attitude: self.attitude + scale * rate.attitude_rate,
+        }
     }
-    .coordinates()
 }
 
 #[cfg(test)]

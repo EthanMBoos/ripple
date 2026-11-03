@@ -25,10 +25,9 @@ fn scenario() -> Result<ScenarioConfig> {
             team: 1,
             count: 3,
             position_m: Vec3::new(0.0, 0.0, 20.0),
-            position_variance_m2: Vec3::new(4.0, 4.0, 0.0),
+            position_stddev_m: Vec3::new(2.0, 2.0, 0.0),
             heading_deg: 90.0,
-            heading_variance_deg2: 9.0,
-            randomize_every_spawn: true,
+            heading_stddev_deg: 3.0,
             spawn: Some(Spawn {
                 rate_hz: 2.0,
                 batch_size: 1,
@@ -122,7 +121,7 @@ fn rust_inputs_receive_shared_validation_before_execution() -> Result<()> {
     config.entities[0].spawn.as_mut().unwrap().batch_size = 0;
     invalid.push(config);
     let mut config = scenario()?;
-    config.entities[0].position_variance_m2.x = -1.0;
+    config.entities[0].position_stddev_m.x = -1.0;
     invalid.push(config);
     let mut config = scenario()?;
     config.entities[0].motion_model = PluginConfig::new("WaypointFollower");

@@ -32,10 +32,10 @@ import perf
 from project import ROOT, build_runner, source_identity
 from run import read_run
 
-SPREAD = 1_000_000  # position variance, m^2: perf.py's collision workload
-CLUSTERED = 400     # 20 m standard deviation: agents crowd into a few cells
+SPREAD = 1000     # position standard deviation, m: perf.py's collision workload
+CLUSTERED = 20    # agents crowd into a few cells
 
-# name: (agents, position variance, collision range m, variants). A variant is
+# name: (agents, position spread m, collision range m, variants). A variant is
 # "none", "scan", or a grid cell width in metres.
 CASES = {
     "sparse-256": (256, SPREAD, 5, ["none", "scan", 5]),
@@ -48,9 +48,9 @@ CASES = {
 }
 
 
-def mission(agents, variance, range_m, collide):
+def mission(agents, spread, range_m, collide):
     interactions = {"SimpleCollision": {"collision_range_m": range_m}} if collide else {}
-    return perf.workload("collision", agents, variance=variance, interactions=interactions)
+    return perf.workload("collision", agents, spread=spread, interactions=interactions)
 
 
 def run(runner, mission, output, grid):
@@ -86,12 +86,12 @@ def main(argv=None):
     results = {}
     scratch = output / "scratch"
     scratch.mkdir()
-    for name, (agents, variance, range_m, variants) in CASES.items():
+    for name, (agents, spread, range_m, variants) in CASES.items():
         missions = {collide: perf.write_mission(scratch / f"{name}-{collide}.yaml",
-                                                mission(agents, variance, range_m, collide))
+                                                mission(agents, spread, range_m, collide))
                     for collide in (True, False)}
         samples = {str(variant): [] for variant in variants}
-        case = {"agents": agents, "position_variance_m2": variance,
+        case = {"agents": agents, "position_stddev_m": spread,
                 "collision_range_m": range_m, "variants": {}}
         digests = set()
         for repeat in range(args.repeats + 1):

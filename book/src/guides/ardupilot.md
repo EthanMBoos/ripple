@@ -211,10 +211,9 @@ controller gives gains measured on the Rascal and ArduPlane's attitude limits
   higher in turns. Keep to moderate-angle flight around 20 m/s. This
   integration has not been checked against the real aircraft.
 
-  **Optional stall:** FixedWing6DOF takes tables against angle
-  of attack that replace its linear lift and zero-lift drag, interpolated
-  and held at their ends like a JSBSim `<table>`. No mission sets them; to
-  fly the Rascal with JSBSim's values, add to its `FixedWing6DOF` block:
+  **Stall:** FixedWing6DOF takes tables against angle of attack that
+  replace its linear lift and zero-lift drag, interpolated and held at their
+  ends like a JSBSim `<table>`. The `rascal` airframe carries JSBSim's:
 
   ```yaml
   # [alpha_rad, C_L]: C_L0 + C_L_alpha * alpha up to the 0.23 rad peak, then falling
@@ -223,17 +222,19 @@ controller gives gains measured on the Rascal and ArduPlane's attitude limits
   drag_table: [[-1.57, 1.5], [-0.26, 0.056], [0.0, 0.028], [0.26, 0.056], [1.57, 1.5]]
   ```
 
-  Use both: induced drag follows `C_L`, so with `lift_table` alone drag
-  falls past the stall. Induced and elevator drag are still added to the
-  table's. Accepted limitations: there is no spin model, and JSBSim's
-  sideslip drag is left out. A deep stall or flying far sideways counts as
-  already a failure; the model is not meant to recover from either
-  faithfully.
+  A mission turns them off with `lift_table: []` and `drag_table: []`,
+  which is how the SCRIMMAGE comparison flies it. Keep both or neither:
+  induced drag follows `C_L`, so with `lift_table` alone drag falls past
+  the stall. Induced, elevator, and sideslip drag are still added to the
+  table's. Accepted limitation: there is no spin model. A deep stall or
+  flying far sideways counts as already a failure; the model is not meant
+  to recover from either faithfully.
 - **Thrust is a fixed 0-25 N with no propeller model,** so top level speed is
-  about 38 m/s.
-- **Surface limits in radians:** elevator ±0.30, aileron and rudder ±0.35,
-  matching the bridge's default PWM maps. Aileron and rudder are JSBSim's;
-  its elevator moves −0.35 to +0.30, so ±0.30 is a simplification.
+  about 35 m/s.
+- **Surface limits in radians are JSBSim's:** elevator −0.35 to +0.30,
+  aileron and rudder ±0.35. The bridge's default PWM map spans ±0.30 for the
+  elevator, so ArduPilot never asks for the model's last 0.05 rad of
+  up-elevator.
 
 ## Adding ArduPilot to a mission
 
@@ -322,7 +323,8 @@ target/release/ripple run crates/ardupilot/missions/rascal-runway.yaml --headles
   taildraggers. JSBSim's castors, and a castering tail wheel ground-looped on
   the landing roll.
 
-What a run looks like (run on 2026-10-01): ArduPlane rolls 22 m and lifts off at
+What a run looked like with the Rascal's earlier numbers (run on
+2026-10-01): ArduPlane rolls 22 m and lifts off at
 12 m/s within 0.3 m of the centreline, climbs out, flies the circuit, and
 touches down at 13 m/s after a 3.9° glide. The rollout stays within 1.6 m of the
 centreline and stops 0.7 m from it, aligned with the runway. The landing is not
@@ -330,19 +332,20 @@ pretty: it lands level at 1.4 m/s sink and bounces (up to 1.7 m) before
 settling. With ArduPilot's default 1° flare it touches down once, tail-high at
 17 m/s, but swerves 14 m off the centreline when the tail drops.
 
-The bounce is not a missing stall. Rerun on 2026-10-05 with and without the
-optional `lift_table` added to the mission, the landing was the same to within
-centimetres: first touch at 15.4 m/s and 1.45 m/s sink, bounces up to 2.0 m,
-rollout within 1.7 m of the centreline. (These numbers come from a different
-touchdown measure than the run above: the first frame after the circuit with the
-centre within 5 cm of its resting height.) Adding `drag_table` too, the extra
-drag at small angles helped a little: first touch at 15.1 m/s, bounces up to 1.9
-m, rollout within 1.2 m. Airborne, the angle of attack peaks at 11.2°, below the
-13.2° stall, from 15 s before touchdown on; only rolling tail-down on the wheels
-(above 5 m/s) does it pass the stall angle, at 14.5°. The unmodified mission
-repeats byte for byte, so these differences are the tables' effect, not
-run-to-run noise (`reference/stall_landing.py`, evidence in
-`paper/data/stall-landing/`). Each touchdown pitches the nose up by 10–17°, as a
+The bounce is not a missing stall. Rerun on 2026-11-02 with the Rascal's
+JSBSim numbers, with and without the `lift_table` (the airframe carries it;
+`lift_table: []` turns it off), the landing was the same to within
+centimetres: first touch at 14.0 m/s and 1.7 m/s sink, bounces up to 0.8 m,
+rollout within 3.2 m of the centreline (3.0 m with the table). (These numbers
+come from a different touchdown measure than the run above: the first frame
+after the circuit with the centre within 5 cm of its resting height.) Adding
+`drag_table` too, the extra drag at small angles helped: first touch at 13.5
+m/s, bounces up to 0.4 m, rollout within 2.3 m. Airborne, the angle of attack
+peaks at 7.7° (8.6° with both tables), below the 13.2° stall; only rolling
+tail-down on the wheels (above 5 m/s) does it pass the stall angle, at 14.3°.
+The unmodified mission repeats exactly, so these differences are the tables'
+effect, not run-to-run noise (`reference/stall_landing.py`, evidence in
+`paper/data/stall-landing/`). Each touchdown pitches the nose up, as a
 taildragger's mains ahead of the centre of gravity do. A likely cause is the
-approach at about 18.5 m/s, more than twice the stall speed, but that is
-untested.
+fast touchdown, 14 m/s against the 8.8 m/s the table's peak lift gives as a
+stall speed, but that is untested.

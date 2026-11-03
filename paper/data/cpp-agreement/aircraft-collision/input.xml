@@ -9,7 +9,6 @@
   <metrics>SimpleCollisionMetrics</metrics>
   <entity>
     <team_id>1</team_id>
-    <color>77 77 255</color>
     <visual_model>zephyr-blue</visual_model>
     <health>1</health>
     <count>1</count>
@@ -18,13 +17,13 @@
     <generate_start_time>0.0</generate_start_time>
     <generate_time_variance>0.0</generate_time_variance>
     <x>-1000.0</x>
-    <variance_x>20.0</variance_x>
+    <variance_x>0.0</variance_x>
     <vx>0.0</vx>
     <y>0.0</y>
-    <variance_y>20.0</variance_y>
+    <variance_y>0.0</variance_y>
     <vy>0.0</vy>
     <z>200.0</z>
-    <variance_z>10.0</variance_z>
+    <variance_z>0.0</variance_z>
     <vz>0.0</vz>
     <heading>0.0</heading>
     <variance_heading>0.0</variance_heading>
@@ -37,7 +36,6 @@
   </entity>
   <entity>
     <team_id>2</team_id>
-    <color>255 0 0</color>
     <visual_model>zephyr-red</visual_model>
     <health>1</health>
     <count>1</count>
@@ -46,13 +44,13 @@
     <generate_start_time>0.0</generate_start_time>
     <generate_time_variance>0.1</generate_time_variance>
     <x>1000.0</x>
-    <variance_x>20.0</variance_x>
+    <variance_x>0.0</variance_x>
     <vx>0.0</vx>
     <y>0.0</y>
-    <variance_y>20.0</variance_y>
+    <variance_y>0.0</variance_y>
     <vy>0.0</vy>
     <z>200.0</z>
-    <variance_z>10.0</variance_z>
+    <variance_z>0.0</variance_z>
     <vz>0.0</vz>
     <heading>180.0</heading>
     <variance_heading>0.0</variance_heading>

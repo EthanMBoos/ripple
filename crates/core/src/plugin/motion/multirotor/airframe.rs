@@ -365,6 +365,7 @@ mod tests {
         forster_speed_radps, forster_thrust_n, rotors,
     };
     use crate::math::Vec3;
+    use nalgebra::Matrix3;
 
     #[test]
     fn crazyflie_hovers_at_forsters_hover_command() {
@@ -537,5 +538,46 @@ mod tests {
             assert!(serde_yaml_ng::from_str::<Vec<RotorParams>>(invalid).is_err());
         }
         Ok(())
+    }
+
+    /// The `firefly` preset against RotorS's `firefly.xacro` at commit
+    /// `cd813b7`, number for number (the lines cited in `firefly`), so an
+    /// edit to the preset shows: the mass from the modeled parts, the body
+    /// inertia, the coefficients, the speed limit, and the six rotors in
+    /// motor order with their positions and spin directions.
+    #[test]
+    fn firefly_matches_the_rotors_model_file() {
+        let airframe = firefly();
+        assert_eq!(airframe.mass_kg, 1.5 + 6.0 * 0.005 + 0.015);
+        assert_eq!(airframe.gravity_mps2, 9.81);
+        assert_eq!(
+            airframe.inertia_kgm2,
+            Matrix3::new(0.0347563, 0.0, 0.0, 0.0, 0.0458929, 0.0, 0.0, 0.0, 0.0977)
+        );
+        assert_eq!(airframe.thrust_coefficient, 8.54858e-06);
+        assert_eq!(airframe.torque_coefficient, 0.016 * 8.54858e-06);
+        assert_eq!(airframe.min_rotor_speed_radps, 0.0);
+        assert_eq!(airframe.max_rotor_speed_radps, 838.0);
+        let (cos30, sin30) = (0.866025403784, 0.5);
+        let expected = [
+            (Direction::Counterclockwise, cos30, sin30),
+            (Direction::Clockwise, 0.0, 1.0),
+            (Direction::Counterclockwise, -cos30, sin30),
+            (Direction::Clockwise, -cos30, -sin30),
+            (Direction::Counterclockwise, 0.0, -1.0),
+            (Direction::Clockwise, cos30, -sin30),
+        ];
+        assert_eq!(airframe.rotors.len(), expected.len());
+        for (index, (rotor, (direction, forward, left))) in
+            airframe.rotors.iter().zip(expected).enumerate()
+        {
+            assert_eq!(rotor.port, format!("motor_{index}"));
+            assert_eq!(rotor.direction, direction);
+            assert_eq!(
+                rotor.offset_body_m,
+                Vec3::new(forward * 0.215, left * 0.215, 0.037)
+            );
+            assert!((rotor.thrust_axis_body - Vec3::new(0.0, 0.0, 1.0)).norm() < 1e-15);
+        }
     }
 }

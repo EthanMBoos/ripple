@@ -40,11 +40,12 @@ fn rascal_gear(steered_tail: bool) -> serde_json::Value {
     ])
 }
 
-/// FixedWing6DOF's Rascal, as the SITL missions fly it, on `gear`.
+/// FixedWing6DOF's Rascal, as the SITL missions fly it, on `gear`, without
+/// its constant yaw moment (JSBSim's C_n0), so that it rolls straight.
 fn rascal_motion(gear: serde_json::Value) -> serde_json::Value {
     json!({
         "airframe": "rascal",
-        "enable_ground_spring": false,
+        "c_yaw_0": 0.0,
         "landing_gear": gear,
     })
 }
@@ -231,7 +232,8 @@ fn rolling_friction_stops_a_rolling_aircraft_and_holds_it() -> Result<()> {
     assert!((4.0..5.6).contains(&time_s), "{time_s} s");
     // Rolling straight: no sideways drift or turn.
     let last = frames.last().unwrap();
-    assert!(last.entities[0].truth.position_world_m.y.abs() < 0.01);
+    let drift_m = last.entities[0].truth.position_world_m.y;
+    assert!(drift_m.abs() < 0.01, "drift {drift_m} m");
     assert!(speed_mps(last) < 1e-3, "{}", speed_mps(last));
     assert!((last.entities[0].truth.position_world_m.x - distance_m).abs() < 0.02);
     Ok(())

@@ -43,8 +43,9 @@ pub fn ring() -> anyhow::Result<ScenarioConfig> {
 
 An entity group specifies `count` independent agents and an optional `Spawn`
 schedule. The example uses the default count of one. Positions and velocities
-are local ENU world coordinates, in meters and meters/second. Position variance
-defaults to zero. Select a motion model explicitly; omitted physics is an error.
+are local ENU world coordinates, in meters and meters/second. The position
+spread (a standard deviation) defaults to zero. Select a motion model
+explicitly; omitted physics is an error.
 
 `PluginConfig::new` uses the plugin's defaults. `with_params` replaces its
 supplied values with a serializable struct or map; the plugin's existing

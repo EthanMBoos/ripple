@@ -18,7 +18,7 @@ local copy can be fetched and read.
 
 - The Crazyflie's numbers come from Förster's 2015 ETH thesis, cited by
   equation number.
-- The Rascal's come from ArduPilot's JSBSim `Rascal.xml`.
+- The Rascal's come from ArduPilot's JSBSim `Rascal.xml`, at a pinned commit.
 - The rotor effects come from RotorS's motor plugin at commit `cd813b7`.
 
 ## 2. New aircraft or new model?
@@ -83,8 +83,9 @@ Shape a model so measured data arrives as values, not new code:
 - Geometry is vectors. A multirotor rotor is a position and a tilt, so any
   layout is a list of `rotors`.
 - Aerodynamic curves use the table-or-linear pattern: `lift_table` and
-  `drag_table` replace the linear lift and drag when a mission gives them,
-  read with `interpolate_clamped`. A measured curve for another coefficient
+  `drag_table` replace the linear lift and drag when the airframe or the
+  mission gives them, read with `interpolate_clamped`; the sideslip-drag and
+  Mach tables are the same pattern. A measured curve for another coefficient
   becomes another table key using the same helper.
 
 ## 7. Keep new effects optional
@@ -103,7 +104,9 @@ Pick the strongest check the source allows:
    compares 480 samples.
 2. **Against an independent implementation** of the same vehicle.
    `reference/crazyflow_check.py` flies the Crazyflie in Crazyflow with the
-   same numbers.
+   same numbers; `reference/jsbsim_check.py` reads the Rascal's loads from
+   JSBSim at 378 held states and flies 5 s open-loop glides there, with a
+   tolerance set from the sensitivities it measures.
 3. **Against a prediction from the measurements.**
    `reference/multirotor_control.py` checks that the Crazyflie leans into its
    measured rotor drag by the predicted angle.

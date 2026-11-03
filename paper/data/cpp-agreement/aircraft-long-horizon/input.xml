@@ -8,48 +8,46 @@
   <metrics>SimpleCollisionMetrics</metrics>
   <entity>
     <team_id>1</team_id>
-    <color>77 77 255</color>
     <visual_model>zephyr-blue</visual_model>
     <health>1</health>
     <count>1</count>
     <x>-900.0</x>
-    <variance_x>20.0</variance_x>
+    <variance_x>20.25</variance_x>
     <vx>0.0</vx>
     <y>0.0</y>
-    <variance_y>20.0</variance_y>
+    <variance_y>20.25</variance_y>
     <vy>0.0</vy>
     <z>195.0</z>
-    <variance_z>10.0</variance_z>
+    <variance_z>10.240000000000002</variance_z>
     <vz>0.0</vz>
     <heading>0.0</heading>
     <variance_heading>0.0</variance_heading>
     <roll>0.0</roll>
     <pitch>0.0</pitch>
-    <use_variance_all_ents>false</use_variance_all_ents>
+    <use_variance_all_ents>true</use_variance_all_ents>
     <autonomy enable_boundary_control="true">Straight</autonomy>
     <controller>SimpleAircraftControllerPID</controller>
     <motion_model>SimpleAircraft</motion_model>
   </entity>
   <entity>
     <team_id>2</team_id>
-    <color>255 0 0</color>
     <visual_model>zephyr-red</visual_model>
     <health>1</health>
     <count>0</count>
     <x>50.0</x>
-    <variance_x>20.0</variance_x>
+    <variance_x>20.25</variance_x>
     <vx>0.0</vx>
     <y>0.0</y>
-    <variance_y>20.0</variance_y>
+    <variance_y>20.25</variance_y>
     <vy>0.0</vy>
     <z>200.0</z>
-    <variance_z>20.0</variance_z>
+    <variance_z>20.25</variance_z>
     <vz>0.0</vz>
     <heading>180.0</heading>
     <variance_heading>0.0</variance_heading>
     <roll>0.0</roll>
     <pitch>0.0</pitch>
-    <use_variance_all_ents>false</use_variance_all_ents>
+    <use_variance_all_ents>true</use_variance_all_ents>
     <autonomy enable_boundary_control="true" speed="21">Straight</autonomy>
     <controller>SimpleAircraftControllerPID</controller>
     <motion_model>SimpleAircraft</motion_model>

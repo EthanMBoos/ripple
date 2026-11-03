@@ -8,6 +8,11 @@ version = "0.1.0"
 edition = "2024"
 license = "LGPL-3.0-or-later"
 
+# Physics loops are written indexed, as the equations are (the book's
+# "Writing physics"); clippy would rather they zipped.
+[workspace.lints.clippy]
+needless_range_loop = "allow"
+
 [workspace.dependencies]
 anyhow = "1"
 nalgebra = { version = "0.35", default-features = false, features = ["std", "serde-serialize"] }

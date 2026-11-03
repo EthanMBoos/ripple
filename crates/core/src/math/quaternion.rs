@@ -1,3 +1,5 @@
+use std::ops::{Add, Mul};
+
 use super::Vec3;
 use serde::{Deserialize, Serialize};
 
@@ -70,6 +72,55 @@ impl Quaternion {
     pub fn roll_world_from_body_rad(self) -> f64 {
         (2.0 * (self.w * self.x + self.y * self.z))
             .atan2(1.0 - 2.0 * (self.x * self.x + self.y * self.y))
+    }
+
+    /// The same attitude at unit length.
+    pub fn normalized(self) -> Self {
+        let norm = (self.w * self.w + self.x * self.x + self.y * self.y + self.z * self.z).sqrt();
+        Self {
+            w: self.w / norm,
+            x: self.x / norm,
+            y: self.y / norm,
+            z: self.z / norm,
+        }
+    }
+}
+
+impl Add for Quaternion {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        Self {
+            w: self.w + other.w,
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
+    }
+}
+
+impl Mul<Quaternion> for f64 {
+    type Output = Quaternion;
+    fn mul(self, q: Quaternion) -> Quaternion {
+        Quaternion {
+            w: self * q.w,
+            x: self * q.x,
+            y: self * q.y,
+            z: self * q.z,
+        }
+    }
+}
+
+/// The Hamilton product: `a * b` is the rotation `b` followed by `a`.
+impl Mul for Quaternion {
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self {
+        let (a, b) = (self, rhs);
+        Self {
+            w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+            x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+            y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
+            z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
+        }
     }
 }
 

@@ -2,220 +2,114 @@
 
 ## Direction
 
-A language-model planner dispatches a mixed fleet (fixed-wing aircraft and
-multirotors) by calling skills that each vehicle's autonomy hosts, while
-operations add rules mid-mission in plain language. Ripple replays every
-mission exactly, so compliance can be measured one decision at a time and
-over whole missions, and the same mission rerun with one thing changed. The
-paper (`paper/manuscript/main.tex`) is "Ripple: Catching Language-Model
-Fleet Planner Mistakes Before Deployment".
+Finish the delivery study and submit it to RA-L for feedback.
 
-Where the results stand (2026-10-27; Haiku is complete with two replies
-per condition, seeds 4-23, so its counts are of 40 missions; Sonnet has one
-reply per condition, with a second reply on the base rows only, so its
-upper-rung counts are of 20, and its fresh run is the next step, see
-below). At the base prompt the two models break
-different rules: Haiku breaks the grounded vehicle in wording B in 24 of 40
-missions and Sonnet never does; both break the no-fly zone (15-25 of 40)
-and standby B (32-36 of 40); wording A of the grounding and standby rules is
-never or almost never broken by either. The ladder lands differently on
-each model: `priority` removes Sonnet's no-fly breaks (2 of 20 under B) but
-not Haiku's (23 of 40), and `definitions` removes the standby misreading on
-both (neither model sends the last idle multirotor while the other reloads,
-in over 300 such moments each) and most of Haiku's grounding breaks (4 of
-40). Haiku's no-fly zone is not fixed by any rung (19 of 40 under B at the
-top rung); `drop_via` fixes it on both models (0 of 40), and enforcement is
-0 everywhere. The standby breaks that remain at the top rung (Sonnet 7 of
-20, Haiku 8 of 40) are sends at minutes 3-5 that leave the depot empty when
-the window opens; the planner notes the call is "before the window opens",
-and the score counts the empty depot (stated in the paper and score.rs).
-Without vehicle limits Haiku makes about 21 wrong-skill calls a mission,
-Sonnet about 2. Breaks lean toward urgent deliveries on both models.
+The study (`crates/delivery`, `paper/manuscript/main.tex`) measures a
+language-model fleet planner over whole missions. What it shows:
 
-Not ours to claim (already published): an LLM picking skills as tools,
-growing skill libraries, caching model calls, deterministic simulation
-alone, the π0.5-style hierarchy, rules changed mid-task with less direct
-wording breaking them more often and a shield removing violations (House
-Rules, text worlds). Ours: a fleet checked from flown trajectories, slips
-adding up over a mission, two equally plain wordings differing, a skill as
-the fix. No optimizer baseline: enforcement in code is the oracle.
+- Slips in 7-10% of decisions break most missions.
+- Two equally plain wordings of a rule get very different results, and
+  Haiku and Sonnet break different rules. You have to run the missions to
+  find out.
+- Offering `drop_via` removed every no-fly breach where no wording did.
+- Some breaks look fine as calls and only show up in the flight (a standby
+  send made before the window that leaves the depot empty when it opens).
 
-## What I want to show
+What it does not show: the engine's physics changing the result. The
+planner read perfect state, communication was perfect, and the 6-DOF
+aircraft did not change the counts significantly.
 
-The main point: you can't tell ahead of time which rule a planner will
-break, so you have to run the missions to find out. Ripple makes that cheap.
-Tweaking the prompt until it stops breaking doesn't count, since you'd need
-to see the failure first.
+Decided 2026-11-03: write it up from the runs that exist plus the reruns
+below. The seven-model, every-wording, every-map sweep is cancelled; more
+of the same would not change the claim.
 
-1. **You can't tell from the wording which rule will break.** Two rules
-   that read equally clearly get very different results (one never broken,
-   one broken in 8-9 of 10 missions).
-   - [ ] Pick all the wordings before running the test missions: six per
-         rule (at least three), plus a few written by someone else or by a
-         different model. That way nobody can say I chose the one that
-         broke.
-   - If there turns out to be an obvious pattern, I'll say testing finds it
-     faster than guessing.
-2. **It happens with other models too.** If different models break
-   different rules, that's the best argument for testing.
-   - [ ] Hook up other models behind the Dispatcher's `command` interface
-         (GPT, Gemini, and an open-weights model), still saving every reply.
-         Try one new model end to end first.
-   - [ ] Run seven models: the core set on the cheap four, the small set on
-         the expensive three (see Budget below).
-   - If bigger models never break the rules, I'll report that. Then the
-     message is "test the model you're going to use".
-3. **How much help does each model need?** Answers "did you just try
-   telling it?" The Dispatcher's `prompt.additions` lists sentences added to
-   the system prompt (text in the mission's `prompt` block), run as three
-   levels on every model:
-   - `[]`: the three-sentence base prompt.
-   - `[priority]`: adds that instructions from operations take priority
-     over deadlines, and that each assignment names the instruction it was
-     checked against.
-   - `[priority, definitions]`: adds what the vehicle states in the prompt
-     mean for a rule: a busy vehicle, including one reloading at the depot,
-     cannot be sent and is not one kept at the depot, on standby, or in
-     reserve.
-   The question is where on this ladder each model stops breaking each
-   rule, and whether the models stop at the same rung. The ladder was
-   workshopped on the development missions the way anyone writes a prompt;
-   the text is fixed for the test runs.
-   - [ ] Run all three rungs on every model.
-   - If the top rung fixes everything, the takeaway is that you only find
-     out what to define by testing. If it doesn't, that's more reason to put
-     the rule in a skill.
-4. **Small mistakes add up.** Slipping on 7-10% of decisions breaks 60-90%
-   of missions. Current runs already show this; it just needs more missions.
-5. **Rules break more under deadline pressure.** Breaks lean toward urgent
-   deliveries.
-   - [ ] Check this with a regression on the existing runs (breaks against
-         urgency and slack). No new runs needed.
-   - If urgency doesn't explain it, I'll just describe what happened.
-6. **The fix is a skill, not a better prompt.** `drop_via` stops the no-fly
-   breaches. Without vehicle limits, the planner tries to land fixed-wing
-   aircraft about 18 times a mission. Already true; check it again on the
-   new models.
+## Submission
 
-To make the numbers solid either way:
-- [ ] Run twenty test missions per condition, with two replies each, so the
-      error bars shrink to about 15-20 points. The test sweeps now ask every
-      mission twice (`repeat`). Haiku is done (1,240 cases, no errors).
-      Sonnet still needs its run of `directives-test-sonnet`: the cases
-      already asked replay from the saved replies, and the second reply on
-      the enforced, no-limits, and prompt-addition rows is about 400 live
-      cases (the run started on 2026-10-27 was stopped partway; its replies
-      are saved, so the rerun only asks what is missing).
-- [ ] Rerun the noise check on the test missions (three live replies). The
-      paper's noise numbers still come from the first pilot.
-- [ ] Don't pick where the rules land; run every option. Put the no-fly
-      zone on the route to each of the six clinics in turn (centered halfway
-      along the straight line from the depot), and close each clinic in
-      turn. Report all of them. If every option is tested, there's nothing to
-      cherry-pick. This is only sweep settings, no code; it costs more model
-      calls, so use fewer seeds per placement if needed. The wording
-      comparison doesn't depend on this, since both wordings always run on
-      the same map.
+What exists, all on the kinematic fixed-wing and the point multirotor:
+Haiku at 20 test missions, 31 conditions, two replies (1,240 cases);
+Sonnet at one reply per condition, two on the base rows, under the old
+parameter names; the 6-DOF check and the per-decision probe on the pilot's
+10 missions; the noise check from the first pilot. Run folders are
+laptop-only and not named here.
 
-If there's time:
-- [ ] Take skills away, or change their descriptions, and see what happens.
-      Only make a chart if it's graded.
-- [ ] Rerun the standby rule on the Firefly multirotor
-      (`delivery-firefly.yaml`), like the 6-DOF check for the fixed-wing
-      aircraft. This needs new model calls, because the vehicles' timing
-      changes the prompts. The planner assumes vehicles fly straight lines at
-      cruise speed, but the Firefly also brakes and descends, so compare
-      arrival times between paired runs before deciding equal scores mean
-      nothing changed.
-- [ ] Put "vehicles fly straight to a site and straight back" next to the
-      no-fly rule again and see whether wording A still holds.
+Decided 2026-11-03: the paper runs on one vehicle set, the Rascal 6-DOF under
+its autopilot and the Firefly (one courier trip checked on 2026-11-03: delivered
+inside 3 m of the rooftop at 112 s against 100 s in a straight line, home and
+idle again at 377 s). The new models need live calls anyway, one vehicle set for
+every model is cleaner, and a simulator built around verified vehicle models
+should not report its study on a toy. The kinematic runs become the check
+instead. Haiku and Sonnet get rerun (Haiku near free, Sonnet about a hundred
+dollars), about a week with the analysis. Settle the vehicle set before making
+any figure.
 
-## Budget
+Expected reviews, in order: no method (answer: the instrument, compounding,
+the skill as the fix, the flight-only breaks); simulation only (one
+sentence on what hardware would test); small models from one vendor (the
+models item); sample size (the statistics item).
 
-Models (seven):
-- Claude Haiku, Sonnet, and Opus.
-- OpenAI's top three; make one of them a reasoning model.
-- One open-weights model (Llama or Qwen). No hosting needed: OpenRouter or
-  Together serve them behind an OpenAI-style API, so it reuses the OpenAI
-  adapter. Reviewers will ask for one because anyone can rerun it later.
-- Gemini only if there's money left; the open model matters more.
+- [ ] **One vehicle set.** `delivery-rascal-firefly.yaml` exists and the
+      two test sweeps point at it (6 s a mission in release; flown against
+      the prompt's straight-line arrival, the Rascal is within 3 s and the
+      Firefly 11-16 s late, so equal scores mean the slower flights never
+      made anything late, not that nothing changed). Left: Haiku and
+      Sonnet rerun on it, two replies each, with the kinematic results kept
+      as the check.
+- [ ] **Figure script.** `results_figs.py` does not filter on
+      `prompt.additions` or `sample`, so on the twenty-seed data it mixes
+      the ladder rows into the base rows. Add both filters, draw every
+      model, and recheck every number the text quotes.
+- [ ] **Statistics by seed.** Two replies on twenty seeds are twenty
+      scenarios, not forty. Count missions broken per seed, compare
+      wording A with B and skill with no skill paired on the same seed,
+      and redo the intervals and tests. Keep the independent-slip formula
+      as an illustration, not a prediction. The abstract's numbers change,
+      so do this early.
+- [ ] **Flight-only breaks.** Sort every breaking decision into three
+      bins: wrong on its face, predictable from geometry (a straight route
+      through the zone), or visible only in the flight timing (the standby
+      sends). Do this first. If the third bin is small, the system section
+      leans on replay and composition, not on checking from the flight.
+- [ ] **Sonnet in the paper.** Second model in Fig. 3 and the table, a
+      subsection on the prompt ladder (where each model stops breaking
+      each rule), and the different-rules finding.
+- [ ] **More models, base rows only** (no rule, each rule in A and B,
+      twenty missions, one reply, about 1,200 calls each). A strong OpenAI
+      model first: it answers "one vendor" and "small models" at once.
+      Opus second if the budget allows. One open-weights model (Llama or
+      Qwen via OpenRouter or Together, same adapter) because it is nearly
+      free and others can rerun it. Prove the API adapter on one short
+      mission first; only the CLI and Ollama paths are verified. If that
+      takes more than a day, submit with what ran. Both outcomes go in: a
+      model that still breaks a rule shows it is not a small-model
+      problem; one that breaks nothing means "test the model you deploy".
+      Say which client (CLI or API) ran each model. Ladder rows only if the
+      base rows are interesting.
+- [ ] **Noise check.** Three live Haiku reruns of the base rows on the test
+      missions, replacing the pilot's number. The per-decision probe stays
+      on the pilot's moments; say so.
+- [ ] **Release run** of `reference/suite.py --release --retain` so the
+      provisional tags clear and `paper/data/` matches the text.
+- [ ] **Text.** Abstract, intro, Fig. 1, results, and discussion from
+      twenty missions and every model. Drop "one model". Resolve the stubs
+      (more models: done; skill removal: Planned, one sentence; noise:
+      replaced). Soften two claims: wording B was picked because it broke
+      in development and kept breaking on new missions, so say "we could
+      not tell by reading"; and the vehicle check "did not resolve an
+      effect", not "no dependence". Add the deadline regression (breaks
+      against urgency and slack) if it is an afternoon.
+- [ ] **Trim to RA-L length:** six pages plus up to two paid, references
+      included; the PDF is nine. Keep the system prompt and one short
+      decision in the appendix, move the rest to the code release.
+- [ ] **Advisor pass, then submit.** Check RA-L's current page and policy
+      text first. The generative-AI statement lists what was actually
+      assisted.
 
-Two size ladders also show whether a bigger model fixes it (point 2).
-
-Not every model needs every condition. Each question needs different
-coverage:
-- "Did you pick the wording?" needs every wording, but only on two models.
-- "Did you pick the map?" needs the zone on every route, also only on two.
-- "Is it just one model?" needs every model, but only no rule and each rule
-  in wordings A and B.
-
-| | Models | What runs | Calls per model |
-| --- | --- | --- | --- |
-| Small set | Opus and OpenAI's two big models | `directives-small-opus.sweep.yaml`: no rule, each rule in wordings A and B; 10 missions | ~1,200 |
-| Core set | Haiku, Sonnet, OpenAI's cheap model, the open-weights model | `directives-test-<model>.sweep.yaml` (one file per model): the small set's rows plus drop_via, enforced, no limits, priority, priority and definitions; 20 missions, each asked twice | ~21,000 |
-| Full set | 2 (Haiku and one OpenAI model) | the core set plus all wordings and the zone on every route | ~25,000 |
-
-The core set is 31 conditions x 20 seeds x 2 replies = 1,240 runs at about
-17 decisions each. About 110,000 calls in all for seven models, almost all
-of them on the cheap ones. The small set's error bars are about 30 points a condition,
-enough to tell "never broken" from "broken most of the time", which is all
-the expensive models are there to show. Its rows are the first seven of the
-core set, so the two compare case for case.
-
-The limit is API access, rate limits, and spend, not code: the adapter and
-sweeps are days of work, and the calls run in parallel over a few days.
-
-## Paper
-
-- [ ] Discussion, in a few sentences, once the results settle.
-- [ ] Trim back to the venue's page limit (scoring details into an
-      appendix).
-- [ ] Redraw the figures from the final runs: `mission_hero.py` (Fig. 1),
-      `results_figs.py` (Fig. 3), Fig. 2's call by hand.
-- [ ] Before submitting: AIT's publications for AMASS results, the IEEE
-      Xplore venues of SayCan, Code as Policies, SMART-LLM, and COHERENT, and
-      a sweep of new preprints.
-- [ ] Venue: RA-L first, submitted as soon as results and writing are done
-      (results are a few weeks out: the adapter and sweeps are days of
-      work, and the calls run in parallel over a few days). Check this
-      year's dates; the ones below are typical, not confirmed.
-  - RA-L: submissions any time, a real revision round (reviewers can ask
-    for a condition and we can add it), less hostile to simulation-only
-    work, and suits an evaluation paper. It can be presented at ICRA or
-    IROS; the IROS option usually closes near IROS's own deadline (early
-    March).
-  - CoRL (usually due late May or June): where SayCan and Code as Policies
-    went, so the audience knows LLM planners over skills. But reviewers
-    expect learning and often hardware; we train nothing and run only in
-    simulation. Worth it only with a small hardware demo (a few quadrotors
-    flying the same planner and skills).
-  - ICRA/IROS directly: broad, fine with simulation and multi-robot work;
-    SMART-LLM and COHERENT went to ICRA. Shorter pages, noisier reviews,
-    and an evaluation paper can read as "no method". ICRA 2027's deadline
-    (around mid-September 2026) has passed.
-
-## Evaluation rules
-
-- Development and test missions are fixed before prompting; frozen prompts
-  on test; report how many prompt versions were tried.
-- Models pinned; at least two families and one open-weights model.
-- Grading is automatic and fixed in advance; every reply is saved.
-
-## Engine
-
-- [ ] One short Courier run on the Firefly, as a test in `crates/delivery`
-      with a fixed assignment and no model call: a Firefly sent from the
-      depot to a nearby rooftop, approaching at its 12 m/s cruise, entering
-      the 3 m arrival radius, completing the dwell, and returning. Check the
-      phase transitions, the delivery event, a finite trajectory, and an
-      altitude and speed envelope. Half a day. This is the link
-      `delivery-firefly.yaml` relies on, tested without an hour-long
-      mission; it is a contract test of Ripple's own courier and controller,
-      not a check against anything outside. Call it a simulated arrival: the
-      Land skill fires on distance and dwell, never on ground contact.
+Rules for the write-up: wordings and scoring were fixed before the test
+missions ran; prompts frozen on test; grading automatic; every reply
+saved; say how many prompt versions were tried.
 
 ## Not planned
 
 Runtime plugin loading, legacy protobuf/string-map spawning, OpenCL, VTK,
 ROS, JSBSim. ArduPilot and Burn stay optional, out of the default build.
-Comms (delay, loss, aged reports) are out of scope for the study.
+Comms (delay, loss, aged reports) stay out of the delivery study.

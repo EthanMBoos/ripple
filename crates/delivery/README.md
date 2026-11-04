@@ -88,13 +88,18 @@ cargo test -p delivery
 
 ## Simplifications
 
-- The multirotors are point models (SingleIntegrator) and the fixed-wing
-  aircraft SimpleAircraft; links are perfect. Two variants swap in fuller
-  vehicles with the same vehicle cards: `delivery-6dof.yaml` flies the
-  fixed-wing aircraft on FixedWing6DOF, and `delivery-firefly.yaml` flies the
-  multirotors as RotorS's Firefly hexacopter. The Firefly needs the
-  courier's `approach_per_s` to stop on a pad; the book's "Flying a
-  multirotor" says why.
+- `delivery.yaml` flies point multirotors (SingleIntegrator) and
+  SimpleAircraft; links are perfect. The paper's missions run on
+  `delivery-rascal-firefly.yaml`, the same file with the verified vehicles
+  and the same vehicle cards: the fixed-wing aircraft on FixedWing6DOF (the
+  Rascal under its autopilot) and the multirotors as RotorS's Firefly
+  hexacopter, at 500 Hz. The Firefly needs the courier's `approach_per_s`
+  to stop on a pad; the book's "Flying a multirotor" says why. One
+  30-minute mission takes about 6 s in release, against 2.5 s on the point
+  models. Flown against the prompt's straight-line arrival: the Rascal
+  within 3 s, the Firefly 11-16 s late (its climb and brake), the point
+  multirotor 2 s. `delivery-6dof.yaml` and `delivery-firefly.yaml` swap in
+  one vehicle each.
 - An idle fixed-wing aircraft counts as recovered and on the ground. It is
   drawn loitering only because SimpleAircraft can't stop, inside the depot
   radius where flight uses no endurance. A vehicle that runs out of

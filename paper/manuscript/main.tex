@@ -278,12 +278,15 @@ aircraft \cite{ludwig2026cola}, and TACOS places trajectory planning and
 supervision behind swarm commands \cite{nazzari2025tacos}. MultiUAV-Plat
 takes a complementary route to scale, with 1,500 tasks and hidden checks
 over a lightweight UAV interface, leaving richer flight dynamics for future
-work \cite{zhang2026multiuavplat}. Together these studies show how a language
-model can coordinate a team, connect to flight software, or be evaluated over
-many tasks. We study the junction of these concerns: one planner makes
-repeated assignments in a fleet of fixed-wing aircraft and multirotors,
-while instructions change and the vehicles' flights determine whether those
-instructions were kept.
+work \cite{zhang2026multiuavplat}. For delivery, LLM-DaaS turns text requests
+into structured ones before selecting drones \cite{wassim2024llmdaas}, and
+SCoBA, without a language model, allocates tasks online under deadlines and
+uncertain completion times \cite{choudhury2020scoba}. Together these studies
+show how a language model can coordinate a team, connect to flight software,
+or be evaluated over many tasks. We study the junction of these concerns: one
+planner makes repeated assignments in a fleet of fixed-wing aircraft and
+multirotors, while instructions change and the vehicles' flights determine
+whether those instructions were kept.
 
 \paragraph{Language models over skills}
 Skill libraries give a language planner a way to act through existing robot
@@ -294,7 +297,11 @@ RoboGen chooses learned or classical methods for different subtasks
 \cite{wang2024robogen}, while Voyager adds executable behaviors to its
 library as it works \cite{wang2023voyager}. Other systems pass plans to a
 solver or verifier rather than relying on the model for every step
-\cite{liu2023llmp,chen2023autotamp,kambhampati2024llmmodulo}.
+\cite{liu2023llmp,chen2023autotamp,kambhampati2024llmmodulo}. Khatana et al.
+ground the plans of two robots into trajectories, predict conflicts with a
+geometric verifier, and feed them back for replanning
+\cite{khatana2026verifier}. In our unguarded conditions, nothing checks a call
+against an operating rule, and compliance is judged from the flights.
 Tool descriptions affect how models use an interface
 \cite{hsieh2023tooldoc}, and selecting the right skill becomes harder as
 libraries grow \cite{chen2026skillscaling}. This work establishes selection,

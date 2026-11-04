@@ -16,6 +16,8 @@
  {"key": "liu2023llmp", "pdf_url": "https://arxiv.org/pdf/2304.11477", "repositories": ["https://github.com/Cranial-XIX/llm-pddl.git"]},
  {"key": "chen2023autotamp", "pdf_url": "https://arxiv.org/pdf/2306.06531", "repositories": ["https://github.com/yongchao98/AutoTAMP.git"]},
  {"key": "choudhury2020scoba", "pdf_url": "https://arxiv.org/pdf/2005.13109", "repositories": ["https://github.com/sisl/SCoBA.jl.git"]},
+ {"key": "wassim2024llmdaas", "pdf_url": "https://arxiv.org/pdf/2412.11672", "repositories": []},
+ {"key": "khatana2026verifier", "pdf_url": "https://arxiv.org/pdf/2610.12761", "repositories": []},
  {"key": "ludwig2026cola", "pdf_url": "https://stottlerhenke.com/wp-content/uploads/2026/06/2026_IEEE_AERO_Ludwig_COLA.pdf", "repositories": [], "note": "Author copy from Stottler Henke's site."},
  {"key": "iannoli2026webofdrones", "pdf_url": "https://arxiv.org/pdf/2605.03788", "repositories": []},
  {"key": "ahn2022saycan", "pdf_url": "https://arxiv.org/pdf/2204.01691", "repositories": []},

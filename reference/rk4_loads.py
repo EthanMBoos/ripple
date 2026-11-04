@@ -1,35 +1,18 @@
 #!/usr/bin/env python3
-"""What evaluating FixedWing6DOF and Multirotor forces at every RK4 stage changes.
+"""Measure what changes when RK4 evaluates loads at every stage.
 
-    python3 reference/rk4_loads.py --output runs/rk4-loads000 [--source ../scrimmage]
+    python3 reference/rk4_loads.py --output DIR [--source PATH]
 
-Upstream C++ (the unmodified Ubuntu-24.04 build, in Docker as for
-reference_check.py) computes forces and moments once, from the start-of-step
-state, and holds them through all four RK4 stages ("frozen"). This checkout,
-like the C++ comparison branch, computes them from each stage's state
-("stage"). The frozen runs come from that external reference, so no earlier
-revision of this project is needed. Writes OUTPUT/results.json and a readable
-OUTPUT/summary.md. Standard library only; needs Docker, Cargo, and the C++
-checkout. C++ runs single-threaded and headless; its controller schedule
-differs from Rust's only with more than one substep, and every multi-substep
-case here has constant controls.
+Upstream SCRIMMAGE holds FixedWing6DOF and Multirotor forces and moments at
+the start-of-step state. Ripple and the C++ comparison branch recompute them
+at each RK4 stage. This check compares the upstream and corrected models:
+constant-control step-size convergence, controlled fixed-wing recovery, and
+altitude-gain sensitivity after an upset. Multi-substep cases use constant
+controls so the controller schedule does not confound the comparison.
 
-Part A, integration accuracy with constant controls: Multirotor
-(missions/multirotor.yaml, constant motor speeds) and FixedWing6DOF with every
-controller gain zero (inputs/fixed-wing-open-loop.yaml), at motion multipliers 1
-to 16, against stage loads at multiplier 1024. With constant controls the
-substep count changes only the integration step.
-
-Part B, a controlled flight at practical steps: inputs/fixed-wing-recovery.yaml
-at outer steps of 0.01, 0.05, and 0.1 s with one substep, frozen against stage.
-
-Part C, the altitude gain: inputs/aircraft-pid-upset.yaml (the default A-4, 45 s
-at 1000 m after a 5 degree roll and 3 degree pitch upset) with altitude D 0.01
-(upstream's default), 0.002 (this project's), and 0, at 0.01 s and two
-halvings: the largest altitude error over the run and after the first 5 s.
-
-Each variant edits the scenario Ripple recorded for its mission; Ripple runs it
-as YAML, and C++ as XML written from it (scrimmage_xml.py).
+Each variant starts from a recorded Ripple scenario; SCRIMMAGE receives XML
+written from it. Writes OUTPUT/results.json and OUTPUT/summary.md. Needs
+Docker, Cargo, and a C++ checkout with the Ubuntu-24.04 branch.
 """
 
 import argparse

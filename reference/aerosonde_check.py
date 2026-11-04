@@ -1,56 +1,22 @@
 #!/usr/bin/env python3
-"""Does the Aerosonde compute Beard and McLain's equations?
+"""Check the Aerosonde against Beard and McLain's aircraft equations.
 
-    python3 reference/aerosonde_check.py --output runs/aerosonde-book000 [--update-fixture]
-                                         [--update-mission] [--fetch]
+    python3 reference/aerosonde_check.py --output DIR [--fetch]
 
-The `aerosonde` airframe is the book's educational Aerosonde (Beard and
-McLain, *Small Unmanned Aircraft*, 2012, chapter 4, with the authors'
-addendum's motor and propeller), with the numbers of
-`parameters/aerosonde_parameters.py` in `mavsim_public` at MAVSIM_COMMIT.
-That repository stubs its force and motor functions, so there is no second
-implementation to run: this script holds its own transcription of the
-book's equations (`aero_loads`, `propeller`, `derivative`) and the file's
-numbers (PARAMETERS), independent of the Rust one, and the check is that the
-two transcriptions agree. Their agreement shows neither misread the other,
-not that either matches the book; it is not flight validation. `--fetch`
-downloads the parameter file at the pinned commit, checks its hash, and
-compares every number here with it.
+The pinned mavsim_public parameter file supplies the airframe numbers, but
+its force and motor functions are stubs. This script independently transcribes
+the book's aerodynamics, propeller, and equations of motion. Agreement with
+Rust checks the two transcriptions, not flight accuracy.
 
-Part A, the held states: at a grid of airspeed, angle of attack (into and
-past the stall blend), sideslip, body rates, surface angles, throttle, and
-attitude, the aerodynamic force and moment, the propeller's thrust, torque,
-and speed, and the equations of motion's body and angular accelerations and
-world velocity in still air (where gravity, the propeller's reaction torque,
-and the product of inertia enter), from this transcription. The Rust test
-`book_samples` (crates/core/.../aerosonde/aerosonde.rs) must agree to
-rounding at every sample, and the fixture's mass, inertia, and geometry must
-equal the airframe's. The samples are committed as
-crates/core/tests/fixtures/aerosonde_book_samples.json so the test runs
-offline; this script checks that fresh samples equal it (`--update-fixture`
-replaces it).
+The check compares loads and accelerations at 432 held states, then solves a
+25 m/s longitudinal trim and flies it open loop for 10 s. The trim leaves a
+reported lateral force; the flight must keep altitude and airspeed within
+1 mm and 1 mm/s. Mission controls must match the trim, and fresh samples
+must match the committed Rust test fixture.
 
-Part B, the trim: longitudinal trim for level flight at the file's initial
-25 m/s in its air, solved from this transcription: the elevator from the
-pitching moment, the angle of attack from the vertical force, the throttle
-from the forward force, and the ailerons and rudder from the roll and yaw
-moments against the propeller's torque. Those two surfaces leave a lateral
-residual, a side force of about 0.06 N, which is reported and not solved
-away. missions/aerosonde.yaml flies that trim open loop with `HeldControls`
-for END_S, and must equal what this script writes from the trim
-(`--update-mission` rewrites it). The flight's drift in altitude and
-airspeed must stay within ALTITUDE_LIMIT_M and AIRSPEED_LIMIT_MPS, 1 mm and
-1 mm/s, set from the first run with margin: it measured 2.5e-5 m and
-6.1e-6 m/s, since a trim that is exact at the start drifts only from the
-mission's rounded digits and the modes the residual excites (the residual
-also carries the aircraft 0.3 m sideways and 0.17 degrees in yaw over the
-flight, reported). The flight at a quarter of the step is run beside it and
-its difference reported.
-
-Passes when the grid test passes and its samples equal the fixture, the
-mission equals the trim, and the flight stays within the limits. Writes
-OUTPUT/results.json and OUTPUT/summary.md. Needs Cargo; `--fetch` needs
-network access.
+Writes OUTPUT/results.json and OUTPUT/summary.md. --fetch verifies the
+pinned parameter file; --update-fixture and --update-mission replace the
+committed inputs. Needs Cargo; --fetch needs network access.
 """
 import argparse
 import hashlib

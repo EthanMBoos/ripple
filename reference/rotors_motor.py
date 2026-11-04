@@ -1,43 +1,18 @@
 #!/usr/bin/env python3
-"""Does Multirotor's motor and rotor model reproduce RotorS, sample by sample?
+"""Compare Multirotor's rotor lag and loads with RotorS's motor code.
 
-    python3 reference/rotors_motor.py --output runs/rotors-motor000 [--update-fixture]
+    python3 reference/rotors_motor.py --output DIR [--update-fixture]
 
-Builds reference/rotors/Dockerfile: RotorS's own `FirstOrderFilter` and
-`GazeboMotorModel::UpdateForcesAndMoments` (ethz-asl/rotors_simulator at
-ROTORS_COMMIT, copied verbatim by rotors/extract.py), compiled against small
-stand-ins for the Gazebo links and joint (rotors/harness.cpp). The harness
-steps one rotor through prescribed vehicle states and motor commands and
-prints, per sample, the shaft speed the loads used, the rotor's force and
-moment on the body (moment about the center of mass, body frame), and the
-filtered speed for the next sample.
+The Docker harness compiles RotorS's pinned FirstOrderFilter and motor-load
+code with small stand-ins for Gazebo. It tests command steps on individual
+rotors, then sums RotorS loads at held Crazyflie and Firefly states. This
+checks the assembled vehicle, hub offsets, and frame conversion as well as
+each rotor. RotorS has no axial-drag term, so that term is omitted from the
+matching Crazyflie samples.
 
-Cases: three coefficient sets (RotorS's defaults; Ripple's `crazyflie2`
-preset with its axial drag left out, since RotorS has none; and its
-`firefly` preset, RotorS's own Firefly numbers) on two rotors (clockwise and
-level; counterclockwise, raised, and tilted), with command steps up and down
-and a moving, rotating vehicle.
-
-Then whole vehicles: the `crazyflie2` and `firefly` presets, drag on, at the
-held states of reference/multirotor_grid.py (attitude, velocity, body rates,
-every rotor's speed, unequal among them; the Firefly's include its 12 m/s
-cruise and a climb). Each rotor goes through RotorS's code at its held speed
-(the filter's time constants zero, so the speed is the previous command) and
-the rotors' forces and moments about the center of mass are summed. Ripple's
-whole-vehicle loads, from Multirotor's own derivative, must reproduce the
-sums to 1e-12 of the individual rotor loads: the assembly, the hub offsets
-(the Firefly's hubs sit 0.037 m up), and the frame conversion are what this
-adds to the one-rotor samples.
-
-Ripple's side is the unit tests `rotors_motor_samples`
-(crates/core/src/plugin/motion/multirotor/rotor.rs) and
-`rotors_vehicle_samples` (multirotor.rs). They read the committed fixture
-crates/core/tests/fixtures/rotors_motor_samples.json, or the file in
-RIPPLE_ROTORS_SAMPLES, and print their largest errors. This script runs them
-on the samples it just produced (pass: every sample within the tests'
-tolerances) and checks that the samples equal the committed fixture to 1e-12
-relative (`--update-fixture` replaces it instead). Writes OUTPUT/samples.json
-and OUTPUT/report.json. Needs Docker and Cargo.
+Rust tests reproduce the fresh samples. They must also equal the committed
+fixture within 1e-12 relative; --update-fixture replaces it. Writes
+OUTPUT/samples.json and OUTPUT/report.json. Needs Docker and Cargo.
 """
 import argparse
 import json

@@ -271,175 +271,41 @@ meaning is established.
 
 ## Writing physics
 
-The reader of a motion model or controller is a controls engineer checking
-the code against a paper, not a Rust programmer. Inside the function that
-holds the equations, write them the way the paper does. None of these rules
-is ours: each says where it comes from, in the flight simulators and
-dynamics engines listed at the end of the section, read at the commits
-given there.
+A controls engineer should be able to compare a model's equations with its
+source. Keep frames and units in configuration, state, and output fields. Inside
+a derivative or controller calculation, use the source's short symbols after
+binding them once to those named fields:
 
-- **Open with a symbols block.** Bind the paper's symbols to the named
-  fields once, in one `let`, with a comment that names each one, then write
-  the equations in those symbols. The long frame-and-unit names stay on the
-  structs, the contexts, and the outputs, so frames and units are still
-  stated at every boundary. A symbol that is computed rather than bound gets
-  its own `let` with a name. ASCII only: `phi`, `theta`, `qbar_s`.
+```rust
+// Roll, speed, and gravity for the coordinated-turn equation.
+let (phi, v, g) = (state.roll_world_from_body_rad, state.speed_mps,
+                   GRAVITY_MPS2);
+let yaw_rate = -g * phi.tan() / v;
+```
 
-  ```rust
-  // Symbols, as in the model's description: roll, pitch, and yaw of the
-  // body in the world frame, speed along the velocity, and gravity.
-  let (phi, theta, psi, v, g) = (
-      state.roll_world_from_body_rad,
-      state.pitch_world_from_body_rad,
-      state.yaw_world_from_body_rad,
-      state.speed_mps,
-      GRAVITY_MPS2,
-  );
-  // A coordinated turn: the lift's horizontal part turns the velocity at
-  // g tan(phi) / v. Banked right (positive phi), it turns right.
-  let yaw_rate = -g * phi.tan() / v;
-  ```
+Use these conventions in motion models and controllers:
 
-  Why: the code is checked by reading it against typeset math, which works
-  when both use the same symbols. Drake's notation guide says its notation
-  "is designed to facilitate comparison between the typeset and coded math
-  in order to verify correct implementation" and that "we avoid typical
-  typographical flourishes that would impede translation from math notation
-  to code". JSBSim computes `alpha`, `beta`, `qbar`, and `Vt` in
-  `FGAuxiliary` and indexes rates with `eP`, `eQ`, `eR`. ArduPilot's SITL
-  plane binds its symbols from the named state exactly as this block does:
-  `Plane::getForce` opens with `double p = gyro.x;` and
-  `const float alpha = angle_of_attack;`, and the equations below use `p`
-  and `alpha`.
+- Write sums over rotors or aerodynamic terms as loops with named totals.
+  Keep a compact iterator expression when it reads more clearly.
+- Put forces, moments, and kinematics in one
+  `derivative(state, inputs) -> Rate` function. Compute every RK4 stage
+  from that function's `state` argument. Separate files are useful for
+  models such as a rotor or an aerodynamic coefficient table.
+- Keep physical state and its rate as named structs through integration.
+  A field called `acceleration_body_mps2` is easier to check against
+  Newton's law than an unexplained array index.
+- Integrate a quaternion's four components and normalize it before using
+  it to rotate a vector and when writing the resulting truth state.
+- Put the source and equation number beside a non-obvious calculation.
+  Comments should explain a convention, approximation, or physical term,
+  using the symbols in the code below them.
 
-- **Loops, not iterator chains.** A sum over rotors is a `for` loop with
-  `+=`; a clamp over commands is a loop over the array. Index the loop when
-  the equations are indexed; the workspace turns off clippy's
-  `needless_range_loop` so that it can. Iterator chains stay in registry,
-  parsing, and output code, where the reader is a programmer.
-
-  Why: a sum in the paper is a loop in every simulator we read. JSBSim's
-  `FGPropulsion::Run` is `for (auto& engine: Engines)`; ArduPilot's
-  `Frame::calculate_forces` is `for (uint8_t i=0; i<num_motors; i++)`,
-  adding each motor's thrust and torque into a running total. The
-  vectorized simulators (Flightmare, Crazyflow) write the same sum as a
-  mixing matrix, the other form a paper uses. None writes it as a map and a
-  fold.
-
-- **One derivative per model.** Forces, Newton and Euler, and the
-  kinematics are one function, `derivative(state, ..) -> Rate`, the
-  `xdot = f(x, u)` of a textbook. Loads that are models in their own right
-  (aerodynamic coefficients, landing gear, a rotor) have their own files.
-  A limit or friction rule is a small named function, not a closure in the
-  middle of the equations; the RK4 call site is the only closure.
-
-  Why: `xdot = f(x, u)` is the form every ODE solver takes and every
-  textbook writes. MATLAB's `ode45` takes `dydt = odefun(t,y)`; SciPy's
-  `solve_ivp` takes `fun(t, y)`, which "must return an array of the same
-  shape as `y`"; Drake's `System` overrides `DoCalcTimeDerivatives`;
-  Flightmare's `QuadrotorDynamics::dState` and Crazyflow's `dynamics`
-  return every rate at once; Beard and McLain's `mavsim` names the method
-  `_f`, "for the dynamics xdot = f(x, u), returns f(x, u)"; SCRIMMAGE's
-  `MotionModel::model(x, dxdt, t)` has the same shape. The form also keeps
-  RK4 honest. A derivative that computes everything from its `state`
-  argument cannot read the start-of-step state by mistake, which is the
-  SCRIMMAGE defect `docs/REFERENCE_NOTES.md` records under "RK4 loads": its
-  6DOF models took the kinematics from the stage state `x` but every force
-  from the member `x_`, so the loads stayed fixed through the four stages.
-  JSBSim, ArduPilot SITL, and PX4's SIH split forces from kinematics into
-  classes run in sequence; they step with Euler or one-evaluation
-  multistep integrators, where the split costs nothing. We do not follow
-  them there.
-
-- **The state goes through RK4 as itself, and its rate is its own struct.**
-  `math::rk4` advances any type with `plus_scaled`, so the derivative takes
-  the model's state struct and nothing is flattened to an array. It returns
-  the state's `Rate` type, whose fields are named for what they hold
-  (`acceleration_frd_mps2`, `attitude_rate`), so a reader checking Newton's
-  law does not find an acceleration in a field named velocity. A struct
-  built inside the derivative only to carry configuration into the next
-  call belongs in the configuration instead.
-
-  Why: the flat `x[0..n]` vector comes from general-purpose solvers, which
-  treat the state as an opaque vector in R^n so that one stepper serves
-  every problem. MATLAB and SciPy take a column vector, Boost.Odeint's
-  default state is `std::vector<double>`, and SCRIMMAGE and `mavsim` index
-  into theirs (`x[q0]`, `_state.item(6)`). Simulators written for one
-  vehicle keep named state: JSBSim's `FGPropagate` holds a
-  `struct VehicleState` with `vUVW`, `vPQR`, and `qAttitudeECI`, keeps
-  their rates apart as `vUVWidot` and `vPQRidot`, and calls `Integrate`
-  once per quantity; Crazyflow's `rk4` passes a `SimStateDeriv` with `acc`
-  and `ang_acc` fields through its stages, separate from its state; PX4 and
-  ArduPilot integrate named members. Odeint itself offers the middle path taken
-  here: with `vector_space_algebra` its steppers run on "anything that
-  defines operators + within itself and * with scalar", and
-  `math::Integrable` is that requirement as one method.
-
-- **One quaternion, normalized where it rotates.** The state holds
-  `math::Quaternion`, RK4 integrates its four components, and the derivative
-  normalizes it once at its top for rotating vectors; `write_truth`
-  normalizes what truth receives. No accessor, no second quaternion type.
-
-  Why: integrate the four components, then renormalize, is what the flight
-  simulators do. JSBSim's `FGQuaternion::GetQDot` is the plain
-  `0.5 q (0, omega)` product, and `FGPropagate::Integrate` calls
-  `Integrand.Normalize()` after the step; `mavsim` divides the four
-  components by their norm right after its RK4 sum; PX4's SIH calls
-  `_q_E.normalize()` after each update; MuJoCo's `mj_normalizeQuat`
-  renormalizes every quaternion in `qpos`. Drake's `RotationMatrix` built
-  from a quaternion takes one "which may or may not have unit length" and
-  normalizes on conversion, which is what `normalized()` at the top of the
-  derivative does. None adds a term to the derivative to pull the norm
-  back. SCRIMMAGE's `lambda * x[q0]`, from NPSNET (1992), was the only one
-  found, and it is dropped on both sides of the comparison (see
-  `docs/REFERENCE_NOTES.md`).
-
-- **Comments in the code's symbols.** When a comment gives the equation,
-  it uses the symbols of the line below it, so the two can be read against
-  each other. Comments name a frame, an equation, or a modeling choice; a
-  field doc that restates the type does not earn its line.
-
-  Why: an equation in a comment is read against the line below it and
-  against its source. JSBSim's `FGAccelerations` cites "Stevens and Lewis,
-  Aircraft Control and Simulation, Second edition (2004), eqn 1.5-16e (page
-  50)" and "NASA SP-8024 (1969) eqn (2) (page 7)" at the lines that
-  implement them. RotorS's motor plugin cites Martin and Salaün (ICRA 2010)
-  and writes the drag as `- \omega * \lambda_1 * V_A^{\perp}`, in the
-  paper's symbols, above the line that computes it. Most UAV simulators
-  cite a source URL with no equation number; JSBSim's form is the one to
-  copy.
-
-The sources, read on 2026-10-31:
-
-- JSBSim (LGPL-2.1), commit `911b2d48`: `src/math/FGQuaternion.cpp`,
-  `src/models/FGPropagate.h`, `FGPropagate.cpp`, `FGAccelerations.cpp`,
-  `FGPropulsion.cpp`, `FGAuxiliary.cpp`.
-- Drake (BSD-3-Clause), commit `0d416795`: `systems/framework/system.h`,
-  `systems/framework/continuous_state.h`, `math/rotation_matrix.h`, and
-  the "Multibody notation" page of its documentation.
-- MuJoCo (Apache-2.0), commit `e87b3785`: `src/engine/engine_support.c`
-  and `engine_forward.c`.
-- ArduPilot SITL (GPL-3.0), commit `363ab1b5`:
-  `libraries/SITL/SIM_Plane.cpp` and `SIM_Frame.cpp`.
-- PX4 (BSD-3-Clause), commit `cb4b9290`:
-  `src/modules/simulation/simulator_sih/sih.cpp`.
-- Beard and McLain's `mavsim_public` (GPL-3.0), commit `10363e0e`:
-  `mavsim_python/models/mav_dynamics.py`.
-- RotorS (Apache-2.0), commit `cd813b7a`:
-  `rotors_gazebo_plugins/src/gazebo_motor_model.cpp`.
-- Flightmare (MIT), commit `d4218aed`:
-  `flightlib/src/dynamics/quadrotor_dynamics.cpp`.
-- Crazyflow (MIT), commit `dbf84eaa`:
-  `crazyflow/dynamics/first_principles/dynamics.py` and
-  `crazyflow/sim/integration.py`.
-- Boost.Odeint (BSL-1.0): the "State types, algebras and operations" page
-  of its documentation; MATLAB R2026b and SciPy 1.18 documentation for
-  `ode45` and `solve_ivp`.
-- SCRIMMAGE (LGPL-3.0), branch `Ubuntu-24.04` at `4bdf41fb`:
-  `src/plugins/motion/FixedWing6DOF/FixedWing6DOF.cpp`.
-
-What the built-in models keep from SCRIMMAGE, and the alternatives measured
-and passed over while writing them this way, are in `docs/REFERENCE_NOTES.md`.
+These conventions were checked against JSBSim (`911b2d48`), RotorS
+(`cd813b7a`), Crazyflow (`dbf84eaa`), and SCRIMMAGE (`4bdf41fb`). The RK4
+rule matters in particular: SCRIMMAGE once computed kinematics from each
+stage's state but held its forces at the start-of-step state. The fix and its
+comparison are recorded in
+[REFERENCE_NOTES](https://github.com/EthanMBoos/ripple/blob/main/docs/REFERENCE_NOTES.md#rk4-loads).
 
 ## Sensor models have explicit boundaries
 

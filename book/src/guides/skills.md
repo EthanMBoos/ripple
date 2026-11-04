@@ -7,14 +7,13 @@ model, or an auction, package each behavior as a *skill*: a behavior with a
 name, the parameters a call gives it, and a way to say it is done. The
 planner calls skills; the vehicle's autonomy runs them.
 
-The engine has no notion of a skill. A skill library is ordinary Rust inside
-one autonomy plugin, so it needs no registration, and it gets the engine's
-guarantees (each vehicle's state its own, the same run at any number of
-workers) without doing anything for them. This chapter describes the pattern
-we recommend, using the delivery crate
+In Ripple, we implement this pattern inside an autonomy plugin. The plugin
+owns the vehicle's state and commands; a skill library inside it describes the
+behaviors a planner may call. The delivery crate
 ([crates/delivery](https://github.com/EthanMBoos/ripple/tree/main/crates/delivery))
-as the example: its `Courier` autonomy hosts the skills `drop`, `land`, and
-`drop_via`, and its `Dispatcher` on the depot calls them.
+shows the pattern: `Courier` hosts `drop`, `land`, and `drop_via`, while
+`Dispatcher` at the depot sends calls to couriers. Skills are Rust code in the
+research crate and use the autonomy's normal execution and messages.
 
 ## The parts
 
@@ -27,8 +26,8 @@ as the example: its `Courier` autonomy hosts the skills `drop`, `land`, and
 | Host | `Courier` in [courier.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/delivery/src/courier.rs) | The autonomy plugin: takes calls, runs the skill, writes commands |
 | Caller | `Dispatcher` in [dispatcher.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/delivery/src/dispatcher.rs) | Another entity's autonomy that sends calls as messages |
 
-Your crate defines all of these, shaped to its task. The delivery crate's
-are a starting point to copy, not an interface to implement.
+These types belong to the delivery crate. A different task can use the same
+organization with its own skill trait, descriptions, and calls.
 
 ## A skill
 
@@ -47,13 +46,11 @@ pub trait Skill: Send {
 }
 ```
 
-Each skill says *where* to go, not how to fly there: `target` returns a
-point, and the host turns it into a heading for a fixed-wing controller or a
-velocity for a multirotor. That keeps every skill short (`drop` is 59
-lines) and lets one skill run on both kinds of vehicle. A task whose
-behaviors need more than a point, such as following a moving contact,
-would give its trait a richer target or let skills read the vehicle's
-belief; decide that once, in the trait, rather than in each skill.
+Each delivery skill returns a target point. `Courier` turns that target into
+a heading for a fixed-wing controller or a velocity for a multirotor. Thus
+`drop` and `land` describe the delivery while the host handles vehicle
+commands. A skill that follows a moving contact would need a different trait
+or access to the vehicle's belief.
 
 Next to the struct, each skill declares what the caller needs to know:
 
@@ -100,9 +97,8 @@ pub struct Courier {
 3. **Output.** Ask the running skill, or the host's phase, for a target,
    turn it into commands, write the ports, and report status for the caller.
 
-The split to aim for: the host owns everything that is not one behavior
-(the vehicle's life cycle, its limits, how commands are written), and each
-skill owns only how its behavior goes.
+`Courier` owns the vehicle's life cycle, limits, and command ports. Each skill
+owns the state and transitions of one delivery behavior.
 
 ## Adding a skill
 
@@ -126,13 +122,10 @@ its time makes the courier idle. Each running skill is a state with a small
 machine of its own inside (`drop_via` goes to the waypoint, on to the site,
 and back to the waypoint), and `done` is its transition out.
 
-What differs from a hand-written machine is the transition out of idle.
-Which skill to enter, and with what parameters, is not a coded guard but a
-call from the planner. The `SkillInfo` rules are the guard on that
-transition: they decide which calls are allowed, and the planner chooses
-among them. The same pieces go by other names elsewhere: a skill is an
-action node in a behavior tree, or an option (where it may start, its
-policy, when it ends) in reinforcement learning.
+The planner chooses the transition out of idle by naming a skill and its
+parameters. `SkillInfo` checks whether that call is allowed. This is close to
+an option in reinforcement learning: a behavior has an entry condition, a
+policy, and a way to terminate.
 
 The delivery crate leaves out two transitions a hand-written machine often
 has. A skill cannot fail; it runs until it is done or the vehicle is lost.

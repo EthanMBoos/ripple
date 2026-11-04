@@ -93,77 +93,20 @@ byte-identical from run to run, like any Ripple run.
 - **Where and how it flies:** edit the mission (goal, start spread, airframe,
   rates). Python trains on whatever the mission says.
 
-## What makes this work
+## Training speed and settings
 
-A few properties of Ripple let Python drive it one step at a time without
-slowing the simulation down or making setup hard:
+Python sends a small action to Ripple and receives a small observation at each
+step. Ripple runs the 25 control and physics substeps in compiled code. On an
+Apple M2 Pro, training reached about 5,900 steps/s (170 µs per step); the
+simulation used about 36 µs of that step. Python, policy inference, and PPO
+accounted for the rest. The trained network runs in Ripple through
+`tract-onnx`, using the same Rust observation function as training.
 
-- **The simulation runs as compiled code.** Python only calls it. One hover
-  step, with all 25 physics substeps, takes about 36 µs.
-- **One small crossing per step.** Python sends an action of a few numbers
-  and gets an observation of a few numbers back: no copy of the world, no
-  network, no second process.
-- **Ripple can be stepped from outside.** `Simulation::new` builds a fresh
-  episode and `step` advances it one tick. Ripple keeps no global state, so
-  many simulations can live in one Python process, and every random number is
-  keyed by what it is for, so an episode depends only on its seed.
-- **Building is one command.** `uv sync` compiles the Rust module through
-  maturin, with nothing else to install.
-- **Sharing is safe by construction.** Each simulation owns its state, and
-  the one thing Python and the plugins share, the table of actions, is
-  behind a lock. Many environments side by side can't corrupt each other.
-- **The network runs in Rust.** `tract-onnx` loads the trained policy with
-  no inference runtime to install, and gives the same answer every run.
-- **One observation function.** The same Rust `observe` runs in training, in
-  replay, and in the test, so nothing has to be translated between them.
-
-## How fast is it?
-
-Training the hover policy runs at about 5,900 steps a second on a laptop
-(Apple M2 Pro), so about 170 µs a step. Ripple's share is about 36 µs, with
-all 25 physics substeps included; the rest is Python and PyTorch: the loop
-over environments, running the network for each action, and PPO's updates.
-A simulator that took no time at all would make this training only about a
-quarter faster.
-
-Simulators written in JAX (Brax, gymnax, MJX, JaxMARL) or for the GPU (Isaac
-Lab) report millions of steps a second. Most of that comes from where the work
-runs, not from faster physics: thousands of copies of the environment and the
-policy step together on the GPU, and Python is not in the loop. Their models
-are kept simple enough to run that way.
-
-| A task that needs | Ripple from Python | A JAX or GPU simulator |
-| --- | --- | --- |
-| About a million steps (these demos) | minutes | seconds |
-| About a hundred million (hard control, large teams) | hours to days | minutes |
-| About a billion (legged locomotion, wide randomization) | impractical | hours |
-
-Ripple is for the first row: learning a behavior on top of real vehicle
-models (fixed-wing aircraft on a 6-DOF model with autopilots, checked
-multirotors, sensors, estimators, and communication), in a mission you can
-replay exactly and evaluate with the same models.
-
-If you ever need more speed, there is a middle option before leaving Ripple:
-one Rust call that steps many copies of the mission in parallel across the
-CPU's cores, so Python is crossed once per batch rather than once per
-environment. That would likely be ten times faster or more on a laptop, with
-the same models. It is not built yet; build it when a real task needs it.
-
-## Choices and why
-
-| Choice | Options | Taken, and why |
-| --- | --- | --- |
-| Where training runs | Python with SB3 over PyO3; Rust with Burn | Python: students already know Gymnasium and SB3, and get every algorithm they offer. Burn would mean writing PPO. |
-| Running the trained policy | ONNX Runtime; `tract-onnx`; calling Python from the plugin | `tract-onnx`: pure Rust, nothing to install, and deterministic. Calling Python would make replays depend on it. |
-| Who computes the observation | Python from positions; the Rust plugin | The plugin's `observe`, called from both sides, so training and replay can't drift apart. |
-| How actions get in | A global table; a new context field for every autonomy; a registry closure | The closure (`register_autonomy_with`): one small engine addition, and no other autonomy changes. |
-| Vehicle and action | Motor speeds; attitude; velocity commands | Velocity commands to the checked Crazyflie controller: it trains in minutes. Motor-level control would be a research project, not a demo. |
-| Rates | 10–100 Hz decisions | 20 Hz decisions, with 500 Hz control and motion (25 substeps), the rate the Crazyflie is checked at. |
-| Reward | Below | −log(distance + 0.1 m). |
-| PPO settings | SB3 defaults; tuned | Tuned: 16 environments, batches of 512, learning rate 1e-3, a 128×128 network, starting log standard deviation −0.5, two million steps. |
-
-The reward and the PPO settings came from trials (2026-10-24, seed 0 unless
-noted; median and worst distance from the goal at the end of 20 new episodes):
+The shipped policy uses velocity commands at 20 Hz, with control and motion
+at 500 Hz. PPO trains on 16 environments with batches of 512, learning rate
+1e-3, a 128×128 network, and initial log standard deviation −0.5. It trains
+for two million steps. The trials below used seed 0 unless noted. Each result
+is the median and worst distance from the goal over 20 new episodes.
 
 | Trial | Median | Worst |
 | --- | --- | --- |
@@ -179,10 +122,9 @@ noted; median and worst distance from the goal at the end of 20 new episodes):
 | For scale: a hand-tuned PD controller | 0.037 m | 0.10 m |
 
 With −distance the policy stopped improving about 0.3 m out, still circling
-the goal at about 0.5 m/s. That reward pays the same for the last centimeter
-as for the first meter, and the approach dominates the return. The logarithm
-pays more the closer the drone gets. One million steps was enough for some
-seeds and not others, so the script trains for two.
+the goal at about 0.5 m/s. The logarithmic reward places more weight on the
+last part of the approach. One million steps worked for some seeds but not
+others, so the script trains for two million.
 
 Training is deterministic for one seed on one machine, but sensitive: computing
 the reward in float32 instead of float64 changed seed 0's result from 0.032 m

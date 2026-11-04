@@ -98,6 +98,14 @@ these are separate from simulation data. Scenario serialization records
 normalized data for manifests, not reloadable mission YAML. The default end
 condition is the time limit, for both Rust and YAML.
 
-The [design
-notes](https://github.com/EthanMBoos/ripple/blob/main/docs/RUST_API.md) explain
-these boundaries and their references.
+## What stays the same as YAML
+
+Rust code and YAML both produce a `ScenarioConfig`. Plugin names and parameters
+therefore get the same startup checks, and both use the same simulation loop.
+`EntityGroupConfig` describes a population and its spawn schedule; the engine
+creates an `Entity` for each agent that is alive during the run.
+
+Use a parameter struct for computed floats. A prebuilt JSON value may already
+have converted NaN or infinity to null before the engine checks it. A saved
+scenario describes what ran, but it is not reloadable mission YAML: mission
+files also have labeled maps, templates, and an envelope.

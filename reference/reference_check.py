@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-"""Build the C++ Docker reference and compare Ripple with it.
+"""Compare Ripple missions with SCRIMMAGE built from two committed branches.
 
-Builds two C++ branches from the sibling checkout: the unmodified baseline
-(Ubuntu-24.04) and the comparison branch (benchmarking-edits), which adds opt-in
-instrumentation and fixes SCRIMMAGE's documented defects (docs/REFERENCE_NOTES.md),
-among them frame timestamps, so its outputs differ from the baseline's by design.
-Per mission, the instrumented build with tracing must write the same frames and
-summaries as without it (non-interference); equality with the baseline is only
-recorded. The comparison run adds
-SCRIMMAGE_KEYED_RANDOM=1, so C++ draws Ripple's keyed random numbers, and is
-compared with Rust frames, summaries, and traces. Missions are YAML: Ripple runs
-each first, and SCRIMMAGE's XML is written from the scenario that run records
-(scrimmage_xml.py). Requires Python 3.10+, Docker, Cargo, and the sibling
-SCRIMMAGE checkout. No host C++ toolchain is needed.
+Ripple runs each YAML mission first; scrimmage_xml.py converts its recorded
+scenario to C++ XML. The unmodified Ubuntu-24.04 branch shows what the
+documented C++ corrections change. The benchmarking-edits branch supplies
+the actual comparison, with tracing and keyed random draws enabled. Tracing
+must leave its frames and summary unchanged. Rust frames, summaries, and
+traces are compared with that branch; upstream equality is only reported.
+
+Requires Python 3.10+, Docker, Cargo, and a SCRIMMAGE checkout containing
+both branches. The default checkout is ../scrimmage; use --source elsewhere.
+No host C++ toolchain is needed. See reference/README.md for the protocol.
 """
 
 import argparse
@@ -39,7 +37,7 @@ from traces import compare_traces, read_trace
 
 BASELINE_BRANCH = "Ubuntu-24.04"
 INSTRUMENTED_BRANCH = "benchmarking-edits"
-# Instrumented-build environments. Non-interference runs must match the baseline.
+# Tracing must not change the comparison branch's own outputs.
 UNTRACED_ENV = {}
 TRACED_ENV = {"SCRIMMAGE_TRACE": "/run/trace.jsonl"}
 COMPARISON_ENV = {**TRACED_ENV, "SCRIMMAGE_KEYED_RANDOM": "1"}
@@ -166,7 +164,7 @@ def build_reference(args, output, branch, target_platform=PLATFORM):
         dependency_text = edit(dependency_text, " && ./setup/install-jsbsim.sh", "")
         build_text = edit(build_text, "-DENABLE_JSBSIM=1", "-DENABLE_JSBSIM=0")
     dependency_file.write_text(dependency_text)
-    # Archive only committed branch files; the sibling checkout is never modified.
+    # Archive only committed branch files; the source checkout is not modified.
     with (context / "source.tar").open("wb") as archive:
         subprocess.run([
             "git", "-C", str(args.source), "archive", "--format=tar", "--prefix=source/", commit,

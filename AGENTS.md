@@ -1,83 +1,59 @@
-**This is a research testbed for students to learn and experiment: optimize for
-readability and simplicity, not industrial-grade bulletproofing.**
-
-Prefer small, direct implementations that handle normal research use. Do not
-turn simple requests into validation frameworks, compatibility layers, or
-exhaustive edge-case machinery. Keep basic correctness and clear errors, and
-document unsupported cases rather than adding complexity for hypothetical needs.
+**This is a research testbed for students. Favor readable, direct code over
+industrial-grade machinery.** Handle normal research use, give clear errors,
+and document unsupported cases instead of building compatibility layers or
+validation frameworks for hypothetical needs.
 
 # Ripple
 
-A multi-agent robotics simulator, ported from SCRIMMAGE's simulation and plugin
-design. Intentional differences from C++ are in `docs/REFERENCE_NOTES.md`; the
-roadmap and scope decisions are in `docs/TODO.md`. Do not reintroduce machinery
-the roadmap excludes (runtime plugin loading, legacy protobuf/string-map
-spawning, OpenCL, VTK, ROS, JSBSim). Keep optional adapters (ArduPilot, Burn)
-out of the default build.
+A multi-agent robotics simulator built from SCRIMMAGE's simulation and plugin
+design. Do not add excluded machinery: runtime plugin loading, legacy
+protobuf/string-map spawning, OpenCL, VTK, ROS, or JSBSim. Keep ArduPilot and
+Burn optional. Scope decisions are in `docs/TODO.md`.
 
-- C++ source: sibling `../scrimmage`, branch `Ubuntu-24.04`. Do not modify it.
-  The only allowed C++ changes are on the `benchmarking-edits` comparison
-  branch: opt-in instrumentation (tracing, test drivers, keyed random numbers)
-  that leaves outputs byte-identical, and fixes for documented C++ defects (the
-  substep order, AircraftPIDController, the RK4 loads in FixedWing6DOF and
-  Multirotor, Multirotor's velocity, moment arms, and idle thrust, the core
-  defects, SimpleAircraft's turn, SingleIntegrator's `max_speed`, the
-  6DOF models' quaternion length-correction term, and FixedWing6DOF's
-  wind-to-body rotation; see `docs/REFERENCE_NOTES.md`).
+- Ripple needs no SCRIMMAGE checkout. The optional C++ checks default to
+  `../scrimmage` and accept `--source PATH`. Never modify its `Ubuntu-24.04`
+  branch. On `benchmarking-edits`, only opt-in, output-preserving test
+  instrumentation and documented defect fixes are allowed; see
+  `docs/REFERENCE_NOTES.md`.
 - User research plugins live in workspace user crates such as `crates/starter`,
   registered in `crates/cli/src/main.rs`; keep the starter building and tested.
-- Missions are YAML, read into the typed `ScenarioConfig`. The SCRIMMAGE
-  comparison writes SCRIMMAGE's XML from the scenario a Ripple run records
-  (`reference/scrimmage_xml.py`); Ripple itself reads no XML.
+- Missions are YAML, read into `ScenarioConfig`. Ripple reads no XML;
+  `reference/scrimmage_xml.py` writes it for the optional C++ checks.
 
 ## Read before changing code
 
-Read the relevant book chapters: [Rust
+Read the relevant book chapters before changing code: [Rust
 style](book/src/development/rust-style.md), [source
 map](book/src/development/source-layout.md), [plugin
 API](book/src/reference/plugin-api.md), [writing
-plugins](book/src/guides/writing-plugins.md), [YAML
-missions](book/src/guides/yaml-missions.md). SCRIMMAGE's own documentation is
-in `../scrimmage/docs/source`; record differences in `docs/REFERENCE_NOTES.md`.
+plugins](book/src/guides/writing-plugins.md), and [YAML
+missions](book/src/guides/yaml-missions.md). For SCRIMMAGE, use that checkout's
+`docs/source` and record differences in `docs/REFERENCE_NOTES.md`.
 
-User and developer guidance goes in `book/src/` (listed in `SUMMARY.md`);
-`docs/` holds plans, audits, and notes. Verification evidence lives in
-`paper/data/<check>/` (written by the suite) and `reference/README.md`
-describes each check; the paper summarizes it in one table and leaves the
-detail to the code release.
+User and developer guidance goes in `book/src/`; `docs/` holds plans, audits,
+and notes. `reference/README.md` describes the checks, and retained evidence
+goes in `paper/data/<check>/`.
 
-The paper (`paper/manuscript/main.tex`, built with `tectonic`) is about the
-study, not the port: name SCRIMMAGE rather than "the C++", keep the voice
-plain and academic, put weeds in the repository, don't volunteer weaknesses
-the reader doesn't need, and mark unrun checks Planned rather than implying
-them.
+The paper (`paper/manuscript/main.tex`) is about the study. Name SCRIMMAGE,
+write plainly, keep implementation detail in the repository, and mark unrun
+checks Planned.
 
 Wrap Markdown and LaTeX prose at 80 columns. Tables, code blocks, and long
 URLs are exempt.
 
 ## Code rules
 
-- Organize around the subsystems (`simulation`, `entity`, `mission`, `math`,
-  `common`, `plugin`, `pubsub`) and the plugin categories: Autonomy,
-  Controller, MotionModel, Sensor, Interaction, Network, Metrics, plus the
-  Rust-only estimators (Localization and Tracking). `plugin.rs` holds the
-  shared API, `plugin/<category>.rs` each interface and its built-ins, and
-  `plugin/registry.rs` the registrations.
-- Each built-in lives in `plugin/<category>/<plugin>/<plugin>.rs`. Parameters
-  are a `#[derive(Deserialize)]` struct with `#[serde(default,
-  deny_unknown_fields)]` whose `Default` holds the mission defaults; `configure`
-  calls `params.parse()`.
-- Named module files, not `mod.rs`. Test-only models go in
-  `crates/core/tests/support/`. No standalone examples application.
+- Follow the [source map](book/src/development/source-layout.md) and
+  [plugin API](book/src/reference/plugin-api.md). Use named module files,
+  not `mod.rs`; put test-only models in `crates/core/tests/support/`. Do not
+  add a standalone examples application.
 - Keep type erasure, threads, locks, and dispatch out of plugin author code.
   Use plain structs, named physical fields, and direct equations.
 - Refactors: no behavior changes mixed in; readability-only changes need
   identical outputs before and after.
-- A non-obvious core change that exists because of a measurement or trial
-  (profiling, timing) gets a `DEVNOTE:` comment saying what was measured, how,
-  the result, and why the code is shaped this way, so the trial can be rerun.
-  Call it out when reporting the change. Skip this for plain bug fixes and
-  trivial changes.
+- For a core change shaped by profiling or a trial, add a `DEVNOTE:` with the
+  measurement, how to repeat it, the result, and the reason. Skip it for plain
+  fixes; mention the note when reporting the change.
 
 ## Execution invariants
 
@@ -87,9 +63,9 @@ URLs are exempt.
   its own phase: never run a whole entity chain as one parallel task.
 - Workers own disjoint entity state; every phase joins every task. Rust output
   must be byte-identical at 1, 2, and 8 workers and with Rerun on or off.
-- Every subscriber has its own queue. Every random number is keyed by what it
-  is for (seed, entity, plugin identity, tick, and the plugin's key from
-  stable IDs), never by draw order; see the book's "Randomness and seeds".
+- Every subscriber has its own queue. Key random numbers by purpose and stable
+  IDs, never draw order; see [Randomness and
+  seeds](book/src/concepts/randomness.md).
 - Keep truth, readings, and belief distinct. Autonomy and controllers see
   belief only; estimators never see truth; sensors never write belief. Rerun
   is output only.
@@ -102,40 +78,36 @@ cargo test --workspace
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 python3 -m unittest discover -s reference -p 'test_*.py'   # after checker edits
+uv sync --reinstall-package ripple && uv run pytest         # after Python bridge edits
 ```
 
-The executable is `ripple` (package `ripple`); use `cargo run -p ripple --bin
-ripple -- run missions/straight-no-gui.yaml --headless`. Runs go to
-`runs/<mission>/runNNN`; never overwrite a previous run. Checking scripts take
-names and paths from `reference/project.py`.
+The executable is `ripple`. Runs go to `runs/<mission>/runNNN`; never
+overwrite one. Reference scripts take names and paths from
+`reference/project.py`.
 
 ## C++ comparison
 
-Keep the C++ comparison passing after any simulation change. Read
-`reference/README.md` first. `python3 reference/suite.py` runs the quick checks
-(tests, determinism, the C++ agreement matrix in Docker, speed against
-`reference/perf_baseline.json`); `--release` runs every check, and `--retain`
-refreshes the evidence in `paper/data/` only when all pass. Refactors and
-renames must pass `reference/equivalence.py OLD NEW` (byte-identical outputs).
+Keep the C++ comparison passing after simulation changes; read
+`reference/README.md` before running it. Use `python3 reference/suite.py` for
+quick checks, `--release` for all checks, and `--retain` to refresh evidence
+only after they pass. Refactors and renames must pass
+`reference/equivalence.py OLD NEW` with byte-identical outputs.
 
-- Don't run C++ GUI missions; the C++ reference runs headless in Docker.
-- Do not change the reference branch, seeds, RNG, or tolerances to make checks
-  pass. Preserve failure reports and known parity gaps. Code comments explain
-  behavior on its own terms; what is kept from SCRIMMAGE, simplification or
-  defect, is listed in `docs/REFERENCE_NOTES.md`. Comparison agreement never
-  vetoes a correctness fix, but a fix needs proof: the failing example, a
-  focused test of the contract, and the comparisons after. A fix to ported
-  code goes on `benchmarking-edits` too, so the two still agree; record it in
-  `docs/REFERENCE_NOTES.md`. Never accept a slower
-  performance baseline or retain failing evidence to make a check pass.
-- A compared mission uses the default estimators and no terrain, and writes out
-  any plugin value whose default differs between the two (SCRIMMAGE's XML gets
-  only what the mission gives; see `reference/scrimmage_xml.py`).
+- Do not change the reference branch, seeds, RNG, tolerances, or performance
+  baseline to make checks pass. Preserve failures and known parity gaps.
+  Comparison agreement never blocks a correctness fix, but prove the fix with
+  a failing example, a focused test, and new comparisons. Apply fixes to
+  ported C++ code on `benchmarking-edits` too and record them in
+  `docs/REFERENCE_NOTES.md`.
+- Compared missions use default estimators, no terrain, and explicit values
+  where defaults differ. The C++ reference runs headless in Docker.
 
 ## Visualization
 
-Dashboard or visualization changes need screenshots; follow
-[Visual checks with Rerun](docs/VISUAL_QA.md).
+Visualization changes need inspected screenshots from an RRD export
+(`--export-rrd`). Check the affected times, especially around motion,
+spawning, removal, or timing changes. On macOS, use the headless Rerun viewer;
+the native viewer has timed out on inspection and screenshots.
 
 ## Workspace safety
 

@@ -1,69 +1,23 @@
 #!/usr/bin/env python3
-"""Does Multirotor's Crazyflie fly like Crazyflow's, given the same numbers?
+"""Compare Multirotor's Crazyflie and Firefly with Crazyflow's dynamics.
 
-    python3 reference/crazyflow_check.py --output runs/crazyflow000 [--python PATH] [--update-fixture]
+    python3 reference/crazyflow_check.py --output DIR [--python PATH]
 
-Crazyflow (learnsyslab/crazyflow, MIT; Schuck et al. 2026) is an independent
-Crazyflie simulator. Its `first_principles` dynamics take the same physics in
-its own conventions: rotor speeds in RPM, x-y-z-w quaternions, body angular
-velocity, a mixing matrix instead of rotor offsets, and a constant linear
-drag matrix instead of per-rotor drag.
+At held states, both vehicles' loads without drag must match Crazyflow's
+independent calculation and the committed Rust test fixture. Five open-loop
+Crazyflie flights then compare trajectories with the same motor commands.
 
-First a loads grid: the `crazyflie2` and `firefly` presets at the held
-states of reference/multirotor_grid.py (attitude, velocity, body rates,
-every rotor's speed, unequal among them), where Ripple's whole-vehicle force
-and moment about its center of mass, from Multirotor's own derivative, must
-reproduce Crazyflow's (crazyflow/loads.py, no drag on either side) to 1e-12
-of the individual rotor loads. The Rust test `crazyflow_loads_samples`
-(crates/core/src/plugin/motion/multirotor/multirotor.rs) does the comparing;
-the samples are committed as crates/core/tests/fixtures/
-crazyflow_loads_samples.json so it runs offline, and this script checks that
-fresh samples equal it (`--update-fixture` replaces it).
+No-drag flights compare shared equations. The drag flights report the
+difference between Ripple's per-rotor model and Crazyflow's lumped model;
+that difference is not a pass criterion. For the hub-drag flights, Ripple's
+drag force and moment are supplied to Crazyflow at every integration stage,
+so the trajectories must agree within LIMITS. The stress flight also passes
+force alone to isolate the missing moment. Each run checks its step-size
+sensitivity against the same limits.
 
-Then flights: the `crazyflie2` preset flown open loop in Ripple and in
-Crazyflow (crazyflow/integrate.py maps the constants) from the same start
-with the same constant motor commands, compared state by state. Four stay
-inside the model's valid range, airborne at near-hover commands within 2% of
-the hover speed: "hover" (drifting at 1 m/s), "climb", "yaw" (a slow
-spin-up), and "tilt" (a held 6 degree tilt that accelerates it sideways to
-Förster's wind-tunnel speeds), 4 s each from 5 m up. The fifth, "stress",
-is the first check's case kept as labeled: four unequal commands that spin
-the vehicle up to 2.2 rad/s while it tilts and falls, 3 s from 2 m, through
-a ground the model does not have. Each flight reports the altitude, speed,
-rates, and command range it reached.
-
-Each flight runs in variants:
-- "no-drag": rotor drag off on both sides. The equations are the same, so
-  the trajectories must agree to integration precision.
-- "drag": Ripple's per-rotor (RotorS) drag with Förster's coefficients, and
-  Crazyflow's drag matrix set to Förster's lumped form at the commanded speeds,
-  K_aero * (sum of speeds). These differ by design (Ripple's acts at each hub,
-  so it also makes moments, and sees the body's rotation); the difference is
-  reported, not judged.
-- "hub-drag": the same Ripple run, against Crazyflow with its drag matrix
-  zero and Ripple's hub drag computed from Crazyflow's own state at every
-  stage and fed through Crazyflow's disturbance inputs as force and moment
-  (integrate.py). The equations are then Ripple's, so the trajectories must
-  agree as the no-drag case does.
-- "hub-drag-force", on the stress flight only: the force alone. It leaves
-  Crazyflow's rotation exactly as in "no-drag" (its rotational equations do
-  not see the force), so the unequal commands spin it up unchecked, as the
-  lumped drag does: the whole "drag" difference is the moment the hub
-  offsets make. The spin at each whole second is reported for every variant.
-
-The pass limits (LIMITS) were set before the comparison from the check's
-own step-size sensitivities, which every run measures again on each
-flight's hub-drag variant: Ripple at a quarter of its 1 ms step, and
-Crazyflow at half of its 0.1 ms step. A limit sits about a hundred times
-above the largest sensitivity measured when it was set (the numbers are at
-LIMITS); a run whose sensitivity exceeds a limit fails, since the comparison
-could not tell a model difference from the step.
-
-Crazyflow runs in a uv environment with CRAZYFLOW (a pinned commit) unless
---python names an interpreter that has it. Writes OUTPUT/results.json and
-OUTPUT/samples.json. Passes when the grid test passes, its samples equal the
-fixture, and every flight's no-drag and hub-drag variants and sensitivities
-are within LIMITS.
+Writes OUTPUT/results.json and OUTPUT/samples.json. --update-fixture
+replaces the committed samples. Crazyflow runs at a pinned commit via uv;
+--python PATH selects an existing environment.
 """
 import argparse
 import json

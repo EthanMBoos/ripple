@@ -21,7 +21,8 @@ pub const ACTION_SIZE: usize = 2;
 #[derive(Clone, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct SpreadConfig {
-    /// Landmarks, `[east, north]`; the team has one agent per landmark.
+    /// Landmarks, `[east, north]`; the team has one agent per landmark. Fixed
+    /// for a mission, where MPE draws new ones each episode.
     // TODO (nice to have): draw the landmarks in the viewer, which now draws
     // only Boundary boxes.
     pub landmarks_m: Vec<[f64; 2]>,
@@ -144,6 +145,9 @@ impl Autonomy for SpreadPolicy {
             "SpreadPolicy needs {ACTION_SIZE} action numbers, got {}",
             action.len()
         );
+        // Velocity commands, where MPE's actions are forces with damping: one
+        // reason scores here don't compare with published ones (book chapter,
+        // "Comparing with MPE").
         let speed_mps = self.config.max_speed_mps;
         io.write("velocity_x", action[0] as f64 * speed_mps)?;
         io.write("velocity_y", action[1] as f64 * speed_mps)?;

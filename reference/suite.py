@@ -1,30 +1,16 @@
 #!/usr/bin/env python3
-"""Run the checks: a quick set after a change, the release set before a release.
+"""Run Ripple's quick or release checks by stable ID.
 
-    python3 reference/suite.py --list              # every check: purpose, reference, criterion
-    python3 reference/suite.py                     # the quick set (about 30 minutes)
-    python3 reference/suite.py --release           # every check (several hours)
-    python3 reference/suite.py --check cpp-agreement --check rust-determinism
-    python3 reference/suite.py --release --retain  # also refresh the release evidence
+    python3 reference/suite.py --list
+    python3 reference/suite.py [--release] [--check ID] [--retain]
 
-Each check has a stable ID and runs one of the scripts in this folder. Output
-goes to runs/suiteNNN/<check>/, with a log per step and summary.json last;
-earlier runs are never reused, and a failing check keeps its diagnostics there.
-The suite exits non-zero if any selected check fails. A check that needs a
-prerequisite (the planted-bug study needs the agreement matrix) runs it too.
+Each check writes logs and a result under a new runs/suiteNNN/ folder;
+prerequisites run first and failures keep their diagnostics. --retain
+refreshes paper/data/ only after every selected check passes. Accepting a
+new speed baseline is separate (`perf.py --accept`).
 
---retain refreshes the release evidence, paper/data/<check>/, but only when
-every selected check passed: the new evidence is staged first, then swapped in
-for the checks that ran, and paper/data/release.json records each check's
-outcome, date, source hash, and references. paper/data/SUMMARY.md is then
-regenerated. Review the result before committing it: retaining never accepts
-a failure, and a new performance baseline is a separate, explicit step
-(perf.py --accept).
-
-Needs Python 3.10+ and Cargo; the C++ checks need Docker and a C++ SCRIMMAGE
-checkout with local Ubuntu-24.04 and benchmarking-edits branches (../scrimmage,
-or --source); the native timings need macOS; stall-landing needs Docker for
-ArduPilot SITL. Standard library only.
+See reference/README.md for the checks and dependencies. C++ checks accept
+--source PATH; normal Ripple use needs no SCRIMMAGE checkout.
 """
 
 import argparse

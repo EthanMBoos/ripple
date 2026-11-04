@@ -20,9 +20,6 @@ reference to the paper means adding it there too; the script stops if the two
 don't match. A few papers have no open PDF that a script can fetch; their
 entries say so, and you can drop the PDF in by hand as `sources/KEY/paper.pdf`.
 
-What we took from the literature, and why: [Learned vs classical: what's out
-there](../../docs/LEARNING_LITERATURE.md).
-
 ## The SCRIMMAGE paper
 
 `sources/demarco2018/` is the original SCRIMMAGE paper (14 pages). Sections

@@ -1,40 +1,18 @@
 #!/usr/bin/env python3
-"""Fit SimpleAircraft's `rascal` limits to FixedWing6DOF's Rascal, and check them.
+"""Fit and check SimpleAircraft's Rascal limits against FixedWing6DOF.
 
-    python3 reference/simple_aircraft_fit.py --output runs/simple-aircraft-fit000
+    python3 reference/simple_aircraft_fit.py --output DIR
 
-The two fixed-wing rungs should share their performance limits: speeds,
-acceleration, climb, descent, and turn rate over these maneuvers. (They fly
-under different controllers, so this is not all that separates them.) This
-flies FixedWing6DOF's Rascal under AircraftPIDController (both `airframe:
-rascal`, 0.01 s steps) through maneuvers that each reach one limit, and
-measures:
+FixedWing6DOF flies maneuvers that reach its speed, acceleration, climb,
+descent, turn, and attitude-rate limits. SimpleAircraft then flies the same
+missions under its own controller. Each measured limit must agree within 5%
+or 0.2 in its unit for small values.
 
-- max speed: the steady level speed at full throttle (60 m/s asked);
-- min speed: the slowest steady speed that still holds altitude (sink under
-  0.05 m/s), over speeds asked from 7 to 14 m/s;
-- acceleration and deceleration: the largest change of speed over 1 s while
-  speeding up toward 60 m/s and slowing toward 5 m/s, from 20 m/s;
-- climb and descent: the steady climb toward a waypoint 2.7 km above, and the
-  steady descent toward one 2.7 km below, at 20 m/s asked;
-- turn: the turn rate in a 180 degree turn while the bank is held (within half
-  a degree of the largest bank held for 1 s), and the bank that gives that
-  rate in a coordinated turn, atan(rate x speed / g). The Rascal turns about
-  8% slower than a coordinated turn at its own bank; SimpleAircraft's bank
-  limit is this effective bank, since SimpleAircraft's bank only sets its
-  turn rate;
-- roll and pitch rates: the largest change of each over 0.1 s in those runs.
-
-The bank and pitch the Rascal holds are reported, not compared: SimpleAircraft
-keeps its speed in a climb or dive (energy is not modeled), so its pitch limit
-(30 degrees) only has to let the climb and descent limits bind at cruise.
-
-It then flies SimpleAircraft with `airframe: rascal` under
-SimpleAircraftControllerPID through the same maneuvers, measures the same
-numbers. Passes when every
-SimpleAircraft number is within 5% (or 0.2 in its unit, for small numbers) of
-the Rascal's. Writes OUTPUT/results.json and OUTPUT/summary.md. Standard library
-only; needs Cargo.
+SimpleAircraft uses an effective bank chosen from the Rascal's measured turn
+rate, because its bank sets turn rate directly. The Rascal's held bank and
+pitch are reported but not compared: the simplified model does not track
+the energy cost of climbing or diving. Writes OUTPUT/results.json and
+OUTPUT/summary.md. Needs Cargo.
 """
 import argparse
 import json

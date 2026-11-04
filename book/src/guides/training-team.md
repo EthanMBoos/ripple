@@ -75,16 +75,14 @@ landmarks.
 - **A different team reward:** edit `SpreadEnv._rewards`. It is computed from
   the observations, so it needs nothing else from the simulation.
 
-## Choices and why
+## Training results
 
-| Choice | Options | Taken, and why |
-| --- | --- | --- |
-| Multi-agent training | SuperSuit's SB3 adapter; a multi-agent library (MAPPO); our own adapter | Our own short `TeamVecEnv`: SuperSuit's adapter fails with SB3 2.9 (it passes `seed` to an object without one), and a multi-agent library is one more thing to learn. |
-| Vehicle | Multirotors; the point model | `SingleIntegrator`: the lesson is coordination, and it trains in minutes. Swap the motion model in the mission to try a vehicle. |
-| Reward | MPE's; the log reward that helped the hover | MPE's, so results compare with the benchmark. The log version did no better on the seeds that failed (below). |
-| PPO settings | SB3 defaults; the hover's tuned settings | Defaults, one million steps. |
+This example uses the point model, MPE's reward form, and one million PPO
+steps with SB3 defaults. `TeamVecEnv` presents each agent's experience to
+SB3 while the three agents share one policy. The point model keeps this
+coordination example short enough to train in minutes.
 
-Trials (2026-10-24): episodes, out of 50 new ones, that end with a landmark
+The trials below count episodes, out of 50 new ones, that end with a landmark
 more than 1 m from every agent, which happens when two agents settle on the
 same landmark.
 
@@ -103,3 +101,18 @@ shipped policy is seed 0's.
 
 `crates/learning/tests/policies.rs` replays it in Ripple on five more seeds
 and checks every landmark ends within 0.5 m of an agent.
+
+## Comparing with MPE
+
+`spread.yaml` uses the `simple_spread` objective, but its returns cannot be
+compared with published MPE scores. Ripple commands velocity for 150 decisions;
+`simple_spread_v3` applies force for 25 steps. Ripple fixes the landmarks and
+weights the collision term differently. The task is useful for exercising team
+training in Ripple, not for ranking algorithms against MPE.
+
+MPE implementations also differ among themselves. OpenAI's original counts an
+agent colliding with itself; later PettingZoo and MPE2 versions do not.
+PettingZoo also changed its position and velocity update order. Published
+returns may aggregate the three agents' shared reward differently. A numerical
+baseline needs the same MPE version, action mapping, episode length, and return
+calculation.

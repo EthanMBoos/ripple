@@ -1,9 +1,9 @@
 # How models are checked
 
-A simulator's results are only as good as its models, so each model the
-paper's study uses is checked against something outside Ripple: another
-implementation of the same model, or published measurements of the real
-vehicle.
+The models used in Ripple's studies have different kinds of evidence. Some
+match another implementation of the same equations; others use published
+vehicle measurements. The checks below say what was compared and how closely
+it agreed.
 
 ## What each part is checked against
 
@@ -16,7 +16,7 @@ vehicle.
   planted one at a time; it catches all twelve.
 - **Determinism**: the same missions at 1, 2, and 8 workers, with recording
   on and off, must give byte-identical output.
-- **Multirotor rotors** match RotorS's motor and rotor code on 480 sampled
+- **Multirotor rotors** match RotorS's motor and rotor code on 720 sampled
   states, to about 10⁻¹⁵.
 - **Multirotor flight** matches Crazyflow, an independent model, on the same
   constants and motor commands: the same 3 s tumbling trajectory, to

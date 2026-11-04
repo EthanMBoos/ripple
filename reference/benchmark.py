@@ -1,36 +1,19 @@
 #!/usr/bin/env python3
-"""Time C++ against Rust in one Linux container for the paper.
+"""Time SCRIMMAGE and Ripple in one Linux container.
 
-    python3 reference/benchmark.py --output runs/new-benchmark
-    python3 reference/benchmark.py --output runs/quick-benchmark --quick
+    python3 reference/benchmark.py --output DIR [--quick]
 
-Builds the C++ comparison branch (benchmarking-edits: the reference with
-controllers and motion interleaved per substep, as Rust runs them; its tracing
-is off unless requested) and the Rust core-only runner
-(reference/benchmark_runner.rs, no viewer) for this machine's own architecture,
-so neither is emulated. On Apple Silicon that is linux/arm64 in Docker's VM, and
-C++ is built without JSBSim, which no workload uses.
+The C++ comparison branch and Rust's core-only runner use the host's
+architecture inside Docker, so neither is emulated. Both run the same
+workloads at three fleet sizes: C++ at 1 and 8 threads, Rust at 1 and 8
+workers. Timed process durations subtract a one-step startup measurement;
+peak memory is reported separately.
 
-Runs perf.py's workloads (motion, substeps, sensing, churn, collision) at three agent counts
-with C++ single-threaded, C++ with its own multi_threaded mode at 8 threads, and
-Rust at 1 and 8 workers: one warm-up, then --repetitions timed runs each. Times
-are whole processes minus the median of three one-step runs of the same mission
-(startup, parsing, and plugin loading), so they approximate stepping and logging.
-Peak memory is each simulator's maximum resident set, from GNU time. A timed
-run's output is deleted once it matches the warm-up's, and each build replaces
-the previous benchmark image, so repeated benchmarks don't fill the disk.
-
-Rust must write identical output (frames, summary, events) at 1 and 8 workers.
-It must also match single-threaded C++ except in churn, sensing, and collision,
-which depend on random spawn positions and sensor noise that the C++ build
-draws differently without SCRIMMAGE_KEYED_RANDOM (the reference check matches
-them with it; the timed C++ runs leave it off).
-Every timed run must repeat its warm-up output; C++'s multithreaded mode is
-reported, not required, to do so.
-That mode sometimes deadlocks (SimControl::worker waits on its condition variable
-without a predicate, so a wake-up can be lost): a C++ 8-thread run still going
-after HANG_S is killed, counted, and retried. A hang in any other variant fails.
-The paper's retained results are in paper/data/speed-cpp-container/.
+Rust output must be identical across worker counts and match serial C++ on
+workloads with shared inputs. C++ multithreaded output is reported but not
+required to repeat: its worker can deadlock, so that variant is timed out,
+counted, and retried. Writes timing and provenance reports; retained results
+are in paper/data/speed-cpp-container/.
 """
 import argparse
 from dataclasses import asdict

@@ -1,51 +1,22 @@
 #!/usr/bin/env python3
-"""Does FixedWing6DOF's Rascal fly like ArduPilot's JSBSim Rascal?
+"""Compare FixedWing6DOF's Rascal with ArduPilot's JSBSim Rascal.
 
-    python3 reference/jsbsim_check.py --output runs/jsbsim-rascal000 [--python PATH] [--update-fixture]
+    python3 reference/jsbsim_check.py --output DIR [--python PATH]
 
-The `rascal` airframe is ArduPilot's JSBSim Rascal
-(Tools/autotest/aircraft/Rascal, fetched here at ARDUPILOT_COMMIT and checked
-against pinned hashes; nothing of ArduPilot's is committed): its numbers,
-tables, and terms, as JSBSim resolves them. JSBSim itself (the `jsbsim`
-package, pinned, in a uv environment as Crazyflow is) flies that file, so it
-is a second evaluator of the same aircraft; reference/jsbsim/rascal.py drives
-it. Not flight truth: neither model was fitted to the aircraft. One form of
-the file is not in the airframe: its elevator drag falls with up-elevator
-(the signed normalized deflection), a defect of the file; the mission key
-`signed_elevator_drag` restores it, and the comparisons run both ways.
+Pinned ArduPilot aircraft files run in JSBSim, a second evaluator of the
+same model. Neither implementation establishes agreement with a real aircraft.
+The aircraft file's signed elevator-drag form differs from Ripple's default;
+the check reports both and judges the matching form.
 
-Part A, the loads: at a grid of airspeed, angle of attack, sideslip, body
-rates, and surface angles, JSBSim's aerodynamic force and moment against
-FixedWing6DOF's from the same state, in JSBSim's environment (air density,
-speed of sound) and with JSBSim's rate of change of angle of attack. The Rust
-test `jsbsim_rascal_samples` (crates/core/.../fixed_wing_6dof/aerodynamics.rs)
-must agree to rounding at every sample in JSBSim's elevator-drag form, and
-reports the residual of the airframe as flown. The helper also reads each
-term beyond the textbook equations from JSBSim's own per-function values, so
-the report shows what each is worth. The samples are committed as
-crates/core/tests/fixtures/jsbsim_rascal_samples.json so the test runs
-offline; this script checks that fresh samples equal it (`--update-fixture`
-replaces it).
+At 378 held states, aerodynamic loads must agree to rounding and match the
+committed Rust test fixture. Both simulators then fly 5 s open-loop glides
+from a JSBSim trim, with held and stepped control surfaces. Position must
+agree within 0.2 m in the matching elevator-drag form; step-size and air
+density sensitivities are reported alongside it.
 
-Part B, the glides: 5 s open loop at 1 ms from a steady glide at 20 m/s
-(trimmed on JSBSim's side; see the helper), the surfaces held at the trim
-("held") and with an elevator, aileron, or rudder offset from the start, the
-throttle at zero on both sides. Ripple flies each with `HeldControls` in
-JSBSim's environment (its air density and speed of sound at the start and the
-acceleration a resting body feels in it) twice: the airframe as flown, and in
-JSBSim's elevator-drag form. The largest position difference over each glide
-in JSBSim's form must be within TOLERANCE_M, set before the first run from
-the sensitivities that remain when the equations agree, which are sized
-alongside: JSBSim at a tenth of its step (under 8 mm), Ripple at a quarter of
-its (nanometers), and Ripple at the air density of the glide's end, since
-JSBSim's density rises as the aircraft descends and Ripple's is constant
-(up to 0.14 m); 0.2 m covers them with margin. The airframe as flown is
-reported beside it.
-
-Passes when the grid test passes and its samples equal the fixture, and every
-glide in JSBSim's form is within the tolerance. Writes OUTPUT/results.json and
-OUTPUT/summary.md. Needs Cargo, uv (or --python), and network access for the
-ArduPilot files.
+Writes OUTPUT/results.json and OUTPUT/summary.md. --update-fixture replaces
+the committed samples. Needs Cargo, uv (or --python PATH), and network access
+to fetch the pinned aircraft files.
 """
 import argparse
 import hashlib

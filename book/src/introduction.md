@@ -1,26 +1,21 @@
 # Ripple
 
-Multi-robot methods are mostly compared on simulated benchmarks where agents
-are points, observations are exact, and messages always arrive. Ripple is a
-multi-agent robotics simulator in Rust for asking what happens to those
-comparisons once sensing is noisy, messages are lost or late, and the agents
-are real vehicles.
+A waypoint follower on a point agent turns immediately when its route changes.
+An aircraft given the same goal must bank into the turn; a delayed route
+message may send it farther along the old path. Ripple runs such changes in
+complete multi-agent missions, where the next decision depends on what the
+vehicles actually did.
 
-Three things make that question answerable:
+A mission selects the policies, sensors, networks, controllers, and vehicle
+models. Autonomy and controllers act on estimated state, while physics and
+scoring use the true state. A sweep varies settings across matched mission
+seeds; keyed random numbers give the same disturbance to the same measurement
+in each run. You can start with point agents, then use a vehicle model without
+rewriting the policy if it takes the same commands. The models and their
+[checks](reference/checks.md) are documented separately.
 
-- **Decisions see only belief.** Every agent acts on what it measured or was
-  told, never the true state, so a learned and a classical policy get exactly
-  the same information.
-- **Runs are deterministic.** The same mission and seed give byte-identical
-  output at any number of workers, so methods can be compared on exactly the
-  same episodes, and any run can be repeated.
-- **Disturbances are settings.** Noise, loss, latency, wind, and vehicle
-  dynamics are each a parameter, off by default, that a sweep can vary from
-  none to severe. The models the study uses are [checked](reference/checks.md)
-  against an independent implementation or published measurements.
-
-It is also built to be read: plugins are ordinary Rust structs, and a new
-model is one file.
+Ripple is written in Rust. Research plugins are ordinary structs compiled into
+the `ripple` command, and missions select them by name.
 
 ## Quick start
 

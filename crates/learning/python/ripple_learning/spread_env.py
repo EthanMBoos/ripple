@@ -81,6 +81,10 @@ class SpreadEnv(ParallelEnv):
         }
 
     def _rewards(self, observations):
+        # MPE's form, but the collision term has weight 1, where
+        # simple_spread_v3 has 0.5 (`local_ratio`) and OpenAI's MPE also counts
+        # each agent colliding with itself, so returns don't compare with
+        # published ones (book chapter, "Comparing with MPE").
         # Observation layout: velocity (2), landmark offsets (2 each), then
         # teammate offsets (2 each).
         landmarks_end = 2 + 2 * self.landmark_count

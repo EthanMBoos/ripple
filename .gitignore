@@ -5,7 +5,6 @@
 __pycache__/
 /book/book/
 /paper/data/.campaign-staging/
-/paper/literature_review/sources/
 
 graphify-out/
 .graphify*/

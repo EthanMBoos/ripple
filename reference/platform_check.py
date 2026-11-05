@@ -30,9 +30,7 @@ IMAGE = f"{IMAGE_PREFIX}-platform"
 
 
 def missions(extra):
-    # The delivery missions ask a language model through a CLI or an API key
-    # the container has neither of; this check is about the arithmetic.
-    found = [mission for mission in project.missions() if "delivery" not in mission.parts]
+    found = list(project.missions())
     if extra:
         found += sorted(extra.glob("*.yaml"))
     return found

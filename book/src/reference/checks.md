@@ -49,8 +49,8 @@ python3 reference/suite.py --check rotors-motor   # one check
 ```
 
 The SCRIMMAGE and RotorS checks build their reference in Docker. Each run
-writes its logs and results to a new `runs/suiteNNN/` folder. The paper's
-numbers come from one release run, kept in `paper/data/`.
+writes its logs and results to a new `runs/suiteNNN/` folder. The retained
+evidence comes from one release run, kept in `paper/data/`.
 [reference/README.md](https://github.com/EthanMBoos/ripple/blob/main/reference/README.md)
 describes every check and its pass criterion.
 

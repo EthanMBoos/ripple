@@ -33,8 +33,8 @@
 //!   (use GroundCollision for removal, not landing). No external force
 //!   input, teleport, or acceleration output.
 //! - To go further: replay NanoBench's recorded Crazyflie motor commands
-//!   (arXiv 2603.09908; 172 flights with Vicon truth, already in
-//!   paper/literature_review) and report prediction error 10, 100, and
+//!   (arXiv 2603.09908; 172 flights with Vicon truth) and report prediction
+//!   error 10, 100, and
 //!   500 ms ahead, as its Task 1 does, with each effect on and off. Its
 //!   vehicle is a Crazyflie 2.1 at 40.85 g, not Förster's 28 g 2.0. The motor
 //!   lag is the least certain value: Förster's fit is command to thrust and

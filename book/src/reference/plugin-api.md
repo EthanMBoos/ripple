@@ -218,7 +218,7 @@ spatial_lookup:
 `scan` tests every agent. `grid` tests only the agents in cells near the
 query and returns exactly the scan's answer in the scan's order, so output is
 byte-identical either way. The grid costs a little to build each tick: in
-the paper's benchmark it made a step up to 9% slower at 256 agents, and about
+the spatial benchmark it made a step up to 9% slower at 256 agents, and about
 twice as fast as the scan at 4,096 spread-out agents. Start with a cell width
 at or a little above your most common query range. The grid works on vertical
 columns, so it suits agents spread out horizontally.

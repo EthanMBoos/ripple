@@ -31,34 +31,26 @@ A study with many hand-picked conditions reads better as a table, one row
 per case:
 
 ```yaml
-name: directives-test
-base_scenario: delivery.yaml
-seeds: [4, 5, 6]
+name: waypoint-conditions
+base_scenario: waypoints-point-agents.yaml
+seeds: [1, 2, 3]
 parameters: # constants only
-  run.end_s: 1800
-prefix: entities.depot.autonomy.Dispatcher # before each column and repeat
-repeat: # like seeds, not a condition
-  sample: [0, 1]
-columns: [directive.kind, directive.wording]
+  run.end_s: 12
+prefix: entities.blue.autonomy.WaypointFollower # before each column
+columns: [speed_mps, arrival_radius_m]
 cases:
-  - [none, plain]
-  - [no_fly, plain]
-  - [no_fly, atc]
+  - [5, 0.01]
+  - [3, 0.01]
+  - [3, 1.0]
 ```
 
 Each row is one combination, numbered in order, so the cases run and are
 recorded exactly as a zipped sweep of the same values would be, and
 `results.jsonl` holds the full dotted paths. `parameter_combinations` is left
 out. `repeat` runs every condition once per value, like `seeds`, for a
-setting that repeats the study rather than changing it. Here it is the
-model's reply sample, so each mission is asked twice. The point is that
-everything else in a run is deterministic: the same mission with the same
-replies gives the same run, byte for byte, and the one input Ripple does not
-control is the model's answer. A repeat over the reply sample holds every
-other input fixed and lets only that vary, so any difference between the two
-runs of a mission is the model's own variation, not the engine's. Seeds
-cycle fastest, then the repeat values, then the rows: 3 rows × 3 seeds × 2
-samples = 18 cases.
+setting that repeats the study rather than changing it, such as a language
+model's reply sample when a planner asks one. Seeds cycle fastest, then any
+repeat values, then the rows: here 3 rows × 3 seeds = 9 cases.
 
 Each path is a dotted path into the mission, set exactly as a [command-line
 override](yaml-missions.md#command-line-overrides) sets it, after templates

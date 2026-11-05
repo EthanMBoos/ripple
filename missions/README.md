@@ -46,6 +46,6 @@ a point; their example repeats the route.
 
 Malformed/missing-plugin cases live under `crates/*/tests/`, not this folder.
 
-See the [paper's validation sections](../paper/README.md) for results,
+See the [retained evidence](../paper/README.md) for results,
 reproduction, and comparison limits; [model
 scope](../book/src/reference/models.md) explains the selection.

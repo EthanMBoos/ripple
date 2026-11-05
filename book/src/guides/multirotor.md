@@ -186,10 +186,8 @@ notes at the top of `multirotor.rs`.
 
 ## The Firefly: choices and why
 
-The Firefly was added so the delivery study's multirotors can fly a vehicle
-of a useful size rather than a point model
-(`crates/delivery/missions/delivery-firefly.yaml`, the mirror of
-`delivery-6dof.yaml`). Copying it raised these choices; each is recorded
+The Firefly was added so missions can fly a multirotor of a useful size
+rather than a point model. Copying it raised these choices; each is recorded
 here so it can be revisited.
 
 1. **Mass: 1.545 kg, the model's own parts.** The model file sums to 1.545
@@ -215,22 +213,19 @@ here so it can be revisited.
    | 2.4, 0.6 | 3% | 4% | 0.7 s, but a 0.5 m/s climb takes 3.7 s |
 
 4. **Landing: hovering on the pad.** `Multirotor` has no ground contact. A
-   delivery "landing" is the vehicle holding the pad's height within the
-   courier's arrival radius, as the point model does.
-5. **Braking: `approach_per_s` on the courier.** The courier commanded full
-   speed until one tick short of a target, which a point model follows
-   exactly; the Firefly needs 18 m to stop from 12 m/s at its 4 m/s² vertical
-   limit and sank 17.7 m below the depot pad. The Firefly mission sets the
-   courier's `approach_per_s: 0.3`, speed in proportion to distance, which
-   asks at most 3.6 m/s² of braking. With it the Fireflies stop on every pad
-   (0.0 m at the depot, 40.0 m on rooftops). Left at 0, the default, the
-   point-model mission is unchanged frame for frame.
+   "landing" is the vehicle holding the pad's height within the autonomy's
+   arrival radius, as the point model does.
+5. **Braking is the autonomy's job.** An autonomy that commands full speed
+   until one tick short of a target works for a point model, which follows
+   it exactly. The Firefly needs 18 m to stop from 12 m/s at its 4 m/s²
+   vertical limit, and one flown that way sank 17.7 m below its pad.
+   Commanding speed in proportion to distance, 0.3 /s, asks at most 3.6 m/s²
+   of braking and stopped it on every pad.
 6. **Step size: 50 substeps of the 0.1 s tick.** That is 500 Hz, the rate
    the control check shows converged (at 200 Hz two step responses ended
    5.5-7.9 mm from a 2000 Hz run, over its 5 mm limit). Substeps are set for
-   the whole run, so the fixed-wing aircraft also integrate at 500 Hz in this
-   mission; with a stand-in planner on seed 4 the two missions' scores were
-   identical.
+   the whole run, so fixed-wing aircraft in the same mission also integrate
+   at 500 Hz.
 7. **The RotorS motor check runs the Firefly's own numbers.** Its
    `rotors-defaults` case uses RotorS's default motor plugin values, which
    are the Firefly's but for the rotor drag (8.06e-5 against 1.0e-4), so at

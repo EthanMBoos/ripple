@@ -58,11 +58,10 @@ belief. See [Belief vs truth](../book/src/concepts/belief-vs-truth.md).
 **Autonomy composition.** SCRIMMAGE can switch and blend autonomy plugins
 through `GraphvizFSM`, `AutonomyExecutor`, and `MotorSchemas`, including
 loading behaviors during a run. Ripple keeps a vehicle's phases and callable
-skills inside one autonomy plugin; the delivery `Courier` is an example.
-Multiple autonomy plugins can still run on an entity, in mission order, but
-the last one declaring a command port sets that port. There is no
-`is_controlling` flag or runtime plugin loading. See
-[Skills](../book/src/guides/skills.md).
+skills inside one autonomy plugin; the delivery `Courier` on the `llm-fleet`
+branch is an example. Multiple autonomy plugins can still run on an entity,
+in mission order, but the last one declaring a command port sets that port.
+There is no `is_controlling` flag or runtime plugin loading.
 
 **Mission and output formats.** Ripple reads YAML and writes MCAP, while
 SCRIMMAGE reads XML and writes `frames.bin` and `summary.csv`. Ripple keeps

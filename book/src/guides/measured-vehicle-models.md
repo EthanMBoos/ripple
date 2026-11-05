@@ -13,8 +13,7 @@ examples. Read their `airframe.rs` files alongside this page.
 
 You need equations and numbers that someone published: a paper, a thesis, a
 simulator's model file. Pin the exact version (a commit, an edition and page)
-and add it to the paper's reference corpus (`paper/literature_review/`), so a
-local copy can be fetched and read.
+and record where to fetch it, so anyone can read the same copy.
 
 - The Crazyflie's numbers come from Förster's 2015 ETH thesis, cited by
   equation number.

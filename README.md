@@ -11,7 +11,8 @@ exactly the same episodes. Recording and replay use [Rerun](https://rerun.io).
 
 It's being built to answer one question: does the ranking between learned and
 classical multi-robot policies hold once sensing is noisy, messages are lost
-or late, and the vehicles have real dynamics? See [the paper](paper/README.md).
+or late, and the vehicles have real dynamics? How each model is checked is in
+[paper/README.md](paper/README.md).
 
 Ripple grew out of [SCRIMMAGE](https://github.com/gtri/scrimmage) and still
 reads its mission files.
@@ -57,8 +58,8 @@ Other missions to try:
   plugin API, and model references. Preview it with `mdbook serve book --open`.
 - [Missions](missions/README.md) and [models](book/src/reference/models.md):
   what is supported.
-- [The paper](paper/README.md): the learned versus classical question, and
-  how each model is checked. The [roadmap](docs/TODO.md) lists what's next.
+- [Checks and evidence](paper/README.md): how each model is checked. The
+  [roadmap](docs/TODO.md) lists what's next.
 
 ## Development
 

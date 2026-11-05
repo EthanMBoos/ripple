@@ -220,13 +220,11 @@ boundaries and collisions, belong in interactions, not in every autonomy.
 
 A vehicle that is told what to do next by a planner (wait, fly to a site,
 land, come home) is best written as one autonomy plugin that hosts a library
-of *skills*, each an ordinary struct in its own file. [Skills: many behaviors
-in one autonomy](skills.md) describes the pattern, with the delivery crate's
-`Courier` as the example.
+of *skills*, each an ordinary struct in its own file, with the autonomy
+owning the vehicle's ports and running whichever skill is current.
 
 Coordination above the vehicle, such as a fleet planner, is another entity's
-autonomy that sends orders as messages; the delivery crate's `Dispatcher`
-does this from the depot.
+autonomy that sends orders as messages.
 
 ## Testing
 

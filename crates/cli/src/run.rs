@@ -170,7 +170,6 @@ pub fn run_scenario(
         viewer.log_boundaries(&BoundaryRegion::in_scenario(
             &simulation.scenario().interactions,
         )?)?;
-        viewer.log_delivery(&serde_json::to_value(simulation.scenario())?)?;
         Some(viewer)
     } else {
         None

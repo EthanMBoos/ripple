@@ -323,7 +323,7 @@ Things checked that need nothing:
 - Deleted: `scripts/bulk_run.py`, `scripts/test_bulk_run.py`.
 - `book/src/guides/sweeps.md`, "Shards and clusters": the three commands,
   the batch script as the place for cluster edits.
-- `crates/delivery/README.md`, `missions/waypoints-point-agents.sweep.yaml`,
+- `missions/waypoints-point-agents.sweep.yaml`,
   `environment.yaml`: the command in place of the script.
 - `book/src/development/python-bridge.md`: one line under "Build" that a
   sweep campaign is part of the same command.

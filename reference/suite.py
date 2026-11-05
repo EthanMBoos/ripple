@@ -485,7 +485,7 @@ def main(argv=None):
     if failed or (arguments.retain and not summary["retained"]):
         return 1
     print(f"\nPassed: {out}."
-          + (" Evidence refreshed; rebuild the paper and check the prose." if summary["retained"] else ""))
+          + (" Evidence refreshed; check the prose that cites it." if summary["retained"] else ""))
     return 0
 
 

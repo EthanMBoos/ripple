@@ -1,45 +1,12 @@
-# Papers
+# Evidence
 
-The paper, its bibliography, the generated tables, and the retained data.
-The paper is the record of evidence for what it claims; there is no separate
-evidence document.
-
-- **[manuscript/main.tex](manuscript/main.tex): the academic paper.** A
-  language model plans for a mixed fleet by calling skills as tools, each
-  skill a **Ripple** plugin: how much each added skill helps, how planners
-  rank on exactly replayable episodes, and whether the planner knows what
-  each vehicle can do. The [roadmap](../docs/TODO.md) drives the work; the
-  appendix gives the full counts behind the mission results.
-
-It uses the IEEE conference layout. Venue and titles are provisional. Results
-marked **[Provisional]** do not yet come from a release run of the suite.
-
-## Framing and scope
-
-A changed ranking means something only if each integration can be trusted.
-Keep three claims separate: matching the
-external implementation, matching independent physical measurements, and
-affecting a multi-agent result. A source comparison supports the first claim;
-it does not automatically support the other two. An external autopilot is a
-control-stack choice, not proof of greater physical accuracy.
-
-A changed ranking is not a gate on integration work: unchanged outcomes,
-useful operating limits, and the cost of extra fidelity also matter. Credit
-SCRIMMAGE as the origin of Ripple; the detail of the agreement with it lives
-in [reference/README.md](../reference/README.md) and
-[REFERENCE_NOTES.md](../docs/REFERENCE_NOTES.md), not the paper.
-
-## Supporting material
-
-- [Bibliography](references.bib): only sources the paper cites.
-- [Cited papers and code](literature_review/README.md): how to download
-  every cited paper and its repositories for local reading.
-- [C++ comparison tools](../reference/README.md): build, tolerances, provenance.
-- [Implementation roadmap](../docs/TODO.md): current plans, not paper results.
+The retained results of the [reference suite](../reference/README.md) and the
+FollowNearest workflow example. There is no paper on `main`; the language-model
+fleet study and its manuscript are on the `llm-fleet` branch.
 
 ## Release evidence
 
-Small result files under [data/](data/) back every number in the manuscript.
+Small result files under [data/](data/) back each check's claims.
 Each folder is one check of the [suite](../reference/README.md), named by its
 check ID and written by `python3 reference/suite.py --retain`;
 [data/release.json](data/release.json) records each check's purpose, reference,
@@ -66,9 +33,8 @@ versions. Local paths are replaced by `<checkout>` and `<run>`.
 | `data/visual-qa/` | Viewer review reports. Screenshots stay in ignored `runs/`. |
 | `workflow-example/` | The FollowNearest workflow example in C++ and Rust; see its README. |
 
-[data/SUMMARY.md](data/SUMMARY.md) is the readable detail behind the paper's
-one summary table, generated from these files; edit the script, not its
-output:
+[data/SUMMARY.md](data/SUMMARY.md) is the readable summary, generated from
+these files; edit the script, not its output:
 
 ```sh
 python3 paper/data/summarize.py   # writes data/SUMMARY.md
@@ -81,17 +47,3 @@ To refresh the evidence after changing code, run `python3 reference/suite.py
 numbers moved. The workflow example (`workflow-example/run-cpp.sh`) is run
 separately. Never edit numbers by hand, and keep failed cases with their
 explanations.
-
-## Build
-
-With [Tectonic](https://tectonic-typesetting.github.io/) (`brew install
-tectonic`):
-
-```sh
-cd paper/manuscript
-tectonic -X compile main.tex
-```
-
-`latexmk -pdf main.tex` also works with a TeX Live installation providing
-`natbib` and `array`. `IEEEtran.cls` is the unchanged IEEE class,
-including its LPPL notices. Generated build files are ignored.

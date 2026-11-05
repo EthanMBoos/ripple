@@ -111,5 +111,3 @@ parameters:
 ```
 
 See [Sweeps and results](sweeps.md) for running it and reading the results.
-How far each sweep should go, measured against real hardware, is part of the
-paper's study.

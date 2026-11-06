@@ -1,0 +1,23 @@
+# Local rules only: no vehicle or stock moves between hubs and no serving a
+# site from another hub. What a manager per hub can do (plan, direction 4).
+- when: surge
+  do:
+    - prioritize: {site: null, urgency: trauma}
+- when: closure
+  do:
+    - avoid: {}
+- when: corridor
+  do:
+    - avoid: {}
+- when: outage
+  do:
+    - ground: {hubs: each_hub, class: any}
+- when: weather
+  do:
+    - ground: {hubs: event_hubs, class: event_class}
+- when: priority
+  do:
+    - prioritize: {site: event_site, urgency: null}
+- when: rooftop_closed
+  do:
+    - use_pad: {}

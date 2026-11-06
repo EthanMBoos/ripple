@@ -34,10 +34,11 @@ User and developer guidance goes in `book/src/`; `docs/` holds plans, audits,
 and notes. `reference/README.md` describes the checks, and retained evidence
 goes in `paper/data/<check>/`.
 
-There is no study or paper on `main`; the language-model fleet study, its
-delivery crate, and its manuscript are on the `llm-fleet` branch. In any
-paper, name SCRIMMAGE, write plainly, keep implementation detail in the
-repository, and mark unrun checks Planned.
+The language-model fleet-manager study is on `main`: its crate is
+`crates/delivery`, its plan `docs/FLEET_MANAGER_PLAN.md`, and its manuscript
+`paper/manuscript/main.tex`. The earlier study and its manuscript are on
+the `llm-fleet` branch. In any paper, name SCRIMMAGE, write plainly, keep
+implementation detail in the repository, and mark unrun checks Planned.
 
 Wrap Markdown and LaTeX prose at 80 columns. Tables, code blocks, and long
 URLs are exempt.

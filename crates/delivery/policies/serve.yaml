@@ -1,0 +1,28 @@
+# Local rules plus serving a surge, shortage or outage hub's sites from its
+# nearest hub, with no vehicle moves (the replanner's serve_from half).
+- when: surge
+  do:
+    - serve_from: {hubs: {nearest: 1}}
+    - prioritize: {site: null, urgency: trauma}
+- when: shortage
+  do:
+    - serve_from: {hubs: {nearest_with_stock: 1}}
+- when: closure
+  do:
+    - avoid: {}
+- when: corridor
+  do:
+    - avoid: {}
+- when: outage
+  do:
+    - ground: {hubs: each_hub, class: any}
+    - serve_from: {hubs: {nearest: 1}}
+- when: weather
+  do:
+    - ground: {hubs: event_hubs, class: event_class}
+- when: priority
+  do:
+    - prioritize: {site: event_site, urgency: null}
+- when: rooftop_closed
+  do:
+    - use_pad: {}

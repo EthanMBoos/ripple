@@ -1,0 +1,553 @@
+% Working manuscript. The results are from docs/FLEET_MANAGER_PLAN.md.
+% Before submission, replace the preliminary tables with the completed seed
+% set and draw the flight figure from a retained run. Study code:
+% crates/delivery.
+\documentclass[conference]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage[varqu]{zi4}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage[bookmarks=true,hidelinks]{hyperref}
+% Run-in bold paragraph headings instead of IEEEtran's lettered ones.
+\renewcommand{\paragraph}[1]{\par\textbf{#1.}\ }
+
+\begin{document}
+
+\title{Ripple: Measuring the Cost of Over-Helping\\in Robot Fleets}
+\author{\IEEEauthorblockN{Ethan Moosbrugger Boos}
+\IEEEauthorblockA{Georgia Institute of Technology}}
+\maketitle
+
+\begin{abstract}
+Language models are increasingly proposed as high-level managers for robot
+fleets. They can respond to events while a dispatcher assigns work and
+each vehicle's controller handles flight. But an order that helps one part
+of a fleet can change what the rest can do later. We present Ripple, a
+multi-agent simulator that runs managers, dispatchers, vehicle autonomies,
+controllers, and dynamics through complete missions and scores their
+flights. In a regional delivery study, managers can set local rules, lend
+an aircraft for one flight, or relocate aircraft and stock. We find that
+language-model managers often over-help: they relocate vehicles and stock
+even when local rules and lent flights produce more on-time deliveries. In
+matched runs of hand-written policies, relocation lowers on-time share
+relative to local rules by 0.02 at four hubs and 0.09 at 64. Models also
+propose or retain these costly moves when giving orders, reviewing a
+replanner, or writing its rules. Feedback about past moves does not
+reliably reduce them. Showing only hubs with problems reduces moves for
+some models; a rule that keeps a reserve of vehicles and stock at each
+hub blocks excessive moves directly. All results are from simulation.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+Robotic systems increasingly divide decisions across levels. A high-level
+component chooses a goal or subtask, and a controller or learned policy
+turns that choice into motion. Recent robot foundation models use this
+structure to carry out longer tasks: $\pi_{0.5}$ predicts semantic subtasks
+before low-level actions, and GR00T N1 combines reasoning about a task with
+physical control \citep{black2025pi05,nvidia2025gr00t}. A team of robots
+adds decisions about who should act, how work should be shared, and what to
+do when the situation changes. Language models are attractive at this
+level because an operator can describe a new task or disruption in ordinary
+language while established software continues to dispatch and control the
+robots.
+
+Language-model planning for teams has taken several forms. SMART-LLM
+breaks an instruction into tasks for groups of robots
+\citep{kannan2024smartllm}; COHERENT revises assignments to a mixed team
+after feedback \citep{liu2025coherent}. Other systems compare centralized
+and local planners \citep{chen2024scalable}, direct large collectives from
+language \citep{vatnsdal2026compass}, or dispatch and reposition a fleet
+of vehicles \citep{lyu2025llmoddr}. These systems show ways to connect a
+model to many agents. A fleet that operates through a day poses a further
+question: an order can solve the problem in front of the manager and still
+leave the fleet less able to handle what happens next.
+
+We study that question with a regional delivery fleet. Each depot, which we
+call a hub, has its own aircraft and stock. Requests arrive throughout the
+day, and a dispatcher assigns them to available vehicles. When urgent
+requests surge across several hubs, a manager can change which requests
+take priority, allow an aircraft from a neighboring hub to make a delivery
+and return home, or move aircraft and stock to the affected hub. Each
+choice may help with the surge. Moving aircraft and stock also leaves the
+neighboring hub with less capacity when its next requests arrive. The
+manager must decide whether the immediate help is worth that later cost.
+
+Judging a plan only when the surge begins hides this later cost. The
+same aircraft may serve another request after returning home, or it may
+still be based elsewhere. Its route and return time determine which later
+requests it can reach before their deadlines. We therefore compare
+managers on the same stream of requests and disruptions, and score what
+the vehicles flew and delivered over the complete mission. Two runs with
+the same requests can still diverge if a model gives different replies.
+Each order changes the fleet state seen at later decisions.
+
+We built Ripple, a multi-agent simulator, to run these comparisons.
+A manager gives orders to a dispatcher; vehicle autonomies, controllers,
+and motion models carry them out on the same clock. Metrics follow the
+flights and requests after each order, including work at hubs outside the
+immediate disruption. We can change the manager, its view of the fleet, or
+the vehicle model while running matched missions. Model replies are saved
+so each observed mission can be inspected and replayed.
+
+We first use Ripple to separate the actions of a structured replanner.
+In the regional missions studied here, local rules improve on-time
+delivery, and letting aircraft serve neighboring hubs can add to that
+gain. Moving aircraft and stock between hubs lowers on-time delivery, with
+a larger loss as the region grows from four to 64 hubs. Language models also
+propose or retain these moves when giving live orders, reviewing the
+replanner's orders, or writing its rules. Feedback alone does not reliably
+reduce relocation. Showing only hubs with problems reduces moves for some
+models; a rule that keeps a reserve at each hub limits them directly.
+
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{Planning for robot teams}
+Language models have been used to decompose tasks and assign them to teams
+of heterogeneous robots. SMART-LLM forms coalitions for subtasks
+\citep{kannan2024smartllm}; COHERENT revises assignments after feedback
+\citep{liu2025coherent}. Chen et al. compare centralized, decentralized,
+and hybrid organizations as team size grows \citep{chen2024scalable}.
+Scale-Plan filters a larger action graph before calling a model
+\citep{gupta2026scaleplan}. COMPASS studies language-conditioned collective
+behavior at much larger robot counts \citep{vatnsdal2026compass}. These
+systems ask how a team can carry out a command. We ask what happens after a
+fleet manager changes the distribution of vehicles and stock, including
+at hubs it was not trying to help.
+
+\paragraph{Managing a fleet}
+Dispatch and repositioning are coupled: a vehicle sent to one area is no
+longer available in another. LLM-ODDR uses a language model to dispatch
+orders and reposition drivers in a ride-hailing fleet
+\citep{lyu2025llmoddr}. In aerial robotics, COLA executes multi-UAV
+missions through collaborating agents \citep{ludwig2026cola}, and
+Web-of-Drones connects a language agent to flight tools
+\citep{iannoli2026webofdrones}. The delivery problem here has heterogeneous
+vehicles, hub stock, deadlines, and rules that change during a mission.
+We give the manager several ways to help, including temporary service by a
+neighbor, and measure their later cost in the same operating day.
+
+\paragraph{Interfaces and checks}
+The interface through which an agent observes and acts can change its
+behavior without changing the model. SWE-agent shows this for software
+agents \citep{yang2024sweagent}; work on tool documentation and context
+selection studies particular parts of that interface
+\citep{hsieh2023tooldoc,lodha2026lesscontext}. In robotics, SayCan grounds
+skill selection in affordances \citep{ahn2022saycan}, while Safety Chip and
+RoboGuard check proposed actions against constraints
+\citep{yang2024safetychip,ravichandran2025roboguard}.
+LLM-Modulo argues for verifiers around a model rather than treating its
+output as an executable plan \citep{kambhampati2024llmmodulo}. Our checker
+rejects infeasible or rule-breaking orders; a separate guard limits how
+much capacity can leave a donor hub. We compare those mechanisms with a
+smaller view and with a model that reviews a classical replanner's orders.
+
+\section{Ripple}
+\label{sec:ripple}
+
+Ripple simulates a set of agents on a shared clock. Its design follows
+SCRIMMAGE's separation of agents, plugins, and world interactions
+\citep{demarco2018}. Each agent owns physical state and a stack of plugins.
+The engine advances every agent through the same ordered phases, so a fleet
+decision, a vehicle's response, and a later request belong to one mission
+history. A research crate supplies the agents and algorithms for a study;
+the engine supplies timing, messages, recording, and metrics. The delivery
+crate used here defines hubs, a dispatcher, couriers, manager orders, and
+the score. The same engine can run a different autonomy or motion model
+without changing the simulation loop.
+
+\subsection{Composing a fleet}
+
+An autonomy chooses what an agent does. A controller turns its commands
+into motion inputs, and a motion model advances the physical state. Sensors
+produce readings; estimators update the belief available to autonomy and
+controllers. Interactions, networks, and metrics operate across agents.
+The mission selects these components for each agent. In this study,
+fixed-wing aircraft and multirotors share the request stream but use
+different controllers and motion models. Fixed-wing aircraft make a
+parachute drop on a pass; multirotors can also land on hospital rooftops.
+A manager need only choose among actions the vehicle autonomies expose.
+
+Ripple leaves the behavior vocabulary to the research crate. Here, the
+Courier autonomy handles the vehicle's lifecycle---idle, serving a
+request, returning, reloading, relocating, or lost---and runs a delivery
+skill for each assignment. The skills are \texttt{drop} and \texttt{land},
+with an optional waypoint for a route around a closed area. The dispatcher
+checks whether a vehicle is available, has the skill, and has sufficient
+estimated endurance for the requested flight. These checks occur before
+an assignment; the score is based on what the vehicle subsequently flies.
+A request that looks feasible from the manager's summary can still become
+late because the aircraft has to reach it and return before taking another.
+
+\subsection{From a manager order to a flight}
+
+The dispatcher assigns individual requests to vehicles. At each decision
+it considers idle vehicles at the site's hub, stock, skill, estimated range,
+and arrival time. A request it cannot assign is retried. This dispatcher
+runs in every condition, including the condition with no manager. The
+manager acts above it when an event begins or at a scheduled check-in. It
+can change local priorities and restrictions, permit another hub to serve a
+site, relocate aircraft, or transfer stock by flight. The manager never
+assigns an individual request.
+
+An order changes the dispatcher's future choices as well as the immediate
+flight. \texttt{serve\_from} lets a neighboring hub serve a site, after
+which the aircraft returns to its own hub. \texttt{reposition} flies an
+idle aircraft to a new hub, which becomes its home. \texttt{transfer} uses
+a vehicle to carry stock between hubs. The latter two consume aircraft
+time and alter the capacity available to the donor for later requests.
+This difference is central to the experiment: a move can solve the current
+shortage and still reduce the day's on-time share. Ripple records each
+order's acceptance and the subsequent flight, delivery, and hub state.
+
+The manager can be a scripted policy, a structured replanner, or a language
+model. The same orders pass through the same dispatcher and Courier code.
+For a model, the delivery crate writes a view of the fleet and active
+events, sends it to a model client, parses the reply, and applies the
+resulting orders. A model can also review a replanner's proposed orders
+and choose which to drop. A policy file offers a third arrangement: the
+model writes rules once, and those rules run without a model call during
+the mission. These arrangements change the manager, not the vehicles or
+scoring.
+
+\subsection{Running matched missions}
+
+Ripple's ordered phases put the manager and vehicles on the same timeline:
+autonomy acts, controllers and motion models execute, sensors and world
+interactions update, messages are routed, estimators update belief, and
+metrics observe the result. The manager's view is formed from reported
+fleet state and events rather than the physical truth used by the metric.
+A closure, for example, is judged from a vehicle's actual position during
+the closure window. A delivery whose flight broke an active rule does not
+count as served, even if the manager ordered it in time.
+
+Requests and events are drawn from random numbers keyed by hub and event
+index. A seed therefore defines a common day for managers that give
+different orders. Randomness in the simulator is keyed by purpose and
+stable identities, and its phase order produces the same output at one,
+two, or eight workers. We also save each model reply with the prompt that
+produced it. An unchanged model run can then be replayed without another
+call. These properties make it possible to inspect a failed mission and to
+compare interventions on matched request streams. A changed view or policy
+changes future prompts and may require new model replies; saved replies
+alone do not make different conditions identical.
+
+% TODO Figure 1: a paired run showing the same surge under temporary
+% service and relocation, with the later donor-hub requests and tracks.
+% Draw only after the per-hub outcome attribution has been checked.
+
+\section{Experimental Evaluation}
+\label{sec:experiments}
+
+We use Ripple to study fleet decisions on a day of regional medical
+delivery. Hubs lie on a square grid 15~km apart. Each has three fixed-wing
+aircraft, two multirotors, four blood-product stocks, six clinics, and two
+hospital
+rooftops with nearby ground pads. Requests arrive at about twelve per hub
+per hour. Routine, urgent, and trauma requests have two-hour, 30-minute,
+and 15-minute deadlines. The reported experiments use four-hour request
+streams at 4, 16, and 64 hubs, or 20 to 320 aircraft, and allow 30 minutes
+for the last requests to finish.
+
+Events include trauma surges, stock shortages, hub outages, closed airspace,
+weather restrictions, priority changes, and rooftop closures. Their counts
+are drawn per hub, so a larger region encounters more disruptions. The
+request and event stream is matched by seed across managers. The base
+fleet uses a kinematic fixed-wing aircraft and a point multirotor with
+limited speed and endurance. Ripple also has checked six-degree-of-freedom
+fixed-wing and multirotor models; the results here do not establish that
+the manager ranking persists under those models.
+
+The outcome is the on-time share of requests, weighted one for routine,
+two for urgent, and four for trauma. We also report late and missed
+requests, lost vehicles, rule breaches, accepted and refused orders, moves
+of aircraft or stock, and temporary cross-hub service permissions. A
+\emph{move} is an applied reposition or stock transfer; a \emph{lend} is
+an applied \texttt{serve\_from} permission, not necessarily a completed
+flight. That distinction matters when interpreting order counts. The
+score is computed from deliveries and trajectories, not from the manager's
+intent.
+
+We compare six classical policies before interpreting model performance.
+\emph{None} is the dispatcher alone. \emph{Local} adds rules for closures,
+grounding, priority, and rooftop delivery without moving capacity between
+hubs. \emph{Serve} adds temporary permissions for neighboring hubs to serve
+sites. \emph{Move} adds aircraft relocations and stock transfers to local
+rules, without the lending orders. The \emph{replanner} combines these
+actions and tops up low stock at check-ins. A \emph{return} variant sends
+relocated aircraft home after an event ends. The policies use the same
+order interface and are compared on the same day.
+
+Model managers use one frozen system prompt and one text for each event
+kind. We vary the view and feedback supplied by the delivery crate: hub
+summaries, summaries with order outcomes, a feasibility checker, a line
+reporting donor state after a move, a donor-capacity guard, and a view that
+shows only exceptions. We also test a model as a veto over the replanner
+and as the author of a policy file. Claude Haiku, Sonnet, Opus, and
+GPT-6 Luna appear in the live exceptions and veto comparisons; the larger
+interface ladder and policy-writing comparisons currently use Haiku and
+Sonnet. The current model results come from two seeds at 16 hubs. More
+seeds and 64-hub model runs are pending; the tables report the sample
+behind each result.
+
+Our experiments ask four questions:
+\begin{enumerate}
+\item Which kind of intervention helps the fleet?
+\item Does changing the model's view or authority reduce costly moves?
+\item Does the result depend on model choice or spare vehicles?
+\item What happens on a day with little to manage?
+\end{enumerate}
+
+\subsection{What is a replanner's help worth, and which part?}
+\label{sec:decomposition}
+
+\begin{table}[t]
+\caption{The replanner's help decomposed, mean on-time score over three
+seeds. The policies differ in which manager orders they apply.}
+\label{tab:decomposition}
+\centering
+\begin{tabular}{lccccc}
+\toprule
+Hubs & None & Replanner & Local & Serve & Move \\
+\midrule
+4  & 0.77 & 0.84 & 0.82 & 0.84 & 0.80 \\
+16 & 0.70 & 0.69 & 0.76 & 0.77 & 0.69 \\
+64 & 0.67 & 0.68 & 0.73 & 0.75 & 0.64 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:decomposition} shows the classical comparison. At 16
+hubs, local rules raise the mean score from 0.70 to 0.76, while the full
+replanner scores 0.69. At 64 hubs, local rules score 0.73 and temporary
+cross-hub service raises this to 0.75; adding relocation without lending
+reduces the score to 0.64. The differences between local and move grow
+from 0.02 at four hubs to 0.07 at 16 and 0.09 at 64. The full replanner
+combines lending with relocation and recovers some of that loss, but does
+not match local rules at 16 or 64 hubs.
+
+The decomposition separates the immediate event response from its effect
+on later work. A borrowed flight returns to its donor hub. A permanent
+reposition does not, and a stock transfer occupies another aircraft.
+The aggregate late-delivery counts are higher with relocation at 64 hubs.
+These counts are consistent with donor depletion; a per-hub trajectory
+analysis is needed to attribute each missed request to a particular move.
+The finding is specific to these missions and policies: a different
+relocation rule, demand distribution, or return policy could change the
+comparison.
+
+\subsection{Does any interface get a model to stop relocating?}
+\label{sec:ladder}
+
+\begin{table}[t]
+\caption{The interface ladder at 16 hubs, seeds 1 / 2: on-time score and
+the number of relocations and stock flights made. The bar is local rules
+at 0.74 / 0.79; the replanner scores 0.68 / 0.71 and with the guard
+0.72 / 0.75.}
+\label{tab:ladder}
+\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Interface & Haiku (score, moves) & Sonnet (score, moves) \\
+\midrule
+Summaries              & 0.67 / 0.67, 43 / 37 & 0.66 / 0.67, 48 / 35 \\
++ feedback             & 0.67 / 0.73, 38 / 22 & 0.65 / 0.71, 46 / 32 \\
++ checker              & 0.67 / 0.77, 38 / 17 & 0.66 / 0.70, 45 / 28 \\
++ cost line            & 0.67 / 0.69, 26 / 25 & 0.72 / 0.65, 31 / 44 \\
++ guard                & 0.70 / 0.75, 12 / 5  & 0.70 / 0.68, 27 / 18 \\
+Exceptions + feedback  & 0.73 / 0.75, 3 / 1   & 0.67 / 0.68, 29 / 14 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:ladder} compares two models in the live manager role.
+With summaries alone, both make dozens of vehicle and stock moves on each
+seed and score below the local policy. Outcome feedback, feasibility
+checks, and a line showing donor state after a move change their behavior,
+but none consistently closes the gap. The cost line is therefore not a
+reliable correction in these runs; it does not show that the models cannot
+use cost information in another form.
+
+Two interfaces change the intervention more directly. A guard refuses
+moves that would leave a donor below a capacity threshold, reducing
+Haiku's moves from 38 and 22 with feedback to 12 and 5. The exceptions
+view leaves Haiku with 3 and 1 moves, close to the local policy's score;
+Sonnet still makes 29 and 14 moves under the same view. The difference
+between the two models is as useful as the aggregate score: withholding
+routine fleet state can reduce unnecessary orders, but its effect is not
+a property of the view alone. The matched runs at 64 hubs and additional
+seeds will determine how stable these comparisons are.
+
+\subsection{What does a model drop when given a planner's list?}
+\label{sec:veto}
+
+We next put the model after the replanner. The replanner proposes orders;
+the model can drop any of them, but cannot add its own. On the two
+16-hub seeds, Haiku retains 9 and 15 of the replanner's 12 and 15 moves,
+while retaining 72 and 80 of its 144 and 120 lending permissions. Sonnet
+retains 14 moves on each seed and 48 and 80 lending permissions. The veto
+improves the score over the replanner in some runs, yet it does not recover
+the local policy's advantage. Given a proposal list, these models remove
+many temporary permissions and retain most permanent moves. The counts
+refer to permissions and orders, not completed borrowed flights. The
+64-hub and additional-seed comparisons are pending.
+
+\subsection{Does a model converge on the right policy given time?}
+\label{sec:revision}
+
+A model can also write the rules that run the mission. We give Haiku and
+Sonnet the mission description and a small policy language, then execute
+each written policy without further model calls. Both initial policies
+parse and run. Both order more stock transfers than the hand-written
+replanner, including transfers from two donors on a surge. We then show
+each model the aggregate score, late deliveries, moves, and lending counts
+from a day at 16 and 64 hubs and ask it to revise once.
+
+Haiku keeps its moves but makes repositions smaller and gives them a return
+time. Sonnet reduces its move count and adds trauma priority to its rules.
+The revisions improve their first policies by 0.01 to 0.05 in the tested
+runs, yet their scores across three seeds at 16 hubs remain 0.66, 0.71, and
+0.73 for Haiku and 0.66, 0.71, and 0.72 for Sonnet, below the local
+policy's 0.74, 0.79, and 0.76. In this policy-writing role, extra time and
+aggregate outcome feedback improve the rules without discovering the
+simple alternative of leaving capacity at its home hub and lending service
+when required.
+
+\subsection{How does spare capacity change the cost of moving?}
+\label{sec:where}
+
+\begin{table}[t]
+\caption{Effect of fleet capacity, mean on-time score over three seeds.
+The return policy sends relocated aircraft home when the event ends.}
+\label{tab:where}
+\centering
+\begin{tabular}{llccccc}
+\toprule
+Hubs & Per hub & None & Replanner & Local & Serve & Return \\
+\midrule
+16 & 5  & 0.70 & 0.69 & 0.76 & 0.77 & 0.74 \\
+16 & 8  & 0.80 & 0.83 & 0.87 & 0.88 & 0.84 \\
+16 & 12 & 0.83 & 0.90 & 0.90 & 0.91 & 0.90 \\
+64 & 5  & 0.67 & 0.68 & 0.73 & 0.75 & 0.70 \\
+64 & 8  & 0.79 & 0.83 & 0.85 & 0.87 & 0.86 \\
+64 & 12 & 0.83 & 0.88 & 0.89 & 0.90 & 0.89 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:where} varies capacity while holding the manager policies
+fixed. At five vehicles per hub, local rules outperform the replanner by
+0.07 at 16 hubs and 0.05 at 64. At twelve vehicles per hub, that gap is
+0.00 and 0.01. More spare vehicles make relocation less costly, but the
+replanner does not overtake the local policy in these runs. Temporary
+service has the highest mean at every tested capacity. Returning a moved
+aircraft after an event recovers part of the loss at five and eight
+vehicles per hub. These tests bound the finding: it is strongest for a
+lean fleet, and the order's duration matters as much as its destination.
+
+\subsection{Do models respond differently to the same interface?}
+\label{sec:models}
+
+\begin{table*}[t]
+\caption{Four model configurations on exceptions and veto interfaces,
+16 hubs and two seeds: on-time score and moves made (or kept for veto).}
+\label{tab:models}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+& Haiku & Sonnet & Opus & GPT-6 Luna \\
+\midrule
+Exceptions & 0.73 / 0.75, 3 / 1 & 0.67 / 0.68, 29 / 14 & 0.67 / 0.68, 42 / 33 & 0.71 / 0.74, 2 / 0 \\
+Veto       & 0.72 / 0.74, 9 / 15 & 0.67 / 0.76, 14 / 14 & 0.73 / 0.74, 10 / 16 & 0.73 / 0.75, 6 / 1 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The four model configurations respond differently to the same interface
+(Table~\ref{tab:models}). Under the exceptions view, Haiku makes 3 and 1
+moves, and GPT-6 Luna makes 2 and 0; Sonnet makes 29 and 14, and Opus
+makes 42 and 33. Opus, the largest of the Claude models tested, is the
+most interventionist in these two runs. As a veto, GPT-6 Luna retains the
+fewest proposed moves and scores 0.73 and 0.75, matching the local policy
+on one seed and trailing it by 0.04 on the other. The current evidence
+supports model-dependent behavior, not a ranking by model size or a claim
+that one interface is best for every model. The table reports two seeds;
+replication at 16 and 64 hubs remains necessary.
+
+\subsection{What does a model do on a quiet day?}
+\label{sec:quiet}
+
+We reduce event density to one quarter of the main mission's rate.
+At 16 hubs, the dispatcher alone scores 0.90 and 0.88 on the two seeds,
+and local rules score 0.91 on both. Haiku and Sonnet with outcome feedback
+give between 19 and 62 orders where local rules give five or six, including
+7 to 34 moves. They score 0.89 and 0.88, and 0.89 and 0.87. Even on a
+quieter day, almost every scheduled call sees some exception somewhere in
+the region. The result is thus a tendency to intervene on small but real
+problems, rather than evidence that models invent work from an entirely
+empty view.
+
+\section{Discussion and Future Work}
+\label{sec:discussion}
+
+The classical decomposition gives the model results a physical explanation.
+A manager can help a stressed hub by changing priority or allowing
+neighboring aircraft to serve its sites. Those actions expire or end with
+the flight. Relocating vehicles changes the donor's future capacity, and
+stock transfers use aircraft that could have delivered requests. In this
+mission, the latter actions often cost more than they gain. The same
+pattern appears in a structured replanner and in several model roles, so
+it cannot be reduced to a single model making a malformed call.
+
+The interfaces change different parts of this behavior. Outcome feedback
+and a line showing donor state provide information, but in the present
+runs they do not reliably prevent moves. The exceptions view limits what
+the manager sees and reduces moves for some models. A donor-capacity guard
+makes the constraint explicit and refuses orders that cross it. A model
+veto can remove bad orders from a planner, but these models also remove
+lending permissions while keeping many relocations. A useful next design
+would let the model propose an intervention and let a planner price its
+opportunity cost over the remaining day before committing it. Ripple can
+compare that design with the present ones on the same missions.
+
+The study has clear limits. Its request distribution, event rates, hub
+geometry, and four-hour horizon are simulated. The reported fleets use
+kinematic vehicle models, so the result concerns fleet allocation under
+these flight times and ranges; it does not establish a difference caused
+by six-degree-of-freedom dynamics. The model comparisons currently have
+two seeds at 16 hubs, and the command-line clients expose different
+harnesses. Additional seeds, 64-hub model runs, and API-based clients are
+needed before making a broad claim across models. A per-hub analysis of
+missed deliveries would also strengthen the proposed donor-depletion
+mechanism. Longer days, different demand patterns, and policies that
+return vehicles sooner would test where relocating begins to pay.
+
+Ripple's broader role is to make these questions experimental. The manager
+can be changed without rewriting the courier, the vehicle model without
+rewriting the manager, and the score can follow the consequences of each
+choice through a complete day. The important outcome here is not a
+universal instruction to avoid relocation. It is evidence that a fleet
+manager's apparently helpful action needs to be judged by the work it
+displaces later and elsewhere.
+
+\section*{Generative AI Disclosure}
+Language models evaluated in the study are named in the experimental
+setup. An AI assistant helped write code and prose, which the author
+reviewed.
+
+\bibliographystyle{IEEEtranN}
+\bibliography{../references}
+
+% TODO before submission: add per-run order and refusal counts, prompt and
+% reply sizes, and late deliveries by donor and recipient hub. Include the
+% frozen system prompt, event texts, and one complete model call in an
+% appendix. These are research evidence, not claims to infer from the
+% summary tables.
+
+\end{document}

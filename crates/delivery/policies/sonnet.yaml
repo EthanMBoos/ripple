@@ -1,0 +1,37 @@
+# Written by claude-sonnet-5-5 once from the mission description (write_policy.py).
+- when: surge
+  do:
+    - reposition: {class: multirotor, count: 1}
+    - reposition: {class: fixed_wing, count: 1}
+    - transfer: {item: "O-", units: quarter_stock, from: {nearest_with_stock: 2}}
+    - serve_from: {hubs: {nearest: 2}}
+    - prioritize: {site: null, urgency: trauma}
+- when: shortage
+  do:
+    - transfer: {item: event_item, units: half_stock, from: {nearest_with_stock: 2}}
+    - serve_from: {hubs: {nearest_with_stock: 2}}
+- when: closure
+  do:
+    - avoid: {}
+- when: outage
+  do:
+    - serve_from: {hubs: {nearest: 2}}
+    - ground: {hubs: event_hubs, class: any}
+    - prioritize: {site: null, urgency: trauma}
+- when: weather
+  do:
+    - ground: {hubs: event_hubs, class: event_class}
+    - serve_from: {hubs: {nearest: 2}}
+- when: priority
+  do:
+    - reserve: {hub: each_hub, count: 1, site: event_site}
+    - prioritize: {site: event_site, urgency: null}
+- when: rooftop_closed
+  do:
+    - use_pad: {}
+- when: corridor
+  do:
+    - avoid: {}
+- when: check_in
+  do:
+    - top_up: {below: quarter_stock, units: half_stock}

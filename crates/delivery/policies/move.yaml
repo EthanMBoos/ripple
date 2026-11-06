@@ -1,0 +1,31 @@
+# Local rules plus the replanner's vehicle and stock moves, with no serving
+# from other hubs (the replanner's reposition and transfer half).
+- when: surge
+  do:
+    - reposition: {class: fixed_wing, count: 4}
+    - reposition: {class: multirotor, count: 2}
+    - prioritize: {site: null, urgency: trauma}
+- when: shortage
+  do:
+    - transfer: {item: event_item, units: half_stock, from: {nearest_with_stock: 1}}
+- when: closure
+  do:
+    - avoid: {}
+- when: corridor
+  do:
+    - avoid: {}
+- when: outage
+  do:
+    - ground: {hubs: each_hub, class: any}
+- when: weather
+  do:
+    - ground: {hubs: event_hubs, class: event_class}
+- when: priority
+  do:
+    - prioritize: {site: event_site, urgency: null}
+- when: rooftop_closed
+  do:
+    - use_pad: {}
+- when: check_in
+  do:
+    - top_up: {below: quarter_stock, units: half_stock}

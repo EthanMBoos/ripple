@@ -1,13 +1,21 @@
-# Evidence
+# Paper and evidence
 
-The retained results of the [reference suite](../reference/README.md) and the
-FollowNearest workflow example. There is no paper on `main`; the language-model
-fleet study and its manuscript are on the `llm-fleet` branch.
-
-The reading list for the next study, the language-model fleet manager in
-[docs/FLEET_MANAGER_PLAN.md](../docs/FLEET_MANAGER_PLAN.md), is
-[references.bib](references.bib), with local copies of each paper built as
-described in [literature_review/README.md](literature_review/README.md).
+- **[manuscript/main.tex](manuscript/main.tex): the working paper**. A
+  language-model fleet manager over a classical dispatcher
+  over-helps: it relocates vehicles and stock when the best policy is local
+  rules and lent flights, and the cost of relocating grows with the region.
+  The study code is `crates/delivery`, the plan with every result is
+  [docs/FLEET_MANAGER_PLAN.md](../docs/FLEET_MANAGER_PLAN.md), and the
+  roadmap is [docs/TODO.md](../docs/TODO.md). Build it with
+  `tectonic -o <folder> main.tex` in `manuscript/`. The earlier manuscript,
+  a different paper on catching planner mistakes, is on the `llm-fleet`
+  branch.
+- [references.bib](references.bib): the reading list, one entry per paper
+  in [docs/LITERATURE.md](../docs/LITERATURE.md), with local copies built as
+  described in [literature_review/README.md](literature_review/README.md).
+- [data/](data/): the retained results of the
+  [reference suite](../reference/README.md) and the FollowNearest workflow
+  example, below.
 
 ## Release evidence
 

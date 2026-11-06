@@ -4,6 +4,11 @@ The retained results of the [reference suite](../reference/README.md) and the
 FollowNearest workflow example. There is no paper on `main`; the language-model
 fleet study and its manuscript are on the `llm-fleet` branch.
 
+The reading list for the next study, the language-model fleet manager in
+[docs/FLEET_MANAGER_PLAN.md](../docs/FLEET_MANAGER_PLAN.md), is
+[references.bib](references.bib), with local copies of each paper built as
+described in [literature_review/README.md](literature_review/README.md).
+
 ## Release evidence
 
 Small result files under [data/](data/) back each check's claims.

@@ -40,14 +40,30 @@ fn serialize_payload<T: Serialize + 'static>(value: &Payload) -> Result<Value> {
 type Subscribers<'a> = BTreeMap<(Option<i32>, &'a Channel), Vec<(usize, TypeId)>>;
 
 // Message counts, not byte limits. Fail clearly instead of silently losing data.
-// Keep these ordinary constants until a real experiment needs per-queue tuning.
 // An entity's plugin publishing more than OUTBOX_CAPACITY in one step is probably
 // a bug. World plugins (interactions, networks, metrics) act on every entity, so
 // one message per entity per step is normal for them; they, and every subscriber
-// inbox, get the same limit as one network's pending deliveries.
+// inbox, get the same limit as the floor on one network's pending deliveries.
 const OUTBOX_CAPACITY: usize = 1024;
 const SUBSCRIBER_CAPACITY: usize = 65_536;
 const NETWORK_CAPACITY: usize = 65_536;
+
+/// The most deliveries one network may hold at once: the floor, or one
+/// outbox's worth for every mailbox on the run, whichever is larger.
+///
+/// DEVNOTE (2026-11-07): the floor alone stopped a 256-hub delivery day
+/// (1,280 couriers, `crates/delivery/region.py --hubs 256`) about one
+/// simulated hour in with "queue full (65536 deliveries)". A pending
+/// delivery is one message to one subscriber, so a topic that every courier
+/// subscribes to, as the dispatcher's assignments are, costs one entry per
+/// courier per message, and the queue for a phase grows with messages times
+/// subscribers. 320 couriers never reached the floor; 1,280 did. The limit
+/// is kept, scaled by the mailbox count, because its job is to catch a
+/// plugin publishing without bound, and that is still a bug at any size.
+/// Repeat with the mission above and `ripple run --headless`.
+fn pending_capacity(mailboxes: usize) -> usize {
+    NETWORK_CAPACITY.max(OUTBOX_CAPACITY * mailboxes)
+}
 
 struct Publication {
     channel: Channel,
@@ -379,9 +395,10 @@ impl NetworkContext<'_, '_> {
                             deliver_at_s: Some(delivered_at_s),
                         });
                     }
+                    let capacity = pending_capacity(self.mailboxes.len());
                     ensure!(
-                        self.scheduled.len() < NETWORK_CAPACITY,
-                        "network '{}' queue full ({NETWORK_CAPACITY} deliveries)",
+                        self.scheduled.len() < capacity,
+                        "network '{}' queue full ({capacity} deliveries)",
                         self.name
                     );
                     self.scheduled.push(ScheduledMessage {
@@ -766,6 +783,13 @@ mod tests {
         assert_eq!(slow.len(), SUBSCRIBER_CAPACITY);
         assert_eq!(*slow[0].value, 0);
         Ok(())
+    }
+
+    #[test]
+    fn the_pending_capacity_grows_with_the_mailboxes() {
+        assert_eq!(pending_capacity(3), NETWORK_CAPACITY);
+        assert_eq!(pending_capacity(64), NETWORK_CAPACITY);
+        assert_eq!(pending_capacity(5_000), 5_000 * OUTBOX_CAPACITY);
     }
 
     #[test]

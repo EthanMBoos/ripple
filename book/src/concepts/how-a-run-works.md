@@ -100,9 +100,12 @@ and controllers run before, so they read it next tick. A delayed message
 arrives in a later tick, never an earlier one. Delivery order follows entity
 and plugin order, never worker timing.
 
-Queues have fixed capacities: 1,024 unsent messages per entity plugin, and
-65,536 per world plugin, per subscriber's unread queue, and per network's
-pending deliveries. Going over stops the run with an error naming the plugin.
+Queues have capacities: 1,024 unsent messages per entity plugin, and 65,536
+per world plugin and per subscriber's unread queue. A network's pending
+deliveries, one per message per subscriber, are capped at 65,536 or 1,024
+per mailbox on the run, whichever is larger, so a topic every vehicle
+subscribes to still fits at thousands of vehicles. Going over stops the run
+with an error naming the plugin.
 
 ## Start and end
 

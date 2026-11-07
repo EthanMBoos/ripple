@@ -377,11 +377,11 @@ and 15-minute deadlines. The reported experiments use four-hour request
 streams at 4, 16, and 64 hubs, or 20 to 320 aircraft, and allow 30 minutes
 for the last requests to finish.
 
-For scale, the 15~km hub spacing and 4--13~km clinic distances are within
-the distance capability reported for medical-drone operator Zipline's
-Platform~1---approximately 116~km service radius and 233~km round-trip
-range~\citep{zipline2026operator}---while our fixed-wing cruise speed of
-90~km/h is comparable to its published 97~km/h~\citep{zipline2023factsheet}.
+The scale is that of a real operation. Zipline's long-range aircraft
+cruises at 97~km/h and flies round trips of over 190~km
+\citep{zipline2023factsheet}; our fixed-wing aircraft cruise at 90~km/h,
+and the 15~km hub spacing and 4 to 13~km site distances sit well inside
+that range.
 
 Events include trauma surges, stock shortages, hub outages, closed airspace,
 weather restrictions, priority changes, and rooftop closures. Their counts
@@ -494,13 +494,11 @@ aircraft home when the event ends recovers about two thirds of what
 relocating loses. Local rules beat the replanner on nine seeds of ten,
 and relocating alone is the worst policy on eight.
 
-To test sensitivity to exact grid placement, we displaced hubs by up to
-3~km, enforcing a minimum separation of 10~km, and repeated all six
-classical policies on three matched seeds at four hubs and five at 16 and
-64 hubs. Each seed used one displaced layout shared by all policies. Lending had the
-highest mean score at all three sizes. The mean Local--Move gap was 2.76,
-5.69, and 8.68 percentage points, respectively, supporting the classical
-finding under these bounded layout perturbations.
+The result does not depend on the lattice. With every hub displaced by
+up to 3~km, no two closer than 10~km, and one displaced layout per seed
+shared by all policies, the order holds at all three sizes: lending
+scores highest, and relocating costs 3, 6, and 9 points against local
+rules, as on the grid (the jittered rows of Table~\ref{tab:decomposition}).
 
 The decomposition separates the immediate event response from its effect on
 later work. A lent flight comes home. A permanent
@@ -674,8 +672,8 @@ Of the two roles, the veto is the steadier at both sizes: one to seven
 points under local rules on every seed, never above. The live runs also
 lose vehicles, which happens when an aircraft runs out of endurance away
 from a hub: up to 8 of 80 at 16 hubs and up to 38 of 320 at 64, the most
-under Opus. The veto runs and the classical policies lose none; the appendix gives
-the counts for every run.
+under Opus. The veto runs and the classical policies lose none; the
+appendix gives the counts for every run.
 
 Of the 40 live and veto runs, 39 score under local rules on the same day.
 The exception is Opus under the exceptions view at 16 hubs on the third

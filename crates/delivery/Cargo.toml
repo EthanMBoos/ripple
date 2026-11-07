@@ -1,7 +1,7 @@
 # One day of blood delivery across a region: a classical dispatcher, couriers
 # flying skills, and a language-model fleet manager above them. The stock
 # `ripple` command registers this crate's plugins (crates/cli/src/main.rs);
-# see README.md and docs/FLEET_MANAGER_PLAN.md.
+# see README.md and docs/TODO.md.
 [package]
 name = "delivery"
 version.workspace = true

@@ -17,7 +17,7 @@
 //! the Anthropic or OpenAI API, or a local Ollama server.
 //!
 //! The `ripple` command calls `register` at startup (crates/cli/src/main.rs).
-//! The plan is docs/FLEET_MANAGER_PLAN.md.
+//! The study's claim and results are in docs/TODO.md.
 use anyhow::Result;
 use ripple_core::plugin::PluginRegistry;
 

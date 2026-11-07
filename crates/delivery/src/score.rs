@@ -8,7 +8,10 @@
 //! vehicles lost, and for each event's rule the breaches measured from what
 //! the fleet did: vehicle-seconds inside a closure or corridor, launches of a
 //! grounded class, deliveries by landing on a closed rooftop, and launches
-//! from a hub in an outage. Only flights sent after an event started count
+//! from a hub in an outage. Per hub, numbered `hub_001` on: its sites'
+//! requests, on time, late and undelivered, and the relocations and stock
+//! flights it gave and got, so a day's losses can be laid against the hubs
+//! that donated. Only flights sent after an event started count
 //! against it: a vehicle already in the air when a closure begins cannot be
 //! called back, so its seconds inside are nobody's decision. A delivery whose
 //! flight broke a rule does not count as delivered (`delivered_in_breach`),
@@ -27,6 +30,7 @@ use crate::messages::{
     MISSED_TOPIC, ManagerCall, Missed, ORDER_TOPIC, OrderRecord, Phase, RELOCATE_TOPIC,
     REQUEST_TOPIC, Relocate, Request, RequestKind, STATUS_TOPIC, SkillName, Status, Urgency,
 };
+use crate::order::Order;
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -254,6 +258,16 @@ impl Metrics for DeliveryScore {
                     "serve_from" => add(&mut self.counts, "lends", 1.0),
                     _ => {}
                 }
+                if let Order::Reposition {
+                    from_hub, to_hub, ..
+                }
+                | Order::Transfer {
+                    from_hub, to_hub, ..
+                } = &record.order
+                {
+                    add(&mut self.counts, &format!("hub_{from_hub:03}_gave"), 1.0);
+                    add(&mut self.counts, &format!("hub_{to_hub:03}_got"), 1.0);
+                }
                 add(
                     &mut self.counts,
                     &format!("applied_{}", record.order.name()),
@@ -357,6 +371,11 @@ impl Metrics for DeliveryScore {
             }
             add("requests".into(), 1.0);
             add(format!("{}_requests", request.urgency.as_str()), 1.0);
+            let hub = format!("hub_{:03}", request.hub);
+            add(format!("{hub}_requests"), 1.0);
+            for outcome in ["on_time", "late", "undelivered"] {
+                add(format!("{hub}_{outcome}"), 0.0);
+            }
             total_weight += weight(request);
             match self.delivered.get(&request.id) {
                 Some((delivered_s, _)) => {
@@ -365,11 +384,16 @@ impl Metrics for DeliveryScore {
                         on_time_weight += weight(request);
                         add("on_time".into(), 1.0);
                         add(format!("{}_on_time", request.urgency.as_str()), 1.0);
+                        add(format!("{hub}_on_time"), 1.0);
                     } else {
                         add("late".into(), 1.0);
+                        add(format!("{hub}_late"), 1.0);
                     }
                 }
-                None => add("undelivered".into(), 1.0),
+                None => {
+                    add("undelivered".into(), 1.0);
+                    add(format!("{hub}_undelivered"), 1.0);
+                }
             }
         }
         for missed in self.missed.values() {

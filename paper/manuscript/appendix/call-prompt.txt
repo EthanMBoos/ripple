@@ -1,0 +1,47 @@
+Time: minute 35 of the day; requests stop coming at minute 240.
+
+New events:
+- The rooftop at hospital 16H2 is closed from minute 35 until minute 155; only drops at its ground pad are allowed.
+
+Events still in force:
+- The rooftop at hospital 3H2 is closed from minute 10 until minute 130; only drops at its ground pad are allowed.
+- Weather at hubs 15, 11, 14, 16: no multirotor launches from minute 10 until minute 70.
+- A medevac helicopter corridor is active in the corridor from (-7.6, 21.0) to (-15.6, 26.9) km, 0.5 km either side, below 150 m from minute 16 until minute 76; no vehicle may cross it below 150 m.
+- Airspace is closed in the circle of radius 6.0 km centered at (22.5, 15.0) km from minute 35 until minute 155; no flights through it.
+
+Your last orders:
+- avoid the circle of radius 6.0 km centered at (22.5, 15.0) km until minute 155: applied; flights now detour around it
+- prioritize trauma requests until minute 60: applied; those requests now come first
+
+Since your last call: 0 delivered (0 on time, 0 late).
+
+Exceptions:
+- hub 4: 2 waiting (1 trauma, 1 routine) with no idle vehicle
+Region: 16 hubs, 45/80 vehicles idle, 4 requests waiting, 0 late.
+
+Orders in force:
+- flights avoid the corridor from (-7.6, 21.0) to (-15.6, 26.9) km, 0.5 km either side, below 150 m until minute 76
+- flights avoid the circle of radius 6.0 km centered at (22.5, 15.0) km until minute 155
+- multirotor grounded at hubs 11, 14, 15, 16 until minute 70
+- trauma requests first until minute 60
+- 11H1 takes drops at its ground pad until minute 70
+- 11H2 takes drops at its ground pad until minute 70
+- 14H1 takes drops at its ground pad until minute 70
+- 14H2 takes drops at its ground pad until minute 70
+- 15H1 takes drops at its ground pad until minute 70
+- 15H2 takes drops at its ground pad until minute 70
+- 16H1 takes drops at its ground pad until minute 70
+- 16H2 takes drops at its ground pad until minute 70
+- 3H2 takes drops at its ground pad until minute 130
+
+Orders, each a JSON object with one key:
+- {"reserve": {"hub": H, "count": N, "site": "CODE", "until_min": M}}: keep N vehicles at hub H for that site only.
+- {"avoid": {"area": {"circle": {"center_km": [x, y], "radius_km": r}}, "until_min": M}} or {"avoid": {"area": {"corridor": {"from_km": [x, y], "to_km": [x, y], "half_width_km": w}}, "until_min": M}}: route every flight around the area.
+- {"reposition": {"class": "fixed_wing" or "multirotor" or null, "count": N, "from_hub": A, "to_hub": B, "until_min": M or null}}: fly N idle vehicles from hub A to hub B, which becomes their hub; with until_min they fly home once idle after that minute.
+- {"transfer": {"item": "O-", "units": N, "from_hub": A, "to_hub": B}}: fly N units of stock from hub A to hub B.
+- {"ground": {"class": "fixed_wing" or "multirotor" or null, "hubs": [H, ...], "until_min": M}}: no launches of that class (null: any) from those hubs.
+- {"prioritize": {"site": "CODE" or null, "urgency": "trauma" or "urgent" or "routine" or null, "until_min": M}}: serve those requests first.
+- {"serve_from": {"site": "CODE", "hubs": [H, ...]}}: let those hubs serve the site besides its own.
+- {"use_pad": {"site": "CODE", "until_min": M}}: deliver to that hospital's ground pad by drop instead of landing on its rooftop.
+
+Reply with {"orders": [...]} and nothing else; {"orders": []} changes nothing.

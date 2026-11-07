@@ -1,7 +1,7 @@
-% Working manuscript. The results are from docs/FLEET_MANAGER_PLAN.md.
-% Before submission, replace the preliminary tables with the completed seed
-% set and draw the flight figure from a retained run. Study code:
-% crates/delivery.
+% Working manuscript. The claim and the result tables are also in
+% docs/TODO.md. The appendix holds the frozen prompt, the event texts, one
+% complete model call, and per-run order and refusal counts; its text files
+% are in appendix/. Study code: crates/delivery.
 \documentclass[conference]{IEEEtran}
 \usepackage[T1]{fontenc}
 \usepackage{times}
@@ -11,6 +11,12 @@
 \usepackage{tabularx}
 \usepackage{array}
 \newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage{graphicx}
+\usepackage{listings}
+\lstset{basicstyle=\footnotesize\ttfamily,breaklines=true,
+  breakatwhitespace=true,
+  columns=fullflexible,keepspaces=true,frame=single,framerule=0.2pt,
+  xleftmargin=2pt,xrightmargin=2pt,aboveskip=4pt,belowskip=6pt}
 \usepackage[bookmarks=true,hidelinks]{hyperref}
 % Run-in bold paragraph headings instead of IEEEtran's lettered ones.
 \renewcommand{\paragraph}[1]{\par\textbf{#1.}\ }
@@ -24,22 +30,26 @@
 
 \begin{abstract}
 Language models are increasingly proposed as high-level managers for robot
-fleets. They can respond to events while a dispatcher assigns work and
-each vehicle's controller handles flight. But an order that helps one part
-of a fleet can change what the rest can do later. We present Ripple, a
+fleets. They can respond to events while a dispatcher assigns work and each
+vehicle's controller handles flight. But an order that helps one part of a
+fleet can change what the rest can do later. We present Ripple, a
 multi-agent simulator that runs managers, dispatchers, vehicle autonomies,
 controllers, and dynamics through complete missions and scores their
-flights. In a regional delivery study, managers can set local rules, lend
-an aircraft for one flight, or relocate aircraft and stock. We find that
-language-model managers often over-help: they relocate vehicles and stock
-even when local rules and lent flights produce more on-time deliveries. In
-matched runs of hand-written policies, relocation lowers on-time share
-relative to local rules by 0.02 at four hubs and 0.09 at 64. Models also
-propose or retain these costly moves when giving orders, reviewing a
-replanner, or writing its rules. Feedback about past moves does not
-reliably reduce them. Showing only hubs with problems reduces moves for
-some models; a rule that keeps a reserve of vehicles and stock at each
-hub blocks excessive moves directly. All results are from simulation.
+flights. In a regional delivery study, managers can set local rules, lend an
+aircraft for one flight, or relocate aircraft and stock. We find that
+language-model managers over-help: they relocate vehicles and stock even
+when local rules and lent flights produce more on-time deliveries. The cost
+is in the action itself: with no model involved, relocating instead of
+keeping to local rules loses two percentage points of on-time deliveries at
+four hubs and nine at 64, and the loss falls at the hubs that gave the
+aircraft. We use the model in three roles. It gives the orders itself; it
+reads a classical planner's orders and drops the ones it rejects; or it
+writes the rules before the day starts and never acts again. In all three it
+moves aircraft and stock between hubs, and the loss again falls at the hubs
+that gave. Telling it what its past moves cost does not reliably reduce
+them. Showing only hubs with problems holds some models back at 16 hubs and
+none at 64; a rule that keeps a reserve of vehicles and stock at each hub
+blocks excessive moves directly. All results are from simulation.
 \end{abstract}
 
 \section{Introduction}
@@ -64,7 +74,7 @@ after feedback \citep{liu2025coherent}. Other systems compare centralized
 and local planners \citep{chen2024scalable}, direct large collectives from
 language \citep{vatnsdal2026compass}, or dispatch and reposition a fleet
 of vehicles \citep{lyu2025llmoddr}. These systems show ways to connect a
-model to many agents. A fleet that operates through a day poses a further
+model to a team of robots. A fleet that operates through a day poses a further
 question: an order can solve the problem in front of the manager and still
 leave the fleet less able to handle what happens next.
 
@@ -97,13 +107,17 @@ so each observed mission can be inspected and replayed.
 
 We first use Ripple to separate the actions of a structured replanner.
 In the regional missions studied here, local rules improve on-time
-delivery, and letting aircraft serve neighboring hubs can add to that
-gain. Moving aircraft and stock between hubs lowers on-time delivery, with
-a larger loss as the region grows from four to 64 hubs. Language models also
-propose or retain these moves when giving live orders, reviewing the
-replanner's orders, or writing its rules. Feedback alone does not reliably
-reduce relocation. Showing only hubs with problems reduces moves for some
-models; a rule that keeps a reserve at each hub limits them directly.
+delivery, and letting aircraft serve neighboring hubs adds to that gain.
+Moving aircraft and stock between hubs lowers on-time delivery, with a
+larger loss as the region grows from four to 64 hubs, and the loss lands
+at the hubs that gave the aircraft. We then put a language model in three
+roles: it gives the orders itself, it reviews the replanner's orders and
+drops the ones it rejects, or it writes the rules once before the day
+starts. In every role it moves aircraft and stock between hubs, and the
+loss again lands at the hubs that gave. Telling it what its last move cost
+does not reliably reduce the moves. Showing it only the
+hubs with problems holds some models back at 16 hubs and none at 64; a
+rule that keeps a reserve at each hub limits the moves directly.
 
 \section{Related Work}
 \label{sec:related}
@@ -145,7 +159,7 @@ RoboGuard check proposed actions against constraints
 LLM-Modulo argues for verifiers around a model rather than treating its
 output as an executable plan \citep{kambhampati2024llmmodulo}. Our checker
 rejects infeasible or rule-breaking orders; a separate guard limits how
-much capacity can leave a donor hub. We compare those mechanisms with a
+much capacity can leave any one hub. We compare those mechanisms with a
 smaller view and with a model that reviews a classical replanner's orders.
 
 \section{Ripple}
@@ -201,7 +215,7 @@ flight. \texttt{serve\_from} lets a neighboring hub serve a site, after
 which the aircraft returns to its own hub. \texttt{reposition} flies an
 idle aircraft to a new hub, which becomes its home. \texttt{transfer} uses
 a vehicle to carry stock between hubs. The latter two consume aircraft
-time and alter the capacity available to the donor for later requests.
+time and leave the hub that gave them less capacity for later requests.
 This difference is central to the experiment: a move can solve the current
 shortage and still reduce the day's on-time share. Ripple records each
 order's acceptance and the subsequent flight, delivery, and hub state.
@@ -230,17 +244,13 @@ count as served, even if the manager ordered it in time.
 Requests and events are drawn from random numbers keyed by hub and event
 index. A seed therefore defines a common day for managers that give
 different orders. Randomness in the simulator is keyed by purpose and
-stable identities, and its phase order produces the same output at one,
-two, or eight workers. We also save each model reply with the prompt that
-produced it. An unchanged model run can then be replayed without another
-call. These properties make it possible to inspect a failed mission and to
-compare interventions on matched request streams. A changed view or policy
-changes future prompts and may require new model replies; saved replies
+stable identities, so a run repeats exactly. We also save each model reply
+with the prompt that produced it. An unchanged model run can then be
+replayed without another call. These properties make it possible to
+inspect a failed mission and to compare interventions on matched request
+streams. A changed view or policy changes future prompts and may require
+new model replies; saved replies
 alone do not make different conditions identical.
-
-% TODO Figure 1: a paired run showing the same surge under temporary
-% service and relocation, with the later donor-hub requests and tracks.
-% Draw only after the per-hub outcome attribution has been checked.
 
 \section{Experimental Evaluation}
 \label{sec:experiments}
@@ -287,60 +297,92 @@ order interface and are compared on the same day.
 Model managers use one frozen system prompt and one text for each event
 kind. We vary the view and feedback supplied by the delivery crate: hub
 summaries, summaries with order outcomes, a feasibility checker, a line
-reporting donor state after a move, a donor-capacity guard, and a view that
-shows only exceptions. We also test a model as a veto over the replanner
-and as the author of a policy file. Claude Haiku, Sonnet, Opus, and
-GPT-6 Luna appear in the live exceptions and veto comparisons; the larger
-interface ladder and policy-writing comparisons currently use Haiku and
-Sonnet. The current model results come from two seeds at 16 hubs. More
-seeds and 64-hub model runs are pending; the tables report the sample
-behind each result.
+reporting the lending hub's state after a move, a guard on the lending hub's
+reserve, and a view that shows only exceptions. We also test a model as a
+veto over the replanner and as the author of a policy file. Four models,
+Claude Haiku, Sonnet, and Opus and GPT-6 Luna, are compared in two roles, as
+live managers shown only the exceptions and as vetoes over the replanner, on
+three seeds at 16 hubs and two at 64. The step-by-step comparison of views
+and feedback and the policy-writing comparison use Haiku and Sonnet on two
+and three seeds at 16 hubs. The classical policies run on five seeds at 16
+and 64 hubs and three at four. Each table states its sample.
 
-Our experiments ask four questions:
-\begin{enumerate}
-\item Which kind of intervention helps the fleet?
-\item Does changing the model's view or authority reduce costly moves?
-\item Does the result depend on model choice or spare vehicles?
-\item What happens on a day with little to manage?
-\end{enumerate}
+The subsections ask, in order: what a replanner's help is worth and which
+part of it; whether any interface gets a model to stop relocating; what a
+model drops when given a planner's list; whether a model that writes the
+rules converges on the right ones; how spare capacity changes the cost of
+moving; whether the result depends on the model; and what a model does on
+a day with little to manage.
 
 \subsection{What is a replanner's help worth, and which part?}
 \label{sec:decomposition}
 
 \begin{table}[t]
-\caption{The replanner's help decomposed, mean on-time score over three
-seeds. The policies differ in which manager orders they apply.}
+\caption{The replanner's help decomposed: mean on-time score over five
+seeds at 16 and 64 hubs and three at four. The policies differ in which
+manager orders they apply; \emph{return} is \emph{move} with relocated
+aircraft sent home when the event ends, and was not run at four hubs.}
 \label{tab:decomposition}
 \centering
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccccc}
 \toprule
-Hubs & None & Replanner & Local & Serve & Move \\
+Hubs & None & Replanner & Local & Serve & Move & Return \\
 \midrule
-4  & 0.77 & 0.84 & 0.82 & 0.84 & 0.80 \\
-16 & 0.70 & 0.69 & 0.76 & 0.77 & 0.69 \\
-64 & 0.67 & 0.68 & 0.73 & 0.75 & 0.64 \\
+4  & 0.77 & 0.84 & 0.82 & 0.84 & 0.80 & -- \\
+16 & 0.68 & 0.70 & 0.75 & 0.76 & 0.68 & 0.73 \\
+64 & 0.67 & 0.69 & 0.73 & 0.75 & 0.64 & 0.70 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:decomposition} shows the classical comparison. At 16
-hubs, local rules raise the mean score from 0.70 to 0.76, while the full
-replanner scores 0.69. At 64 hubs, local rules score 0.73 and temporary
-cross-hub service raises this to 0.75; adding relocation without lending
-reduces the score to 0.64. The differences between local and move grow
-from 0.02 at four hubs to 0.07 at 16 and 0.09 at 64. The full replanner
-combines lending with relocation and recovers some of that loss, but does
-not match local rules at 16 or 64 hubs.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/paired-surge}
+\caption{What a move costs. A surge hits hub 6 and its neighbors at
+minute 60 on a quiet 16-hub day. Hub 1 sits next to the surge and has five
+aircraft. We run the same day under two fixed rules. Under lending, hub 1's
+aircraft fly to the surge and come home between trips. Under relocating,
+they move to the surge hubs for good. Top: how many of hub 1's aircraft are
+home. Bottom: how many flights have reached hub 1's own clinics and
+hospitals. The surge is served about equally well either way. Under lending
+all 48 of hub 1's requests are served; under relocating 38 of the 48 are
+never served, because its aircraft never come back. The day scores 0.92
+under lending and 0.85 under relocating. The same loss appears in the
+model runs (Section~\ref{sec:models}).}
+\label{fig:paired}
+\end{figure}
 
-The decomposition separates the immediate event response from its effect
-on later work. A borrowed flight returns to its donor hub. A permanent
+Table~\ref{tab:decomposition} shows the classical comparison, with no
+model involved. The score is the weighted share of requests delivered on
+time, so a difference of 0.01 is one percentage point. At 16 hubs, local
+rules raise the mean from 0.68 with no manager to 0.75, and lending raises
+it to 0.76; the replanner, which does everything, scores 0.70, and
+relocating without lending scores 0.68, no better than no manager. At 64
+hubs, local rules score 0.73, lending 0.75, the replanner 0.69, and
+relocating alone 0.64, worse than no manager. So relocating costs two
+points at four hubs, seven at 16, and nine at 64, measured against local
+rules. The replanner, which lends and relocates, lands between the two at
+both sizes: above no manager, below local rules. Sending relocated
+aircraft home when the event ends recovers about two thirds of what
+relocating loses. Local rules beat the replanner on nine seeds of ten,
+and relocating alone is the worst policy on eight.
+
+The decomposition separates the immediate event response from its effect on
+later work. A lent flight comes home. A permanent
 reposition does not, and a stock transfer occupies another aircraft.
-The aggregate late-delivery counts are higher with relocation at 64 hubs.
-These counts are consistent with donor depletion; a per-hub trajectory
-analysis is needed to attribute each missed request to a particular move.
-The finding is specific to these missions and policies: a different
-relocation rule, demand distribution, or return policy could change the
-comparison.
+Figure~\ref{fig:paired} shows the mechanism on one surge: the surge area is
+served about equally well either way, and the whole difference is the
+lending hub's own requests after its aircraft left. The same holds on the
+full days. Over the five 16-hub days, relocating lost 73 more requests a day
+than lending, counting late and undelivered together. Of those, 68 were at
+the hubs that gave aircraft or stock, 4 at the hubs that received them, and
+1 elsewhere. Per hundred of their own requests, the hubs that gave lost 14
+more, the hubs that received 2, and the rest none. At 64 hubs, where two
+thirds of the region gives on a typical day, the hubs that gave lost 433
+more requests a day than under lending, 18 per hundred of their own, while
+the hubs that received and the rest lost none. The finding is
+specific to these missions and policies: a different relocation rule, demand
+distribution, or return policy could change the comparison.
 
 \subsection{Does any interface get a model to stop relocating?}
 \label{sec:ladder}
@@ -366,23 +408,27 @@ Exceptions + feedback  & 0.73 / 0.75, 3 / 1   & 0.67 / 0.68, 29 / 14 \\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:ladder} compares two models in the live manager role.
-With summaries alone, both make dozens of vehicle and stock moves on each
-seed and score below the local policy. Outcome feedback, feasibility
-checks, and a line showing donor state after a move change their behavior,
-but none consistently closes the gap. The cost line is therefore not a
-reliable correction in these runs; it does not show that the models cannot
-use cost information in another form.
+Table~\ref{tab:ladder} compares two models in the live manager role. With
+summaries alone, both make dozens of vehicle and stock moves on each seed
+and score below the local policy. Outcome feedback, feasibility checks, and
+a line showing the lending hub's state after a move change their behavior, but
+none consistently closes the gap. The cost line is therefore not a reliable
+correction in these runs; it does not show that the models cannot use cost
+information in another form.
 
 Two interfaces change the intervention more directly. A guard refuses
-moves that would leave a donor below a capacity threshold, reducing
-Haiku's moves from 38 and 22 with feedback to 12 and 5. The exceptions
+moves that would leave the hub giving them below a capacity threshold, reducing
+Haiku's moves from 38 and 22 with feedback to 12 and 5. The replanner
+with the same guard scores 0.72 and 0.75 and Haiku with it 0.70 and 0.75,
+so the guard does the work and the model adds nothing over it. The exceptions
 view leaves Haiku with 3 and 1 moves, close to the local policy's score;
 Sonnet still makes 29 and 14 moves under the same view. The difference
 between the two models is as useful as the aggregate score: withholding
 routine fleet state can reduce unnecessary orders, but its effect is not
-a property of the view alone. The matched runs at 64 hubs and additional
-seeds will determine how stable these comparisons are.
+a property of the view alone. At 64 hubs the exceptions view holds no
+model back (Section~\ref{sec:models}): a region that size has dozens of
+hubs with a problem at every call, so the view no longer hides much, and
+every model relocates.
 
 \subsection{What does a model drop when given a planner's list?}
 \label{sec:veto}
@@ -392,11 +438,14 @@ the model can drop any of them, but cannot add its own. On the two
 16-hub seeds, Haiku retains 9 and 15 of the replanner's 12 and 15 moves,
 while retaining 72 and 80 of its 144 and 120 lending permissions. Sonnet
 retains 14 moves on each seed and 48 and 80 lending permissions. The veto
-improves the score over the replanner in some runs, yet it does not recover
+improves the score over the replanner in most runs, yet it does not recover
 the local policy's advantage. Given a proposal list, these models remove
 many temporary permissions and retain most permanent moves. The counts
 refer to permissions and orders, not completed borrowed flights. The
-64-hub and additional-seed comparisons are pending.
+pattern holds on a third 16-hub seed and on two seeds at 64 hubs
+(Section~\ref{sec:models}): in 10 of those 12 runs the model keeps a
+larger share of the replanner's moves than of its lending permissions,
+and every veto run scores under local rules, by 0.01 to 0.07.
 
 \subsection{Does a model converge on the right policy given time?}
 \label{sec:revision}
@@ -404,8 +453,8 @@ refer to permissions and orders, not completed borrowed flights. The
 A model can also write the rules that run the mission. We give Haiku and
 Sonnet the mission description and a small policy language, then execute
 each written policy without further model calls. Both initial policies
-parse and run. Both order more stock transfers than the hand-written
-replanner, including transfers from two donors on a surge. We then show
+parse and run. Both order more stock transfers than the
+replanner, including transfers from two hubs on a surge. We then show
 each model the aggregate score, late deliveries, moves, and lending counts
 from a day at 16 and 64 hubs and ask it to revise once.
 
@@ -423,18 +472,19 @@ when required.
 \label{sec:where}
 
 \begin{table}[t]
-\caption{Effect of fleet capacity, mean on-time score over three seeds.
-The return policy sends relocated aircraft home when the event ends.}
+\caption{Effect of fleet capacity, mean on-time score over three seeds
+(five at five vehicles per hub). The return policy sends relocated
+aircraft home when the event ends.}
 \label{tab:where}
 \centering
 \begin{tabular}{llccccc}
 \toprule
 Hubs & Per hub & None & Replanner & Local & Serve & Return \\
 \midrule
-16 & 5  & 0.70 & 0.69 & 0.76 & 0.77 & 0.74 \\
+16 & 5  & 0.68 & 0.70 & 0.75 & 0.76 & 0.73 \\
 16 & 8  & 0.80 & 0.83 & 0.87 & 0.88 & 0.84 \\
 16 & 12 & 0.83 & 0.90 & 0.90 & 0.91 & 0.90 \\
-64 & 5  & 0.67 & 0.68 & 0.73 & 0.75 & 0.70 \\
+64 & 5  & 0.67 & 0.69 & 0.73 & 0.75 & 0.70 \\
 64 & 8  & 0.79 & 0.83 & 0.85 & 0.87 & 0.86 \\
 64 & 12 & 0.83 & 0.88 & 0.89 & 0.90 & 0.89 \\
 \bottomrule
@@ -443,42 +493,83 @@ Hubs & Per hub & None & Replanner & Local & Serve & Return \\
 
 Table~\ref{tab:where} varies capacity while holding the manager policies
 fixed. At five vehicles per hub, local rules outperform the replanner by
-0.07 at 16 hubs and 0.05 at 64. At twelve vehicles per hub, that gap is
+0.05 at 16 hubs and at 64. At twelve vehicles per hub, that gap is
 0.00 and 0.01. More spare vehicles make relocation less costly, but the
 replanner does not overtake the local policy in these runs. Temporary
 service has the highest mean at every tested capacity. Returning a moved
 aircraft after an event recovers part of the loss at five and eight
-vehicles per hub. These tests bound the finding: it is strongest for a
-lean fleet, and the order's duration matters as much as its destination.
+vehicles per hub. The models were not run at the larger capacities, so
+this bounds the cost of a move, not a model's tendency to make one. The
+finding is strongest for a lean fleet, and the order's duration matters as
+much as its destination.
 
 \subsection{Do models respond differently to the same interface?}
 \label{sec:models}
 
 \begin{table*}[t]
-\caption{Four model configurations on exceptions and veto interfaces,
-16 hubs and two seeds: on-time score and moves made (or kept for veto).}
+\caption{Four models on the exceptions and veto interfaces: on-time
+score and moves made (or kept, for the veto), per seed. Local rules score
+0.74 / 0.79 / 0.76 on the three 16-hub seeds and 0.75 / 0.70 on the two
+64-hub seeds; the replanner 0.68 / 0.71 / 0.69 and 0.69 / 0.66.}
 \label{tab:models}
 \centering
-\begin{tabular}{lcccc}
+\begin{tabular}{llcccc}
 \toprule
-& Haiku & Sonnet & Opus & GPT-6 Luna \\
+Hubs & Interface & Haiku & Sonnet & Opus & GPT-6 Luna \\
 \midrule
-Exceptions & 0.73 / 0.75, 3 / 1 & 0.67 / 0.68, 29 / 14 & 0.67 / 0.68, 42 / 33 & 0.71 / 0.74, 2 / 0 \\
-Veto       & 0.72 / 0.74, 9 / 15 & 0.67 / 0.76, 14 / 14 & 0.73 / 0.74, 10 / 16 & 0.73 / 0.75, 6 / 1 \\
+16 & Exceptions & 0.73 / 0.75 / 0.76, 3 / 1 / 4 & 0.67 / 0.68 / 0.68, 29 / 14 / 22 & 0.67 / 0.68 / 0.80, 42 / 33 / 58 & 0.71 / 0.74 / 0.68, 2 / 0 / 1 \\
+16 & Veto       & 0.72 / 0.74 / 0.73, 9 / 15 / 18 & 0.67 / 0.76 / 0.74, 14 / 14 / 21 & 0.73 / 0.74 / 0.74, 10 / 16 / 23 & 0.73 / 0.75 / 0.73, 6 / 1 / 9 \\
+64 & Exceptions & 0.70 / 0.66, 43 / 24 & 0.70 / 0.57, 128 / 117 & 0.63 / 0.54, 325 / 267 & 0.66 / 0.60, 34 / 5 \\
+64 & Veto       & 0.71 / 0.65, 79 / 60 & 0.72 / 0.68, 90 / 64 & 0.74 / 0.67, 101 / 64 & 0.72 / 0.68, 41 / 68 \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
-The four model configurations respond differently to the same interface
-(Table~\ref{tab:models}). Under the exceptions view, Haiku makes 3 and 1
-moves, and GPT-6 Luna makes 2 and 0; Sonnet makes 29 and 14, and Opus
-makes 42 and 33. Opus, the largest of the Claude models tested, is the
-most interventionist in these two runs. As a veto, GPT-6 Luna retains the
-fewest proposed moves and scores 0.73 and 0.75, matching the local policy
-on one seed and trailing it by 0.04 on the other. The current evidence
-supports model-dependent behavior, not a ranking by model size or a claim
-that one interface is best for every model. The table reports two seeds;
-replication at 16 and 64 hubs remains necessary.
+The four models respond differently to the same interface
+(Table~\ref{tab:models}), and the region's size changes the answer. At 16
+hubs under the exceptions view, Haiku makes 3, 1, and 4 moves and GPT-6 Luna
+2, 0, and 1; Sonnet makes 14 to 29 and Opus 33 to 58. At 64 hubs the view
+holds no model back: Haiku makes 43 and 24 moves, Sonnet 128 and 117, and
+Opus 325 and 267, with the two lowest scores in the study, 0.63 and 0.54,
+and six hours of aircraft time inside closed areas on one seed. GPT-6 Luna
+moves little there and still scores 0.66 and 0.60, because it grants 597 and
+908 lending permissions and hubs spend the day covering each other's sites.
+Of the two roles, the veto is the steadier at both sizes: one to seven
+points under local rules on every seed, never above. The live runs also
+lose vehicles, which happens when an aircraft runs out of endurance away
+from a hub: up to 8 of 80 at 16 hubs and up to 38 of 320 at 64, the most
+under Opus. The veto runs and the classical policies lose none
+(Table~\ref{tab:counts} in the appendix).
+
+Of the 40 live and veto runs, 39 score under local rules on the same day.
+The exception is Opus under the exceptions view at 16 hubs on the third
+seed: 0.80 against 0.76, with 58 moves. On that day its relocations
+landed where the next requests arrived: 14 requests were missed for want
+of an aircraft against 40 under local rules and 28 under lending. The same
+arm scored 0.67 and 0.68 on the other 16-hub seeds and 0.63 and 0.54 at
+64 hubs, the four lowest days in the study. The win is a day on which
+relocating happened to pay, not a model that learned when to relocate.
+Restraint does not come with model size, and no interface is best for
+every model.
+
+Do the models lose because they move? The classical runs say a move costs
+the hub that gave the aircraft. If the models' moves are what costs them,
+their losses should sit at the same hubs. To check, we replayed all 40
+model runs from their saved replies, this time counting late and
+undelivered requests at each hub, and compared each hub with local rules
+on the same day. We sort the hubs in each run into three groups: hubs that
+gave aircraft or stock, hubs that only received, and hubs that did neither.
+For every 100 of its own requests, a hub that gave lost 11 more than under
+local rules. A hub that only received lost none. A hub that did neither
+lost 3. Of everything the models lost against local rules, 90 percent was
+at the hubs that gave. This holds for Haiku, Sonnet, and Opus at both
+sizes and in both roles, where the share is 80 percent or more. GPT-6 Luna
+is different. It rarely moves, so only a third of its loss at 16 hubs is at
+hubs that gave. Its loss comes from lending: on one 64-hub day it made five
+moves, granted 908 lending permissions, and lost 331 requests at hubs that
+neither gave nor received. On the one day a model beat local rules, Opus
+moved among 14 hubs and those hubs lost nothing. So the models lose because
+they move, and the hub that was asked to help pays.
 
 \subsection{What does a model do on a quiet day?}
 \label{sec:quiet}
@@ -499,34 +590,36 @@ empty view.
 The classical decomposition gives the model results a physical explanation.
 A manager can help a stressed hub by changing priority or allowing
 neighboring aircraft to serve its sites. Those actions expire or end with
-the flight. Relocating vehicles changes the donor's future capacity, and
+the flight. Relocating vehicles changes the giving hub's future capacity, and
 stock transfers use aircraft that could have delivered requests. In this
 mission, the latter actions often cost more than they gain. The same
 pattern appears in a structured replanner and in several model roles, so
 it cannot be reduced to a single model making a malformed call.
 
-The interfaces change different parts of this behavior. Outcome feedback
-and a line showing donor state provide information, but in the present
-runs they do not reliably prevent moves. The exceptions view limits what
-the manager sees and reduces moves for some models. A donor-capacity guard
-makes the constraint explicit and refuses orders that cross it. A model
-veto can remove bad orders from a planner, but these models also remove
-lending permissions while keeping many relocations. A useful next design
-would let the model propose an intervention and let a planner price its
-opportunity cost over the remaining day before committing it. Ripple can
-compare that design with the present ones on the same missions.
+The interfaces change different parts of this behavior. Outcome feedback and
+a line showing the lending hub's state provide information, but they do not
+prevent moves. The exceptions view limits what the manager sees and holds
+some models back at 16 hubs; at 64 hubs the exceptions themselves are
+plentiful and every model relocates. A guard on each hub's reserve
+makes the constraint explicit and refuses orders that cross it. A model veto
+can remove bad orders from a planner, but these models also remove lending
+permissions while keeping many relocations. A useful next design would let
+the model propose an intervention and let a planner price its opportunity
+cost over the remaining day before committing it. Ripple can compare that
+design with the present ones on the same missions.
 
 The study has clear limits. Its request distribution, event rates, hub
 geometry, and four-hour horizon are simulated. The reported fleets use
 kinematic vehicle models, so the result concerns fleet allocation under
-these flight times and ranges; it does not establish a difference caused
-by six-degree-of-freedom dynamics. The model comparisons currently have
-two seeds at 16 hubs, and the command-line clients expose different
-harnesses. Additional seeds, 64-hub model runs, and API-based clients are
-needed before making a broad claim across models. A per-hub analysis of
-missed deliveries would also strengthen the proposed donor-depletion
-mechanism. Longer days, different demand patterns, and policies that
-return vehicles sooner would test where relocating begins to pay.
+these flight times and ranges; it does not establish a difference caused by
+six-degree-of-freedom dynamics. The model comparisons have three seeds at 16
+hubs and two at 64. The four models were reached through two command-line
+tools that wrap them differently, one keeping a coding agent's tools and one
+not; calling the model APIs directly would make the cleaner cross-model
+comparison. One model run in 40 beat local rules, so the claim is about the
+average and the spread of a model's days, not a bound. Longer days,
+different demand patterns, and policies that return vehicles sooner would
+test where relocating begins to pay.
 
 Ripple's broader role is to make these questions experimental. The manager
 can be changed without rewriting the courier, the vehicle model without
@@ -541,13 +634,100 @@ Language models evaluated in the study are named in the experimental
 setup. An AI assistant helped write code and prose, which the author
 reviewed.
 
+\appendix
+\label{app:prompt}
+
+\subsection{The frozen system prompt}
+
+Every model call in the study used this system prompt. It was written once,
+before any scored run, and never changed. The mission file holds it.
+
+\lstinputlisting{appendix/system-prompt.txt}
+
+\subsection{Event texts}
+\label{app:events}
+
+Each event kind has one text, written once and filled in from the event's
+fields. The model reads events as these sentences under \emph{New events}
+and \emph{Events still in force} (Section~\ref{app:call}). The placeholders
+are the hub or hubs, the site, the stock item, the area, the vehicle class,
+and the start and end minutes.
+
+\begin{center}
+\footnotesize
+\begin{tabularx}{\columnwidth}{@{}lX@{}}
+\toprule
+Kind & Text \\
+\midrule
+Surge & A mass-casualty incident near \{hubs\}: the hospitals there are
+sending trauma requests beyond what those hubs can fly alone, starting at
+minute \{from\}. \\
+Shortage & \{item\} has run out at \{hubs\} as of minute \{from\}. Requests
+for \{item\} at their sites can only be served from hubs that still hold
+it. \\
+Closure & Airspace is closed in \{area\} from minute \{from\} until minute
+\{to\}; no flights through it. \\
+Outage & \{hubs\} cannot launch from minute \{from\} until minute \{to\};
+its sites must be covered by other hubs. \\
+Weather & Weather at \{hubs\}: no \{class\} launches from minute \{from\}
+until minute \{to\}. \\
+Priority & Hospital \{site\} takes priority over routine deliveries from
+minute \{from\} until \{to\}. \\
+Rooftop closed & The rooftop at hospital \{site\} is closed from minute
+\{from\} until minute \{to\}; only drops at its ground pad are allowed. \\
+Corridor & A medevac helicopter corridor is active in \{area\} from minute
+\{from\} until minute \{to\}; no vehicle may cross it below 150 m. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{One complete model call}
+\label{app:call}
+
+The prompt below is one call to Opus as a live manager with the exceptions
+view and feedback on a 16-hub day, at minute 35, and the reply that came
+back. The prompt is what the delivery crate wrote; nothing was removed. The
+order format at the end is part of every live prompt. The reply closed the
+rooftop that had just been reported and moved two fixed-wing aircraft from
+hub 5 to hub 4, the one hub with waiting requests and no idle vehicle, with
+a return time.
+
+\lstinputlisting{appendix/call-prompt.txt}
+
+The reply:
+
+\lstinputlisting{appendix/call-reply.txt}
+
+A veto prompt has the same head and, instead of the order format, the
+replanner's numbered proposals and a one-line instruction. The tail of one
+such prompt, at minute 41 on a 16-hub day after a stock shortage at five
+hubs, and its reply:
+
+\lstinputlisting{appendix/veto-tail.txt}
+
+\lstinputlisting{appendix/veto-reply.txt}
+
+\subsection{Per-run counts}
+\label{app:counts}
+
+Table~\ref{tab:counts} gives, for each of the 40 model runs behind
+Table~\ref{tab:models}, the number of model calls, the orders the model
+gave (or, for the veto, the replanner's proposals it kept), how many were
+applied and how many refused by the dispatcher, the replies that could not
+be read, the moves (applied relocations and stock flights), the lending
+permissions, and the vehicles lost.
+
+\begin{table*}[t]
+\caption{Per-run counts for the 40 model runs. Refused orders are those
+the dispatcher could not apply, almost all for too few idle vehicles.
+Unreadable replies were not JSON in the expected form and changed nothing.}
+\label{tab:counts}
+\centering
+\footnotesize
+\input{appendix/counts.tex}
+\end{table*}
+
 \bibliographystyle{IEEEtranN}
 \bibliography{../references}
-
-% TODO before submission: add per-run order and refusal counts, prompt and
-% reply sizes, and late deliveries by donor and recipient hub. Include the
-% frozen system prompt, event texts, and one complete model call in an
-% appendix. These are research evidence, not claims to infer from the
-% summary tables.
 
 \end{document}

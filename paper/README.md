@@ -4,9 +4,9 @@
   language-model fleet manager over a classical dispatcher
   over-helps: it relocates vehicles and stock when the best policy is local
   rules and lent flights, and the cost of relocating grows with the region.
-  The study code is `crates/delivery`, the plan with every result is
-  [docs/FLEET_MANAGER_PLAN.md](../docs/FLEET_MANAGER_PLAN.md), and the
-  roadmap is [docs/TODO.md](../docs/TODO.md). Build it with
+  The study code is `crates/delivery`, and the claim, the results the paper
+  still needs, and the roadmap are in [docs/TODO.md](../docs/TODO.md).
+  Build it with
   `tectonic -o <folder> main.tex` in `manuscript/`. The earlier manuscript,
   a different paper on catching planner mistakes, is on the `llm-fleet`
   branch.

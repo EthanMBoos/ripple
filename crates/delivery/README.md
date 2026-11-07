@@ -4,8 +4,9 @@ One operating day of blood delivery across a region of hubs, flown by
 fixed-wing aircraft and multirotors, run by a classical dispatcher, with a
 fleet manager above it that reads events and gives orders. The fleet manager
 is a language model, a structured replanner, a hand-written script, or
-nothing. The study plan is
-[docs/FLEET_MANAGER_PLAN.md](../../docs/FLEET_MANAGER_PLAN.md).
+nothing. The study's claim and results are in
+[docs/TODO.md](../../docs/TODO.md), the paper in
+[paper/manuscript/main.tex](../../paper/manuscript/main.tex).
 
 ## Run
 
@@ -89,7 +90,10 @@ written once.
 
 Facts happen whether or not anyone acts. Rules are scored from truth: a
 vehicle inside a closed area counts against the run only if it was sent after
-the closure began.
+the closure began. A delivery whose flight broke a rule is not counted as
+delivered (`delivered_in_breach`), so obeying a rule is never a loss on the
+score; without this the dispatcher alone, which ignores every rule, beat the
+replanner.
 
 ### Orders
 
@@ -194,4 +198,7 @@ urgent 2, trauma 4). The other columns: on-time and late counts by urgency,
 `missed_<reason>`, `closure_breach_s` and `corridor_breach_s`,
 `weather_breaches`, `outage_breaches`, `rooftop_breaches`, `vehicles_lost`,
 transfers, orders by name and outcome, and calls, prompt and reply
-characters, queries and parse failures.
+characters, queries and parse failures. Per hub, `hub_001_requests`,
+`_on_time`, `_late` and `_undelivered` count its own sites' requests, and
+`_gave` and `_got` the relocations and stock flights it donated and
+received, so a day's losses can be laid against the hubs that donated.

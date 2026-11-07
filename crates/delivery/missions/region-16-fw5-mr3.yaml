@@ -2,10 +2,7 @@
 # SimpleAircraft and point multirotors. Written by crates/delivery/region.py; edit that
 # script, not this file. The Dispatcher on the region entity holds the hubs,
 # stock, requests, events, and the fleet manager; see crates/delivery/README.md
-# and docs/FLEET_MANAGER_PLAN.md.
-#
-# A group's Courier block repeats the template's vehicle values because a
-# group's autonomy replaces the template's whole slot.
+# and docs/TODO.md.
 format_version: 1
 name: region-16
 
@@ -18,14 +15,18 @@ networks: {GlobalNetwork: {}}
 metrics: {DeliveryScore: {}}
 
 templates:
+  # Each hub's groups name a template and give only their hub and position;
+  # a group's Courier values lay over the template's.
   fixed_wing:
     team: 1
     visual_model: aircraft
+    position_stddev_m: [60, 60, 0]
+    heading_deg: 90
+    velocity_mps: [0, 25, 0]
     autonomy:
       Courier:
         class: fixed_wing
-        hub: 1
-        hub_m: [0, 0, 0]
+        region: {hubs: 16, hub_spacing_m: 15000}
         cruise_speed_mps: 25
         endurance_s: 3600
         cruise_altitude_m: 120
@@ -40,11 +41,11 @@ templates:
   multirotor:
     team: 1
     visual_model: sphere
+    position_stddev_m: [3, 3, 0]
     autonomy:
       Courier:
         class: multirotor
-        hub: 1
-        hub_m: [0, 0, 0]
+        region: {hubs: 16, hub_spacing_m: 15000}
         cruise_speed_mps: 12
         endurance_s: 1500
         cruise_altitude_m: 80
@@ -193,543 +194,159 @@ entities:
     template: fixed_wing
     count: 5
     position_m: [-22500, -22500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 1
-        hub_m: [-22500, -22500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 1}}
   hub1_multirotor:
     template: multirotor
     count: 3
     position_m: [-22500, -22500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 1
-        hub_m: [-22500, -22500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 1}}
   hub2_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [-7500, -22500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 2
-        hub_m: [-7500, -22500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 2}}
   hub2_multirotor:
     template: multirotor
     count: 3
     position_m: [-7500, -22500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 2
-        hub_m: [-7500, -22500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 2}}
   hub3_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [7500, -22500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 3
-        hub_m: [7500, -22500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 3}}
   hub3_multirotor:
     template: multirotor
     count: 3
     position_m: [7500, -22500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 3
-        hub_m: [7500, -22500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 3}}
   hub4_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [22500, -22500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 4
-        hub_m: [22500, -22500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 4}}
   hub4_multirotor:
     template: multirotor
     count: 3
     position_m: [22500, -22500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 4
-        hub_m: [22500, -22500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 4}}
   hub5_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [-22500, -7500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 5
-        hub_m: [-22500, -7500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 5}}
   hub5_multirotor:
     template: multirotor
     count: 3
     position_m: [-22500, -7500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 5
-        hub_m: [-22500, -7500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 5}}
   hub6_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [-7500, -7500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 6
-        hub_m: [-7500, -7500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 6}}
   hub6_multirotor:
     template: multirotor
     count: 3
     position_m: [-7500, -7500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 6
-        hub_m: [-7500, -7500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 6}}
   hub7_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [7500, -7500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 7
-        hub_m: [7500, -7500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 7}}
   hub7_multirotor:
     template: multirotor
     count: 3
     position_m: [7500, -7500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 7
-        hub_m: [7500, -7500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 7}}
   hub8_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [22500, -7500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 8
-        hub_m: [22500, -7500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 8}}
   hub8_multirotor:
     template: multirotor
     count: 3
     position_m: [22500, -7500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 8
-        hub_m: [22500, -7500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 8}}
   hub9_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [-22500, 7500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 9
-        hub_m: [-22500, 7500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 9}}
   hub9_multirotor:
     template: multirotor
     count: 3
     position_m: [-22500, 7500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 9
-        hub_m: [-22500, 7500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 9}}
   hub10_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [-7500, 7500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 10
-        hub_m: [-7500, 7500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 10}}
   hub10_multirotor:
     template: multirotor
     count: 3
     position_m: [-7500, 7500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 10
-        hub_m: [-7500, 7500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 10}}
   hub11_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [7500, 7500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 11
-        hub_m: [7500, 7500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 11}}
   hub11_multirotor:
     template: multirotor
     count: 3
     position_m: [7500, 7500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 11
-        hub_m: [7500, 7500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 11}}
   hub12_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [22500, 7500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 12
-        hub_m: [22500, 7500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 12}}
   hub12_multirotor:
     template: multirotor
     count: 3
     position_m: [22500, 7500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 12
-        hub_m: [22500, 7500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 12}}
   hub13_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [-22500, 22500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 13
-        hub_m: [-22500, 22500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 13}}
   hub13_multirotor:
     template: multirotor
     count: 3
     position_m: [-22500, 22500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 13
-        hub_m: [-22500, 22500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 13}}
   hub14_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [-7500, 22500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 14
-        hub_m: [-7500, 22500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 14}}
   hub14_multirotor:
     template: multirotor
     count: 3
     position_m: [-7500, 22500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 14
-        hub_m: [-7500, 22500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 14}}
   hub15_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [7500, 22500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 15
-        hub_m: [7500, 22500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 15}}
   hub15_multirotor:
     template: multirotor
     count: 3
     position_m: [7500, 22500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 15
-        hub_m: [7500, 22500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 15}}
   hub16_fixed_wing:
     template: fixed_wing
     count: 5
     position_m: [22500, 22500, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: 16
-        hub_m: [22500, 22500, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {Courier: {hub: 16}}
   hub16_multirotor:
     template: multirotor
     count: 3
     position_m: [22500, 22500, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: 16
-        hub_m: [22500, 22500, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {Courier: {hub: 16}}

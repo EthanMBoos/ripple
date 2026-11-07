@@ -30,7 +30,7 @@ use crate::messages::{
     ASSIGNMENT_TOPIC, Assignment, DELIVERED_TOPIC, Delivered, Phase, RELOCATE_TOPIC, Relocate,
     STATUS_TOPIC, SkillName, Status, VehicleCard, VehicleClass,
 };
-use crate::region::horizontal_m;
+use crate::region::{RegionConfig, horizontal_m, hub_position_m, side};
 use crate::skill::{self, Settings, Skill};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
@@ -41,7 +41,9 @@ pub struct CourierConfig {
     class: Option<VehicleClass>,
     /// Its hub, numbered from 1. Required.
     hub: u32,
-    hub_m: [f64; 3],
+    /// The region's grid, the same numbers as the Dispatcher's `region`, so
+    /// `hub` alone says where home is.
+    region: RegionConfig,
     cruise_speed_mps: f64,
     endurance_s: f64,
     cruise_altitude_m: f64,
@@ -64,7 +66,7 @@ impl Default for CourierConfig {
         Self {
             class: None,
             hub: 0,
-            hub_m: [0.0; 3],
+            region: RegionConfig::default(),
             cruise_speed_mps: 12.0,
             endurance_s: 1500.0,
             cruise_altitude_m: 100.0,
@@ -117,7 +119,13 @@ impl Autonomy for Courier {
         config
             .class
             .context("Courier needs class: fixed_wing or multirotor")?;
-        ensure!(config.hub >= 1, "Courier needs hub, numbered from 1");
+        side(&config.region)?;
+        ensure!(
+            config.hub >= 1 && config.hub <= config.region.hubs,
+            "Courier hub must be 1 to {}, not {}",
+            config.region.hubs,
+            config.hub
+        );
         ensure!(
             config.cruise_speed_mps > 0.0 && config.endurance_s > 0.0,
             "Courier cruise speed and endurance must be positive"
@@ -141,7 +149,11 @@ impl Autonomy for Courier {
                 endurance_s: config.endurance_s,
             },
             hub: config.hub,
-            hub_world_m: Vec3::from(config.hub_m),
+            hub_world_m: hub_position_m(
+                config.hub,
+                side(&config.region).expect("checked in configure"),
+                config.region.hub_spacing_m,
+            ),
             cruise_altitude_m: config.cruise_altitude_m,
             hub_radius_m: config.hub_radius_m,
             arrival_radius_m: config.arrival_radius_m,

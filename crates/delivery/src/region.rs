@@ -75,18 +75,24 @@ const HOSPITAL_RADII_KM: [f64; 2] = [1.5, 2.5];
 pub const PAD_OFFSET_M: f64 = 300.0;
 pub const ROOFTOP_HEIGHT_M: f64 = 40.0;
 
+/// Hubs on a side of the square grid, checking the region's numbers.
+pub fn side(config: &RegionConfig) -> Result<u32> {
+    let side = (f64::from(config.hubs).sqrt()).round() as u32;
+    ensure!(
+        config.hubs >= 1 && side * side == config.hubs,
+        "region.hubs must be a square number (1, 4, 16, 64, 256), not {}",
+        config.hubs
+    );
+    ensure!(
+        config.hub_spacing_m > 0.0,
+        "region.hub_spacing_m must be positive"
+    );
+    Ok(side)
+}
+
 impl Region {
     pub fn new(config: &RegionConfig) -> Result<Self> {
-        let side = (f64::from(config.hubs).sqrt()).round() as u32;
-        ensure!(
-            config.hubs >= 1 && side * side == config.hubs,
-            "region.hubs must be a square number (1, 4, 16, 64, 256), not {}",
-            config.hubs
-        );
-        ensure!(
-            config.hub_spacing_m > 0.0,
-            "region.hub_spacing_m must be positive"
-        );
+        let side = side(config)?;
         let mut hubs = Vec::new();
         let mut sites = Vec::new();
         for row in 0..side {

@@ -181,8 +181,12 @@ fn plugin_configs(slot: Mapping) -> Result<Vec<PluginConfig>> {
 }
 
 /// Replaces each entity's `template: name` with that template's keys. The
-/// entity's own keys win, and each replaces the template's value wholesale:
-/// an entity's `autonomy` replaces the template's whole `autonomy` slot.
+/// entity's own keys win, and each replaces the template's value wholesale,
+/// with one exception: when the template and the entity both give a slot
+/// exactly one plugin and it is the same plugin, the entity's values change
+/// that plugin's values and the rest stay. So a group sets a Courier's hub
+/// without repeating its speeds, and still swaps a motion model by naming a
+/// different one.
 fn expand_templates(tree: &mut Value) -> Result<()> {
     let Value::Mapping(root) = tree else {
         bail!("a mission must be a map");
@@ -217,11 +221,38 @@ fn expand_templates(tree: &mut Value) -> Result<()> {
         );
         let mut expanded = template.clone();
         for (field, value) in fields.iter() {
-            expanded.insert(field.clone(), value.clone());
+            let merged = match (expanded.get(field), value) {
+                (Some(Value::Mapping(inherited)), Value::Mapping(own)) => {
+                    same_plugin_merged(inherited, own)
+                }
+                _ => None,
+            };
+            expanded.insert(field.clone(), merged.unwrap_or_else(|| value.clone()));
         }
         *fields = expanded;
     }
     Ok(())
+}
+
+/// The entity's values laid over the template's for a slot where both name
+/// one plugin and it is the same one; `None` when the slot is replaced.
+fn same_plugin_merged(inherited: &Mapping, own: &Mapping) -> Option<Value> {
+    if inherited.len() != 1 || own.len() != 1 {
+        return None;
+    }
+    let (name, inherited_values) = inherited.iter().next()?;
+    let own_values = own.get(name)?;
+    let (Value::Mapping(mut values), Value::Mapping(own_values)) =
+        (or_empty(inherited_values), or_empty(own_values))
+    else {
+        return None;
+    };
+    for (key, value) in own_values {
+        values.insert(key, value);
+    }
+    let mut slot = Mapping::new();
+    slot.insert(name.clone(), Value::Mapping(values));
+    Some(Value::Mapping(slot))
 }
 
 /// A bare key (`SimpleAircraft:`) means "no values".
@@ -491,17 +522,42 @@ entities:
     team: 2
     autonomy:
       Straight:
+        enable_boundary_control: true
 ";
 
     #[test]
-    fn templates_fill_groups_and_own_keys_replace_whole_values() -> Result<()> {
+    fn templates_fill_groups_and_same_plugin_values_merge() -> Result<()> {
         let mission = load(TEMPLATED, &[])?;
         let (blue, red) = (&mission.entities[0], &mission.entities[1]);
         assert_eq!((blue.team, blue.heading_deg), (1, 90.0));
         assert_eq!((red.team, red.heading_deg), (2, 90.0));
-        // Red's own `autonomy` replaced the template's, parameters and all.
-        assert!(red.autonomy[0].params.is_empty());
+        // Red names the template's own plugin, so its values lay over the
+        // template's: the speed stays and the new flag is added.
+        assert_eq!(red.autonomy[0].params["speed_mps"], Value::from(25));
+        assert_eq!(
+            red.autonomy[0].params["enable_boundary_control"],
+            Value::from(true)
+        );
         mission.resolve(&PluginRegistry::with_builtins())?;
+        Ok(())
+    }
+
+    #[test]
+    fn a_different_plugin_or_several_replace_the_whole_slot() -> Result<()> {
+        let other = TEMPLATED.replace(
+            "      Straight:\n        enable_boundary_control: true\n",
+            "      Other:\n        turn_deg: 5\n",
+        );
+        let red = &load(&other, &[])?.entities[1];
+        assert_eq!(red.autonomy[0].name, "Other");
+        assert_eq!(red.autonomy[0].params.len(), 1);
+        let several = TEMPLATED.replace(
+            "      Straight:\n        enable_boundary_control: true\n",
+            "      Straight:\n      Other:\n",
+        );
+        let red = &load(&several, &[])?.entities[1];
+        assert_eq!(red.autonomy.len(), 2);
+        assert!(red.autonomy[0].params.is_empty());
         Ok(())
     }
 

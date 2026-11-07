@@ -1,7 +1,7 @@
 # Cited papers and code
 
 Every source in [references.bib](../references.bib), the reading list for the
-fleet manager study ([plan](../../docs/FLEET_MANAGER_PLAN.md), [notes and
+fleet manager study ([claim and results](../../docs/TODO.md), [notes and
 verdict](../../docs/LITERATURE.md)), downloaded for local reading: the PDF, a
 Markdown copy for searching, and shallow clones of the code the authors
 published. It goes in `sources/`, which git ignores, since these are other

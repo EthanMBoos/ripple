@@ -171,9 +171,11 @@ the group has, replacing its plugins: `'entities.red.autonomy:={Straight: {}}'`.
 
 A template is a named set of entity fields. A group names one with
 `template:`, and its own keys replace the template's. The replacement is
-whole: a group's `controller` replaces the template's entire `controller`
-slot, and a group's `spawn` replaces the template's whole `spawn`, so a group
-can replace an inherited motion model.
+whole, with one exception. When the template and the group both give a slot
+exactly one plugin and it is the same plugin, the group's values lay over the
+template's values for that plugin and the rest stay. A group that names a
+different plugin, or several, replaces the template's whole slot, so a group
+can still swap a motion model or a controller.
 
 ```yaml
 templates:
@@ -196,10 +198,29 @@ entities:
     template: hovering_quad
     team: 3
     position_m: [-10, 10, 30]
-    controller:              # replaces the template's controller slot
-      MotorSpeeds:
-        speeds_radps: [820, 821, 823, 822]
+    controller:              # the same plugin: these speeds replace the
+      MotorSpeeds:           # template's, and any other MotorSpeeds value
+        speeds_radps: [820, 821, 823, 822]   # it had would stay
+  velocity_held:
+    template: hovering_quad
+    team: 4
+    position_m: [10, 10, 30]
+    controller: {MultirotorVelocityController: {}}  # a different plugin:
+                                                     # replaces the slot
 ```
+
+The delivery study's missions use this to give each hub's vehicles one line:
+the template holds the Courier's speeds and endurance, and a group says
+`autonomy: {Courier: {hub: 7}}`.
+
+Why this rule and not another (decided 2026-11-07, when the 64-hub delivery
+mission had reached 2,367 lines because every group repeated its template's
+Courier values): replacing whole slots is simple but makes a group that
+changes one value repeat them all; merging every nested map would make it
+impossible to drop a template's value or swap a plugin without naming every
+key; a grid or list construct that spawns groups at many positions is
+machinery this project leaves out. Merging only when both sides name the
+same single plugin keeps a swap a swap and a tweak a tweak.
 
 Loading happens in this order: read the file, expand templates, apply
 command-line overrides or sweep values, then validate. So an override

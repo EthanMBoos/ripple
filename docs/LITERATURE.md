@@ -1,7 +1,7 @@
 # Related work
 
-This is the reading list for the study in
-[FLEET_MANAGER_PLAN.md](FLEET_MANAGER_PLAN.md). The BibTeX is
+This is the reading list for the fleet-manager study whose claim is in
+[TODO.md](TODO.md). The BibTeX is
 [paper/references.bib](../paper/references.bib), one entry per paper below.
 `scripts/build_paper_sources.py` downloads each PDF and makes a Markdown copy;
 see [paper/literature_review/README.md](../paper/literature_review/README.md).
@@ -18,8 +18,9 @@ hybrid planners on 4 to 32 robots on grid tasks and up to 10 in warehouse
 tasks, find that hybrids scale best, and name context length and long
 dialogues as the limits. Later planners stay at the same size: RobotFleet
 tests 3 and 5 robots, Nl2Hltl2Plan up to 4, and DynaHMRC 2 to 4. Scale-Plan
-filters the action graph before the model plans, and Kawabe et al. put model
-layers over a classical planner; neither reports large teams.
+filters the action graph before the model plans and runs three robots in a
+household simulator; Kawabe et al. put model layers over a classical planner.
+Neither reports large teams.
 
 Swarm work reaches larger numbers on simpler tasks. COMPASS\* directs up to
 1,024 robots in language, but the task is flocking on a heading, the robots
@@ -40,12 +41,16 @@ precedent for summaries at scale.
 
 Drone papers put a model over a dispatcher or flight stack. TACOS
 coordinates 6 and 20 drones; the Web-of-Drones paper runs ArduPilot and finds
-that models need planning tools and guardrails to execute a mission; COLA,
-MultiUAV-Plat, LLM-DaaS and FLEET turn text into missions or schedules for
-small teams. A 2026 survey of model-driven UAV dispatch describes the model
-as a layer over a classical dispatcher, the structure used here. Team sizes
-for COLA, FLEET, LLM-DaaS, AutoHMA-LLM and MultiUAV-Plat are not in their
-abstracts and still need to be read.
+that models need planning tools and guardrails to execute a mission. COLA
+flies three quad-planes under a model supervisor, in simulation and live;
+FLEET schedules two to three robots; LLM-DaaS uses a model only to parse a
+customer's request and lets a classical selector pick the drone; AutoHMA-LLM
+runs one UAV, one vehicle and one robot per scenario; MultiUAV-Plat's
+benchmark goes from 3 to 30 UAVs, the largest aerial fleet a model runs in
+this list, on short tasks with no stock, deadlines or events. A 2026 survey
+of model-driven UAV dispatch describes the model as a layer over a classical
+dispatcher, the structure used here. (Read 2026-11-07; the notes below have
+the details.)
 
 Blood delivery by air is a real operation. Zipline has dropped blood by
 parachute in Rwanda since 2016, and Nisingizwe et al. measured shorter
@@ -221,3 +226,137 @@ Fill these in as each paper is read, under its own heading in
 ## Notes
 
 One heading per paper, using the fields above, as each is read.
+
+### COLA (Ludwig et al., IEEE Aerospace 2026)
+
+- **Claim:** model-driven agents (a mission supervisor and one agent per
+  UAV) can run a multi-UAV search from natural-language operator commands,
+  in simulation and in four live flights, and the live flights showed
+  failures the simulation did not.
+- **Scale:** three VTOL quad-planes and one supervisor agent. The model
+  (GPT-4o) sees each UAV's state, the chat history and the mission plan in
+  a filled prompt template.
+- **Model's role:** a translator from operator text and UAV messages to JSON
+  function calls (route generation, waypoint reallocation, return to
+  launch); called on every operator command and UAV message.
+- **World:** ArduPilot SITL and live quad-planes through MAVProxy; real
+  wind, GPS and battery noise in the live flights.
+- **Checks and feedback:** UAV agents check feasibility of commands; a
+  secondary model replays prompts to grade replies offline. No planner
+  prices an order.
+- **Limitations:** two of four live flights failed at the control handoff
+  because the supervisor judged safety conditions unmet from an altitude
+  discrepancy; prompt sensitivity; one missed final waypoint needed a
+  manual override.
+- **Future work:** scaling the agent workflow, automated validation, more
+  complex missions.
+- **Relevance:** a model over a flight stack at three vehicles with a human
+  on the loop. Nothing about what an order costs later; the mission is one
+  search, not a day.
+
+### FLEET (Rivera et al., arXiv 2025)
+
+- **Claim:** a model that writes a task graph and a robot-task fitness
+  matrix, with a MILP scheduler that turns them into a makespan-minimal
+  schedule, beats pure language planners on heterogeneous tasks.
+- **Scale:** two agents in the PARTNR simulator (three where possible), two
+  Spot robots in hardware. The model sees the instruction and short robot
+  profiles.
+- **Model's role:** decomposes and scores once per instruction; replanning
+  is triggered by delays, failures or new detections and re-scores only the
+  affected tasks.
+- **World:** Habitat household scenes; two quadrupeds with disjoint sensors.
+- **Checks and feedback:** the MILP enforces precedence and non-overlap with
+  a time cap and an auction fallback; execution agents stream status to a
+  world model.
+- **Limitations:** two-agent teams; success rates 0.5 to 0.7.
+- **Future work:** not stated beyond the framework.
+- **Relevance:** the model proposes, a solver commits. That is the design
+  the discussion recommends for pricing a move before it is made, shown
+  here at two robots.
+
+### LLM-DaaS (Wassim et al., arXiv 2024)
+
+- **Claim:** small fine-tuned models (Phi-3.5, LLaMA 3.2, Gemma 2b,
+  Qwen-2.5) turn free-text delivery requests into structured requests with
+  near-perfect scores on 1,000 held-back requests.
+- **Scale:** not stated; the drone fleet is a skyway network of stations,
+  and the selection and composition step picks drones per request.
+- **Model's role:** parsing only. Drone selection, composition and routing
+  (A* and Dijkstra with weather-adjusted speed) are classical.
+- **World:** a station graph with weather from CSV files, battery and
+  maintenance state; no dynamics.
+- **Checks and feedback:** none on the model's output beyond the parse
+  score.
+- **Limitations:** no fleet-level decision by the model; two routes
+  compared.
+- **Future work:** larger fleets and more complex delivery scenarios.
+- **Relevance:** a delivery setting where the model never manages the
+  fleet; it is the opposite end from our study.
+
+### AutoHMA-LLM (Yang et al., IEEE TCCN 2025)
+
+- **Claim:** a cloud model as central planner over device models and
+  small controllers (PID, NMPC, Q-learning) completes logistics,
+  inspection and rescue tasks more often than the centralized planner of
+  Chen et al., with fewer communication steps and tokens.
+- **Scale:** one UAV, one vehicle (car or ship) and one robot per scenario
+  in MATLAB; agent counts are symbols in the formulation and never larger
+  in the experiments.
+- **Model's role:** the cloud model decomposes the task and allocates it;
+  device models turn subtasks into action parameters; small models execute.
+  Called each iteration with feedback.
+- **World:** MATLAB with traffic, communication delay (10 percent) and loss
+  (1 percent) in the inspection scenario, rough sea in rescue.
+- **Checks and feedback:** syntax and action-set validation of each subtask
+  plan, collision checks, bounded replanning; device feedback to the
+  planner each iteration.
+- **Limitations:** a pure model scheme is slower to avoid collisions than
+  the small models; heavy communication under delay and loss.
+- **Future work:** more scenarios, robustness.
+- **Relevance:** three agents; the paper's result is about model placement
+  and communication cost, not about what a plan costs the fleet later.
+
+### MultiUAV-Plat (Zhang et al., arXiv 2026)
+
+- **Claim:** a benchmark of 75 sessions and 1,500 tasks for model agents
+  running multi-UAV missions through a REST API with partial observation
+  and hidden validators; a task-specific agent workflow (Agent4Drone)
+  passes 58 to 70 percent of tasks against 31 to 64 percent for ReAct.
+- **Scale:** 3 to 30 UAVs per session, 3 to 100 targets, 6 to 100
+  obstacles. The agent sees each UAV's state and what is within its
+  perception radius, never the global map.
+- **Model's role:** plans and acts for every UAV through API calls in a
+  closed loop, with short-horizon replanning; the full run took more than
+  35,000 requests.
+- **World:** a lightweight simulator with battery, wind and weather fields;
+  no vehicle dynamics; tasks are reach, photograph, search and patrol.
+- **Checks and feedback:** hidden task validators score the outcome; the
+  agent gets command feedback and verification results.
+- **Limitations:** target assignment is the hardest family; many tasks pass
+  most checks and still fail; the sessions are short tasks, not a day of
+  operations.
+- **Future work:** more methods on the benchmark.
+- **Relevance:** the largest aerial fleet in this list with a model in the
+  loop, at 30, still below LLM-ODDR's 300 taxis. There are no deadlines,
+  stock or disruptions, so nothing an order does later is measured.
+
+### Scale-Plan (Gupta et al., arXiv 2026)
+
+- **Claim:** filtering a PDDL domain's action graph to the task-relevant
+  actions and objects before the model plans raises task completion on a
+  cleaned household benchmark (MAT2-THOR, 49 tasks) from 53 to 78 percent
+  over the best hybrid baseline.
+- **Scale:** three robots in AI2-THOR. The model sees the filtered actions
+  and objects, not the whole scene.
+- **Model's role:** proposes candidate actions for the graph search, then
+  decomposes, allocates and integrates sub-plans; several calls per task.
+- **World:** AI2-THOR household scenes; no vehicles.
+- **Checks and feedback:** executability in the simulator; no replanning
+  (named as future work).
+- **Limitations:** hallucinated object locations, missing affordance
+  reasoning (open before put), vague tasks.
+- **Future work:** knowledge graphs for grounding, replanning.
+- **Relevance:** showing the model less is a scalability lever, as in our
+  exceptions view, but here it reduces hallucination on one task, not a
+  model's appetite for costly actions across a day.

@@ -20,8 +20,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 # Few vehicles per hub, so that a surge makes vehicles scarce; the 2026-11-06
-# probes found no fleet decision at 10 and 6 (docs/FLEET_MANAGER_PLAN.md,
-# "Finding the problem").
+# probes found no fleet decision at 10 and 6 per hub, where hub stock was the
+# only thing that ran out.
 FIXED_WING_PER_HUB = 3
 MULTIROTOR_PER_HUB = 2
 
@@ -91,7 +91,7 @@ def quote(text: str, indent: int) -> str:
     return ">-\n" + "\n".join(lines)
 
 
-def templates(checked: bool) -> str:
+def templates(hubs: int, spacing_m: float, checked: bool) -> str:
     if checked:
         fixed_wing_models = """\
     controller: {AircraftPIDController: {airframe: rascal}}
@@ -119,14 +119,18 @@ def templates(checked: bool) -> str:
     motion_model: {SingleIntegrator: {max_speed_mps: 12}}"""
     return f"""\
 templates:
+  # Each hub's groups name a template and give only their hub and position;
+  # a group's Courier values lay over the template's.
   fixed_wing:
     team: 1
     visual_model: aircraft
+    position_stddev_m: [60, 60, 0]
+    heading_deg: 90
+    velocity_mps: [0, 25, 0]
     autonomy:
       Courier:
         class: fixed_wing
-        hub: 1
-        hub_m: [0, 0, 0]
+        region: {{hubs: {hubs}, hub_spacing_m: {spacing_m:g}}}
         cruise_speed_mps: 25
         endurance_s: 3600
         cruise_altitude_m: 120
@@ -140,11 +144,11 @@ templates:
   multirotor:
     team: 1
     visual_model: sphere
+    position_stddev_m: [3, 3, 0]
     autonomy:
       Courier:
         class: multirotor
-        hub: 1
-        hub_m: [0, 0, 0]
+        region: {{hubs: {hubs}, hub_spacing_m: {spacing_m:g}}}
         cruise_speed_mps: 12
         endurance_s: 1500
         cruise_altitude_m: 80
@@ -283,36 +287,12 @@ def couriers(hubs: int, spacing_m: float) -> str:
     template: fixed_wing
     count: {FIXED_WING_PER_HUB}
     position_m: [{x:g}, {y:g}, 120]
-    position_stddev_m: [60, 60, 0]
-    heading_deg: 90
-    velocity_mps: [0, 25, 0]
-    autonomy:
-      Courier:
-        class: fixed_wing
-        hub: {hub}
-        hub_m: [{x:g}, {y:g}, 0]
-        cruise_speed_mps: 25
-        endurance_s: 3600
-        cruise_altitude_m: 120
-        hub_radius_m: 400
-        arrival_radius_m: 75
-        loiter_radius_m: 300
+    autonomy: {{Courier: {{hub: {hub}}}}}
   hub{hub}_multirotor:
     template: multirotor
     count: {MULTIROTOR_PER_HUB}
     position_m: [{x:g}, {y:g}, 0]
-    position_stddev_m: [3, 3, 0]
-    autonomy:
-      Courier:
-        class: multirotor
-        hub: {hub}
-        hub_m: [{x:g}, {y:g}, 0]
-        cruise_speed_mps: 12
-        endurance_s: 1500
-        cruise_altitude_m: 80
-        hub_radius_m: 200
-        arrival_radius_m: 3
-        dwell_s: 30
+    autonomy: {{Courier: {{hub: {hub}}}}}
 """
         )
     return "".join(groups)
@@ -332,10 +312,7 @@ def mission(hubs: int, spacing_m: float, day_s: float, checked: bool, seed: int)
 # {models}. Written by crates/delivery/region.py; edit that
 # script, not this file. The Dispatcher on the region entity holds the hubs,
 # stock, requests, events, and the fleet manager; see crates/delivery/README.md
-# and docs/FLEET_MANAGER_PLAN.md.
-#
-# A group's Courier block repeats the template's vehicle values because a
-# group's autonomy replaces the template's whole slot.
+# and docs/TODO.md.
 format_version: 1
 name: {name}
 
@@ -347,7 +324,7 @@ run:
 networks: {{GlobalNetwork: {{}}}}
 metrics: {{DeliveryScore: {{}}}}
 
-{templates(checked)}
+{templates(hubs, spacing_m, checked)}
 {dispatcher(hubs, spacing_m, day_s)}{couriers(hubs, spacing_m)}"""
 
 

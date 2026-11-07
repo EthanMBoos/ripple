@@ -1,278 +1,204 @@
 # Roadmap
 
-## The claim
+## What we have
 
-**A language-model fleet manager over-helps.** It relocates vehicles and
-stock when the best policy is to set local rules and lend flights, and the
-cost of relocating grows with the region. Telling the model the cost does
-not stop it; an exceptions-only view holds one model back at 16 hubs and
-no model at 64; a donor guard refuses the moves; given a planner's list to
-prune, every model drops the free lent flights and keeps the costly moves.
-Over five seeds at 16 and 64 hubs the classical table holds (lending, then
-local rules, then the replanner, then no manager), and 39 of the 40 model
-runs on the exceptions view and the veto score under local rules. The one
-that beat them, Opus with the exceptions view at 16 hubs on one seed,
-scored lowest in the study on its other four days, so a model's wins do
-not repeat. Four models were tested as live managers and as vetoes; two
-also wrote policies.
+A fleet manager that helps one hub by moving aircraft or stock there
+makes the hub that gave lose more than the hub in trouble gains. The
+manager cannot see that loss when it decides. Every language model we
+tried makes the move anyway. So the right policy is local rules and lent
+flights, and a model is safest as a veto or as the author of the rules.
+That is the finding, shown at 16 and 64 hubs, and it is in the
+manuscript, [paper/manuscript/main.tex](../paper/manuscript/main.tex).
+It is enough for a paper.
 
-Everything below serves that claim. The test problem is one day of blood
-delivery across 16 to 64 hubs with surges, shortages and closures, a
-classical dispatcher under the model, and a score taken from what was flown.
-The model and its prompt are fixed; what varies is how the model is used (in
-the loop, as a veto over a planner, or writing the rules once) and what it
-is shown. The study code and its method are in `crates/delivery` and its
-[README](../crates/delivery/README.md); the working paper is
-[paper/manuscript/main.tex](../paper/manuscript/main.tex); the related work
-is [LITERATURE.md](LITERATURE.md).
+## What we are after
 
-How it got here, all on 2026-11-06: the mission was re-sized until the
-fleet decision mattered; five directions were tried (notices, a call budget
-with an exceptions view, the model writing the rules once, a hierarchy of
-managers, failure counts) and the decomposition of the replanner's help
-showed that relocating is the whole loss while local rules and lending are
-the whole gain; evaluations of every interface and model against that bar
-followed, then the firm-up below. The earlier result tables are in the
-manuscript. The earlier study, which asked which mistakes a language-model
-planner makes, is on the `llm-fleet` branch with its manuscript; it turned
-into prompt engineering because the model was what it measured.
+The finding leaves one question open: is over-helping a property of the
+model, or of what the model is shown? A live manager over 16 hubs made
+few moves. Over 64 it made dozens, because each call showed it dozens of
+problems. Size is what separates the two explanations, so the second
+finding needs a region too large for any flat manager: 256 and 1,024
+hubs, 1,280 and 5,120 aircraft. There the model must manage a cluster of
+16 hubs, with a manager above the clusters.
 
-## Results
+- If a cluster manager behaves like the 16-hub manager did, over-helping
+  was the view's fault, and small views fix it.
+- If the manager above the clusters moves aircraft between clusters and
+  the loss lands at the clusters that gave, over-helping is what a model
+  does whenever it can move things, at any level and any size. At 16
+  hubs a replanner above clusters already made things worse, so this is
+  the likelier outcome.
 
-The firm-up of 2026-11-07, now in the manuscript's tables: the classical
-table at five seeds and the two model arms that mattered, the exceptions
-view with feedback (X) and the veto over the replanner, for Haiku, Sonnet,
-Opus and gpt-6-luna on a third seed at 16 hubs and on seeds 1 and 2 at 64
-hubs. Scores per seed, then the mean:
+Either answer is a second claim with the same shape as the first: where
+help should come from at scale. Two smaller results come with it. The
+cost of relocating should be a straight line in region size, since per
+hundred of the giving hubs' own requests it was 16 at 16 hubs and 17 at
+64 and the total grew only because more hubs gave. And the model's roles
+should sort by size: the live manager worse, the veto a few points under
+local rules, a policy file written once unaffected. If they do, the
+recommendation is plain: at scale, let the model write the rules, not
+give the orders.
 
-| Hubs | none | replanner | guarded replanner | local | serve | move | return |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 16 | 0.69 / 0.71 / 0.70 / 0.67 / 0.65 (0.68) | 0.68 / 0.71 / 0.69 / 0.69 / 0.74 (0.70) | 0.70 / 0.73 (0.71, seeds 4 and 5) | 0.74 / 0.79 / 0.76 / 0.73 / 0.71 (0.75) | 0.74 / 0.77 / 0.78 / 0.72 / 0.76 (0.76) | 0.68 / 0.70 / 0.67 / 0.67 / 0.67 (0.68) | 0.72 / 0.74 / 0.76 / 0.70 / 0.75 (0.73) |
-| 64 | 0.69 / 0.63 / 0.68 / 0.70 / 0.67 (0.67) | 0.69 / 0.66 / 0.69 / 0.70 / 0.69 (0.69) | 0.73 / 0.72 (0.73, seeds 4 and 5) | 0.75 / 0.70 / 0.74 / 0.75 / 0.73 (0.73) | 0.78 / 0.71 / 0.76 / 0.74 / 0.76 (0.75) | 0.67 / 0.62 / 0.62 / 0.68 / 0.63 (0.64) | 0.71 / 0.67 / 0.72 / 0.71 / 0.70 (0.70) |
+A 1,024-hub region is the 16-hub problem tiled 64 times, and the first
+finding is local, so the big runs do not show it again and the paper must
+not claim they do. They show only what size can: the cost curve, each
+interface as its view grows, and the hierarchy. The sizes go up by four
+because the region is a square grid. 1,024 hubs is the top; anything
+larger is no operation that will exist (decided 2026-11-07).
 
-- The order holds at both sizes: lending, then local rules, then the
-  replanner with returns or with the guard (returns ahead at 16 hubs, the
-  guard at 64), then the replanner, then no manager, then relocating
-  without lending. Local rules beat the replanner on every seed but one (16
-  hubs, seed 5, by 0.02 the other way); `move` is the worst arm on eight
-  seeds of ten.
-- One three-seed statement changes: at 16 hubs the replanner now edges
-  the dispatcher alone (0.70 against 0.68) instead of trailing it. At both
-  sizes the replanner, which lends and relocates, lands between the two:
-  above no manager, below local rules.
-- The cost of relocating is local minus move: 0.07 at 16 hubs and 0.09 at
-  64, as on three seeds. Lending over local rules is 0.01 at 16 and 0.02 at
-  64.
+## The plan and the exit gate
 
-The model arms, score then relocations and stock flights made (`moves`),
-then lent flights (`lends`); for the veto, moves kept of the replanner's
-proposals. The bar is local rules: 0.76 at 16 hubs seed 3, 0.75 / 0.70 at
-64 hubs seeds 1 / 2 (lending 0.78, 0.78 / 0.71). The 16-hub seed 1 and 2
-rows are in the manuscript's earlier tables.
+Try for the second finding. Keep the first one ready to ship at every
+step. The first finding needs the eight items under Either way; those
+take a few days and are needed whichever paper goes, so they come first
+or alongside. The second finding needs phases A to C below, about two
+weeks, before anyone knows whether it is there.
 
-| Arm | Haiku | Sonnet | Opus | gpt-6-luna |
-| --- | --- | --- | --- | --- |
-| X, 16 hubs seed 3 | 0.76, moves 4, lends 18 | 0.68, moves 22, lends 59 | 0.80, moves 58, lends 124 | 0.68, moves 1, lends 101 |
-| veto, 16 hubs seed 3 | 0.73, kept moves 18 of 28, lends 78 of 160 | 0.74, kept 21, lends 116 | 0.74, kept 23, lends 80 | 0.73, kept 9, lends 43 |
-| X, 64 hubs seeds 1 / 2 | 0.70 / 0.66, moves 43 / 24, lends 43 / 95 | 0.70 / 0.57, moves 128 / 117, lends 96 / 188 | 0.63 / 0.54, moves 325 / 267, lends 391 / 302 | 0.66 / 0.60, moves 34 / 5, lends 597 / 908 |
-| veto, 64 hubs seeds 1 / 2 | 0.71 / 0.65, kept moves 79 / 60 of 143 / 92, lends 448 / 352 of 584 / 640 | 0.72 / 0.68, kept 90 / 64, lends 265 / 328 | 0.74 / 0.67, kept 101 / 64, lends 288 / 416 | 0.72 / 0.68, kept 41 / 68, lends 328 / 456 |
+The gate is 2026-11-21. On that date, one of two things is true:
 
-- The gap does not close at 64 hubs. No model arm reaches local rules
-  there on either seed; the nearest is Opus as a veto at 0.01 under on
-  seed 1, and the mean over the eight 64-hub veto runs is 0.03 under.
-- The exceptions view fails at 64 hubs for every model. It held Haiku to
-  3 and 1 moves at 16 hubs; at 64 Haiku makes 43 and 24, Sonnet 128 and
-  117, and Opus 325 and 267 for the two lowest scores in the study, 0.63
-  and 0.54, with six hours of vehicle time inside closed areas on seed 1.
-  gpt-6-luna moves little (34 and 5) and still scores 0.66 and 0.60: it
-  gives 1,218 and 1,674 orders a day, 597 and 908 of them lent flights, so
-  hubs spend the day covering each other's sites. Shown only exceptions, a
-  64-hub region offers a model dozens of them at every call.
-- The veto is the steadiest arm: 0.01 to 0.04 under local rules in these
-  runs, and 0.00 to 0.06 over the replanner it prunes (Haiku on 64-hub
-  seed 2 is 0.01 under it). It still prunes the wrong list: in 10 of these
-  12 runs the model keeps a larger share of the replanner's moves than of
-  its lent flights (moves kept 29 to 82 percent, lent flights 27 to 77).
-- Across all 40 exceptions and veto runs (four models, two arms, three
-  seeds at 16 hubs and two at 64), 39 score under local rules on the same
-  day. The exception is Opus on the exceptions view at 16 hubs, seed 3:
-  0.80 against 0.76 with 58 moves, 47 relocations and 37 stock transfers.
-  That day its moves landed: 14 requests missed for want of a vehicle
-  against 40 under local rules and 28 under lending, and 982 s of closure
-  breach against 1,737. The same arm scored 0.67 and 0.68 on seeds 1 and 2
-  at 16 hubs and 0.63 and 0.54 at 64, the lowest four days in the study,
-  so the win is a day on which relocating happened to pay, not a model
-  that learned when to relocate.
-- Parse failures stayed at 0 to 3 per run. Live model runs lose vehicles
-  (out of endurance away from a hub): up to 8 of 80 at 16 hubs and up to
-  38 of 320 at 64, most under Opus; veto runs and classical policies lose
-  none. (Corrected 2026-11-07; an earlier line here said no run lost one.)
-- Where the loss lands (2026-11-07, per-hub columns added to the score):
-  over the five 16-hub days the hubs that donated under `move` lost 68
-  more requests a day than under `serve`, out of 73 in all; recipients 4
-  more and the rest 1. Per hundred of their own requests: donors 14 more,
-  recipients 2, others none. At 64 hubs (44 of 64 hubs donate on a typical
-  day) the donors lost 433 more a day, 18 per hundred of their own, and
-  recipients and the rest lost none. On the Opus seed-3 day the model
-  moved among 14 of the 16 hubs; its gain over local rules sat at one
-  recipient hub (14 fewer lost) and no donor lost ground.
-- The same holds in the model runs (2026-11-07, all 40 exceptions and veto
-  runs replayed offline with the per-hub columns, each compared with local
-  rules on its day): hubs that gave aircraft or stock lost 11 more requests
-  per hundred of their own, hubs that only received none, the rest 3; 90
-  percent of the models' loss against local rules fell at the hubs that
-  gave (above 80 percent for Haiku, Sonnet and Opus at both sizes and in
-  both arms). gpt-6-luna is the exception in kind: it rarely moves, a third
-  of its 16-hub loss is at giving hubs, and on 64-hub seed 2 with 5 moves it
-  lost 331 requests at hubs that neither gave nor received, from 908 lending
-  permissions. On the Opus win the hubs that gave lost nothing. This is the
-  model-side evidence for the claim; before it, the attribution was only on
-  the classical `move` policy.
-- The paired day, now the middle of figure 1: one scripted surge at hub 6
-  and its neighbours on an otherwise quiet 16-hub day, seed 3. Lending
-  0.92 with nothing missed; relocating 0.85 with 48 missed, 38 of them at
-  hub 1 after its aircraft moved to the surge hubs. The surge hubs fare
-  the same either way.
-- Figure 2, the loss by hub role against local rules on the same day, per
-  hundred of the group's own requests: the move policy 16 / -2 / 0 at 16
-  hubs and 17 / -3 / 0 at 64 (gave / only received / neither); the models
-  giving orders 8 / 1 / 4 and 13 / 1 / 5; the models as a veto 10 / 0 / 0
-  and 10 / -3 / 2. The loss is at the hubs that gave under every
-  condition.
+- Phases A to C are done and the hierarchy runs say one clear thing on
+  both seeds, in either direction. Then fold the second finding in,
+  finish D and E, and submit to RA-L in January or straight to IROS by
+  2027-03-01.
+- Anything else: a 1,024-hub day does not run or costs more than an hour,
+  the cost curve at 256 and 1,024 hubs says nothing new, the hierarchy
+  runs disagree between seeds, or the work does not feel right. Then stop
+  the scaling work where it is, note what was measured, and submit the
+  first finding to RA-L in the first days of December. Nothing from the
+  scaling work is wasted; it becomes the next paper.
 
-## Next
+There is no third outcome where the first paper waits on the second. The
+December date holds because the first finding is complete today.
 
-- [x] Firm up the claim (run 2026-11-06, done 2026-11-07): the tables
-      above.
-- [x] Complete the manuscript (2026-11-07): the firm-up tables, the
-      paired flight figure (two time series of the lending hub's aircraft
-      at home and its own flights, drawn by a scratch script from two
-      retained runs' frame recordings; replaced the same day, below), the
-      per-hub analysis, and the claims reviewed against the results.
-- [x] Manuscript appendix (2026-11-07): the frozen system prompt, the
-      event texts, one complete live call and a veto prompt's tail, and
-      the per-run counts for the 40 model runs, from text files in
-      `paper/manuscript/appendix/`. The figure script and the track
-      sampler live in the session scratchpad; move them into
-      `crates/delivery/` if the figure must be redrawn.
-- [x] Plugins draw their own mission geometry (decided and done
-      2026-11-07; the work items below are as built, see the plugin API's
-      Drawings section). Before it the viewer in `crates/cli/src/viewer.rs`
-      drew only the terrain, the Boundary boxes, and each frame's entity
-      snapshot; the boxes were a special case where the CLI and the replay
-      reader re-parsed plugins named `Boundary` from the scenario. The
-      delivery hubs, sites and keep-out areas are private state of one
-      autonomy, and random closures and corridors exist only there. Of
-      the flows considered (rebuild from the mission as Boundary does; a
-      drawings method on the plugin traits pulled by the engine; a push
-      sink in the step context; a script over the record; hubs and sites
-      as entities), the pulled method is the one that gives the live
-      viewer, the exported recording, the headless screenshots and the
-      demo video the same picture, random events included. The work:
-      - A plain `Drawing` enum in core, in world meters: a labeled point,
-        a circle, a polyline, a filled strip or polygon, text.
-      - One method on each plugin trait returning its current drawings,
-        empty by default. The engine collects them once per step on the
-        main thread after metrics, in entity order then world-plugin
-        order, so the result is the same at any worker count.
-      - A drawings channel in the record, written every run whether or
-        not Rerun is on, and only when a frame's drawings differ from the
-        previous frame's. The replay reader decodes it; the frame, event
-        and summary channels stay byte-identical.
-      - The viewer logs drawings generically to the 3D world and the map,
-        replacing the Boundary code; Boundary moves onto the method, and
-        the special cases in the viewer and the replay reader go. Prove it
-        with screenshots of the boundary verification mission's exported
-        recording before and after.
-      - The Dispatcher returns the hubs, the sites and the areas active
-        now. Book: the plugin API and the run-records chapter.
-      Two decisions after the first build (2026-11-07): the method is split
-      into `fixed_drawings`, asked once when the plugin starts and held by
-      reference, and `drawings`, asked every tick for shapes that come and
-      go, because asking for everything each tick rebuilt a 64-hub region's
-      576 labeled points on each of a day's 300,000 ticks to find them
-      unchanged; and trails stay a viewer option, not a plugin drawing,
-      because they are derived from the recorded frames, redrawing them
-      through the record costs what the trails DEVNOTE measured, and
-      plugins see belief, not the truth path. Checked: the Boundary
-      mission's map and 3D views are the same before and after from
-      exported recordings in the headless viewer; the drawings channel is
-      compared by `reference/equivalence.py`.
-- [x] Rerun view of hubs, sites, closed areas and corridors, with inspected
-      screenshots (2026-11-07): the 16-hub mission, seed 3, 100 minutes,
-      manager none, random events off, with a scripted closure (minutes 60
-      to 90) and corridor (from minute 60) at hub 6; exported with
-      `--export-rrd` and inspected in the headless viewer at minute 75 in
-      the light theme with the map maximized. Two stills of it were set as
-      figure 1 and taken out again the same day: at print size the hubs
-      were smudges and the picture showed no cost, no hub that gave, and
-      no later time. The headless viewer renders one pixel per UI point
-      whatever the window size, so a still's resolution is its window size
-      and its labels stay 12 px. The recording is kept for the demo video.
-- [x] Figure 1 built, not captured (2026-11-07; the stills showed no
-      cost, no hub that gave, and no later time, and the `llm-fleet`
-      manuscript's built figure 1 is the model): three TikZ panels under
-      the authors through
-      `\IEEEaftertitletext` (conference mode needs
-      `\IEEEoverridecommandlockouts`; a float cannot sit in the title
-      block). Left, the three kinds of help in plain words with the order
-      names; middle, the paired surge day drawn twice at minute 90 with
-      hub 1's aircraft and their trails since minute 60, from the two
-      retained records by `crates/delivery/title_figure.py`, which writes
-      `paper/manuscript/figures/title-{lending,relocating}.tex` and prints
-      the summary numbers the typed annotations repeat (0.92 and 0.85, 48
-      and 38 of 48); right, the costs from table 1 and the per-hub
-      paragraph. The site geometry the script needs is `sites()` in
-      `crates/delivery/region.py`, the same as `region.rs`. The surge
-      figure is figure 2.
-- [x] Figure 2 replaced (2026-11-07): the paired time series showed the
-      same day and the same 38 of 48 as figure 1, so it went. In its place
-      the per-hub attribution that was prose only: for the move policy
-      and the 40 model runs, each hub's late and undelivered requests
-      against local rules on the same day, grouped by whether the hub
-      gave, only received, or neither, per hundred of its own requests.
-      Drawn as TikZ by `crates/delivery/loss_figure.py` from the per-hub
-      run logs (one run per line; the logs are in the session scratchpad,
-      the runs under their region folders), which prints the numbers the
-      text quotes. The classical per-hub paragraph now compares with
-      local rules, as the table and the model runs do, instead of with
-      lending.
-- [ ] Demo video from the figure-1 recording.
-- [x] Read the fleet papers whose team sizes were unknown (COLA 3 UAVs,
-      FLEET 2 to 3 robots, LLM-DaaS parsing only, AutoHMA-LLM 3 agents,
-      MultiUAV-Plat 3 to 30 UAVs, Scale-Plan 3 robots) and fill in the
-      notes in [LITERATURE.md](LITERATURE.md) (2026-11-07). The paper's
-      related-work sentences hold; LLM-ODDR's 300 taxis stays the largest.
+On the venues: a December RA-L submission can also be presented at IROS
+2027 if accepted before 2027-04-30, which is possible, not certain, and
+the journal paper counts either way. RA-L takes six pages including
+references, two more at a charge, nothing beyond eight; the paper is
+seven. Check the RA-L author page for the current terms before
+submitting.
 
-## Risks
+## Either way
 
-- The paper reads as "language models are bad at this". Every claim has to
-  be about an action (relocating), an interface (what cut it), and a size
-  (where the cost grows), shown on four models.
-- One model run in 40 beat local rules, and the same arm scored lowest on
-  its other days. The claim is about the average and the spread, not a
-  bound; a reviewer may ask what that one day had, and the per-hub
-  outcome analysis in the manuscript bullet is the answer.
-- The two command-line clients differ: the `codex` command keeps a coding
-  agent's tools, the `claude` command drops them. The API clients are the
-  clean comparison if a reviewer asks.
-- The cost of relocating is a property of a lean fleet. The capacity table
-  in the manuscript shows it weakens with more vehicles per hub but never
-  reverses; the paper says where it holds.
-- Simulation only, on cheap vehicle models. The checked Rascal and Firefly
-  are available but no result depends on them.
+Needed for the first finding and the second alike.
 
-## To do
+1. Show when moving pays. Write a short plan, then sweep with the
+   classical policies only until the move policy beats local rules on
+   some days: surge length or size, and a demand imbalance across hubs (a
+   few busy hubs among quiet ones, or two hub types). Without this, a
+   reviewer can say the surges are too short for relocating ever to pay,
+   or that a uniform grid never offers the quiet-hub-next-to-busy-hub
+   case where relocation should pay, so any mover loses and the models
+   only inherited that.
+2. Run the four models as live managers and as vetoes on those days, same
+   seeds. If they move when it pays and still move when it does not, the
+   finding is that managers cannot price the downstream cost of help. If
+   they adapt, say so.
+3. Add seeds: more for the classical table at both sizes, and one more
+   64-hub seed for the model runs if the budget allows.
+4. Rewrite the opening of the system section so Ripple is the instrument
+   and the over-helping finding is the contribution, as the title and
+   abstract already say.
+5. Defend the grid. The world is a square grid of identical hubs so that
+   a loss can be attributed to the move and not to the hub; say so in the
+   setup, and say the world is a test instance, not a region. Add one
+   table row with the hubs jittered off the grid under a minimum spacing
+   (a small change to `region.py`), same seeds and policies, so the
+   result does not rest on the lattice. Cite one real medical-drone
+   operation for range, speed and service radius and say in a sentence
+   whether the grid's 15 km spacing and 4 to 13 km site distances sit
+   inside those figures. Terrain, wind and airspace stay out: closures
+   and corridors are events, and the paper says simulation only.
+6. Make the appendix reachable. The paper cites `paper/appendix/` by its
+   repository URL, so the repository must be public by submission, or the
+   appendix PDF hosted somewhere else and the footnote changed.
+7. Record the demo video from the figure-1 recording; a video is the one
+   extra RA-L accepts.
+8. Run `reference/suite.py --release --retain` so `paper/data/` reflects
+   the current engine.
 
-- [ ] **Release run** of `reference/suite.py --release --retain`, so
-      `paper/data/` reflects the current engine.
+## The second finding, phase by phase
+
+Measured so far (2026-11-07, Apple Silicon, release build, no manager,
+8.5 simulated hours at 0.1 s steps): a 64-hub day of 320 aircraft takes
+159 s on one worker and 206 s on eight (the eight spend 574 s in the
+kernel, so the phase joins cost more than they save at this size), in
+37 MB of memory, and writes a 5.5 GB record. A 256-hub day of 1,280
+aircraft does not finish: about a simulated hour in, after 89 s, the run
+stops with `network 'GlobalNetwork' queue full (65536 deliveries)`, the
+cap on one network's pending deliveries in
+`crates/core/src/pubsub/messages.rs`; the 1,280 couriers' status messages
+to the dispatcher fill it. Up to that point it ran at about 90 s per
+simulated hour, so a full day would be about 12 minutes on one worker
+and a 1,024-hub day about 50 minutes, if the cost stays linear in
+aircraft; memory went from 37 MB at 64 hubs to 81 MB at 256, so a
+1,024-hub day should stay under 400 MB. Runs are single-threaded, so
+eight can go at once on this machine. Disk is not a holdup: a 1,024-hub
+day's record is about 90 GB, and the machine will be cleared for it or
+the runs go elsewhere.
+
+A. Make a day at 1,024 hubs run, and know its cost. Two to three days.
+   1. Lift the network queue cap. The 65,536 pending deliveries per
+      network was set as an ordinary constant "until a real experiment
+      needs per-queue tuning"; this is that experiment. Size the cap by
+      the population (so many per entity) or make it a mission value,
+      keep the clear error, add the test, and write the DEVNOTE with the
+      256-hub failure as the measurement.
+   2. Make workers pay. Eight workers are slower than one at 64 hubs.
+      Profile a day, find where the time goes (the phase joins, the
+      dispatcher, the record writer), and either fix it or document the
+      size at which workers help. DEVNOTE with the measurement.
+   3. Time a day at 256 and 1,024 hubs with no manager on one worker and
+      on the best worker count; these numbers are the engine table in the
+      paper.
+B. The classical policies at scale. Two days. Thirty simulated days,
+   about sixteen hours of compute, run eight at a time in an afternoon;
+   the rest is seeds, analysis and the figure.
+   Run none, local, serve, move and the replanner at 256 and 1,024 hubs on
+   three seeds. The question is whether the cost of relocating keeps
+   growing with the region (0.07 at 16 hubs, 0.09 at 64) and whether the
+   loss still lands at the hubs that gave. `loss_figure.py` and
+   `results.py` take any size.
+C. The model at scale. Five to seven days, most of it waiting on calls.
+   At 1,024 hubs a day is 64 clusters times about 26 calls, some 1,700
+   calls and about two million input tokens. Through the command-line
+   client one call after another is hours a day, so the cluster calls
+   have to go in parallel first (one to two days of code); check that the
+   reply cache keeps replays free.
+   A flat manager cannot read 1,024 hubs: the exceptions view already
+   fails for every model at 64, and the full list is about 260K tokens a
+   call at 4,096 vehicles. The hierarchy is built (`cluster_side`,
+   `top_kind`, `top_model`): a manager per cluster of 16 hubs, 64 of them
+   at 1,024 hubs, each a model call, and one manager above them that
+   moves between clusters. Run Haiku and one stronger model as cluster
+   managers with local rules and lending allowed, with and without a top
+   manager, on two seeds at each size. This phase answers the question
+   under What we are after.
+D. Interfaces by size. Two days; eight new runs, the 16- and 64-hub ones
+   exist. The veto and the policy file against the live manager at 16,
+   64, 256 and 1,024 hubs. The policy file is written once and costs
+   nothing to run at any size; the veto prunes a replanner list that
+   grows with the region. One model, two seeds per size.
+E. The paper. Four to five days.
+   New: the engine table (wall time, memory and record size per simulated
+   day by size and worker count), the classical table at four sizes, the
+   cost-of-relocating curve by size, the hierarchy result, and the
+   interface-by-size table. Figure 2 becomes one panel per size. The
+   system section then earns its place: matched days, one seed, the same
+   record at every worker count, and a day at 1,024 hubs in the time it
+   takes.
+
+## Pointers
+
+The study code is `crates/delivery` and its
+[README](../crates/delivery/README.md); the related work is
+[LITERATURE.md](LITERATURE.md). The earlier study, on which mistakes a
+language-model planner makes, is on the `llm-fleet` branch with its own
+manuscript.
 
 ## Not planned
 
 Runtime plugin loading, legacy protobuf/string-map spawning, OpenCL, VTK,
 ROS, JSBSim. ArduPilot and Burn stay optional, out of the default build.
-No reinforcement-learning study (decided 2026-11-06); the learning crate
-stays as an engine feature. Classical coordination at scale was dropped too.
 Out of the study's scope: communication loss and delay, wind beyond the
 weather event, terrain, hardware, wording comparisons, and one manager per
 hub as an arm of its own.

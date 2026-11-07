@@ -4,9 +4,9 @@ One operating day of blood delivery across a region of hubs, flown by
 fixed-wing aircraft and multirotors, run by a classical dispatcher, with a
 fleet manager above it that reads events and gives orders. The fleet manager
 is a language model, a structured replanner, a hand-written script, or
-nothing. The study's claim and results are in
-[docs/TODO.md](../../docs/TODO.md), the paper in
-[paper/manuscript/main.tex](../../paper/manuscript/main.tex).
+nothing. The study's claim and results are in the paper,
+[paper/manuscript/main.tex](../../paper/manuscript/main.tex); what is left
+before submission is in [docs/TODO.md](../../docs/TODO.md).
 
 ## Run
 

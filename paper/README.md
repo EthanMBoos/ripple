@@ -4,12 +4,19 @@
   language-model fleet manager over a classical dispatcher
   over-helps: it relocates vehicles and stock when the best policy is local
   rules and lent flights, and the cost of relocating grows with the region.
-  The study code is `crates/delivery`, and the claim, the results the paper
-  still needs, and the roadmap are in [docs/TODO.md](../docs/TODO.md).
+  The study code is `crates/delivery`; what is left before submission is
+  in [docs/TODO.md](../docs/TODO.md).
   Build it with
   `tectonic -o <folder> main.tex` in `manuscript/`. The earlier manuscript,
   a different paper on catching planner mistakes, is on the `llm-fleet`
   branch.
+- [appendix/main.tex](appendix/main.tex), built as
+  [appendix.pdf](appendix/appendix.pdf): the paper's appendix as its own
+  document, since RA-L counts an appendix toward its eight pages and the
+  paper cites this folder by URL instead. The frozen system prompt, the
+  event texts, one complete model call and a veto prompt with their
+  replies, and the per-run counts for the 40 model runs, from the text
+  files beside it. Rebuild the PDF after editing it.
 - [references.bib](references.bib): the reading list, one entry per paper
   in [docs/LITERATURE.md](../docs/LITERATURE.md), with local copies built as
   described in [literature_review/README.md](literature_review/README.md).

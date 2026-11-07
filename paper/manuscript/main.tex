@@ -1,7 +1,8 @@
-% Working manuscript. The claim and the result tables are also in
-% docs/TODO.md. The appendix holds the frozen prompt, the event texts, one
-% complete model call, and per-run order and refusal counts; its text files
-% are in appendix/. Study code: crates/delivery.
+% Working manuscript; what is left before submission is in docs/TODO.md.
+% The appendix (the frozen prompt, the event texts, one
+% complete model call, and per-run order and refusal counts) is its own
+% document in ../appendix/, cited by URL: RA-L counts an appendix toward its
+% eight pages. Study code: crates/delivery.
 \documentclass[conference]{IEEEtran}
 % Conference mode locks out \IEEEaftertitletext, which places figure 1.
 \IEEEoverridecommandlockouts
@@ -21,11 +22,6 @@
 \definecolor{ink}{RGB}{11,11,11}
 \definecolor{orange}{RGB}{235,104,52}
 \definecolor{muted}{RGB}{107,106,102}
-\usepackage{listings}
-\lstset{basicstyle=\footnotesize\ttfamily,breaklines=true,
-  breakatwhitespace=true,
-  columns=fullflexible,keepspaces=true,frame=single,framerule=0.2pt,
-  xleftmargin=2pt,xrightmargin=2pt,aboveskip=4pt,belowskip=6pt}
 \usepackage[bookmarks=true,hidelinks]{hyperref}
 % Run-in bold paragraph headings instead of IEEEtran's lettered ones.
 \renewcommand{\paragraph}[1]{\par\textbf{#1.}\ }
@@ -410,7 +406,11 @@ relocated aircraft home after an event ends. The policies use the same
 order interface and are compared on the same day.
 
 Model managers use one frozen system prompt and one text for each event
-kind. We vary the view and feedback supplied by the delivery crate: hub
+kind; the prompt, the event texts, one complete call and reply, and the
+per-run counts of calls, orders, refusals, and unreadable replies are in
+the appendix, which is in the
+repository.\footnote{\url{https://github.com/EthanMBoos/ripple/tree/main/paper/appendix}}
+We vary the view and feedback supplied by the delivery crate: hub
 summaries, summaries with order outcomes, a feasibility checker, a line
 reporting the lending hub's state after a move, a guard on the lending hub's
 reserve, and a view that shows only exceptions. We also test a model as a
@@ -654,8 +654,8 @@ Of the two roles, the veto is the steadier at both sizes: one to seven
 points under local rules on every seed, never above. The live runs also
 lose vehicles, which happens when an aircraft runs out of endurance away
 from a hub: up to 8 of 80 at 16 hubs and up to 38 of 320 at 64, the most
-under Opus. The veto runs and the classical policies lose none
-(Table~\ref{tab:counts} in the appendix).
+under Opus. The veto runs and the classical policies lose none; the appendix gives
+the counts for every run.
 
 Of the 40 live and veto runs, 39 score under local rules on the same day.
 The exception is Opus under the exceptions view at 16 hubs on the third
@@ -750,99 +750,6 @@ displaces later and elsewhere.
 Language models evaluated in the study are named in the experimental
 setup. An AI assistant helped write code and prose, which the author
 reviewed.
-
-\appendix
-\label{app:prompt}
-
-\subsection{The frozen system prompt}
-
-Every model call in the study used this system prompt. It was written once,
-before any scored run, and never changed. The mission file holds it.
-
-\lstinputlisting{appendix/system-prompt.txt}
-
-\subsection{Event texts}
-\label{app:events}
-
-Each event kind has one text, written once and filled in from the event's
-fields. The model reads events as these sentences under \emph{New events}
-and \emph{Events still in force} (Section~\ref{app:call}). The placeholders
-are the hub or hubs, the site, the stock item, the area, the vehicle class,
-and the start and end minutes.
-
-\begin{center}
-\footnotesize
-\begin{tabularx}{\columnwidth}{@{}lX@{}}
-\toprule
-Kind & Text \\
-\midrule
-Surge & A mass-casualty incident near \{hubs\}: the hospitals there are
-sending trauma requests beyond what those hubs can fly alone, starting at
-minute \{from\}. \\
-Shortage & \{item\} has run out at \{hubs\} as of minute \{from\}. Requests
-for \{item\} at their sites can only be served from hubs that still hold
-it. \\
-Closure & Airspace is closed in \{area\} from minute \{from\} until minute
-\{to\}; no flights through it. \\
-Outage & \{hubs\} cannot launch from minute \{from\} until minute \{to\};
-its sites must be covered by other hubs. \\
-Weather & Weather at \{hubs\}: no \{class\} launches from minute \{from\}
-until minute \{to\}. \\
-Priority & Hospital \{site\} takes priority over routine deliveries from
-minute \{from\} until \{to\}. \\
-Rooftop closed & The rooftop at hospital \{site\} is closed from minute
-\{from\} until minute \{to\}; only drops at its ground pad are allowed. \\
-Corridor & A medevac helicopter corridor is active in \{area\} from minute
-\{from\} until minute \{to\}; no vehicle may cross it below 150 m. \\
-\bottomrule
-\end{tabularx}
-\end{center}
-
-\subsection{One complete model call}
-\label{app:call}
-
-The prompt below is one call to Opus as a live manager with the exceptions
-view and feedback on a 16-hub day, at minute 35, and the reply that came
-back. The prompt is what the delivery crate wrote; nothing was removed. The
-order format at the end is part of every live prompt. The reply closed the
-rooftop that had just been reported and moved two fixed-wing aircraft from
-hub 5 to hub 4, the one hub with waiting requests and no idle vehicle, with
-a return time.
-
-\lstinputlisting{appendix/call-prompt.txt}
-
-The reply:
-
-\lstinputlisting{appendix/call-reply.txt}
-
-A veto prompt has the same head and, instead of the order format, the
-replanner's numbered proposals and a one-line instruction. The tail of one
-such prompt, at minute 41 on a 16-hub day after a stock shortage at five
-hubs, and its reply:
-
-\lstinputlisting{appendix/veto-tail.txt}
-
-\lstinputlisting{appendix/veto-reply.txt}
-
-\subsection{Per-run counts}
-\label{app:counts}
-
-Table~\ref{tab:counts} gives, for each of the 40 model runs behind
-Table~\ref{tab:models}, the number of model calls, the orders the model
-gave (or, for the veto, the replanner's proposals it kept), how many were
-applied and how many refused by the dispatcher, the replies that could not
-be read, the moves (applied relocations and stock flights), the lending
-permissions, and the vehicles lost.
-
-\begin{table*}[t]
-\caption{Per-run counts for the 40 model runs. Refused orders are those
-the dispatcher could not apply, almost all for too few idle vehicles.
-Unreadable replies were not JSON in the expected form and changed nothing.}
-\label{tab:counts}
-\centering
-\footnotesize
-\input{appendix/counts.tex}
-\end{table*}
 
 \bibliographystyle{IEEEtranN}
 \bibliography{../references}

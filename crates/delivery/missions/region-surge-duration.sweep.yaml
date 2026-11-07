@@ -1,0 +1,40 @@
+# 3 surge windows x 4 policies x 5 matched seeds = 60 episodes.
+# No LLM calls. Reuses the 16-hub geometry, fleet, stock, and request generator.
+# Four hours of background requests, then 30 minutes to finish, as in the paper.
+# Each affected hub gets exactly 16 extra trauma requests: only their arrival
+# window changes, together with the event end used by priorities and returns.
+# A nonempty scripted list replaces all randomly generated events.
+#
+# Compare replanner vs return to isolate scheduled returns: both permit lending
+# and stock transfers. Local and serve are additional policy comparisons.
+# A return starts only once a vehicle is idle after the event end.
+name: region-surge-duration
+base_scenario: region-16.yaml
+seeds: [1, 2, 3, 4, 5]
+parameters:
+  run.end_s: 16200
+  entities.region.autonomy.Dispatcher.requests.until_s: 14400
+  entities.region.autonomy.Dispatcher.events.surge_requests_per_hub: 16
+  entities.region.autonomy.Dispatcher.events.text.surge: >-
+    A surge at {hubs} will generate 16 extra trauma requests per hub,
+    spread uniformly between minute {from} and minute {to}.
+    These requests are additional to normal demand; each has a 15-minute
+    deadline from its opening time. Normal demand continues at every hub.
+  entities.region.autonomy.Dispatcher.manager.kind: policy
+  entities.region.autonomy.Dispatcher.manager.offline: true
+prefix: entities.region.autonomy.Dispatcher
+columns: [events.surge_window_min, events.scripted, manager.policy]
+cases:
+  # Hub 6 and its four grid neighbors, explicitly fixed in every condition.
+  - [15, [{kind: surge, at_min: 60, until_min: 75, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/local.yaml]
+  - [15, [{kind: surge, at_min: 60, until_min: 75, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/serve.yaml]
+  - [15, [{kind: surge, at_min: 60, until_min: 75, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/replanner.yaml]
+  - [15, [{kind: surge, at_min: 60, until_min: 75, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/return.yaml]
+  - [60, [{kind: surge, at_min: 60, until_min: 120, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/local.yaml]
+  - [60, [{kind: surge, at_min: 60, until_min: 120, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/serve.yaml]
+  - [60, [{kind: surge, at_min: 60, until_min: 120, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/replanner.yaml]
+  - [60, [{kind: surge, at_min: 60, until_min: 120, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/return.yaml]
+  - [120, [{kind: surge, at_min: 60, until_min: 180, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/local.yaml]
+  - [120, [{kind: surge, at_min: 60, until_min: 180, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/serve.yaml]
+  - [120, [{kind: surge, at_min: 60, until_min: 180, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/replanner.yaml]
+  - [120, [{kind: surge, at_min: 60, until_min: 180, hubs: [6, 2, 5, 7, 10]}], crates/delivery/policies/return.yaml]

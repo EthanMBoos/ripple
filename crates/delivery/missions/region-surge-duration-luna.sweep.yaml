@@ -1,0 +1,40 @@
+# 2 surge windows x 5 matched seeds x 2 reply samples = 20 model episodes.
+# Same environment and forecast as region-surge-duration.sweep.yaml.
+# Uses the paper's summaries + feedback interface (D), with the unchanged
+# region-16 system prompt. All existing orders remain available.
+# Eight decision points per episode (30-minute check-ins, surge at minute 60):
+# up to 160 model requests before cache reuse. These are paid API calls.
+# Samples separate cached replies; they are not provider-side random seeds.
+name: region-surge-duration-luna
+base_scenario: region-16.yaml
+seeds: [1, 2, 3, 4, 5]
+parameters:
+  run.end_s: 16200
+  entities.region.autonomy.Dispatcher.requests.until_s: 14400
+  entities.region.autonomy.Dispatcher.events.surge_requests_per_hub: 16
+  entities.region.autonomy.Dispatcher.events.text.surge: >-
+    A surge at {hubs} will generate 16 extra trauma requests per hub,
+    spread uniformly between minute {from} and minute {to}.
+    These requests are additional to normal demand; each has a 15-minute
+    deadline from its opening time. Normal demand continues at every hub.
+  entities.region.autonomy.Dispatcher.manager.kind: model
+  entities.region.autonomy.Dispatcher.manager.provider: openai
+  entities.region.autonomy.Dispatcher.manager.via: api
+  entities.region.autonomy.Dispatcher.manager.model: gpt-6-luna
+  entities.region.autonomy.Dispatcher.manager.offline: false
+  entities.region.autonomy.Dispatcher.manager.view: summaries
+  entities.region.autonomy.Dispatcher.manager.feedback: true
+  entities.region.autonomy.Dispatcher.manager.checker: false
+  entities.region.autonomy.Dispatcher.manager.cost_feedback: false
+  entities.region.autonomy.Dispatcher.manager.guard: false
+  entities.region.autonomy.Dispatcher.manager.check_in_s: 1800
+  entities.region.autonomy.Dispatcher.manager.calls_per_hour: 0
+  entities.region.autonomy.Dispatcher.manager.cluster_side: 0
+  entities.region.autonomy.Dispatcher.manager.top_kind: none
+prefix: entities.region.autonomy.Dispatcher
+repeat:
+  manager.sample: [1, 2]
+columns: [events.surge_window_min, events.scripted]
+cases:
+  - [15, [{kind: surge, at_min: 60, until_min: 75, hubs: [6, 2, 5, 7, 10]}]]
+  - [120, [{kind: surge, at_min: 60, until_min: 180, hubs: [6, 2, 5, 7, 10]}]]

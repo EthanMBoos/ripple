@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use anyhow::Result;
 use ripple_core::{Mission, Params, Simulation};
@@ -20,7 +21,7 @@ fn simulation(altitude_bias: f64, sensor_rate: f64) -> Result<Simulation> {
     let mission = Mission::load(&root.join("missions/noisy-state.yaml"), &root, &overrides)?;
     Simulation::new(
         mission.scenario,
-        &ripple_core::plugin::PluginRegistry::with_builtins(),
+        Arc::new(ripple_core::plugin::PluginRegistry::with_builtins()),
         2,
     )
 }
@@ -63,7 +64,7 @@ entities:
     std::fs::remove_file(&path)?;
     Simulation::new(
         mission?.scenario,
-        &ripple_core::plugin::PluginRegistry::with_builtins(),
+        Arc::new(ripple_core::plugin::PluginRegistry::with_builtins()),
         1,
     )
 }
@@ -143,7 +144,7 @@ fn no_sensor_gives_perfect_belief() -> Result<()> {
     )?;
     let mut simulation = Simulation::new(
         mission.scenario,
-        &ripple_core::plugin::PluginRegistry::with_builtins(),
+        Arc::new(ripple_core::plugin::PluginRegistry::with_builtins()),
         1,
     )?;
     for _ in 0..3 {

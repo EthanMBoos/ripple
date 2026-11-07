@@ -1,6 +1,7 @@
 //! Simulation-level contracts of the core: time, spawn sampling, and the dt a
 //! rate-limited plugin receives.
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::sync::Mutex;
 
 use anyhow::Result;
@@ -48,7 +49,7 @@ fn run(name: &str, yaml: &str) -> Result<(Vec<SimulationFrame>, Simulation)> {
     registry.register_motion::<Still>("Still")?;
     let mission = Mission::load(&path, &root, &Params::new());
     std::fs::remove_file(&path)?;
-    let mut simulation = Simulation::new(mission?.scenario, &registry, 1)?;
+    let mut simulation = Simulation::new(mission?.scenario, Arc::new(registry), 1)?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
         frames.push(frame);
@@ -217,7 +218,7 @@ fn contact_errors(
     registry.register_motion::<Still>("Still")?;
     let mission = Mission::load(&path, &root, &Params::new());
     std::fs::remove_file(&path)?;
-    let mut simulation = Simulation::new(mission?.scenario, &registry, 1)?;
+    let mut simulation = Simulation::new(mission?.scenario, Arc::new(registry), 1)?;
     let mut errors = std::collections::BTreeMap::new();
     let mut tick = 0;
     while simulation.step()?.is_some() {

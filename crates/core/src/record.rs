@@ -262,8 +262,7 @@ impl RunWriter {
             origin_s,
             descriptions: BTreeSet::new(),
             groups: scenario
-                .entities
-                .iter()
+                .groups()
                 .map(|group| (group.label.clone(), group.visual_model.clone()))
                 .collect(),
             events_written: 0,

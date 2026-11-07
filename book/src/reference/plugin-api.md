@@ -255,6 +255,30 @@ that time, even if the publisher has gone quiet. A network that only delivers
 within the sender's entity calls `route_within_entity` instead, which sees
 only those links and keeps routing cost linear in the number of agents.
 
+### Spawn requests
+
+A plugin asks the engine to build entities by publishing a `SpawnRequest`
+on `GlobalNetwork` under `SpawnRequest::TOPIC`. It names one of the
+mission's [recipes](../guides/yaml-missions.md#recipes) and says where, how
+many, and which plugin values differ:
+
+```rust,ignore
+let request = SpawnRequest::recipe("fixed_wing")
+    .count(3)
+    .at(hub_world_m)
+    .autonomy("Courier", CourierHome { hub, region })?;
+context.messages.publish("GlobalNetwork", SpawnRequest::TOPIC, request)?;
+```
+
+`at` replaces the recipe's `position_m` (its spread still applies),
+`heading` its `heading_deg`, and `autonomy` or `overlay(slot, plugin,
+values)` lays a struct or map's keys over one plugin's values, by the
+plugin's label in the mission. The engine builds the entities at the start
+of the next tick, in delivery order, so a request published in `initialize`
+gives entities present from tick 1. An unknown recipe or plugin, or a value
+the plugin rejects, stops the run with an error naming the recipe and the
+requesting plugin.
+
 A sensor's `publish_reading` is not a message: it goes only to its own
 entity's estimators, and no network sees it. Use a message when
 communication itself is part of the experiment.

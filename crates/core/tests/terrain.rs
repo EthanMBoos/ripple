@@ -5,6 +5,7 @@ use ripple_core::{
     EntityGroupConfig, EventKind, PluginConfig, RunConfig, ScenarioConfig, Simulation, Spawn, Vec3,
     plugin::PluginRegistry,
 };
+use std::sync::Arc;
 use std::{fs, path::PathBuf};
 
 /// A 200 m strip, sampled every 10 m, flat at z = 0 except for a thin ridge
@@ -91,8 +92,11 @@ fn agents_hit_a_ridge_crossed_between_steps_and_flat_ground_off_the_grid() -> Re
         ..ScenarioConfig::default()
     };
     for workers in [1, 2, 8] {
-        let mut simulation =
-            Simulation::new(scenario.clone(), &PluginRegistry::with_builtins(), workers)?;
+        let mut simulation = Simulation::new(
+            scenario.clone(),
+            Arc::new(PluginRegistry::with_builtins()),
+            workers,
+        )?;
         while simulation.step()?.is_some() {}
         let collided: Vec<_> = simulation
             .events()
@@ -152,7 +156,7 @@ fn flying_onto_the_grid_does_not_mix_the_ground_outside_with_the_edge() -> Resul
         entities: vec![agent(1, Vec3::new(-10.0, 5.0, 1.0), [10.0, 0.0, 0.0])?],
         ..ScenarioConfig::default()
     };
-    let mut simulation = Simulation::new(scenario, &PluginRegistry::with_builtins(), 1)?;
+    let mut simulation = Simulation::new(scenario, Arc::new(PluginRegistry::with_builtins()), 1)?;
     while simulation.step()?.is_some() {}
     fs::remove_dir_all(&directory)?;
     assert!(
@@ -201,7 +205,8 @@ fn fixed_wing_flies_a_terrain_mission() -> Result<()> {
             ..ScenarioConfig::default()
         })
     };
-    let mut simulation = Simulation::new(scenario()?, &PluginRegistry::with_builtins(), 1)?;
+    let mut simulation =
+        Simulation::new(scenario()?, Arc::new(PluginRegistry::with_builtins()), 1)?;
     while simulation.step()?.is_some() {}
     fs::remove_dir_all(terrain.parent().unwrap())?;
     Ok(())
@@ -216,7 +221,7 @@ fn terrain_collision_needs_complete_terrain() -> Result<()> {
         entities: vec![agent(1, Vec3::new(0.0, 5.0, 10.0), [0.0, 0.0, 0.0])?],
         ..ScenarioConfig::default()
     };
-    let error = Simulation::new(scenario, &PluginRegistry::with_builtins(), 1)
+    let error = Simulation::new(scenario, Arc::new(PluginRegistry::with_builtins()), 1)
         .err()
         .expect("terrain with a hole");
     fs::remove_dir_all(terrain.parent().unwrap())?;
@@ -234,7 +239,7 @@ fn terrain_collision_needs_a_terrain() -> Result<()> {
         entities: vec![agent(1, Vec3::new(0.0, 0.0, 10.0), [0.0, 0.0, 0.0])?],
         ..ScenarioConfig::default()
     };
-    let error = Simulation::new(scenario, &PluginRegistry::with_builtins(), 1)
+    let error = Simulation::new(scenario, Arc::new(PluginRegistry::with_builtins()), 1)
         .err()
         .expect("no terrain");
     assert!(format!("{error:#}").contains("needs the mission to name a terrain"));

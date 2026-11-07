@@ -2,6 +2,7 @@
 //! does: heading along the command (kept when it is zero), speed and climb
 //! within the aircraft's limits, and turns no tighter than its bank allows.
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use anyhow::Result;
 use ripple_core::plugin::PluginRegistry;
@@ -39,7 +40,11 @@ entities:
     )?;
     let mission = Mission::load(&path, &root, &Params::new());
     std::fs::remove_file(&path)?;
-    let mut simulation = Simulation::new(mission?.scenario, &PluginRegistry::with_builtins(), 1)?;
+    let mut simulation = Simulation::new(
+        mission?.scenario,
+        Arc::new(PluginRegistry::with_builtins()),
+        1,
+    )?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
         frames.push(frame);
@@ -159,7 +164,11 @@ entities:
     )?;
     let mission = Mission::load(&path, &root, &Params::new());
     std::fs::remove_file(&path)?;
-    let mut simulation = Simulation::new(mission?.scenario, &PluginRegistry::with_builtins(), 1)?;
+    let mut simulation = Simulation::new(
+        mission?.scenario,
+        Arc::new(PluginRegistry::with_builtins()),
+        1,
+    )?;
     let mut last = None;
     while let Some(frame) = simulation.step()? {
         last = Some(frame);

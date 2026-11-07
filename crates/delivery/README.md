@@ -11,22 +11,31 @@ before submission is in [docs/TODO.md](../../docs/TODO.md).
 ## Run
 
 ```sh
-python3 crates/delivery/region.py --hubs 4        # writes missions/region-4.yaml
-python3 crates/delivery/region.py --hubs 16 --fixed-wing 8 --multirotor 4   # a fatter fleet
 cargo build --release
-./target/release/ripple run crates/delivery/missions/region-4.yaml --headless
-python3 crates/delivery/results.py runs/region-4/run000
+./target/release/ripple run crates/delivery/missions/region.yaml --headless
+python3 crates/delivery/results.py runs/region/run000
 ```
 
-The missions are generated; edit `region.py`, not the YAML. `--hubs 1`,
-`4`, `16`, `64`, `256` and `1024` give 5 to 5,120 vehicles, five per hub.
-`--checked` uses the Rascal and Firefly instead of SimpleAircraft and point
-multirotors.
+`missions/region.yaml` is the one mission: the Dispatcher places the hubs on
+a grid and builds each hub's couriers from the two recipes at the top of
+the file, so the region's size is one value and the file is the same length
+at 16 hubs and at 1,024:
+
+```sh
+D=entities.region.autonomy.Dispatcher
+ripple run crates/delivery/missions/region.yaml --headless $D.region.hubs:=256
+```
+
+`region.hubs` is a square number, 1 to 1,024, five vehicles per hub;
+`fleet` sets how many of each recipe a hub gets. `region-1-checked.yaml` is
+the same day on the Rascal and the Firefly. The sweep files set the size the
+same way, as a parameter.
 
 For the matched grid and jitter comparison, `region.py --classical-sweeps
-FOLDER` writes five matched days and their six-policy sweeps without model
-calls; `--jitter-km` and `--min-spacing-km` displace the hubs, and
-`--layout-seed` keys the displacement apart from the demand seed.
+FOLDER` writes five matched days' six-policy sweeps without model calls;
+`--jitter-km` and `--min-spacing-km` displace the hubs, written into the
+sweep as `region.hub_positions_m`, and `--layout-seed` keys the displacement
+apart from the demand seed.
 
 Any setting can be changed on the command line. The prefix for the
 dispatcher is `entities.region.autonomy.Dispatcher`:

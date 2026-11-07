@@ -1,6 +1,7 @@
 //! Initialization, stop, failure, and removal through the public plugin API.
 use crate::plugin_fixtures;
 
+use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use anyhow::{Result, bail};
@@ -85,6 +86,7 @@ fn initialization_failure_step_failure_and_removal_close_each_plugin_once() -> R
     let mut registry = plugin_fixtures::registry()?;
     registry.register_sensor::<LifecycleSensor>("LifecycleSensor")?;
     registry.register_interaction::<RemoveEntities>("RemoveEntities")?;
+    let registry = Arc::new(registry);
 
     // One test owns this counter; parallel tests cannot interfere with it.
     for workers in [1, 8] {
@@ -98,7 +100,7 @@ fn initialization_failure_step_failure_and_removal_close_each_plugin_once() -> R
                 ("interactions".into(), "{RemoveEntities: {}}".into()),
             ]);
             let scenario = plugin_fixtures::scenario(&overrides)?;
-            let result = Simulation::new(scenario, &registry, workers);
+            let result = Simulation::new(scenario, Arc::clone(&registry), workers);
             if action == "fail_init" {
                 let error = result.err().expect("initialization must fail");
                 let message = format!("{error:#}");

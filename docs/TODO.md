@@ -51,12 +51,12 @@ larger is no operation that will exist (decided 2026-11-07).
 Try for the second finding. Keep the first one ready to ship at every
 step. The first finding needs the eight items under Either way; those
 take a few days and are needed whichever paper goes, so they come first
-or alongside. The second finding needs phases A to C below, about two
+or alongside. The second finding needs phases B and C below, about two
 weeks, before anyone knows whether it is there.
 
 The gate is 2026-11-21. On that date, one of two things is true:
 
-- Phases A to C are done and the hierarchy runs say one clear thing on
+- Phases B and C are done and the hierarchy runs say one clear thing on
   both seeds, in either direction. Then fold the second finding in,
   finish D and E, and submit to RA-L in January or straight to IROS by
   2027-03-01.
@@ -118,38 +118,12 @@ Needed for the first finding and the second alike.
 
 ## The second finding, phase by phase
 
-Measured so far (2026-11-07, Apple Silicon, release build, no manager,
-8.5 simulated hours at 0.1 s steps): a 64-hub day of 320 aircraft takes
-159 s on one worker and 206 s on eight (the eight spend 574 s in the
-kernel, so the phase joins cost more than they save at this size), in
-37 MB of memory, and writes a 5.5 GB record. A 256-hub day of 1,280
-aircraft does not finish: about a simulated hour in, after 89 s, the run
-stops with `network 'GlobalNetwork' queue full (65536 deliveries)`, the
-cap on one network's pending deliveries in
-`crates/core/src/pubsub/messages.rs`; the 1,280 couriers' status messages
-to the dispatcher fill it. Up to that point it ran at about 90 s per
-simulated hour, so a full day would be about 12 minutes on one worker
-and a 1,024-hub day about 50 minutes, if the cost stays linear in
-aircraft; memory went from 37 MB at 64 hubs to 81 MB at 256, so a
-1,024-hub day should stay under 400 MB. Runs are single-threaded, so
-eight can go at once on this machine. Disk is not a holdup: a 1,024-hub
-day's record is about 90 GB, and the machine will be cleared for it or
-the runs go elsewhere.
+A. Done. Timing (2026-11-07, release build, no manager, one worker): a
+   64-hub day takes about 3 minutes, a 256-hub day about 16 minutes, and
+   a 1,024-hub day about 2 hours. Each run writes a big file (5 GB,
+   23 GB, 90 GB) that we delete once we have the summary. With 110 GB
+   free we can run three 256-hub days at a time, or one 1,024-hub day.
 
-A. Make a day at 1,024 hubs run, and know its cost. Two to three days.
-   1. Lift the network queue cap. The 65,536 pending deliveries per
-      network was set as an ordinary constant "until a real experiment
-      needs per-queue tuning"; this is that experiment. Size the cap by
-      the population (so many per entity) or make it a mission value,
-      keep the clear error, add the test, and write the DEVNOTE with the
-      256-hub failure as the measurement.
-   2. Make workers pay. Eight workers are slower than one at 64 hubs.
-      Profile a day, find where the time goes (the phase joins, the
-      dispatcher, the record writer), and either fix it or document the
-      size at which workers help. DEVNOTE with the measurement.
-   3. Time a day at 256 and 1,024 hubs with no manager on one worker and
-      on the best worker count; these numbers are the engine table in the
-      paper.
 B. The classical policies at scale. Two days. Thirty simulated days,
    about sixteen hours of compute, run eight at a time in an afternoon;
    the rest is seeds, analysis and the figure.

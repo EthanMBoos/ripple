@@ -1,8 +1,6 @@
-# One day of blood delivery across 1 hub (5 vehicles) on
-# the Rascal (FixedWing6DOF) and the Firefly (Multirotor) at 500 Hz. Written by crates/delivery/region.py; edit that
-# script, not this file. The Dispatcher on the region entity holds the hubs,
-# stock, requests, events, and the fleet manager; see crates/delivery/README.md
-# and docs/TODO.md.
+# One day of blood delivery at one hub on the Rascal (FixedWing6DOF) and the
+# Firefly (Multirotor) at 500 Hz: region.yaml's day on the checked vehicle
+# models. The Dispatcher builds the couriers from the two recipes.
 format_version: 1
 name: region-1-checked
 
@@ -15,9 +13,8 @@ run:
 networks: {GlobalNetwork: {}}
 metrics: {DeliveryScore: {}}
 
-templates:
-  # Each hub's groups name a template and give only their hub and position;
-  # a group's Courier values lay over the template's.
+recipes:
+  # As in region.yaml: built on the Dispatcher's request.
   fixed_wing:
     team: 1
     visual_model: aircraft
@@ -27,7 +24,6 @@ templates:
     autonomy:
       Courier:
         class: fixed_wing
-        region: {hubs: 1, hub_spacing_m: 15000}
         cruise_speed_mps: 25
         endurance_s: 3600
         cruise_altitude_m: 120
@@ -46,7 +42,6 @@ templates:
     autonomy:
       Courier:
         class: multirotor
-        region: {hubs: 1, hub_spacing_m: 15000}
         cruise_speed_mps: 12
         endurance_s: 1500
         cruise_altitude_m: 80
@@ -77,6 +72,10 @@ entities:
         region:
           hubs: 1
           hub_spacing_m: 15000
+          hub_positions_m: []
+        fleet:
+          - {recipe: fixed_wing, per_hub: 3, altitude_m: 120}
+          - {recipe: multirotor, per_hub: 2}
         stock:
           items: ["O-", "O+", "A+", "B+"]
           units_per_item: 100
@@ -202,13 +201,3 @@ entities:
         detour_margin_m: 500
     controller: {SingleIntegratorControllerSimple: {}}
     motion_model: {SingleIntegrator: {}}
-  hub1_fixed_wing:
-    template: fixed_wing
-    count: 3
-    position_m: [0, 0, 120]
-    autonomy: {Courier: {hub: 1}}
-  hub1_multirotor:
-    template: multirotor
-    count: 2
-    position_m: [0, 0, 0]
-    autonomy: {Courier: {hub: 1}}

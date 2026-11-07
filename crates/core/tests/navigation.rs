@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use anyhow::Result;
 use ripple_core::{Mission, Params, Simulation, Vec3};
@@ -12,7 +13,7 @@ fn run(name: &str, update_at: f64) -> Result<Simulation> {
     let mission = Mission::load(&root.join("missions").join(name), &root, &overrides)?;
     let mut simulation = Simulation::new(
         mission.scenario,
-        &ripple_core::plugin::PluginRegistry::with_builtins(),
+        Arc::new(ripple_core::plugin::PluginRegistry::with_builtins()),
         2,
     )?;
     while simulation.step()?.is_some() {}

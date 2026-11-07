@@ -17,8 +17,9 @@ and every phase finishes for every agent before the next one starts:
   └──── next tick: time advances by dt
 ```
 
-Spawning happens at the start of a tick, and removal of destroyed agents at
-the end. The arrows on the right mark where each kind of disturbance enters
+Spawning happens at the start of a tick, scheduled groups and the entities
+plugins asked for with a spawn request alike, and removal of destroyed
+agents at the end. The arrows on the right mark where each kind of disturbance enters
 (see [Disturbances](../guides/disturbances.md)).
 
 Because each phase is joined before the next, everything in a phase sees the
@@ -132,8 +133,8 @@ From Rust, the same loop is:
 
 ```rust,ignore
 let mission = Mission::load(path, root, &Params::new())?;
-let mut simulation =
-    Simulation::new(mission.scenario, &PluginRegistry::with_builtins(), workers)?;
+let registry = Arc::new(PluginRegistry::with_builtins());
+let mut simulation = Simulation::new(mission.scenario, registry, workers)?;
 while let Some(frame) = simulation.step()? {
     inspect(frame);
 }

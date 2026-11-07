@@ -39,7 +39,8 @@ use crate::skill::{self, Settings, Skill};
 pub struct CourierConfig {
     /// `fixed_wing` or `multirotor`. Required.
     class: Option<VehicleClass>,
-    /// Its hub, numbered from 1. Required.
+    /// Its hub, numbered from 1. A recipe leaves it 0 and the Dispatcher's
+    /// spawn request gives it, with `region`.
     hub: u32,
     /// The region's layout, the same values as the Dispatcher's `region`, so
     /// `hub` alone says where home is.
@@ -121,7 +122,7 @@ impl Autonomy for Courier {
             .context("Courier needs class: fixed_wing or multirotor")?;
         side(&config.region)?;
         ensure!(
-            config.hub >= 1 && config.hub <= config.region.hubs,
+            config.hub <= config.region.hubs,
             "Courier hub must be 1 to {}, not {}",
             config.region.hubs,
             config.hub
@@ -149,7 +150,11 @@ impl Autonomy for Courier {
                 endurance_s: config.endurance_s,
             },
             hub: config.hub,
-            hub_world_m: config.region.position_m(config.hub),
+            hub_world_m: if config.hub == 0 {
+                Vec3::zeros()
+            } else {
+                config.region.position_m(config.hub)
+            },
             cruise_altitude_m: config.cruise_altitude_m,
             hub_radius_m: config.hub_radius_m,
             arrival_radius_m: config.arrival_radius_m,
@@ -186,6 +191,11 @@ impl Autonomy for Courier {
     }
 
     fn initialize(&mut self, context: &mut AgentContext) -> Result<()> {
+        ensure!(
+            self.hub >= 1,
+            "Courier {} has no hub: give the group `hub`, or build it from a Dispatcher's `fleet`",
+            context.entity.id
+        );
         context
             .messages
             .subscribe::<Assignment>("GlobalNetwork", ASSIGNMENT_TOPIC)?;

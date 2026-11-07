@@ -19,15 +19,16 @@
 //! break a rule or cannot be flown, with the reason. With `feedback`, the
 //! next call reports each order's estimate and what was flown since.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::fmt::Write as _;
 
 use anyhow::{Context, Result, ensure};
 use ripple_core::Vec3;
 use ripple_core::plugin::{
-    AgentContext, Autonomy, Drawing, Frame, PluginIo, PluginParams, PluginRandom, Port, Ports, Unit,
+    AgentContext, Autonomy, Drawing, Frame, PluginIo, PluginParams, PluginRandom, Port, Ports,
+    SpawnRequest, Unit,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::area::{Area, detour, tagged};
 use crate::client::{Client, Provider, Via};
@@ -232,10 +233,36 @@ impl ManagerConfig {
     }
 }
 
+/// The couriers the dispatcher builds at every hub from one of the
+/// mission's recipes.
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct FleetEntry {
+    pub recipe: String,
+    pub per_hub: u32,
+    /// Where they start above the hub; a fixed-wing recipe starts in the air.
+    pub altitude_m: f64,
+}
+
+/// What a spawn request lays over a courier recipe: its hub and the region.
+#[derive(Serialize)]
+struct CourierHome {
+    hub: u32,
+    region: RegionConfig,
+}
+
+/// Spawn requests published per step. A plugin may hold 1,024 unsent
+/// messages, so a large fleet is asked for over a few ticks: two recipes at
+/// 1,024 hubs take five.
+const SPAWN_REQUESTS_PER_STEP: usize = 500;
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct DispatcherConfig {
     pub region: RegionConfig,
+    /// The couriers to build at every hub, each from a recipe of the
+    /// mission. Empty when the mission writes the couriers out.
+    pub fleet: Vec<FleetEntry>,
     pub stock: StockConfig,
     pub requests: RequestsConfig,
     pub events: EventsConfig,
@@ -257,6 +284,7 @@ impl Default for DispatcherConfig {
     fn default() -> Self {
         Self {
             region: RegionConfig::default(),
+            fleet: Vec::new(),
             stock: StockConfig::default(),
             requests: RequestsConfig::default(),
             events: EventsConfig::default(),
@@ -298,6 +326,8 @@ struct Tally {
 pub struct Dispatcher {
     config: DispatcherConfig,
     region: Region,
+    /// The fleet still to ask the engine for.
+    spawn_queue: VecDeque<SpawnRequest>,
     /// Units of each item at each hub, by hub number.
     stock: BTreeMap<u32, BTreeMap<String, u32>>,
     next_restock_s: f64,
@@ -352,6 +382,17 @@ impl Autonomy for Dispatcher {
             "manager.cluster_side must divide the region's side ({})",
             region.side()
         );
+        for entry in &config.fleet {
+            ensure!(
+                !entry.recipe.trim().is_empty(),
+                "every fleet entry names a recipe of the mission"
+            );
+            ensure!(
+                entry.altitude_m.is_finite() && entry.altitude_m >= 0.0,
+                "fleet entry {}: altitude_m must be finite and nonnegative",
+                entry.recipe
+            );
+        }
         ensure!(
             !config.stock.items.is_empty(),
             "stock.items must name the blood types"
@@ -460,6 +501,7 @@ impl Autonomy for Dispatcher {
         Self {
             config: config.clone(),
             region,
+            spawn_queue: VecDeque::new(),
             stock,
             next_restock_s: config.stock.restock_interval_s,
             requests: BTreeMap::new(),
@@ -518,11 +560,36 @@ impl Autonomy for Dispatcher {
             event.text = self.config.events.text(event);
         }
         self.draw_requests(&context.random.with(&[PluginRandom::name("requests")]));
+        // The fleet: each hub's couriers, built by the engine from their
+        // recipes at the hub, with the hub and the region laid over.
+        for hub in &self.region.hubs {
+            for entry in &self.config.fleet {
+                let start_world_m = hub.position_world_m + Vec3::new(0.0, 0.0, entry.altitude_m);
+                let request = SpawnRequest::recipe(&entry.recipe)
+                    .count(entry.per_hub as usize)
+                    .at(start_world_m)
+                    .autonomy(
+                        "Courier",
+                        CourierHome {
+                            hub: hub.id,
+                            region: self.config.region.clone(),
+                        },
+                    )?;
+                self.spawn_queue.push_back(request);
+            }
+        }
         Ok(())
     }
 
     fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let now_s = context.time.time_s;
+
+        let requests_now = SPAWN_REQUESTS_PER_STEP.min(self.spawn_queue.len());
+        for request in self.spawn_queue.drain(..requests_now) {
+            context
+                .messages
+                .publish("GlobalNetwork", SpawnRequest::TOPIC, request)?;
+        }
 
         // Input: reports and deliveries.
         for message in context

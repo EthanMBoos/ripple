@@ -66,6 +66,20 @@ fn parse(text: &str, source: PathBuf, overrides: &Params) -> Result<Mission> {
     let name = root.remove("name").context("missing name")?;
     ensure!(name.is_string(), "name must be a string");
     ensure!(root.contains_key("entities"), "missing entities");
+    if let Some(Value::Mapping(recipes)) = root.get("recipes") {
+        for (label, recipe) in recipes {
+            let Value::Mapping(fields) = recipe else {
+                continue;
+            };
+            for forbidden in ["count", "spawn"] {
+                ensure!(
+                    !fields.contains_key(forbidden),
+                    "recipe {}: `{forbidden}` is not allowed; a recipe is built only when a plugin asks",
+                    key(label)?
+                );
+            }
+        }
+    }
     let viewer = match root.get_mut("run") {
         Some(Value::Mapping(run)) => run
             .remove("viewer")
@@ -196,40 +210,42 @@ fn expand_templates(tree: &mut Value) -> Result<()> {
         Some(_) => bail!("templates must be a map of named entity groups"),
         None => Mapping::new(),
     };
-    let Some(Value::Mapping(entities)) = root.get_mut("entities") else {
-        return Ok(());
-    };
-    for (label, entity) in entities.iter_mut() {
-        let Value::Mapping(fields) = entity else {
+    for (section, kind) in [("entities", "entity"), ("recipes", "recipe")] {
+        let Some(Value::Mapping(groups)) = root.get_mut(section) else {
             continue;
         };
-        let Some(name) = fields.remove("template") else {
-            continue;
-        };
-        let label = key(label)?;
-        let name = name
-            .as_str()
-            .with_context(|| format!("entity {label}: template must be a name"))?;
-        let template = match templates.get(name) {
-            Some(Value::Mapping(template)) => template,
-            Some(_) => bail!("template {name} must be a map"),
-            None => bail!("entity {label}: unknown template `{name}`"),
-        };
-        ensure!(
-            !template.contains_key("template"),
-            "template {name}: templates cannot use other templates"
-        );
-        let mut expanded = template.clone();
-        for (field, value) in fields.iter() {
-            let merged = match (expanded.get(field), value) {
-                (Some(Value::Mapping(inherited)), Value::Mapping(own)) => {
-                    same_plugin_merged(inherited, own)
-                }
-                _ => None,
+        for (label, group) in groups.iter_mut() {
+            let Value::Mapping(fields) = group else {
+                continue;
             };
-            expanded.insert(field.clone(), merged.unwrap_or_else(|| value.clone()));
+            let Some(name) = fields.remove("template") else {
+                continue;
+            };
+            let label = key(label)?;
+            let name = name
+                .as_str()
+                .with_context(|| format!("{kind} {label}: template must be a name"))?;
+            let template = match templates.get(name) {
+                Some(Value::Mapping(template)) => template,
+                Some(_) => bail!("template {name} must be a map"),
+                None => bail!("{kind} {label}: unknown template `{name}`"),
+            };
+            ensure!(
+                !template.contains_key("template"),
+                "template {name}: templates cannot use other templates"
+            );
+            let mut expanded = template.clone();
+            for (field, value) in fields.iter() {
+                let merged = match (expanded.get(field), value) {
+                    (Some(Value::Mapping(inherited)), Value::Mapping(own)) => {
+                        same_plugin_merged(inherited, own)
+                    }
+                    _ => None,
+                };
+                expanded.insert(field.clone(), merged.unwrap_or_else(|| value.clone()));
+            }
+            *fields = expanded;
         }
-        *fields = expanded;
     }
     Ok(())
 }
@@ -431,6 +447,23 @@ entities:
             perfect.config.entities[0].localization.inputs["state"],
             "perfect"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn a_recipe_is_a_group_built_only_on_request() -> Result<()> {
+        let recipes = MISSION.replace(
+            "entities:\n",
+            "recipes:\n  spare:\n    autonomy: {Straight: {speed_mps: 25}}\n    \
+             controller: {SimpleAircraftControllerPID: {}}\n    \
+             motion_model: {SimpleAircraft: {}}\nentities:\n",
+        );
+        let resolved = load(&recipes, &[])?.resolve(&PluginRegistry::with_builtins())?;
+        assert_eq!(resolved.config.recipes.len(), 1);
+        assert_eq!(resolved.config.recipes[0].label, "spare");
+        assert_eq!(resolved.config.recipes[0].count, 0);
+        let counted = recipes.replace("  spare:\n", "  spare:\n    count: 2\n");
+        assert!(error(&counted, &[]).contains("recipe spare: `count` is not allowed"));
         Ok(())
     }
 

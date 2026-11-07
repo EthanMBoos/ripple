@@ -1,7 +1,7 @@
 use ripple_cli::{RunSettings, run_scenario};
 use ripple_core::record;
 use ripple_core::{EntityGroupConfig, PluginConfig, ScenarioConfig, Vec3, plugin::PluginRegistry};
-use std::{fs, process::Command};
+use std::{fs, process::Command, sync::Arc};
 
 fn scenario() -> ScenarioConfig {
     let mut scenario = ScenarioConfig::default();
@@ -47,7 +47,7 @@ entities:
 "#,
     )
     .unwrap();
-    let registry = PluginRegistry::with_builtins();
+    let registry = Arc::new(PluginRegistry::with_builtins());
     for (workers, recording) in [(1, false), (8, true)] {
         let name = format!("rust-{workers}");
         let output = run_scenario(
@@ -102,7 +102,7 @@ entities:
 #[test]
 fn invalid_rust_setup_does_not_create_outputs() {
     let temp = tempfile::tempdir().unwrap();
-    let registry = PluginRegistry::with_builtins();
+    let registry = Arc::new(PluginRegistry::with_builtins());
     for invalid in 0..3 {
         let mut scenario = scenario();
         let mut settings = RunSettings {
@@ -129,7 +129,7 @@ fn repeated_group_labels_keep_distinct_recorded_group_indices() {
     config.entities.push(second);
     let output = run_scenario(
         config,
-        &PluginRegistry::with_builtins(),
+        &Arc::new(PluginRegistry::with_builtins()),
         RunSettings {
             root: temp.path().to_owned(),
             ..RunSettings::default()

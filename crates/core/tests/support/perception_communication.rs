@@ -1,5 +1,6 @@
 //! Consumers for the built-in contact sensor and auction; all use public plugin APIs.
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use anyhow::Result;
 use ripple_core::plugin::autonomy::{
@@ -162,7 +163,7 @@ fn simulation(workers: usize, overrides: &Params) -> Result<Simulation> {
     registry.register_interaction::<RemoveContacts>("RemoveContacts")?;
     let path = root.join("crates/core/tests/fixtures/perception_communication.yaml");
     let scenario = Mission::load(&path, &root, overrides)?.scenario;
-    Simulation::new(scenario, &registry, workers)
+    Simulation::new(scenario, Arc::new(registry), workers)
 }
 
 /// The newest NoisyContacts reading this entity has, if any yet.

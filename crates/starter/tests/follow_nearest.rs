@@ -3,6 +3,7 @@
 use anyhow::Result;
 use ripple_core::{EventKind, Mission, Params, Simulation, plugin::PluginRegistry};
 use std::path::Path;
+use std::sync::Arc;
 
 #[test]
 fn chaser_catches_the_target() -> Result<()> {
@@ -14,7 +15,7 @@ fn chaser_catches_the_target() -> Result<()> {
         crate_folder,
         &Params::new(),
     )?;
-    let mut simulation = Simulation::new(mission.scenario, &registry, 1)?;
+    let mut simulation = Simulation::new(mission.scenario, Arc::new(registry), 1)?;
     while simulation.step()?.is_some() {}
 
     let caught = simulation

@@ -1,6 +1,9 @@
 //! Fixed-step orchestration with explicit phase boundaries.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    sync::Arc,
+};
 
 use anyhow::Result;
 use serde::Serialize;
@@ -23,6 +26,7 @@ mod scheduler;
 mod trace;
 pub(crate) mod world_plugins;
 
+pub use generation::{PluginOverlay, PluginSlot, SpawnRequest};
 pub use trace::TraceSink;
 
 use generation::Generator;
@@ -79,7 +83,11 @@ pub struct SimulationFrame {
 
 pub struct Simulation {
     config: ScenarioConfig,
-    definitions: Vec<EntityDefinition>,
+    /// Shared with the command, which runs many simulations from one
+    /// registry; kept to configure the plugins of groups that plugins
+    /// request entities from during the run.
+    registry: Arc<PluginRegistry>,
+    definitions: Vec<Arc<EntityDefinition>>,
     entities: Vec<Entity>,
     events: Vec<Event>,
     time_s: f64,
@@ -106,10 +114,10 @@ pub struct Simulation {
 impl Simulation {
     pub fn new(
         scenario: ScenarioConfig,
-        registry: &PluginRegistry,
+        registry: Arc<PluginRegistry>,
         worker_count: usize,
     ) -> Result<Self> {
-        let scenario = scenario.resolve(registry)?;
+        let scenario = scenario.resolve(&registry)?;
         let ResolvedScenario {
             config,
             definitions,
@@ -124,6 +132,7 @@ impl Simulation {
         let mut simulation = Self {
             time_s: config.run.start_s - config.run.dt_s,
             config,
+            registry,
             definitions,
             entities: Vec::new(),
             events: Vec::new(),
@@ -153,6 +162,10 @@ impl Simulation {
             &simulation.entity_teams,
             simulation.terrain.as_ref(),
         )?;
+        // The engine's own mailbox takes the spawn requests plugins publish.
+        simulation
+            .messages
+            .subscribe::<SpawnRequest>("GlobalNetwork", SpawnRequest::TOPIC)?;
         // Setup pass, labeled one step before the start (tick -1): build every
         // group due at startup, then run the interactions once, so starting
         // overlaps and collisions are settled before the first tick runs.

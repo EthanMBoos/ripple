@@ -7,6 +7,7 @@ mod plugin_fixtures;
 use anyhow::Result;
 use plugin_fixtures::*;
 use ripple_core::{Drawing, Params, Simulation, plugin::PluginRegistry, record};
+use std::sync::Arc;
 
 /// Overrides that replace whole plugin slots, such as
 /// `entities.agents.motion_model:={MissingMotion: {}}`.
@@ -56,13 +57,13 @@ fn duplicate_registration_and_unknown_plugins_fail_before_execution() -> Result<
             .is_err()
     );
     let overrides = slots(&[("entities.agents.motion_model", "{MissingMotion: {}}")]);
-    assert!(Simulation::new(scenario(&overrides)?, &registry, 1).is_err());
+    assert!(Simulation::new(scenario(&overrides)?, Arc::new(registry), 1).is_err());
     Ok(())
 }
 
 #[test]
 fn a_registered_name_in_the_wrong_category_is_rejected() -> Result<()> {
-    let registry = registry()?;
+    let registry = Arc::new(registry()?);
     for (slot, plugins, expected) in [
         (
             "entities.agents.motion_model",
@@ -86,7 +87,7 @@ fn a_registered_name_in_the_wrong_category_is_rejected() -> Result<()> {
         ),
     ] {
         let overrides = slots(&[(slot, plugins)]);
-        let error = Simulation::new(scenario(&overrides)?, &registry, 1)
+        let error = Simulation::new(scenario(&overrides)?, Arc::clone(&registry), 1)
             .err()
             .expect("wrong category must fail");
         assert!(format!("{error:#}").contains(expected), "{error:#}");
@@ -106,7 +107,7 @@ fn different_categories_can_register_the_same_name() -> Result<()> {
     );
 
     let overrides = slots(&[("entities.agents.motion_model", "{PositionSensor: {}}")]);
-    let mut simulation = Simulation::new(scenario(&overrides)?, &registry, 2)?;
+    let mut simulation = Simulation::new(scenario(&overrides)?, Arc::new(registry), 2)?;
     while simulation.step()?.is_some() {}
     for entity in simulation.entities() {
         assert!((entity.truth().position_world_m.x - 1.0).abs() < 1e-12);
@@ -116,7 +117,7 @@ fn different_categories_can_register_the_same_name() -> Result<()> {
 
 #[test]
 fn interaction_messages_reach_both_metrics_in_the_same_tick() -> Result<()> {
-    let mut simulation = Simulation::new(scenario(&Params::new())?, &registry()?, 8)?;
+    let mut simulation = Simulation::new(scenario(&Params::new())?, Arc::new(registry()?), 8)?;
     simulation.step()?;
     for (_, report) in simulation.metric_reports() {
         // Pre-start interaction plus current interaction, delivered before the first metric step.
@@ -163,16 +164,16 @@ fn custom_network_delay_and_loss_change_only_delivered_statistics() -> Result<()
 
 #[test]
 fn all_world_plugin_categories_resolve_through_the_registry() -> Result<()> {
-    let registry = registry()?;
+    let registry = Arc::new(registry()?);
     for slot in ["interactions", "networks", "metrics"] {
         let overrides = slots(&[(slot, "{MissingPlugin: {}}")]);
         assert!(
-            Simulation::new(scenario(&overrides)?, &registry, 1).is_err(),
+            Simulation::new(scenario(&overrides)?, Arc::clone(&registry), 1).is_err(),
             "{slot}"
         );
     }
     let negative_delay = slots(&[("networks.ExampleNetwork.delay_s", "-1")]);
-    assert!(Simulation::new(scenario(&negative_delay)?, &registry, 1).is_err());
+    assert!(Simulation::new(scenario(&negative_delay)?, Arc::clone(&registry), 1).is_err());
     Ok(())
 }
 
@@ -196,7 +197,7 @@ fn world_plugin_failure_terminates_the_run_and_closes_other_plugins() -> Result<
     let mut registry = registry()?;
     registry.register_interaction::<FailingInteraction>("FailingInteraction")?;
     let overrides = slots(&[("interactions", "{FailingInteraction: {}}")]);
-    let mut simulation = Simulation::new(scenario(&overrides)?, &registry, 8)?;
+    let mut simulation = Simulation::new(scenario(&overrides)?, Arc::new(registry), 8)?;
     let error = simulation.step().unwrap_err();
     assert!(format!("{error:#}").contains("FailingInteraction"));
     assert_eq!(
@@ -233,7 +234,7 @@ fn world_plugin_stop_emits_terminal_frame_and_closes_once() -> Result<()> {
     let mut registry = registry()?;
     registry.register_interaction::<StopInteraction>("StopInteraction")?;
     let overrides = slots(&[("interactions", "{StopInteraction: {}}")]);
-    let mut simulation = Simulation::new(scenario(&overrides)?, &registry, 8)?;
+    let mut simulation = Simulation::new(scenario(&overrides)?, Arc::new(registry), 8)?;
     assert!(simulation.step()?.is_some());
     assert_eq!(
         simulation.termination(),
@@ -275,7 +276,7 @@ fn network_panic_is_reported_and_other_plugins_are_closed() -> Result<()> {
     registry.register_interaction::<interaction::Floor>("Floor")?;
     registry.register_network::<PanicNetwork>("ExampleNetwork")?;
     registry.register_metrics::<metrics::PopulationMetrics>("PopulationMetrics")?;
-    let mut simulation = Simulation::new(scenario(&Params::new())?, &registry, 8)?;
+    let mut simulation = Simulation::new(scenario(&Params::new())?, Arc::new(registry), 8)?;
     assert!(simulation.step().is_err());
     assert_eq!(
         simulation.termination(),
@@ -295,7 +296,8 @@ fn every_frame_carries_the_plugins_drawings_in_entity_then_world_order() -> Resu
         .collect();
     let mut first_frames = None;
     for workers in [1, 2, 8] {
-        let mut simulation = Simulation::new(scenario(&Params::new())?, &registry()?, workers)?;
+        let mut simulation =
+            Simulation::new(scenario(&Params::new())?, Arc::new(registry()?), workers)?;
         let mut frames = Vec::new();
         while let Some(frame) = simulation.step()? {
             frames.push(frame);
@@ -344,7 +346,7 @@ fn a_record_replays_each_frames_drawings() -> Result<()> {
     ));
     std::fs::create_dir_all(&directory)?;
     let path = directory.join("run.mcap");
-    let mut simulation = Simulation::new(scenario(&Params::new())?, &registry()?, 1)?;
+    let mut simulation = Simulation::new(scenario(&Params::new())?, Arc::new(registry()?), 1)?;
     let mut writer = record::RunWriter::create(&path, &simulation, false)?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
@@ -358,5 +360,81 @@ fn a_record_replays_each_frames_drawings() -> Result<()> {
         assert_eq!(saved.drawings, live.drawings);
     }
     std::fs::remove_dir_all(&directory)?;
+    Ok(())
+}
+
+/// The spawn-request fixture: a launcher that asks for two scouts.
+fn spawn_requests(overrides: &[(&str, &str)]) -> Result<ripple_core::ScenarioConfig> {
+    let core = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let path = core.join("tests/fixtures/spawn_requests.yaml");
+    Ok(ripple_core::Mission::load(&path, &core.join("../.."), &slots(overrides))?.scenario)
+}
+
+#[test]
+fn a_requested_entity_is_built_next_tick_with_the_requested_values() -> Result<()> {
+    let registry = Arc::new(registry()?);
+    let mut expected = None;
+    for workers in [1, 2, 8] {
+        let mut simulation = Simulation::new(spawn_requests(&[])?, Arc::clone(&registry), workers)?;
+        let mut frames = Vec::new();
+        let mut first_frame_entities = None;
+        while let Some(frame) = simulation.step()? {
+            first_frame_entities.get_or_insert(frame.entities.len());
+            frames.push(serde_json::to_string(&frame)?);
+        }
+        // The first frame has the launcher alone; the scouts arrive at tick 1.
+        assert_eq!(first_frame_entities, Some(1));
+        let entities = simulation.entities();
+        assert_eq!(entities.len(), 3);
+        // Recipes are numbered after the entities: the launcher is 0.
+        let scouts: Vec<_> = entities.iter().filter(|e| e.group_index() == 1).collect();
+        assert_eq!(scouts.len(), 2);
+        for scout in &scouts {
+            assert!((scout.born_s() - 0.1).abs() < 1e-12, "{}", scout.born_s());
+        }
+        // The first scout starts at x = 10 and drives to the overlaid goal of
+        // 12, not the group's 1; the second starts past it and stays.
+        let x: Vec<f64> = scouts
+            .iter()
+            .map(|s| s.truth().position_world_m.x)
+            .collect();
+        assert!(x[0] > 11.0 && x[0] <= 12.0 + 1e-9, "{x:?}");
+        assert!((x[1] - 20.0).abs() < 1e-12, "{x:?}");
+        let output = (frames, serde_json::to_string(simulation.events())?);
+        match &expected {
+            None => expected = Some(output),
+            Some(expected) => assert_eq!(expected, &output, "workers {workers}"),
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn a_spawn_request_for_an_unknown_group_or_plugin_stops_the_run() -> Result<()> {
+    let registry = Arc::new(registry()?);
+    for (path, value, expected) in [
+        (
+            "entities.launcher.autonomy.Launcher.recipe",
+            "nowhere",
+            "the mission has no recipe `nowhere`",
+        ),
+        (
+            "entities.launcher.autonomy.Launcher.goal_plugin",
+            "Straight",
+            "the recipe has no autonomy plugin `Straight`",
+        ),
+    ] {
+        let mut simulation =
+            Simulation::new(spawn_requests(&[(path, value)])?, Arc::clone(&registry), 1)?;
+        let error = loop {
+            match simulation.step() {
+                Ok(Some(_)) => continue,
+                Ok(None) => panic!("the bad request must stop the run"),
+                Err(error) => break format!("{error:#}"),
+            }
+        };
+        assert!(error.contains(expected), "{error}");
+        assert!(error.contains("Launcher:0 of entity 1"), "{error}");
+    }
     Ok(())
 }

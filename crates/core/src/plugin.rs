@@ -44,6 +44,7 @@ pub use crate::ports::{Frame, PluginIo, Port, Ports, Unit};
 pub use crate::pubsub::{
     Delivery, Message, MessageEndpoint, Messages, NetworkContext, Transmission,
 };
+pub use crate::simulation::{PluginSlot, SpawnRequest};
 pub use autonomy::Autonomy;
 pub use controller::Controller;
 pub use estimator::{

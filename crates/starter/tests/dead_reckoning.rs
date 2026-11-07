@@ -2,6 +2,7 @@
 use anyhow::Result;
 use ripple_core::{Mission, Params, Simulation, plugin::PluginRegistry};
 use std::path::Path;
+use std::sync::Arc;
 
 /// After every tick: time, the dead-reckoning robot's belief error, and how far
 /// it really is from the robot with perfect localization.
@@ -18,7 +19,7 @@ fn run(overrides: &[(&str, &str)]) -> Result<Vec<(f64, f64, f64)>> {
         crate_folder,
         &params,
     )?;
-    let mut simulation = Simulation::new(mission.scenario, &registry, 1)?;
+    let mut simulation = Simulation::new(mission.scenario, Arc::new(registry), 1)?;
     let mut ticks = Vec::new();
     while simulation.step()?.is_some() {
         // Entities in mission order: the dead-reckoning robot, then the perfect one.

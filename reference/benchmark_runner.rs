@@ -6,7 +6,7 @@
 //! It also registers StateBroadcast and StateListener, a message pair that only
 //! reference/message_benchmark.py uses.
 
-use std::{env, fs, path::Path, time::Instant};
+use std::{env, fs, path::Path, sync::Arc, time::Instant};
 
 use anyhow::{Result, ensure};
 use ripple_core::plugin::*;
@@ -65,7 +65,7 @@ fn main() -> Result<()> {
             cell_width_m: cell_width_m.parse()?,
         };
     }
-    let mut simulation = Simulation::new(config.scenario, &registry, args[4].parse()?)?;
+    let mut simulation = Simulation::new(config.scenario, Arc::new(registry), args[4].parse()?)?;
     let setup_s = started.elapsed().as_secs_f64();
     let started = Instant::now();
     let output = Path::new(&args[3]);

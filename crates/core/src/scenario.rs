@@ -1,5 +1,5 @@
 //! The experiment description shared by Rust setup code and mission readers.
-use std::{collections::BTreeMap, path::PathBuf};
+use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
 
 use anyhow::{Context, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ use crate::{
 /// Validated configuration and factories, ready for runtime construction.
 pub(crate) struct ResolvedScenario {
     pub config: ScenarioConfig,
-    pub definitions: Vec<EntityDefinition>,
+    pub definitions: Vec<Arc<EntityDefinition>>,
     pub generators: Vec<Generator>,
     pub world: CompiledWorld,
     pub end_conditions: EndConditions,
@@ -273,6 +273,13 @@ pub struct ScenarioConfig {
     pub terrain: Option<PathBuf>,
     #[serde(deserialize_with = "crate::mission::entity_groups")]
     pub entities: Vec<EntityGroupConfig>,
+    /// Groups built only when a plugin asks, by a `SpawnRequest` naming one.
+    /// They are numbered after `entities` and have no `count` or `spawn`.
+    #[serde(
+        deserialize_with = "crate::mission::entity_groups",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub recipes: Vec<EntityGroupConfig>,
     #[serde(deserialize_with = "crate::mission::plugins")]
     pub interactions: Vec<PluginConfig>,
     #[serde(deserialize_with = "crate::mission::plugins")]
@@ -282,6 +289,11 @@ pub struct ScenarioConfig {
 }
 
 impl ScenarioConfig {
+    /// Every group in group-index order: the entities, then the recipes.
+    pub(crate) fn groups(&self) -> impl Iterator<Item = &EntityGroupConfig> {
+        self.entities.iter().chain(self.recipes.iter())
+    }
+
     pub(crate) fn resolve(mut self, registry: &PluginRegistry) -> Result<ResolvedScenario> {
         ensure!(
             self.run.dt_s.is_finite() && self.run.dt_s > 0.0,
@@ -304,18 +316,28 @@ impl ScenarioConfig {
             );
         }
 
+        for recipe in &mut self.recipes {
+            ensure!(
+                recipe.spawn.is_none(),
+                "recipe {}: a recipe is built only when a plugin asks, not on a schedule",
+                recipe.label
+            );
+            recipe.count = 0;
+        }
         let mut definitions = Vec::new();
         let mut generators = Vec::new();
-        for (index, entity) in self.entities.iter_mut().enumerate() {
-            entity
+        let entities = self.entities.iter_mut().map(|group| ("entity", group));
+        let recipes = self.recipes.iter_mut().map(|group| ("recipe", group));
+        for (index, (kind, group)) in entities.chain(recipes).enumerate() {
+            group
                 .validate()
-                .with_context(|| format!("entity {}", entity.label))?;
-            let definition = EntityDefinition::parse(entity, registry)
-                .with_context(|| format!("entity {}", entity.label))?;
+                .with_context(|| format!("{kind} {}", group.label))?;
+            let definition = EntityDefinition::parse(group, registry)
+                .with_context(|| format!("{kind} {}", group.label))?;
             // Record every estimator input's source, including the defaults.
-            [entity.localization.inputs, entity.tracking.inputs] = definition.estimator_inputs();
-            definitions.push(definition);
-            generators.push(Generator::new(entity, index, self.run.start_s)?);
+            [group.localization.inputs, group.tracking.inputs] = definition.estimator_inputs();
+            definitions.push(Arc::new(definition));
+            generators.push(Generator::new(group, index, self.run.start_s)?);
         }
         let world = CompiledWorld::compile(&self, registry)?;
         let end_conditions = self.end_conditions;
@@ -330,7 +352,7 @@ impl ScenarioConfig {
 }
 
 impl EntityGroupConfig {
-    fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         ensure!(self.health > 0, "entity health must be positive");
         ensure!(
             !self.motion_model.name.trim().is_empty(),

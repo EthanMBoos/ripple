@@ -8,6 +8,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use ripple_core::plugin::PluginRegistry;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 mod replay;
 mod run;
@@ -56,8 +57,8 @@ pub fn main(registry: PluginRegistry, project_root: impl AsRef<Path>) -> Result<
         .unwrap_or_else(|_| project_root.as_ref().to_path_buf());
     let project_root = project_root.as_path();
     match Cli::parse().command {
-        Command::Run(options) => run::run(options, &registry, project_root)?,
-        Command::Sweep(options) => sweep::sweep(options, &registry, project_root)?,
+        Command::Run(options) => run::run(options, &Arc::new(registry), project_root)?,
+        Command::Sweep(options) => sweep::sweep(options, &Arc::new(registry), project_root)?,
         Command::Replay { path, draw_trails } => replay::replay(&path, draw_trails)?,
     }
     Ok(())

@@ -6,6 +6,7 @@ use ripple_core::{
     SpatialLookup, Vec3,
     plugin::{Interaction, InteractionContext, PluginParams, PluginRegistry, Update},
 };
+use std::sync::Arc;
 
 /// Three agents in a row, 3 m apart, with a 5 m collision range: the first and
 /// second overlap, and so do the second and third. They are created in the
@@ -58,7 +59,7 @@ fn chain(spatial_lookup: SpatialLookup) -> Result<ScenarioConfig> {
 fn collisions(spatial_lookup: SpatialLookup, workers: usize) -> Result<Vec<Vec<i32>>> {
     let mut simulation = Simulation::new(
         chain(spatial_lookup)?,
-        &PluginRegistry::with_builtins(),
+        Arc::new(PluginRegistry::with_builtins()),
         workers,
     )?;
     while simulation.step()?.is_some() {}
@@ -92,7 +93,7 @@ fn a_grid_needs_a_positive_cell_width() -> Result<()> {
     for cell_width_m in [0.0, -1.0, f64::NAN] {
         let error = Simulation::new(
             chain(SpatialLookup::Grid { cell_width_m })?,
-            &PluginRegistry::with_builtins(),
+            Arc::new(PluginRegistry::with_builtins()),
             1,
         )
         .err()
@@ -128,6 +129,7 @@ impl Interaction for MoveOnto {
 fn a_collision_caused_by_an_earlier_interaction_is_seen() -> Result<()> {
     let mut registry = PluginRegistry::with_builtins();
     registry.register_interaction::<MoveOnto>("MoveOnto")?;
+    let registry = Arc::new(registry);
     // Agents 1 and 2 start 100 m apart; MoveOnto runs before SimpleCollision.
     let lookups = [
         SpatialLookup::Scan,
@@ -142,7 +144,7 @@ fn a_collision_caused_by_an_earlier_interaction_is_seen() -> Result<()> {
         scenario
             .interactions
             .insert(0, PluginConfig::new("MoveOnto"));
-        let mut simulation = Simulation::new(scenario, &registry, 1)?;
+        let mut simulation = Simulation::new(scenario, Arc::clone(&registry), 1)?;
         while simulation.step()?.is_some() {}
         let collisions: Vec<_> = simulation
             .events()

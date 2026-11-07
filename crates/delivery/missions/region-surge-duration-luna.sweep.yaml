@@ -6,9 +6,10 @@
 # up to 160 model requests before cache reuse. These are paid API calls.
 # Samples separate cached replies; they are not provider-side random seeds.
 name: region-surge-duration-luna
-base_scenario: region-16.yaml
+base_scenario: region.yaml
 seeds: [1, 2, 3, 4, 5]
 parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 16
   run.end_s: 16200
   entities.region.autonomy.Dispatcher.requests.until_s: 14400
   entities.region.autonomy.Dispatcher.events.surge_requests_per_hub: 16

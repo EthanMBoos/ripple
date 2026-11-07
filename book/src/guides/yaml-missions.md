@@ -80,6 +80,7 @@ entities:
 | `terrain` | none | a terrain header ([Terrain](terrain.md)) |
 | `interactions`, `networks`, `metrics` | empty | world plugins |
 | `entities` | required | entity groups |
+| `recipes` | empty | entity groups built only when a plugin asks ([Recipes](#recipes)) |
 
 `spatial_lookup: {method: grid, cell_width_m: 5}` answers "who is within range?"
 with a grid instead of testing every agent. Results are identical; only speed
@@ -209,9 +210,60 @@ entities:
                                                      # replaces the slot
 ```
 
-The delivery study's missions use this to give each hub's vehicles one line:
-the template holds the Courier's speeds and endurance, and a group says
-`autonomy: {Courier: {hub: 7}}`.
+## Recipes
+
+The two sections differ in who decides when an entity appears. Under
+`entities`, the mission decides: a group's `count` appear at the start, or
+on its `spawn` timetable when the mission knows the schedule up front, as
+in a stream of aircraft entering at a fixed rate. Under `recipes`, a plugin
+decides during the run, because the number and the places depend on
+something only the run knows, such as how many hubs a region has or where
+a vehicle was lost. A recipe is written like an entity group but has no
+`count` or `spawn`; the mission rejects them. The plugin asks by publishing
+a `SpawnRequest` that names the recipe and says where, how many, and which
+plugin values differ ([Plugin API](../reference/plugin-api.md#spawn-requests)).
+Templates apply to recipes as they do to entities, and the entities built
+from a recipe belong to it, so the record and the viewer label them by its
+name.
+
+Use `entities` whenever you can write the schedule into the file; it is
+the simpler of the two and needs no plugin. Reach for a recipe when writing
+the groups out would mean generating the mission.
+
+```yaml
+recipes:
+  fixed_wing:
+    team: 1
+    position_stddev_m: [60, 60, 0]
+    autonomy: {Courier: {class: fixed_wing}}
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+
+entities:
+  region:
+    autonomy:
+      Dispatcher:
+        region: {hubs: 16, hub_spacing_m: 15000}
+        fleet:
+          - {recipe: fixed_wing, per_hub: 3, altitude_m: 120}
+```
+
+Here the Dispatcher asks for three `fixed_wing` couriers at every hub and
+gives each its hub number, so the mission is the same length at 16 hubs and
+at 1,024. A template saves lines inside a group: the group inherits the
+template's fields and writes only its own. A recipe saves groups: the
+mission writes one, and a plugin decides at run time how many to build and
+where.
+
+Why a message and a section of their own (decided 2026-11-07, when the
+1,024-hub delivery mission had reached 278 KB of generated courier groups):
+a grid or list construct in the mission format is machinery for one study;
+a `spawn()` method on every plugin context is a new slot in every context
+for one caller; a spawner interaction plugin would carry a copy of the
+layout its dispatcher already owns. A message needs nothing the plugins do
+not have. The recipes are their own section, not entities with `count: 0`,
+so that a reader sees from the file which groups exist at the start and
+which a plugin builds.
 
 Why this rule and not another (decided 2026-11-07, when the 64-hub delivery
 mission had reached 2,367 lines because every group repeated its template's

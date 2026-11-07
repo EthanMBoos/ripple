@@ -19,4 +19,7 @@ pub use mission::{Mission, Params};
 pub use scenario::{
     EndConditions, EntityGroupConfig, PluginConfig, RunConfig, ScenarioConfig, SpatialLookup, Spawn,
 };
-pub use simulation::{Event, EventKind, Simulation, SimulationFrame, TerminationReason, TraceSink};
+pub use simulation::{
+    Event, EventKind, PluginOverlay, PluginSlot, Simulation, SimulationFrame, SpawnRequest,
+    TerminationReason, TraceSink,
+};

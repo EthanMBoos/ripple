@@ -1,0 +1,15 @@
+# The classical policies on a 1024-hub day, three seeds; no model calls.
+name: region-1024-classical
+base_scenario: region.yaml
+seeds: [1, 2, 3]
+parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 1024
+  entities.region.autonomy.Dispatcher.manager.offline: true
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.kind, manager.policy]
+cases:
+  - [none, ""]
+  - [replanner, ""]
+  - [policy, crates/delivery/policies/local.yaml]
+  - [policy, crates/delivery/policies/serve.yaml]
+  - [policy, crates/delivery/policies/move.yaml]

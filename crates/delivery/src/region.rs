@@ -1,6 +1,6 @@
 //! The region: a nominal square grid, optionally displaced by explicit hub
-//! coordinates. The mission generator (`crates/delivery/region.py`) writes
-//! the same layout for the dispatcher, courier homes, and spawn positions.
+//! coordinates. The dispatcher places the hubs and builds each hub's
+//! couriers there, so one `region` setting is the whole layout.
 //!
 //! Hubs are numbered from 1 in row order. Hub `h` has clinics `hA` to `hF`,
 //! 4 to 13 km out at angles that turn with the hub number, and hospitals
@@ -10,10 +10,11 @@
 
 use anyhow::{Result, ensure};
 use ripple_core::Vec3;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
-#[derive(Clone, Debug, Deserialize)]
+/// Serializes too: the dispatcher hands it to each courier it builds.
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct RegionConfig {
     /// A square number: 1, 4, 16, 64, 256.

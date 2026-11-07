@@ -30,6 +30,7 @@ use std::{
     fs,
     io::Write,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 #[derive(Args)]
@@ -136,7 +137,7 @@ struct CaseRow {
 
 pub(crate) fn sweep(
     options: SweepOptions,
-    registry: &PluginRegistry,
+    registry: &Arc<PluginRegistry>,
     project_root: &Path,
 ) -> Result<()> {
     let root = options.root.as_deref().unwrap_or(project_root);
@@ -392,7 +393,7 @@ fn run_case(
     spec: &SweepFile,
     base: &Path,
     root: &Path,
-    registry: &PluginRegistry,
+    registry: &Arc<PluginRegistry>,
     index: usize,
     max_steps: usize,
 ) -> CaseRow {
@@ -410,7 +411,7 @@ fn run_case(
         let config = load_case(spec, base, root, index)?;
         row.seed = config.run.seed;
         // One worker per case: Slurm gives each shard one CPU.
-        let mut simulation = Simulation::new(config, registry, 1)?;
+        let mut simulation = Simulation::new(config, Arc::clone(registry), 1)?;
         while simulation.step()?.is_some() {
             ensure!(
                 simulation.step_count() <= max_steps,

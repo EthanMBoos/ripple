@@ -5,6 +5,7 @@ use ripple_core::{
     Mission, Params, ScenarioConfig, Simulation, plugin::PluginRegistry, record::RunWriter,
 };
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 pub(crate) mod output;
 
@@ -42,7 +43,7 @@ pub(crate) struct RunOptions {
 }
 pub(crate) fn run(
     options: RunOptions,
-    registry: &PluginRegistry,
+    registry: &Arc<PluginRegistry>,
     project_root: &Path,
 ) -> Result<()> {
     let root = options.root.as_deref().unwrap_or(project_root);
@@ -125,7 +126,7 @@ impl Default for RunSettings {
 /// a valid partial MCAP with their error in the result metadata.
 pub fn run_scenario(
     scenario: ScenarioConfig,
-    registry: &PluginRegistry,
+    registry: &Arc<PluginRegistry>,
     settings: RunSettings,
 ) -> Result<PathBuf> {
     ensure!(settings.max_steps > 0, "max_steps must be positive");
@@ -137,7 +138,7 @@ pub fn run_scenario(
         !settings.name.is_empty(),
         "experiment name must not be empty"
     );
-    let mut simulation = Simulation::new(scenario, registry, settings.workers)?;
+    let mut simulation = Simulation::new(scenario, Arc::clone(registry), settings.workers)?;
     let runs = settings.root.join("runs").join(&settings.name);
     let output = output::create_directory(settings.output.as_deref(), &runs)?;
     // One ArduPlane SITL container per ArduPilotBridge aircraft, stopped when

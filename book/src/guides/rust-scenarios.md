@@ -85,9 +85,11 @@ missions](yaml-missions.md).
 ```rust,ignore
 use ripple_core::{Mission, Params, Simulation};
 
-// Either load a mission or call your Rust setup function.
+// Either load a mission or call your Rust setup function. The registry is
+// shared (`Arc`): the simulation keeps it to build the entities plugins
+// request during the run, and a program can run many simulations from one.
 let mission = Mission::load(path, root, &Params::new())?;
-let mut simulation = Simulation::new(mission.scenario, &registry, 8)?;
+let mut simulation = Simulation::new(mission.scenario, Arc::new(registry), 8)?;
 while let Some(frame) = simulation.step()? {
     // Inspect state or collect experiment-specific output.
 }

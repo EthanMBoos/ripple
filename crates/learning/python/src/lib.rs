@@ -15,6 +15,7 @@ use ripple_core::plugin::{Autonomy, PluginParams, PluginRegistry};
 use ripple_core::{Entity, Mission, Params};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 /// A mission's learning task, read from an entity group's autonomy.
 enum Task {
@@ -82,7 +83,7 @@ impl Simulation {
             let mut registry = PluginRegistry::with_builtins();
             learning::register_for_training(&mut registry, &actions)?;
             Ok(Self {
-                simulation: ripple_core::Simulation::new(scenario, &registry, 1)?,
+                simulation: ripple_core::Simulation::new(scenario, Arc::new(registry), 1)?,
                 actions,
                 tasks,
             })

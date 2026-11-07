@@ -11,6 +11,7 @@ mod motion;
 mod sensor;
 
 use std::collections::BTreeMap;
+use std::sync::Arc;
 use std::sync::Mutex;
 
 use anyhow::Result;
@@ -302,7 +303,7 @@ fn population(log: &str) -> Result<ScenarioConfig> {
 
 fn run(scenario: ScenarioConfig, workers: usize) -> Result<(Vec<SimulationFrame>, Simulation)> {
     let registry = registry()?;
-    let mut simulation = Simulation::new(scenario, &registry, workers)?;
+    let mut simulation = Simulation::new(scenario, Arc::new(registry), workers)?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
         frames.push(frame);
@@ -447,9 +448,13 @@ fn a_named_input_selects_its_sensor_and_ambiguity_is_an_error() -> Result<()> {
         })
     };
     let registry = registry()?;
-    let error = Simulation::new(scenario(PluginConfig::new("PassThrough"))?, &registry, 1)
-        .err()
-        .expect("two state sensors and no input named");
+    let error = Simulation::new(
+        scenario(PluginConfig::new("PassThrough"))?,
+        Arc::new(registry),
+        1,
+    )
+    .err()
+    .expect("two state sensors and no input named");
     assert!(format!("{error:#}").contains("coarse, fine"), "{error:#}");
     for (sensor, bias_m) in [("coarse", 5.0), ("fine", 0.0)] {
         let (_, simulation) = run(
@@ -611,7 +616,7 @@ fn estimators_run_every_tick() -> Result<()> {
         entities: vec![entity],
         ..ScenarioConfig::default()
     };
-    let error = Simulation::new(scenario, &registry()?, 1)
+    let error = Simulation::new(scenario, Arc::new(registry()?), 1)
         .err()
         .expect("an estimator loop_rate_hz is rejected");
     assert!(
@@ -652,7 +657,7 @@ fn a_perfect_input_gives_only_its_declared_kind() -> Result<()> {
         entities: vec![entity],
         ..ScenarioConfig::default()
     };
-    let error = Simulation::new(scenario, &registry()?, 1)
+    let error = Simulation::new(scenario, Arc::new(registry()?), 1)
         .err()
         .expect("asking a state input for contacts fails");
     assert!(
@@ -670,7 +675,7 @@ fn a_panic_while_starting_an_entity_is_an_error() -> Result<()> {
         entities: vec![entity],
         ..ScenarioConfig::default()
     };
-    let error = Simulation::new(scenario, &registry()?, 1)
+    let error = Simulation::new(scenario, Arc::new(registry()?), 1)
         .err()
         .expect("the panic becomes an error");
     assert!(

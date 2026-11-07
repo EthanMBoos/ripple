@@ -9,9 +9,10 @@
 # and stock transfers. Local and serve are additional policy comparisons.
 # A return starts only once a vehicle is idle after the event end.
 name: region-surge-duration
-base_scenario: region-16.yaml
+base_scenario: region.yaml
 seeds: [1, 2, 3, 4, 5]
 parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 16
   run.end_s: 16200
   entities.region.autonomy.Dispatcher.requests.until_s: 14400
   entities.region.autonomy.Dispatcher.events.surge_requests_per_hub: 16

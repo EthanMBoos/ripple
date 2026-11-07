@@ -4,6 +4,7 @@
 use ripple_core::plugin::PluginRegistry;
 use ripple_core::{Mission, Params, Simulation, Vec3};
 use std::path::Path;
+use std::sync::Arc;
 
 const ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../..");
 
@@ -22,7 +23,7 @@ fn final_positions(mission: &str, plugin: &str, entity: &str, seed: u32) -> Vec<
     let scenario = Mission::load(&path, root, &overrides).unwrap().scenario;
     let mut registry = PluginRegistry::with_builtins();
     learning::register(&mut registry).unwrap();
-    let mut simulation = Simulation::new(scenario, &registry, 1).unwrap();
+    let mut simulation = Simulation::new(scenario, Arc::new(registry), 1).unwrap();
     while simulation.step().unwrap().is_some() {}
     simulation
         .entities()

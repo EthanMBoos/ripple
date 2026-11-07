@@ -5,6 +5,7 @@ use ripple_core::{
 };
 use serde::Serialize;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 #[derive(Serialize)]
 struct WaypointParams {
@@ -56,7 +57,8 @@ struct Outputs {
 }
 
 fn outputs(config: ScenarioConfig, workers: usize) -> Result<Outputs> {
-    let mut simulation = Simulation::new(config, &PluginRegistry::with_builtins(), workers)?;
+    let mut simulation =
+        Simulation::new(config, Arc::new(PluginRegistry::with_builtins()), workers)?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
         serde_json::to_writer(&mut frames, &frame)?;
@@ -112,7 +114,7 @@ fn rust_and_yaml_setups_match_with_scheduled_spawns_across_workers() -> Result<(
 
 #[test]
 fn rust_inputs_receive_shared_validation_before_execution() -> Result<()> {
-    let registry = PluginRegistry::with_builtins();
+    let registry = Arc::new(PluginRegistry::with_builtins());
     let mut invalid = Vec::new();
     let mut config = scenario()?;
     config.entities[0].position_m.x = f64::NAN;
@@ -134,7 +136,7 @@ fn rust_inputs_receive_shared_validation_before_execution() -> Result<()> {
         PluginConfig::new("WaypointFollower").with_params(serde_json::json!({"speeed": 5}))?;
     invalid.push(config);
     for config in invalid {
-        assert!(Simulation::new(config, &registry, 1).is_err());
+        assert!(Simulation::new(config, Arc::clone(&registry), 1).is_err());
     }
     Ok(())
 }
@@ -179,7 +181,7 @@ fn thousands_of_agents_spawned_together_reach_metrics() -> Result<()> {
         }],
         ..ScenarioConfig::default()
     };
-    let mut simulation = Simulation::new(config, &PluginRegistry::with_builtins(), 4)?;
+    let mut simulation = Simulation::new(config, Arc::new(PluginRegistry::with_builtins()), 4)?;
     while simulation.step()?.is_some() {}
     let team = &simulation.metric_reports()[0].1.teams[&1];
     assert_eq!(team.score, 0.0);
@@ -223,7 +225,7 @@ fn thousands_of_agents_removed_together_reach_metrics() -> Result<()> {
         }],
         ..ScenarioConfig::default()
     };
-    let mut simulation = Simulation::new(config, &PluginRegistry::with_builtins(), 4)?;
+    let mut simulation = Simulation::new(config, Arc::new(PluginRegistry::with_builtins()), 4)?;
     while simulation.step()?.is_some() {}
     assert!(simulation.entities().is_empty());
     assert_eq!(

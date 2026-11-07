@@ -3,9 +3,10 @@
 # Keep the base mission's random events; four hours of requests, then 30 min
 # to finish. No model calls. Analyze these 60 episodes as one complete dataset.
 name: region-4-classical
-base_scenario: region-4.yaml
+base_scenario: region.yaml
 seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 4
   run.end_s: 16200
   entities.region.autonomy.Dispatcher.requests.until_s: 14400
   entities.region.autonomy.Dispatcher.manager.offline: true

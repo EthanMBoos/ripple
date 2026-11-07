@@ -10,6 +10,7 @@ use ripple_core::{
     EntityGroupConfig, PluginConfig, RunConfig, ScenarioConfig, Simulation, SimulationFrame, Vec3,
 };
 use serde_json::json;
+use std::sync::Arc;
 use std::{fs, path::PathBuf};
 
 /// The Rascal resting on its three wheels sits nose-up by this much: the
@@ -135,7 +136,7 @@ fn scenario(rascal: EntityGroupConfig, dt_s: f64, end_s: f64) -> ScenarioConfig 
 fn run(scenario: ScenarioConfig) -> Result<Vec<SimulationFrame>> {
     let mut registry = PluginRegistry::with_builtins();
     registry.register_controller::<FixedInputs>("FixedInputs")?;
-    let mut simulation = Simulation::new(scenario, &registry, 1)?;
+    let mut simulation = Simulation::new(scenario, Arc::new(registry), 1)?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
         frames.push(frame);

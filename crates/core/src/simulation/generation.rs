@@ -1,10 +1,134 @@
-//! Mission-controlled generation schedules.
+//! Generation: the mission's spawn schedules and the spawn requests plugins
+//! publish. Every entity is built through `spawn`.
 
 use super::{Event, EventKind, Simulation};
+use crate::entity::{Entity, EntityDefinition, SpawnConfig};
 use crate::plugin::StepTime;
-use crate::scenario::EntityGroupConfig;
-use crate::{common::random, entity::Entity, math::Vec3};
-use anyhow::{Context, Result, ensure};
+use crate::pubsub::messages::MessageEndpoint;
+use crate::scenario::{EntityGroupConfig, PluginConfig};
+use crate::{common::random, math::Vec3};
+use anyhow::{Context, Result, bail, ensure};
+use serde::{Deserialize, Serialize};
+use serde_yaml_ng::Mapping;
+use std::sync::Arc;
+
+/// A plugin's request that the engine build entities from one of the
+/// mission's `recipes`, published on `GlobalNetwork` under
+/// `SpawnRequest::TOPIC`. The recipe says what; the request says where, how
+/// many, and which plugin values differ. The engine builds them at the
+/// start of the next tick, in delivery order, so a request published while
+/// an entity initializes gives entities present from tick 1.
+///
+/// ```ignore
+/// context.messages.publish(
+///     "GlobalNetwork",
+///     SpawnRequest::TOPIC,
+///     SpawnRequest::recipe("fixed_wing")
+///         .count(3)
+///         .at(hub_world_m)
+///         .autonomy("Courier", CourierHome { hub, region })?,
+/// )?;
+/// ```
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SpawnRequest {
+    /// The label of a recipe in the mission.
+    pub recipe: String,
+    /// Replaces the recipe's `position_m`; the recipe's spread still applies.
+    pub position_m: Vec3,
+    /// Replaces the recipe's `heading_deg` when given.
+    pub heading_deg: Option<f64>,
+    pub count: usize,
+    /// Plugin values laid over the recipe's.
+    pub overlays: Vec<PluginOverlay>,
+}
+
+/// Values for one of a recipe's plugins, named by its label in the mission,
+/// laid over the values the recipe gives it key by key.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct PluginOverlay {
+    pub slot: PluginSlot,
+    pub plugin: String,
+    pub values: Mapping,
+}
+
+/// An entity's plugin slots, as the mission names them.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PluginSlot {
+    Autonomy,
+    Controller,
+    MotionModel,
+    Sensors,
+    Localization,
+    Tracking,
+}
+
+impl PluginSlot {
+    fn name(self) -> &'static str {
+        match self {
+            Self::Autonomy => "autonomy",
+            Self::Controller => "controller",
+            Self::MotionModel => "motion_model",
+            Self::Sensors => "sensors",
+            Self::Localization => "localization",
+            Self::Tracking => "tracking",
+        }
+    }
+}
+
+impl SpawnRequest {
+    pub const TOPIC: &'static str = "SpawnRequest";
+
+    /// One entity from the recipe, at the recipe's position and heading.
+    pub fn recipe(label: impl Into<String>) -> Self {
+        Self {
+            recipe: label.into(),
+            position_m: Vec3::zeros(),
+            heading_deg: None,
+            count: 1,
+            overlays: Vec::new(),
+        }
+    }
+
+    pub fn at(mut self, position_m: Vec3) -> Self {
+        self.position_m = position_m;
+        self
+    }
+
+    pub fn heading(mut self, heading_deg: f64) -> Self {
+        self.heading_deg = Some(heading_deg);
+        self
+    }
+
+    pub fn count(mut self, count: usize) -> Self {
+        self.count = count;
+        self
+    }
+
+    /// Values for the recipe's autonomy plugin `plugin`, from any struct or
+    /// map that serializes to a map.
+    pub fn autonomy(self, plugin: impl Into<String>, values: impl Serialize) -> Result<Self> {
+        self.overlay(PluginSlot::Autonomy, plugin, values)
+    }
+
+    /// Values for one plugin of the recipe's `slot`.
+    pub fn overlay(
+        mut self,
+        slot: PluginSlot,
+        plugin: impl Into<String>,
+        values: impl Serialize,
+    ) -> Result<Self> {
+        let serde_yaml_ng::Value::Mapping(values) = serde_yaml_ng::to_value(values)? else {
+            bail!("plugin values must serialize to a map");
+        };
+        self.overlays.push(PluginOverlay {
+            slot,
+            plugin: plugin.into(),
+            values,
+        });
+        Ok(self)
+    }
+}
 
 #[derive(Clone)]
 pub(crate) struct Generator {
@@ -13,7 +137,8 @@ pub(crate) struct Generator {
     pub(crate) next_spawn_times_s: Vec<f64>,
     pub(crate) rate_hz: f64,
     pub(crate) time_stddev_s: f64,
-    /// Spawns scheduled so far; the next one's number in its group.
+    /// Entities built from this group so far, scheduled or requested; the
+    /// next one's number in its group.
     pub(crate) spawned: u64,
 }
 
@@ -27,32 +152,36 @@ enum SpawnField {
     Z = 4,
 }
 
-/// All creation goes through `spawn`: callers supply a sampled or fixed start.
-/// Currently only schedules produce requests. Velocity and roll/pitch still
-/// come from the group definition; extend the starting state with the first
-/// connection pilot.
-struct SpawnRequest {
-    definition_index: usize,
-    position_world_m: Vec3,
-    heading_world_deg: f64,
-}
-
 impl Simulation {
+    /// The start of a tick: the entities plugins asked for since the last
+    /// tick, then the batches the mission's schedules have due now.
     pub(super) fn generate_entities(&mut self) -> Result<()> {
-        // Requests: which groups are due to spawn this tick. A batch spawns on
-        // the tick nearest its time, so rounding (t + 1/rate landing just
-        // after a tick) cannot delay it a tick.
-        let mut due_definitions = Vec::new();
+        self.spawn_requested()?;
+        for (group_index, count) in self.due_now() {
+            // Shared, so the definition can be read while the batch changes
+            // the rest of the simulation.
+            let definition = Arc::clone(&self.definitions[group_index]);
+            self.spawn_batch(group_index, &definition, count)?;
+        }
+        Ok(())
+    }
+
+    /// How many each schedule builds this tick, in group order, and when
+    /// its next batches come. A batch spawns on the tick nearest its time,
+    /// so rounding (t + 1/rate landing just after a tick) cannot delay it a
+    /// tick.
+    fn due_now(&mut self) -> Vec<(usize, usize)> {
+        let mut due = Vec::new();
         let half_tick_s = self.config.run.dt_s / 2.0;
         for generator in &mut self.generators {
+            let mut count = 0;
             for next_spawn_s in &mut generator.next_spawn_times_s {
                 if self.time_s < *next_spawn_s - half_tick_s || generator.remaining == 0 {
                     continue;
                 }
                 generator.remaining -= 1;
-                let number = generator.spawned;
-                generator.spawned += 1;
-                due_definitions.push((generator.definition_index, number));
+                let number = generator.spawned + count as u64;
+                count += 1;
 
                 if generator.rate_hz > 0.0 {
                     let expected_next_spawn_s = self.time_s + 1.0 / generator.rate_hz;
@@ -70,32 +199,85 @@ impl Simulation {
                     }
                 }
             }
+            if count > 0 {
+                due.push((generator.definition_index, count));
+            }
         }
+        due
+    }
 
-        // Each start is sampled just before its entity is built, because the
-        // collision check sees the entities spawned earlier in this tick.
-        for (definition_index, number) in due_definitions {
-            let (position_world_m, heading_world_deg) =
-                self.sample_spawn_start(definition_index, number)?;
-            self.spawn(SpawnRequest {
-                definition_index,
-                position_world_m,
-                heading_world_deg,
-            })?;
+    /// Builds what plugins requested since the last tick, in delivery order:
+    /// entity and plugin order, the same at any worker count.
+    fn spawn_requested(&mut self) -> Result<()> {
+        let requests = self
+            .messages
+            .receive::<SpawnRequest>("GlobalNetwork", SpawnRequest::TOPIC)?;
+        for message in requests {
+            let request = &message.value;
+            self.requested_definition(request)
+                .and_then(|(group_index, definition)| {
+                    self.spawn_batch(group_index, &definition, request.count)
+                })
+                .with_context(|| {
+                    format!(
+                        "spawn request from {} for recipe `{}`",
+                        describe(&message.sender),
+                        request.recipe
+                    )
+                })?;
         }
         Ok(())
     }
 
-    /// Chooses a scheduled start: position and heading sampled around the
-    /// spawn's. `number` is the spawn's number in its group; each try at a
+    /// The request's recipe with the request's values laid over it, as a
+    /// definition ready to build from, and its group index (the recipes are
+    /// numbered after the entities).
+    fn requested_definition(&self, request: &SpawnRequest) -> Result<(usize, EntityDefinition)> {
+        let position = self
+            .config
+            .recipes
+            .iter()
+            .position(|recipe| recipe.label == request.recipe)
+            .with_context(|| format!("the mission has no recipe `{}`", request.recipe))?;
+        let group = overlaid(&self.config.recipes[position], request)?;
+        group.validate()?;
+        let definition = EntityDefinition::parse(&group, &self.registry)?;
+        Ok((self.config.entities.len() + position, definition))
+    }
+
+    /// Builds `count` entities of one group, numbered on from the group's
+    /// count so far. Each start is sampled just before its entity is built,
+    /// because the collision check sees the entities built earlier.
+    fn spawn_batch(
+        &mut self,
+        group_index: usize,
+        definition: &EntityDefinition,
+        count: usize,
+    ) -> Result<()> {
+        for _ in 0..count {
+            let number = self.generators[group_index].spawned;
+            self.generators[group_index].spawned += 1;
+            let (position_world_m, heading_world_deg) =
+                self.sample_spawn_start(group_index, number, &definition.spawn)?;
+            self.spawn(group_index, definition, position_world_m, heading_world_deg)?;
+        }
+        Ok(())
+    }
+
+    /// Chooses a start: position and heading sampled around the spawn's.
+    /// `number` is the spawn's number in its group; each try at a
     /// collision-free position has its own numbers.
-    fn sample_spawn_start(&self, definition_index: usize, number: u64) -> Result<(Vec3, f64)> {
+    fn sample_spawn_start(
+        &self,
+        group_index: usize,
+        number: u64,
+        spawn: &SpawnConfig,
+    ) -> Result<(Vec3, f64)> {
         let seed = self.config.run.seed;
         let draw = |field, attempt, mean, stddev| {
-            let label = spawn_label(seed, definition_index, number, field, attempt);
+            let label = spawn_label(seed, group_index, number, field, attempt);
             random::normal(label, mean, stddev)
         };
-        let spawn = &self.definitions[definition_index].spawn;
         let origin_world_m = spawn.position_world_m;
         let heading_world_deg = draw(
             SpawnField::Heading,
@@ -130,10 +312,16 @@ impl Simulation {
         Ok((position_world_m, heading_world_deg))
     }
 
-    /// Builds one entity from a request: assigns its ID, adds it, and records
-    /// and publishes `EntityGenerated`. No randomness is drawn here.
-    fn spawn(&mut self, request: SpawnRequest) -> Result<()> {
-        let definition = &self.definitions[request.definition_index];
+    /// Builds one entity of `group_index`'s group from `definition` at a
+    /// chosen start: assigns its ID, adds it, and records and publishes
+    /// `EntityGenerated`. No randomness is drawn here.
+    fn spawn(
+        &mut self,
+        group_index: usize,
+        definition: &EntityDefinition,
+        position_world_m: Vec3,
+        heading_world_deg: f64,
+    ) -> Result<()> {
         let mut id = definition.spawn.requested_id.unwrap_or(0);
         while !self.used_ids.insert(id) {
             id = self
@@ -147,10 +335,10 @@ impl Simulation {
 
         let entity = Entity::new(
             id,
-            i32::try_from(request.definition_index).context("entity block ID exceeds i32")?,
+            i32::try_from(group_index).context("entity block ID exceeds i32")?,
             definition,
-            request.position_world_m,
-            request.heading_world_deg,
+            position_world_m,
+            heading_world_deg,
             StepTime {
                 time_s: self.time_s,
                 dt_s: 0.0,
@@ -171,6 +359,46 @@ impl Simulation {
         self.events.push(event);
         self.entities.push(entity);
         Ok(())
+    }
+}
+
+/// The recipe with the request's position, heading and plugin values.
+fn overlaid(recipe: &EntityGroupConfig, request: &SpawnRequest) -> Result<EntityGroupConfig> {
+    let mut group = recipe.clone();
+    group.position_m = request.position_m;
+    if let Some(heading_deg) = request.heading_deg {
+        group.heading_deg = heading_deg;
+    }
+    for overlay in &request.overlays {
+        let plugins: &mut [PluginConfig] = match overlay.slot {
+            PluginSlot::Autonomy => &mut group.autonomy,
+            PluginSlot::Controller => &mut group.controller,
+            PluginSlot::Sensors => &mut group.sensors,
+            PluginSlot::MotionModel => std::slice::from_mut(&mut group.motion_model),
+            PluginSlot::Localization => std::slice::from_mut(&mut group.localization),
+            PluginSlot::Tracking => std::slice::from_mut(&mut group.tracking),
+        };
+        let plugin = plugins
+            .iter_mut()
+            .find(|plugin| plugin.instance.as_deref().unwrap_or(&plugin.name) == overlay.plugin)
+            .with_context(|| {
+                format!(
+                    "the recipe has no {} plugin `{}`",
+                    overlay.slot.name(),
+                    overlay.plugin
+                )
+            })?;
+        for (key, value) in &overlay.values {
+            plugin.params.insert(key.clone(), value.clone());
+        }
+    }
+    Ok(group)
+}
+
+fn describe(sender: &MessageEndpoint) -> String {
+    match sender.entity_id {
+        Some(id) => format!("{} of entity {id}", sender.plugin),
+        None => sender.plugin.clone(),
     }
 }
 

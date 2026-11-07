@@ -7,6 +7,7 @@ use ripple_core::{Mission, Params, Simulation, plugin::PluginRegistry};
 use serde_json::Value;
 use std::net::UdpSocket;
 use std::path::Path;
+use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
@@ -134,7 +135,7 @@ fn simulation(
         crate_folder,
         &params,
     )?;
-    Simulation::new(mission.scenario, &registry, workers)
+    Simulation::new(mission.scenario, Arc::new(registry), workers)
 }
 
 /// Run the one-aircraft mission to its end.

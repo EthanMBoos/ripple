@@ -3,6 +3,7 @@ pub(super) mod autonomy;
 pub(super) mod controller;
 pub(super) mod estimator;
 pub(super) mod interaction;
+pub(super) mod launcher;
 pub(super) mod metrics;
 pub(super) mod motion;
 pub(super) mod network;
@@ -12,10 +13,12 @@ pub(super) mod sensor;
 use anyhow::Result;
 use ripple_core::{Mission, Params, Simulation, plugin::PluginRegistry};
 use std::path::PathBuf;
+use std::sync::Arc;
 
 pub(super) fn registry() -> Result<PluginRegistry> {
     let mut registry = PluginRegistry::with_builtins();
     registry.register_autonomy::<autonomy::DriveToGoal>("DriveToGoal")?;
+    registry.register_autonomy::<launcher::Launcher>("Launcher")?;
     registry.register_controller::<controller::ScaleSpeed>("ScaleSpeed")?;
     registry.register_motion::<motion::EastwardMotion>("EastwardMotion")?;
     registry.register_sensor::<sensor::PositionSensor>("PositionSensor")?;
@@ -39,7 +42,7 @@ pub(super) fn scenario(overrides: &Params) -> Result<ripple_core::ScenarioConfig
     Ok(scenario)
 }
 pub(super) fn simulate(workers: usize, overrides: &Params) -> Result<Simulation> {
-    let mut simulation = Simulation::new(scenario(overrides)?, &registry()?, workers)?;
+    let mut simulation = Simulation::new(scenario(overrides)?, Arc::new(registry()?), workers)?;
     while simulation.step()?.is_some() {}
     Ok(simulation)
 }

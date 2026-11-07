@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use anyhow::Result;
 use ripple_core::{Mission, Params, Simulation, TraceSink};
@@ -33,7 +34,7 @@ fn run_mission_with_trace(
     let mission = Mission::load(&root.join("missions").join(name), &root, &Params::new())?;
     let mut simulation = Simulation::new(
         mission.scenario,
-        &ripple_core::plugin::PluginRegistry::with_builtins(),
+        Arc::new(ripple_core::plugin::PluginRegistry::with_builtins()),
         threads,
     )?;
     let mut trace = trace.map(Buffer);
@@ -130,7 +131,7 @@ fn contacts_retain_their_mission_entity_block_id() -> Result<()> {
     )?;
     let mut simulation = Simulation::new(
         mission.scenario,
-        &ripple_core::plugin::PluginRegistry::with_builtins(),
+        Arc::new(ripple_core::plugin::PluginRegistry::with_builtins()),
         2,
     )?;
     let initial = simulation.step()?.expect("mission emits an initial frame");

@@ -15,6 +15,8 @@ larger regions are written on demand and run the same way:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import math
 from pathlib import Path
 
@@ -84,6 +86,48 @@ def hub_position_m(hub: int, side: int, spacing_m: float) -> tuple[float, float]
     return ((column - offset) * spacing_m, (row - offset) * spacing_m)
 
 
+def jittered_positions(hubs: int, spacing_m: float, radius_m: float,
+                      min_spacing_m: float, seed: int) -> list[tuple[float, float]]:
+    """Displace each grid point uniformly in a disk, rejecting close pairs.
+
+    Each draw is keyed by layout seed, hub, attempt, and purpose. It never
+    consumes the simulator's request/event random numbers.
+    """
+    side = math.isqrt(hubs)
+    if hubs < 1 or side * side != hubs:
+        raise ValueError("hubs must be a positive square number")
+    if not all(math.isfinite(v) for v in (spacing_m, radius_m, min_spacing_m)):
+        raise ValueError("spacing and jitter must be finite")
+    if spacing_m <= 0 or radius_m < 0 or min_spacing_m <= 0:
+        raise ValueError("spacing must be positive and jitter nonnegative")
+    positions = []
+    for hub in range(1, hubs + 1):
+        x, y = hub_position_m(hub, side, spacing_m)
+        for attempt in range(10_000):
+            def uniform(purpose: str) -> float:
+                key = f"ripple-layout:{seed}:{hub}:{attempt}:{purpose}".encode()
+                bits = int.from_bytes(hashlib.sha256(key).digest()[:8], "big") >> 11
+                return (bits + 0.5) / 2**53
+
+            radius = radius_m * math.sqrt(uniform("radius"))
+            angle = math.tau * uniform("angle")
+            point = (x + radius * math.cos(angle), y + radius * math.sin(angle))
+            if all(math.dist(point, other) >= min_spacing_m for other in positions):
+                positions.append(point)
+                break
+        else:
+            raise ValueError(f"cannot place hub {hub}; reduce minimum spacing or jitter")
+    return positions
+
+
+def region_values(hubs: int, spacing_m: float, positions) -> str:
+    """One identical region configuration for the dispatcher and couriers."""
+    values = f"hubs: {hubs}, hub_spacing_m: {spacing_m:g}"
+    if positions is not None:
+        values += f", hub_positions_m: {json.dumps(positions)}"
+    return "{" + values + "}"
+
+
 # Site geometry, the same as region.rs: clinics A to F at these radii on
 # angles 60 degrees apart, hospitals H1 and H2 at theirs on 30 and 210
 # degrees, all turned by 17 degrees per hub so neighbors' sites interleave.
@@ -115,7 +159,7 @@ def quote(text: str, indent: int) -> str:
     return ">-\n" + "\n".join(lines)
 
 
-def templates(hubs: int, spacing_m: float, checked: bool) -> str:
+def templates(hubs: int, spacing_m: float, checked: bool, positions=None) -> str:
     if checked:
         fixed_wing_models = """\
     controller: {AircraftPIDController: {airframe: rascal}}
@@ -154,7 +198,7 @@ templates:
     autonomy:
       Courier:
         class: fixed_wing
-        region: {{hubs: {hubs}, hub_spacing_m: {spacing_m:g}}}
+        region: {region_values(hubs, spacing_m, positions)}
         cruise_speed_mps: 25
         endurance_s: 3600
         cruise_altitude_m: 120
@@ -172,7 +216,7 @@ templates:
     autonomy:
       Courier:
         class: multirotor
-        region: {{hubs: {hubs}, hub_spacing_m: {spacing_m:g}}}
+        region: {region_values(hubs, spacing_m, positions)}
         cruise_speed_mps: 12
         endurance_s: 1500
         cruise_altitude_m: 80
@@ -183,10 +227,11 @@ templates:
 """
 
 
-def dispatcher(hubs: int, spacing_m: float, day_s: float) -> str:
+def dispatcher(hubs: int, spacing_m: float, day_s: float, positions=None) -> str:
     texts = "\n".join(
         f"            {kind}: {quote(text, 14)}" for kind, text in EVENT_TEXT.items()
     )
+    layout_line = "" if positions is None else f"\n          hub_positions_m: {json.dumps(positions)}"
     return f"""\
 entities:
   region:
@@ -197,7 +242,7 @@ entities:
       Dispatcher:
         region:
           hubs: {hubs}
-          hub_spacing_m: {spacing_m:g}
+          hub_spacing_m: {spacing_m:g}{layout_line}
         stock:
           items: ["O-", "O+", "A+", "B+"]
           units_per_item: 100
@@ -299,30 +344,33 @@ entities:
 """
 
 
-def couriers(hubs: int, spacing_m: float) -> str:
+def couriers(hubs: int, spacing_m: float, positions=None) -> str:
     side = round(math.sqrt(hubs))
     assert side * side == hubs, "hubs must be a square number"
     groups = []
     for hub in range(1, hubs + 1):
-        x, y = hub_position_m(hub, side, spacing_m)
+        x, y = positions[hub - 1] if positions is not None else hub_position_m(hub, side, spacing_m)
+        # Keep full precision for explicit layouts, and the old grid output.
+        x, y = (repr(x), repr(y)) if positions is not None else (f"{x:g}", f"{y:g}")
         groups.append(
             f"""\
   hub{hub}_fixed_wing:
     template: fixed_wing
     count: {FIXED_WING_PER_HUB}
-    position_m: [{x:g}, {y:g}, 120]
+    position_m: [{x}, {y}, 120]
     autonomy: {{Courier: {{hub: {hub}}}}}
   hub{hub}_multirotor:
     template: multirotor
     count: {MULTIROTOR_PER_HUB}
-    position_m: [{x:g}, {y:g}, 0]
+    position_m: [{x}, {y}, 0]
     autonomy: {{Courier: {{hub: {hub}}}}}
 """
         )
     return "".join(groups)
 
 
-def mission(hubs: int, spacing_m: float, day_s: float, checked: bool, seed: int) -> str:
+def mission(hubs: int, spacing_m: float, day_s: float, checked: bool, seed: int,
+            positions=None) -> str:
     vehicles = hubs * (FIXED_WING_PER_HUB + MULTIROTOR_PER_HUB)
     models = (
         "the Rascal (FixedWing6DOF) and the Firefly (Multirotor) at 500 Hz"
@@ -348,8 +396,47 @@ run:
 networks: {{GlobalNetwork: {{}}}}
 metrics: {{DeliveryScore: {{}}}}
 
-{templates(hubs, spacing_m, checked)}
-{dispatcher(hubs, spacing_m, day_s)}{couriers(hubs, spacing_m)}"""
+{templates(hubs, spacing_m, checked, positions)}
+{dispatcher(hubs, spacing_m, day_s, positions)}{couriers(hubs, spacing_m, positions)}"""
+
+
+def write_classical_sweeps(args) -> None:
+    """Five matched days, each with one layout and six existing policy arms."""
+    folder = args.classical_sweeps
+    folder.mkdir(parents=True, exist_ok=True)
+    layout = "jitter" if args.jitter_km else "grid"
+    for seed in range(1, 6):
+        layout_seed = args.layout_seed + seed - 1
+        positions = jittered_positions(args.hubs, args.spacing_km * 1000,
+                                      args.jitter_km * 1000, args.min_spacing_km * 1000,
+                                      layout_seed) if args.jitter_km else None
+        name = f"region-{args.hubs}-{layout}-seed{seed}"
+        base = folder / f"{name}.yaml"
+        sweep = folder / f"{name}.sweep.yaml"
+        if base.exists() or sweep.exists():
+            raise FileExistsError(f"{name} already exists in {folder}; use a new directory")
+        header = (f"# Layout seed {layout_seed}; jitter radius {args.jitter_km:g} km; "
+                  f"minimum hub spacing {args.min_spacing_km:g} km.\n")
+        base.write_text(header + mission(args.hubs, args.spacing_km * 1000,
+                                        args.day_h * 3600, args.checked, seed, positions))
+        sweep.write_text(f"""\
+# Six classical arms on one fixed layout and demand seed; no model calls.
+name: {name}
+base_scenario: {base.name}
+seeds: [{seed}]
+parameters:
+  entities.region.autonomy.Dispatcher.manager.offline: true
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.kind, manager.policy]
+cases:
+  - [none, ""]
+  - [replanner, ""]
+  - [policy, crates/delivery/policies/local.yaml]
+  - [policy, crates/delivery/policies/serve.yaml]
+  - [policy, crates/delivery/policies/move.yaml]
+  - [policy, crates/delivery/policies/return.yaml]
+""")
+        print(f"wrote {sweep} (6 episodes)")
 
 
 def main() -> None:
@@ -360,15 +447,28 @@ def main() -> None:
     parser.add_argument("--day-h", type=float, default=8.0, help="hours of requests")
     parser.add_argument("--checked", action="store_true", help="the Rascal and the Firefly")
     parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--jitter-km", type=float, default=0, help="maximum hub displacement")
+    parser.add_argument("--min-spacing-km", type=float, default=10)
+    parser.add_argument("--layout-seed", type=int, default=1, help="independent of demand seed")
+    parser.add_argument("--classical-sweeps", type=Path,
+                        help="write missions and six-policy sweeps for seeds 1..5 to this folder")
     parser.add_argument("--fixed-wing", type=int, default=FIXED_WING_PER_HUB, help="aircraft per hub")
     parser.add_argument("--multirotor", type=int, default=MULTIROTOR_PER_HUB, help="multirotors per hub")
     parser.add_argument("--out", type=Path, help="default: crates/delivery/missions/region-<hubs>.yaml")
     args = parser.parse_args()
     FIXED_WING_PER_HUB, MULTIROTOR_PER_HUB = args.fixed_wing, args.multirotor
-    text = mission(args.hubs, args.spacing_km * 1000, args.day_h * 3600, args.checked, args.seed)
+    if args.classical_sweeps:
+        write_classical_sweeps(args)
+        return
+    positions = jittered_positions(args.hubs, args.spacing_km * 1000,
+                                  args.jitter_km * 1000, args.min_spacing_km * 1000,
+                                  args.layout_seed) if args.jitter_km else None
+    text = mission(args.hubs, args.spacing_km * 1000, args.day_h * 3600, args.checked,
+                   args.seed, positions)
     out = args.out or HERE / "missions" / (
         f"region-{args.hubs}"
         + ("-checked" if args.checked else "")
+        + ("-jitter" if args.jitter_km else "")
         + (f"-fw{args.fixed_wing}-mr{args.multirotor}" if (args.fixed_wing, args.multirotor) != (3, 2) else "")
         + ".yaml"
     )

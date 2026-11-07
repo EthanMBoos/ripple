@@ -23,6 +23,11 @@ The missions are generated; edit `region.py`, not the YAML. `--hubs 1`,
 `--checked` uses the Rascal and Firefly instead of SimpleAircraft and point
 multirotors.
 
+For the matched grid/jitter experiment, see
+[Delivery layout comparison](../../book/src/guides/sweeps.md#delivery-layout-comparison).
+`region.py --classical-sweeps` generates the six policy arms without model
+calls; `--jitter-km` and `--min-spacing-km` control the displaced layout.
+
 Any setting can be changed on the command line. The prefix for the
 dispatcher is `entities.region.autonomy.Dispatcher`:
 

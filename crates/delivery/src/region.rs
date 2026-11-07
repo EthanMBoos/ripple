@@ -1,7 +1,6 @@
-//! The region: hubs on a square grid, each with its clinics and hospital
-//! rooftops. The layout is a fixed pattern, not random, so a region depends
-//! only on its hub count and spacing; the mission generator
-//! (`crates/delivery/region.py`) places the couriers with the same formula.
+//! The region: a nominal square grid, optionally displaced by explicit hub
+//! coordinates. The mission generator (`crates/delivery/region.py`) writes
+//! the same layout for the dispatcher, courier homes, and spawn positions.
 //!
 //! Hubs are numbered from 1 in row order. Hub `h` has clinics `hA` to `hF`,
 //! 4 to 13 km out at angles that turn with the hub number, and hospitals
@@ -20,6 +19,8 @@ pub struct RegionConfig {
     /// A square number: 1, 4, 16, 64, 256.
     pub hubs: u32,
     pub hub_spacing_m: f64,
+    /// Optional [east, north] coordinates in hub-ID order. Empty uses the grid.
+    pub hub_positions_m: Vec<[f64; 2]>,
 }
 
 impl Default for RegionConfig {
@@ -27,6 +28,7 @@ impl Default for RegionConfig {
         Self {
             hubs: 1,
             hub_spacing_m: 15_000.0,
+            hub_positions_m: Vec::new(),
         }
     }
 }
@@ -84,10 +86,36 @@ pub fn side(config: &RegionConfig) -> Result<u32> {
         config.hubs
     );
     ensure!(
-        config.hub_spacing_m > 0.0,
+        config.hub_spacing_m.is_finite() && config.hub_spacing_m > 0.0,
         "region.hub_spacing_m must be positive"
     );
+    ensure!(
+        config.hub_positions_m.is_empty()
+            || (config.hub_positions_m.len() == config.hubs as usize
+                && config
+                    .hub_positions_m
+                    .iter()
+                    .flatten()
+                    .all(|v| v.is_finite())),
+        "region.hub_positions_m must be empty or contain one finite [east, north] pair per hub"
+    );
     Ok(side)
+}
+
+impl RegionConfig {
+    /// Called after `side` has checked the layout and the caller's hub ID.
+    pub fn position_m(&self, id: u32) -> Vec3 {
+        if self.hub_positions_m.is_empty() {
+            hub_position_m(
+                id,
+                (f64::from(self.hubs).sqrt()).round() as u32,
+                self.hub_spacing_m,
+            )
+        } else {
+            let [x, y] = self.hub_positions_m[(id - 1) as usize];
+            Vec3::new(x, y, 0.0)
+        }
+    }
 }
 
 impl Region {
@@ -98,7 +126,7 @@ impl Region {
         for row in 0..side {
             for column in 0..side {
                 let id = row * side + column + 1;
-                let position_world_m = hub_position_m(id, side, config.hub_spacing_m);
+                let position_world_m = config.position_m(id);
                 hubs.push(Hub {
                     id,
                     position_world_m,
@@ -236,6 +264,7 @@ mod tests {
         let region = Region::new(&RegionConfig {
             hubs: 4,
             hub_spacing_m: 15_000.0,
+            ..RegionConfig::default()
         })
         .unwrap();
         assert_eq!(region.hubs.len(), 4);
@@ -268,7 +297,8 @@ mod tests {
         assert!(
             Region::new(&RegionConfig {
                 hubs: 6,
-                hub_spacing_m: 1.0
+                hub_spacing_m: 1.0,
+                ..RegionConfig::default()
             })
             .is_err()
         );

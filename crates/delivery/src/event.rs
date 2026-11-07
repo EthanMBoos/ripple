@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::area::{Area, tagged_option};
 use crate::messages::VehicleClass;
-use crate::region::{Region, SiteKind, horizontal_m};
+use crate::region::{Region, RegionConfig, SiteKind, horizontal_m};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -258,12 +258,21 @@ impl EventsConfig {
         items: &[String],
         random: &PluginRandom,
     ) -> Vec<Event> {
+        // Event membership uses the nominal grid so displaced layouts get
+        // the same workload. Only physical areas follow the actual layout.
+        // Policy donor choices still use actual distances in Region::neighbors.
+        let nominal = Region::new(&RegionConfig {
+            hubs: region.hubs.len() as u32,
+            hub_spacing_m: region.hub_spacing_m,
+            ..RegionConfig::default()
+        })
+        .expect("region already validated");
         let mut events = Vec::new();
         if !self.scripted.is_empty() {
             for (index, event) in self.scripted.iter().enumerate() {
                 let mut event = event.clone();
                 event.id = index as u32 + 1;
-                self.complete(&mut event, region, items, random);
+                self.complete(&mut event, &nominal, region, items, random);
                 events.push(event);
             }
         } else {
@@ -292,8 +301,8 @@ impl EventsConfig {
                         ..Event::default()
                     };
                     let pick = random.uniform(&key("pick", index));
-                    self.fill(&mut event, region, items, pick);
-                    self.complete(&mut event, region, items, random);
+                    self.fill(&mut event, &nominal, region, items, pick);
+                    self.complete(&mut event, &nominal, region, items, random);
                     events.push(event);
                 }
             }
@@ -307,7 +316,14 @@ impl EventsConfig {
 
     /// The fields a drawn event of its kind needs, from its first hub and one
     /// uniform number.
-    fn fill(&self, event: &mut Event, region: &Region, items: &[String], pick: f64) {
+    fn fill(
+        &self,
+        event: &mut Event,
+        nominal: &Region,
+        region: &Region,
+        items: &[String],
+        pick: f64,
+    ) {
         let hub = event.hubs[0];
         let center = region.hub(hub).expect("a drawn hub").position_world_m;
         let hospital = |index: usize| {
@@ -319,20 +335,21 @@ impl EventsConfig {
         };
         match event.kind {
             EventKind::Surge | EventKind::Weather => {
-                event.hubs = region.group(hub);
+                event.hubs = nominal.group(hub);
                 if event.kind == EventKind::Weather {
                     event.class = Some(VehicleClass::Multirotor);
                 }
             }
             EventKind::Shortage => {
-                event.hubs = region.group(hub);
+                event.hubs = nominal.group(hub);
                 event.item = pick_item(items, pick);
             }
             EventKind::Closure => {
-                // Between the hub and its nearest neighbor, so it cuts both.
-                let other = region
-                    .neighbors(hub)
-                    .first()
+                // Keep the same pair of hubs across layouts; move the circle
+                // to their actual midpoint without changing its radius.
+                let neighbor = nominal.neighbors(hub).first().map(|h| h.id);
+                let other = neighbor
+                    .and_then(|id| region.hub(id))
                     .map(|h| h.position_world_m)
                     .unwrap_or(center + ripple_core::Vec3::new(region.hub_spacing_m, 0.0, 0.0));
                 let middle = (center + other) / 2.0;
@@ -340,11 +357,19 @@ impl EventsConfig {
                     center_km: [middle.x / 1000.0, middle.y / 1000.0],
                     radius_km: self.closure_radius_km,
                 });
-                event.hubs = region
+                let nominal_center = nominal.hub(hub).expect("valid event hub").position_world_m;
+                let nominal_other = neighbor
+                    .and_then(|id| nominal.hub(id))
+                    .map(|h| h.position_world_m)
+                    .unwrap_or(
+                        nominal_center + ripple_core::Vec3::new(region.hub_spacing_m, 0.0, 0.0),
+                    );
+                let nominal_middle = (nominal_center + nominal_other) / 2.0;
+                event.hubs = nominal
                     .hubs
                     .iter()
                     .filter(|h| {
-                        horizontal_m(h.position_world_m, middle)
+                        horizontal_m(h.position_world_m, nominal_middle)
                             <= self.closure_radius_km * 1000.0 + 13_000.0
                     })
                     .map(|h| h.id)
@@ -376,6 +401,7 @@ impl EventsConfig {
     fn complete(
         &self,
         event: &mut Event,
+        nominal: &Region,
         region: &Region,
         items: &[String],
         random: &PluginRandom,
@@ -392,7 +418,7 @@ impl EventsConfig {
                 event.hubs = vec![1];
             }
             let pick = random.uniform(&[PluginRandom::name("fill"), u64::from(event.id)]);
-            self.fill(event, region, items, pick);
+            self.fill(event, nominal, region, items, pick);
         }
         if event.until_min <= event.at_min {
             let duration_s = event.kind.default_duration_s();
@@ -455,7 +481,6 @@ impl EventsConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::region::RegionConfig;
 
     #[test]
     fn a_drawn_script_is_the_same_for_the_same_seed_and_scales_with_hubs() {
@@ -466,11 +491,13 @@ mod tests {
         let small = Region::new(&RegionConfig {
             hubs: 4,
             hub_spacing_m: 15_000.0,
+            ..RegionConfig::default()
         })
         .unwrap();
         let large = Region::new(&RegionConfig {
             hubs: 16,
             hub_spacing_m: 15_000.0,
+            ..RegionConfig::default()
         })
         .unwrap();
         let random = PluginRandom::new(3, 1, "test");
@@ -521,6 +548,7 @@ mod tests {
         let region = Region::new(&RegionConfig {
             hubs: 4,
             hub_spacing_m: 15_000.0,
+            ..RegionConfig::default()
         })
         .unwrap();
         let events = config.script(&region, 7200.0, &[], &PluginRandom::new(1, 1, "test"));

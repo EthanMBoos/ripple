@@ -1,0 +1,20 @@
+# Complete regular-grid classical comparison: six policies x ten matched days.
+# No model calls. Analyze these 60 episodes as one complete dataset.
+# Keep the base mission's random events; four hours of requests, then 30 min
+# to finish. This is separate from the scripted surge-duration experiment.
+name: region-64-classical
+base_scenario: region-64.yaml
+seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+parameters:
+  run.end_s: 16200
+  entities.region.autonomy.Dispatcher.requests.until_s: 14400
+  entities.region.autonomy.Dispatcher.manager.offline: true
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.kind, manager.policy]
+cases:
+  - [none, ""]
+  - [replanner, ""]
+  - [policy, crates/delivery/policies/local.yaml]
+  - [policy, crates/delivery/policies/serve.yaml]
+  - [policy, crates/delivery/policies/move.yaml]
+  - [policy, crates/delivery/policies/return.yaml]

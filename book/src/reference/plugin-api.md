@@ -259,6 +259,55 @@ A sensor's `publish_reading` is not a message: it goes only to its own
 entity's estimators, and no network sees it. Use a message when
 communication itself is part of the experiment.
 
+## Drawings
+
+Every category trait has two methods for what the plugin draws in the
+viewer; both return a `Vec<Drawing>` and draw nothing unless overridden.
+A `Drawing` is one shape in world meters: a `Point`, a `Circle`, an open
+`Line`, a flat convex `Polygon`, or an axis-aligned `Box` with open floor
+and roof. Each carries a label and a color the plugin chooses. A prominent
+point is larger and always labeled, for the few places a reader must find
+at a glance; a plain point is small and labeled on hover, for the many. The
+shapes are display only: the engine never reads them.
+
+- `fixed_drawings` is asked once, when the plugin starts, for shapes that
+  hold for the whole run: a boundary, the hubs and sites of a region, a
+  goal. The engine keeps them by reference; they cost nothing after that.
+- `drawings(time_s)` is asked every tick for shapes that come and go: an
+  area closed for an hour, a planned route. Return the same shapes each
+  tick while nothing has changed, and nothing when there is nothing; an
+  empty list costs nothing to build or compare.
+
+```rust,ignore
+fn fixed_drawings(&self) -> Vec<Drawing> {
+    vec![Drawing::Point {
+        position_world_m: self.goal_world_m,
+        label: "goal".into(),
+        color: [255, 255, 255],
+        prominent: true,
+    }]
+}
+```
+
+The engine asks every plugin after the metrics phase and on the main
+thread, in entity order then world-plugin order, so the result is the same
+at any worker count. The frame carries both parts under the plugin's name,
+with the entity's ID for an entity's plugin (`Dispatcher/7`), and the
+record writes them to its `/drawings` channel only when a frame's drawings
+differ from the previous frame's, whether or not a viewer is open. The
+viewer redraws a plugin's fixed part once and its changing part on change.
+`Boundary` draws its box this way and the delivery crate's Dispatcher its
+hubs and sites, with the areas closed now as its changing part.
+
+What the viewer can derive from the record over time is not a plugin
+drawing. An agent's trail is its recent truth positions, already in the
+frames; the viewer rebuilds it from them with `--draw-trails`, and the
+speed and altitude plots the same way. Recording them again through this
+API would double the frames and redraw every agent every frame, the cost
+the trails module measured. Plugins see belief, not truth, so they could
+not draw that trail anyway. A plugin draws what only it knows: its region,
+its rules, its plan.
+
 ## Metrics
 
 `Metrics::report` returns a `MetricReport`: ordered column names and, for each

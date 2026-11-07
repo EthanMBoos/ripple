@@ -226,6 +226,14 @@ owning the vehicle's ports and running whichever skill is current.
 Coordination above the vehicle, such as a fleet planner, is another entity's
 autonomy that sends orders as messages.
 
+## Drawing in the viewer
+
+Override `fixed_drawings` to show mission geometry in Rerun that holds for
+the run, such as a goal or a depot, and `drawings` for shapes that come and
+go, such as an area to keep out of for an hour. Return world meters; the
+engine records and redraws them only when they change. The shapes and the
+rules are in the [plugin API](../reference/plugin-api.md#drawings).
+
 ## Testing
 
 - **Unit tests** go in a `#[cfg(test)] mod tests` block at the bottom of the

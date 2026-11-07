@@ -1,12 +1,15 @@
 //! World plugin ownership and dispatch. Model logic belongs under plugin/{interaction,network,metrics}.
 use crate::common::{SpatialIndex, Terrain, TruthContacts};
-use crate::{Entity, EntitySnapshot, Event, Vec3, plugin::*, scenario::ScenarioConfig};
+use crate::{
+    Entity, EntitySnapshot, Event, Vec3, drawing::PluginDrawings, plugin::*,
+    scenario::ScenarioConfig,
+};
 use crate::{
     plugin::{Catalog, CompiledPlugin},
     pubsub::messages::{Mailbox, NetworkTrace, ScheduledMessage},
 };
 use anyhow::{Context, Result, ensure};
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::Arc};
 
 pub(crate) struct CompiledWorld {
     interactions: Vec<CompiledPlugin<dyn Interaction>>,
@@ -96,6 +99,8 @@ struct WorldSlot<T: ?Sized> {
     // Only networks draw today; interactions and metrics can expose it when needed.
     random: PluginRandom,
     closed: bool,
+    /// The plugin's fixed drawings, asked once after `initialize`.
+    fixed_drawings: Arc<[Drawing]>,
 }
 impl<T: ?Sized> WorldSlot<T> {
     fn new(plugin: &CompiledPlugin<T>, index: usize, category: &str, seed: u32) -> Self {
@@ -118,6 +123,7 @@ impl<T: ?Sized> WorldSlot<T> {
             messages: Messages::for_world_plugin(),
             scheduled: Vec::new(),
             closed: false,
+            fixed_drawings: Arc::from(Vec::new()),
         }
     }
     fn mailbox(&mut self) -> Mailbox<'_> {
@@ -186,6 +192,15 @@ impl WorldPlugins {
         }
         for slot in &mut self.metrics {
             slot.initialize(time, contacts, teams, terrain, Metrics::initialize)?;
+        }
+        for slot in &mut self.interactions {
+            slot.fixed_drawings = slot.plugin.fixed_drawings().into();
+        }
+        for slot in &mut self.networks {
+            slot.fixed_drawings = slot.plugin.fixed_drawings().into();
+        }
+        for slot in &mut self.metrics {
+            slot.fixed_drawings = slot.plugin.fixed_drawings().into();
         }
         Ok(())
     }
@@ -308,6 +323,44 @@ impl WorldPlugins {
             stop |= update == Update::Stop;
         }
         Ok(stop)
+    }
+    /// Each world plugin's drawings at `time_s`: interactions, then networks,
+    /// then metrics, each in mission order, the fixed part by reference and
+    /// the changing part asked now. Plugins with nothing in either are left
+    /// out.
+    pub fn drawings(&self, time_s: f64) -> Vec<PluginDrawings> {
+        let mut drawings = Vec::new();
+        let mut collect = |name: &str, fixed: &Arc<[Drawing]>, changing: Vec<Drawing>| {
+            if !fixed.is_empty() || !changing.is_empty() {
+                drawings.push(PluginDrawings {
+                    source: name.to_string(),
+                    fixed: fixed.clone(),
+                    changing,
+                });
+            }
+        };
+        for slot in &self.interactions {
+            collect(
+                &slot.name,
+                &slot.fixed_drawings,
+                slot.plugin.drawings(time_s),
+            );
+        }
+        for slot in &self.networks {
+            collect(
+                &slot.name,
+                &slot.fixed_drawings,
+                slot.plugin.drawings(time_s),
+            );
+        }
+        for slot in &self.metrics {
+            collect(
+                &slot.name,
+                &slot.fixed_drawings,
+                slot.plugin.drawings(time_s),
+            );
+        }
+        drawings
     }
     pub fn reports(&self, time_s: f64) -> Vec<(String, MetricReport)> {
         self.metrics

@@ -14,6 +14,7 @@ use serde::de::DeserializeOwned;
 use crate::{
     EntitySnapshot, KinematicState, Vec3,
     common::{PluginRandom, is_within},
+    drawing::Drawing,
     plugin::sensor::{ReadingKind, Readings},
     plugin::{EntityInfo, PluginParams, StepTime},
     pubsub::Messages,
@@ -241,6 +242,16 @@ pub trait Localization: Send {
     fn close(&mut self, _time: StepTime) -> Result<()> {
         Ok(())
     }
+    /// Shapes this plugin draws in the viewer for the whole run, asked once
+    /// when it starts: see `Drawing`. Empty unless overridden.
+    fn fixed_drawings(&self) -> Vec<Drawing> {
+        Vec::new()
+    }
+    /// Shapes that come and go, asked every tick at `time_s`. Empty unless
+    /// overridden.
+    fn drawings(&self, _time_s: f64) -> Vec<Drawing> {
+        Vec::new()
+    }
 }
 
 /// Maintains the contacts the entity knows about, using localization's pose.
@@ -277,6 +288,16 @@ pub trait Tracking: Send {
     fn step(&mut self, context: &mut TrackingContext) -> Result<()>;
     fn close(&mut self, _time: StepTime) -> Result<()> {
         Ok(())
+    }
+    /// Shapes this plugin draws in the viewer for the whole run, asked once
+    /// when it starts: see `Drawing`. Empty unless overridden.
+    fn fixed_drawings(&self) -> Vec<Drawing> {
+        Vec::new()
+    }
+    /// Shapes that come and go, asked every tick at `time_s`. Empty unless
+    /// overridden.
+    fn drawings(&self, _time_s: f64) -> Vec<Drawing> {
+        Vec::new()
     }
 }
 

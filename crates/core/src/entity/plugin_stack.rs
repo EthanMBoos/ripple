@@ -8,7 +8,7 @@ use crate::{
 };
 use crate::{plugin::CompiledPlugin, ports::Signals};
 use anyhow::{Context, Result, bail, ensure};
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::Arc};
 
 /// The name missions use for the engine's perfect measurement.
 pub(crate) const PERFECT: &str = "perfect";
@@ -356,6 +356,8 @@ struct Slot<T: ?Sized> {
     rate: Rate,
     messages: Messages,
     random: PluginRandom,
+    /// The plugin's fixed drawings, asked once in `start`.
+    fixed_drawings: Arc<[Drawing]>,
 }
 impl<T: ?Sized> Slot<T> {
     fn new(compiled: &CompiledPlugin<T>, random: PluginRandom, endpoint: MessageEndpoint) -> Self {
@@ -367,6 +369,7 @@ impl<T: ?Sized> Slot<T> {
             rate: compiled.rate.clone(),
             messages: Messages::default(),
             random,
+            fixed_drawings: Arc::from(Vec::new()),
         }
     }
     fn mailbox(&mut self) -> crate::pubsub::messages::Mailbox<'_> {
@@ -579,6 +582,7 @@ impl PluginStack {
                 Autonomy::initialize,
             )?;
         }
+        self.ask_fixed_drawings();
         Ok(())
     }
     pub fn readings(&self) -> &Readings {
@@ -822,6 +826,72 @@ impl PluginStack {
             }
         }
     }
+    /// Ask every plugin for its fixed drawings, once, after they are all
+    /// initialized.
+    fn ask_fixed_drawings(&mut self) {
+        for slot in &mut self.autonomies {
+            slot.fixed_drawings = slot.plugin.fixed_drawings().into();
+        }
+        for slot in &mut self.controllers {
+            slot.fixed_drawings = slot.plugin.fixed_drawings().into();
+        }
+        self.motion.fixed_drawings = self.motion.plugin.fixed_drawings().into();
+        for slot in &mut self.sensors {
+            slot.fixed_drawings = slot.plugin.fixed_drawings().into();
+        }
+        self.localization.fixed_drawings = self.localization.plugin.fixed_drawings().into();
+        self.tracking.fixed_drawings = self.tracking.plugin.fixed_drawings().into();
+    }
+
+    /// Each plugin's drawings at `time_s`, by plugin name, in the stack's
+    /// order: its fixed part by reference and its changing part asked now.
+    /// Plugins with nothing in either are left out.
+    pub fn drawings(&self, time_s: f64) -> Vec<(String, Arc<[Drawing]>, Vec<Drawing>)> {
+        let mut drawings = Vec::new();
+        let mut collect = |name: &str, fixed: &Arc<[Drawing]>, changing: Vec<Drawing>| {
+            if !fixed.is_empty() || !changing.is_empty() {
+                drawings.push((name.to_string(), fixed.clone(), changing));
+            }
+        };
+        for slot in &self.autonomies {
+            collect(
+                &slot.name,
+                &slot.fixed_drawings,
+                slot.plugin.drawings(time_s),
+            );
+        }
+        for slot in &self.controllers {
+            collect(
+                &slot.name,
+                &slot.fixed_drawings,
+                slot.plugin.drawings(time_s),
+            );
+        }
+        collect(
+            &self.motion.name,
+            &self.motion.fixed_drawings,
+            self.motion.plugin.drawings(time_s),
+        );
+        for slot in &self.sensors {
+            collect(
+                &slot.name,
+                &slot.fixed_drawings,
+                slot.plugin.drawings(time_s),
+            );
+        }
+        collect(
+            &self.localization.name,
+            &self.localization.fixed_drawings,
+            self.localization.plugin.drawings(time_s),
+        );
+        collect(
+            &self.tracking.name,
+            &self.tracking.fixed_drawings,
+            self.tracking.plugin.drawings(time_s),
+        );
+        drawings
+    }
+
     pub fn close(&mut self, time: StepTime) -> Result<()> {
         if self.closed {
             return Ok(());

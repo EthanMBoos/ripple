@@ -7,6 +7,7 @@ use serde::Serialize;
 
 use crate::{
     common::{SpatialIndex, Terrain, TruthContacts},
+    drawing::PluginDrawings,
     entity::{Entity, EntityDefinition, EntitySnapshot},
     plugin::estimator::{Contact, ContactList},
     plugin::{Messages, MetricReport, PluginRegistry, StepTime},
@@ -70,6 +71,10 @@ pub enum TerminationReason {
 pub struct SimulationFrame {
     pub time_s: f64,
     pub entities: Vec<EntitySnapshot>,
+    /// What every plugin draws at this time, entities' plugins in entity
+    /// order then world plugins; each plugin's fixed part is shared by
+    /// reference between frames.
+    pub drawings: Vec<PluginDrawings>,
 }
 
 pub struct Simulation {
@@ -226,7 +231,43 @@ impl Simulation {
             // A frame holds the state at the current time, before this tick's step.
             time_s: self.time_s,
             entities,
+            drawings: Vec::new(),
         }
+    }
+
+    /// The frame's drawings: every plugin's, asked on this thread so the
+    /// order is the entities' by ID, then the world plugins', at any worker
+    /// count. Each plugin's fixed part is held by reference; only its
+    /// changing part is asked here.
+    ///
+    /// DEVNOTE: the first build asked every plugin for all of its drawings
+    /// each tick, which rebuilt the delivery Dispatcher's 576 labeled points
+    /// at 64 hubs on every tick to find them unchanged. With the fixed and
+    /// changing split, a 64-hub one-hour delivery day (`crates/delivery/
+    /// missions/region-64.yaml`, `run.end_s:=3600`, headless, release, one
+    /// worker, M-series Mac, 2026-11-07) took 16.8 to 17.5 s before this
+    /// change and 17.3 to 18.8 s with it over five alternating pairs, the
+    /// last three pairs 16.8/17.3, 16.8/17.4, 16.9/17.4: about 0.5 s, or 14
+    /// microseconds a tick, for asking 321 entities' six slots and the world
+    /// plugins and filtering the day's events. Repeat with the two release
+    /// binaries on the same mission. The cost is kept because it is paid
+    /// once per tick, not per plugin that draws, and every plugin that draws
+    /// nothing changing returns an empty list without allocating.
+    fn drawings(&self) -> Vec<PluginDrawings> {
+        let mut entities: Vec<&Entity> = self.entities.iter().collect();
+        entities.sort_by_key(|entity| entity.id);
+        let mut drawings = Vec::new();
+        for entity in entities {
+            for (plugin, fixed, changing) in entity.drawings(self.time_s) {
+                drawings.push(PluginDrawings {
+                    source: format!("{plugin}/{}", entity.id),
+                    fixed,
+                    changing,
+                });
+            }
+        }
+        drawings.extend(self.world.drawings(self.time_s));
+        drawings
     }
 
     /// Returns pre-step state, then advances the simulation. The final call emits terminal state.
@@ -263,7 +304,8 @@ impl Simulation {
 
         self.generate_entities()?;
         self.start_entities()?;
-        let frame = self.snapshot();
+        let mut frame = self.snapshot();
+        frame.drawings = self.drawings();
         let time = StepTime {
             time_s: self.time_s,
             dt_s: self.config.run.dt_s,
@@ -439,8 +481,10 @@ impl Simulation {
         if let Some(trace) = trace {
             trace.beliefs(self.time_s, &self.entities)?;
         }
+        let mut frame = self.snapshot();
+        frame.drawings = self.drawings();
         self.close_plugins()?;
-        Ok(self.snapshot())
+        Ok(frame)
     }
 
     fn close_plugins(&mut self) -> Result<()> {

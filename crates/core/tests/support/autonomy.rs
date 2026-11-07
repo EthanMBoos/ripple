@@ -1,6 +1,6 @@
 //! Drive until belief says the goal has been reached.
 use anyhow::Result;
-use ripple_core::plugin::*;
+use ripple_core::{Vec3, plugin::*};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -32,5 +32,14 @@ impl Autonomy for DriveToGoal {
         let reached_goal = context.state.position_world_m.x >= self.goal_world_m;
         io.write("speed", if reached_goal { 0.0 } else { 2.0 })?;
         Ok(())
+    }
+
+    fn fixed_drawings(&self) -> Vec<Drawing> {
+        vec![Drawing::Point {
+            position_world_m: Vec3::new(self.goal_world_m, 0.0, 0.0),
+            label: "goal".into(),
+            color: [255, 255, 255],
+            prominent: true,
+        }]
     }
 }

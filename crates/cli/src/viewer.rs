@@ -1,14 +1,16 @@
 //! Rerun observes the run; playback and debug panels never change simulation state.
 use anyhow::{Result, ensure};
 use rerun::{RecordingStream, RecordingStreamBuilder};
-use ripple_core::{SimulationFrame, Terrain, plugin::interaction::BoundaryRegion};
+use ripple_core::{SimulationFrame, Terrain};
 use std::{collections::BTreeSet, path::Path, time::Duration};
 
 mod blueprint;
+mod drawings;
 mod map;
 mod terrain;
 mod trails;
 
+use drawings::Drawn;
 use trails::Trails;
 
 pub(crate) struct Viewer {
@@ -21,6 +23,8 @@ pub(crate) struct Viewer {
     last_time_ns: Option<i64>,
     /// [west, east, south, north] of the drawn terrain.
     terrain_extent_m: Option<[f32; 4]>,
+    /// The plugins' drawings on screen; see `drawings.rs`.
+    drawn: Drawn,
     /// With `--draw-trails`, a second stream into the same recording that goes
     /// only to the live viewer, so trails are shown but never saved.
     live_trails: Option<(RecordingStream, Trails)>,
@@ -75,6 +79,7 @@ impl Viewer {
             first_time_s: None,
             last_time_ns: None,
             terrain_extent_m: None,
+            drawn: Drawn::default(),
             live_trails,
         })
     }
@@ -85,74 +90,6 @@ impl Viewer {
         let [east_m, south_m, _] = terrain.sample(terrain.rows() - 1, terrain.columns() - 1);
         self.terrain_extent_m = Some([west_m, east_m, south_m, north_m].map(|value| value as f32));
         terrain::log(&self.recording, terrain)
-    }
-
-    /// Draw each Boundary box once, in the 3D world and on the map. Rerun hides
-    /// an entity per view, so the blueprint panel's eye on `world/boundaries`
-    /// hides the 3D box only; `map/boundaries` has its own.
-    pub fn log_boundaries(&mut self, boundaries: &[BoundaryRegion]) -> Result<()> {
-        if boundaries.is_empty() {
-            return Ok(());
-        }
-        let color = [170, 170, 120];
-        let (mut edges, mut outlines) = (Vec::new(), Vec::new());
-        let (mut walls, mut triangles) = (Vec::new(), Vec::new());
-        for boundary in boundaries {
-            let min_m = boundary.center_world_m - boundary.lengths_m * 0.5;
-            let max_m = boundary.center_world_m + boundary.lengths_m * 0.5;
-            // The box's floor, corner to corner and back to the first.
-            let floor_m = [
-                [min_m.x, min_m.y],
-                [max_m.x, min_m.y],
-                [max_m.x, max_m.y],
-                [min_m.x, max_m.y],
-                [min_m.x, min_m.y],
-            ]
-            .map(|[east_m, north_m]| [east_m as f32, north_m as f32, min_m.z as f32]);
-            let roof_m = floor_m.map(|[east_m, north_m, _]| [east_m, north_m, max_m.z as f32]);
-            edges.push(floor_m.to_vec());
-            edges.push(roof_m.to_vec());
-            edges.extend(floor_m[..4].iter().zip(&roof_m).map(|(a, b)| vec![*a, *b]));
-            // The four side walls, two triangles each; the floor and roof
-            // stay open so the box doesn't hide what flies inside it.
-            for side in 0..4 {
-                let first = u32::try_from(walls.len())?;
-                walls.extend([
-                    floor_m[side],
-                    floor_m[side + 1],
-                    roof_m[side + 1],
-                    roof_m[side],
-                ]);
-                triangles.push([first, first + 1, first + 2]);
-                triangles.push([first, first + 2, first + 3]);
-            }
-            outlines.push(floor_m.map(map::project).to_vec());
-            // Fit the map and its grid around the box as well as the agents.
-            for corner in floor_m {
-                self.widen_range(corner);
-            }
-        }
-        self.recording.log_static(
-            "world/boundaries",
-            &rerun::LineStrips3D::new(edges)
-                .with_colors([color])
-                .with_radii([rerun::Radius::new_ui_points(1.0)]),
-        )?;
-        self.recording.log_static(
-            "world/boundaries/walls",
-            &rerun::Mesh3D::new(walls)
-                .with_triangle_indices(triangles)
-                .with_albedo_factor(rerun::Rgba32::from_unmultiplied_rgba(
-                    color[0], color[1], color[2], 40,
-                )),
-        )?;
-        self.recording.log_static(
-            "map/boundaries",
-            &rerun::LineStrips2D::new(outlines)
-                .with_colors([color])
-                .with_radii([rerun::Radius::new_ui_points(1.0)]),
-        )?;
-        Ok(())
     }
 
     pub fn log_frame(&mut self, index: usize, frame: &SimulationFrame) -> Result<()> {
@@ -168,6 +105,11 @@ impl Viewer {
             stream.set_duration_secs("time", time_ns as f64 * 1e-9);
             trails.log_frame(stream, frame)?;
         }
+
+        self.drawn
+            .log_frame(&self.recording, &frame.drawings, &mut |point| {
+                widen(&mut self.position_range_m, point);
+            })?;
 
         let current_ids: BTreeSet<_> = frame.entities.iter().map(|entity| entity.id).collect();
         for id in self.previous_ids.difference(&current_ids) {
@@ -185,6 +127,7 @@ impl Viewer {
             let label = format!("{} · team {}", entity.id, entity.team_id);
             let point = [position.x as f32, position.y as f32, position.z as f32];
             self.widen_range(point);
+            let arrow_m = heading_arrow_m(self.position_range_m);
 
             self.recording.log(
                 path.as_str(),
@@ -208,7 +151,7 @@ impl Viewer {
             )?;
             self.recording.log(
                 format!("{path}/heading"),
-                &rerun::Arrows3D::from_vectors([[8.0, 0.0, 0.0]]).with_colors([color]),
+                &rerun::Arrows3D::from_vectors([[arrow_m, 0.0, 0.0]]).with_colors([color]),
             )?;
 
             let map_path = format!("map/entities/{}", entity.id);
@@ -225,8 +168,8 @@ impl Viewer {
             self.recording.log(
                 format!("{map_path}/heading"),
                 &rerun::Arrows2D::from_vectors([[
-                    8.0 * heading_rad.cos() as f32,
-                    -8.0 * heading_rad.sin() as f32,
+                    arrow_m * heading_rad.cos() as f32,
+                    -arrow_m * heading_rad.sin() as f32,
                 ]])
                 .with_origins([position_map_m])
                 .with_colors([color]),
@@ -258,11 +201,7 @@ impl Viewer {
 
     /// Grow the range the map is fitted to so it includes `point`.
     fn widen_range(&mut self, point: [f32; 3]) {
-        let [low, high] = self.position_range_m.get_or_insert([point, point]);
-        for axis in 0..3 {
-            low[axis] = low[axis].min(point[axis]);
-            high[axis] = high[axis].max(point[axis]);
-        }
+        widen(&mut self.position_range_m, point);
     }
 
     pub fn finish(self) -> Result<()> {
@@ -283,6 +222,24 @@ impl Viewer {
 
     pub fn log_saved_trails(&self, frames: &[SimulationFrame]) -> Result<()> {
         trails::draw(&self.recording, frames)
+    }
+}
+
+/// The heading arrow's length: 8 m, or a fiftieth of the wider horizontal
+/// span seen so far, so an arrow stays visible on a map of a region. It
+/// grows with the span, so early frames of a run that spreads out later
+/// have shorter arrows; plugin drawings widen the span from the first frame.
+pub(super) fn heading_arrow_m(range: Option<[[f32; 3]; 2]>) -> f32 {
+    let span_m = range.map_or(0.0, |[low, high]| (high[0] - low[0]).max(high[1] - low[1]));
+    (span_m / 50.0).max(8.0)
+}
+
+/// Grow `range` so it includes `point`.
+fn widen(range: &mut Option<[[f32; 3]; 2]>, point: [f32; 3]) {
+    let [low, high] = range.get_or_insert([point, point]);
+    for axis in 0..3 {
+        low[axis] = low[axis].min(point[axis]);
+        high[axis] = high[axis].max(point[axis]);
     }
 }
 
@@ -340,6 +297,22 @@ fn status_text(index: usize, frame: &SimulationFrame, replay_time_ns: i64) -> St
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn the_heading_arrow_is_8_m_up_to_a_400_m_span_then_a_fiftieth_of_it() {
+        assert_eq!(heading_arrow_m(None), 8.0);
+        assert_eq!(
+            heading_arrow_m(Some([[0.0, 0.0, 0.0], [300.0, 100.0, 0.0]])),
+            8.0
+        );
+        assert_eq!(
+            heading_arrow_m(Some([
+                [-30_000.0, -30_000.0, 0.0],
+                [30_000.0, 30_000.0, 0.0]
+            ])),
+            1200.0
+        );
+    }
+
     #[test]
     fn playback_uses_seconds_and_retains_the_repeated_terminal_sample() {
         assert_eq!(playback_time_ns(0.1, Some(0)), 100_000_000);

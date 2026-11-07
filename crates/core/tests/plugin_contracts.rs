@@ -6,7 +6,7 @@ mod plugin_fixtures;
 
 use anyhow::Result;
 use plugin_fixtures::*;
-use ripple_core::{Params, Simulation, plugin::PluginRegistry};
+use ripple_core::{Drawing, Params, Simulation, plugin::PluginRegistry, record};
 
 /// Overrides that replace whole plugin slots, such as
 /// `entities.agents.motion_model:={MissingMotion: {}}`.
@@ -284,5 +284,79 @@ fn network_panic_is_reported_and_other_plugins_are_closed() -> Result<()> {
     for (_, report) in simulation.metric_reports() {
         assert_eq!(report.teams[&1].values["closed"], 1.0);
     }
+    Ok(())
+}
+
+#[test]
+fn every_frame_carries_the_plugins_drawings_in_entity_then_world_order() -> Result<()> {
+    let expected_sources: Vec<String> = (1..=8)
+        .map(|id| format!("DriveToGoal/{id}"))
+        .chain(["Floor".to_string()])
+        .collect();
+    let mut first_frames = None;
+    for workers in [1, 2, 8] {
+        let mut simulation = Simulation::new(scenario(&Params::new())?, &registry()?, workers)?;
+        let mut frames = Vec::new();
+        while let Some(frame) = simulation.step()? {
+            frames.push(frame);
+        }
+        for frame in &frames {
+            let sources: Vec<&str> = frame
+                .drawings
+                .iter()
+                .map(|plugin| plugin.source.as_str())
+                .collect();
+            assert_eq!(sources, expected_sources);
+            // The goal is fixed and shared between frames; the floor's line
+            // changes every tick.
+            let goal = &frame.drawings[0];
+            assert!(matches!(goal.fixed[..], [Drawing::Point { .. }]));
+            assert!(goal.changing.is_empty());
+            assert!(std::sync::Arc::ptr_eq(
+                &goal.fixed,
+                &frames[0].drawings[0].fixed
+            ));
+            let floor = &frame.drawings[8];
+            assert!(floor.fixed.is_empty());
+            let Drawing::Line { label, .. } = &floor.changing[0] else {
+                panic!("the floor draws a line");
+            };
+            assert_eq!(label, &format!("floor at {:.1} s", frame.time_s));
+        }
+        // The same drawings at every worker count.
+        let drawings: Vec<_> = frames.iter().map(|frame| frame.drawings.clone()).collect();
+        match &first_frames {
+            None => first_frames = Some(drawings),
+            Some(first) => assert_eq!(&drawings, first),
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn a_record_replays_each_frames_drawings() -> Result<()> {
+    let directory = std::env::temp_dir().join(format!(
+        "ripple-drawings-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_nanos()
+    ));
+    std::fs::create_dir_all(&directory)?;
+    let path = directory.join("run.mcap");
+    let mut simulation = Simulation::new(scenario(&Params::new())?, &registry()?, 1)?;
+    let mut writer = record::RunWriter::create(&path, &simulation, false)?;
+    let mut frames = Vec::new();
+    while let Some(frame) = simulation.step()? {
+        writer.step_frame(&simulation, &frame)?;
+        frames.push(frame);
+    }
+    writer.finish_run(&simulation, None)?;
+    let replay = record::read_replay(&path)?;
+    assert_eq!(replay.frames.len(), frames.len());
+    for (saved, live) in replay.frames.iter().zip(&frames) {
+        assert_eq!(saved.drawings, live.drawings);
+    }
+    std::fs::remove_dir_all(&directory)?;
     Ok(())
 }

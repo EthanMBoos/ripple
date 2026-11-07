@@ -4,6 +4,7 @@
 //! area, which the dispatcher gives the courier.
 
 use ripple_core::Vec3;
+use ripple_core::plugin::Drawing;
 use serde::de::{DeserializeOwned, Deserializer, Error};
 use serde::{Deserialize, Serialize};
 
@@ -107,6 +108,52 @@ impl Area {
             } => {
                 segment_segment_m(from, to, km_to_m(*from_km), km_to_m(*to_km))
                     < half_width_km * 1000.0
+            }
+        }
+    }
+
+    /// The area on the ground for the viewer: the circle, or the corridor's
+    /// outline with its round ends, which is what `contains` keeps out of.
+    pub fn drawing(&self, label: &str, color: [u8; 3]) -> Drawing {
+        match self {
+            Area::Circle {
+                center_km,
+                radius_km,
+            } => Drawing::Circle {
+                center_world_m: km_to_m(*center_km),
+                radius_m: radius_km * 1000.0,
+                label: label.to_string(),
+                color,
+            },
+            Area::Corridor {
+                from_km,
+                to_km,
+                half_width_km,
+            } => {
+                let (from, to) = (km_to_m(*from_km), km_to_m(*to_km));
+                let half_width_m = half_width_km * 1000.0;
+                let along = (to - from).normalize();
+                let left = Vec3::new(-along.y, along.x, 0.0);
+                // Half a circle at each end, swept from one side to the other.
+                let cap_points = 12;
+                let cap = |center: Vec3, start: Vec3| {
+                    (0..=cap_points).map(move |step| {
+                        let angle = std::f64::consts::PI * step as f64 / cap_points as f64;
+                        let (sin, cos) = angle.sin_cos();
+                        let outward = Vec3::new(
+                            start.x * cos - start.y * sin,
+                            start.x * sin + start.y * cos,
+                            0.0,
+                        );
+                        center + outward * half_width_m
+                    })
+                };
+                let points_world_m = cap(to, -left).chain(cap(from, left)).collect();
+                Drawing::Polygon {
+                    points_world_m,
+                    label: label.to_string(),
+                    color,
+                }
             }
         }
     }

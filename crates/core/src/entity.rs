@@ -2,12 +2,15 @@
 
 pub(crate) mod plugin_stack;
 
+use std::sync::Arc;
+
 use anyhow::{Context, Result};
 
 use serde::Serialize;
 
 use crate::{
     common::Terrain,
+    drawing::Drawing,
     entity::plugin_stack::{CompiledStack, PluginStack},
     math::{EulerAngles, KinematicState, Quaternion, Vec3},
     plugin::estimator::{Contact, ContactList},
@@ -211,6 +214,11 @@ impl Entity {
 
     pub(crate) fn plugin_outputs(&self) -> Vec<(&str, &str, f64)> {
         self.plugins.outputs()
+    }
+    /// What this entity's plugins draw at `time_s`, by plugin name: the
+    /// fixed part by reference and the changing part asked now.
+    pub(crate) fn drawings(&self, time_s: f64) -> Vec<(String, Arc<[Drawing]>, Vec<Drawing>)> {
+        self.plugins.drawings(time_s)
     }
     /// Delivered sensor readings, by sensor instance name. Estimators read these;
     /// evaluation and tests may inspect them.

@@ -25,7 +25,7 @@ use std::fmt::Write as _;
 use anyhow::{Context, Result, ensure};
 use ripple_core::Vec3;
 use ripple_core::plugin::{
-    AgentContext, Autonomy, Frame, PluginIo, PluginParams, PluginRandom, Port, Ports, Unit,
+    AgentContext, Autonomy, Drawing, Frame, PluginIo, PluginParams, PluginRandom, Port, Ports, Unit,
 };
 use serde::Deserialize;
 
@@ -678,6 +678,58 @@ impl Autonomy for Dispatcher {
             io.write(name, 0.0)?;
         }
         Ok(())
+    }
+
+    /// The region for the viewer: each hub, each site by its code, and a
+    /// faint spoke from each site to its hub, since a hub's sites reach
+    /// past its neighbors and the map alone does not say whose they are.
+    fn fixed_drawings(&self) -> Vec<Drawing> {
+        let mut drawings = Vec::new();
+        for site in &self.region.sites {
+            let Some(hub) = self.region.hub(site.hub) else {
+                continue;
+            };
+            drawings.push(Drawing::Line {
+                points_world_m: vec![hub.position_world_m, site.position_world_m],
+                label: String::new(),
+                color: [55, 55, 62],
+            });
+        }
+        for hub in &self.region.hubs {
+            drawings.push(Drawing::Point {
+                position_world_m: hub.position_world_m,
+                label: format!("hub {}", hub.id),
+                color: [255, 210, 80],
+                prominent: true,
+            });
+        }
+        for site in &self.region.sites {
+            drawings.push(Drawing::Point {
+                position_world_m: site.position_world_m,
+                label: site.code.clone(),
+                color: match site.kind {
+                    SiteKind::Clinic => [110, 110, 110],
+                    SiteKind::Hospital => [255, 255, 255],
+                },
+                prominent: false,
+            });
+        }
+        drawings
+    }
+
+    /// The areas closed at `time_s`; usually none.
+    fn drawings(&self, time_s: f64) -> Vec<Drawing> {
+        let mut drawings = Vec::new();
+        for event in self.events.iter().filter(|event| event.active(time_s)) {
+            if let Some(area) = &event.area {
+                let color = match event.kind {
+                    EventKind::Corridor => [255, 160, 60],
+                    _ => [255, 90, 77],
+                };
+                drawings.push(area.drawing(event.kind.as_str(), color));
+            }
+        }
+        drawings
     }
 }
 

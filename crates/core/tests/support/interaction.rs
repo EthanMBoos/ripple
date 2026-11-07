@@ -1,6 +1,9 @@
 //! A world interaction: keep every entity above a floor and publish the resulting population.
 use anyhow::Result;
-use ripple_core::plugin::{Interaction, InteractionContext, Update};
+use ripple_core::{
+    Vec3,
+    plugin::{Drawing, Interaction, InteractionContext, Update},
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
@@ -36,5 +39,18 @@ impl Interaction for Floor {
             },
         )?;
         Ok(Update::Applied)
+    }
+
+    /// The floor's edge, redrawn only when a frame's drawings change, so a
+    /// frame's time in the label makes every frame differ.
+    fn drawings(&self, time_s: f64) -> Vec<Drawing> {
+        vec![Drawing::Line {
+            points_world_m: vec![
+                Vec3::new(-10.0, 0.0, self.height_world_m),
+                Vec3::new(10.0, 0.0, self.height_world_m),
+            ],
+            label: format!("floor at {time_s:.1} s"),
+            color: [170, 170, 120],
+        }]
     }
 }

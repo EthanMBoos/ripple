@@ -2,7 +2,9 @@
 //! seconds, on the recording's own timelines. `ripple run --viewer` sends
 //! them only to the live viewer, and `ripple replay` rebuilds them from a
 //! run's frames. They are never saved: redrawing every agent's trail every
-//! frame made large recorded runs much slower (see `draw`).
+//! frame made large recorded runs much slower (see `draw`). For the same
+//! reason trails are not plugin drawings (`drawings.rs`): they are derived
+//! from the recorded frames, and plugins see belief, not the truth path.
 use anyhow::Result;
 use rerun::RecordingStream;
 use ripple_core::SimulationFrame;

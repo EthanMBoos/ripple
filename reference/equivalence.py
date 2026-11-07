@@ -26,9 +26,9 @@ import perf
 from project import ROOT, RUNS, allocate, missions
 from run import read_run
 
-CHANNELS = ("/entities", "/frames", "/events", "/summary",
+CHANNELS = ("/entities", "/frames", "/events", "/summary", "/drawings",
             "/beliefs", "/readings", "/deliveries", "/outputs")
-BASE_CHANNELS = CHANNELS[:4]
+BASE_CHANNELS = CHANNELS[:5]
 WORKERS = (1, 2, 8)
 
 

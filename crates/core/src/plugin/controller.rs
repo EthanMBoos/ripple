@@ -1,5 +1,6 @@
 //! Controllers: the plugin interface and the built-in control laws.
 use crate::{
+    drawing::Drawing,
     plugin::{AgentContext, PluginParams, StepTime},
     ports::{PluginIo, Ports},
 };
@@ -38,6 +39,16 @@ pub trait Controller: Send {
     fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()>;
     fn close(&mut self, _time: StepTime) -> Result<()> {
         Ok(())
+    }
+    /// Shapes this plugin draws in the viewer for the whole run, asked once
+    /// when it starts: see `Drawing`. Empty unless overridden.
+    fn fixed_drawings(&self) -> Vec<Drawing> {
+        Vec::new()
+    }
+    /// Shapes that come and go, asked every tick at `time_s`. Empty unless
+    /// overridden.
+    fn drawings(&self, _time_s: f64) -> Vec<Drawing> {
+        Vec::new()
     }
 }
 

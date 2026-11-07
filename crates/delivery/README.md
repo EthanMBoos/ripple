@@ -44,7 +44,7 @@ side. The tests in `tests/region.rs` run short days of the same missions.
 | `region.rs` | Hubs on a square grid, 15 km apart; each hub's six clinics and two hospital rooftops with ground pads. Site codes are `3A` or `3H1`. |
 | `courier.rs` | The vehicle autonomy: flies an assignment with a skill, returns, reloads, relocates to a new hub, reports status, and is lost when its endurance runs out away from a hub. |
 | `skill.rs`, `skill/` | `drop` (parachute release on a pass or hover) and `land` (multirotors only, on rooftops). Either can go out and back through one `via` waypoint for a detour. |
-| `dispatcher.rs` | One per region: stock per hub, the day's requests, events, the rules in force, the fleet manager's calls, and the assignment of each request to a vehicle. |
+| `dispatcher.rs` | One per region: stock per hub, the day's requests, events, the rules in force, the fleet manager's calls, and the assignment of each request to a vehicle. Draws the hubs, the sites and the areas closed now in the viewer. |
 | `event.rs` | The eight event kinds, their seeded script, and their texts from the mission. |
 | `order.rs` | The orders a fleet manager can give, the queries it can ask, and the rules they leave in force. |
 | `view.rs` | What the fleet manager sees: a full vehicle list, per-hub summaries, a hub list with queries, or only the exceptions. |

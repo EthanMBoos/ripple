@@ -28,10 +28,9 @@ use sha2::{Digest, Sha256};
 
 use crate::{
     Terrain,
+    drawing::PluginDrawings,
     entity::EntitySnapshot,
     math::{KinematicState, Quaternion as MathQuaternion, Vec3},
-    plugin::interaction::BoundaryRegion,
-    scenario::PluginConfig,
     simulation::{Event as SimulationEvent, Simulation, SimulationFrame, TraceSink},
 };
 
@@ -182,6 +181,16 @@ pub struct RunWriter {
     events_written: usize,
     channels: BTreeMap<&'static str, u16>,
     sequences: BTreeMap<&'static str, u32>,
+    /// The drawings last written, so a frame's are written only on change.
+    drawings_written: Vec<PluginDrawings>,
+}
+
+/// One `/drawings` message: every plugin's drawings from `time_s` until the
+/// next message. JSON, like the trace channels, so a reader needs no schema.
+#[derive(serde::Serialize, serde::Deserialize)]
+struct DrawingsRecord {
+    time_s: f64,
+    drawings: Vec<PluginDrawings>,
 }
 
 impl RunWriter {
@@ -260,6 +269,7 @@ impl RunWriter {
             events_written: 0,
             channels,
             sequences: BTreeMap::new(),
+            drawings_written: Vec::new(),
         };
         record.new_events(simulation.events())?;
         Ok(record)
@@ -320,6 +330,28 @@ impl RunWriter {
         self.message("/frames", frame.time_s, &frame.encode_to_vec())
     }
 
+    /// The frame's drawings, when they differ from the last written. The
+    /// channel is added at the first message, so a run in which nothing
+    /// draws has no `/drawings` channel.
+    fn drawings(&mut self, frame: &SimulationFrame) -> Result<()> {
+        if frame.drawings == self.drawings_written {
+            return Ok(());
+        }
+        if !self.channels.contains_key("/drawings") {
+            let channel = self
+                .writer
+                .add_channel(0, "/drawings", "json", &BTreeMap::new())?;
+            self.channels.insert("/drawings", channel);
+        }
+        let record = DrawingsRecord {
+            time_s: frame.time_s,
+            drawings: frame.drawings.clone(),
+        };
+        self.message("/drawings", frame.time_s, &serde_json::to_vec(&record)?)?;
+        self.drawings_written = record.drawings;
+        Ok(())
+    }
+
     fn events(&mut self, events: &[SimulationEvent]) -> Result<()> {
         for event in events {
             let value = Event {
@@ -340,7 +372,8 @@ impl RunWriter {
 
     pub fn step_frame(&mut self, simulation: &Simulation, frame: &SimulationFrame) -> Result<()> {
         self.new_events(simulation.events())?;
-        self.frame(frame)
+        self.frame(frame)?;
+        self.drawings(frame)
     }
 
     /// Each metric plugin's own score and columns; a column a team has no
@@ -492,12 +525,13 @@ pub fn read_frames(path: &Path) -> Result<Vec<SimulationFrame>> {
 /// What a replay draws: the frames, the terrain files named by the scenario,
 /// and its Boundary regions.
 pub struct Replay {
+    /// Each frame carries the drawings in force at its time.
     pub frames: Vec<SimulationFrame>,
     pub terrain: Option<Terrain>,
-    pub boundaries: Vec<BoundaryRegion>,
 }
 
-/// Decode the MCAP frames and load the terrain files named by its scenario.
+/// Decode the MCAP frames and drawings and load the terrain files named by
+/// its scenario.
 pub fn read_replay(path: &Path) -> Result<Replay> {
     let bytes = fs::read(path).with_context(|| format!("read {}", path.display()))?;
     let metadata = metadata_from_bytes(&bytes, "ripple.run")?;
@@ -519,23 +553,7 @@ pub fn read_replay(path: &Path) -> Result<Replay> {
             Terrain::load(header)
         })
         .transpose()?;
-    let interactions = scenario["interactions"]
-        .as_array()
-        .context("recorded scenario has no interactions")?
-        .iter()
-        .filter(|plugin| plugin["name"] == "Boundary")
-        .map(|plugin| {
-            let mut config = PluginConfig::new("Boundary");
-            config.params = serde_json::from_value(plugin["params"].clone())?;
-            Ok(config)
-        })
-        .collect::<Result<Vec<_>>>()?;
-    let boundaries = BoundaryRegion::in_scenario(&interactions)?;
-    Ok(Replay {
-        frames,
-        terrain,
-        boundaries,
-    })
+    Ok(Replay { frames, terrain })
 }
 
 fn frames_from_bytes(bytes: &[u8], scenario: &serde_json::Value) -> Result<Vec<SimulationFrame>> {
@@ -544,9 +562,17 @@ fn frames_from_bytes(bytes: &[u8], scenario: &serde_json::Value) -> Result<Vec<S
         .context("recorded scenario has no entity groups")?;
     let mut descriptions = BTreeMap::new();
     let mut frames = Vec::new();
+    // A drawings message holds from its time until the next one; frames at
+    // or after it carry its drawings.
+    let mut drawings: Vec<DrawingsRecord> = Vec::new();
     for message in MessageStream::new(bytes)? {
         let message = message?;
         match message.channel.topic.as_str() {
+            "/drawings" => {
+                let record: DrawingsRecord = serde_json::from_slice(message.data.as_ref())?;
+                ensure!(record.time_s.is_finite(), "nonfinite drawings time");
+                drawings.push(record);
+            }
             "/entities" => {
                 let description = EntityDescription::decode(message.data.as_ref())?;
                 ensure!(
@@ -583,10 +609,19 @@ fn frames_from_bytes(bytes: &[u8], scenario: &serde_json::Value) -> Result<Vec<S
                 frames.push(SimulationFrame {
                     time_s: frame.time_s,
                     entities,
+                    drawings: Vec::new(),
                 });
             }
             _ => {}
         }
+    }
+    let mut in_force = drawings.iter().peekable();
+    let mut current: &[PluginDrawings] = &[];
+    for frame in &mut frames {
+        while let Some(record) = in_force.next_if(|record| record.time_s <= frame.time_s) {
+            current = &record.drawings;
+        }
+        frame.drawings = current.to_vec();
     }
     Ok(frames)
 }

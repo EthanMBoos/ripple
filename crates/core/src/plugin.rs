@@ -39,6 +39,7 @@ pub mod sensor;
 mod tests;
 
 pub use crate::common::{Pairs, PluginRandom, SpatialIndex, TruthContacts};
+pub use crate::drawing::Drawing;
 pub use crate::ports::{Frame, PluginIo, Port, Ports, Unit};
 pub use crate::pubsub::{
     Delivery, Message, MessageEndpoint, Messages, NetworkContext, Transmission,

@@ -1,13 +1,13 @@
 //! Publish an axis-aligned mission boundary; autonomies decide how to respond.
 //! Derived from SCRIMMAGE: interaction/Boundary. Publishes once in the interaction phase.
-//! Geometry is ordinary Rust data, independent of rendering and physical collision.
+//! Geometry is ordinary Rust data, independent of rendering and physical
+//! collision; the plugin draws its box in the viewer through `drawings`.
 
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 
 use crate::Vec3;
-use crate::plugin::{Interaction, InteractionContext, PluginParams, Update};
-use crate::scenario::PluginConfig;
+use crate::plugin::{Drawing, Interaction, InteractionContext, PluginParams, Update};
 
 pub const BOUNDARY_TOPIC: &str = "Boundary";
 
@@ -27,18 +27,6 @@ impl BoundaryRegion {
             }
         }
         true
-    }
-
-    /// The region of each Boundary among a scenario's interactions, for
-    /// drawing; parameters are checked as a run checks them.
-    pub fn in_scenario(interactions: &[PluginConfig]) -> Result<Vec<BoundaryRegion>> {
-        interactions
-            .iter()
-            .filter(|plugin| plugin.name == "Boundary")
-            .map(|plugin| {
-                Ok(Boundary::new(&Boundary::configure(&PluginParams::new(plugin))?).region)
-            })
-            .collect()
     }
 }
 
@@ -101,13 +89,22 @@ impl Interaction for Boundary {
         }
         Ok(Update::Applied)
     }
+
+    fn fixed_drawings(&self) -> Vec<Drawing> {
+        vec![Drawing::Box {
+            center_world_m: self.region.center_world_m,
+            lengths_m: self.region.lengths_m,
+            label: "Boundary".into(),
+            color: [170, 170, 120],
+        }]
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::BoundaryRegion;
+    use super::{Boundary, BoundaryRegion};
     use crate::Vec3;
-    use crate::scenario::PluginConfig;
+    use crate::plugin::{Drawing, Interaction, PluginParams};
 
     #[test]
     fn cuboid_contains_interior_but_not_its_faces() {
@@ -126,14 +123,21 @@ mod tests {
     }
 
     #[test]
-    fn a_scenario_gives_each_boundarys_region() {
-        let mut boundary = PluginConfig::new("Boundary");
-        boundary.params = serde_yaml_ng::from_str("center_m: [1, 2, 3]").unwrap();
-        let other = PluginConfig::new("GroundCollision");
-        let regions = BoundaryRegion::in_scenario(&[boundary, other]).unwrap();
-        assert_eq!(regions.len(), 1);
-        assert_eq!(regions[0].center_world_m, Vec3::new(1.0, 2.0, 3.0));
+    fn the_boundary_draws_its_box() {
+        let config = Boundary::configure(&PluginParams::yaml("center_m: [1, 2, 3]")).unwrap();
+        let drawings = Boundary::new(&config).fixed_drawings();
+        let [
+            Drawing::Box {
+                center_world_m,
+                lengths_m,
+                ..
+            },
+        ] = drawings.as_slice()
+        else {
+            panic!("expected one box, got {drawings:?}");
+        };
+        assert_eq!(*center_world_m, Vec3::new(1.0, 2.0, 3.0));
         // Lengths the mission leaves out take the plugin's default.
-        assert_eq!(regions[0].lengths_m, Vec3::new(10.0, 10.0, 10.0));
+        assert_eq!(*lengths_m, Vec3::new(10.0, 10.0, 10.0));
     }
 }

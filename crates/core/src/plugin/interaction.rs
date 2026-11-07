@@ -3,6 +3,7 @@
 use crate::{
     Entity, Event, EventKind, Vec3,
     common::SpatialIndex,
+    drawing::Drawing,
     plugin::{PluginParams, StepTime, Update, WorldContext},
     pubsub::Messages,
 };
@@ -61,6 +62,16 @@ pub trait Interaction: Send {
     fn step(&mut self, context: &mut InteractionContext) -> Result<Update>;
     fn close(&mut self, _time: StepTime) -> Result<()> {
         Ok(())
+    }
+    /// Shapes this plugin draws in the viewer for the whole run, asked once
+    /// when it starts: see `Drawing`. Empty unless overridden.
+    fn fixed_drawings(&self) -> Vec<Drawing> {
+        Vec::new()
+    }
+    /// Shapes that come and go, asked every tick at `time_s`. Empty unless
+    /// overridden.
+    fn drawings(&self, _time_s: f64) -> Vec<Drawing> {
+        Vec::new()
     }
 }
 

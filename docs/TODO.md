@@ -147,19 +147,20 @@ rows are in the manuscript's earlier tables.
       `paper/manuscript/appendix/`. The figure script and the track
       sampler live in the session scratchpad; move them into
       `crates/delivery/` if the figure must be redrawn.
-- [ ] Plugins draw their own mission geometry (decided 2026-11-07). Today
-      the viewer in `crates/cli/src/viewer.rs` draws only the terrain, the
-      Boundary boxes, and each frame's entity snapshot; the boxes are a
-      special case where the CLI and the replay reader re-parse plugins
-      named `Boundary` from the scenario. The delivery hubs, sites and
-      keep-out areas are private state of one autonomy, and random
-      closures and corridors exist only there. Of the flows considered
-      (rebuild from the mission as Boundary does; a drawings method on the
-      plugin traits pulled by the engine; a push sink in the step context;
-      a script over the record; hubs and sites as entities), the pulled
-      method is the one that gives the live viewer, the exported
-      recording, the headless screenshots and the demo video the same
-      picture, random events included. The work:
+- [x] Plugins draw their own mission geometry (decided and done
+      2026-11-07; the work items below are as built, see the plugin API's
+      Drawings section). Before it the viewer in `crates/cli/src/viewer.rs`
+      drew only the terrain, the Boundary boxes, and each frame's entity
+      snapshot; the boxes were a special case where the CLI and the replay
+      reader re-parsed plugins named `Boundary` from the scenario. The
+      delivery hubs, sites and keep-out areas are private state of one
+      autonomy, and random closures and corridors exist only there. Of
+      the flows considered (rebuild from the mission as Boundary does; a
+      drawings method on the plugin traits pulled by the engine; a push
+      sink in the step context; a script over the record; hubs and sites
+      as entities), the pulled method is the one that gives the live
+      viewer, the exported recording, the headless screenshots and the
+      demo video the same picture, random events included. The work:
       - A plain `Drawing` enum in core, in world meters: a labeled point,
         a circle, a polyline, a filled strip or polygon, text.
       - One method on each plugin trait returning its current drawings,
@@ -176,7 +177,19 @@ rows are in the manuscript's earlier tables.
         with screenshots of the boundary verification mission's exported
         recording before and after.
       - The Dispatcher returns the hubs, the sites and the areas active
-        now. Book: the plugin API and the visualization chapter.
+        now. Book: the plugin API and the run-records chapter.
+      Two decisions after the first build (2026-11-07): the method is split
+      into `fixed_drawings`, asked once when the plugin starts and held by
+      reference, and `drawings`, asked every tick for shapes that come and
+      go, because asking for everything each tick rebuilt a 64-hub region's
+      576 labeled points on each of a day's 300,000 ticks to find them
+      unchanged; and trails stay a viewer option, not a plugin drawing,
+      because they are derived from the recorded frames, redrawing them
+      through the record costs what the trails DEVNOTE measured, and
+      plugins see belief, not the truth path. Checked: the Boundary
+      mission's map and 3D views are the same before and after from
+      exported recordings in the headless viewer; the drawings channel is
+      compared by `reference/equivalence.py`.
 - [ ] Rerun view of hubs, sites, closed areas and corridors, with inspected
       screenshots, for figure 1: the first region run with a scripted
       closure and corridor, exported and inspected headless; the same

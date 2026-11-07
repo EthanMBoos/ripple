@@ -128,19 +128,27 @@ rows are in the manuscript's earlier tables.
   permissions. On the Opus win the hubs that gave lost nothing. This is the
   model-side evidence for the claim; before it, the attribution was only on
   the classical `move` policy.
-- The paired figure: one scripted surge at hub 6 and its neighbours on an
-  otherwise quiet 16-hub day, seed 3. Lending 0.92 with nothing missed;
-  relocating 0.85 with 48 missed, 38 of them at hub 1 after its aircraft
-  moved to the surge hubs. The surge hubs fare the same either way.
+- The paired day, now the middle of figure 1: one scripted surge at hub 6
+  and its neighbours on an otherwise quiet 16-hub day, seed 3. Lending
+  0.92 with nothing missed; relocating 0.85 with 48 missed, 38 of them at
+  hub 1 after its aircraft moved to the surge hubs. The surge hubs fare
+  the same either way.
+- Figure 2, the loss by hub role against local rules on the same day, per
+  hundred of the group's own requests: the move policy 16 / -2 / 0 at 16
+  hubs and 17 / -3 / 0 at 64 (gave / only received / neither); the models
+  giving orders 8 / 1 / 4 and 13 / 1 / 5; the models as a veto 10 / 0 / 0
+  and 10 / -3 / 2. The loss is at the hubs that gave under every
+  condition.
 
 ## Next
 
 - [x] Firm up the claim (run 2026-11-06, done 2026-11-07): the tables
       above.
 - [x] Complete the manuscript (2026-11-07): the firm-up tables, the
-      paired flight figure (`paper/manuscript/figures/paired-surge.pdf`,
-      drawn by a scratch script from two retained runs' frame recordings),
-      the per-hub analysis, and the claims reviewed against the results.
+      paired flight figure (two time series of the lending hub's aircraft
+      at home and its own flights, drawn by a scratch script from two
+      retained runs' frame recordings; replaced the same day, below), the
+      per-hub analysis, and the claims reviewed against the results.
 - [x] Manuscript appendix (2026-11-07): the frozen system prompt, the
       event texts, one complete live call and a veto prompt's tail, and
       the per-run counts for the 40 model runs, from text files in
@@ -190,10 +198,46 @@ rows are in the manuscript's earlier tables.
       mission's map and 3D views are the same before and after from
       exported recordings in the headless viewer; the drawings channel is
       compared by `reference/equivalence.py`.
-- [ ] Rerun view of hubs, sites, closed areas and corridors, with inspected
-      screenshots, for figure 1: the first region run with a scripted
-      closure and corridor, exported and inspected headless; the same
-      recording is the demo video. The surge figure becomes figure 2.
+- [x] Rerun view of hubs, sites, closed areas and corridors, with inspected
+      screenshots (2026-11-07): the 16-hub mission, seed 3, 100 minutes,
+      manager none, random events off, with a scripted closure (minutes 60
+      to 90) and corridor (from minute 60) at hub 6; exported with
+      `--export-rrd` and inspected in the headless viewer at minute 75 in
+      the light theme with the map maximized. Two stills of it were set as
+      figure 1 and taken out again the same day: at print size the hubs
+      were smudges and the picture showed no cost, no hub that gave, and
+      no later time. The headless viewer renders one pixel per UI point
+      whatever the window size, so a still's resolution is its window size
+      and its labels stay 12 px. The recording is kept for the demo video.
+- [x] Figure 1 built, not captured (2026-11-07; the stills showed no
+      cost, no hub that gave, and no later time, and the `llm-fleet`
+      manuscript's built figure 1 is the model): three TikZ panels under
+      the authors through
+      `\IEEEaftertitletext` (conference mode needs
+      `\IEEEoverridecommandlockouts`; a float cannot sit in the title
+      block). Left, the three kinds of help in plain words with the order
+      names; middle, the paired surge day drawn twice at minute 90 with
+      hub 1's aircraft and their trails since minute 60, from the two
+      retained records by `crates/delivery/title_figure.py`, which writes
+      `paper/manuscript/figures/title-{lending,relocating}.tex` and prints
+      the summary numbers the typed annotations repeat (0.92 and 0.85, 48
+      and 38 of 48); right, the costs from table 1 and the per-hub
+      paragraph. The site geometry the script needs is `sites()` in
+      `crates/delivery/region.py`, the same as `region.rs`. The surge
+      figure is figure 2.
+- [x] Figure 2 replaced (2026-11-07): the paired time series showed the
+      same day and the same 38 of 48 as figure 1, so it went. In its place
+      the per-hub attribution that was prose only: for the move policy
+      and the 40 model runs, each hub's late and undelivered requests
+      against local rules on the same day, grouped by whether the hub
+      gave, only received, or neither, per hundred of its own requests.
+      Drawn as TikZ by `crates/delivery/loss_figure.py` from the per-hub
+      run logs (one run per line; the logs are in the session scratchpad,
+      the runs under their region folders), which prints the numbers the
+      text quotes. The classical per-hub paragraph now compares with
+      local rules, as the table and the model runs do, instead of with
+      lending.
+- [ ] Demo video from the figure-1 recording.
 - [x] Read the fleet papers whose team sizes were unknown (COLA 3 UAVs,
       FLEET 2 to 3 robots, LLM-DaaS parsing only, AutoHMA-LLM 3 agents,
       MultiUAV-Plat 3 to 30 UAVs, Scale-Plan 3 robots) and fill in the
@@ -222,9 +266,6 @@ rows are in the manuscript's earlier tables.
 
 - [ ] **Release run** of `reference/suite.py --release --retain`, so
       `paper/data/` reflects the current engine.
-- [ ] **Channel congestion** in the networks, delivery that degrades with how
-      many nearby agents transmit at once. SphereNetwork has range, loss, and
-      delay but not this. Only needed if comms are added to the study.
 
 ## Not planned
 

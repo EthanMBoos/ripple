@@ -84,6 +84,30 @@ def hub_position_m(hub: int, side: int, spacing_m: float) -> tuple[float, float]
     return ((column - offset) * spacing_m, (row - offset) * spacing_m)
 
 
+# Site geometry, the same as region.rs: clinics A to F at these radii on
+# angles 60 degrees apart, hospitals H1 and H2 at theirs on 30 and 210
+# degrees, all turned by 17 degrees per hub so neighbors' sites interleave.
+CLINIC_RADII_KM = [4.0, 7.0, 10.0, 13.0, 6.0, 9.0]
+HOSPITAL_RADII_KM = [1.5, 2.5]
+
+
+def sites(hub: int, side: int, spacing_m: float) -> list[tuple[str, bool, float, float]]:
+    """Hub `hub`'s sites as (code, rooftop, x_m, y_m), clinics then hospitals."""
+    x, y = hub_position_m(hub, side, spacing_m)
+    turn_deg = 17.0 * hub
+    found = []
+    for index, radius_km in enumerate(CLINIC_RADII_KM):
+        angle = math.radians(60.0 * index + turn_deg)
+        code = f"{hub}{chr(ord('A') + index)}"
+        found.append((code, False, x + radius_km * 1000 * math.cos(angle),
+                      y + radius_km * 1000 * math.sin(angle)))
+    for index, radius_km in enumerate(HOSPITAL_RADII_KM):
+        angle = math.radians(30.0 + 180.0 * index + turn_deg)
+        found.append((f"{hub}H{index + 1}", True, x + radius_km * 1000 * math.cos(angle),
+                      y + radius_km * 1000 * math.sin(angle)))
+    return found
+
+
 def quote(text: str, indent: int) -> str:
     """A folded YAML block scalar."""
     pad = " " * indent

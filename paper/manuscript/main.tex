@@ -105,15 +105,15 @@
     {\textbf{Relocating instead of local rules}\\ on-time deliveries lost
      over whole days, by region size};
   \foreach \y/\hubs/\pts/\lab in
-    {6.55/4 hubs/2/$-$2 pts, 6.15/16 hubs/7/$-$7, 5.75/64 hubs/9/$-$9} {
+    {6.55/4 hubs/1/$-$1 pt, 6.15/16 hubs/6/$-$6, 5.75/64 hubs/10/$-$10} {
     \node[font=\scriptsize, anchor=east, text=black!70] at (14.95,\y) {\hubs};
     \fill[white] (15.05,\y-0.09) rectangle (17.4,\y+0.09);
     \fill[orange] (15.05,\y-0.09) rectangle (15.05+0.2*\pts,\y+0.09);
     \node[font=\tiny, anchor=west, text=orange] at (15.05+0.2*\pts,\y) {\lab};
   }
   \node[block] at (13.85,5.2)
-    {\textbf{Where the loss lands}\\ of the 73 more requests lost a day at
-     16 hubs, 68 were at the hubs that gave aircraft or stock.};
+    {\textbf{Where the loss lands}\\ 77 more requests lost a day at donor
+     hubs, partly offset elsewhere: 69 more overall at 16 hubs.};
   \node[block] at (13.85,3.95)
     {\textbf{A language model in three roles}\\ giving the orders, vetoing
      a planner's, or writing the rules once: it moves aircraft and stock in
@@ -150,8 +150,8 @@ aircraft for one flight, or relocate aircraft and stock. We find that
 language-model managers over-help: they relocate vehicles and stock even
 when local rules and lent flights produce more on-time deliveries. The cost
 is in the action itself: with no model involved, relocating instead of
-keeping to local rules loses two percentage points of on-time deliveries at
-four hubs and nine at 64, and the loss falls at the hubs that gave the
+keeping to local rules loses about one percentage point at four hubs and
+ten at 64, and the loss falls at the hubs that gave the
 aircraft. We use the model in three roles. It gives the orders itself; it
 reads a classical planner's orders and drops the ones it rejects; or it
 writes the rules before the day starts and never acts again. In all three it
@@ -440,8 +440,8 @@ Claude Haiku, Sonnet, and Opus and GPT-6 Luna, are compared in two roles, as
 live managers shown only the exceptions and as vetoes over the replanner, on
 three seeds at 16 hubs and two at 64. The step-by-step comparison of views
 and feedback and the policy-writing comparison use Haiku and Sonnet on two
-and three seeds at 16 hubs. The classical policies run on five seeds at 16
-and 64 hubs and three at four. Each table states its sample.
+and three seeds at 16 hubs. The classical grid and jittered comparisons
+use the same ten seeds at each hub size. Each table states its sample.
 
 The subsections ask, in order: what a replanner's help is worth and which
 part of it; whether any interface gets a model to stop relocating; what a
@@ -455,23 +455,24 @@ view and order set remain useful as the region grows.
 \label{sec:decomposition}
 
 \begin{table}[t]
-\caption{The replanner's help decomposed: mean on-time score over five
-seeds at 16 and 64 hubs and three at four. The policies differ in which
-manager orders they apply; \emph{return} is the \emph{replanner} with
+\caption{The replanner's help decomposed: mean on-time score over ten seeds
+for each size and layout. The policies differ in which manager orders
+they apply;
+\emph{return} is the \emph{replanner} with
 relocated aircraft scheduled to return home after the event ends, once
-idle. It was not run for the four-hub grid condition.}
+idle.}
 \label{tab:decomposition}
 \centering
 \begin{tabular}{lcccccc}
 \toprule
 Hubs/layout & None & Replanner & Local & Serve & Move & Return \\
 \midrule
-4, grid  & 0.77 & 0.84 & 0.82 & 0.84 & 0.80 & -- \\
-4, jittered  & 0.77 & 0.82 & 0.81 & 0.83 & 0.78 & 0.82 \\
-16, grid & 0.68 & 0.70 & 0.75 & 0.76 & 0.68 & 0.73 \\
-16, jittered & 0.68 & 0.71 & 0.74 & 0.76 & 0.69 & 0.74 \\
-64, grid & 0.67 & 0.69 & 0.73 & 0.75 & 0.64 & 0.70 \\
-64, jittered & 0.67 & 0.69 & 0.73 & 0.76 & 0.64 & 0.71 \\
+4, grid  & 0.79 & 0.88 & 0.85 & 0.88 & 0.84 & 0.88 \\
+4, jittered  & 0.79 & 0.87 & 0.85 & 0.88 & 0.84 & 0.87 \\
+16, grid & 0.69 & 0.71 & 0.76 & 0.78 & 0.70 & 0.75 \\
+16, jittered & 0.69 & 0.72 & 0.75 & 0.78 & 0.70 & 0.76 \\
+64, grid & 0.68 & 0.68 & 0.74 & 0.76 & 0.64 & 0.71 \\
+64, jittered & 0.67 & 0.69 & 0.73 & 0.76 & 0.64 & 0.72 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -486,7 +487,7 @@ Hubs/layout & None & Replanner & Local & Serve & Move & Return \\
 sorted by its part in that day's moves: it gave aircraft or stock, it only
 received, or neither. Bars show how many more of a group's own requests
 were late or undelivered than under local rules on the same day, per
-hundred requests, averaged over the days of each condition: the move
+hundred requests, pooled across the days of each condition: the move
 policy, the models giving the orders, and the models as a veto over the
 replanner. Under every condition and at both sizes the loss is at the hubs
 that gave; the hubs that received lose little or gain.}
@@ -496,24 +497,22 @@ that gave; the hubs that received lose little or gain.}
 Table~\ref{tab:decomposition} shows the classical comparison, with no
 model involved. The score is the weighted share of requests delivered on
 time, so a difference of 0.01 is one percentage point. On the grid at 16
-hubs, local
-rules raise the mean from 0.68 with no manager to 0.75, and lending raises
-it to 0.76; the replanner, which does everything, scores 0.70, and
-relocating without lending scores 0.68, no better than no manager. At 64
-hubs, local rules score 0.73, lending 0.75, the replanner 0.69, and
-relocating alone 0.64, worse than no manager. So relocating costs two
-points at four hubs, seven at 16, and nine at 64, measured against local
-rules. The replanner, which lends and relocates, lands between the two at
-both sizes: above no manager, below local rules. Sending relocated
-aircraft home when the event ends recovers about two thirds of what
-relocating loses. Local rules beat the replanner on nine seeds of ten,
-and relocating alone is the worst policy on eight.
+hubs, local rules raise the mean from 0.69 with no manager to 0.76, and
+lending raises it to 0.78; the replanner scores 0.71, and relocating
+without lending scores 0.70. At 64 hubs, local rules score 0.74, lending
+0.76, the replanner 0.68, and relocating alone 0.64, worse than no manager.
+Relocating costs 1.27 points at four hubs, 6.20 at 16, and 9.58 at 64,
+measured against local rules. At four hubs, return and lending nearly tie
+at 0.88, and the replanner beats local rules on seven of ten days. At 16
+and 64 hubs, local rules beat the replanner on 19 of 20 days, relocating
+alone loses to local rules on all 20 and is worst on 13, and returning
+aircraft improves on the replanner on all 20 but remains below lending.
 
-The result does not depend on the lattice. With every hub displaced by
+The main finding persists off the lattice. With every hub displaced by
 up to 3~km, no two closer than 10~km, and one displaced layout per seed
-shared by all policies, the order holds at all three sizes: lending
-scores highest, and relocating costs 3, 6, and 9 points against local
-rules, as on the grid (the jittered rows of Table~\ref{tab:decomposition}).
+shared by all policies, lending has the highest mean at all three sizes.
+Relocating costs 0.83, 5.31, and 8.78 points against local rules at 4, 16,
+and 64 hubs (the jittered rows of Table~\ref{tab:decomposition}).
 
 The decomposition separates the immediate event response from its effect on
 later work. A lent flight comes home. A permanent
@@ -521,15 +520,16 @@ reposition does not, and a stock transfer occupies another aircraft.
 Figure~\ref{fig:region} shows the mechanism on one surge: the surge area
 is served about equally well either way, and the whole difference is the
 lending hub's own requests after its aircraft left. Figure~\ref{fig:loss}
-shows the same on the full days. Over the five 16-hub days, relocating lost
-69 more requests a day than local rules, counting late and undelivered
-together: 76 more at the hubs that gave aircraft or stock, 7 fewer at the
-hubs that received them, and none elsewhere. Per hundred of their own
-requests, the hubs that gave lost 16 more, the hubs that received 2 fewer,
-and the rest none. At 64 hubs, where two thirds of the region gives on a
-typical day, the hubs that gave lost 419 more requests a day than under
-local rules, 17 per hundred of their own, while the hubs that received lost
-3 fewer and the rest none. The finding is specific to these missions and
+shows the same pattern across the full simulated days. Across ten 16-hub days,
+relocating lost 68.5 more requests a day than local rules, counting late
+and undelivered together: 77.2 more at the hubs that gave aircraft or
+stock, 8.9 fewer at the hubs that received them, and 0.2 more elsewhere.
+Per hundred of their own requests, the hubs that gave lost about 17 more,
+the hubs that received 3 fewer, and the rest almost none. Across ten
+64-hub days, the hubs that gave lost 445.5 more requests a day than under
+local rules, about 17 per hundred of their own, while the hubs that
+received lost 3 fewer per hundred and the rest almost none.
+The finding is specific to these missions and
 policies: a different relocation rule, demand distribution, or return
 policy could change the comparison.
 
@@ -621,8 +621,8 @@ when required.
 \label{sec:where}
 
 \begin{table}[t]
-\caption{Effect of fleet capacity, mean on-time score over three seeds
-(five at five vehicles per hub). The return policy sends relocated
+\caption{Effect of fleet capacity, mean on-time score over ten seeds
+per condition. The return policy sends relocated
 aircraft home when the event ends.}
 \label{tab:where}
 \centering
@@ -630,24 +630,25 @@ aircraft home when the event ends.}
 \toprule
 Hubs & Per hub & None & Replanner & Local & Serve & Return \\
 \midrule
-16 & 5  & 0.68 & 0.70 & 0.75 & 0.76 & 0.73 \\
-16 & 8  & 0.80 & 0.83 & 0.87 & 0.88 & 0.84 \\
-16 & 12 & 0.83 & 0.90 & 0.90 & 0.91 & 0.90 \\
-64 & 5  & 0.67 & 0.69 & 0.73 & 0.75 & 0.70 \\
-64 & 8  & 0.79 & 0.83 & 0.85 & 0.87 & 0.86 \\
-64 & 12 & 0.83 & 0.88 & 0.89 & 0.90 & 0.89 \\
+16 & 5  & 0.69 & 0.71 & 0.76 & 0.78 & 0.75 \\
+16 & 8  & 0.80 & 0.83 & 0.87 & 0.88 & 0.85 \\
+16 & 12 & 0.82 & 0.88 & 0.89 & 0.90 & 0.89 \\
+64 & 5  & 0.68 & 0.68 & 0.74 & 0.76 & 0.71 \\
+64 & 8  & 0.80 & 0.83 & 0.86 & 0.87 & 0.85 \\
+64 & 12 & 0.84 & 0.88 & 0.89 & 0.90 & 0.89 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Table~\ref{tab:where} varies capacity while holding the manager policies
 fixed. At five vehicles per hub, local rules outperform the replanner by
-0.05 at 16 hubs and at 64. At twelve vehicles per hub, that gap is
-0.00 and 0.01. More spare vehicles make relocation less costly, but the
-replanner does not overtake the local policy in these runs. Temporary
+4.81 percentage points at 16 hubs and 5.91 at 64. At twelve vehicles per
+hub, those gaps shrink to 0.70 and 1.26 points. More spare vehicles make
+relocation less costly, but the replanner remains below local rules on
+average. Temporary
 service has the highest mean at every tested capacity. Returning a moved
-aircraft after an event recovers part of the loss at five and eight
-vehicles per hub. The models were not run at the larger capacities, so
+aircraft after an event recovers part of the loss at all three capacities.
+The models were not run at the larger capacities, so
 this bounds the cost of a move, not a model's tendency to make one. The
 finding is strongest for a lean fleet, and the order's duration matters as
 much as its destination.

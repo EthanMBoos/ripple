@@ -1,0 +1,20 @@
+# Square grid: 8 aircraft per hub (5 fixed-wing + 3 multirotors).
+# Five capacity-table policies x ten matched days; no model calls.
+name: region-16-capacity-8
+base_scenario: region.yaml
+seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 16
+  entities.region.autonomy.Dispatcher.fleet:
+    - [{recipe: fixed_wing, per_hub: 5, altitude_m: 120}, {recipe: multirotor, per_hub: 3}]
+  run.end_s: 16200
+  entities.region.autonomy.Dispatcher.requests.until_s: 14400
+  entities.region.autonomy.Dispatcher.manager.offline: true
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.kind, manager.policy]
+cases:
+  - [none, ""]
+  - [replanner, ""]
+  - [policy, crates/delivery/policies/local.yaml]
+  - [policy, crates/delivery/policies/serve.yaml]
+  - [policy, crates/delivery/policies/return.yaml]

@@ -119,12 +119,12 @@ def jittered_positions(hubs: int, spacing_m: float, radius_m: float,
 
 
 def write_classical_sweeps(args) -> None:
-    """Five matched days, each with one layout and six existing policy arms."""
+    """Matched days, each with one layout and six existing policy arms."""
     folder = args.classical_sweeps
     folder.mkdir(parents=True, exist_ok=True)
     layout = "jitter" if args.jitter_km else "grid"
     day_s = args.day_h * 3600
-    for seed in range(1, 6):
+    for seed in args.seeds:
         layout_seed = args.layout_seed + seed - 1
         name = f"region-{args.hubs}-{layout}-seed{seed}"
         sweep = folder / f"{name}.sweep.yaml"
@@ -177,7 +177,9 @@ def main() -> None:
     parser.add_argument("--min-spacing-km", type=float, default=10)
     parser.add_argument("--layout-seed", type=int, default=1, help="independent of demand seed")
     parser.add_argument("--classical-sweeps", type=Path, required=True,
-                        help="write six-policy sweeps for seeds 1..5 to this folder")
+                        help="write six-policy sweeps to this folder")
+    parser.add_argument("--seeds", type=int, nargs="+", default=list(range(1, 6)),
+                        help="demand seeds for --classical-sweeps (default: 1 2 3 4 5)")
     args = parser.parse_args()
     write_classical_sweeps(args)
 

@@ -118,11 +118,16 @@ Needed for the first finding and the second alike.
 
 ## The second finding, phase by phase
 
-A. Done. Timing (2026-11-07, release build, no manager, one worker): a
-   64-hub day takes about 3 minutes, a 256-hub day about 16 minutes, and
-   a 1,024-hub day about 2 hours. Each run writes a big file (5 GB,
-   23 GB, 90 GB) that we delete once we have the summary. With 110 GB
-   free we can run three 256-hub days at a time, or one 1,024-hub day.
+A. Timing. On 2026-11-07, a release run with no manager and one worker
+   completed a 256-hub day in about 16 minutes. The 1,024-hub timing run
+   was stopped before completion; its two-hour estimate is a projection,
+   not a measured result. The current parallel sweep is not
+   a clean timing trial. A run writes roughly 5 GB at 64 hubs, 23 GB at
+   256, or 90 GB at 1,024; delete the recording after retaining its
+   summary. With 110 GB free, run three 256-hub days at a time or one
+   1,024-hub day. After the sweep, time a complete 1,024-hub day alone.
+   Retain the command, machine, worker count, recording setting, and wall
+   time for the engine table.
 
 B. The classical policies at scale. Two days. Thirty simulated days,
    about sixteen hours of compute, run eight at a time in an afternoon;
@@ -132,6 +137,10 @@ B. The classical policies at scale. Two days. Thirty simulated days,
    growing with the region (0.07 at 16 hubs, 0.09 at 64) and whether the
    loss still lands at the hubs that gave. `loss_figure.py` and
    `results.py` take any size.
+   The current 256- and 1,024-hub sweep files inherit eight hours of
+   requests from `region.yaml`. The reported 4-, 16-, and 64-hub days use
+   four hours. Before drawing a size curve, run matched durations at all
+   four sizes; leave the sweeps already running untouched.
 C. The model at scale. Five to seven days, most of it waiting on calls.
    At 1,024 hubs a day is 64 clusters times about 26 calls, some 1,700
    calls and about two million input tokens. Through the command-line
@@ -147,6 +156,9 @@ C. The model at scale. Five to seven days, most of it waiting on calls.
    managers with local rules and lending allowed, with and without a top
    manager, on two seeds at each size. This phase answers the question
    under What we are after.
+   Before those runs, enforce the cluster managers' order set. The current
+   cluster scope rejects orders naming hubs outside the cluster, but still
+   accepts relocations and stock transfers within it.
 D. Interfaces by size. Two days; eight new runs, the 16- and 64-hub ones
    exist. The veto and the policy file against the live manager at 16,
    64, 256 and 1,024 hubs. The policy file is written once and costs

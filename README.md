@@ -1,65 +1,66 @@
 # Ripple
 
-https://github.com/user-attachments/assets/88d48e3a-dec9-4937-9eec-8b08ec797499
+Ripple runs multi-agent robotics missions from a decision to its physical
+outcome. A YAML mission chooses agents and plugins for autonomy, control,
+motion, sensing, estimation, communication, world interactions, and metrics.
+The simulator advances them on one clock. Agents act on estimated state;
+sensors and metrics can observe physical truth. Included models range from
+point agents to multirotors and fixed-wing aircraft.
 
-Ripple is a deterministic multi-agent robotics simulator in Rust, for
-research and teaching. Point agents, multirotors, and fixed-wing aircraft share
-one world and one sensing, communication, and estimation pipeline, and each
-agent acts on its own belief rather than the true state. Runs are
-byte-identical at any worker count, so two strategies can be compared on
-exactly the same episodes. Recording and replay use [Rerun](https://rerun.io).
+You can change the manager, a vehicle model, or its sensors while keeping
+the rest of the mission. A seed defines a repeatable run, and Rust outputs
+are byte-identical with one, two, or eight workers. Each run writes
+an MCAP record; [Rerun](https://rerun.io) can display it. Ripple follows
+[SCRIMMAGE](https://github.com/gtri/scrimmage)'s simulation and plugin
+design, with its own YAML mission format.
 
-It's being built to answer one question: does the ranking between learned and
-classical multi-robot policies hold once sensing is noisy, messages are lost
-or late, and the vehicles have real dynamics? How each model is checked is in
-[paper/README.md](paper/README.md).
+## Current study
 
-Ripple grew out of [SCRIMMAGE](https://github.com/gtri/scrimmage) and still
-reads its mission files.
+The [fleet study](paper/README.md) puts a manager above a dispatcher in a
+regional delivery mission. The manager can set local rules, lend an aircraft
+for one flight, or move aircraft and stock between hubs. In the reported
+missions, local rules and lent flights beat moving capacity; language-model
+managers still make those moves, and the losses fall on the hubs that gave.
+The next question is the **fleet API**: what the model sees and what it may
+order as the region grows. The reported model results cover up to 64 hubs
+and 320 aircraft; the same regional mission runs at 1,024 hubs and 5,120
+aircraft, with model tests at that size planned. All results are from
+simulation.
 
-Each agent runs a plugin stack:
-
-```text
-autonomy -> controller -> motion model -> sensors -> (next autonomy step)
-```
-
-World-level interaction, network, and metrics plugins handle collisions,
-communication, and scoring. Plugins are ordinary Rust structs compiled into the
-`ripple` command; you write your own in the starter crate.
-
-## Quick start
+## Try it
 
 With Rust installed, from the repository root:
 
 ```sh
 cargo install --path crates/cli --locked
-ripple run missions/straight-no-gui.yaml --headless
-ripple replay runs/straight-no-gui/run000
+ripple run missions/waypoints-point-agents.yaml --headless
 ```
 
-Each run gets a new folder (`runs/<mission>/run000`, `run001`, ...) holding one
-`run.mcap` with frames, events, metrics, and the resolved scenario. Replay needs
-the `rerun` viewer matching the SDK version in `Cargo.lock` on your PATH. Use
-`--viewer` to watch live or `--export-rrd` to save a Rerun recording. Add
-`--draw-trails` to `run --viewer` or `replay` to draw each agent's recent path.
-See [Run records](book/src/guides/run-records.md) for the channels and reader.
+The command prints a new `runs/waypoints-point-agents/runNNN` folder. To
+watch a run, use `--viewer`; to inspect a saved run, use
+`ripple replay <run-folder>`. Both need a Rerun viewer matching the SDK
+version in `Cargo.lock`. See [run records](book/src/guides/run-records.md)
+for the files and channels.
 
-Other missions to try:
+The [delivery crate](crates/delivery/README.md) explains the regional
+mission and its sweeps.
 
-- `missions/waypoints-point-agents.yaml`: the smallest navigation example.
-- `missions/networks-local-global.yaml`: aircraft, sensors, and messaging.
-- `ripple sweep missions/waypoints-point-agents.sweep.yaml`: a parameter sweep.
+## Make your own mission
 
-## Next steps
+Plugins are ordinary Rust structs compiled into the `ripple` command.
+Start with [your first autonomy plugin](book/src/tutorial/first-autonomy.md)
+in `crates/starter`, then use the
+[plugin guide](book/src/guides/writing-plugins.md) and
+[YAML mission guide](book/src/guides/yaml-missions.md). The
+[book](book/src/SUMMARY.md) covers the simulation loop, models, sweeps,
+and records. The [mission index](missions/README.md) lists the examples.
 
-- [Your first autonomy plugin](book/src/tutorial/first-autonomy.md): write and
-  run a plugin in `crates/starter`.
-- [The book](book/src/SUMMARY.md): concepts, YAML missions and sweeps, the
-  plugin API, and model references. Preview it with `mdbook serve book --open`.
-- [Missions](missions/README.md) and [models](book/src/reference/models.md):
-  what is supported.
-- [Checks and evidence](paper/README.md): how each model is checked. The
-  [roadmap](docs/TODO.md) lists what's next.
+The optional [ArduPilot bridge](book/src/guides/ardupilot.md) lets ArduPlane
+SITL fly Ripple's six-degree-of-freedom Rascal through a runway takeoff,
+circuit, and landing. The optional [learning demos](crates/learning/README.md)
+show single-agent and multi-agent reinforcement learning. In Python, one
+policy trains a Crazyflie to reach and hold a goal; another trains three
+agents to cover landmarks. Ripple runs the saved ONNX policies.
 
 ## Development
 
@@ -69,9 +70,10 @@ cargo test --workspace --locked
 cargo clippy --workspace --all-targets --locked -- -D warnings
 ```
 
-`python3 reference/suite.py` runs the quick checks and `--release` runs every
-check; see [reference/README.md](reference/README.md). Contributor rules are in
-[AGENTS.md](AGENTS.md).
+The [reference suite](reference/README.md) compares vehicle models with
+JSBSim, RotorS, and Crazyflow, and checks Aerosonde against a separate
+transcription of its published equations. It also checks determinism,
+speed, and shared behavior against SCRIMMAGE.
 
 ## License
 

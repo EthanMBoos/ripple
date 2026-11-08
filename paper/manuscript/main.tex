@@ -187,8 +187,11 @@ of vehicles \citep{lyu2025llmoddr}. These systems show ways to connect a
 model to a team of robots. A fleet that operates through a day poses a further
 question: an order can solve the problem in front of the manager and still
 leave the fleet less able to handle what happens next.
+As the fleet grows, the manager's interface matters too: which parts of
+the fleet should the model see, and which changes should it be allowed to
+make?
 
-We study that question with a regional delivery fleet. Each depot, which we
+We study these questions with a regional delivery fleet. Each depot, which we
 call a hub, has its own aircraft and stock. Requests arrive throughout the
 day, and a dispatcher assigns them to available vehicles. When urgent
 requests surge across several hubs, a manager can change which requests
@@ -214,6 +217,9 @@ flights and requests after each order, including work at hubs outside the
 immediate disruption. We can change the manager, its view of the fleet, or
 the vehicle model while running matched missions. Model replies are saved
 so each observed mission can be inspected and replayed.
+The same regional mission can also run 1,024 hubs and 5,120 aircraft. At that
+size, a manager's view and the reach of its orders become part of the
+planning problem.
 
 We first use Ripple to separate the actions of a structured replanner.
 In the regional missions studied here, local rules improve on-time
@@ -240,15 +246,16 @@ of heterogeneous robots. SMART-LLM forms coalitions for subtasks
 and hybrid organizations as team size grows \citep{chen2024scalable}.
 Scale-Plan filters a larger action graph before calling a model
 \citep{gupta2026scaleplan}. COMPASS studies language-conditioned collective
-behavior at much larger robot counts \citep{vatnsdal2026compass}. These
-systems ask how a team can carry out a command. We ask what happens after a
-fleet manager changes the distribution of vehicles and stock, including
-at hubs it was not trying to help.
+behavior with up to 1,024 robots in short flocking trials
+\citep{vatnsdal2026compass}. These systems ask how a team can carry out a
+command. We ask what happens after a fleet manager changes the distribution
+of vehicles and stock over a day, including at hubs it was not trying to
+help.
 
 \paragraph{Managing a fleet}
 Dispatch and repositioning are coupled: a vehicle sent to one area is no
 longer available in another. LLM-ODDR uses a language model to dispatch
-orders and reposition drivers in a ride-hailing fleet
+orders and reposition drivers; its surge study uses 300 taxis
 \citep{lyu2025llmoddr}. In aerial robotics, COLA executes multi-UAV
 missions through collaborating agents \citep{ludwig2026cola}, and
 Web-of-Drones connects a language agent to flight tools
@@ -362,6 +369,13 @@ streams. A changed view or policy changes future prompts and may require
 new model replies; saved replies
 alone do not make different conditions identical.
 
+The simulator carries the whole region between manager calls. At 1,024
+hubs, it advances 5,120 aircraft through 306,000 steps of 0.1 seconds.
+Requests arrive for the first eight hours of that 8.5-hour day. An initial
+release timing check without model calls completed an 8.5-hour day with
+1,280 aircraft on one worker in about 16 minutes. We measure simulator
+runtime separately from model inference.
+
 \section{Experimental Evaluation}
 \label{sec:experiments}
 
@@ -434,7 +448,8 @@ part of it; whether any interface gets a model to stop relocating; what a
 model drops when given a planner's list; whether a model that writes the
 rules converges on the right ones; how spare capacity changes the cost of
 moving; whether the result depends on the model; and what a model does on
-a day with little to manage.
+a day with little to manage. Section~\ref{sec:api-scale} then asks which
+view and order set remain useful as the region grows.
 
 \subsection{What is a replanner's help worth, and which part?}
 \label{sec:decomposition}
@@ -718,6 +733,48 @@ quieter day, almost every scheduled call sees some exception somewhere in
 the region. The result is thus a tendency to intervene on small but real
 problems, rather than evidence that models invent work from an entirely
 empty view.
+
+\section{The Fleet API at Scale}
+\label{sec:api-scale}
+
+The fleet API has two parts: what the model sees and what it can order. Its
+report can describe every hub or show only hubs with problems. Its orders
+can change local priorities, lend an aircraft for one flight, or move
+aircraft and stock between hubs. Together, the report and the orders set
+the size of the model's task and how far its decisions can reach.
+
+At 16 hubs, the exceptions report keeps Haiku and GPT-6 Luna to at most
+four moves on each tested day. At 64 hubs, both make more moves, and all
+four models move capacity under the same report (Table~\ref{tab:models}).
+As the region grows, even a report that omits healthy hubs can contain many
+unrelated problems. A model managing them in one call must decide where
+help is needed and whether the hubs asked to give can spare an aircraft
+for their own later requests.
+
+\emph{Planned test.} At 256 and 1,024 hubs (1,280 and 5,120 aircraft), each
+hub keeps the same fleet, request rate, and event process. Classical policies
+on matched days establish what moving costs at each size. Each model manager
+receives one 16-hub cluster and may set local rules and lend flights. A
+manager above the clusters sees one summary per cluster and may move
+aircraft and stock between them. These runs test whether a bounded local
+view supports useful decisions and whether region-wide moves bring back
+the losses at giving hubs. Live orders, vetoes over a replanner, and rules
+written before the day begins test whether the model should give orders,
+screen them, or set the rules once. We measure on-time score, losses at
+giving hubs, moves per 100 hubs, calls, input tokens, and simulation time.
+
+% RESULTS TO FILL AFTER THE 256- AND 1,024-HUB RUNS:
+% 1. Where the exceptions view stops being useful: problems shown per call,
+%    moves per 100 hubs, and score gap to local rules at each tested size.
+%    A flat 1,024-hub prompt that was never run is an input-size limit,
+%    not evidence of a behavioral failure.
+% 2. Bounded cluster view with local rules and lending: score, donor loss,
+%    calls and tokens. Compare with the same cluster managers plus an upper
+%    manager allowed to move capacity between clusters.
+% 3. Live orders, veto, and written policy by size. Recommend an API only
+%    if one holds its score and cost as the region grows. Keep view size
+%    and permitted orders separate in the interpretation. Current cluster
+%    scoping alone still permits relocation within a cluster.
 
 \section{Discussion and Future Work}
 \label{sec:discussion}

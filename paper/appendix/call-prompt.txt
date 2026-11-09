@@ -1,38 +1,87 @@
-Time: minute 35 of the day; requests stop coming at minute 240.
+Time: minute 35 of the day; requests stop coming at minute 480.
 
 New events:
-- The rooftop at hospital 16H2 is closed from minute 35 until minute 155; only drops at its ground pad are allowed.
+- The rooftop at hospital 9H1 is closed from minute 35 until minute 155; only drops at its ground pad are allowed.
 
 Events still in force:
-- The rooftop at hospital 3H2 is closed from minute 10 until minute 130; only drops at its ground pad are allowed.
-- Weather at hubs 15, 11, 14, 16: no multirotor launches from minute 10 until minute 70.
-- A medevac helicopter corridor is active in the corridor from (-7.6, 21.0) to (-15.6, 26.9) km, 0.5 km either side, below 150 m from minute 16 until minute 76; no vehicle may cross it below 150 m.
-- Airspace is closed in the circle of radius 6.0 km centered at (22.5, 15.0) km from minute 35 until minute 155; no flights through it.
+- A medevac helicopter corridor is active in the corridor from (-21.5, -21.4) to (-11.6, -23.2) km, 0.5 km either side, below 150 m from minute 2 until minute 62; no vehicle may cross it below 150 m.
+- Weather at hubs 6, 2, 5, 7, 10: no multirotor launches from minute 10 until minute 70.
+- Hospital 4H2 takes priority over routine deliveries from minute 14 until the end of the day.
+- O+ has run out at hubs 10, 6, 9, 11, 14 as of minute 21. Requests for O+ at their sites can only be served from hubs that still hold it.
+- Weather at hubs 12, 8, 11, 16: no multirotor launches from minute 25 until minute 85.
+- hub 8 cannot launch from minute 26 until minute 116; its sites must be covered by other hubs.
+- Weather at hubs 12, 8, 11, 16: no multirotor launches from minute 26 until minute 86.
+- A mass-casualty incident near hubs 2, 1, 3, 6: the hospitals there are sending trauma requests beyond what those hubs can fly alone, starting at minute 26.
+- The rooftop at hospital 15H1 is closed from minute 27 until minute 147; only drops at its ground pad are allowed.
+- The rooftop at hospital 16H1 is closed from minute 29 until minute 149; only drops at its ground pad are allowed.
 
 Your last orders:
-- avoid the circle of radius 6.0 km centered at (22.5, 15.0) km until minute 155: applied; flights now detour around it
-- prioritize trauma requests until minute 60: applied; those requests now come first
+- use the ground pad at 16H1 until minute 149: applied; drops at 16H1's pad, 300 m from the rooftop; any vehicle can fly them
+- reposition 1 fixed-wing from hub 16 to hub 15 until minute 150: refused_too_few_idle; hub 16 has no idle fixed-wing free to go
+- reposition 1 fixed-wing from hub 12 to hub 4 until minute 180: refused_too_few_idle; hub 12 has no idle fixed-wing free to go
 
-Since your last call: 0 delivered (0 on time, 0 late).
+Since your last call: 21 delivered (21 on time, 0 late).
 
 Exceptions:
-- hub 4: 2 waiting (1 trauma, 1 routine) with no idle vehicle
-Region: 16 hubs, 45/80 vehicles idle, 4 requests waiting, 0 late.
+- hub 1: 7 waiting (4 trauma, 3 routine) with no idle vehicle
+- hub 3: 10 waiting (8 trauma, 1 urgent, 1 routine) with no idle vehicle
+- hub 4: 2 waiting (1 urgent, 1 routine) with no idle vehicle
+- hub 6: stock low: O+ 0
+- hub 8: cannot launch (outage)
+- hub 9: stock low: O+ 4
+- hub 10: stock low: O+ 4
+- hub 11: stock low: O+ 5
+- hub 14: 2 waiting (2 routine) with no idle vehicle; stock low: O+ 8
+- hub 15: 2 waiting (1 urgent, 1 routine) with no idle vehicle
+Region: 16 hubs, 25/80 vehicles idle, 50 requests waiting, 0 late.
 
 Orders in force:
-- flights avoid the corridor from (-7.6, 21.0) to (-15.6, 26.9) km, 0.5 km either side, below 150 m until minute 76
-- flights avoid the circle of radius 6.0 km centered at (22.5, 15.0) km until minute 155
-- multirotor grounded at hubs 11, 14, 15, 16 until minute 70
-- trauma requests first until minute 60
-- 11H1 takes drops at its ground pad until minute 70
-- 11H2 takes drops at its ground pad until minute 70
-- 14H1 takes drops at its ground pad until minute 70
-- 14H2 takes drops at its ground pad until minute 70
-- 15H1 takes drops at its ground pad until minute 70
-- 15H2 takes drops at its ground pad until minute 70
-- 16H1 takes drops at its ground pad until minute 70
-- 16H2 takes drops at its ground pad until minute 70
-- 3H2 takes drops at its ground pad until minute 130
+- flights avoid the corridor from (-21.5, -21.4) to (-11.6, -23.2) km, 0.5 km either side, below 150 m until minute 62
+- multirotor grounded at hubs 2, 5, 6, 7, 10 until minute 70
+- multirotor grounded at hubs 8, 11, 12, 16 until minute 85
+- multirotor grounded at hubs 8, 11, 12, 16 until minute 86
+- requests for 4H2 first until minute 480
+- trauma requests first until minute 480
+- urgent requests first until minute 480
+- 1H1 may be served from hubs 4, 5, 7
+- 1H2 may be served from hubs 4, 5, 7
+- 2H1 may be served from hubs 4, 5, 7
+- 2H2 may be served from hubs 4, 5, 7
+- 3H1 may be served from hubs 4, 5, 7
+- 3H2 may be served from hubs 4, 5, 7
+- 6H1 may be served from hubs 4, 5, 7
+- 6H2 may be served from hubs 4, 5, 7
+- 8A may be served from hubs 4, 7, 12
+- 8B may be served from hubs 4, 7, 12
+- 8C may be served from hubs 4, 7, 12
+- 8D may be served from hubs 4, 7, 12
+- 8E may be served from hubs 4, 7, 12
+- 8F may be served from hubs 4, 7, 12
+- 8H1 may be served from hubs 4, 7, 12
+- 8H2 may be served from hubs 4, 7, 12
+- 10H1 takes drops at its ground pad until minute 70
+- 10H2 takes drops at its ground pad until minute 70
+- 11H1 takes drops at its ground pad until minute 86
+- 11H2 takes drops at its ground pad until minute 86
+- 12H1 takes drops at its ground pad until minute 86
+- 12H2 takes drops at its ground pad until minute 86
+- 15H1 takes drops at its ground pad until minute 147
+- 16H1 takes drops at its ground pad until minute 149
+- 16H2 takes drops at its ground pad until minute 86
+- 1H1 takes drops at its ground pad until minute 120
+- 1H2 takes drops at its ground pad until minute 120
+- 2H1 takes drops at its ground pad until minute 70
+- 2H2 takes drops at its ground pad until minute 70
+- 3H1 takes drops at its ground pad until minute 120
+- 3H2 takes drops at its ground pad until minute 120
+- 5H1 takes drops at its ground pad until minute 70
+- 5H2 takes drops at its ground pad until minute 70
+- 6H1 takes drops at its ground pad until minute 70
+- 6H2 takes drops at its ground pad until minute 70
+- 7H1 takes drops at its ground pad until minute 70
+- 7H2 takes drops at its ground pad until minute 70
+- 8H1 takes drops at its ground pad until minute 116
+- 8H2 takes drops at its ground pad until minute 116
 
 Orders, each a JSON object with one key:
 - {"reserve": {"hub": H, "count": N, "site": "CODE", "until_min": M}}: keep N vehicles at hub H for that site only.

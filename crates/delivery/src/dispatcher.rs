@@ -256,6 +256,14 @@ struct CourierHome {
 /// 1,024 hubs take five.
 const SPAWN_REQUESTS_PER_STEP: usize = 500;
 
+/// Request ids by kind, so no two requests on a day share one. The day's
+/// requests are `hub * 1000 + index + 1`; surge requests count up from
+/// here by event, hub and request; stock transfers count up from their own
+/// base as the day goes. The bases sit far apart because a 1,024-hub day
+/// has a million day requests and thousands of events.
+const SURGE_REQUEST_BASE: i32 = 10_000_000;
+const TRANSFER_REQUEST_BASE: i32 = 2_000_000_000;
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct DispatcherConfig {
@@ -508,7 +516,7 @@ impl Autonomy for Dispatcher {
             schedule: Vec::new(),
             opened: 0,
             open: BTreeSet::new(),
-            next_transfer_id: 100_000_000,
+            next_transfer_id: TRANSFER_REQUEST_BASE,
             fleet: BTreeMap::new(),
             pending: BTreeMap::new(),
             pending_relocations: BTreeMap::new(),
@@ -559,7 +567,7 @@ impl Autonomy for Dispatcher {
         for event in &mut self.events {
             event.text = self.config.events.text(event);
         }
-        self.draw_requests(&context.random.with(&[PluginRandom::name("requests")]));
+        self.draw_requests(&context.random.with(&[PluginRandom::name("requests")]))?;
         // The fleet: each hub's couriers, built by the engine from their
         // recipes at the hub, with the hub and the region laid over.
         for hub in &self.region.hubs {
@@ -814,7 +822,7 @@ struct Candidate {
 impl Dispatcher {
     /// The day's requests, each from its own keyed random numbers, plus the
     /// surges' trauma requests.
-    fn draw_requests(&mut self, random: &PluginRandom) {
+    fn draw_requests(&mut self, random: &PluginRandom) -> Result<()> {
         let config = &self.config.requests;
         let items = &self.config.stock.items;
         let pick = |u: f64, count: usize| ((u * count as f64) as usize).min(count - 1);
@@ -877,6 +885,12 @@ impl Dispatcher {
                 if hospitals.is_empty() || clinics.is_empty() {
                     continue;
                 }
+                // Unique across the day: event, then hub, then request. An
+                // earlier `event * 100_000 + hub * 100 + k` collided once a
+                // hub had 100 or more surge requests, and a colliding id made
+                // the schedule wait for the wrong request (found 2026-11-09).
+                let hub_stride = self.region.hubs.len() as i32 + 1;
+                let per_hub = events.surge_requests_per_hub as i32;
                 for k in 0..events.surge_requests_per_hub {
                     let key = |name: &str| {
                         [
@@ -895,7 +909,9 @@ impl Dispatcher {
                         clinics[(k / 2) as usize % clinics.len()]
                     };
                     let request = Request {
-                        id: 1_000_000 + event.id as i32 * 100_000 + *hub as i32 * 100 + k as i32,
+                        id: SURGE_REQUEST_BASE
+                            + (event.id as i32 * hub_stride + *hub as i32) * per_hub
+                            + k as i32,
                         kind: RequestKind::Delivery,
                         hub: *hub,
                         site: site.code.clone(),
@@ -919,6 +935,13 @@ impl Dispatcher {
             .into_iter()
             .map(|(_, request)| (request.id, request))
             .collect();
+        ensure!(
+            self.requests.len() == self.schedule.len(),
+            "{} of the day's {} requests share an id with another",
+            self.schedule.len() - self.requests.len(),
+            self.schedule.len()
+        );
+        Ok(())
     }
 
     fn deadline_s(&self, urgency: Urgency) -> f64 {

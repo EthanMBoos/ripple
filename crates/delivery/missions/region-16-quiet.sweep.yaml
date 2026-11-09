@@ -1,0 +1,29 @@
+# A quiet day: every event kind at a quarter of the mission's rate, on a
+# 16-hub day, seeds 1 and 2. No manager and local rules, then Haiku and
+# Sonnet as live managers with hub summaries and order feedback. Live calls
+# through the signed-in claude client.
+name: region-16-quiet
+base_scenario: region.yaml
+seeds: [1, 2]
+parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 16
+  entities.region.autonomy.Dispatcher.events.per_hub_per_day:
+    surge: 0.0625
+    shortage: 0.0625
+    closure: 0.0625
+    outage: 0.025
+    weather: 0.125
+    priority: 0.125
+    rooftop_closed: 0.125
+    corridor: 0.125
+  entities.region.autonomy.Dispatcher.manager.provider: claude
+  entities.region.autonomy.Dispatcher.manager.via: cli
+  entities.region.autonomy.Dispatcher.manager.view: summaries
+  entities.region.autonomy.Dispatcher.manager.feedback: true
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.kind, manager.policy, manager.model, manager.offline]
+cases:
+  - [none, "", claude-haiku-5-5, true]
+  - [policy, crates/delivery/policies/local.yaml, claude-haiku-5-5, true]
+  - [model, "", claude-haiku-5-5, false]
+  - [model, "", claude-sonnet-5-5, false]

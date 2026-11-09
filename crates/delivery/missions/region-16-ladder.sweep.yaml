@@ -1,0 +1,29 @@
+# The interface ladder: Haiku and Sonnet as live managers on a 16-hub day,
+# seeds 1 and 2, under each view and feedback setting the paper compares,
+# plus the replanner with the same guard. Live calls through the signed-in
+# claude client.
+name: region-16-ladder
+base_scenario: region.yaml
+seeds: [1, 2]
+parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 16
+  entities.region.autonomy.Dispatcher.manager.provider: claude
+  entities.region.autonomy.Dispatcher.manager.via: cli
+  entities.region.autonomy.Dispatcher.manager.offline: false
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.kind, manager.model, manager.view, manager.feedback, manager.checker, manager.cost_feedback, manager.guard]
+cases:
+  # summaries; + feedback; + checker; + cost line; + guard; exceptions + feedback
+  - [model, claude-haiku-5-5, summaries, false, false, false, false]
+  - [model, claude-haiku-5-5, summaries, true, false, false, false]
+  - [model, claude-haiku-5-5, summaries, true, true, false, false]
+  - [model, claude-haiku-5-5, summaries, true, false, true, false]
+  - [model, claude-haiku-5-5, summaries, true, true, false, true]
+  - [model, claude-haiku-5-5, exceptions, true, false, false, false]
+  - [model, claude-sonnet-5-5, summaries, false, false, false, false]
+  - [model, claude-sonnet-5-5, summaries, true, false, false, false]
+  - [model, claude-sonnet-5-5, summaries, true, true, false, false]
+  - [model, claude-sonnet-5-5, summaries, true, false, true, false]
+  - [model, claude-sonnet-5-5, summaries, true, true, false, true]
+  - [model, claude-sonnet-5-5, exceptions, true, false, false, false]
+  - [replanner, claude-haiku-5-5, summaries, false, false, false, true]

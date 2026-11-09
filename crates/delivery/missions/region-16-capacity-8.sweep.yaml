@@ -7,8 +7,6 @@ parameters:
   entities.region.autonomy.Dispatcher.region.hubs: 16
   entities.region.autonomy.Dispatcher.fleet:
     - [{recipe: fixed_wing, per_hub: 5, altitude_m: 120}, {recipe: multirotor, per_hub: 3}]
-  run.end_s: 16200
-  entities.region.autonomy.Dispatcher.requests.until_s: 14400
   entities.region.autonomy.Dispatcher.manager.offline: true
 prefix: entities.region.autonomy.Dispatcher
 columns: [manager.kind, manager.policy]

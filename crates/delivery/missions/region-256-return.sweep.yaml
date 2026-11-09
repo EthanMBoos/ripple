@@ -1,0 +1,13 @@
+# The Return policy on a 256-hub day, three seeds; no model calls. Completes
+# the six-policy table that region-256-classical.sweep.yaml started, on the
+# same mission default day (requests for eight hours, half an hour to finish).
+name: region-256-return
+base_scenario: region.yaml
+seeds: [1, 2, 3]
+parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 256
+  entities.region.autonomy.Dispatcher.manager.offline: true
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.kind, manager.policy]
+cases:
+  - [policy, crates/delivery/policies/return.yaml]

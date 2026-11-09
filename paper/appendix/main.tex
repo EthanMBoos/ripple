@@ -27,10 +27,12 @@ Fleets}
 
 This appendix holds the material the paper refers to but has no room
 for: the system prompt every model call used, the one text for each event
-kind, one complete live call and one veto prompt with their replies, and
-the per-run counts for the 40 model runs. The study code is the delivery
-crate of the Ripple repository, and the prompt and call texts here are the
-files beside this document, as the crate wrote them.
+kind, one complete live call and one veto prompt with their replies, the
+per-seed scores behind the paper's model table, and the per-run counts for
+the 40 model runs. It also gives the per-seed results for the interface,
+policy-writing, quiet-day, and surge-length checks. The study code is the
+delivery crate of the Ripple repository, and the prompt and call texts
+here are the files beside this document, as the crate wrote them.
 
 \section{The frozen system prompt}
 
@@ -82,10 +84,11 @@ Corridor & A medevac helicopter corridor is active in \{area\} from minute
 The prompt below is one call to Opus as a live manager with the exceptions
 view and feedback on a 16-hub day, at minute 35, and the reply that came
 back. The prompt is what the delivery crate wrote; nothing was removed. The
-order format at the end is part of every live prompt. The reply closed the
-rooftop that had just been reported and moved two fixed-wing aircraft from
-hub 5 to hub 4, the one hub with waiting requests and no idle vehicle, with
-a return time.
+order format at the end is part of every live prompt. The reply switched
+the hospital whose rooftop had just closed to its ground pad, then moved
+two fixed-wing aircraft from hub 5 to hub 3 and one from hub 7 to hub 1,
+two of the hubs with waiting requests and no idle vehicle, each with a
+return time.
 
 \lstinputlisting{call-prompt.txt}
 
@@ -95,12 +98,123 @@ The reply:
 
 A veto prompt has the same head and, instead of the order format, the
 replanner's numbered proposals and a one-line instruction. The tail of one
-such prompt, at minute 41 on a 16-hub day after a stock shortage at five
-hubs, and its reply:
+such prompt to Haiku, at minute 88 on a 16-hub day after a stock shortage,
+and its reply: the replanner proposed three stock transfers, each with
+lending permissions for the receiving hub's sites, and the model dropped
+the third transfer and its permissions while keeping the other two.
 
 \lstinputlisting{veto-tail.txt}
 
 \lstinputlisting{veto-reply.txt}
+
+\section{Per-seed scores}
+\label{app:scores}
+
+The paper's model table gives means. Table~\ref{tab:scores} gives the
+on-time score and the moves made (kept, for the veto) on each seed: seeds
+1 to 3 at 16 hubs and 1 and 2 at 64. On the same seeds local rules score
+0.69, 0.78, and 0.75 at 16 hubs and 0.73 and 0.70 at 64; the replanner
+0.68, 0.74, and 0.73, and 0.62 and 0.62.
+
+\begin{table*}[h]
+\caption{Per-seed on-time score and moves for the 40 model runs, in seed
+order within each cell.}
+\label{tab:scores}
+\centering
+\footnotesize
+\input{scores.tex}
+\end{table*}
+
+\section{Interface and policy checks}
+\label{app:interface}
+
+Table~\ref{tab:interface} gives the two 16-hub seeds behind the interface
+comparison in the paper. Each cell is the on-time score and number of
+applied moves. The checker and the donor-state line are separate changes
+to the outcome-feedback setting; the reserve row also uses the checker.
+On these seeds, local rules score 0.69 and 0.78, and the unguarded
+replanner scores 0.68 with 23 moves and 0.74 with 27.
+
+\begin{table*}[h]
+\caption{Interface check: on-time score / moves, seeds 1 and 2.}
+\label{tab:interface}
+\centering
+\footnotesize
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+View and checks & Haiku 1 & Haiku 2 & Sonnet 1 & Sonnet 2 \\
+\midrule
+Hub summaries & 0.66 / 52 & 0.70 / 44 & 0.66 / 66 & 0.68 / 37 \\
+Summaries + feedback & 0.68 / 51 & 0.75 / 27 & 0.63 / 72 & 0.65 / 46 \\
+Feedback + checker & 0.68 / 42 & 0.75 / 23 & 0.61 / 70 & 0.64 / 58 \\
+Feedback + donor state & 0.62 / 58 & 0.73 / 32 & 0.62 / 74 & 0.69 / 47 \\
+Feedback + checker + reserve & 0.70 / 25 & 0.76 / 10 & 0.65 / 38 & 0.68 / 28 \\
+Exceptions + feedback & 0.64 / 7 & 0.74 / 7 & 0.61 / 36 & 0.67 / 48 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+With the same reserve guard and no model, the replanner scores 0.69 with
+20 moves on seed 1 and 0.74 with 21 on seed 2.
+
+Table~\ref{tab:authored} gives the policies Haiku and Sonnet wrote before
+the day, and their single revisions after seeing two day summaries. The
+local-rules scores on the same three seeds are 0.69, 0.78, and 0.75.
+
+\begin{table}[h]
+\caption{Model-written policies: on-time score / moves by seed.}
+\label{tab:authored}
+\centering
+\footnotesize
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Policy & Seed 1 & Seed 2 & Seed 3 \\
+\midrule
+Haiku & 0.66 / 62 & 0.71 / 60 & 0.65 / 71 \\
+Haiku revised & 0.66 / 62 & 0.71 / 60 & 0.65 / 71 \\
+Sonnet & 0.63 / 67 & 0.69 / 60 & 0.65 / 71 \\
+Sonnet revised & 0.63 / 36 & 0.69 / 32 & 0.65 / 39 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:quiet} gives the quiet-day check, with every event kind
+at a quarter of its usual rate. The model rows use hub summaries and
+outcome feedback.
+
+\begin{table}[h]
+\caption{Quiet 16-hub days: on-time score / moves by seed.}
+\label{tab:quiet}
+\centering
+\footnotesize
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Manager & Seed 1 & Seed 2 \\
+\midrule
+None & 0.90 / 0 & 0.92 / 0 \\
+Local rules & 0.92 / 0 & 0.94 / 0 \\
+Haiku & 0.90 / 22 & 0.93 / 17 \\
+Sonnet & 0.88 / 37 & 0.90 / 38 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Surge length}
+\label{app:surge}
+
+The paper summarizes the surge-length means. Table~\ref{tab:surge}
+gives each seed: one scripted surge at hub 6 and its four neighbors on an
+otherwise quiet 16-hub day, at 16 trauma requests per hub per 15 minutes,
+held for 15, 60, 120, and 240 minutes.
+
+\begin{table}[h]
+\caption{Per-seed on-time score by surge length and policy.}
+\label{tab:surge}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\input{surge.tex}
+\end{table}
 
 \section{Per-run counts}
 \label{app:counts}

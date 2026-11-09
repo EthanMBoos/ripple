@@ -1,48 +1,30 @@
 Proposed orders from the dispatcher's planner:
-1. transfer 50 units of A+ from hub 6 to hub 11
-2. serve 11A from hubs 6
-3. serve 11B from hubs 6
-4. serve 11C from hubs 6
-5. serve 11D from hubs 6
-6. serve 11E from hubs 6
-7. serve 11F from hubs 6
-8. serve 11H1 from hubs 6
-9. serve 11H2 from hubs 6
-10. transfer 50 units of A+ from hub 3 to hub 7
-11. serve 7A from hubs 3
-12. serve 7B from hubs 3
-13. serve 7C from hubs 3
-14. serve 7D from hubs 3
-15. serve 7E from hubs 3
-16. serve 7F from hubs 3
-17. serve 7H1 from hubs 3
-18. serve 7H2 from hubs 3
-19. transfer 50 units of A+ from hub 6 to hub 10
-20. serve 10A from hubs 6
-21. serve 10B from hubs 6
-22. serve 10C from hubs 6
-23. serve 10D from hubs 6
-24. serve 10E from hubs 6
-25. serve 10F from hubs 6
-26. serve 10H1 from hubs 6
-27. serve 10H2 from hubs 6
-28. transfer 50 units of A+ from hub 8 to hub 12
-29. serve 12A from hubs 8
-30. serve 12B from hubs 8
-31. serve 12C from hubs 8
-32. serve 12D from hubs 8
-33. serve 12E from hubs 8
-34. serve 12F from hubs 8
-35. serve 12H1 from hubs 8
-36. serve 12H2 from hubs 8
-37. transfer 50 units of A+ from hub 14 to hub 15
-38. serve 15A from hubs 14
-39. serve 15B from hubs 14
-40. serve 15C from hubs 14
-41. serve 15D from hubs 14
-42. serve 15E from hubs 14
-43. serve 15F from hubs 14
-44. serve 15H1 from hubs 14
-45. serve 15H2 from hubs 14
+1. transfer 50 units of O+ from hub 11 to hub 16
+2. serve 16A from hubs 11
+3. serve 16B from hubs 11
+4. serve 16C from hubs 11
+5. serve 16D from hubs 11
+6. serve 16E from hubs 11
+7. serve 16F from hubs 11
+8. serve 16H1 from hubs 11
+9. serve 16H2 from hubs 11
+10. transfer 50 units of O+ from hub 8 to hub 12
+11. serve 12A from hubs 8
+12. serve 12B from hubs 8
+13. serve 12C from hubs 8
+14. serve 12D from hubs 8
+15. serve 12E from hubs 8
+16. serve 12F from hubs 8
+17. serve 12H1 from hubs 8
+18. serve 12H2 from hubs 8
+19. transfer 50 units of O+ from hub 11 to hub 15
+20. serve 15A from hubs 11
+21. serve 15B from hubs 11
+22. serve 15C from hubs 11
+23. serve 15D from hubs 11
+24. serve 15E from hubs 11
+25. serve 15F from hubs 11
+26. serve 15H1 from hubs 11
+27. serve 15H2 from hubs 11
 
 Reply with {"drop": [numbers]}, the proposed orders to drop, and nothing else; {"drop": []} keeps them all.

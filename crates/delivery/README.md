@@ -1,7 +1,7 @@
 # Delivery: a region of blood-delivery hubs with a fleet manager
 
 One operating day of blood delivery across a region of hubs, flown by
-fixed-wing aircraft and multirotors, run by a classical dispatcher, with a
+fixed-wing aircraft and multirotors, run by a rule-based dispatcher, with a
 fleet manager above it that reads events and gives orders. The fleet manager
 is a language model, a structured replanner, a hand-written script, or
 nothing. The study's claim and results are in the paper,

@@ -68,10 +68,10 @@ days:
 
 Haiku and Opus run all of it, two seeds at each size. Calls are budgeted
 at three an hour, with events since the last call batched, so every
-manager is asked about 26 times a day. A 1,024-hub day has about 2,900
+manager is asked about 23 times a day. A 1,024-hub day has about 2,900
 events; a call at each event would mean about 190,000 calls for a cluster
 API. Report score, missed requests at giving and receiving hubs, moves
-per hundred hubs, calls, and input tokens for each API, against the fixed
+per hundred hubs, calls, and prompt characters for each API, against the fixed
 policies at the same size. Test whether one model can use the region-wide
 report, whether cluster managers leave needs unmet across boundaries, and
 whether the regional layer helps more than it costs at giving hubs.
@@ -82,34 +82,31 @@ moves per hundred hubs.
 
 The model half is the `region-256-clusters` and `region-1024-clusters`
 sweep files, sixteen runs each, about 12,800 Opus calls and as many
-Haiku calls in all. The cluster boundary is not yet what the list above
-claims, so this comes first:
+Haiku calls in all. The code holds a cluster manager to its cluster: it
+is shown its own hubs, the events and rules that touch them, and its own
+feedback and tally; an order naming a hub or site outside is refused; its
+avoid rules and priorities by urgency reach its own hubs only; a flat
+manager sees and reaches everything. Left to settle when the first case
+with a regional manager runs:
 
-- Show a cluster manager only its own cluster: filter the ongoing events
-  and the orders in force by cluster as the new events already are,
-  write each event's text again after its hub list is trimmed, and keep
-  the order feedback and delivery tally per cluster.
-- Scope every order. Orders naming a site go through the site's recorded
-  hub, and serve-from checks both the site and every named hub. A cluster
-  manager's avoid rule applies only to flights by aircraft based at its
-  hubs, even when the avoided area lies between hubs; a flat manager's
-  avoid rule remains region-wide. Store the issuing cluster with the rule
-  and select it by aircraft hub when choosing a route. Do not test
-  whether a hub lies inside the area: the 6 km closure circle can lie
-  between hubs 15 km apart. Refuse urgency-only prioritize from a cluster
-  manager. List only available orders and their scope in each prompt.
-- Call the clusters in parallel, a few at a time, with replies kept in
-  cluster order so a day replays the same.
-- State in the paper that the regional move keeps half of each donor
-  hub's aircraft and is permanent, as the replanner's repositions are,
-  while a flat manager's reposition has no floor unless the guard is on.
+- The regional manager's prompt is one line per cluster, then every new
+  and ongoing event in full text. Read that case's regional prompts and
+  their size. If the ongoing list is too long, add the item and class to each
+  cluster line's event summary and drop the list; do not trim the list,
+  since a shortage's item is only in the full text.
 
-Then check a parallel day matches a serial one byte for byte and a rerun
-makes no calls, run one 256-hub Haiku day and read its prompts and orders
-by hand, then the 256-hub file, then 1,024. These runs answer the paper's
-second question, currently marked Planned. If they miss submission, move
-the Fleet API section to future work and narrow the introduction's question
-accordingly; do not present a planned comparison as a result.
+Not doing: calling the clusters in parallel inside the dispatcher. Calls
+stay serial within a run, and the bulk runner runs several runs at once,
+as the 64-hub model sweep did with eight.
+
+Next the 256-hub file, then 1,024, six to eight runs at once. A cluster call
+takes about 12 seconds and a manager is called 23 times a day, so a 256-hub
+cluster run takes about an hour and a half, and a 1,024-hub one needs about
+1.5 GB, two and a half hours of simulation, and some 1,500 calls, about
+seven hours in all. These runs answer the paper's second question, currently
+marked Planned. If they miss submission, move the Fleet API section to
+future work and narrow the introduction's question accordingly; do not
+present a planned comparison as a result.
 
 ## Loose ends, not needed for submission
 

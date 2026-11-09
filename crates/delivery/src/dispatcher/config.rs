@@ -117,8 +117,10 @@ pub struct ManagerConfig {
     pub calls_per_hour: f64,
     /// A fleet manager per cluster of hubs instead of one over the region:
     /// clusters are square blocks of this many hubs a side (0: one manager).
-    /// Each is called with its own hubs' view and events and may only name
-    /// its own hubs; `top_kind` puts a manager above them.
+    /// Each is called with its own hubs' view, the events and rules that
+    /// touch them, and its own feedback, and may only name its own hubs and
+    /// sites; its rules naming no hub reach its hubs only. `top_kind` puts
+    /// a manager above them.
     pub cluster_side: u32,
     /// Hand-written orders for `kind: scripted`.
     pub scripted: Vec<ScriptedOrder>,

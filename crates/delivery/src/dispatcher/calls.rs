@@ -6,30 +6,33 @@
 use anyhow::Result;
 use ripple_core::plugin::AgentContext;
 
-use super::{Dispatcher, Tally};
-use crate::event::Event;
+use super::Dispatcher;
+use crate::event::{Event, EventsConfig};
 use crate::messages::{CALL_TOPIC, ManagerCall, ManagerKind, ORDER_TOPIC, OrderRecord};
 use crate::model::Asked;
 use crate::order::{Order, parse_veto};
+use crate::region::Region;
 use crate::replanner;
 
-/// An order as a manager gave it: from which cluster, if any, and whether
-/// the call had nothing new to act on.
+/// An order as a manager gave it: from which cluster, if any (its position
+/// among the clusters and its hubs; none for a manager over the whole
+/// region), and whether the call had nothing new to act on.
 pub(super) struct Given {
     pub order: Order,
+    pub index: usize,
     pub cluster: Option<Vec<u32>>,
     pub quiet: bool,
 }
 
 /// One round of calls: the orders given, the calls made, the events of the
-/// round for the manager above the clusters, and the orders in a model's
-/// replies that did not read.
+/// round for the manager above the clusters, and how many orders in each
+/// cluster's model reply did not read.
 #[derive(Default)]
 struct Round {
     orders: Vec<Given>,
     calls: Vec<ManagerCall>,
     due_events: Vec<u32>,
-    unreadable: u32,
+    unreadable: Vec<(usize, u32)>,
 }
 
 impl Dispatcher {
@@ -107,12 +110,14 @@ impl Dispatcher {
         if kind.uses_model() {
             // The feedback and the tally start again from this call.
             self.feedback.clear();
-            self.tally = Tally::default();
+            self.tallies.clear();
             self.move_costs.clear();
             self.late_by_hub.clear();
-            for _ in 0..round.unreadable {
-                self.feedback
-                    .push("an order could not be read and was dropped".into());
+            for (index, count) in &round.unreadable {
+                let lines = self.feedback.entry(*index).or_default();
+                for _ in 0..*count {
+                    lines.push("an order could not be read and was dropped".into());
+                }
             }
         }
         self.last_call_s = now_s;
@@ -137,6 +142,7 @@ impl Dispatcher {
         {
             round.orders.push(Given {
                 order: scripted[self.scripted_fired].order.clone(),
+                index: 0,
                 cluster: None,
                 quiet: false,
             });
@@ -151,9 +157,9 @@ impl Dispatcher {
             due_events: events.iter().map(|e| e.id).collect(),
             ..Round::default()
         };
-        for cluster in self.clusters() {
+        for (index, cluster) in self.clusters().into_iter().enumerate() {
             let snapshot = self.snapshot_of(now_s, cluster.as_deref());
-            let mine = events_touching(events, cluster.as_deref());
+            let mine = events_touching(events, cluster.as_deref(), &self.config.events);
             let mine: Vec<&Event> = mine.iter().collect();
             let planned = match &self.policy {
                 Some(policy) => policy.plan(&mine, &snapshot),
@@ -175,6 +181,7 @@ impl Dispatcher {
             });
             round.orders.extend(planned.into_iter().map(|order| Given {
                 order,
+                index,
                 cluster: cluster.clone(),
                 quiet,
             }));
@@ -190,13 +197,13 @@ impl Dispatcher {
             due_events: events.iter().map(|e| e.id).collect(),
             ..Round::default()
         };
-        for cluster in self.clusters() {
+        for (index, cluster) in self.clusters().into_iter().enumerate() {
             let snapshot = self.snapshot_of(now_s, cluster.as_deref());
-            let mine = events_touching(events, cluster.as_deref());
+            let mine = events_touching(events, cluster.as_deref(), &self.config.events);
             let mine: Vec<&Event> = mine.iter().collect();
             let planned = replanner::plan(&mine, &snapshot);
             let quiet = mine.is_empty() && !snapshot.has_exceptions();
-            let situation = self.situation(&snapshot, &mine, Some(&planned));
+            let situation = self.situation(index, &snapshot, &mine, Some(&planned));
             let model = self.model.as_ref().expect("a model manager");
             let (reply, parse_failed, dropped) = if planned.is_empty() {
                 // Nothing to review: no call.
@@ -231,6 +238,7 @@ impl Dispatcher {
             }
             round.orders.extend(kept.into_iter().map(|order| Given {
                 order,
+                index,
                 cluster: cluster.clone(),
                 quiet,
             }));
@@ -245,11 +253,11 @@ impl Dispatcher {
             due_events: events.iter().map(|e| e.id).collect(),
             ..Round::default()
         };
-        for cluster in self.clusters() {
+        for (index, cluster) in self.clusters().into_iter().enumerate() {
             let snapshot = self.snapshot_of(now_s, cluster.as_deref());
-            let mine = events_touching(events, cluster.as_deref());
+            let mine = events_touching(events, cluster.as_deref(), &self.config.events);
             let mine: Vec<&Event> = mine.iter().collect();
-            let situation = self.situation(&snapshot, &mine, None);
+            let situation = self.situation(index, &snapshot, &mine, None);
             let quiet = mine.is_empty() && !snapshot.has_exceptions();
             let asked: Asked = self
                 .model
@@ -269,11 +277,12 @@ impl Dispatcher {
                 dropped: 0,
                 parse_failed: asked.parse_failed,
             });
-            round.unreadable += asked.unreadable;
+            round.unreadable.push((index, asked.unreadable));
             round
                 .orders
                 .extend(asked.orders.into_iter().map(|order| Given {
                     order,
+                    index,
                     cluster: cluster.clone(),
                     quiet,
                 }));
@@ -292,13 +301,14 @@ impl Dispatcher {
     ) -> Result<()> {
         for Given {
             order,
+            index,
             cluster,
             quiet,
         } in orders
         {
             let outside = cluster
-                .as_ref()
-                .is_some_and(|c| order.hubs_named().iter().any(|h| !c.contains(h)));
+                .as_deref()
+                .is_some_and(|c| names_outside(&order, c, &self.region));
             let (outcome, feedback) = if order.is_top() {
                 (
                     "refused_top_only".to_string(),
@@ -307,10 +317,10 @@ impl Dispatcher {
             } else if outside {
                 (
                     "refused_outside_cluster".to_string(),
-                    "names a hub outside your cluster".to_string(),
+                    "names a hub or site outside your cluster".to_string(),
                 )
             } else {
-                self.apply(context, now_s, &order)?
+                self.apply(context, now_s, &order, cluster.as_deref())?
             };
             let record = OrderRecord {
                 time_s: now_s,
@@ -326,6 +336,8 @@ impl Dispatcher {
                 .publish("GlobalNetwork", ORDER_TOPIC, record)?;
             if kind.uses_model() {
                 self.feedback
+                    .entry(index)
+                    .or_default()
                     .push(format!("{}: {outcome}; {feedback}", order.describe()));
             }
             self.changed = true;
@@ -399,7 +411,7 @@ impl Dispatcher {
         };
         for order in orders {
             let (outcome, feedback) = if order.is_top() {
-                self.apply(context, now_s, &order)?
+                self.apply(context, now_s, &order, None)?
             } else {
                 (
                     "refused_moves_only".to_string(),
@@ -432,10 +444,26 @@ impl Dispatcher {
     }
 }
 
+/// Whether an order names a hub or a site outside the cluster. A site is
+/// placed by its hub; a site that does not exist is left for `apply` to
+/// refuse by name.
+fn names_outside(order: &Order, cluster: &[u32], region: &Region) -> bool {
+    order.hubs_named().iter().any(|h| !cluster.contains(h))
+        || order
+            .sites_named()
+            .iter()
+            .filter_map(|code| region.site(code))
+            .any(|site| !cluster.contains(&site.hub))
+}
+
 /// The events a cluster's manager is told about: those naming one of its
-/// hubs, with the hubs outside the cluster left out, and those naming none
-/// (an area only).
-fn events_touching(events: &[&Event], cluster: Option<&[u32]>) -> Vec<Event> {
+/// hubs, with the hubs outside the cluster left out and the text written
+/// again for the shorter list, and those naming none (an area only).
+pub(super) fn events_touching(
+    events: &[&Event],
+    cluster: Option<&[u32]>,
+    texts: &EventsConfig,
+) -> Vec<Event> {
     events
         .iter()
         .filter(|e| {
@@ -444,9 +472,116 @@ fn events_touching(events: &[&Event], cluster: Option<&[u32]>) -> Vec<Event> {
         .map(|e| {
             let mut event = (*e).clone();
             if let Some(cluster) = cluster {
+                let before = event.hubs.len();
                 event.hubs.retain(|h| cluster.contains(h));
+                if event.hubs.len() < before {
+                    event.text = texts.text(&event);
+                }
             }
             event
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeMap;
+
+    use super::*;
+    use crate::event::EventKind;
+    use crate::messages::Urgency;
+    use crate::region::RegionConfig;
+
+    fn four_hubs() -> Region {
+        Region::new(&RegionConfig {
+            hubs: 4,
+            hub_spacing_m: 15_000.0,
+            ..RegionConfig::default()
+        })
+        .unwrap()
+    }
+
+    #[test]
+    fn a_trimmed_events_text_names_only_the_clusters_hubs() {
+        let texts = EventsConfig {
+            text: BTreeMap::from([(
+                EventKind::Surge,
+                "A surge near {hubs} from minute {from}.".into(),
+            )]),
+            ..EventsConfig::default()
+        };
+        let mut surge = Event {
+            id: 1,
+            kind: EventKind::Surge,
+            at_min: 10.0,
+            until_min: 70.0,
+            hubs: vec![1, 2, 3],
+            ..Event::default()
+        };
+        surge.text = texts.text(&surge);
+        let corridor = Event {
+            id: 2,
+            kind: EventKind::Corridor,
+            at_min: 20.0,
+            until_min: 80.0,
+            text: "a corridor".into(),
+            ..Event::default()
+        };
+        let all = [&surge, &corridor];
+        let mine = events_touching(&all, Some(&[1, 2]), &texts);
+        assert_eq!(mine.len(), 2);
+        assert_eq!(mine[0].hubs, vec![1, 2]);
+        assert_eq!(mine[0].text, "A surge near hubs 1, 2 from minute 10.");
+        assert_eq!(
+            mine[1].text, "a corridor",
+            "an event naming no hub is shared"
+        );
+        let theirs = events_touching(&all, Some(&[4]), &texts);
+        assert_eq!(theirs.len(), 1, "only the corridor reaches hub 4's cluster");
+        let flat = events_touching(&all, None, &texts);
+        assert_eq!(
+            flat[0].text, surge.text,
+            "a flat manager's text is unchanged"
+        );
+    }
+
+    #[test]
+    fn a_site_outside_the_cluster_is_outside() {
+        let region = four_hubs();
+        let cluster = [1, 2];
+        let inside = Order::Reserve {
+            hub: 1,
+            count: 1,
+            site: "1H1".into(),
+            until_min: 60.0,
+        };
+        let pad = Order::UsePad {
+            site: "3H1".into(),
+            until_min: 60.0,
+        };
+        let lend = Order::ServeFrom {
+            site: "1H1".into(),
+            hubs: vec![3],
+        };
+        let trauma = Order::Prioritize {
+            site: None,
+            urgency: Some(Urgency::Trauma),
+            until_min: 60.0,
+        };
+        let unknown = Order::UsePad {
+            site: "9H9".into(),
+            until_min: 60.0,
+        };
+        assert!(!names_outside(&inside, &cluster, &region));
+        assert!(names_outside(&pad, &cluster, &region));
+        assert!(names_outside(&lend, &cluster, &region));
+        assert!(
+            !names_outside(&trauma, &cluster, &region),
+            "scoped when applied"
+        );
+        assert!(
+            !names_outside(&unknown, &cluster, &region),
+            "refused by name later"
+        );
+    }
 }

@@ -189,7 +189,7 @@ impl Dispatcher {
                 self.changed = true;
             }
             if before.is_some_and(|p| p != Phase::Lost) && status.phase == Phase::Lost {
-                self.tally.lost += 1;
+                self.tallies.entry(status.hub).or_default().lost += 1;
             }
             if let Some(request_id) = status.request_id {
                 self.carried.insert(request_id);
@@ -225,11 +225,12 @@ impl Dispatcher {
                         }
                     }
                     RequestKind::Delivery => {
-                        self.tally.delivered += 1;
+                        let tally = self.tallies.entry(request.hub).or_default();
+                        tally.delivered += 1;
                         if delivery.time_s <= request.deadline_s {
-                            self.tally.on_time += 1;
+                            tally.on_time += 1;
                         } else {
-                            self.tally.late += 1;
+                            tally.late += 1;
                             *self.late_by_hub.entry(request.hub).or_insert(0) += 1;
                         }
                     }

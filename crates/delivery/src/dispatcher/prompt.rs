@@ -6,8 +6,9 @@
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
-use super::Dispatcher;
+use super::calls::events_touching;
 use super::config::EventsAs;
+use super::{Dispatcher, Tally};
 use crate::event::{Event, hub_list};
 use crate::messages::{Phase, RequestKind, VehicleClass};
 use crate::order::{Order, QUERY_SYNTAX, SYNTAX, TOP_SYNTAX, VETO_SYNTAX};
@@ -66,6 +67,7 @@ impl Dispatcher {
                 }
             }
         }
+        let active: Vec<&Event> = self.events.iter().filter(|e| e.active(now_s)).collect();
         let mut cards = BTreeMap::new();
         for vehicle in self.fleet.values() {
             cards.entry(vehicle.card.class).or_insert(vehicle.card);
@@ -82,7 +84,7 @@ impl Dispatcher {
                 .values()
                 .filter(|v| cluster.is_none_or(|c| c.contains(&v.hub)))
                 .collect(),
-            active_events: self.events.iter().filter(|e| e.active(now_s)).collect(),
+            active_events: events_touching(&active, cluster, &self.config.events),
             items: &self.config.stock.items,
             units_per_item: self.config.stock.units_per_item,
             cluster: cluster.map(<[u32]>::to_vec),
@@ -93,13 +95,33 @@ impl Dispatcher {
     /// view, the rules in force, and the orders available. With `proposed`,
     /// the replanner's orders are listed for the veto manager instead of the
     /// order syntax.
+    /// What happened since the last call at the hubs in view.
+    fn tally_for(&self, cluster: Option<&[u32]>) -> Tally {
+        let mut total = Tally::default();
+        for (hub, tally) in &self.tallies {
+            if cluster.is_some_and(|c| !c.contains(hub)) {
+                continue;
+            }
+            total.delivered += tally.delivered;
+            total.on_time += tally.on_time;
+            total.late += tally.late;
+            total.lost += tally.lost;
+            for (reason, count) in &tally.missed {
+                *total.missed.entry(*reason).or_insert(0) += count;
+            }
+        }
+        total
+    }
+
     pub(super) fn situation(
         &self,
+        index: usize,
         snapshot: &Snapshot<'_>,
         new_events: &[&Event],
         proposed: Option<&[Order]>,
     ) -> String {
         let manager = &self.config.manager;
+        let cluster = snapshot.cluster.as_deref();
         let minute = |s: f64| format!("{:.0}", s / 60.0);
         let mut text = String::new();
         let _ = writeln!(
@@ -112,8 +134,8 @@ impl Dispatcher {
             let _ = writeln!(
                 text,
                 "You manage hubs {} only, one cluster of the region; the other clusters \
-                 have their own fleet manager, and an order naming a hub outside yours \
-                 is refused.",
+                 have their own fleet manager, and an order naming a hub or site outside \
+                 yours is refused.",
                 hub_list(cluster)
             );
         }
@@ -132,7 +154,6 @@ impl Dispatcher {
         let ongoing: Vec<&Event> = snapshot
             .active_events
             .iter()
-            .copied()
             .filter(|e| !new_events.iter().any(|n| n.id == e.id))
             .collect();
         if !ongoing.is_empty() {
@@ -142,13 +163,13 @@ impl Dispatcher {
             }
         }
         if manager.feedback {
-            if !self.feedback.is_empty() {
+            if let Some(lines) = self.feedback.get(&index).filter(|l| !l.is_empty()) {
                 text.push_str("\nYour last orders:\n");
-                for line in &self.feedback {
+                for line in lines {
                     let _ = writeln!(text, "- {line}");
                 }
             }
-            let tally = &self.tally;
+            let tally = self.tally_for(cluster);
             let mut since = format!(
                 "\nSince your last call: {} delivered ({} on time, {} late)",
                 tally.delivered, tally.on_time, tally.late
@@ -165,16 +186,20 @@ impl Dispatcher {
             }
             text.push_str(&since);
             text.push_str(".\n");
-            if manager.cost_feedback && !self.move_costs.is_empty() {
-                text.push_str("\nAt the hubs your moves took from:\n");
-                for line in self.cost_lines() {
-                    let _ = writeln!(text, "- {line}");
+            if manager.cost_feedback {
+                let lines = self.cost_lines(cluster);
+                if !lines.is_empty() {
+                    text.push_str("\nAt the hubs your moves took from:\n");
+                    for line in lines {
+                        let _ = writeln!(text, "- {line}");
+                    }
                 }
             }
         }
         text.push('\n');
         text.push_str(&snapshot.write(manager.view));
-        let rules = self.rules.describe();
+        let site_hub = |code: &str| self.region.site(code).map(|site| site.hub);
+        let rules = self.rules.describe_within(cluster, &site_hub);
         if !rules.is_empty() {
             text.push_str("\nOrders in force:\n");
             for line in rules {
@@ -242,7 +267,6 @@ impl Dispatcher {
         let ongoing: Vec<&Event> = snapshot
             .active_events
             .iter()
-            .copied()
             .filter(|e| !new_events.iter().any(|n| n.id == e.id))
             .collect();
         if !ongoing.is_empty() {
@@ -258,7 +282,7 @@ impl Dispatcher {
             }
             if manager.cost_feedback && !self.move_costs.is_empty() {
                 text.push_str("\nAt the hubs your moves took from:\n");
-                for line in self.cost_lines() {
+                for line in self.cost_lines(None) {
                     let _ = writeln!(text, "- {line}");
                 }
             }
@@ -275,9 +299,10 @@ impl Dispatcher {
 
     /// One line per move since the last call: the donor hub's idle vehicles
     /// now and its late deliveries since.
-    pub(super) fn cost_lines(&self) -> Vec<String> {
+    pub(super) fn cost_lines(&self, cluster: Option<&[u32]>) -> Vec<String> {
         self.move_costs
             .iter()
+            .filter(|(_, donor)| cluster.is_none_or(|c| c.contains(donor)))
             .map(|(words, donor)| {
                 let idle = |class: VehicleClass| {
                     self.fleet

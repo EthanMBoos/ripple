@@ -4,7 +4,7 @@
 # and the clusters with a manager above them, the replanner or the same
 # model, that sees cluster totals and moves aircraft and stock between
 # clusters. Calls are budgeted at three an hour, so every manager is asked
-# together about 26 times a day. Live calls through the signed-in claude
+# together about 23 times a day. Live calls through the signed-in claude
 # command, replies cached under runs/llm-cache; a rerun with the same
 # settings makes no calls.
 name: region-256-clusters

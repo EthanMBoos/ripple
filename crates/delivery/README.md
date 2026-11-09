@@ -158,9 +158,12 @@ for the next one, together. 0 means a call per event. It applies to the
 replanner too, so the budget's cost can be measured without a model.
 
 `manager.cluster_side` splits the region into square clusters of that many
-hubs a side, each with its own fleet manager call: its own hubs' view and
-events, and an order naming a hub outside the cluster is refused
-(`refused_outside_cluster`). 0 is one manager over the region. The replanner
+hubs a side, each with its own fleet manager call. It sees its own hubs, the
+events and orders in force that touch them, and its own orders' feedback and
+delivery tally. An order naming a hub or site outside the cluster is refused
+(`refused_outside_cluster`), and an avoid rule or a priority by urgency from
+a cluster manager reaches only its own hubs' flights and requests. 0 is one
+manager over the region, which sees and reaches everything. The replanner
 splits the same way, which measures what the split alone costs.
 
 `manager.top_kind` puts a manager above the clusters (`replanner` or

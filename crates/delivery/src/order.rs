@@ -121,6 +121,20 @@ impl Order {
         matches!(self, Order::Move { .. } | Order::Send { .. })
     }
 
+    /// The sites an order names; with `hubs_named`, what a cluster's manager
+    /// must keep within its own cluster.
+    pub fn sites_named(&self) -> Vec<&str> {
+        match self {
+            Order::Reserve { site, .. }
+            | Order::ServeFrom { site, .. }
+            | Order::UsePad { site, .. } => {
+                vec![site.as_str()]
+            }
+            Order::Prioritize { site, .. } => site.iter().map(String::as_str).collect(),
+            _ => Vec::new(),
+        }
+    }
+
     /// The hubs an order names, so a cluster's manager stays within its own.
     pub fn hubs_named(&self) -> Vec<u32> {
         match self {
@@ -320,11 +334,14 @@ pub fn parse_reply(text: &str) -> Reply {
     Reply::Orders { orders, unreadable }
 }
 
-/// The orders in force, kept by the dispatcher.
+/// The orders in force, kept by the dispatcher. A rule from a cluster's
+/// manager that names no hub (an avoid, a priority by urgency) carries the
+/// cluster's hubs and applies to their flights and requests only; a rule
+/// from a manager over the whole region carries none and applies everywhere.
 #[derive(Clone, Debug, Default)]
 pub struct Rules {
     pub reserves: Vec<Reserve>,
-    pub avoids: Vec<(Area, f64)>,
+    pub avoids: Vec<Avoid>,
     pub grounded: Vec<Grounded>,
     pub priorities: Vec<Priority>,
     /// Extra hubs allowed to serve a site, by site code.
@@ -342,6 +359,14 @@ pub struct Reserve {
 }
 
 #[derive(Clone, Debug)]
+pub struct Avoid {
+    pub area: Area,
+    pub until_s: f64,
+    /// The issuing cluster's hubs; None applies to every flight.
+    pub hubs: Option<Vec<u32>>,
+}
+
+#[derive(Clone, Debug)]
 pub struct Grounded {
     pub class: Option<VehicleClass>,
     pub hubs: Vec<u32>,
@@ -353,12 +378,23 @@ pub struct Priority {
     pub site: Option<String>,
     pub urgency: Option<Urgency>,
     pub until_s: f64,
+    /// For a priority by urgency from a cluster's manager, the cluster's
+    /// hubs; None applies to every request.
+    pub hubs: Option<Vec<u32>>,
+}
+
+/// Whether a rule scoped to `hubs` (None: everywhere) reaches a cluster.
+fn reaches(hubs: Option<&[u32]>, cluster: Option<&[u32]>) -> bool {
+    match (hubs, cluster) {
+        (Some(hubs), Some(cluster)) => hubs.iter().any(|h| cluster.contains(h)),
+        _ => true,
+    }
 }
 
 impl Rules {
     pub fn expire(&mut self, now_s: f64) {
         self.reserves.retain(|r| r.until_s >= now_s);
-        self.avoids.retain(|(_, until_s)| *until_s >= now_s);
+        self.avoids.retain(|a| a.until_s >= now_s);
         self.grounded.retain(|g| g.until_s >= now_s);
         self.priorities.retain(|p| p.until_s >= now_s);
         self.pads.retain(|_, until_s| *until_s >= now_s);
@@ -375,7 +411,10 @@ impl Rules {
             p.site
                 .as_ref()
                 .is_some_and(|site| site.eq_ignore_ascii_case(&request.site))
-                || p.urgency.is_some_and(|u| u == request.urgency)
+                || (p.urgency.is_some_and(|u| u == request.urgency)
+                    && p.hubs
+                        .as_ref()
+                        .is_none_or(|hubs| hubs.contains(&request.hub)))
         })
     }
 
@@ -383,15 +422,29 @@ impl Rules {
         self.pads.contains_key(site)
     }
 
-    pub fn active_areas(&self) -> Vec<&Area> {
-        self.avoids.iter().map(|(area, _)| area).collect()
+    /// The areas a flight launching from `hub` keeps out of.
+    pub fn areas_for(&self, hub: u32) -> Vec<&Area> {
+        self.avoids
+            .iter()
+            .filter(|a| a.hubs.as_ref().is_none_or(|hubs| hubs.contains(&hub)))
+            .map(|a| &a.area)
+            .collect()
     }
 
-    /// Each rule in a line, for the prompt.
-    pub fn describe(&self) -> Vec<String> {
+    /// The rules in force, one line each, for the prompt: with a cluster,
+    /// only those that reach it, at its hubs, at its sites (`site_hub` gives
+    /// a site's hub), or scoped to it or to everywhere. With no cluster,
+    /// every rule.
+    pub fn describe_within(
+        &self,
+        cluster: Option<&[u32]>,
+        site_hub: &dyn Fn(&str) -> Option<u32>,
+    ) -> Vec<String> {
         let minute = |s: f64| format!("{:.0}", s / 60.0);
+        let at_hub = |hub: u32| cluster.is_none_or(|c| c.contains(&hub));
+        let at_site = |site: &str| cluster.is_none() || site_hub(site).is_some_and(at_hub);
         let mut lines = Vec::new();
-        for r in &self.reserves {
+        for r in self.reserves.iter().filter(|r| at_hub(r.hub)) {
             lines.push(format!(
                 "{} vehicles at hub {} reserved for {} until minute {}",
                 r.count,
@@ -400,14 +453,22 @@ impl Rules {
                 minute(r.until_s)
             ));
         }
-        for (area, until_s) in &self.avoids {
+        for a in self
+            .avoids
+            .iter()
+            .filter(|a| reaches(a.hubs.as_deref(), cluster))
+        {
             lines.push(format!(
                 "flights avoid {} until minute {}",
-                area.describe(),
-                minute(*until_s)
+                a.area.describe(),
+                minute(a.until_s)
             ));
         }
-        for g in &self.grounded {
+        for g in self
+            .grounded
+            .iter()
+            .filter(|g| g.hubs.iter().any(|h| at_hub(*h)))
+        {
             lines.push(format!(
                 "{} grounded at hubs {} until minute {}",
                 g.class.map_or("all vehicles", |c| c.as_str()),
@@ -415,7 +476,10 @@ impl Rules {
                 minute(g.until_s)
             ));
         }
-        for p in &self.priorities {
+        for p in self.priorities.iter().filter(|p| match &p.site {
+            Some(site) => at_site(site),
+            None => reaches(p.hubs.as_deref(), cluster),
+        }) {
             lines.push(format!(
                 "{} first until minute {}",
                 match (&p.site, p.urgency) {
@@ -426,13 +490,17 @@ impl Rules {
                 minute(p.until_s)
             ));
         }
-        for (site, hubs) in &self.serve_from {
+        for (site, hubs) in self
+            .serve_from
+            .iter()
+            .filter(|(site, hubs)| at_site(site) || hubs.iter().any(|h| at_hub(*h)))
+        {
             lines.push(format!(
                 "{site} may be served from hubs {}",
                 crate::event::hub_list(hubs)
             ));
         }
-        for (site, until_s) in &self.pads {
+        for (site, until_s) in self.pads.iter().filter(|(site, _)| at_site(site)) {
             lines.push(format!(
                 "{site} takes drops at its ground pad until minute {}",
                 minute(*until_s)
@@ -509,6 +577,106 @@ mod tests {
         assert!(!rules.is_grounded(3, VehicleClass::Multirotor));
         rules.expire(601.0);
         assert!(rules.grounded.is_empty());
-        assert_eq!(rules.describe(), Vec::<String>::new());
+        assert_eq!(rules.describe_within(None, &|_| None), Vec::<String>::new());
+    }
+
+    fn request_at(hub: u32, site: &str, urgency: Urgency) -> Request {
+        Request {
+            id: 1,
+            kind: crate::messages::RequestKind::Delivery,
+            hub,
+            site: site.into(),
+            site_world_m: ripple_core::Vec3::zeros(),
+            rooftop: false,
+            pad_world_m: ripple_core::Vec3::zeros(),
+            item: "O-".into(),
+            units: 1,
+            urgency,
+            opened_at_s: 0.0,
+            deadline_s: 600.0,
+            to_hub: None,
+        }
+    }
+
+    #[test]
+    fn a_clusters_avoid_and_urgency_priority_reach_only_its_own_hubs() {
+        let area = Area::Circle {
+            center_km: [0.0, 0.0],
+            radius_km: 2.0,
+        };
+        let mut rules = Rules::default();
+        rules.avoids.push(Avoid {
+            area,
+            until_s: 600.0,
+            hubs: Some(vec![1, 2]),
+        });
+        rules.priorities.push(Priority {
+            site: None,
+            urgency: Some(Urgency::Trauma),
+            until_s: 600.0,
+            hubs: Some(vec![1, 2]),
+        });
+        assert_eq!(rules.areas_for(1).len(), 1);
+        assert!(rules.areas_for(3).is_empty(), "another cluster's flights");
+        assert!(rules.prioritized(&request_at(2, "2C1", Urgency::Trauma)));
+        assert!(!rules.prioritized(&request_at(3, "3C1", Urgency::Trauma)));
+        // A flat manager's rules reach everything.
+        rules.avoids[0].hubs = None;
+        rules.priorities[0].hubs = None;
+        assert_eq!(rules.areas_for(3).len(), 1);
+        assert!(rules.prioritized(&request_at(3, "3C1", Urgency::Trauma)));
+    }
+
+    #[test]
+    fn a_cluster_is_shown_only_the_rules_that_reach_it() {
+        let site_hub = |site: &str| {
+            site.split(|c: char| !c.is_ascii_digit())
+                .next()?
+                .parse()
+                .ok()
+        };
+        let mut rules = Rules::default();
+        rules.reserves.push(Reserve {
+            hub: 1,
+            count: 2,
+            site: "1H1".into(),
+            until_s: 600.0,
+        });
+        rules.grounded.push(Grounded {
+            class: None,
+            hubs: vec![3],
+            until_s: 600.0,
+        });
+        rules.priorities.push(Priority {
+            site: Some("3H1".into()),
+            urgency: None,
+            until_s: 600.0,
+            hubs: None,
+        });
+        rules.priorities.push(Priority {
+            site: None,
+            urgency: Some(Urgency::Trauma),
+            until_s: 600.0,
+            hubs: None,
+        });
+        rules.serve_from.insert("1C1".into(), vec![2]);
+        rules.pads.insert("3H1".into(), 600.0);
+        rules.avoids.push(Avoid {
+            area: Area::Circle {
+                center_km: [0.0, 0.0],
+                radius_km: 2.0,
+            },
+            until_s: 600.0,
+            hubs: Some(vec![3, 4]),
+        });
+        let all = rules.describe_within(None, &|_| None);
+        assert_eq!(all.len(), 7);
+        let mine = rules.describe_within(Some(&[1, 2]), &site_hub);
+        // The reserve at hub 1, the region-wide trauma priority, and the
+        // serve-from at site 1C1; nothing at hubs 3 and 4.
+        assert_eq!(mine.len(), 3, "{mine:?}");
+        assert!(mine.iter().all(|line| !line.contains('3')), "{mine:?}");
+        let theirs = rules.describe_within(Some(&[3, 4]), &site_hub);
+        assert_eq!(theirs.len(), 5, "{theirs:?}");
     }
 }

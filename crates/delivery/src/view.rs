@@ -78,7 +78,9 @@ pub struct Snapshot<'a> {
     pub range_margin: f64,
     /// Every vehicle's latest report, by ID.
     pub vehicles: Vec<&'a Status>,
-    pub active_events: Vec<&'a Event>,
+    /// The events in force, limited and trimmed to the cluster when there
+    /// is one (`events_touching` in `dispatcher.rs`).
+    pub active_events: Vec<Event>,
     pub items: &'a [String],
     /// A hub's starting stock of each item, the scale for stock decisions.
     pub units_per_item: u32,

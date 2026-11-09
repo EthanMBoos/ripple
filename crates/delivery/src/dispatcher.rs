@@ -76,7 +76,8 @@ struct Return {
     until_s: f64,
 }
 
-/// What happened since the fleet manager's last call, for feedback.
+/// What happened at one hub since the fleet manager's last call, for
+/// feedback.
 #[derive(Default)]
 struct Tally {
     delivered: u32,
@@ -128,8 +129,11 @@ pub struct Dispatcher {
     last_call_s: f64,
     /// Events that started since the last call, waiting for the next one.
     queued_events: Vec<usize>,
-    feedback: Vec<String>,
-    tally: Tally,
+    /// What each manager is told about its last orders, by its position
+    /// among the clusters (0 for a manager over the whole region).
+    feedback: BTreeMap<usize, Vec<String>>,
+    /// Since the last call, by hub.
+    tallies: BTreeMap<u32, Tally>,
     changed: bool,
     last_decision_s: f64,
 }
@@ -216,8 +220,8 @@ impl Autonomy for Dispatcher {
             scripted_fired: 0,
             last_call_s: 0.0,
             queued_events: Vec::new(),
-            feedback: Vec::new(),
-            tally: Tally::default(),
+            feedback: BTreeMap::new(),
+            tallies: BTreeMap::new(),
             changed: false,
             last_decision_s: f64::NEG_INFINITY,
         }

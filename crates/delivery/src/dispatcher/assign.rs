@@ -11,7 +11,7 @@ use ripple_core::Vec3;
 use ripple_core::plugin::AgentContext;
 
 use super::Dispatcher;
-use crate::area::{Area, detour};
+use crate::area::detour;
 use crate::messages::{
     ASSIGNMENT_TOPIC, Assignment, MISSED_TOPIC, MissReason, Missed, Request, SkillName, Status,
     VehicleClass,
@@ -69,9 +69,8 @@ impl Dispatcher {
                 .then(a.id.cmp(&b.id))
         });
         let mut taken: BTreeSet<i32> = BTreeSet::new();
-        let areas: Vec<Area> = self.rules.active_areas().into_iter().copied().collect();
         for request in &waiting {
-            match self.best_vehicle(request, &taken, &areas, now_s) {
+            match self.best_vehicle(request, &taken, now_s) {
                 Ok(candidate) => {
                     taken.insert(candidate.vehicle_id);
                     if let Some(stock) = self.stock.get_mut(&candidate.hub)
@@ -100,7 +99,13 @@ impl Dispatcher {
                 }
                 Err(reason) => {
                     if request.deadline_s < now_s && self.missed.insert(request.id) {
-                        *self.tally.missed.entry(reason).or_insert(0) += 1;
+                        *self
+                            .tallies
+                            .entry(request.hub)
+                            .or_default()
+                            .missed
+                            .entry(reason)
+                            .or_insert(0) += 1;
                         context.messages.publish(
                             "GlobalNetwork",
                             MISSED_TOPIC,
@@ -123,7 +128,6 @@ impl Dispatcher {
         &self,
         request: &Request,
         taken: &BTreeSet<i32>,
-        areas: &[Area],
         now_s: f64,
     ) -> Result<Candidate, MissReason> {
         let mut eligible = vec![request.hub];
@@ -141,10 +145,6 @@ impl Dispatcher {
         } else {
             request.site_world_m
         };
-        let area_refs: Vec<&Area> = areas.iter().collect();
-        if area_refs.iter().any(|area| area.contains(target)) {
-            return Err(MissReason::Closed);
-        }
         let mut best: Option<Candidate> = None;
         // Reasons rank from least to most informative for the fleet manager.
         let mut reason = MissReason::NoVehicle;
@@ -157,6 +157,13 @@ impl Dispatcher {
             let Some(hub_position) = self.region.hub(hub).map(|h| h.position_world_m) else {
                 continue;
             };
+            // The areas closed to this hub's flights: every avoid over the
+            // region, and its own cluster's.
+            let areas = self.rules.areas_for(hub);
+            if areas.iter().any(|area| area.contains(target)) {
+                note(MissReason::Closed, &mut reason);
+                continue;
+            }
             if self.in_outage(hub, now_s) {
                 note(MissReason::Grounded, &mut reason);
                 continue;
@@ -205,7 +212,7 @@ impl Dispatcher {
                 let via = detour(
                     vehicle.position_world_m,
                     target,
-                    &area_refs,
+                    &areas,
                     self.config.detour_margin_m,
                 );
                 let out_m = match via {

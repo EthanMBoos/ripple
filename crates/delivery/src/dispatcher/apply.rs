@@ -11,7 +11,7 @@ use super::{Dispatcher, PendingRelocation, Return};
 use crate::messages::{
     Phase, RELOCATE_TOPIC, REQUEST_TOPIC, Relocate, Request, RequestKind, Status, Urgency,
 };
-use crate::order::{Grounded, Order, Priority, Reserve};
+use crate::order::{Avoid, Grounded, Order, Priority, Reserve};
 use crate::region::{SiteKind, horizontal_m};
 
 /// A refusal: the outcome names the reason, the note says why.
@@ -42,14 +42,15 @@ impl Dispatcher {
         context: &mut AgentContext,
         now_s: f64,
         order: &Order,
+        cluster: Option<&[u32]>,
     ) -> Result<(String, String)> {
         let (outcome, note) = match order {
             Order::Reserve { .. } => self.apply_reserve(now_s, order)?,
-            Order::Avoid { .. } => self.apply_avoid(now_s, order)?,
+            Order::Avoid { .. } => self.apply_avoid(now_s, order, cluster)?,
             Order::Reposition { .. } => self.apply_reposition(context, now_s, order)?,
             Order::Transfer { .. } => self.apply_transfer(context, now_s, order)?,
             Order::Ground { .. } => self.apply_ground(now_s, order)?,
-            Order::Prioritize { .. } => self.apply_prioritize(now_s, order)?,
+            Order::Prioritize { .. } => self.apply_prioritize(now_s, order, cluster)?,
             Order::ServeFrom { .. } => self.apply_serve_from(order)?,
             Order::UsePad { .. } => self.apply_use_pad(now_s, order)?,
             Order::Move { .. } => self.apply_move(context, now_s, order)?,
@@ -124,7 +125,12 @@ impl Dispatcher {
     }
 
     /// Routes every flight around an area.
-    fn apply_avoid(&mut self, now_s: f64, order: &Order) -> Result<(String, String)> {
+    fn apply_avoid(
+        &mut self,
+        now_s: f64,
+        order: &Order,
+        cluster: Option<&[u32]>,
+    ) -> Result<(String, String)> {
         let Order::Avoid { area, until_min } = order else {
             unreachable!("matched in apply")
         };
@@ -135,11 +141,16 @@ impl Dispatcher {
             Ok(u) => u,
             Err(e) => return Ok(e),
         };
-        self.rules.avoids.push((*area, until_s));
+        self.rules.avoids.push(Avoid {
+            area: *area,
+            until_s,
+            hubs: cluster.map(<[u32]>::to_vec),
+        });
         let hubs_inside: Vec<String> = self
             .region
             .hubs
             .iter()
+            .filter(|h| cluster.is_none_or(|c| c.contains(&h.id)))
             .filter(|h| area.contains(h.position_world_m))
             .map(|h| h.id.to_string())
             .collect();
@@ -504,7 +515,12 @@ impl Dispatcher {
     }
 
     /// Puts a site's or an urgency's requests first.
-    fn apply_prioritize(&mut self, now_s: f64, order: &Order) -> Result<(String, String)> {
+    fn apply_prioritize(
+        &mut self,
+        now_s: f64,
+        order: &Order,
+        cluster: Option<&[u32]>,
+    ) -> Result<(String, String)> {
         let Order::Prioritize {
             site,
             urgency,
@@ -527,10 +543,18 @@ impl Dispatcher {
             Ok(u) => u,
             Err(e) => return Ok(e),
         };
+        // A site is one hub's; an urgency alone would reach every hub, so a
+        // cluster's reaches its own.
+        let hubs = if site.is_none() {
+            cluster.map(<[u32]>::to_vec)
+        } else {
+            None
+        };
         self.rules.priorities.push(Priority {
             site,
             urgency: *urgency,
             until_s,
+            hubs,
         });
         Ok(("applied".into(), "those requests now come first".into()))
     }
@@ -692,7 +716,7 @@ impl Dispatcher {
                 to_hub,
                 until_min: None,
             };
-            let (outcome, note) = self.apply(context, now_s, &sub)?;
+            let (outcome, note) = self.apply(context, now_s, &sub, None)?;
             if outcome.starts_with("refused") {
                 continue;
             }
@@ -759,7 +783,7 @@ impl Dispatcher {
             from_hub,
             to_hub,
         };
-        let (outcome, note) = self.apply(context, now_s, &sub)?;
+        let (outcome, note) = self.apply(context, now_s, &sub, None)?;
         Ok((outcome, format!("hub {from_hub} to hub {to_hub}: {note}")))
     }
 

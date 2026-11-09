@@ -22,16 +22,14 @@ hours the advantage disappears. The main study has 15-minute surges.
 
 Before submitting:
 
-- Rerun GPT-6 Luna through the OpenAI API instead of the codex command
-  (Ezra). The codex command keeps a coding agent's tools around the
-  model; the claude command runs with its tools removed, so the two
-  wrappers differ and the paper's limits paragraph has to say so. Change
-  `via: cli` to `via: api` for the Luna cases in the two model sweep
-  files and run them with an OpenAI key; the API client has not been
-  used live yet, so the first run is the test. Ten runs, five live and
-  five veto. Then Luna's numbers move in the model table, the appendix,
-  and the loss figure, and the limits paragraph says both paths were one
-  plain call with the same system prompt.
+- Update Figure 2 with Luna's OpenAI API results (Ezra). The API reruns
+  are complete; the local manuscript and appendix now use the ten matched
+  runs (three seeds at 16 hubs, two at 64, both roles). The figure still
+  uses Luna's original CLI runs. Recover the original eight-hour per-hub
+  results used for the pooled bars, replace Luna's contribution with the
+  API results, and regenerate the figure against matched Local-rules runs.
+  Recheck its caption and donor-loss discussion, then remove the caption's
+  TODO. The API-versus-CLI comparison is in the appendix.
 - Commit and push the current appendix PDF so the public repository link
   in the paper opens the version described there.
 - Record the demo video from the title-figure recording.

@@ -450,10 +450,13 @@ orders and drops the ones it rejects, but adds none. As the \emph{author of
 the rules} it writes a policy file once, before the day, which then runs
 with no further calls. Four models, Claude Haiku, Sonnet, and Opus and
 GPT-6 Luna, are compared in the first two roles, on three seeds at 16 hubs
-and two at 64. The comparisons of what the model sees and the policy
-writing use Haiku and Sonnet. Every model call used one frozen system
-prompt and one text per event kind; the prompt, the texts, one complete
-call and one veto with their replies, and the per-run and per-seed numbers
+and two at 64. Luna uses the OpenAI API; the Claude models use the Claude
+command-line client with tools disabled. Both paths receive the same study
+system prompt, with no tools available. The comparisons of what the model
+sees and the policy writing use Haiku and Sonnet. Every model call used one
+frozen system prompt and one text per event kind; the prompt, the texts,
+one complete call and one veto with their replies, and the per-run and
+per-seed numbers
 are in the appendix, in the
 repository.\footnote{\url{https://github.com/EthanMBoos/ripple/tree/main/paper/appendix}}
 
@@ -494,8 +497,8 @@ Hubs & No manager & Replanner & Local rules & Lending & Relocating & Return \\
 \begin{figure}[t]
 \centering
 % Drawn by crates/delivery/loss_figure.py from the per-hub columns of the
-% relocating policy and the 40 model runs, each against local rules on the
-% same day.
+% relocating policy and the original 40 CLI model runs, each against local
+% rules on the same day. Updating Luna requires the original per-hub totals.
 \resizebox{\columnwidth}{!}{\input{figures/loss-by-hub.tex}}
 \caption{Where additional missed requests fall. For each day, every hub is
 sorted by its part in that day's moves: it gave aircraft or stock, it only
@@ -503,9 +506,11 @@ received, or neither. Bars show how many more of a group's own requests
 were late or undelivered than under local rules on the same day, per
 hundred requests, pooled over the days of each condition: the relocating
 policy, the models giving the orders, and the models as a veto over the
-replanner. For the relocating policy and the vetoes the loss is at the
-hubs that gave. The live managers' bars include GPT-6 Luna, whose loss
-comes from lending and lands everywhere (Section~\ref{sec:models}).}
+replanner. \textbf{TODO: replace Luna's original CLI runs in this figure
+with the API reruns.} For the
+relocating policy and the vetoes the loss is at the hubs that gave.
+Luna's CLI live-manager losses are more widely distributed
+(Section~\ref{sec:models}).}
 \label{fig:loss}
 \end{figure}
 
@@ -565,42 +570,44 @@ the replanner 0.71 and 0.62. The per-seed numbers are in the appendix.}
 \toprule
 Hubs & Role & Haiku & Sonnet & Opus & GPT-6 Luna \\
 \midrule
-16 & Live & 0.70, 8 moves   & 0.62, 47  & 0.69, 70  & 0.62, 3   \\
-16 & Veto & 0.71, 19 kept   & 0.72, 25  & 0.71, 23  & 0.72, 14  \\
-64 & Live & 0.66, 64 moves  & 0.59, 301 & 0.56, 481 & 0.55, 22  \\
-64 & Veto & 0.63, 152 kept  & 0.63, 171 & 0.65, 146 & 0.67, 89  \\
+16 & Live & 0.70, 8 moves   & 0.62, 47  & 0.69, 70  & 0.57, 3   \\
+16 & Veto & 0.71, 19 kept   & 0.72, 25  & 0.71, 23  & 0.72, 22  \\
+64 & Live & 0.66, 64 moves  & 0.59, 301 & 0.56, 481 & 0.62, 56  \\
+64 & Veto & 0.63, 152 kept  & 0.63, 171 & 0.65, 146 & 0.62, 164  \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
 Table~\ref{tab:models} puts the four models in the live-manager and veto
-roles on the same days. Of the 40 runs, 38 score below local rules.
+roles on the same days. Of the 40 runs, 39 score below local rules.
 Shown only hubs with a problem, Haiku as a live manager makes 7 to 10
 moves per 16-hub day; Sonnet makes 36 to 56, and Opus 54 to 85. GPT-6
-Luna makes 0 to 8, yet also trails local rules: it grants 160 to 240
+Luna makes 1 to 6, yet also trails local rules: it grants 164 to 193
 lending permissions instead. At 64 hubs all four models score below
 local rules' 0.71. Sonnet and Opus make hundreds of moves; Luna grants
-892 and 1,357 lending permissions on its two days. Live managers can
+1,096 and 1,000 lending permissions on its two days. Live managers can
 also lose aircraft to exhausted endurance away from a hub, up to 56 of
 320 at 64 hubs. Opus beats local rules on one 16-hub seed despite making
 85 moves, but trails on the other four tested days. Few moves alone do
 not make a good fleet plan either: Luna's extensive lending still loses.
 
 As a veto the models are steadier, but still trail local rules on every
-seed except one tie. At 16 hubs, they keep 8 to 34 of the replanner's
-move orders while removing many of its lending permissions. They do not
+seed. At 16 hubs, they keep 16 to 34 of the replanner's move orders while
+removing many of its lending permissions. They do not
 consistently distinguish a useful temporary permission from a harmful
-move. No veto run loses an aircraft.
+move. No veto run loses an aircraft. The appendix compares Luna's API
+results with its earlier command-line runs on the same seeds.
 
-We replayed the 40 runs from saved replies and compared each hub's late
-and undelivered requests with local rules on the same day
-(Figure~\ref{fig:loss}). For Haiku, Sonnet, and Opus in both roles, and
-for Luna as a veto, at least 90 percent of the additional lost requests
-are at hubs that gave aircraft or stock. Luna as a live manager is the
-exception: it rarely moves, and only 15 to 20 percent of its loss is at
-giving hubs. The spatial pattern in the other runs matches the fixed
-policy's moving cost. Luna grants many more lending permissions, and its
-losses spread across hubs that did not give aircraft or stock.
+Figure~\ref{fig:loss} retains the original 40 CLI runs, replayed from
+saved replies and compared with local rules on the same day. For Haiku,
+Sonnet, and Opus in both roles, and for Luna as a veto, at least 90 percent
+of the additional lost requests are at hubs that gave aircraft or stock.
+Luna's CLI live manager is the exception, with only 15 to 20 percent of
+its loss at giving hubs. In the API reruns, giving hubs account for
+25 percent of Luna's additional live-manager losses at 16 hubs and
+69 percent at 64. Its veto losses still concentrate at giving hubs.
+Luna's spatial pattern therefore changes with the client path, especially
+at 64 hubs.
 
 A model can also write the policy that runs the day. We gave Haiku and
 Sonnet the mission description and the policy language, ran what they
@@ -706,14 +713,12 @@ geometry, and eight-hour horizon are simulated. The reported fleets use
 kinematic vehicle models, so the result concerns fleet allocation under
 these flight times and ranges; it does not establish a difference caused by
 six-degree-of-freedom dynamics. The model comparisons have three seeds at
-16 hubs and two at 64. The four models were reached through two
-command-line tools that wrap them differently, one keeping a coding
-agent's tools and one not; calling the model APIs directly would make the
-cleaner cross-model comparison. Two model runs in 40 matched or beat local
-rules, so the claim is about the average and the spread of a model's days,
-not a bound. Different demand patterns, a few hubs busy all day beside
-quiet ones, and policies that return aircraft sooner would test where
-relocating begins to pay.
+16 hubs and two at 64. Luna was reached through the OpenAI API and the
+Claude models through the command-line client with tools disabled.
+One model run in 40 matched or beat local rules, so the claim is about
+the average and the spread of a model's days, not a bound. Different demand
+patterns, a few hubs busy all day beside quiet ones, and policies that
+return aircraft sooner would test where relocating begins to pay.
 
 Ripple's broader role is to make these questions experimental. The manager
 can be changed without rewriting the courier, the vehicle model without

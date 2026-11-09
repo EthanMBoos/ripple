@@ -125,6 +125,44 @@ order within each cell.}
 \input{scores.tex}
 \end{table*}
 
+\section{Luna through the API and command-line client}
+\label{app:luna-api}
+
+We reran Luna through the OpenAI API on the same three seeds at 16 hubs
+and two at 64, in both roles. The mission, study system prompt, exceptions
+view, and feedback setting were unchanged. The API supplies no tools;
+the earlier Codex command-line client retained coding-agent tools.
+Table~\ref{tab:luna-api} compares the means. The paper's model table and
+this appendix's per-seed scores and counts use the API runs.
+
+\begin{table}[h]
+\caption{Luna on matched seeds through the command-line client (CLI) and
+API. Scores are weighted on-time shares; moves are mean applied relocation
+and stock-transfer orders. CLI scores retain the original table's rounding.}
+\label{tab:luna-api}
+\centering
+\footnotesize
+\begin{tabular}{llrrrr}
+\toprule
+& & \multicolumn{2}{c}{Score} & \multicolumn{2}{c}{Moves} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Hubs & Role & CLI & API & CLI & API \\
+\midrule
+16 & Live & 0.62 & 0.57 & 3.3 & 3.0 \\
+16 & Veto & 0.72 & 0.72 & 13.7 & 22.0 \\
+64 & Live & 0.55 & 0.62 & 22.0 & 55.5 \\
+64 & Veto & 0.67 & 0.62 & 88.5 & 164.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The API does not consistently improve the score. At 64 hubs it improves
+the live manager's mean but lowers the veto's; both roles make more moves.
+All ten API runs score below local rules on their matched seeds. Five
+live-manager replies could not be parsed; all veto replies were readable.
+These few reruns compare the two client paths, not tool availability in
+isolation, and do not separate client effects from model sampling.
+
 \section{Interface and policy checks}
 \label{app:interface}
 

@@ -188,12 +188,13 @@ after feedback \citep{liu2025coherent}. Other systems compare centralized
 and local planners \citep{chen2024scalable}, direct large collectives from
 language \citep{vatnsdal2026compass}, or dispatch and reposition a fleet
 of vehicles \citep{lyu2025llmoddr}. These systems show ways to connect a
-model to a team of robots. A fleet that operates through a day poses a further
-question: an order can solve the problem in front of the manager and still
-leave the fleet less able to handle what happens next.
-As the fleet grows, the manager's interface matters too: which parts of
-the fleet should the model see, and which changes should it be allowed to
-make?
+model to a team of robots. We study two questions about a language model
+managing a fleet through a full day. First, when requests and disruptions
+compete for the same aircraft and stock, how does the manager respond, and
+where do its decisions make the fleet worse off? Second, as the fleet
+grows, what should the manager see and how far should its orders reach?
+This second question concerns the fleet API: the report given to the model
+and the changes it may order.
 
 We study these questions with a regional delivery fleet. Each depot, which we
 call a hub, has its own aircraft and stock. Requests arrive throughout the
@@ -454,14 +455,14 @@ call and one veto with their replies, and the per-run and per-seed numbers
 are in the appendix, in the
 repository.\footnote{\url{https://github.com/EthanMBoos/ripple/tree/main/paper/appendix}}
 
-We ask three questions. First, how much on-time delivery does relocating
-aircraft cost, when no model is involved? Second, knowing that cost, does
-a language model still relocate aircraft, in each of its three roles:
-giving the orders, vetoing a planner's orders, or writing the rules?
-Third, what stops a model from relocating? Fourth, what should a model
-see and be allowed to order when the fleet reaches thousands of aircraft?
-We set up this fleet API question below; the model runs that will answer
-it are planned.
+We ask how a language-model manager handles competing needs across a fleet
+and where its choices fail. To understand those choices, we first measure
+the cost of relocating aircraft and stock under fixed policies, with no
+model involved. We then test models as live managers, vetoes, and authors
+of rules: what they order, where the resulting missed requests fall, and
+what limits harmful moves. Finally, we examine what a model should see and
+be allowed to order as the fleet grows to thousands of aircraft. The model
+runs for this last question are planned.
 
 \subsection{What moving costs, with no model}
 \label{sec:cost}
@@ -641,31 +642,36 @@ reserve.
 \section{The Fleet API at Scale}
 \label{sec:scale}
 
-The fleet API has two parts: what the model sees and what it can order.
-Its report can describe every hub, show only hubs with problems, or cover
-one cluster. Its orders can set local rules, lend an aircraft for one
-flight, or move aircraft and stock. The report sets the size of the
-model's task; the orders set how far its decisions can reach.
+The fleet API defines what a manager is shown and which orders the
+dispatcher accepts. A manager responsible for the whole region can move
+aircraft and stock between any hubs, but its report grows as more problems
+arise at once. Dividing the region into clusters gives each manager a
+smaller report and a smaller reach. A manager above the clusters can
+coordinate across them, though its moves may again leave giving hubs short
+when later requests arrive.
 
-The completed runs show why both parts matter. At 16 hubs an exceptions
-report holds Haiku to seven moves on each tested day, while Sonnet still
-moves dozens of times. At 64 hubs all four models move under that report.
-Showing less changes what the model chooses, while a reserve guard changes
-which of its orders are accepted. The fixed policies at 256 and 1,024
-hubs, with 1,280 and 5,120 aircraft, put the cost of moving at 13 points
-at both sizes (Table~\ref{tab:policies}).
+The smaller runs show why both choices matter. With only problem hubs in
+its report, Haiku makes seven moves on each tested 16-hub day, while
+Sonnet still makes dozens; at 64 hubs all four models move. Fixed policies
+at 256 and 1,024 hubs show a 13-point cost of relocating at both sizes,
+with 1,280 and 5,120 aircraft (Table~\ref{tab:policies}). No model has yet
+managed a region that large.
 
-\emph{Planned.} At those two sizes, each model will manage one cluster of
-16 hubs. It will see that cluster and may order changes within it,
-including moves; orders naming another cluster will be refused. One
-condition adds a manager above the clusters. It sees a summary of each
-cluster and may move aircraft and stock between them. We will compare
-these APIs on matched days with Haiku and one stronger model, using two
-seeds per size. We will report on-time score, missed requests at hubs that
-gave, moves per hundred hubs, model calls, and input tokens. The question
-is whether a bounded local API helps the region without losing the
-giving hubs' later work, and what changes when the manager can make moves
-across the region.
+\emph{Planned.} We will compare three APIs on matched days at 256 and
+1,024 hubs: one model sees the whole region and can order anywhere; a
+model for each 16-hub cluster sees and acts within it; and those cluster
+managers work with a regional manager that sees cluster totals and can
+move aircraft and stock between clusters. The regional manager will be
+either a deterministic replanner or the same model. A regional move keeps
+at least half of each donor hub's aircraft and is permanent; flat
+reposition has no donor floor unless the reserve guard is on. Each
+manager is called at most three times an hour, with new events batched
+until the next call, or about 26 calls per day. We will run Haiku and
+Opus on two seeds per size, and report on-time score, missed requests at
+giving and receiving hubs, moves per hundred hubs, model calls, and input
+tokens. These runs ask whether one model can respond across a large
+region, whether local managers miss help across cluster boundaries, and
+whether a regional layer serves more requests than its moves later cost.
 
 \section{Discussion and Future Work}
 \label{sec:discussion}

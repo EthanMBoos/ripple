@@ -2,12 +2,14 @@
 
 ## The paper
 
-On the main study's eight-hour days, moving aircraft and stock to a
-stressed hub costs the giving hubs more requests than it saves elsewhere.
-Local rules and lending flights do better. Every model tried chooses moves
-in at least one role, including when it only vetoes a replanner's orders or
-writes rules before the day. Neither role reaches local rules. A reserve
-guard limits the moves directly. That is the finding in
+The paper asks how a language-model manager handles competing needs across
+a fleet, and what it should see and be allowed to order as the fleet grows.
+On the main study's eight-hour days, every model tried moves aircraft or
+stock in at least one role, including when it only vetoes a replanner's
+orders or writes rules before the day. Local rules and lending flights do
+better: moving to a stressed hub costs the giving hubs more requests than
+it saves elsewhere. A reserve guard limits the moves directly. These are
+the completed findings in
 [paper/manuscript/main.tex](../paper/manuscript/main.tex).
 
 The main comparisons use matched requests and events on eight-hour days,
@@ -45,34 +47,77 @@ paper is seven. Check the author page for current terms first.
 
 ## Scaling, still to do
 
-The next question is whether a smaller view still reduces moves in a
-large region. At 16 hubs the exceptions view held Haiku to a few moves,
-but Sonnet still made dozens; at 64 every tested model moved. At 256 and
-1,024 hubs, give each model a cluster of 16 hubs, with a manager above
-the clusters. The cluster runs test whether a small view cuts moves at
-scale. The upper manager tests whether permission to move capacity
-between clusters brings the donor-hub losses back.
+The paper's second question is how to give a manager enough information and
+authority to handle competing needs when the fleet reaches thousands of
+aircraft. The fleet API is the report the model sees and the orders the
+dispatcher accepts. Compare three APIs at 256 and 1,024 hubs on matched
+days:
+
+- One manager over the whole region, shown the exceptions report for
+  every hub, giving the eight hub orders anywhere. This keeps the view
+  and order set of the 16- and 64-hub runs, while the report and the
+  reach of each order grow. The call schedule is different (below).
+- One manager per cluster of 16 hubs, 16 or 64 of them. Each is shown
+  its own cluster's exceptions and events. Its orders affect only its
+  cluster's sites and aircraft; cross-cluster orders are refused. The
+  report stays the size of a 16-hub day, but a cluster cannot move stock
+  or aircraft from another cluster on its own.
+- The cluster managers plus a manager above them, shown each cluster's
+  totals and allowed two orders of its own, move aircraft and send stock
+  between clusters. The above manager is the replanner, a deterministic
+  reference, or the same model. This puts region-wide moves back, but
+  only through a thin second layer.
+
+Haiku and Opus run all of it, two seeds at each size. Calls are budgeted
+at three an hour, with events since the last call batched, so every
+manager is asked about 26 times a day. A 1,024-hub day has about 2,900
+events; a call at each event would mean about 190,000 calls for a cluster
+API. Report score, missed requests at giving and receiving hubs, moves
+per hundred hubs, calls, and input tokens for each API, against the fixed
+policies at the same size. Test whether one model can use the region-wide
+report, whether cluster managers leave needs unmet across boundaries, and
+whether the regional layer helps more than it costs at giving hubs.
 
 The fixed-policy half is done and in the paper's policy table: the cost
 of relocating levels off at 13 points from 64 hubs on, and so do the
 moves per hundred hubs.
 
-The model half is not started. It needs code first: the cluster managers'
-order set enforced (the cluster scope refuses orders naming hubs outside
-the cluster but still accepts relocations within it), the cluster calls
-made in parallel (a 1,024-hub day is 64 clusters times about 26 calls),
-and a check that the reply cache keeps replays free. Then Haiku and one
-stronger model as cluster managers, with and without a manager above, two
-seeds at each size. Five to seven days, most of it waiting on calls. The
-result fills the paper's fourth question, which the manuscript already
-asks and marks Planned. If the runs are not done by the submission date,
-the paper goes with the first finding and the stub.
+The model half is the `region-256-clusters` and `region-1024-clusters`
+sweep files, sixteen runs each, about 12,800 Opus calls and as many
+Haiku calls in all. The cluster boundary is not yet what the list above
+claims, so this comes first:
 
-Also wanted for the fourth question: one 1,024-hub day run alone on a
-free machine, with the command, worker count and wall time written down,
-so the paper can say how long a day at that size takes. A 256-hub day
-takes about 16 minutes on one worker; a 1,024-hub day took two to six
-hours with three sharing the machine.
+- Show a cluster manager only its own cluster: filter the ongoing events
+  and the orders in force by cluster as the new events already are,
+  write each event's text again after its hub list is trimmed, and keep
+  the order feedback and delivery tally per cluster.
+- Scope every order. Orders naming a site go through the site's recorded
+  hub, and serve-from checks both the site and every named hub. A cluster
+  manager's avoid rule applies only to flights by aircraft based at its
+  hubs, even when the avoided area lies between hubs; a flat manager's
+  avoid rule remains region-wide. Store the issuing cluster with the rule
+  and select it by aircraft hub when choosing a route. Do not test
+  whether a hub lies inside the area: the 6 km closure circle can lie
+  between hubs 15 km apart. Refuse urgency-only prioritize from a cluster
+  manager. List only available orders and their scope in each prompt.
+- Call the clusters in parallel, a few at a time, with replies kept in
+  cluster order so a day replays the same.
+- State in the paper that the regional move keeps half of each donor
+  hub's aircraft and is permanent, as the replanner's repositions are,
+  while a flat manager's reposition has no floor unless the guard is on.
+
+Then check a parallel day matches a serial one byte for byte and a rerun
+makes no calls, run one 256-hub Haiku day and read its prompts and orders
+by hand, then the 256-hub file, then 1,024. These runs answer the paper's
+second question, currently marked Planned. If they miss submission, move
+the Fleet API section to future work and narrow the introduction's question
+accordingly; do not present a planned comparison as a result.
+
+Also wanted: one 1,024-hub day run alone on a free machine, with the
+command, worker count and wall time written down, so the paper can say
+how long a day at that size takes. A 256-hub day takes about 16 minutes
+on one worker; a 1,024-hub day took two to six hours with three sharing
+the machine.
 
 ## Loose ends, not needed for submission
 

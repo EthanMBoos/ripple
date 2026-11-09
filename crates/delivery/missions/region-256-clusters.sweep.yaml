@@ -1,0 +1,33 @@
+# Three fleet APIs on a 256-hub day, Haiku and Opus, seeds [1, 2]: one
+# manager over the whole region with the exceptions report; a manager per
+# 16-hub cluster (16 of them) seeing and ordering within its cluster only;
+# and the clusters with a manager above them, the replanner or the same
+# model, that sees cluster totals and moves aircraft and stock between
+# clusters. Calls are budgeted at three an hour, so every manager is asked
+# together about 26 times a day. Live calls through the signed-in claude
+# command, replies cached under runs/llm-cache; a rerun with the same
+# settings makes no calls.
+name: region-256-clusters
+base_scenario: region.yaml
+seeds: [1, 2]
+parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 256
+  entities.region.autonomy.Dispatcher.manager.kind: model
+  entities.region.autonomy.Dispatcher.manager.calls_per_hour: 3
+  entities.region.autonomy.Dispatcher.manager.view: exceptions
+  entities.region.autonomy.Dispatcher.manager.feedback: true
+  entities.region.autonomy.Dispatcher.manager.checker: false
+  entities.region.autonomy.Dispatcher.manager.provider: claude
+  entities.region.autonomy.Dispatcher.manager.via: cli
+  entities.region.autonomy.Dispatcher.manager.offline: false
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.model, manager.cluster_side, manager.top_kind]
+cases:
+  - [claude-haiku-5-5, 0, none]
+  - [claude-haiku-5-5, 4, none]
+  - [claude-haiku-5-5, 4, replanner]
+  - [claude-haiku-5-5, 4, model]
+  - [claude-opus-5-5, 0, none]
+  - [claude-opus-5-5, 4, none]
+  - [claude-opus-5-5, 4, replanner]
+  - [claude-opus-5-5, 4, model]

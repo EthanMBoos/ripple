@@ -113,12 +113,6 @@ second question, currently marked Planned. If they miss submission, move
 the Fleet API section to future work and narrow the introduction's question
 accordingly; do not present a planned comparison as a result.
 
-Also wanted: one 1,024-hub day run alone on a free machine, with the
-command, worker count and wall time written down, so the paper can say
-how long a day at that size takes. A 256-hub day takes about 16 minutes
-on one worker; a 1,024-hub day took two to six hours with three sharing
-the machine.
-
 ## Loose ends, not needed for submission
 
 - A model on the long-surge day: the surge-length line ran fixed

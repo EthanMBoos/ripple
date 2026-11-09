@@ -1,0 +1,20 @@
+# Luna through the API: three seeds x two roles = six episodes.
+# Matches the model-table setup; 64-hub seed 3 extends its two CLI seeds.
+# Eight hours of requests plus 30 minutes to finish. Calls are paid and cached.
+name: region-64-luna-api
+base_scenario: region.yaml
+seeds: [1, 2, 3]
+parameters:
+  run.end_s: 30600
+  entities.region.autonomy.Dispatcher.requests.until_s: 28800
+  entities.region.autonomy.Dispatcher.region.hubs: 64
+  entities.region.autonomy.Dispatcher.manager.view: exceptions
+  entities.region.autonomy.Dispatcher.manager.feedback: true
+  entities.region.autonomy.Dispatcher.manager.checker: false
+  entities.region.autonomy.Dispatcher.manager.via: api
+  entities.region.autonomy.Dispatcher.manager.offline: false
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.kind, manager.provider, manager.model]
+cases:
+  - [model, openai, gpt-6-luna]
+  - [veto, openai, gpt-6-luna]

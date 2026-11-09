@@ -146,10 +146,10 @@ fleets. An order that helps one part of a fleet can change what the rest can
 do later. We present Ripple, a
 multi-agent simulator that runs managers, dispatchers, vehicle autonomies,
 controllers, and dynamics through complete missions and scores their
-flights. One worker runs an 8.5-hour mission with 1,280 aircraft in about
-16 minutes, without model calls; the fixed-policy study reaches 5,120
-aircraft. In a regional delivery study, managers set local rules, lend an
-aircraft for one flight, or move aircraft and stock. We find that
+flights. Without model calls, one worker runs an 8.5-hour mission with
+1,280 aircraft in about 16 minutes and with 5,120 aircraft in about two
+and a half hours. In a regional delivery study, managers set local rules,
+lend an aircraft for one flight, or move aircraft and stock. We find that
 language-model managers over-help: they relocate vehicles and stock even
 when local rules and lent flights produce more on-time deliveries. The cost
 is in the action itself: with no model involved, moving aircraft and stock
@@ -385,8 +385,10 @@ steps of 0.1 seconds while requests, stock, and events change across the
 region.
 Requests arrive for the first eight hours of that 8.5-hour day. A run
 with 1,280 aircraft and no model calls took about 16 minutes on one
-worker, roughly 32 times faster than real time. Model inference is timed
-separately from the simulator.
+worker, roughly 32 times faster than real time; a run with 5,120 aircraft
+took two and a half hours of processor time on one worker, about 3.4
+times faster than real time, at a peak of 1.5 GB of memory. Model
+inference is timed separately from the simulator.
 
 \section{Experimental Evaluation}
 \label{sec:experiments}

@@ -213,6 +213,12 @@ impl RunWriter {
         // byte-identical worker check.
         let mut writer = WriteOptions::new()
             .compression(Some(Compression::Zstd))
+            // mcap's default starts a zstd thread pool for every chunk.
+            // TODO: writing the file from one thread of its own, fed frames
+            // over a bounded channel, overlaps compression with the next
+            // tick and took a 64-hub hour from 17.2 s to 14.4 s with
+            // identical bytes. Not done, to keep the recorder a plain writer.
+            .compression_threads(1)
             .profile("ripple")
             // DEVNOTE: Two identical 3-step plugin_defaults runs differed first
             // at the summary's Schema record: mcap 0.25 repeats schemas and

@@ -15,6 +15,7 @@ use crate::{
     math::{EulerAngles, KinematicState, Quaternion, Vec3},
     plugin::estimator::{Contact, ContactList},
     plugin::{EntityInfo, PluginRegistry, Readings, StepTime},
+    pubsub::messages::Mailbox,
     scenario::EntityGroupConfig,
 };
 
@@ -184,10 +185,7 @@ impl Entity {
     pub fn set_health(&mut self, health: i32) {
         self.health = health
     }
-    pub(crate) fn mailboxes<'a>(
-        &'a mut self,
-        mailboxes: &mut Vec<crate::pubsub::messages::Mailbox<'a>>,
-    ) {
+    pub(crate) fn mailboxes<'a>(&'a mut self, mailboxes: &mut Vec<Mailbox<'a>>) {
         self.plugins.mailboxes(mailboxes);
     }
     pub fn is_active(&self) -> bool {

@@ -4,11 +4,15 @@ use crate::plugin::*;
 use crate::{
     KinematicState, Vec3,
     common::{Rate, Terrain},
+    pubsub::messages::Mailbox,
     scenario::EntityGroupConfig,
 };
 use crate::{plugin::CompiledPlugin, ports::Signals};
 use anyhow::{Context, Result, bail, ensure};
-use std::{collections::BTreeMap, sync::Arc};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    sync::Arc,
+};
 
 /// The name missions use for the engine's perfect measurement.
 pub(crate) const PERFECT: &str = "perfect";
@@ -136,14 +140,11 @@ impl CompiledStack {
             .map(|plugin| registry.sensors.compile(plugin))
             .collect::<Result<Vec<_>>>()?;
 
-        let mut upstream = Vec::new();
+        let mut upstream: Vec<Port> = Vec::new();
         for autonomy in &autonomies {
             autonomy.ports.connect(&[], &autonomy.name)?;
             for output in &autonomy.ports.outputs {
-                if let Some(previous) = upstream
-                    .iter()
-                    .find(|port: &&Port| port.name == output.name)
-                {
+                if let Some(previous) = upstream.iter().find(|port| port.name == output.name) {
                     ensure!(
                         previous == output,
                         "autonomies disagree on port '{}'",
@@ -166,8 +167,8 @@ impl CompiledStack {
                 sensor.name
             );
         }
-        let mut occurrences = std::collections::BTreeMap::new();
-        let mut identities = std::collections::BTreeSet::new();
+        let mut occurrences = BTreeMap::new();
+        let mut identities = BTreeSet::new();
         let mut sensor_identities = Vec::new();
         for source in &config.sensors {
             let count = occurrences.entry(&source.name).or_insert(0);
@@ -372,8 +373,8 @@ impl<T: ?Sized> Slot<T> {
             fixed_drawings: Arc::from(Vec::new()),
         }
     }
-    fn mailbox(&mut self) -> crate::pubsub::messages::Mailbox<'_> {
-        crate::pubsub::messages::Mailbox {
+    fn mailbox(&mut self) -> Mailbox<'_> {
+        Mailbox {
             endpoint: &self.endpoint,
             messages: &mut self.messages,
         }
@@ -799,7 +800,7 @@ impl PluginStack {
         self.command_times.clear();
         Ok(())
     }
-    pub fn mailboxes<'a>(&'a mut self, mailboxes: &mut Vec<crate::pubsub::messages::Mailbox<'a>>) {
+    pub fn mailboxes<'a>(&'a mut self, mailboxes: &mut Vec<Mailbox<'a>>) {
         for slot in &mut self.autonomies {
             mailboxes.push(slot.mailbox());
         }

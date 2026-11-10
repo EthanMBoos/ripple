@@ -42,13 +42,13 @@ impl Localization for PassThroughState {
             .inputs
             .latest::<KinematicState>("state")?
             .context("the state sensor gave no reading at startup")?;
-        *context.state = reading.value.clone();
+        *context.state = *reading.value;
         Ok(())
     }
 
     fn step(&mut self, context: &mut LocalizationContext) -> Result<()> {
         if let Some(reading) = context.inputs.fresh::<KinematicState>("state")? {
-            *context.state = reading.value.clone();
+            *context.state = *reading.value;
         }
         Ok(())
     }

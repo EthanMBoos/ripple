@@ -25,7 +25,7 @@ impl Sensor for StateBroadcast {
     }
 
     fn step(&mut self, context: &mut SensorContext) -> Result<()> {
-        let state = context.truth.clone();
+        let state = *context.truth;
         context.messages.publish(NETWORK, TOPIC, state)?;
         Ok(())
     }

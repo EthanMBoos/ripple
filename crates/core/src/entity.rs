@@ -19,7 +19,7 @@ use crate::{
     scenario::EntityGroupConfig,
 };
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Serialize)]
 pub struct EntitySnapshot {
     pub id: i32,
     /// Index of the mission entity group this entity came from.
@@ -288,7 +288,7 @@ impl Entity {
             id: self.id,
             group_index: self.group_index,
             team_id: self.team_id,
-            truth: self.truth.clone(),
+            truth: self.truth,
             active: self.active,
         }
     }

@@ -742,7 +742,7 @@ impl PluginStack {
     /// written. Any other localization updates belief once per tick.
     pub fn follow_perfect_state(&mut self, truth: &KinematicState) {
         if self.belief_is_perfect_state {
-            self.belief = truth.clone();
+            self.belief = *truth;
         }
     }
     /// The estimation step: deliver this tick's readings, then localization, then

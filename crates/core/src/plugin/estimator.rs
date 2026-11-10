@@ -21,7 +21,7 @@ use crate::{
 };
 
 /// One contact as a tracker knows it.
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Contact {
     pub id: i32,
     pub team_id: i32,
@@ -36,7 +36,7 @@ impl Contact {
             id: snapshot.id,
             team_id: snapshot.team_id,
             group_index: snapshot.group_index,
-            state: snapshot.truth.clone(),
+            state: snapshot.truth,
             sampled_at_s,
         }
     }

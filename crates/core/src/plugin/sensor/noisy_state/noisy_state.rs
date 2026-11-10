@@ -116,7 +116,7 @@ impl StateNoise {
         let error = |quantity: usize, axis: usize, bias: [f64; 3], stddev: [f64; 3]| {
             quantities[quantity].normal(&[axis as u64], bias[axis], stddev[axis])
         };
-        let mut measured = truth.clone();
+        let mut measured = *truth;
         for axis in 0..3 {
             measured.position_world_m[axis] = truth.position_world_m[axis]
                 + error(0, axis, self.position_bias_m, self.position_stddev_m)?;

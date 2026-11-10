@@ -126,7 +126,7 @@ impl Localization for CommandLog {
             .or_default()
             .push((commands.substeps(), speeds, dts));
         if let Some(reading) = context.inputs.latest::<KinematicState>("state")? {
-            *context.state = reading.value.clone();
+            *context.state = *reading.value;
         }
         Ok(())
     }
@@ -168,7 +168,7 @@ impl Localization for Echo {
             .messages
             .publish("LocalNetwork", "echo", context.time.time_s)?;
         if let Some(reading) = context.inputs.latest::<KinematicState>("state")? {
-            *context.state = reading.value.clone();
+            *context.state = *reading.value;
         }
         Ok(())
     }

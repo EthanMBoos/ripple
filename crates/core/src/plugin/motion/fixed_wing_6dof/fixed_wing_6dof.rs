@@ -874,7 +874,7 @@ mod tests {
             velocity_world_mps: Vector3::new(120.0, 0.0, 0.0),
             ..KinematicState::default()
         };
-        let (mut still_truth, mut windy_truth) = (start.clone(), start);
+        let (mut still_truth, mut windy_truth) = (start, start);
         windy_truth.velocity_world_mps += wind_mps;
         let control = Control {
             throttle: 0.6,

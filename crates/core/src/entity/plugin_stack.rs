@@ -25,7 +25,7 @@ fn select_sources(
     role: &str,
     config: &crate::scenario::PluginConfig,
     inputs: &[Input],
-    sensors: &[(String, ReadingKind)],
+    sensors: &[CompiledPlugin<dyn Sensor>],
 ) -> Result<Vec<(String, Source)>> {
     for named in config.inputs.keys() {
         ensure!(
@@ -51,18 +51,19 @@ fn select_sources(
                 );
                 Source::Perfect(input.kind)
             } else {
-                let (_, kind) = sensors
+                let kind = sensors
                     .iter()
-                    .find(|(name, _)| name == sensor)
+                    .find(|candidate| &candidate.instance_name == sensor)
+                    .map(|candidate| candidate.reading_kind)
                     .with_context(|| {
                         format!(
                             "{role} input '{}' names sensor '{sensor}', but the entity's sensors are: {}",
                             input.role,
-                            sensors.iter().map(|(name, _)| name.as_str()).collect::<Vec<_>>().join(", ")
+                            sensors.iter().map(|candidate| candidate.instance_name.as_str()).collect::<Vec<_>>().join(", ")
                         )
                     })?;
                 ensure!(
-                    input.kind == ReadingKind::Other || *kind == input.kind,
+                    input.kind == ReadingKind::Other || kind == input.kind,
                     "{role} input '{}' needs {:?} readings, but sensor '{sensor}' gives {kind:?}",
                     input.role,
                     input.kind
@@ -72,17 +73,17 @@ fn select_sources(
         } else if perfect_allowed(input) {
             let candidates: Vec<_> = sensors
                 .iter()
-                .filter(|(_, kind)| *kind == input.kind)
+                .filter(|candidate| candidate.reading_kind == input.kind)
                 .collect();
             match candidates.as_slice() {
                 [] => Source::Perfect(input.kind),
-                [(name, _)] => Source::Sensor(name.clone()),
+                [candidate] => Source::Sensor(candidate.instance_name.clone()),
                 _ => bail!(
                     "{role} input '{}' could use any of the sensors {}; name one in the mission's `inputs`",
                     input.role,
                     candidates
                         .iter()
-                        .map(|(name, _)| name.as_str())
+                        .map(|candidate| candidate.instance_name.as_str())
                         .collect::<Vec<_>>()
                         .join(", ")
                 ),
@@ -116,7 +117,6 @@ pub(crate) struct CompiledStack {
     controllers: Vec<CompiledPlugin<dyn Controller>>,
     motion: CompiledPlugin<dyn MotionModel>,
     sensors: Vec<CompiledPlugin<dyn Sensor>>,
-    sensor_identities: Vec<String>,
     localization: CompiledPlugin<dyn Localization>,
     localization_sources: Vec<(String, Source)>,
     tracking: CompiledPlugin<dyn Tracking>,
@@ -135,7 +135,7 @@ impl CompiledStack {
             .map(|plugin| registry.controllers.compile(plugin))
             .collect::<Result<Vec<_>>>()?;
         let motion = registry.motion.compile(&config.motion_model)?;
-        let sensors = config
+        let mut sensors = config
             .sensors
             .iter()
             .map(|plugin| registry.sensors.compile(plugin))
@@ -168,31 +168,27 @@ impl CompiledStack {
                 sensor.name
             );
         }
+        // A sensor's instance name: the mission's, else its plugin name and
+        // how many of that plugin came before it.
         let mut occurrences = BTreeMap::new();
-        let mut identities = BTreeSet::new();
-        let mut sensor_identities = Vec::new();
-        for source in &config.sensors {
+        let mut names = BTreeSet::new();
+        for (source, sensor) in config.sensors.iter().zip(&mut sensors) {
             let count = occurrences.entry(&source.name).or_insert(0);
-            let identity = source
+            sensor.instance_name = source
                 .instance
                 .clone()
                 .unwrap_or_else(|| format!("{}:{}", source.name, count));
             *count += 1;
             ensure!(
-                identities.insert(identity.clone()),
-                "duplicate sensor instance '{identity}'"
+                names.insert(sensor.instance_name.clone()),
+                "duplicate sensor instance '{}'",
+                sensor.instance_name
             );
-            sensor_identities.push(identity);
         }
         ensure!(
-            !sensor_identities.iter().any(|name| name == PERFECT),
+            !sensors.iter().any(|sensor| sensor.instance_name == PERFECT),
             "'{PERFECT}' is reserved for the perfect measurement; rename the sensor"
         );
-        let sensor_kinds: Vec<_> = sensor_identities
-            .iter()
-            .cloned()
-            .zip(sensors.iter().map(|sensor| sensor.reading_kind))
-            .collect();
         // Estimators run every tick: fresh-reading flags and recorded commands
         // cover one tick, so a skipped tick would lose them. An estimator that
         // wants to do expensive work less often decides that in its own `step`.
@@ -211,21 +207,16 @@ impl CompiledStack {
             "localization",
             &config.localization,
             &localization.inputs,
-            &sensor_kinds,
+            &sensors,
         )?;
         let tracking = registry.tracking.compile(&config.tracking)?;
-        let tracking_sources = select_sources(
-            "tracking",
-            &config.tracking,
-            &tracking.inputs,
-            &sensor_kinds,
-        )?;
+        let tracking_sources =
+            select_sources("tracking", &config.tracking, &tracking.inputs, &sensors)?;
         Ok(Self {
             autonomies,
             controllers,
             motion,
             sensors,
-            sensor_identities,
             localization,
             localization_sources,
             tracking,
@@ -255,19 +246,12 @@ impl CompiledStack {
         let sensors = self
             .sensors
             .iter()
-            .zip(&self.sensor_identities)
             .enumerate()
-            .map(|(index, (plugin, identity))| {
-                let random = PluginRandom::new(seed, entity_id, identity);
+            .map(|(index, plugin)| {
+                let random = PluginRandom::new(seed, entity_id, &plugin.instance_name);
                 let name = format!("sensor/{}:{index}", plugin.name);
                 Slot::new(plugin, random, endpoint(entity_id, name))
             })
-            .collect();
-        let sensor_readings = self
-            .sensor_identities
-            .iter()
-            .cloned()
-            .zip(self.sensors.iter().map(|sensor| sensor.reading_kind))
             .collect();
         let localization_identity = format!("localization/{}:0", self.localization.name);
         let localization = Slot::new(
@@ -292,7 +276,6 @@ impl CompiledStack {
             controllers,
             motion,
             sensors,
-            sensor_readings,
             localization,
             localization_sources: self.localization_sources.clone(),
             tracking,
@@ -356,6 +339,9 @@ struct Slot<T: ?Sized> {
     plugin: Box<T>,
     io: PluginIo,
     rate: Rate,
+    /// Sensors only: see `CompiledPlugin`.
+    instance_name: String,
+    reading_kind: ReadingKind,
     messages: Messages,
     random: PluginRandom,
     /// The plugin's fixed drawings, asked once in `start`.
@@ -369,6 +355,8 @@ impl<T: ?Sized> Slot<T> {
             plugin: (compiled.instantiate)(),
             io: PluginIo::new(&compiled.ports),
             rate: compiled.rate.clone(),
+            instance_name: compiled.instance_name.clone(),
+            reading_kind: compiled.reading_kind,
             messages: Messages::default(),
             random,
             fixed_drawings: Arc::from(Vec::new()),
@@ -447,8 +435,6 @@ pub(crate) struct PluginStack {
     controllers: Vec<Slot<dyn Controller>>,
     motion: Slot<dyn MotionModel>,
     sensors: Vec<Slot<dyn Sensor>>,
-    /// Each sensor's instance name and reading kind, in sensor order.
-    sensor_readings: Vec<(String, ReadingKind)>,
     localization: Slot<dyn Localization>,
     localization_sources: Vec<(String, Source)>,
     tracking: Slot<dyn Tracking>,
@@ -494,7 +480,7 @@ impl PluginStack {
             })
             .with_context(|| format!("initialize '{}'", self.motion.name))?;
         // A sensor's startup reading sees the initial truth as motion set it up.
-        for (sensor, (name, kind)) in self.sensors.iter_mut().zip(&self.sensor_readings) {
+        for sensor in &mut self.sensors {
             sensor.messages.time_s = time.time_s;
             sensor
                 .plugin
@@ -505,8 +491,8 @@ impl PluginStack {
                     messages: &mut sensor.messages,
                     contacts_truth: TruthContacts::from(&[][..]),
                     random: sensor.random.at_tick(time.tick),
-                    name,
-                    kind: *kind,
+                    name: &sensor.instance_name,
+                    kind: sensor.reading_kind,
                     pending: &mut self.pending,
                 })
                 .with_context(|| format!("initialize '{}'", sensor.name))?;
@@ -591,8 +577,9 @@ impl PluginStack {
     /// For the optional observation trace.
     pub(crate) fn pending_measurements(&self) -> Result<Vec<Measurement<'_>>> {
         let mut measurements = Vec::new();
-        for (slot, (name, kind)) in self.sensors.iter().zip(&self.sensor_readings) {
-            let states = match kind {
+        for slot in &self.sensors {
+            let name = &slot.instance_name;
+            let states = match slot.reading_kind {
                 ReadingKind::State => self
                     .pending
                     .get::<KinematicState>(name)?
@@ -715,7 +702,7 @@ impl PluginStack {
         truth: &KinematicState,
         contacts_truth: TruthContacts<'_>,
     ) -> Result<()> {
-        for (sensor, (name, kind)) in self.sensors.iter_mut().zip(&self.sensor_readings) {
+        for sensor in &mut self.sensors {
             sensor.messages.time_s = time.time_s;
             // A sensor's dt stays the tick's: its reading is taken at the tick's end.
             if sensor.rate.due(time.dt_s).is_none() {
@@ -730,8 +717,8 @@ impl PluginStack {
                     messages: &mut sensor.messages,
                     contacts_truth,
                     random: sensor.random.at_tick(time.tick),
-                    name,
-                    kind: *kind,
+                    name: &sensor.instance_name,
+                    kind: sensor.reading_kind,
                     pending: &mut self.pending,
                 })
                 .with_context(|| format!("step '{}' on entity {}", sensor.name, entity.id))?;

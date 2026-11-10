@@ -19,6 +19,10 @@ pub(crate) struct CompiledPlugin<T: ?Sized> {
     pub inputs: Vec<Input>,
     /// Sensors only: what their readings contain.
     pub reading_kind: ReadingKind,
+    /// Sensors only: the sensor instance name, which its readings are keyed
+    /// by and estimators select it by. The mission's `instance`, else
+    /// `<plugin>:<count>`, filled in by the entity's stack.
+    pub instance_name: String,
     pub instantiate: Box<dyn Fn() -> Box<T> + Send + Sync>,
 }
 impl<T: ?Sized> CompiledPlugin<T> {
@@ -32,6 +36,7 @@ impl<T: ?Sized> CompiledPlugin<T> {
             rate: Rate::new(params.loop_rate_hz)?,
             inputs: Vec::new(),
             reading_kind: ReadingKind::Other,
+            instance_name: String::new(),
             instantiate: Box::new(instantiate),
         })
     }

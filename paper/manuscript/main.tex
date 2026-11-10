@@ -143,25 +143,24 @@ model managers' moves. All results are from simulation.}
 \begin{abstract}
 Language models are increasingly proposed as high-level managers for robot
 fleets. An order that helps one part of a fleet can change what the rest can
-do later. We present Ripple, a
-multi-agent simulator that runs managers, dispatchers, vehicle autonomies,
-controllers, and dynamics through complete missions and scores their
-flights. Without model calls, one worker runs an 8.5-hour mission with
-1,280 aircraft in about 16 minutes and with 5,120 aircraft in about two
-and a half hours. In a regional delivery study, managers set local rules,
-lend an aircraft for one flight, or move aircraft and stock. We find that
+do later. We present Ripple, a multi-agent simulator for studying what
+fleet managers see and what they can order. Without model calls, one worker
+runs an 8.5-hour mission with 1,280 aircraft in about 16 minutes and with
+5,120 aircraft in about two and a half hours. In a regional delivery study,
+managers set local rules, authorize
+neighboring hubs to serve requests, or order moves of aircraft and stock.
+We find that
 language-model managers over-help: they relocate vehicles and stock even
-when local rules and lent flights produce more on-time deliveries. The cost
-is in the action itself: with no model involved, moving aircraft and stock
-instead of keeping to local rules loses about two percentage points at four
-hubs and 13 at 64.
+when local rules and lent flights produce more on-time deliveries. Under
+the main workload, moving aircraft and stock instead of keeping to local
+rules loses about two percentage points at four hubs and 13 at 64, even
+with no model involved. Longer surges can make moving worthwhile.
 We test models as live managers, as vetoes over a replanner's orders, and
-as authors of rules that run without them. Each arrangement still chooses
-to relocate aircraft or transfer stock. Under the relocating policy and
-in most live-manager and veto runs, the added missed requests concentrate
-at hubs that gave aircraft or stock. One model moves little and lends
-widely, but also underperforms. Telling a model what its past moves cost
-does not reliably reduce them. Showing only hubs with problems
+as authors of rules that run without them. Under the relocating policy and
+in most live-manager and veto runs, the added late or undelivered requests
+concentrate at hubs that gave aircraft or stock. One model moves little and
+lends widely, but also underperforms. Telling a model what its past moves
+cost does not reliably reduce moves. Showing only hubs with problems
 reduces moves for some models at 16 hubs but does not stop them at 64; a
 reserve rule limits moves directly. All results are from simulation.
 \end{abstract}
@@ -473,23 +472,23 @@ runs for this last question are planned.
 \label{sec:cost}
 
 \begin{table}[t]
-\caption{The six fixed policies by region size: mean on-time score over
-ten seeds at 4, 16, and 64 hubs and three at 256 and 1,024. Relocating,
-the replanner, and Return move aircraft and stock between hubs; the other
-three never do. Return sends relocated aircraft home when the event ends.}
+\caption{Mean weighted on-time score by region size. Ten seeds at 4--64
+hubs; three at 256 and 1,024. Bold marks row maxima at displayed precision.}
 \label{tab:policies}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3pt}
 \begin{tabular}{@{}rcccccc@{}}
 \toprule
-Hubs & No manager & Replanner & Local rules & Lending & Relocating & Return \\
+& \multicolumn{3}{c}{No relocation} & \multicolumn{3}{c}{Relocation allowed} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Hubs & No manager & Local rules & Lending & Relocating & Replanner & Return \\
 \midrule
-4     & 0.73 & 0.78 & 0.78 & 0.81 & 0.77 & 0.79 \\
-16    & 0.68 & 0.69 & 0.74 & 0.74 & 0.66 & 0.72 \\
-64    & 0.67 & 0.62 & 0.73 & 0.73 & 0.60 & 0.67 \\
-256   & 0.65 & 0.61 & 0.71 & 0.71 & 0.58 & 0.66 \\
-1,024 & 0.65 & 0.61 & 0.71 & 0.71 & 0.58 & 0.65 \\
+4     & 0.73 & 0.78 & \textbf{0.81} & 0.77 & 0.78 & 0.79 \\
+16    & 0.68 & \textbf{0.74} & \textbf{0.74} & 0.66 & 0.69 & 0.72 \\
+64    & 0.67 & \textbf{0.73} & \textbf{0.73} & 0.60 & 0.62 & 0.67 \\
+256   & 0.65 & \textbf{0.71} & \textbf{0.71} & 0.58 & 0.61 & 0.66 \\
+1,024 & 0.65 & \textbf{0.71} & \textbf{0.71} & 0.58 & 0.61 & 0.65 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -500,23 +499,22 @@ Hubs & No manager & Replanner & Local rules & Lending & Relocating & Return \\
 % relocating policy and the original 40 CLI model runs, each against local
 % rules on the same day. Updating Luna requires the original per-hub totals.
 \resizebox{\columnwidth}{!}{\input{figures/loss-by-hub.tex}}
-\caption{Where additional missed requests fall. For each day, every hub is
-sorted by its part in that day's moves: it gave aircraft or stock, it only
-received, or neither. Bars show how many more of a group's own requests
-were late or undelivered than under local rules on the same day, per
-hundred requests, pooled over the days of each condition: the relocating
-policy, the models giving the orders, and the models as a veto over the
-replanner. \textbf{TODO: replace Luna's original CLI runs in this figure
-with the API reruns.} For the
-relocating policy and the vetoes the loss is at the hubs that gave.
-Luna's CLI live-manager losses are more widely distributed
-(Section~\ref{sec:models}).}
+\caption{Where additional missed requests fall. Hubs are grouped by whether
+they gave aircraft or stock, only received, or neither. Bars show additional
+late or undelivered requests per hundred compared with Local rules on the
+same seeded day. Results are pooled across the labeled number of runs;
+the live-manager and veto groups each combine Haiku, Sonnet, Opus, and Luna.
+Positive values indicate worse performance than Local rules.
+\textbf{TODO: replace Luna's original CLI runs in this figure with the API
+reruns.} For the
+relocating policy and vetoes, losses concentrate at donor hubs;
+live-manager losses are more widely distributed (Section~\ref{sec:models}).}
 \label{fig:loss}
 \end{figure}
 
 Table~\ref{tab:policies} compares the fixed policies, with no model involved.
-The score is the weighted share of requests delivered on time, so a difference
-of 0.01 is one point. At four hubs, lending scores 0.81 and the replanner
+The score is the weighted share of requests delivered on time.
+At four hubs, lending scores 0.81 and the replanner
 ties local rules at 0.78. At 16 hubs, local rules and lending score 0.74,
 the replanner 0.69, and relocating 0.66. The gap between local rules and
 relocating reaches 13 points at 64 hubs and stays there at 256 and 1,024.
@@ -559,27 +557,28 @@ The per-seed scores are in the appendix.
 \label{sec:models}
 
 \begin{table*}[t]
-\caption{Four models as the live manager, shown only the hubs with a
-problem, and as a veto over the replanner: mean on-time score and mean
-moves made (kept, for the veto) over three seeds at 16 hubs and two at 64.
-On the same seeds local rules score 0.74 at 16 hubs and 0.71 at 64, and
-the replanner 0.71 and 0.62. The per-seed numbers are in the appendix.}
+\caption{Mean weighted on-time score and move orders by model and role.
+Three seeds at 16 hubs; two at 64. For vetoes, moves are retained orders.}
 \label{tab:models}
 \centering
-\begin{tabular}{llcccc}
+\begin{tabular}{llrrrrrrrr}
 \toprule
-Hubs & Role & Haiku & Sonnet & Opus & GPT-6 Luna \\
+& & \multicolumn{2}{c}{Haiku} & \multicolumn{2}{c}{Sonnet} & \multicolumn{2}{c}{Opus} & \multicolumn{2}{c}{GPT-6 Luna} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+Hubs & Role & Score & Moves & Score & Moves & Score & Moves & Score & Moves \\
 \midrule
-16 & Live & 0.70, 8 moves   & 0.62, 47  & 0.69, 70  & 0.57, 3   \\
-16 & Veto & 0.71, 19 kept   & 0.72, 25  & 0.71, 23  & 0.72, 22  \\
-64 & Live & 0.66, 64 moves  & 0.59, 301 & 0.56, 481 & 0.62, 56  \\
-64 & Veto & 0.63, 152 kept  & 0.63, 171 & 0.65, 146 & 0.62, 164  \\
+16 & Live & 0.70 & 8   & 0.62 & 47  & 0.69 & 70  & 0.57 & 3  \\
+16 & Veto & 0.71 & 19  & 0.72 & 25  & 0.71 & 23  & 0.72 & 22 \\
+64 & Live & 0.66 & 64  & 0.59 & 301 & 0.56 & 481 & 0.62 & 56 \\
+64 & Veto & 0.63 & 152 & 0.63 & 171 & 0.65 & 146 & 0.62 & 164 \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
 Table~\ref{tab:models} puts the four models in the live-manager and veto
-roles on the same days. Of the 40 runs, 39 score below local rules.
+roles on the same seeded days. Local rules average 0.74 at 16 hubs and
+0.71 at 64; the replanner averages 0.71 and 0.62, respectively. Per-seed
+results are in the appendix. Of the 40 runs, 39 score below local rules.
 Shown only hubs with a problem, Haiku as a live manager makes 7 to 10
 moves per 16-hub day; Sonnet makes 36 to 56, and Opus 54 to 85. GPT-6
 Luna makes 1 to 6, yet also trails local rules: it grants 164 to 193

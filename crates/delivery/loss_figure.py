@@ -10,7 +10,7 @@ the run's summary.json with the per-hub columns. For every day with a local
 run, each other arm's hubs are split by their part in that run: hubs that
 gave aircraft or stock, hubs that only received, and the rest. The figure
 shows, per hundred of a group's own requests, how many more were late or
-undelivered than under local rules on the same day, averaged over the days
+undelivered than under local rules on the same day, pooled over the runs
 of each condition: the move policy, the models giving the orders (X), and
 the models as a veto over the replanner. The numbers are printed to
 stderr, to check against the text.
@@ -125,7 +125,7 @@ def draw(rates, days):
             x -= gap_cm
             out.append(f"\\node[anchor=north, text width={cluster_cm + 0.3:.2f}cm, align=center, inner sep=1pt, "
                        f"font=\\tiny, text=black!70] at ({x - cluster_cm / 2:.2f},{y(y_bottom) - 0.08:.2f}) "
-                       f"{{{label}, {days[key]} days}};")
+                       f"{{{label}, {days[key]} runs}};")
             x += 0.3
         x += 0.2
         label = f"{size[4:]} hubs"
@@ -148,7 +148,7 @@ def main():
     rates = per_hundred(totals)
     for key in sorted(rates):
         cells = totals[key]
-        print(key, f"{days[key]} days;", " ".join(
+        print(key, f"{days[key]} runs;", " ".join(
             f"{g}: {cells[g][0] / days[key]:+.1f}/day, {rates[key][g]:+.1f} per 100 of {cells[g][1] / days[key]:.0f}"
             for g in GROUPS), file=sys.stderr)
     sys.stdout.write(draw(rates, days))

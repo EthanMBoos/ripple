@@ -13,11 +13,16 @@
 //! what is grounded or reserved, what comes first, where flights detour, and
 //! where vehicles and stock are.
 //!
-//! The fleet manager is called when events start and every `check_in_s`.
-//! Its orders are checked for sense (a hub that exists, a site that exists)
-//! under every interface; the `checker` interface also refuses orders that
-//! break a rule or cannot be flown, with the reason. With `feedback`, the
-//! next call reports each order's estimate and what was flown since.
+//! The fleet managers are called when events start and every `check_in_s`.
+//! There is one over the region or one per cluster of hubs, and above the
+//! clusters there may be one more; each is a `Manager` (`calls.rs`) with a
+//! `Scope` (`scope.rs`) that filters what it is shown, gates what it may
+//! order, and places the rules it gives, and a decider: the replanner, a
+//! policy file, a model, or the model vetoing the replanner. Orders are
+//! checked for sense (a hub that exists, a site that exists) under every
+//! interface; the `checker` interface also refuses orders that break a rule
+//! or cannot be flown, with the reason. With `feedback`, the next call
+//! reports each order's estimate and what was flown since.
 //!
 //! The helpers sit beside this file: `dispatcher/config.rs` holds the
 //! mission keys and their checks, `day.rs` the day's requests and each
@@ -40,9 +45,9 @@ use crate::messages::{
     DELIVERED_TOPIC, Delivered, ManagerKind, MissReason, Request, STATUS_TOPIC, Status,
 };
 use crate::model::ModelManager;
-use crate::order::Rules;
-use crate::policy::Policy;
 use crate::region::{Region, RegionConfig, SiteKind};
+use crate::rules::Rules;
+use crate::scope::Scope;
 use crate::view::ViewKind;
 
 mod apply;
@@ -52,6 +57,7 @@ mod config;
 mod day;
 mod prompt;
 
+use calls::{Decider, Manager};
 pub use config::DispatcherConfig;
 use day::TRANSFER_REQUEST_BASE;
 
@@ -115,11 +121,9 @@ pub struct Dispatcher {
     events: Vec<Event>,
     announced: usize,
     rules: Rules,
-    model: Option<ModelManager>,
-    policy: Option<Policy>,
-    /// The model above the clusters, and what it is told about its orders.
-    top_model: Option<ModelManager>,
-    top_feedback: Vec<String>,
+    /// The fleet managers: one over the region or one per cluster, in
+    /// cluster order, then the manager above the clusters if there is one.
+    managers: Vec<Manager>,
     /// Relocations and stock flights applied since the last call, for the
     /// cost feedback: the order's words and the donor hub.
     move_costs: Vec<(String, u32)>,
@@ -129,10 +133,7 @@ pub struct Dispatcher {
     last_call_s: f64,
     /// Events that started since the last call, waiting for the next one.
     queued_events: Vec<usize>,
-    /// What each manager is told about its last orders, by its position
-    /// among the clusters (0 for a manager over the whole region).
-    feedback: BTreeMap<usize, Vec<String>>,
-    /// Since the last call, by hub.
+    /// Since the last call, by hub; a manager reads its own hubs'.
     tallies: BTreeMap<u32, Tally>,
     changed: bool,
     last_decision_s: f64,
@@ -164,32 +165,71 @@ impl Autonomy for Dispatcher {
                 )
             })
             .collect();
-        let model = config.manager.kind.uses_model().then(|| ModelManager {
-            model: config.manager.model.clone(),
+        let model = |name: &str, max_queries| ModelManager {
+            model: name.to_string(),
             sample: config.manager.sample,
             system: config.manager.prompt.system.clone(),
             cache_dir: config.manager.cache_dir.clone().into(),
             client: config.manager.client().expect("checked in configure"),
             offline: config.manager.offline,
-            max_queries: if config.manager.view == ViewKind::Queries {
-                config.manager.max_queries
-            } else {
-                0
-            },
-        });
-        let top_model = (config.manager.top_kind == ManagerKind::Model).then(|| ModelManager {
-            model: if config.manager.top_model.is_empty() {
-                config.manager.model.clone()
-            } else {
-                config.manager.top_model.clone()
-            },
-            sample: config.manager.sample,
-            system: config.manager.prompt.system.clone(),
-            cache_dir: config.manager.cache_dir.clone().into(),
-            client: config.manager.client().expect("checked in configure"),
-            offline: config.manager.offline,
-            max_queries: 0,
-        });
+            max_queries,
+        };
+        let queries = if config.manager.view == ViewKind::Queries {
+            config.manager.max_queries
+        } else {
+            0
+        };
+        // The managers over the region or the clusters, then the one above.
+        let decider = match config.manager.kind {
+            ManagerKind::Replanner => Some(Decider::Replanner),
+            ManagerKind::Policy => Some(Decider::Policy(
+                config
+                    .manager
+                    .policy()
+                    .expect("checked in configure")
+                    .expect("a policy file for kind policy"),
+            )),
+            ManagerKind::Model => Some(Decider::Model(model(&config.manager.model, queries))),
+            ManagerKind::Veto => Some(Decider::Veto(model(&config.manager.model, queries))),
+            ManagerKind::None | ManagerKind::Scripted => None,
+        };
+        let scopes = match config.manager.cluster_side {
+            0 => vec![Scope::Region],
+            side => region
+                .clusters(side)
+                .into_iter()
+                .map(Scope::Cluster)
+                .collect(),
+        };
+        let mut managers = Vec::new();
+        if let Some(decider) = decider {
+            for scope in scopes {
+                managers.push(Manager {
+                    scope,
+                    decider: decider.clone(),
+                    above: false,
+                    feedback: Vec::new(),
+                });
+            }
+        }
+        let top_decider = match config.manager.top_kind {
+            ManagerKind::Replanner => Some(Decider::Replanner),
+            ManagerKind::Model => {
+                let name = if config.manager.top_model.is_empty() {
+                    &config.manager.model
+                } else {
+                    &config.manager.top_model
+                };
+                Some(Decider::Model(model(name, 0)))
+            }
+            _ => None,
+        };
+        managers.extend(top_decider.map(|decider| Manager {
+            scope: Scope::Region,
+            decider,
+            above: true,
+            feedback: Vec::new(),
+        }));
         Self {
             config: config.clone(),
             region,
@@ -211,16 +251,12 @@ impl Autonomy for Dispatcher {
             events: Vec::new(),
             announced: 0,
             rules: Rules::default(),
-            model,
-            policy: config.manager.policy().expect("checked in configure"),
-            top_model,
-            top_feedback: Vec::new(),
+            managers,
             move_costs: Vec::new(),
             late_by_hub: BTreeMap::new(),
             scripted_fired: 0,
             last_call_s: 0.0,
             queued_events: Vec::new(),
-            feedback: BTreeMap::new(),
             tallies: BTreeMap::new(),
             changed: false,
             last_decision_s: f64::NEG_INFINITY,

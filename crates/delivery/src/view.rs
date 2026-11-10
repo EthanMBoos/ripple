@@ -67,7 +67,7 @@ pub struct ClusterView {
     pub out: u32,
 }
 
-/// The state at one call.
+/// The state at one call, limited to the hubs the manager's scope covers.
 pub struct Snapshot<'a> {
     pub time_s: f64,
     pub day_s: f64,
@@ -78,14 +78,11 @@ pub struct Snapshot<'a> {
     pub range_margin: f64,
     /// Every vehicle's latest report, by ID.
     pub vehicles: Vec<&'a Status>,
-    /// The events in force, limited and trimmed to the cluster when there
-    /// is one (`events_touching` in `dispatcher.rs`).
+    /// The events in force as the manager is told them (`Scope::events_shown`).
     pub active_events: Vec<Event>,
     pub items: &'a [String],
     /// A hub's starting stock of each item, the scale for stock decisions.
     pub units_per_item: u32,
-    /// The hubs this view is limited to, for a fleet manager per cluster.
-    pub cluster: Option<Vec<u32>>,
 }
 
 pub fn km(point: Vec3) -> String {

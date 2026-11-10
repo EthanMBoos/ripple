@@ -1,49 +1,86 @@
-//! When each fleet manager is called and with what, and what becomes of its
-//! orders. A round calls every manager, one over the region or one per
-//! cluster, then records and applies the orders, then calls the manager
-//! above the clusters if there is one.
+//! The fleet managers: who they are, when they are called, with what, and
+//! what becomes of their orders. Every manager is a `Manager`: a scope, a
+//! way of deciding, and what it was last told. A call goes to one tier at a
+//! time, the managers over the region or over each cluster first, then the
+//! manager above the clusters. A tier's orders are recorded and applied once
+//! all of its managers have decided, so they decide on the same state.
 
 use anyhow::Result;
 use ripple_core::plugin::AgentContext;
 
 use super::Dispatcher;
-use crate::event::{Event, EventsConfig};
+use crate::event::Event;
 use crate::messages::{CALL_TOPIC, ManagerCall, ManagerKind, ORDER_TOPIC, OrderRecord};
-use crate::model::Asked;
+use crate::model::ModelManager;
 use crate::order::{Order, Outcome, parse_veto};
-use crate::region::Region;
+use crate::policy::Policy;
 use crate::replanner;
+use crate::scope::Scope;
 
-/// An order as a manager gave it: from which cluster, if any (its position
-/// among the clusters and its hubs; none for a manager over the whole
-/// region), and whether the call had nothing new to act on.
-pub(super) struct Given {
-    pub order: Order,
-    pub index: usize,
-    pub cluster: Option<Vec<u32>>,
-    pub quiet: bool,
+/// How a manager decides what to order.
+#[derive(Clone)]
+pub(super) enum Decider {
+    /// Classical code reading the events (`replanner.rs`).
+    Replanner,
+    /// Rules written once as data (`policy.rs`).
+    Policy(Policy),
+    /// A language model reading the prompt (`prompt.rs`, `model.rs`).
+    Model(ModelManager),
+    /// The replanner plans and the model drops what it objects to.
+    Veto(ModelManager),
 }
 
-/// One round of calls: the orders given, the calls made, the events of the
-/// round for the manager above the clusters, and how many orders in each
-/// cluster's model reply did not read.
+impl Decider {
+    pub fn kind(&self) -> ManagerKind {
+        match self {
+            Decider::Replanner => ManagerKind::Replanner,
+            Decider::Policy(_) => ManagerKind::Policy,
+            Decider::Model(_) => ManagerKind::Model,
+            Decider::Veto(_) => ManagerKind::Veto,
+        }
+    }
+}
+
+/// One fleet manager: what it is responsible for, how it decides, and what
+/// it is told about its last orders at its next call. The manager above the
+/// clusters is one too: its scope is the region, it is shown cluster totals
+/// instead of hubs, and it gives only moves between clusters.
+pub(super) struct Manager {
+    pub scope: Scope,
+    pub decider: Decider,
+    pub above: bool,
+    pub feedback: Vec<String>,
+}
+
+/// An order as it was given: by which manager (its position in `managers`;
+/// none for an order scripted in the mission, which no scope limits), and
+/// whether the call had nothing new to act on.
+struct Given {
+    order: Order,
+    manager: Option<usize>,
+    quiet: bool,
+}
+
+/// What one tier decided this call, before any of it is applied: the orders
+/// given, the calls made, and for each manager that asked a model, how many
+/// orders in its reply did not read.
 #[derive(Default)]
 struct Round {
     orders: Vec<Given>,
     calls: Vec<ManagerCall>,
-    due_events: Vec<u32>,
-    unreadable: Vec<(usize, u32)>,
+    replied: Vec<(usize, u32)>,
+}
+
+/// One manager's decision.
+struct Decided {
+    orders: Vec<Order>,
+    /// None when the manager had nothing to decide and made no call.
+    call: Option<ManagerCall>,
+    unreadable: u32,
+    quiet: bool,
 }
 
 impl Dispatcher {
-    /// The clusters a manager is called for: every hub at once, or blocks.
-    pub(super) fn clusters(&self) -> Vec<Option<Vec<u32>>> {
-        match self.config.manager.cluster_side {
-            0 => vec![None],
-            side => self.region.clusters(side).into_iter().map(Some).collect(),
-        }
-    }
-
     /// Whether the fleet manager is called now, and with which events: the
     /// ones queued since the last call, once the call budget allows it, or a
     /// check-in with none.
@@ -70,8 +107,9 @@ impl Dispatcher {
         due.iter().map(|&index| &self.events[index]).collect()
     }
 
-    /// Calls the fleet manager when events start and at check-ins, and
-    /// applies what it orders.
+    /// Calls the fleet managers when events start and at check-ins, and
+    /// applies what they order: first the managers over the region or the
+    /// clusters, then the manager above the clusters.
     pub(super) fn manage(
         &mut self,
         context: &mut AgentContext,
@@ -83,52 +121,32 @@ impl Dispatcher {
         if kind == ManagerKind::None && top_kind == ManagerKind::None {
             return Ok(());
         }
+        let due: Vec<usize>;
         let round = if kind == ManagerKind::Scripted {
             let round = self.scripted_round(now_s);
             if round.orders.is_empty() {
                 return Ok(());
             }
+            due = Vec::new();
             round
         } else {
-            let Some(due) = self.due(now_s, new_events) else {
+            let Some(queued) = self.due(now_s, new_events) else {
                 return Ok(());
             };
-            let events = self.started(&due);
-            match kind {
-                ManagerKind::None => Round {
-                    due_events: events.iter().map(|e| e.id).collect(),
-                    ..Round::default()
-                },
-                ManagerKind::Replanner | ManagerKind::Policy => {
-                    self.planned_round(now_s, &events, kind)
-                }
-                ManagerKind::Veto => self.veto_round(now_s, &events)?,
-                ManagerKind::Model => self.model_round(now_s, &events)?,
-                ManagerKind::Scripted => unreachable!("handled above"),
-            }
+            due = queued;
+            self.decide_tier(now_s, &self.started(&due), false)?
         };
         if kind.uses_model() {
-            // The feedback and the tally start again from this call.
-            self.feedback.clear();
+            // What is reported since the last call starts again from it.
             self.tallies.clear();
             self.move_costs.clear();
             self.late_by_hub.clear();
-            for (index, count) in &round.unreadable {
-                let lines = self.feedback.entry(*index).or_default();
-                for _ in 0..*count {
-                    lines.push("an order could not be read and was dropped".into());
-                }
-            }
         }
         self.last_call_s = now_s;
-        self.record_orders(context, now_s, kind, round.orders)?;
-        for call in round.calls {
-            context
-                .messages
-                .publish("GlobalNetwork", CALL_TOPIC, call)?;
-        }
+        self.record(context, now_s, round)?;
         if top_kind != ManagerKind::None {
-            self.manage_top(context, now_s, &round.due_events)?;
+            let round = self.decide_tier(now_s, &self.started(&due), true)?;
+            self.record(context, now_s, round)?;
         }
         Ok(())
     }
@@ -142,8 +160,7 @@ impl Dispatcher {
         {
             round.orders.push(Given {
                 order: scripted[self.scripted_fired].order.clone(),
-                index: 0,
-                cluster: None,
+                manager: None,
                 quiet: false,
             });
             self.scripted_fired += 1;
@@ -151,278 +168,156 @@ impl Dispatcher {
         round
     }
 
-    /// The replanner's or the policy's orders, cluster by cluster.
-    fn planned_round(&self, now_s: f64, events: &[&Event], kind: ManagerKind) -> Round {
-        let mut round = Round {
-            due_events: events.iter().map(|e| e.id).collect(),
-            ..Round::default()
-        };
-        for (index, cluster) in self.clusters().into_iter().enumerate() {
-            let snapshot = self.snapshot_of(now_s, cluster.as_deref());
-            let mine = events_touching(events, cluster.as_deref(), &self.config.events);
-            let mine: Vec<&Event> = mine.iter().collect();
-            let planned = match &self.policy {
-                Some(policy) => policy.plan(&mine, &snapshot),
-                None => replanner::plan(&mine, &snapshot),
-            };
-            let quiet = mine.is_empty() && !snapshot.has_exceptions();
-            round.calls.push(ManagerCall {
-                time_s: now_s,
-                source: kind,
-                top: false,
-                quiet,
-                events: mine.iter().map(|e| e.id).collect(),
-                prompt_chars: 0,
-                reply_chars: 0,
-                queries: 0,
-                orders: planned.len() as u32,
-                dropped: 0,
-                parse_failed: false,
-            });
-            round.orders.extend(planned.into_iter().map(|order| Given {
-                order,
-                index,
-                cluster: cluster.clone(),
-                quiet,
-            }));
-        }
-        round
-    }
-
-    /// The replanner plans and the model drops what it objects to, cluster
-    /// by cluster; a cluster with nothing proposed makes no call.
-    fn veto_round(&self, now_s: f64, events: &[&Event]) -> Result<Round> {
-        let kind = ManagerKind::Veto;
-        let mut round = Round {
-            due_events: events.iter().map(|e| e.id).collect(),
-            ..Round::default()
-        };
-        for (index, cluster) in self.clusters().into_iter().enumerate() {
-            let snapshot = self.snapshot_of(now_s, cluster.as_deref());
-            let mine = events_touching(events, cluster.as_deref(), &self.config.events);
-            let mine: Vec<&Event> = mine.iter().collect();
-            let planned = replanner::plan(&mine, &snapshot);
-            let quiet = mine.is_empty() && !snapshot.has_exceptions();
-            let situation = self.situation(index, &snapshot, &mine, Some(&planned));
-            let model = self.model.as_ref().expect("a model manager");
-            let (reply, parse_failed, dropped) = if planned.is_empty() {
-                // Nothing to review: no call.
-                (String::new(), false, Vec::new())
-            } else {
-                let reply = model.ask_text(&situation)?;
-                match parse_veto(&reply) {
-                    Some(drop) => (reply, false, drop),
-                    None => (reply, true, Vec::new()),
-                }
-            };
-            let kept: Vec<Order> = planned
-                .iter()
-                .enumerate()
-                .filter(|(i, _)| !dropped.contains(&(i + 1)))
-                .map(|(_, o)| o.clone())
-                .collect();
-            if !planned.is_empty() {
-                round.calls.push(ManagerCall {
-                    time_s: now_s,
-                    source: kind,
-                    top: false,
-                    quiet,
-                    events: mine.iter().map(|e| e.id).collect(),
-                    prompt_chars: situation.len(),
-                    reply_chars: reply.len(),
-                    queries: 0,
-                    orders: kept.len() as u32,
-                    dropped: (planned.len() - kept.len()) as u32,
-                    parse_failed,
-                });
+    /// Every manager of one tier decides, each on the same state.
+    fn decide_tier(&self, now_s: f64, events: &[&Event], above: bool) -> Result<Round> {
+        let mut round = Round::default();
+        for (index, manager) in self.managers.iter().enumerate() {
+            if manager.above != above {
+                continue;
             }
-            round.orders.extend(kept.into_iter().map(|order| Given {
-                order,
-                index,
-                cluster: cluster.clone(),
-                quiet,
-            }));
-        }
-        Ok(round)
-    }
-
-    /// The model's orders, cluster by cluster.
-    fn model_round(&self, now_s: f64, events: &[&Event]) -> Result<Round> {
-        let kind = ManagerKind::Model;
-        let mut round = Round {
-            due_events: events.iter().map(|e| e.id).collect(),
-            ..Round::default()
-        };
-        for (index, cluster) in self.clusters().into_iter().enumerate() {
-            let snapshot = self.snapshot_of(now_s, cluster.as_deref());
-            let mine = events_touching(events, cluster.as_deref(), &self.config.events);
-            let mine: Vec<&Event> = mine.iter().collect();
-            let situation = self.situation(index, &snapshot, &mine, None);
-            let quiet = mine.is_empty() && !snapshot.has_exceptions();
-            let asked: Asked = self
-                .model
-                .as_ref()
-                .expect("a model manager")
-                .ask(&situation, &snapshot)?;
-            round.calls.push(ManagerCall {
-                time_s: now_s,
-                source: kind,
-                top: false,
-                quiet,
-                events: mine.iter().map(|e| e.id).collect(),
-                prompt_chars: asked.prompt_chars,
-                reply_chars: asked.reply_chars,
-                queries: asked.queries,
-                orders: asked.orders.len() as u32 + asked.unreadable,
-                dropped: 0,
-                parse_failed: asked.parse_failed,
-            });
-            round.unreadable.push((index, asked.unreadable));
+            let decided = self.decide(manager, now_s, events)?;
+            round.calls.extend(decided.call);
+            if manager.decider.kind().uses_model() {
+                round.replied.push((index, decided.unreadable));
+            }
             round
                 .orders
-                .extend(asked.orders.into_iter().map(|order| Given {
+                .extend(decided.orders.into_iter().map(|order| Given {
                     order,
-                    index,
-                    cluster: cluster.clone(),
-                    quiet,
+                    manager: Some(index),
+                    quiet: decided.quiet,
                 }));
         }
         Ok(round)
     }
 
-    /// Checks each order against its cluster, applies it, publishes what
-    /// became of it, and keeps the feedback for a model's next call.
-    fn record_orders(
-        &mut self,
-        context: &mut AgentContext,
-        now_s: f64,
-        kind: ManagerKind,
-        orders: Vec<Given>,
-    ) -> Result<()> {
+    /// One manager's decision: its scope's share of the events and view,
+    /// then its orders by its decider.
+    fn decide(&self, manager: &Manager, now_s: f64, events: &[&Event]) -> Result<Decided> {
+        let snapshot = self.snapshot_of(now_s, &manager.scope);
+        let mine = manager.scope.events_shown(events, &self.config.events);
+        let mine: Vec<&Event> = mine.iter().collect();
+        let quiet = mine.is_empty() && !snapshot.has_exceptions();
+        let mut call = ManagerCall {
+            time_s: now_s,
+            source: manager.decider.kind(),
+            top: manager.above,
+            quiet,
+            events: mine.iter().map(|e| e.id).collect(),
+            prompt_chars: 0,
+            reply_chars: 0,
+            queries: 0,
+            orders: 0,
+            dropped: 0,
+            parse_failed: false,
+        };
+        let mut unreadable = 0;
+        let clusters = || self.region.clusters(self.config.manager.cluster_side);
+        let orders = match &manager.decider {
+            Decider::Replanner if manager.above => {
+                replanner::plan_top(&mine, &snapshot, &clusters())
+            }
+            Decider::Replanner => replanner::plan(&mine, &snapshot),
+            Decider::Policy(policy) => policy.plan(&mine, &snapshot),
+            Decider::Model(model) => {
+                let situation = if manager.above {
+                    self.top_situation(manager, &snapshot, &mine, &clusters())
+                } else {
+                    self.situation(manager, &snapshot, &mine, None)
+                };
+                let asked = model.ask(&situation, &snapshot)?;
+                call.prompt_chars = asked.prompt_chars;
+                call.reply_chars = asked.reply_chars;
+                call.queries = asked.queries;
+                call.parse_failed = asked.parse_failed;
+                unreadable = asked.unreadable;
+                asked.orders
+            }
+            Decider::Veto(model) => {
+                let planned = replanner::plan(&mine, &snapshot);
+                if planned.is_empty() {
+                    // Nothing to review: no call.
+                    return Ok(Decided {
+                        orders: Vec::new(),
+                        call: None,
+                        unreadable: 0,
+                        quiet,
+                    });
+                }
+                let situation = self.situation(manager, &snapshot, &mine, Some(&planned));
+                let reply = model.ask_text(&situation)?;
+                let dropped = parse_veto(&reply).unwrap_or_else(|| {
+                    call.parse_failed = true;
+                    Vec::new()
+                });
+                let kept: Vec<Order> = planned
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| !dropped.contains(&(i + 1)))
+                    .map(|(_, o)| o.clone())
+                    .collect();
+                call.prompt_chars = situation.len();
+                call.reply_chars = reply.len();
+                call.dropped = (planned.len() - kept.len()) as u32;
+                kept
+            }
+        };
+        call.orders = orders.len() as u32 + unreadable;
+        Ok(Decided {
+            orders,
+            call: Some(call),
+            unreadable,
+            quiet,
+        })
+    }
+
+    /// Applies a tier's round: each order is checked against its giver's
+    /// scope and tier, applied, and published with what became of it, and a
+    /// model manager is told about its orders at its next call.
+    fn record(&mut self, context: &mut AgentContext, now_s: f64, round: Round) -> Result<()> {
+        for (index, unreadable) in round.replied {
+            let feedback = &mut self.managers[index].feedback;
+            feedback.clear();
+            for _ in 0..unreadable {
+                feedback.push("an order could not be read and was dropped".into());
+            }
+        }
         for Given {
             order,
-            index,
-            cluster,
+            manager,
             quiet,
-        } in orders
+        } in round.orders
         {
-            let outside = cluster
-                .as_deref()
-                .is_some_and(|c| names_outside(&order, c, &self.region));
-            let (outcome, feedback) = if order.is_top() {
+            let (scope, above, kind) = match manager {
+                Some(index) => {
+                    let who = &self.managers[index];
+                    (who.scope.clone(), who.above, who.decider.kind())
+                }
+                None => (Scope::Region, false, ManagerKind::Scripted),
+            };
+            let (outcome, feedback) = if order.is_top() && !above {
                 (
                     Outcome::Refused("top_only"),
                     "only the manager above the clusters moves between clusters".to_string(),
                 )
-            } else if outside {
-                (
-                    Outcome::Refused("outside_cluster"),
-                    "names a hub or site outside your cluster".to_string(),
-                )
-            } else {
-                self.apply(context, now_s, &order, cluster.as_deref())?
-            };
-            let record = OrderRecord {
-                time_s: now_s,
-                source: kind,
-                top: false,
-                quiet,
-                order: order.clone(),
-                outcome,
-                feedback: feedback.clone(),
-            };
-            context
-                .messages
-                .publish("GlobalNetwork", ORDER_TOPIC, record)?;
-            if kind.uses_model() {
-                self.feedback
-                    .entry(index)
-                    .or_default()
-                    .push(format!("{}: {outcome}; {feedback}", order.describe()));
-            }
-            self.changed = true;
-        }
-        Ok(())
-    }
-
-    /// The call above the clusters, after theirs: it sees cluster totals and
-    /// may only move vehicles and stock between clusters.
-    fn manage_top(
-        &mut self,
-        context: &mut AgentContext,
-        now_s: f64,
-        event_ids: &[u32],
-    ) -> Result<()> {
-        let top_kind = self.config.manager.top_kind;
-        let clusters = self.region.clusters(self.config.manager.cluster_side);
-        let snapshot = self.snapshot_of(now_s, None);
-        let events: Vec<&Event> = self
-            .events
-            .iter()
-            .filter(|e| event_ids.contains(&e.id))
-            .collect();
-        let quiet = events.is_empty() && !snapshot.has_exceptions();
-        let (orders, call) = match top_kind {
-            ManagerKind::Replanner => {
-                let planned = replanner::plan_top(&events, &snapshot, &clusters);
-                let call = ManagerCall {
-                    time_s: now_s,
-                    source: top_kind,
-                    top: true,
-                    quiet,
-                    events: event_ids.to_vec(),
-                    prompt_chars: 0,
-                    reply_chars: 0,
-                    queries: 0,
-                    orders: planned.len() as u32,
-                    dropped: 0,
-                    parse_failed: false,
-                };
-                (planned, call)
-            }
-            ManagerKind::Model => {
-                let situation = self.top_situation(&snapshot, &events, &clusters);
-                let asked: Asked = self
-                    .top_model
-                    .as_ref()
-                    .expect("a top model")
-                    .ask(&situation, &snapshot)?;
-                let call = ManagerCall {
-                    time_s: now_s,
-                    source: top_kind,
-                    top: true,
-                    quiet,
-                    events: event_ids.to_vec(),
-                    prompt_chars: asked.prompt_chars,
-                    reply_chars: asked.reply_chars,
-                    queries: 0,
-                    orders: asked.orders.len() as u32 + asked.unreadable,
-                    dropped: 0,
-                    parse_failed: asked.parse_failed,
-                };
-                self.top_feedback.clear();
-                for _ in 0..asked.unreadable {
-                    self.top_feedback
-                        .push("an order could not be read and was dropped".into());
-                }
-                (asked.orders, call)
-            }
-            _ => unreachable!("checked in configure"),
-        };
-        for order in orders {
-            let (outcome, feedback) = if order.is_top() {
-                self.apply(context, now_s, &order, None)?
-            } else {
+            } else if above && !order.is_top() {
                 (
                     Outcome::Refused("moves_only"),
                     "the manager above the clusters only moves vehicles and stock between clusters"
                         .to_string(),
                 )
+            } else if !scope.covers_order(&order, &self.region) {
+                (
+                    Outcome::Refused("outside_cluster"),
+                    "names a hub or site outside your cluster".to_string(),
+                )
+            } else {
+                self.apply(context, now_s, &order, &scope)?
             };
             let record = OrderRecord {
                 time_s: now_s,
-                source: top_kind,
-                top: true,
+                source: kind,
+                top: above,
                 quiet,
                 order: order.clone(),
                 outcome,
@@ -431,157 +326,20 @@ impl Dispatcher {
             context
                 .messages
                 .publish("GlobalNetwork", ORDER_TOPIC, record)?;
-            if top_kind == ManagerKind::Model {
-                self.top_feedback
+            if kind.uses_model()
+                && let Some(index) = manager
+            {
+                self.managers[index]
+                    .feedback
                     .push(format!("{}: {outcome}; {feedback}", order.describe()));
             }
             self.changed = true;
         }
-        context
-            .messages
-            .publish("GlobalNetwork", CALL_TOPIC, call)?;
+        for call in round.calls {
+            context
+                .messages
+                .publish("GlobalNetwork", CALL_TOPIC, call)?;
+        }
         Ok(())
-    }
-}
-
-/// Whether an order names a hub or a site outside the cluster. A site is
-/// placed by its hub; a site that does not exist is left for `apply` to
-/// refuse by name.
-fn names_outside(order: &Order, cluster: &[u32], region: &Region) -> bool {
-    order.hubs_named().iter().any(|h| !cluster.contains(h))
-        || order
-            .sites_named()
-            .iter()
-            .filter_map(|code| region.site(code))
-            .any(|site| !cluster.contains(&site.hub))
-}
-
-/// The events a cluster's manager is told about: those naming one of its
-/// hubs, with the hubs outside the cluster left out and the text written
-/// again for the shorter list, and those naming none (an area only).
-pub(super) fn events_touching(
-    events: &[&Event],
-    cluster: Option<&[u32]>,
-    texts: &EventsConfig,
-) -> Vec<Event> {
-    events
-        .iter()
-        .filter(|e| {
-            cluster.is_none_or(|c| e.hubs.is_empty() || e.hubs.iter().any(|h| c.contains(h)))
-        })
-        .map(|e| {
-            let mut event = (*e).clone();
-            if let Some(cluster) = cluster {
-                let before = event.hubs.len();
-                event.hubs.retain(|h| cluster.contains(h));
-                if event.hubs.len() < before {
-                    event.text = texts.text(&event);
-                }
-            }
-            event
-        })
-        .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use std::collections::BTreeMap;
-
-    use super::*;
-    use crate::event::EventKind;
-    use crate::messages::Urgency;
-    use crate::region::RegionConfig;
-
-    fn four_hubs() -> Region {
-        Region::new(&RegionConfig {
-            hubs: 4,
-            hub_spacing_m: 15_000.0,
-            ..RegionConfig::default()
-        })
-        .unwrap()
-    }
-
-    #[test]
-    fn a_trimmed_events_text_names_only_the_clusters_hubs() {
-        let texts = EventsConfig {
-            text: BTreeMap::from([(
-                EventKind::Surge,
-                "A surge near {hubs} from minute {from}.".into(),
-            )]),
-            ..EventsConfig::default()
-        };
-        let mut surge = Event {
-            id: 1,
-            kind: EventKind::Surge,
-            at_min: 10.0,
-            until_min: 70.0,
-            hubs: vec![1, 2, 3],
-            ..Event::default()
-        };
-        surge.text = texts.text(&surge);
-        let corridor = Event {
-            id: 2,
-            kind: EventKind::Corridor,
-            at_min: 20.0,
-            until_min: 80.0,
-            text: "a corridor".into(),
-            ..Event::default()
-        };
-        let all = [&surge, &corridor];
-        let mine = events_touching(&all, Some(&[1, 2]), &texts);
-        assert_eq!(mine.len(), 2);
-        assert_eq!(mine[0].hubs, vec![1, 2]);
-        assert_eq!(mine[0].text, "A surge near hubs 1, 2 from minute 10.");
-        assert_eq!(
-            mine[1].text, "a corridor",
-            "an event naming no hub is shared"
-        );
-        let theirs = events_touching(&all, Some(&[4]), &texts);
-        assert_eq!(theirs.len(), 1, "only the corridor reaches hub 4's cluster");
-        let flat = events_touching(&all, None, &texts);
-        assert_eq!(
-            flat[0].text, surge.text,
-            "a flat manager's text is unchanged"
-        );
-    }
-
-    #[test]
-    fn a_site_outside_the_cluster_is_outside() {
-        let region = four_hubs();
-        let cluster = [1, 2];
-        let inside = Order::Reserve {
-            hub: 1,
-            count: 1,
-            site: "1H1".into(),
-            until_min: 60.0,
-        };
-        let pad = Order::UsePad {
-            site: "3H1".into(),
-            until_min: 60.0,
-        };
-        let lend = Order::ServeFrom {
-            site: "1H1".into(),
-            hubs: vec![3],
-        };
-        let trauma = Order::Prioritize {
-            site: None,
-            urgency: Some(Urgency::Trauma),
-            until_min: 60.0,
-        };
-        let unknown = Order::UsePad {
-            site: "9H9".into(),
-            until_min: 60.0,
-        };
-        assert!(!names_outside(&inside, &cluster, &region));
-        assert!(names_outside(&pad, &cluster, &region));
-        assert!(names_outside(&lend, &cluster, &region));
-        assert!(
-            !names_outside(&trauma, &cluster, &region),
-            "scoped when applied"
-        );
-        assert!(
-            !names_outside(&unknown, &cluster, &region),
-            "refused by name later"
-        );
     }
 }

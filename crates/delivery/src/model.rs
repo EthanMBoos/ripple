@@ -18,6 +18,7 @@ use crate::client::Client;
 use crate::order::{Order, Reply, parse_reply};
 use crate::view::Snapshot;
 
+#[derive(Clone)]
 pub struct ModelManager {
     pub model: String,
     pub sample: u32,

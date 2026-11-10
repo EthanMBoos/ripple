@@ -6,23 +6,23 @@
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
-use super::calls::events_touching;
 use super::config::EventsAs;
-use super::{Dispatcher, Tally};
+use super::{Dispatcher, Manager, Tally};
 use crate::event::{Event, hub_list};
 use crate::messages::{Phase, RequestKind, VehicleClass};
 use crate::order::{Order, QUERY_SYNTAX, SYNTAX, TOP_SYNTAX, VETO_SYNTAX};
+use crate::scope::Scope;
 use crate::view::{HubView, Snapshot, ViewKind};
 
 impl Dispatcher {
-    /// The state at one call, limited to a cluster's hubs when given one.
-    pub(super) fn snapshot_of(&self, now_s: f64, cluster: Option<&[u32]>) -> Snapshot<'_> {
+    /// The state at one call, limited to the hubs the scope covers.
+    pub(super) fn snapshot_of(&self, now_s: f64, scope: &Scope) -> Snapshot<'_> {
         let waiting = self.waiting();
         let mut hubs: Vec<HubView> = self
             .region
             .hubs
             .iter()
-            .filter(|hub| cluster.is_none_or(|c| c.contains(&hub.id)))
+            .filter(|hub| scope.covers_hub(hub.id))
             .map(|hub| HubView {
                 id: hub.id,
                 position_world_m: hub.position_world_m,
@@ -82,24 +82,19 @@ impl Dispatcher {
             vehicles: self
                 .fleet
                 .values()
-                .filter(|v| cluster.is_none_or(|c| c.contains(&v.hub)))
+                .filter(|v| scope.covers_hub(v.hub))
                 .collect(),
-            active_events: events_touching(&active, cluster, &self.config.events),
+            active_events: scope.events_shown(&active, &self.config.events),
             items: &self.config.stock.items,
             units_per_item: self.config.stock.units_per_item,
-            cluster: cluster.map(<[u32]>::to_vec),
         }
     }
 
-    /// The prompt for one call: the time, the events, the feedback, the fleet
-    /// view, the rules in force, and the orders available. With `proposed`,
-    /// the replanner's orders are listed for the veto manager instead of the
-    /// order syntax.
-    /// What happened since the last call at the hubs in view.
-    fn tally_for(&self, cluster: Option<&[u32]>) -> Tally {
+    /// What happened since the last call at the hubs the scope covers.
+    fn tally_for(&self, scope: &Scope) -> Tally {
         let mut total = Tally::default();
         for (hub, tally) in &self.tallies {
-            if cluster.is_some_and(|c| !c.contains(hub)) {
+            if !scope.covers_hub(*hub) {
                 continue;
             }
             total.delivered += tally.delivered;
@@ -113,15 +108,20 @@ impl Dispatcher {
         total
     }
 
+    /// The prompt for one manager's call, everything the model reads: the
+    /// time, the events, the feedback and tally for its scope, the fleet
+    /// view, the rules in force that reach it, and the orders available.
+    /// With `proposed`, the replanner's orders are listed for the veto
+    /// manager instead of the order syntax.
     pub(super) fn situation(
         &self,
-        index: usize,
+        who: &Manager,
         snapshot: &Snapshot<'_>,
         new_events: &[&Event],
         proposed: Option<&[Order]>,
     ) -> String {
         let manager = &self.config.manager;
-        let cluster = snapshot.cluster.as_deref();
+        let scope = &who.scope;
         let minute = |s: f64| format!("{:.0}", s / 60.0);
         let mut text = String::new();
         let _ = writeln!(
@@ -130,13 +130,13 @@ impl Dispatcher {
             minute(snapshot.time_s),
             minute(snapshot.day_s)
         );
-        if let Some(cluster) = &snapshot.cluster {
+        if let Scope::Cluster(hubs) = scope {
             let _ = writeln!(
                 text,
                 "You manage hubs {} only, one cluster of the region; the other clusters \
                  have their own fleet manager, and an order naming a hub or site outside \
                  yours is refused.",
-                hub_list(cluster)
+                hub_list(hubs)
             );
         }
         let event_line = |event: &Event| match manager.events_as {
@@ -163,13 +163,13 @@ impl Dispatcher {
             }
         }
         if manager.feedback {
-            if let Some(lines) = self.feedback.get(&index).filter(|l| !l.is_empty()) {
+            if !who.feedback.is_empty() {
                 text.push_str("\nYour last orders:\n");
-                for line in lines {
+                for line in &who.feedback {
                     let _ = writeln!(text, "- {line}");
                 }
             }
-            let tally = self.tally_for(cluster);
+            let tally = self.tally_for(scope);
             let mut since = format!(
                 "\nSince your last call: {} delivered ({} on time, {} late)",
                 tally.delivered, tally.on_time, tally.late
@@ -187,7 +187,7 @@ impl Dispatcher {
             text.push_str(&since);
             text.push_str(".\n");
             if manager.cost_feedback {
-                let lines = self.cost_lines(cluster);
+                let lines = self.cost_lines(scope);
                 if !lines.is_empty() {
                     text.push_str("\nAt the hubs your moves took from:\n");
                     for line in lines {
@@ -198,8 +198,7 @@ impl Dispatcher {
         }
         text.push('\n');
         text.push_str(&snapshot.write(manager.view));
-        let site_hub = |code: &str| self.region.site(code).map(|site| site.hub);
-        let rules = self.rules.describe_within(cluster, &site_hub);
+        let rules = self.rules.shown_to(scope, &self.region);
         if !rules.is_empty() {
             text.push_str("\nOrders in force:\n");
             for line in rules {
@@ -229,9 +228,11 @@ impl Dispatcher {
         text
     }
 
-    /// The prompt for the manager above the clusters.
+    /// The prompt for the manager above the clusters: the time, the events,
+    /// its feedback, one line per cluster, and its two orders.
     pub(super) fn top_situation(
         &self,
+        who: &Manager,
         snapshot: &Snapshot<'_>,
         new_events: &[&Event],
         clusters: &[Vec<u32>],
@@ -275,14 +276,14 @@ impl Dispatcher {
                 let _ = writeln!(text, "- {}", event_line(event));
             }
         }
-        if manager.feedback && !self.top_feedback.is_empty() {
+        if manager.feedback && !who.feedback.is_empty() {
             text.push_str("\nYour last orders:\n");
-            for line in &self.top_feedback {
+            for line in &who.feedback {
                 let _ = writeln!(text, "- {line}");
             }
             if manager.cost_feedback && !self.move_costs.is_empty() {
                 text.push_str("\nAt the hubs your moves took from:\n");
-                for line in self.cost_lines(None) {
+                for line in self.cost_lines(&Scope::Region) {
                     let _ = writeln!(text, "- {line}");
                 }
             }
@@ -297,12 +298,12 @@ impl Dispatcher {
         text
     }
 
-    /// One line per move since the last call: the donor hub's idle vehicles
-    /// now and its late deliveries since.
-    pub(super) fn cost_lines(&self, cluster: Option<&[u32]>) -> Vec<String> {
+    /// One line per move since the last call from a donor hub the scope
+    /// covers: the hub's idle vehicles now and its late deliveries since.
+    pub(super) fn cost_lines(&self, scope: &Scope) -> Vec<String> {
         self.move_costs
             .iter()
-            .filter(|(_, donor)| cluster.is_none_or(|c| c.contains(donor)))
+            .filter(|(_, donor)| scope.covers_hub(*donor))
             .map(|(words, donor)| {
                 let idle = |class: VehicleClass| {
                     self.fleet

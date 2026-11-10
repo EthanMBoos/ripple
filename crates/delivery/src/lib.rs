@@ -32,6 +32,8 @@ mod order;
 mod policy;
 mod region;
 mod replanner;
+mod rules;
+mod scope;
 mod score;
 mod skill;
 mod view;

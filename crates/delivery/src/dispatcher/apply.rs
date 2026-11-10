@@ -11,8 +11,10 @@ use super::{Dispatcher, PendingRelocation, Return};
 use crate::messages::{
     Phase, RELOCATE_TOPIC, REQUEST_TOPIC, Relocate, Request, RequestKind, Status, Urgency,
 };
-use crate::order::{Avoid, Grounded, Order, Outcome, Priority, Reserve};
+use crate::order::{Order, Outcome};
 use crate::region::{SiteKind, horizontal_m};
+use crate::rules::{Avoid, Grounded, Priority, Reserve};
+use crate::scope::Scope;
 
 /// A refusal: the outcome names the reason, the note says why.
 fn refuse(reason: &'static str, why: String) -> Result<(Outcome, String)> {
@@ -36,21 +38,23 @@ fn until(now_s: f64, until_min: f64) -> Result<f64, (Outcome, String)> {
 
 impl Dispatcher {
     /// Checks an order and applies it. Returns the outcome and what the
-    /// fleet manager is told about it.
+    /// fleet manager is told about it. `scope` is the giver's, already
+    /// checked to cover every hub and site the order names; a rule that
+    /// names no place (an avoid, a priority by urgency) is placed by it.
     pub(super) fn apply(
         &mut self,
         context: &mut AgentContext,
         now_s: f64,
         order: &Order,
-        cluster: Option<&[u32]>,
+        scope: &Scope,
     ) -> Result<(Outcome, String)> {
         let (outcome, note) = match order {
             Order::Reserve { .. } => self.apply_reserve(now_s, order)?,
-            Order::Avoid { .. } => self.apply_avoid(now_s, order, cluster)?,
+            Order::Avoid { .. } => self.apply_avoid(now_s, order, scope)?,
             Order::Reposition { .. } => self.apply_reposition(context, now_s, order)?,
             Order::Transfer { .. } => self.apply_transfer(context, now_s, order)?,
             Order::Ground { .. } => self.apply_ground(now_s, order)?,
-            Order::Prioritize { .. } => self.apply_prioritize(now_s, order, cluster)?,
+            Order::Prioritize { .. } => self.apply_prioritize(now_s, order, scope)?,
             Order::ServeFrom { .. } => self.apply_serve_from(order)?,
             Order::UsePad { .. } => self.apply_use_pad(now_s, order)?,
             Order::Move { .. } => self.apply_move(context, now_s, order)?,
@@ -124,12 +128,12 @@ impl Dispatcher {
         ))
     }
 
-    /// Routes every flight around an area.
+    /// Routes the giver's flights around an area.
     fn apply_avoid(
         &mut self,
         now_s: f64,
         order: &Order,
-        cluster: Option<&[u32]>,
+        scope: &Scope,
     ) -> Result<(Outcome, String)> {
         let Order::Avoid { area, until_min } = order else {
             unreachable!("matched in apply")
@@ -144,13 +148,13 @@ impl Dispatcher {
         self.rules.avoids.push(Avoid {
             area: *area,
             until_s,
-            hubs: cluster.map(<[u32]>::to_vec),
+            scope: scope.clone(),
         });
         let hubs_inside: Vec<String> = self
             .region
             .hubs
             .iter()
-            .filter(|h| cluster.is_none_or(|c| c.contains(&h.id)))
+            .filter(|h| scope.covers_hub(h.id))
             .filter(|h| area.contains(h.position_world_m))
             .map(|h| h.id.to_string())
             .collect();
@@ -519,7 +523,7 @@ impl Dispatcher {
         &mut self,
         now_s: f64,
         order: &Order,
-        cluster: Option<&[u32]>,
+        scope: &Scope,
     ) -> Result<(Outcome, String)> {
         let Order::Prioritize {
             site,
@@ -543,18 +547,18 @@ impl Dispatcher {
             Ok(u) => u,
             Err(e) => return Ok(e),
         };
-        // A site is one hub's; an urgency alone would reach every hub, so a
-        // cluster's reaches its own.
-        let hubs = if site.is_none() {
-            cluster.map(<[u32]>::to_vec)
+        // A site priority is placed by its site; an urgency alone names no
+        // place, so the giver's scope places it.
+        let scope = if site.is_none() {
+            scope.clone()
         } else {
-            None
+            Scope::Region
         };
         self.rules.priorities.push(Priority {
             site,
             urgency: *urgency,
             until_s,
-            hubs,
+            scope,
         });
         Ok((Outcome::Applied, "those requests now come first".into()))
     }
@@ -716,7 +720,7 @@ impl Dispatcher {
                 to_hub,
                 until_min: None,
             };
-            let (outcome, note) = self.apply(context, now_s, &sub, None)?;
+            let (outcome, note) = self.apply(context, now_s, &sub, &Scope::Region)?;
             if outcome.is_refused() {
                 continue;
             }
@@ -787,7 +791,7 @@ impl Dispatcher {
             from_hub,
             to_hub,
         };
-        let (outcome, note) = self.apply(context, now_s, &sub, None)?;
+        let (outcome, note) = self.apply(context, now_s, &sub, &Scope::Region)?;
         Ok((outcome, format!("hub {from_hub} to hub {to_hub}: {note}")))
     }
 

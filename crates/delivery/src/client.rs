@@ -44,6 +44,7 @@ pub enum Via {
 
 /// One way of asking a model, built by `Client::new` from the mission's
 /// `provider`, `via`, `command`, and `host`.
+#[derive(Clone)]
 pub enum Client {
     /// `claude -p`: the client the study ran on.
     ClaudeCli {

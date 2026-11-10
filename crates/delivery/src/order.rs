@@ -15,6 +15,38 @@ use serde::{Deserialize, Serialize};
 use crate::area::{Area, tagged};
 use crate::messages::{Request, Urgency, VehicleClass};
 
+/// What became of an order. A refusal names its reason, which is also the
+/// score column that counts it (`refused_<reason>`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Outcome {
+    Applied,
+    /// Applied for what was there, less than the order asked.
+    Partial,
+    Refused(&'static str),
+}
+
+impl Outcome {
+    pub fn is_refused(self) -> bool {
+        matches!(self, Self::Refused(_))
+    }
+}
+
+impl std::fmt::Display for Outcome {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Applied => f.write_str("applied"),
+            Self::Partial => f.write_str("partial"),
+            Self::Refused(reason) => write!(f, "refused_{reason}"),
+        }
+    }
+}
+
+impl Serialize for Outcome {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str(self)
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
 pub enum Order {

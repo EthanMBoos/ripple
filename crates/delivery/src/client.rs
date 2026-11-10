@@ -506,9 +506,7 @@ mod tests {
     #[test]
     fn an_error_status_names_the_status_and_what_the_server_said() {
         let server = FakeServer::start(404, r#"{"error": "model 'llama9' not found"}"#);
-        let client = Client::Ollama {
-            url: server.url.clone(),
-        };
+        let client = Client::Ollama { url: server.url };
         let error = client
             .ask_once("llama9", "Manage.", "Fleet: ...", 0)
             .expect_err("a 404 is an error");

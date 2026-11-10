@@ -10,7 +10,7 @@ use super::Dispatcher;
 use crate::event::{Event, EventsConfig};
 use crate::messages::{CALL_TOPIC, ManagerCall, ManagerKind, ORDER_TOPIC, OrderRecord};
 use crate::model::Asked;
-use crate::order::{Order, parse_veto};
+use crate::order::{Order, Outcome, parse_veto};
 use crate::region::Region;
 use crate::replanner;
 
@@ -311,12 +311,12 @@ impl Dispatcher {
                 .is_some_and(|c| names_outside(&order, c, &self.region));
             let (outcome, feedback) = if order.is_top() {
                 (
-                    "refused_top_only".to_string(),
+                    Outcome::Refused("top_only"),
                     "only the manager above the clusters moves between clusters".to_string(),
                 )
             } else if outside {
                 (
-                    "refused_outside_cluster".to_string(),
+                    Outcome::Refused("outside_cluster"),
                     "names a hub or site outside your cluster".to_string(),
                 )
             } else {
@@ -328,7 +328,7 @@ impl Dispatcher {
                 top: false,
                 quiet,
                 order: order.clone(),
-                outcome: outcome.clone(),
+                outcome,
                 feedback: feedback.clone(),
             };
             context
@@ -414,7 +414,7 @@ impl Dispatcher {
                 self.apply(context, now_s, &order, None)?
             } else {
                 (
-                    "refused_moves_only".to_string(),
+                    Outcome::Refused("moves_only"),
                     "the manager above the clusters only moves vehicles and stock between clusters"
                         .to_string(),
                 )
@@ -425,7 +425,7 @@ impl Dispatcher {
                 top: true,
                 quiet,
                 order: order.clone(),
-                outcome: outcome.clone(),
+                outcome,
                 feedback: feedback.clone(),
             };
             context

@@ -30,7 +30,7 @@ use crate::messages::{
     MISSED_TOPIC, ManagerCall, Missed, ORDER_TOPIC, OrderRecord, Phase, RELOCATE_TOPIC,
     REQUEST_TOPIC, Relocate, Request, RequestKind, STATUS_TOPIC, SkillName, Status, Urgency,
 };
-use crate::order::Order;
+use crate::order::{Order, Outcome};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -412,7 +412,7 @@ impl DeliveryScore {
             if record.quiet {
                 count(&mut self.counts, "quiet_orders", 1.0);
             }
-            if record.outcome == "applied" || record.outcome == "partial" {
+            if !record.outcome.is_refused() {
                 count(&mut self.counts, "orders_applied", 1.0);
                 // Relocations and stock flights against lent flights.
                 match record.order.name() {
@@ -437,7 +437,7 @@ impl DeliveryScore {
                     &format!("applied_{}", record.order.name()),
                     1.0,
                 );
-                if record.outcome == "partial" {
+                if record.outcome == Outcome::Partial {
                     count(
                         &mut self.counts,
                         &format!("partial_{}", record.order.name()),
@@ -446,7 +446,7 @@ impl DeliveryScore {
                 }
             } else {
                 count(&mut self.counts, "orders_refused", 1.0);
-                count(&mut self.counts, &record.outcome, 1.0);
+                count(&mut self.counts, &record.outcome.to_string(), 1.0);
             }
         }
         Ok(())
@@ -488,23 +488,23 @@ impl DeliveryScore {
             let Some(area) = &event.area else {
                 continue;
             };
-            let inside: Vec<i32> = context
-                .contacts_truth
-                .iter()
-                .filter(|entity| {
-                    entity.active
-                        && entity.team_id == self.team
-                        && self
-                            .sent_s
-                            .get(&entity.id)
-                            .is_some_and(|sent_s| *sent_s >= event.at_s())
-                        && area.contains(entity.truth.position_world_m)
-                })
-                .map(|entity| entity.id)
-                .collect();
-            if !inside.is_empty() {
-                *self.area_breach_s.entry(event.kind).or_insert(0.0) += inside.len() as f64 * dt_s;
-                self.breached.extend(inside);
+            let mut inside = 0;
+            for entity in context.contacts_truth.iter() {
+                let sent_after_closure = self
+                    .sent_s
+                    .get(&entity.id)
+                    .is_some_and(|sent_s| *sent_s >= event.at_s());
+                if entity.active
+                    && entity.team_id == self.team
+                    && sent_after_closure
+                    && area.contains(entity.truth.position_world_m)
+                {
+                    inside += 1;
+                    self.breached.insert(entity.id);
+                }
+            }
+            if inside > 0 {
+                *self.area_breach_s.entry(event.kind).or_insert(0.0) += f64::from(inside) * dt_s;
             }
         }
     }

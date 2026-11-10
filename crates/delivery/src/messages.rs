@@ -3,7 +3,7 @@
 use ripple_core::Vec3;
 use serde::{Deserialize, Serialize};
 
-use crate::order::Order;
+use crate::order::{Order, Outcome};
 
 /// Each courier's state: on every change, and every `report_interval_s`.
 pub const STATUS_TOPIC: &str = "DeliveryStatus";
@@ -256,8 +256,7 @@ pub struct OrderRecord {
     /// Given on a call with no new event and nothing wrong in view.
     pub quiet: bool,
     pub order: Order,
-    /// `applied`, or why it was refused.
-    pub outcome: String,
+    pub outcome: Outcome,
     /// What the fleet manager is told about it next call, when feedback is on.
     pub feedback: String,
 }

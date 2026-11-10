@@ -1,5 +1,5 @@
 //! Each order's checks and effect. `apply` hands an order to its function,
-//! which returns the outcome (`applied`, `partial`, or `refused_<reason>`)
+//! which returns the outcome (applied, partial, or refused with a reason)
 //! and what the fleet manager is told about it. Every order is checked for
 //! sense (a hub that exists, a site that exists); the `checker` interface
 //! also refuses what breaks a rule or cannot be flown.
@@ -11,20 +11,20 @@ use super::{Dispatcher, PendingRelocation, Return};
 use crate::messages::{
     Phase, RELOCATE_TOPIC, REQUEST_TOPIC, Relocate, Request, RequestKind, Status, Urgency,
 };
-use crate::order::{Avoid, Grounded, Order, Priority, Reserve};
+use crate::order::{Avoid, Grounded, Order, Outcome, Priority, Reserve};
 use crate::region::{SiteKind, horizontal_m};
 
 /// A refusal: the outcome names the reason, the note says why.
-fn refuse(reason: &str, why: String) -> Result<(String, String)> {
-    Ok((format!("refused_{reason}"), why))
+fn refuse(reason: &'static str, why: String) -> Result<(Outcome, String)> {
+    Ok((Outcome::Refused(reason), why))
 }
 
 /// A minute of the day as seconds, if it is still to come.
-fn until(now_s: f64, until_min: f64) -> Result<f64, (String, String)> {
+fn until(now_s: f64, until_min: f64) -> Result<f64, (Outcome, String)> {
     let until_s = until_min * 60.0;
     if !until_s.is_finite() || until_s <= now_s {
         return Err((
-            "refused_past_time".into(),
+            Outcome::Refused("past_time"),
             format!(
                 "until_min {until_min} is not after minute {:.0}",
                 now_s / 60.0
@@ -35,15 +35,15 @@ fn until(now_s: f64, until_min: f64) -> Result<f64, (String, String)> {
 }
 
 impl Dispatcher {
-    /// Checks an order and applies it. Returns the outcome (`applied`, or
-    /// `refused_<reason>`) and what the fleet manager is told about it.
+    /// Checks an order and applies it. Returns the outcome and what the
+    /// fleet manager is told about it.
     pub(super) fn apply(
         &mut self,
         context: &mut AgentContext,
         now_s: f64,
         order: &Order,
         cluster: Option<&[u32]>,
-    ) -> Result<(String, String)> {
+    ) -> Result<(Outcome, String)> {
         let (outcome, note) = match order {
             Order::Reserve { .. } => self.apply_reserve(now_s, order)?,
             Order::Avoid { .. } => self.apply_avoid(now_s, order, cluster)?,
@@ -58,7 +58,7 @@ impl Dispatcher {
         };
         // A relocation or stock flight that went ahead is a cost at its donor
         // hub, reported with the next feedback.
-        if !outcome.starts_with("refused") {
+        if !outcome.is_refused() {
             match order {
                 Order::Reposition { from_hub, .. } | Order::Transfer { from_hub, .. } => {
                     self.move_costs.push((order.describe(), *from_hub));
@@ -74,7 +74,7 @@ impl Dispatcher {
     }
 
     /// Holds vehicles at a hub for one site.
-    fn apply_reserve(&mut self, now_s: f64, order: &Order) -> Result<(String, String)> {
+    fn apply_reserve(&mut self, now_s: f64, order: &Order) -> Result<(Outcome, String)> {
         let Order::Reserve {
             hub,
             count,
@@ -116,7 +116,7 @@ impl Dispatcher {
             until_s,
         });
         Ok((
-            "applied".into(),
+            Outcome::Applied,
             format!(
                 "{count} of hub {hub}'s {at_hub} vehicles held for {}",
                 site.code
@@ -130,7 +130,7 @@ impl Dispatcher {
         now_s: f64,
         order: &Order,
         cluster: Option<&[u32]>,
-    ) -> Result<(String, String)> {
+    ) -> Result<(Outcome, String)> {
         let Order::Avoid { area, until_min } = order else {
             unreachable!("matched in apply")
         };
@@ -162,7 +162,7 @@ impl Dispatcher {
                 hubs_inside.join(", ")
             )
         };
-        Ok(("applied".into(), note))
+        Ok((Outcome::Applied, note))
     }
 
     /// Flies idle vehicles to another hub, for good or until a minute.
@@ -171,7 +171,7 @@ impl Dispatcher {
         context: &mut AgentContext,
         now_s: f64,
         order: &Order,
-    ) -> Result<(String, String)> {
+    ) -> Result<(Outcome, String)> {
         let Order::Reposition {
             class,
             count,
@@ -332,11 +332,11 @@ impl Dispatcher {
         // Partial: the order asked for more than was there, which the
         // fleet manager's view should have shown.
         let outcome = if moved.len() < *count as usize {
-            "partial"
+            Outcome::Partial
         } else {
-            "applied"
+            Outcome::Applied
         };
-        Ok((outcome.into(), notes.join("; ")))
+        Ok((outcome, notes.join("; ")))
     }
 
     /// Flies stock to another hub as transfer requests.
@@ -345,7 +345,7 @@ impl Dispatcher {
         context: &mut AgentContext,
         now_s: f64,
         order: &Order,
-    ) -> Result<(String, String)> {
+    ) -> Result<(Outcome, String)> {
         let Order::Transfer {
             item,
             units,
@@ -435,9 +435,9 @@ impl Dispatcher {
         // Without the checker, what is there goes; the outcome says so.
         let mut remaining = (*units).min(have);
         let outcome = if remaining < *units {
-            "partial"
+            Outcome::Partial
         } else {
-            "applied"
+            Outcome::Applied
         };
         let mut flights = 0;
         while remaining > 0 {
@@ -480,11 +480,11 @@ impl Dispatcher {
                 "; beyond every vehicle's round-trip range, so the flights cannot be assigned",
             );
         }
-        Ok((outcome.into(), note))
+        Ok((outcome, note))
     }
 
     /// Stops a class, or every vehicle, launching from hubs.
-    fn apply_ground(&mut self, now_s: f64, order: &Order) -> Result<(String, String)> {
+    fn apply_ground(&mut self, now_s: f64, order: &Order) -> Result<(Outcome, String)> {
         let Order::Ground {
             class,
             hubs,
@@ -509,7 +509,7 @@ impl Dispatcher {
             until_s,
         });
         Ok((
-            "applied".into(),
+            Outcome::Applied,
             "no launches of that class from those hubs until then".into(),
         ))
     }
@@ -520,7 +520,7 @@ impl Dispatcher {
         now_s: f64,
         order: &Order,
         cluster: Option<&[u32]>,
-    ) -> Result<(String, String)> {
+    ) -> Result<(Outcome, String)> {
         let Order::Prioritize {
             site,
             urgency,
@@ -556,11 +556,11 @@ impl Dispatcher {
             until_s,
             hubs,
         });
-        Ok(("applied".into(), "those requests now come first".into()))
+        Ok((Outcome::Applied, "those requests now come first".into()))
     }
 
     /// Lets other hubs serve a site besides its own.
-    fn apply_serve_from(&mut self, order: &Order) -> Result<(String, String)> {
+    fn apply_serve_from(&mut self, order: &Order) -> Result<(Outcome, String)> {
         let Order::ServeFrom { site, hubs } = order else {
             unreachable!("matched in apply")
         };
@@ -612,11 +612,11 @@ impl Dispatcher {
         } else {
             format!("{farthest_km:.0} km from the farthest of those hubs")
         };
-        Ok(("applied".into(), note))
+        Ok((Outcome::Applied, note))
     }
 
     /// Delivers to a hospital's ground pad by drop while its rooftop is closed.
-    fn apply_use_pad(&mut self, now_s: f64, order: &Order) -> Result<(String, String)> {
+    fn apply_use_pad(&mut self, now_s: f64, order: &Order) -> Result<(Outcome, String)> {
         let Order::UsePad { site, until_min } = order else {
             unreachable!("matched in apply")
         };
@@ -635,7 +635,7 @@ impl Dispatcher {
         };
         self.rules.pads.insert(site.code.clone(), until_s);
         Ok((
-            "applied".into(),
+            Outcome::Applied,
             format!(
                 "drops at {}'s pad, 300 m from the rooftop; any vehicle can fly them",
                 site.code
@@ -649,7 +649,7 @@ impl Dispatcher {
         context: &mut AgentContext,
         now_s: f64,
         order: &Order,
-    ) -> Result<(String, String)> {
+    ) -> Result<(Outcome, String)> {
         let Order::Move {
             class,
             count,
@@ -680,7 +680,7 @@ impl Dispatcher {
             .max_by_key(|&&h| (load(h), std::cmp::Reverse(h)))
             .expect("a cluster has hubs");
         let destination = self.region.hub(to_hub).expect("checked").position_world_m;
-        let mut donors: Vec<u32> = from.clone();
+        let mut donors = from;
         donors.sort_by(|a, b| {
             let d = |h: u32| {
                 horizontal_m(
@@ -717,7 +717,7 @@ impl Dispatcher {
                 until_min: None,
             };
             let (outcome, note) = self.apply(context, now_s, &sub, None)?;
-            if outcome.starts_with("refused") {
+            if outcome.is_refused() {
                 continue;
             }
             notes.push(format!("hub {donor} to hub {to_hub}: {note}"));
@@ -730,8 +730,12 @@ impl Dispatcher {
                 format!("no hub of cluster {from_cluster} can spare a vehicle"),
             );
         }
-        let outcome = if sent < *count { "partial" } else { "applied" };
-        Ok((outcome.into(), notes.join("; ")))
+        let outcome = if sent < *count {
+            Outcome::Partial
+        } else {
+            Outcome::Applied
+        };
+        Ok((outcome, notes.join("; ")))
     }
 
     /// From the manager above the clusters: stock from the hub holding the most to the hub holding the least.
@@ -740,7 +744,7 @@ impl Dispatcher {
         context: &mut AgentContext,
         now_s: f64,
         order: &Order,
-    ) -> Result<(String, String)> {
+    ) -> Result<(Outcome, String)> {
         let Order::Send {
             item,
             units,
@@ -789,7 +793,7 @@ impl Dispatcher {
 
     /// The hubs of two clusters named in a move or send, or why not.
     #[allow(clippy::type_complexity)]
-    fn cluster_pair(&self, from: u32, to: u32) -> Result<(Vec<u32>, Vec<u32>), (String, String)> {
+    fn cluster_pair(&self, from: u32, to: u32) -> Result<(Vec<u32>, Vec<u32>), (Outcome, String)> {
         let clusters = self.region.clusters(self.config.manager.cluster_side);
         let get = |index: u32| {
             (index >= 1)
@@ -798,12 +802,12 @@ impl Dispatcher {
         };
         match (get(from), get(to)) {
             (Some(_), Some(_)) if from == to => Err((
-                "refused_same_cluster".into(),
+                Outcome::Refused("same_cluster"),
                 "from_cluster and to_cluster are the same".into(),
             )),
             (Some(from), Some(to)) => Ok((from, to)),
             _ => Err((
-                "refused_unknown_cluster".into(),
+                Outcome::Refused("unknown_cluster"),
                 format!("clusters are 1 to {}", clusters.len()),
             )),
         }

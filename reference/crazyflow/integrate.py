@@ -6,7 +6,7 @@ Runs in an environment with Crazyflow installed (crazyflow_check.py starts one
 with uv). CASE.json gives Ripple's vehicle constants and constant motor
 commands; this maps them onto Crazyflow's `first_principles.dynamics` (rotor
 speeds in RPM, quaternions x-y-z-w, body angular velocity) and integrates it
-with classical RK4 at a fine step, renormalizing the quaternion after each
+with fourth-order Runge-Kutta at a fine step, renormalizing the quaternion after each
 step as Crazyflow's warning asks. Only Crazyflow's derivative is used; the
 integrator here is plain RK4, so differences are the models', not the
 integrators'.

@@ -1,4 +1,4 @@
-//! The structured replanner: classical code that reads each event's fields
+//! The structured replanner: fixed rules that read each event's fields
 //! and gives the same orders a fleet manager can. It is meant to be
 //! competent, not a strawman. Regional events get fixed rules and a greedy
 //! reassignment: spare vehicles and stock come from the nearest hubs with
@@ -256,7 +256,7 @@ pub(crate) fn top_up(snapshot: &Snapshot<'_>, below: u32, units: u32) -> Vec<Ord
     orders
 }
 
-/// The manager above the clusters, as classical code: it sees cluster totals
+/// The manager above the clusters, as fixed rules: it sees cluster totals
 /// and moves vehicles and stock between clusters. A surge or outage hub gets
 /// the flat replanner's counts from the nearest other cluster with spare; a
 /// shortage hub's cluster gets half a hub's stock from the cluster holding

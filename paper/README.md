@@ -1,7 +1,7 @@
 # Paper and evidence
 
 - **[manuscript/main.tex](manuscript/main.tex): the working paper**. A
-  language-model fleet manager over a classical dispatcher
+  language-model fleet manager over a rule-based dispatcher
   over-helps: it relocates vehicles and stock when local rules and lent
   flights do better, and the cost of moving grows with the region.
   The study code is `crates/delivery`; what is left before submission is

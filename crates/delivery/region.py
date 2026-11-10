@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Write matched jitter sweeps for the region mission.
 
-    python3 crates/delivery/region.py --hubs 16 --classical-sweeps FOLDER
-    python3 crates/delivery/region.py --hubs 16 --jitter-km 3 --classical-sweeps FOLDER
+    python3 crates/delivery/region.py --hubs 16 --policy-sweeps FOLDER
+    python3 crates/delivery/region.py --hubs 16 --jitter-km 3 --policy-sweeps FOLDER
 
 The mission itself is missions/region.yaml, written by hand: the Dispatcher
 places the hubs on a grid and builds each hub's couriers, so the region's
 size is one value. This script only writes sweep files for it: five matched
-days (one demand seed each) with the six classical policy arms, on the grid
+days (one demand seed each) with the six fixed policies, on the grid
 or with every hub displaced (`--jitter-km`, `--min-spacing-km`,
 `--layout-seed`), the displaced layout written as `region.hub_positions_m`.
 """
@@ -26,7 +26,7 @@ HERE = Path(__file__).resolve().parent
 # The texts missions/region.yaml carries, for write_policy.py, which asks a
 # model to write rules from them; keep the two the same.
 SYSTEM_PROMPT = """\
-You are the fleet manager for a regional blood delivery service. A classical
+You are the fleet manager for a regional blood delivery service. The
 dispatcher assigns each request to the idle vehicle at the site's own hub that
 has the stock and the range and arrives soonest; it does not read events.
 Fixed-wing aircraft drop by parachute and cannot land; multirotors can also
@@ -118,9 +118,9 @@ def jittered_positions(hubs: int, spacing_m: float, radius_m: float,
     return positions
 
 
-def write_classical_sweeps(args) -> None:
+def write_policy_sweeps(args) -> None:
     """Matched days, each with one layout and six existing policy arms."""
-    folder = args.classical_sweeps
+    folder = args.policy_sweeps
     folder.mkdir(parents=True, exist_ok=True)
     layout = "jitter" if args.jitter_km else "grid"
     day_s = args.day_h * 3600
@@ -137,12 +137,12 @@ def write_classical_sweeps(args) -> None:
             f"  entities.region.autonomy.Dispatcher.region.hub_spacing_m: {args.spacing_km * 1000:g}",
             "  entities.region.autonomy.Dispatcher.manager.offline: true",
         ]
-        header = f"# Six classical arms on the {args.hubs}-hub grid, demand seed {seed}; no model calls.\n"
+        header = f"# The six fixed policies on the {args.hubs}-hub grid, demand seed {seed}; no model calls.\n"
         if args.jitter_km:
             positions = jittered_positions(args.hubs, args.spacing_km * 1000,
                                           args.jitter_km * 1000, args.min_spacing_km * 1000,
                                           layout_seed)
-            header = (f"# Six classical arms on one displaced layout and demand seed {seed}; no model\n"
+            header = (f"# The six fixed policies on one displaced layout and demand seed {seed}; no model\n"
                       f"# calls. Layout seed {layout_seed}; jitter radius {args.jitter_km:g} km; "
                       f"minimum hub spacing {args.min_spacing_km:g} km.\n")
             # One value that is a list: a bare list would be read as alternatives.
@@ -176,12 +176,12 @@ def main() -> None:
     parser.add_argument("--jitter-km", type=float, default=0, help="maximum hub displacement")
     parser.add_argument("--min-spacing-km", type=float, default=10)
     parser.add_argument("--layout-seed", type=int, default=1, help="independent of demand seed")
-    parser.add_argument("--classical-sweeps", type=Path, required=True,
+    parser.add_argument("--policy-sweeps", type=Path, required=True,
                         help="write six-policy sweeps to this folder")
     parser.add_argument("--seeds", type=int, nargs="+", default=list(range(1, 6)),
-                        help="demand seeds for --classical-sweeps (default: 1 2 3 4 5)")
+                        help="demand seeds for --policy-sweeps (default: 1 2 3 4 5)")
     args = parser.parse_args()
-    write_classical_sweeps(args)
+    write_policy_sweeps(args)
 
 
 if __name__ == "__main__":

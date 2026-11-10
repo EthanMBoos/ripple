@@ -6,7 +6,7 @@
 //!
 //! The day is drawn once at the start from random numbers keyed by hub and
 //! request index, so a seed is one day, the same however it is managed. The
-//! classical assignment is the same under every fleet manager: each waiting
+//! dispatcher's assignment is the same under every fleet manager: each waiting
 //! request, in priority then deadline order, goes to the idle vehicle at an
 //! eligible hub with the right skill, the stock, and the endurance for the
 //! round trip, that arrives soonest. Orders change which hubs are eligible,

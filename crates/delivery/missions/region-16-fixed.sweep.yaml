@@ -1,10 +1,10 @@
-# Complete regular-grid classical comparison: six policies x ten matched days.
+# Complete regular-grid comparison of the fixed policies: six policies x ten matched days.
 # No model calls.
-name: region-64-classical
+name: region-16-fixed
 base_scenario: region.yaml
 seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 parameters:
-  entities.region.autonomy.Dispatcher.region.hubs: 64
+  entities.region.autonomy.Dispatcher.region.hubs: 16
   entities.region.autonomy.Dispatcher.manager.offline: true
 prefix: entities.region.autonomy.Dispatcher
 columns: [manager.kind, manager.policy]

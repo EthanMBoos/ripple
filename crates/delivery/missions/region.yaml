@@ -65,7 +65,7 @@ entities:
       Dispatcher:
         region:
           # A square number of hubs on a grid; hub_positions_m, one [east,
-          # north] per hub, displaces them (region.py --classical-sweeps).
+          # north] per hub, displaces them (region.py --policy-sweeps).
           hubs: 16
           hub_spacing_m: 15000
           hub_positions_m: []
@@ -174,7 +174,7 @@ entities:
           sample: 0
           prompt:
             system: >-
-              You are the fleet manager for a regional blood delivery service. A classical
+              You are the fleet manager for a regional blood delivery service. The
               dispatcher assigns each request to the idle vehicle at the site's own hub that
               has the stock and the range and arrives soonest; it does not read events.
               Fixed-wing aircraft drop by parachute and cannot land; multirotors can also

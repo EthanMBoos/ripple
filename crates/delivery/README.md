@@ -31,7 +31,7 @@ ripple run crates/delivery/missions/region.yaml --headless $D.region.hubs:=256
 the same day on the Rascal and the Firefly. The sweep files set the size the
 same way, as a parameter.
 
-For the matched grid and jitter comparison, `region.py --classical-sweeps
+For the matched grid and jitter comparison, `region.py --policy-sweeps
 FOLDER` writes five matched days' six-policy sweeps without model calls;
 `--jitter-km` and `--min-spacing-km` displace the hubs, written into the
 sweep as `region.hub_positions_m`, and `--layout-seed` keys the displacement

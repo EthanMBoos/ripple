@@ -229,7 +229,7 @@ pub enum ManagerKind {
     None,
     /// Hand-written orders at set times, from the mission.
     Scripted,
-    /// Classical code reading the events as structured data.
+    /// Fixed rules reading the events as structured data.
     Replanner,
     /// Rules written once as data (`policy.rs`), by hand or by a model.
     Policy,

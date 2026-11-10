@@ -1,6 +1,6 @@
-//! One day of blood delivery across a region of hubs. A classical dispatcher
+//! One day of blood delivery across a region of hubs. A dispatcher
 //! assigns requests to couriers at each hub; a fleet manager above it, a
-//! language model or classical code, reads the day's events and gives orders
+//! language model or fixed rules, reads the day's events and gives orders
 //! that change how the dispatcher and the couriers behave.
 //!
 //! - `Dispatcher` (autonomy, on the region entity): the hubs and their stock,

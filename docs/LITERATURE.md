@@ -19,7 +19,7 @@ tasks, find that hybrids scale best, and name context length and long
 dialogues as the limits. Later planners stay at the same size: RobotFleet
 tests 3 and 5 robots, Nl2Hltl2Plan up to 4, and DynaHMRC 2 to 4. Scale-Plan
 filters the action graph before the model plans and runs three robots in a
-household simulator; Kawabe et al. put model layers over a classical planner.
+household simulator; Kawabe et al. put model layers over a hand-written planner.
 Neither reports large teams.
 
 Swarm work reaches larger numbers on simpler tasks. COMPASS\* directs up to
@@ -44,11 +44,11 @@ coordinates 6 and 20 drones; the Web-of-Drones paper runs ArduPilot and finds
 that models need planning tools and guardrails to execute a mission. COLA
 flies three quad-planes under a model supervisor, in simulation and live;
 FLEET schedules two to three robots; LLM-DaaS uses a model only to parse a
-customer's request and lets a classical selector pick the drone; AutoHMA-LLM
+customer's request and lets a rule-based selector pick the drone; AutoHMA-LLM
 runs one UAV, one vehicle and one robot per scenario; MultiUAV-Plat's
 benchmark goes from 3 to 30 UAVs, the largest aerial fleet a model runs in
 this list, on short tasks with no stock, deadlines or events. A 2026 survey
-of model-driven UAV dispatch describes the model as a layer over a classical
+of model-driven UAV dispatch describes the model as a layer over a rule-based
 dispatcher, the structure used here. (Read 2026-11-07; the notes below have
 the details.)
 
@@ -132,7 +132,7 @@ grows too fast with the fleet, and that the work is simulation only.
 | `gupta2026scaleplan` | [Scale-Plan: Scalable Language-Enabled Task Planning for Heterogeneous Multi-Robot Teams](https://arxiv.org/abs/2603.08814) | arXiv 2026 | Filters the action graph before the model plans |
 | `gupta2025robotfleet` | [RobotFleet: An Open-Source Framework for Centralized Multi-Robot Task Planning](https://arxiv.org/abs/2510.10379) | arXiv 2025 | Central model plans, a scheduler allocates; 3 and 5 robots |
 | `xu2024nl2hltl2plan` | [Nl2Hltl2Plan: Scaling Up Natural Language Understanding for Multi-Robots Through Hierarchical Temporal Logic](https://arxiv.org/abs/2408.08188) | arXiv 2024 | Language to temporal logic; up to 4 robots |
-| `kawabe2026hierarchical` | [Hierarchical LLM-Based Multi-Agent Framework with Prompt Optimization for Multi-Robot Task Planning](https://arxiv.org/abs/2602.21670) | arXiv 2026 | Model layers over a classical planner (Fast Downward) |
+| `kawabe2026hierarchical` | [Hierarchical LLM-Based Multi-Agent Framework with Prompt Optimization for Multi-Robot Task Planning](https://arxiv.org/abs/2602.21670) | arXiv 2026 | Model layers over a hand-written planner (Fast Downward) |
 | `li2026llmmrs` | [Large Language Models for Multi-Robot Systems: A Survey](https://arxiv.org/abs/2502.03814) | Autonomous Robots 2026 | Survey |
 
 ### Language models over drone and delivery fleets
@@ -199,7 +199,7 @@ Found on 2026-11-06 and judged not worth downloading yet:
   [RAND's blood-delivery fleet
   design](https://www.rand.org/pubs/research_reports/RR3047.html). Useful for
   realistic numbers if the scenario needs them.
-- Open-RMF's classical task dispatch and traffic
+- Open-RMF's rule-based task dispatch and traffic
   ([book](https://osrf.github.io/ros2multirobotbook/task.html)), and an
   [open-source model-run AMR fleet on
   Open-RMF](https://github.com/Sanmitra10-ai/llm-amr-fleet-agent): a
@@ -283,7 +283,7 @@ One heading per paper, using the fields above, as each is read.
 - **Scale:** not stated; the drone fleet is a skyway network of stations,
   and the selection and composition step picks drones per request.
 - **Model's role:** parsing only. Drone selection, composition and routing
-  (A* and Dijkstra with weather-adjusted speed) are classical.
+  (A* and Dijkstra with weather-adjusted speed) are hand-written.
 - **World:** a station graph with weather from CSV files, battery and
   maintenance state; no dynamics.
 - **Checks and feedback:** none on the model's output beyond the parse

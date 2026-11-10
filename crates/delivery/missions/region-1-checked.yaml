@@ -177,7 +177,7 @@ entities:
           sample: 0
           prompt:
             system: >-
-              You are the fleet manager for a regional blood delivery service. A classical
+              You are the fleet manager for a regional blood delivery service. The
               dispatcher assigns each request to the idle vehicle at the site's own hub that
               has the stock and the range and arrives soonest; it does not read events.
               Fixed-wing aircraft drop by parachute and cannot land; multirotors can also

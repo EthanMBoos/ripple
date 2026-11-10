@@ -1,9 +1,9 @@
-# The classical policies on a 1024-hub day, three seeds; no model calls.
-name: region-1024-classical
+# The fixed policies on a 256-hub day, three seeds; no model calls.
+name: region-256-fixed
 base_scenario: region.yaml
 seeds: [1, 2, 3]
 parameters:
-  entities.region.autonomy.Dispatcher.region.hubs: 1024
+  entities.region.autonomy.Dispatcher.region.hubs: 256
   entities.region.autonomy.Dispatcher.manager.offline: true
 prefix: entities.region.autonomy.Dispatcher
 columns: [manager.kind, manager.policy]

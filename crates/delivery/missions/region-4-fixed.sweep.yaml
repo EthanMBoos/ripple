@@ -1,9 +1,10 @@
-# The classical policies on a 256-hub day, three seeds; no model calls.
-name: region-256-classical
+# Complete regular-grid comparison of the fixed policies: six policies x ten matched days.
+# No model calls.
+name: region-4-fixed
 base_scenario: region.yaml
-seeds: [1, 2, 3]
+seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 parameters:
-  entities.region.autonomy.Dispatcher.region.hubs: 256
+  entities.region.autonomy.Dispatcher.region.hubs: 4
   entities.region.autonomy.Dispatcher.manager.offline: true
 prefix: entities.region.autonomy.Dispatcher
 columns: [manager.kind, manager.policy]
@@ -13,3 +14,4 @@ cases:
   - [policy, crates/delivery/policies/local.yaml]
   - [policy, crates/delivery/policies/serve.yaml]
   - [policy, crates/delivery/policies/move.yaml]
+  - [policy, crates/delivery/policies/return.yaml]

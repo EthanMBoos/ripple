@@ -1,5 +1,5 @@
 # The Return policy on a 1024-hub day, three seeds; no model calls. Completes
-# the six-policy table that region-1024-classical.sweep.yaml started, on the
+# the six-policy table that region-1024-fixed.sweep.yaml started, on the
 # same mission default day (requests for eight hours, half an hour to finish).
 name: region-1024-return
 base_scenario: region.yaml

@@ -220,4 +220,5 @@ transfers, orders by name and outcome, and calls, prompt and reply
 characters, queries and parse failures. Per hub, `hub_001_requests`,
 `_on_time`, `_late` and `_undelivered` count its own sites' requests, and
 `_gave` and `_got` the relocations and stock flights it donated and
-received, so a day's losses can be laid against the hubs that donated.
+received, the ones a move or send between clusters chose included, so a
+day's losses can be laid against the hubs that donated.

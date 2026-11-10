@@ -127,6 +127,9 @@ pub struct Dispatcher {
     /// Relocations and stock flights applied since the last call, for the
     /// cost feedback: the order's words and the donor hub.
     move_costs: Vec<(String, u32)>,
+    /// The hub pairs the order being applied moved vehicles or stock between,
+    /// taken into its record.
+    moved: Vec<(u32, u32)>,
     /// Late deliveries since the last call, by hub.
     late_by_hub: BTreeMap<u32, u32>,
     scripted_fired: usize,
@@ -253,6 +256,7 @@ impl Autonomy for Dispatcher {
             rules: Rules::default(),
             managers,
             move_costs: Vec::new(),
+            moved: Vec::new(),
             late_by_hub: BTreeMap::new(),
             scripted_fired: 0,
             last_call_s: 0.0,

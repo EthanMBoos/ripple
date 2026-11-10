@@ -30,7 +30,7 @@ use crate::messages::{
     MISSED_TOPIC, ManagerCall, Missed, ORDER_TOPIC, OrderRecord, Phase, RELOCATE_TOPIC,
     REQUEST_TOPIC, Relocate, Request, RequestKind, STATUS_TOPIC, SkillName, Status, Urgency,
 };
-use crate::order::{Order, Outcome};
+use crate::order::Outcome;
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -422,13 +422,7 @@ impl DeliveryScore {
                     "serve_from" => count(&mut self.counts, "lends", 1.0),
                     _ => {}
                 }
-                if let Order::Reposition {
-                    from_hub, to_hub, ..
-                }
-                | Order::Transfer {
-                    from_hub, to_hub, ..
-                } = &record.order
-                {
+                for (from_hub, to_hub) in &record.moved {
                     count(&mut self.counts, &format!("hub_{from_hub:03}_gave"), 1.0);
                     count(&mut self.counts, &format!("hub_{to_hub:03}_got"), 1.0);
                 }

@@ -64,8 +64,14 @@ impl Dispatcher {
         // hub, reported with the next feedback.
         if !outcome.is_refused() {
             match order {
-                Order::Reposition { from_hub, .. } | Order::Transfer { from_hub, .. } => {
+                Order::Reposition {
+                    from_hub, to_hub, ..
+                }
+                | Order::Transfer {
+                    from_hub, to_hub, ..
+                } => {
                     self.move_costs.push((order.describe(), *from_hub));
+                    self.moved.push((*from_hub, *to_hub));
                 }
                 _ => {}
             }

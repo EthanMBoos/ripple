@@ -314,6 +314,7 @@ impl Dispatcher {
             } else {
                 self.apply(context, now_s, &order, &scope)?
             };
+            let moved = std::mem::take(&mut self.moved);
             let record = OrderRecord {
                 time_s: now_s,
                 source: kind,
@@ -321,6 +322,7 @@ impl Dispatcher {
                 quiet,
                 order: order.clone(),
                 outcome,
+                moved,
                 feedback: feedback.clone(),
             };
             context

@@ -257,6 +257,9 @@ pub struct OrderRecord {
     pub quiet: bool,
     pub order: Order,
     pub outcome: Outcome,
+    /// The hub pairs a relocation or stock flight went between: one for a
+    /// reposition or transfer, one per donor hub for a move, one for a send.
+    pub moved: Vec<(u32, u32)>,
     /// What the fleet manager is told about it next call, when feedback is on.
     pub feedback: String,
 }

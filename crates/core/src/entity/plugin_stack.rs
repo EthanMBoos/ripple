@@ -4,6 +4,7 @@ use crate::plugin::*;
 use crate::{
     KinematicState, Vec3,
     common::{Rate, Terrain},
+    drawing::PluginDrawings,
     pubsub::messages::Mailbox,
     scenario::EntityGroupConfig,
 };
@@ -840,14 +841,18 @@ impl PluginStack {
         self.tracking.fixed_drawings = self.tracking.plugin.fixed_drawings().into();
     }
 
-    /// Each plugin's drawings at `time_s`, by plugin name, in the stack's
-    /// order: its fixed part by reference and its changing part asked now.
-    /// Plugins with nothing in either are left out.
-    pub fn drawings(&self, time_s: f64) -> Vec<(String, Arc<[Drawing]>, Vec<Drawing>)> {
+    /// Each plugin's drawings at `time_s`, in the stack's order, with the
+    /// source `<plugin>/<entity id>`: its fixed part by reference and its
+    /// changing part asked now. Plugins with nothing in either are left out.
+    pub fn drawings(&self, entity_id: i32, time_s: f64) -> Vec<PluginDrawings> {
         let mut drawings = Vec::new();
         let mut collect = |name: &str, fixed: &Arc<[Drawing]>, changing: Vec<Drawing>| {
             if !fixed.is_empty() || !changing.is_empty() {
-                drawings.push((name.to_string(), fixed.clone(), changing));
+                drawings.push(PluginDrawings {
+                    source: format!("{name}/{entity_id}"),
+                    fixed: fixed.clone(),
+                    changing,
+                });
             }
         };
         for slot in &self.autonomies {

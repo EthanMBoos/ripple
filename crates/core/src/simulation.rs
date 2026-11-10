@@ -271,13 +271,7 @@ impl Simulation {
         entities.sort_by_key(|entity| entity.id);
         let mut drawings = Vec::new();
         for entity in entities {
-            for (plugin, fixed, changing) in entity.drawings(self.time_s) {
-                drawings.push(PluginDrawings {
-                    source: format!("{plugin}/{}", entity.id),
-                    fixed,
-                    changing,
-                });
-            }
+            drawings.extend(entity.drawings(self.time_s));
         }
         drawings.extend(self.world.drawings(self.time_s));
         drawings

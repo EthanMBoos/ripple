@@ -87,6 +87,7 @@ impl CompiledWorld {
                 .enumerate()
                 .map(|(index, plugin)| WorldSlot::new(plugin, index, "metrics", seed))
                 .collect(),
+            closed: false,
         }
     }
 }
@@ -98,7 +99,6 @@ struct WorldSlot<T: ?Sized> {
     scheduled: Vec<ScheduledMessage>,
     // Only networks draw today; interactions and metrics can expose it when needed.
     random: PluginRandom,
-    closed: bool,
     /// The plugin's fixed drawings, asked once after `initialize`.
     fixed_drawings: Arc<[Drawing]>,
 }
@@ -122,7 +122,6 @@ impl<T: ?Sized> WorldSlot<T> {
             plugin: (plugin.instantiate)(),
             messages: Messages::default(),
             scheduled: Vec::new(),
-            closed: false,
             fixed_drawings: Arc::from(Vec::new()),
         }
     }
@@ -160,10 +159,6 @@ impl<T: ?Sized> WorldSlot<T> {
         time: StepTime,
         close: impl FnOnce(&mut T, StepTime) -> Result<()>,
     ) -> Result<()> {
-        if self.closed {
-            return Ok(());
-        }
-        self.closed = true;
         close(&mut self.plugin, time).with_context(|| format!("close world plugin '{}'", self.name))
     }
 }
@@ -171,6 +166,7 @@ pub(crate) struct WorldPlugins {
     interactions: Vec<WorldSlot<dyn Interaction>>,
     networks: Vec<WorldSlot<dyn Network>>,
     metrics: Vec<WorldSlot<dyn Metrics>>,
+    closed: bool,
 }
 impl WorldPlugins {
     pub fn initialize(
@@ -365,6 +361,10 @@ impl WorldPlugins {
             .collect()
     }
     pub fn close(&mut self, time: StepTime) -> Result<()> {
+        if self.closed {
+            return Ok(());
+        }
+        self.closed = true;
         let mut failure = None;
         let mut record = |result| {
             if let Err(error) = result {

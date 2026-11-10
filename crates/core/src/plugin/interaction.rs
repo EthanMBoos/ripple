@@ -2,7 +2,7 @@
 //! effects.
 use crate::{
     Entity, Event, EventKind, Vec3,
-    common::SpatialIndex,
+    common::{SpatialIndex, Terrain},
     drawing::Drawing,
     plugin::{PluginParams, StepTime, Update, WorldContext},
     pubsub::Messages,
@@ -17,6 +17,8 @@ pub struct InteractionContext<'a> {
     /// at the start of this interaction's step.
     pub nearby: &'a SpatialIndex,
     pub messages: &'a mut Messages,
+    /// The mission's ground heights, if it names terrain.
+    pub terrain: Option<&'a Terrain>,
     pub(crate) events: &'a mut Vec<Event>,
 }
 impl InteractionContext<'_> {
@@ -56,7 +58,14 @@ pub trait Interaction: Send {
     fn initialize(&mut self, _context: &mut WorldContext) -> Result<()> {
         Ok(())
     }
-    fn collision_exists(&self, _entities: &[Entity], _position_world_m: Vec3) -> bool {
+    /// Whether a new entity at `position_world_m` would already be in
+    /// collision, asked when a spawn's position is chosen.
+    fn collision_exists(
+        &self,
+        _entities: &[Entity],
+        _terrain: Option<&Terrain>,
+        _position_world_m: Vec3,
+    ) -> bool {
         false
     }
     fn step(&mut self, context: &mut InteractionContext) -> Result<Update>;

@@ -179,7 +179,6 @@ pub struct WorldContext<'a> {
     /// Retains team membership after an entity has been removed.
     pub entity_teams: &'a BTreeMap<i32, i32>,
     pub messages: &'a mut Messages,
-    /// The mission's ground heights, if it names terrain. `Terrain` is cheap to
-    /// clone, so a plugin can keep it from `initialize`.
+    /// The mission's ground heights, if it names terrain.
     pub terrain: Option<&'a Terrain>,
 }

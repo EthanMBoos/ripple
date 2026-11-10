@@ -221,6 +221,11 @@ impl Simulation {
                 Ok(())
             }
         });
+        self.record_phase(result)
+    }
+
+    /// A failed phase ends the run.
+    fn record_phase(&mut self, result: Result<()>) -> Result<()> {
         if result.is_err() {
             self.termination = Some(TerminationReason::PluginFailure);
             self.finished = true;
@@ -347,7 +352,6 @@ impl Simulation {
         let StepTime { time_s, dt_s, tick } = time;
         let motion_dt_s = dt_s / self.config.run.motion_multiplier as f64;
         let mut substep_time_s = time_s;
-        let terrain = self.terrain.clone();
         for substep in 0..self.config.run.motion_multiplier {
             let time = StepTime {
                 time_s: substep_time_s,
@@ -360,7 +364,23 @@ impl Simulation {
                 }
                 entity.step_controller(time)
             })?;
-            self.run_phase(|entity| entity.step_motion(time, terrain.as_ref()))?;
+            // Motion borrows the terrain, so this phase borrows the
+            // simulation's fields one by one instead of going through
+            // `run_phase`, which needs all of `self`.
+            let Self {
+                scheduler,
+                entities,
+                terrain,
+                ..
+            } = self;
+            let result = scheduler.run_phase(entities, |entity| {
+                if entity.is_active() {
+                    entity.step_motion(time, terrain.as_ref())
+                } else {
+                    Ok(())
+                }
+            });
+            self.record_phase(result)?;
             substep_time_s += motion_dt_s;
         }
         Ok(())
@@ -511,7 +531,7 @@ impl Simulation {
 
     fn startup_collision_exists(&self, position_world_m: crate::Vec3) -> bool {
         self.world
-            .collision_exists(&self.entities, position_world_m)
+            .collision_exists(&self.entities, self.terrain.as_ref(), position_world_m)
     }
 
     fn apply_interactions(&mut self, nearby: &mut SpatialIndex) -> Result<()> {
@@ -524,9 +544,13 @@ impl Simulation {
         for entity in &mut self.entities {
             entity.clear_applied_forces();
         }
-        self.world_stop |=
-            self.world
-                .interactions(time, &mut self.entities, nearby, &mut self.events)?;
+        self.world_stop |= self.world.interactions(
+            time,
+            &mut self.entities,
+            nearby,
+            self.terrain.as_ref(),
+            &mut self.events,
+        )?;
         self.messages.time_s = self.time_s;
         for entity in self
             .entities

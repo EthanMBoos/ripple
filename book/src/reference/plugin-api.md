@@ -84,7 +84,7 @@ contexts also have `entity: EntityInfo` (`id`, `team_id`, `group_index`) and
 | `SensorContext` | `truth`, read-only; `contacts_truth`; `random`; `publish_reading` |
 | `LocalizationContext` | `inputs`; `commands`; `state`, mutable belief; `random` |
 | `TrackingContext` | `inputs`; `pose` from localization; `contacts`, mutable; `random` |
-| `InteractionContext` | `entities`, mutable; `nearby`, the spatial index |
+| `InteractionContext` | `entities`, mutable; `nearby`, the spatial index; `terrain` |
 | `NetworkContext` | `route` or `route_within_entity`; the network's own `messages()` |
 | `WorldContext` | `contacts_truth`; `entity_teams`; `terrain` |
 

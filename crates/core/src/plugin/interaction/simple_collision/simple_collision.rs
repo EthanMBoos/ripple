@@ -9,7 +9,7 @@ use anyhow::{Result, ensure};
 use serde::Deserialize;
 
 use crate::plugin::{Interaction, InteractionContext, PluginParams, Update};
-use crate::{Entity, EventKind, Vec3};
+use crate::{Entity, EventKind, Terrain, Vec3};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Clone, Deserialize)]
@@ -58,7 +58,12 @@ impl Interaction for SimpleCollision {
         }
     }
 
-    fn collision_exists(&self, entities: &[Entity], position_world_m: Vec3) -> bool {
+    fn collision_exists(
+        &self,
+        entities: &[Entity],
+        _terrain: Option<&Terrain>,
+        position_world_m: Vec3,
+    ) -> bool {
         entities.iter().any(|entity| {
             let separation_world_m = position_world_m - entity.truth().position_world_m;
             if self.config.startup_altitude_only {

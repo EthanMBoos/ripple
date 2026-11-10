@@ -196,16 +196,23 @@ impl WorldPlugins {
         }
         Ok(())
     }
-    pub fn collision_exists(&self, entities: &[Entity], position_world_m: Vec3) -> bool {
-        self.interactions
-            .iter()
-            .any(|slot| slot.plugin.collision_exists(entities, position_world_m))
+    pub fn collision_exists(
+        &self,
+        entities: &[Entity],
+        terrain: Option<&Terrain>,
+        position_world_m: Vec3,
+    ) -> bool {
+        self.interactions.iter().any(|slot| {
+            slot.plugin
+                .collision_exists(entities, terrain, position_world_m)
+        })
     }
     pub fn interactions(
         &mut self,
         time: StepTime,
         entities: &mut [Entity],
         nearby: &mut SpatialIndex,
+        terrain: Option<&Terrain>,
         events: &mut Vec<Event>,
     ) -> Result<bool> {
         let mut stop = false;
@@ -222,6 +229,7 @@ impl WorldPlugins {
                     nearby,
                     events,
                     messages: &mut slot.messages,
+                    terrain,
                 })
                 .with_context(|| format!("interaction '{}'", slot.name))?;
             stop |= update == Update::Stop;

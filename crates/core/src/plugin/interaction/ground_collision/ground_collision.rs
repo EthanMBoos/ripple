@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 use serde::Deserialize;
 
 use crate::plugin::{Interaction, InteractionContext, Update};
-use crate::{Entity, EventKind, Vec3};
+use crate::{Entity, EventKind, Terrain, Vec3};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -67,7 +67,12 @@ impl Interaction for GroundCollision {
         Self { config: *config }
     }
 
-    fn collision_exists(&self, _entities: &[Entity], position_world_m: Vec3) -> bool {
+    fn collision_exists(
+        &self,
+        _entities: &[Entity],
+        _terrain: Option<&Terrain>,
+        position_world_m: Vec3,
+    ) -> bool {
         // Startup candidates have no team filter here.
         self.config.startup_collisions && position_world_m.z <= self.config.height_world_m
     }

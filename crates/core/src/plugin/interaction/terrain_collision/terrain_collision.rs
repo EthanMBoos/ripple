@@ -62,8 +62,6 @@ pub struct TerrainCollisionConfig {
 
 pub struct TerrainCollision {
     config: TerrainCollisionConfig,
-    /// Set in `initialize` from the mission's terrain.
-    terrain: Option<Terrain>,
     /// Where each live, checked entity was at the end of the last step, and
     /// its attitude.
     last_pose: BTreeMap<i32, (Vec3, Quaternion)>,
@@ -71,8 +69,7 @@ pub struct TerrainCollision {
 
 impl TerrainCollision {
     /// Height above the ground plus clearance; zero or less is a collision.
-    fn clearance_left_m(&self, position_world_m: Vec3) -> f64 {
-        let terrain = self.terrain.as_ref().expect("set in initialize");
+    fn clearance_left_m(&self, terrain: &Terrain, position_world_m: Vec3) -> f64 {
         let ground_z = terrain.ground_height(position_world_m.x, position_world_m.y);
         position_world_m.z - ground_z - self.config.clearance_m
     }
@@ -83,8 +80,12 @@ impl TerrainCollision {
     /// quadratic in distance, so the clearance left is too (the entity's height
     /// is linear). The line is cut where it crosses grid lines, and each piece
     /// is checked at its ends, its middle, and the quadratic's turning point.
-    fn path_touches_ground(&self, start_world_m: Vec3, end_world_m: Vec3) -> bool {
-        let terrain = self.terrain.as_ref().expect("set in initialize");
+    fn path_touches_ground(
+        &self,
+        terrain: &Terrain,
+        start_world_m: Vec3,
+        end_world_m: Vec3,
+    ) -> bool {
         let [west_m, north_m, _] = terrain.sample(0, 0);
         let [east_m, south_m, _] = terrain.sample(terrain.rows() - 1, terrain.columns() - 1);
         let mut cuts = vec![0.0, 1.0];
@@ -179,7 +180,6 @@ impl Interaction for TerrainCollision {
     fn new(config: &TerrainCollisionConfig) -> Self {
         Self {
             config: config.clone(),
-            terrain: None,
             last_pose: BTreeMap::new(),
         }
     }
@@ -193,16 +193,22 @@ impl Interaction for TerrainCollision {
             "TerrainCollision needs complete terrain; {} samples have no height",
             terrain.missing_samples()
         );
-        self.terrain = Some(terrain.clone());
         Ok(())
     }
 
-    fn collision_exists(&self, _entities: &[Entity], position_world_m: Vec3) -> bool {
+    fn collision_exists(
+        &self,
+        _entities: &[Entity],
+        terrain: Option<&Terrain>,
+        position_world_m: Vec3,
+    ) -> bool {
+        let terrain = terrain.expect("checked in initialize");
         // Like GroundCollision, startup candidates have no team filter here.
-        self.config.startup_collisions && self.clearance_left_m(position_world_m) <= 0.0
+        self.config.startup_collisions && self.clearance_left_m(terrain, position_world_m) <= 0.0
     }
 
     fn step(&mut self, context: &mut InteractionContext) -> Result<Update> {
+        let terrain = context.terrain.expect("checked in initialize");
         let last_pose = std::mem::take(&mut self.last_pose);
         for index in 0..context.entities.len() {
             let entity = &context.entities[index];
@@ -229,13 +235,13 @@ impl Interaction for TerrainCollision {
             // on its first step only.
             let start = last_pose.get(&id).copied().unwrap_or(end);
             let touches = if self.config.structure_points_body_m.is_empty() {
-                self.path_touches_ground(start.0, end.0)
+                self.path_touches_ground(terrain, start.0, end.0)
             } else {
                 self.config.structure_points_body_m.iter().any(|&point| {
                     let at = |(position, attitude): (Vec3, Quaternion)| {
                         position + attitude.rotate_body_to_world(point)
                     };
-                    self.path_touches_ground(at(start), at(end))
+                    self.path_touches_ground(terrain, at(start), at(end))
                 })
             };
             if touches {

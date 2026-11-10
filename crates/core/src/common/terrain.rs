@@ -20,7 +20,10 @@
 //! on the grid, and flat ground at `z = 0`, the origin's altitude, off it.
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
-use std::{fs, path::Path, sync::Arc};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use crate::Vec3;
 
@@ -64,19 +67,18 @@ struct Surface {
     slope_north: f64,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Terrain {
-    source: Arc<str>,
+    source: String,
     origin: Option<GeographicOrigin>,
-    imagery: Option<Arc<Path>>,
+    imagery: Option<PathBuf>,
     west_m: f64,
     north_m: f64,
     cell_m: f64,
     columns: usize,
     rows: usize,
     /// Local heights (`z`), row by row from north to south; NaN where missing.
-    /// Every field is shared or small, so cloning a `Terrain` never copies it.
-    heights_m: Arc<[f32]>,
+    heights_m: Vec<f32>,
 }
 
 impl Terrain {
@@ -123,9 +125,9 @@ impl Terrain {
             header.columns,
             heights_m,
         )?;
-        terrain.source = header.source.into();
+        terrain.source = header.source;
         terrain.origin = Some(header.origin);
-        terrain.imagery = header.imagery.map(|imagery| directory.join(imagery).into());
+        terrain.imagery = header.imagery.map(|imagery| directory.join(imagery));
         Ok(terrain)
     }
 
@@ -161,7 +163,7 @@ impl Terrain {
             cell_m,
             columns,
             rows: heights_m.len() / columns,
-            heights_m: heights_m.into(),
+            heights_m,
         })
     }
 

@@ -20,7 +20,7 @@ use crate::scope::Scope;
 /// How a manager decides what to order.
 #[derive(Clone)]
 pub(super) enum Decider {
-    /// Classical code reading the events (`replanner.rs`).
+    /// Fixed rules reading the events (`replanner.rs`).
     Replanner,
     /// Rules written once as data (`policy.rs`).
     Policy(Policy),

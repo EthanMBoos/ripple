@@ -38,6 +38,16 @@ Before submitting:
 - Explain in the setup why identical hubs help isolate the cost of moving
   capacity. Check whether the cited medical-drone operation supports a
   service-radius comparison; add one only if it does.
+- Add a demand-sized replanner as one robustness row: it sizes each
+  reposition from the backlog in view at the call instead of moving a
+  fixed four fixed-wing and two multirotors per surge hub. Run it on the
+  4-, 16- and 64-hub days first (no model calls), and at 256
+  and 1,024 only if the small sizes change the picture. Say in the setup
+  why the primary rule sizes by the event: a surge's requests are not yet
+  visible when it is announced, and a rule that waits for the backlog
+  acts a call later, past the trauma deadline. If the demand-sized rule
+  also loses at giving hubs, the claim is stronger; if it wins, the claim
+  becomes that over-moving costs, not moving.
 
 Submit to RA-L in the first days of December. RA-L takes six pages
 including references, two more at a charge, nothing beyond eight; the

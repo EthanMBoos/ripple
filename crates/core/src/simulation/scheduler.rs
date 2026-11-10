@@ -1,23 +1,27 @@
 //! Parallel entity-phase barriers; every task joins before advancing.
 
-use std::panic::{AssertUnwindSafe, catch_unwind};
-
 use anyhow::{Result, ensure};
 use rayon::{ThreadPool, ThreadPoolBuilder, prelude::*};
 
+/// The worker pool, or none: one worker runs every phase on the calling
+/// thread.
 pub(crate) struct Scheduler {
-    workers: ThreadPool,
+    workers: Option<ThreadPool>,
 }
 
 impl Scheduler {
     pub(crate) fn new(worker_count: usize) -> Result<Self> {
         ensure!(worker_count > 0, "worker count must be positive");
-
-        let workers = ThreadPoolBuilder::new()
-            .num_threads(worker_count)
-            .thread_name(|index| format!("ripple-{index}"))
-            .build()?;
-
+        let workers = if worker_count == 1 {
+            None
+        } else {
+            Some(
+                ThreadPoolBuilder::new()
+                    .num_threads(worker_count)
+                    .thread_name(|index| format!("ripple-{index}"))
+                    .build()?,
+            )
+        };
         Ok(Self { workers })
     }
 
@@ -27,11 +31,7 @@ impl Scheduler {
         items: &mut [T],
         update: impl Fn(&mut T) -> Result<()> + Sync,
     ) -> Result<()> {
-        let run = |(index, item): (usize, &mut T)| {
-            catch_unwind(AssertUnwindSafe(|| update(item)))
-                .unwrap_or_else(|_| Err(anyhow::anyhow!("task {index} panicked")))
-        };
-        // DEVNOTE: one worker runs on the calling thread instead of the pool.
+        // DEVNOTE: one worker runs on the calling thread instead of a pool.
         // Profiling perf.py's motion workload (64 aircraft, 20,000 steps) with macOS
         // `sample` showed the main thread mostly waiting on rayon's latch: each phase
         // is handed to a pool thread, which is woken, and then joined, costing ~7 µs
@@ -39,13 +39,10 @@ impl Scheduler {
         // phases. Running inline took that run from 2.04 s to 1.28 s with identical
         // output. The same per-phase cost is why 8 workers only pay off when phases
         // carry real work (e.g. many sensors); more workers still use the pool.
-        let results: Vec<_> = if self.workers.current_num_threads() == 1 {
-            items.iter_mut().enumerate().map(run).collect()
-        } else {
-            self.workers
-                .install(|| items.par_iter_mut().enumerate().map(run).collect())
+        let results: Vec<_> = match &self.workers {
+            None => items.iter_mut().map(&update).collect(),
+            Some(pool) => pool.install(|| items.par_iter_mut().map(&update).collect()),
         };
-
         for result in results {
             result?;
         }
@@ -71,22 +68,6 @@ mod tests {
             assert!(result.is_err());
             assert_eq!(updates, [1; 32]);
         }
-        Ok(())
-    }
-
-    #[test]
-    fn a_panicking_task_is_joined_before_the_phase_returns() -> Result<()> {
-        let scheduler = Scheduler::new(4)?;
-        let mut entities: Vec<_> = (0..32).map(|id| (id, false)).collect();
-
-        let result = scheduler.run_phase(&mut entities, |(id, updated)| {
-            *updated = true;
-            assert_ne!(*id, 7, "deliberate plugin panic");
-            Ok(())
-        });
-
-        assert!(result.unwrap_err().to_string().contains("task 7 panicked"));
-        assert!(entities.iter().all(|(_, updated)| *updated));
         Ok(())
     }
 

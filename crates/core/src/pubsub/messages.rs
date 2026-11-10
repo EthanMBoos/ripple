@@ -39,32 +39,6 @@ fn serialize_payload<T: Serialize + 'static>(value: &Payload) -> Result<Value> {
 /// first in the key so most comparisons are of integers, not channel names.
 type Subscribers<'a> = BTreeMap<(Option<i32>, &'a Channel), Vec<(usize, TypeId)>>;
 
-// Message counts, not byte limits. Fail clearly instead of silently losing data.
-// An entity's plugin publishing more than OUTBOX_CAPACITY in one step is probably
-// a bug. World plugins (interactions, networks, metrics) act on every entity, so
-// one message per entity per step is normal for them; they, and every subscriber
-// inbox, get the same limit as the floor on one network's pending deliveries.
-const OUTBOX_CAPACITY: usize = 1024;
-const SUBSCRIBER_CAPACITY: usize = 65_536;
-const NETWORK_CAPACITY: usize = 65_536;
-
-/// The most deliveries one network may hold at once: the floor, or one
-/// outbox's worth for every mailbox on the run, whichever is larger.
-///
-/// DEVNOTE (2026-11-07): the floor alone stopped a 256-hub delivery day
-/// (1,280 couriers, `crates/delivery/region.py --hubs 256`) about one
-/// simulated hour in with "queue full (65536 deliveries)". A pending
-/// delivery is one message to one subscriber, so a topic that every courier
-/// subscribes to, as the dispatcher's assignments are, costs one entry per
-/// courier per message, and the queue for a phase grows with messages times
-/// subscribers. 320 couriers never reached the floor; 1,280 did. The limit
-/// is kept, scaled by the mailbox count, because its job is to catch a
-/// plugin publishing without bound, and that is still a bug at any size.
-/// Repeat with the mission above and `ripple run --headless`.
-fn pending_capacity(mailboxes: usize) -> usize {
-    NETWORK_CAPACITY.max(OUTBOX_CAPACITY * mailboxes)
-}
-
 struct Publication {
     channel: Channel,
     sent_at_s: f64,
@@ -80,32 +54,14 @@ struct Envelope {
 }
 
 /// One mailbox per plugin instance. Multicast shares immutable payloads, never plugin state.
+#[derive(Default)]
 pub struct Messages {
     subscriptions: BTreeMap<Channel, TypeId>,
     inbox: BTreeMap<Channel, Vec<Envelope>>,
     outbox: Vec<Publication>,
-    outbox_capacity: usize,
     pub(crate) time_s: f64,
 }
-impl Default for Messages {
-    fn default() -> Self {
-        Self {
-            subscriptions: BTreeMap::new(),
-            inbox: BTreeMap::new(),
-            outbox: Vec::new(),
-            outbox_capacity: OUTBOX_CAPACITY,
-            time_s: 0.0,
-        }
-    }
-}
 impl Messages {
-    /// A world plugin's mailbox, which may publish one message per entity per step.
-    pub(crate) fn for_world_plugin() -> Self {
-        Self {
-            outbox_capacity: NETWORK_CAPACITY,
-            ..Self::default()
-        }
-    }
     pub fn subscribe<T: Send + Sync + 'static>(
         &mut self,
         network: &str,
@@ -135,16 +91,10 @@ impl Messages {
             !network.is_empty() && !topic.is_empty(),
             "network and topic must not be empty"
         );
-        ensure!(
-            self.outbox.len() < self.outbox_capacity,
-            "publisher queue full ({} messages), publishing {network}/{topic}",
-            self.outbox_capacity
-        );
         self.publish_engine_event(network, topic, value);
         Ok(())
     }
-    /// Engine lifecycle events are bounded by the population, not by plugin code,
-    /// so they skip the per-plugin publisher limit.
+    /// Engine lifecycle events are published by the engine's own mailboxes.
     pub(crate) fn publish_engine_event<T: Serialize + Send + Sync + 'static>(
         &mut self,
         network: &str,
@@ -395,12 +345,6 @@ impl NetworkContext<'_, '_> {
                             deliver_at_s: Some(delivered_at_s),
                         });
                     }
-                    let capacity = pending_capacity(self.mailboxes.len());
-                    ensure!(
-                        self.scheduled.len() < capacity,
-                        "network '{}' queue full ({capacity} deliveries)",
-                        self.name
-                    );
                     self.scheduled.push(ScheduledMessage {
                         receiver: mailbox.endpoint.clone(),
                         channel: publication.channel.clone(),
@@ -437,13 +381,6 @@ impl NetworkContext<'_, '_> {
                     .inbox
                     .entry(message.channel.clone())
                     .or_default();
-                ensure!(
-                    inbox.len() < SUBSCRIBER_CAPACITY,
-                    "subscriber {:?} queue full ({SUBSCRIBER_CAPACITY} messages) on {}/{}",
-                    receiver.endpoint,
-                    message.channel.0,
-                    message.channel.1
-                );
                 if let Some(trace) = self.trace.as_deref_mut() {
                     trace.deliveries.push(DeliveryRecord {
                         time_s: self.time.time_s,
@@ -744,84 +681,6 @@ mod tests {
                 })
                 .is_err()
         );
-        Ok(())
-    }
-
-    #[test]
-    fn publisher_overflow_is_an_error_without_discarding_queued_messages() -> Result<()> {
-        let mut messages = Messages::default();
-        for value in 0..OUTBOX_CAPACITY {
-            messages.publish("test", "sample", value)?;
-        }
-        let error = messages.publish("test", "sample", 0).unwrap_err();
-        assert!(error.to_string().contains("publisher queue full"));
-        assert_eq!(messages.outbox.len(), OUTBOX_CAPACITY);
-        Ok(())
-    }
-
-    #[test]
-    fn a_slow_subscriber_fills_only_its_own_queue_then_errors() -> Result<()> {
-        let mut mailboxes = TestMailboxes::new()?;
-        for value in 0..SUBSCRIBER_CAPACITY {
-            mailboxes.sender.publish("test", "sample", value as i32)?;
-            mailboxes.phase(value as f64, |context| {
-                context.route(|_, _| Ok(Delivery::After { delay_s: 0.0 }))
-            })?;
-            let fast = mailboxes.same_entity.receive::<i32>("test", "sample")?;
-            assert_eq!(fast.len(), 1);
-            assert_eq!(*fast[0].value, value as i32);
-        }
-        mailboxes.sender.publish("test", "sample", -1_i32)?;
-        let error = mailboxes
-            .phase(2000.0, |context| {
-                context.route(|_, _| Ok(Delivery::After { delay_s: 0.0 }))
-            })
-            .unwrap_err();
-        assert!(error.to_string().contains("subscriber"));
-        assert!(error.to_string().contains("queue full"));
-        let slow = mailboxes.other_entity.receive::<i32>("test", "sample")?;
-        assert_eq!(slow.len(), SUBSCRIBER_CAPACITY);
-        assert_eq!(*slow[0].value, 0);
-        Ok(())
-    }
-
-    #[test]
-    fn the_pending_capacity_grows_with_the_mailboxes() {
-        assert_eq!(pending_capacity(3), NETWORK_CAPACITY);
-        assert_eq!(pending_capacity(64), NETWORK_CAPACITY);
-        assert_eq!(pending_capacity(5_000), 5_000 * OUTBOX_CAPACITY);
-    }
-
-    #[test]
-    fn pending_network_deliveries_have_a_capacity() -> Result<()> {
-        let mut mailboxes = TestMailboxes::new()?;
-        for _ in 0..NETWORK_CAPACITY {
-            mailboxes.scheduled.push(ScheduledMessage {
-                receiver: MessageEndpoint {
-                    entity_id: Some(1),
-                    plugin: "autonomy".into(),
-                },
-                channel: ("test".into(), "sample".into()),
-                envelope: Envelope {
-                    sender: MessageEndpoint {
-                        entity_id: Some(1),
-                        plugin: "sensor".into(),
-                    },
-                    sent_at_s: 0.0,
-                    delivered_at_s: 100.0,
-                    value: Arc::new(42_i32),
-                    serialize: serialize_payload::<i32>,
-                },
-            });
-        }
-        mailboxes.sender.publish("test", "sample", 1_i32)?;
-        let error = mailboxes
-            .phase(0.0, |context| {
-                context.route(|_, _| Ok(Delivery::After { delay_s: 1.0 }))
-            })
-            .unwrap_err();
-        assert!(error.to_string().contains("network 'test' queue full"));
-        assert_eq!(mailboxes.scheduled.len(), NETWORK_CAPACITY);
         Ok(())
     }
 

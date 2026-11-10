@@ -120,7 +120,7 @@ impl<T: ?Sized> WorldSlot<T> {
                 plugin: identity,
             },
             plugin: (plugin.instantiate)(),
-            messages: Messages::for_world_plugin(),
+            messages: Messages::default(),
             scheduled: Vec::new(),
             closed: false,
             fixed_drawings: Arc::from(Vec::new()),
@@ -164,11 +164,7 @@ impl<T: ?Sized> WorldSlot<T> {
             return Ok(());
         }
         self.closed = true;
-        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            close(&mut self.plugin, time)
-        }))
-        .unwrap_or_else(|_| Err(anyhow::anyhow!("plugin close panicked")))
-        .with_context(|| format!("close world plugin '{}'", self.name))
+        close(&mut self.plugin, time).with_context(|| format!("close world plugin '{}'", self.name))
     }
 }
 pub(crate) struct WorldPlugins {

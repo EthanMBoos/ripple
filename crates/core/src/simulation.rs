@@ -294,10 +294,7 @@ impl Simulation {
         sink: Option<&mut dyn TraceSink>,
     ) -> Result<Option<SimulationFrame>> {
         let mut trace = sink.map(Trace::new);
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            self.step_inner(trace.as_mut())
-        }))
-        .unwrap_or_else(|_| Err(anyhow::anyhow!("simulation plugin panicked")));
+        let result = self.step_inner(trace.as_mut());
         if result.is_err() {
             self.termination = Some(TerminationReason::PluginFailure);
             self.finished = true;

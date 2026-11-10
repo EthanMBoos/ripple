@@ -194,22 +194,6 @@ impl Localization for WrongType {
     }
 }
 
-/// Autonomy whose initialization panics.
-struct PanicOnStart;
-impl Autonomy for PanicOnStart {
-    type Config = ();
-    fn new(_: &()) -> Self {
-        Self
-    }
-
-    fn initialize(&mut self, _: &mut AgentContext) -> Result<()> {
-        panic!("intentional initialization panic");
-    }
-    fn step(&mut self, _: &mut AgentContext, _: &mut PluginIo) -> Result<()> {
-        Ok(())
-    }
-}
-
 /// Passes the `speed` port through and logs the own-state x position it saw.
 struct PositionWitness {
     log: String,
@@ -248,7 +232,6 @@ fn registry() -> Result<PluginRegistry> {
     registry.register_localization::<CommandLog>("CommandLog")?;
     registry.register_localization::<Echo>("Echo")?;
     registry.register_localization::<WrongType>("WrongType")?;
-    registry.register_autonomy::<PanicOnStart>("PanicOnStart")?;
     Ok(registry)
 }
 
@@ -662,24 +645,6 @@ fn a_perfect_input_gives_only_its_declared_kind() -> Result<()> {
         .expect("asking a state input for contacts fails");
     assert!(
         format!("{error:#}").contains("gives State readings"),
-        "{error:#}"
-    );
-    Ok(())
-}
-
-#[test]
-fn a_panic_while_starting_an_entity_is_an_error() -> Result<()> {
-    let mut entity = mover("panics", 1, Vec3::zeros(), [0.0, 0.0, 0.0], "unused")?;
-    entity.autonomy.push(PluginConfig::new("PanicOnStart"));
-    let scenario = ScenarioConfig {
-        entities: vec![entity],
-        ..ScenarioConfig::default()
-    };
-    let error = Simulation::new(scenario, Arc::new(registry()?), 1)
-        .err()
-        .expect("the panic becomes an error");
-    assert!(
-        format!("{error:#}").contains("initialization panicked"),
         "{error:#}"
     );
     Ok(())

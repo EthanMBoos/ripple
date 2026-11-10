@@ -13,9 +13,10 @@ use crate::messages::{
 };
 use crate::region::SiteKind;
 
-/// Spawn requests published per step. A plugin may hold 1,024 unsent
-/// messages, so a large fleet is asked for over a few ticks: two recipes at
-/// 1,024 hubs take five.
+/// Spawn requests published per step: a large fleet is asked for over a few
+/// ticks (two recipes at 1,024 hubs take five). The batching dates from a
+/// limit on unsent messages and stays because a seed's day depends on the
+/// tick each courier appears.
 pub(super) const SPAWN_REQUESTS_PER_STEP: usize = 500;
 
 /// Request ids by kind, so no two requests on a day share one. The day's

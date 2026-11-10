@@ -115,19 +115,16 @@ impl Entity {
         };
         let mut plugins = definition.plugins.instantiate(id, seed);
         let time = born;
-        let initialized = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            plugins.initialize(
-                EntityInfo {
-                    id,
-                    team_id: definition.team_id,
-                    group_index,
-                },
-                time,
-                &mut truth,
-                terrain,
-            )
-        }))
-        .unwrap_or_else(|_| Err(anyhow::anyhow!("entity plugin initialization panicked")));
+        let initialized = plugins.initialize(
+            EntityInfo {
+                id,
+                team_id: definition.team_id,
+                group_index,
+            },
+            time,
+            &mut truth,
+            terrain,
+        );
         if let Err(error) = initialized {
             // The entity has not entered the simulation yet; its plugins still need cleanup.
             let _ = plugins.close(time);
@@ -238,14 +235,9 @@ impl Entity {
         self.started = true;
         let time = self.born;
         let info = self.info();
-        // As in `new`, a panicking plugin becomes an error rather than escaping
-        // `Simulation::new` (a sweep then records one failed case).
-        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            self.plugins
-                .start(info, time, &self.truth, perfect_contacts)
-        }))
-        .unwrap_or_else(|_| Err(anyhow::anyhow!("entity plugin initialization panicked")))
-        .with_context(|| format!("initialize entity {}", self.id))
+        self.plugins
+            .start(info, time, &self.truth, perfect_contacts)
+            .with_context(|| format!("initialize entity {}", self.id))
     }
 
     pub(crate) fn step_autonomy(&mut self, time: StepTime) -> Result<()> {

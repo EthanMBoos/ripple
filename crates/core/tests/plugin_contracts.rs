@@ -6,7 +6,7 @@ mod plugin_fixtures;
 
 use anyhow::Result;
 use plugin_fixtures::*;
-use ripple_core::{Drawing, Params, Simulation, plugin::PluginRegistry, record};
+use ripple_core::{Drawing, Params, Simulation, record};
 use std::sync::Arc;
 
 /// Overrides that replace whole plugin slots, such as
@@ -245,45 +245,6 @@ fn world_plugin_stop_emits_terminal_frame_and_closes_once() -> Result<()> {
     for (_, report) in simulation.metric_reports() {
         assert_eq!(report.teams[&1].values["closed"], 1.0);
         assert_eq!(report.teams[&1].values["steps"], 1.0);
-    }
-    Ok(())
-}
-
-struct PanicNetwork;
-impl ripple_core::plugin::Network for PanicNetwork {
-    type Config = ();
-    // Stands in for ExampleNetwork under the same name, so it ignores that network's parameters.
-    fn configure(_: &ripple_core::plugin::PluginParams) -> Result<()> {
-        Ok(())
-    }
-    fn new(_: &()) -> Self {
-        Self
-    }
-
-    fn step(&mut self, _: &mut ripple_core::plugin::NetworkContext<'_, '_>) -> Result<()> {
-        panic!("intentional network panic");
-    }
-}
-#[test]
-fn network_panic_is_reported_and_other_plugins_are_closed() -> Result<()> {
-    // Floor and PopulationMetrics still address ExampleNetwork: register the failing implementation at that name in a separate registry.
-    let mut registry = PluginRegistry::with_builtins();
-    registry.register_autonomy::<autonomy::DriveToGoal>("DriveToGoal")?;
-    registry.register_controller::<controller::ScaleSpeed>("ScaleSpeed")?;
-    registry.register_motion::<motion::EastwardMotion>("EastwardMotion")?;
-    registry.register_sensor::<sensor::PositionSensor>("PositionSensor")?;
-    registry.register_localization::<estimator::EastFix>("EastFix")?;
-    registry.register_interaction::<interaction::Floor>("Floor")?;
-    registry.register_network::<PanicNetwork>("ExampleNetwork")?;
-    registry.register_metrics::<metrics::PopulationMetrics>("PopulationMetrics")?;
-    let mut simulation = Simulation::new(scenario(&Params::new())?, Arc::new(registry), 8)?;
-    assert!(simulation.step().is_err());
-    assert_eq!(
-        simulation.termination(),
-        Some(ripple_core::TerminationReason::PluginFailure)
-    );
-    for (_, report) in simulation.metric_reports() {
-        assert_eq!(report.teams[&1].values["closed"], 1.0);
     }
     Ok(())
 }

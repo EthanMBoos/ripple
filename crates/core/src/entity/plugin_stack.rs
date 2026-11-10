@@ -384,11 +384,7 @@ impl<T: ?Sized> Slot<T> {
         time: StepTime,
         close: impl FnOnce(&mut T, StepTime) -> Result<()>,
     ) -> Result<()> {
-        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            close(&mut self.plugin, time)
-        }))
-        .unwrap_or_else(|_| Err(anyhow::anyhow!("plugin close panicked")))
-        .with_context(|| format!("close '{}'", self.name))
+        close(&mut self.plugin, time).with_context(|| format!("close '{}'", self.name))
     }
 
     // Autonomies and controllers are different traits with the same shape

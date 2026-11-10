@@ -134,8 +134,9 @@ impl Dispatcher {
             let _ = writeln!(
                 text,
                 "You manage hubs {} only, one cluster of the region; the other clusters \
-                 have their own fleet manager, and an order naming a hub or site outside \
-                 yours is refused.",
+                 have their own fleet manager. An order naming a hub or site outside yours \
+                 is refused, and your avoid and priority orders reach only your own hubs' \
+                 flights and requests.",
                 hub_list(hubs)
             );
         }

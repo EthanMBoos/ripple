@@ -69,7 +69,9 @@ Paths are relative to `crates/core/src/`.
 | [simulation/scheduler.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/simulation/scheduler.rs) | Joined parallel entity phases, including failures/panics |
 | [simulation/world_plugins.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/simulation/world_plugins.rs) | Interaction/network/metrics ownership and dispatch, not model equations |
 | `simulation/trace.rs` | The optional observation trace (`--trace`) |
-| [entity.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/entity.rs), [entity/plugin_stack.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/entity/plugin_stack.rs) | Entity state/lifecycle and its configured plugin instances |
+| [entity.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/entity.rs) | Entity state and lifecycle |
+| [entity/compiled_stack.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/entity/compiled_stack.rs) | A group's plugin list checked and wired once at load: ports, sensor names, estimator sources |
+| [entity/plugin_stack.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/entity/plugin_stack.rs) | One entity's live plugins and its share of each tick's phases |
 | [mission.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/mission.rs) | Finding a YAML mission, expanding templates and overrides |
 | [scenario.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/scenario.rs) | Public experiment data and its validation |
 | [math/state.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/math/state.rs), `math/quaternion.rs`, `math/angles.rs` | Physical state and coordinate conventions |
@@ -113,8 +115,9 @@ registry supports [Rust-built scenarios](../guides/rust-scenarios.md).
    `Simulation::new`.
 2. `plugin/registry.rs`: compile registered types from mission
    parameters.
-3. `entity/plugin_stack.rs` and `simulation/world_plugins.rs`: create and own
-   independent entity-local and world-level plugin instances.
+3. `entity/compiled_stack.rs` checks and wires a group's plugin list once;
+   `entity/plugin_stack.rs` and `simulation/world_plugins.rs` create and
+   own independent entity-local and world-level plugin instances.
 4. `simulation.rs`: `step_inner` shows the phases in order: generate
    entities; run autonomy; for each substep, controllers then motion; sensors;
    interactions; networks; estimation; metrics; then remove inactive entities

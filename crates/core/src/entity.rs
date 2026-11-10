@@ -1,5 +1,6 @@
 //! Entity-owned truth and the autonomy/controller/motion execution chain.
 
+pub(crate) mod compiled_stack;
 pub(crate) mod plugin_stack;
 
 use anyhow::{Context, Result};
@@ -9,7 +10,7 @@ use serde::Serialize;
 use crate::{
     common::Terrain,
     drawing::PluginDrawings,
-    entity::plugin_stack::{CompiledStack, PluginStack},
+    entity::{compiled_stack::CompiledStack, plugin_stack::PluginStack},
     math::{EulerAngles, KinematicState, Quaternion, Vec3},
     plugin::estimator::{Contact, ContactList},
     plugin::{EntityInfo, PluginRegistry, Readings, StepTime},

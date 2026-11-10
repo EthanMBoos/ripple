@@ -665,21 +665,24 @@ at 256 and 1,024 hubs show a 13-point cost of relocating at both sizes,
 with 1,280 and 5,120 aircraft (Table~\ref{tab:policies}). No model has yet
 managed a region that large.
 
-\emph{Planned.} We will compare three APIs on matched days at 256 and
-1,024 hubs: one model sees the whole region and can order anywhere; a
-model for each 16-hub cluster sees and acts within it; and those cluster
-managers work with a regional manager that sees cluster totals and can
-move aircraft and stock between clusters. The regional manager will be
-either a deterministic replanner or the same model. A regional move keeps
-at least half of each donor hub's aircraft and is permanent; flat
-reposition has no donor floor unless the reserve guard is on. Each
-manager is called at most three times an hour, with new events batched
-until the next call, or about 23 calls per day. We will run Haiku and
-Opus on two seeds per size, and report on-time score, missed requests at
-giving and receiving hubs, moves per hundred hubs, model calls, and prompt
-characters. These runs ask whether one model can respond across a large
-region, whether local managers miss help across cluster boundaries, and
-whether a regional layer serves more requests than its moves later cost.
+\emph{Planned.} The question is plain: which API lets a model manage a
+small fleet, where does it strain as the fleet grows, and what change lets
+it keep working at the larger size. We will run one ladder on matched days
+at 16, 64, and 256 hubs, and at 1,024 where the runs fit, with Haiku and
+Opus on three seeds, against local rules and a fixed rule at each size.
+Three APIs: one model sees the whole region and gives the orders of the
+main study; one model sees the whole region but may only grant temporary
+help, a hub serving another hub's sites for a time with its aircraft
+returning home, chosen from the hubs the dispatcher lists as able to spare
+aircraft and reach the sites; and a model for each 16-hub cluster, seeing
+and acting within it, with a model above the clusters that may only grant
+the same help. Each manager is called at most three times an hour, with
+new events batched until the next call, or about 23 calls per day. We will
+report on-time score, missed requests at lending and receiving hubs,
+aircraft lost, model calls, prompt characters, and cost per day. If the
+first API falls behind as the fleet grows and the second holds, the orders
+were the problem; if the second falls too and the third holds, dividing
+the view and the decisions earned its place.
 
 \section{Discussion and Future Work}
 \label{sec:discussion}

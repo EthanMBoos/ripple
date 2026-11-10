@@ -1,8 +1,6 @@
 //! What the fleet manager sees of the fleet: a snapshot the dispatcher builds
-//! at each call, and the three ways of writing it out. The full list names
-//! every vehicle; the summaries give one line per hub; the queries give the
-//! hub list and answer questions. The words around them are the same for
-//! every interface.
+//! at each call, written out as one line per hub, or as only the hubs with
+//! something wrong. The words around them are the same for both.
 //!
 //! Distances are kilometers and times minutes, rounded, so the prompt depends
 //! only on the state and a saved reply matches a rerun.
@@ -14,16 +12,13 @@ use ripple_core::Vec3;
 use serde::Deserialize;
 
 use crate::event::Event;
-use crate::messages::{Phase, Status, Urgency, VehicleCard, VehicleClass};
-use crate::order::Query;
-use crate::region::{Region, horizontal_m};
+use crate::messages::{Urgency, VehicleCard, VehicleClass};
+use crate::region::Region;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ViewKind {
-    FullList,
     Summaries,
-    Queries,
     /// Only what is going wrong: late or stranded requests, low stock,
     /// outages, lost vehicles.
     Exceptions,
@@ -55,7 +50,6 @@ pub struct HubView {
 pub struct ClusterView {
     /// 1-based, in the order `Region::clusters` gives.
     pub index: u32,
-    pub hubs: Vec<u32>,
     pub idle: BTreeMap<VehicleClass, u32>,
     pub total: BTreeMap<VehicleClass, u32>,
     pub flying: u32,
@@ -76,8 +70,6 @@ pub struct Snapshot<'a> {
     /// One vehicle card per class, for range estimates.
     pub cards: BTreeMap<VehicleClass, VehicleCard>,
     pub range_margin: f64,
-    /// Every vehicle's latest report, by ID.
-    pub vehicles: Vec<&'a Status>,
     /// The events in force as the manager is told them (`Scope::events_shown`).
     pub active_events: Vec<Event>,
     pub items: &'a [String],
@@ -103,19 +95,6 @@ impl Snapshot<'_> {
         self.cards.get(&class).map_or(0.0, |card| {
             card.cruise_speed_mps * card.endurance_s * self.range_margin
         })
-    }
-
-    /// A hub number or a site code as a point.
-    pub fn locate(&self, near: &str) -> Option<Vec3> {
-        if let Ok(id) = near.trim().trim_start_matches("hub").trim().parse::<u32>() {
-            return self.region.hub(id).map(|hub| hub.position_world_m);
-        }
-        self.region.site(near).map(|site| site.position_world_m)
-    }
-
-    /// Flight time to and from a point for a class, from its hub.
-    fn minutes(&self, from: Vec3, to: Vec3, speed_mps: f64) -> f64 {
-        horizontal_m(from, to) / speed_mps / 60.0
     }
 
     pub fn stock_line(&self, hub: &HubView) -> String {
@@ -211,64 +190,9 @@ impl Snapshot<'_> {
         )
     }
 
-    pub fn full_list(&self) -> String {
-        let mut text = String::from("Hubs:\n");
-        for hub in &self.hubs {
-            let mut line = format!(
-                "- hub {} at {}: stock {}; {}",
-                hub.id,
-                km(hub.position_world_m),
-                self.stock_line(hub),
-                self.waiting_line(hub)
-            );
-            if hub.out {
-                line.push_str("; cannot launch (outage)");
-            }
-            let _ = writeln!(text, "{line}");
-        }
-        text.push_str("Vehicles:\n");
-        for vehicle in &self.vehicles {
-            let state = match vehicle.phase {
-                Phase::Idle if vehicle.request_id.is_none() => "idle".to_string(),
-                Phase::Lost => "lost (out of endurance)".to_string(),
-                phase => format!("busy ({})", phase.as_str()),
-            };
-            let _ = writeln!(
-                text,
-                "- vehicle {}: {}, hub {}, {state}, at {}, {:.0} min of flight left",
-                vehicle.vehicle_id,
-                vehicle.card.class.as_str(),
-                vehicle.hub,
-                km(vehicle.position_world_m),
-                vehicle.endurance_left_s / 60.0
-            );
-        }
-        text
-    }
-
-    pub fn hub_list(&self) -> String {
-        let mut text = String::from("Hubs:\n");
-        for hub in &self.hubs {
-            let mut line = format!(
-                "- hub {} at {}: {} fixed-wing, {} multirotors",
-                hub.id,
-                km(hub.position_world_m),
-                counts(&hub.total, VehicleClass::FixedWing),
-                counts(&hub.total, VehicleClass::Multirotor),
-            );
-            if hub.out {
-                line.push_str(", cannot launch (outage)");
-            }
-            let _ = writeln!(text, "{line}");
-        }
-        text
-    }
-
     pub fn write(&self, kind: ViewKind) -> String {
         match kind {
-            ViewKind::FullList => self.full_list(),
             ViewKind::Summaries => self.summaries(),
-            ViewKind::Queries => self.hub_list(),
             ViewKind::Exceptions => self.exceptions(),
         }
     }
@@ -331,7 +255,6 @@ impl Snapshot<'_> {
     pub fn cluster_view(&self, index: u32, hubs: &[u32]) -> ClusterView {
         let mut view = ClusterView {
             index,
-            hubs: hubs.to_vec(),
             ..ClusterView::default()
         };
         for hub in self.hubs.iter().filter(|h| hubs.contains(&h.id)) {
@@ -356,15 +279,16 @@ impl Snapshot<'_> {
     }
 
     /// One line per cluster, then the region line: what the manager above
-    /// the clusters sees.
+    /// the clusters sees. A line carries the totals and only the live events
+    /// shown above, with the item or class.
     pub fn clusters(&self, clusters: &[Vec<u32>]) -> String {
         let mut text = String::from("Clusters:\n");
         for (i, hubs) in clusters.iter().enumerate() {
             let view = self.cluster_view(i as u32 + 1, hubs);
+            // No hub list: the manager orders by cluster number.
             let mut line = format!(
-                "- cluster {} (hubs {}): {}/{} fixed-wing idle, {}/{} multirotor idle",
+                "- cluster {}: {}/{} fixed-wing idle, {}/{} multirotor idle",
                 view.index,
-                crate::event::hub_list(&view.hubs),
                 counts(&view.idle, VehicleClass::FixedWing),
                 counts(&view.total, VehicleClass::FixedWing),
                 counts(&view.idle, VehicleClass::Multirotor),
@@ -395,7 +319,7 @@ impl Snapshot<'_> {
             let events: Vec<String> = self
                 .active_events
                 .iter()
-                .filter(|e| e.hubs.iter().any(|h| hubs.contains(h)))
+                .filter(|e| e.kind.shown_above() && e.hubs.iter().any(|h| hubs.contains(h)))
                 .map(|e| {
                     let hubs: Vec<u32> = e
                         .hubs
@@ -403,11 +327,17 @@ impl Snapshot<'_> {
                         .copied()
                         .filter(|h| hubs.contains(h))
                         .collect();
-                    let mut text = format!(
-                        "{} at hubs {}",
-                        e.kind.as_str(),
-                        crate::event::hub_list(&hubs)
-                    );
+                    // The item and class are here because the manager above
+                    // the clusters reads no event text: a send needs the
+                    // item, and a move knows which class the weather grounds.
+                    let mut text = e.kind.as_str().to_string();
+                    if !e.item.is_empty() {
+                        let _ = write!(text, " of {}", e.item);
+                    }
+                    let _ = write!(text, " at hubs {}", crate::event::hub_list(&hubs));
+                    if let Some(class) = e.class {
+                        let _ = write!(text, ", {} grounded", class.as_str());
+                    }
                     if e.until_min.is_finite() {
                         let _ = write!(text, " until minute {:.0}", e.until_min);
                     }
@@ -421,104 +351,5 @@ impl Snapshot<'_> {
         }
         text.push_str(&self.region_line());
         text
-    }
-
-    /// The answer to a query, in a few lines.
-    pub fn answer(&self, query: &Query) -> String {
-        match query {
-            Query::FindVehicles {
-                near,
-                within_min,
-                class,
-            } => {
-                let Some(point) = self.locate(near) else {
-                    return format!("No hub or site named {near}.");
-                };
-                let mut per_hub: BTreeMap<(u32, VehicleClass), (u32, f64)> = BTreeMap::new();
-                for vehicle in &self.vehicles {
-                    if !vehicle.free() || class.is_some_and(|c| c != vehicle.card.class) {
-                        continue;
-                    }
-                    let minutes = self.minutes(
-                        vehicle.position_world_m,
-                        point,
-                        vehicle.card.cruise_speed_mps,
-                    );
-                    if minutes <= *within_min {
-                        let entry = per_hub
-                            .entry((vehicle.hub, vehicle.card.class))
-                            .or_insert((0, minutes));
-                        entry.0 += 1;
-                        entry.1 = entry.1.min(minutes);
-                    }
-                }
-                if per_hub.is_empty() {
-                    return format!("No idle vehicles within {within_min:.0} min of {near}.");
-                }
-                let mut text = format!("Idle vehicles within {within_min:.0} min of {near}:\n");
-                for ((hub, class), (count, minutes)) in per_hub {
-                    let _ = writeln!(
-                        text,
-                        "- hub {hub}: {count} {} ({minutes:.0} min away)",
-                        class.as_str()
-                    );
-                }
-                text
-            }
-            Query::HubStatus { hub } => match self.hub(*hub) {
-                Some(view) => {
-                    let mut text = self.hub_line(view);
-                    text.push('\n');
-                    let sites: Vec<String> = self
-                        .region
-                        .sites_of(*hub)
-                        .map(|site| format!("{} {}", site.code, km(site.position_world_m)))
-                        .collect();
-                    let _ = writeln!(text, "  sites: {}", sites.join("; "));
-                    text
-                }
-                None => format!("No hub {hub}."),
-            },
-            Query::FindStock { item, near } => {
-                let Some(point) = self.locate(near) else {
-                    return format!("No hub or site named {near}.");
-                };
-                if !self.items.iter().any(|i| i.eq_ignore_ascii_case(item)) {
-                    return format!(
-                        "No item named {item}; the items are {}.",
-                        self.items.join(", ")
-                    );
-                }
-                let mut holders: Vec<(&HubView, u32, f64)> = self
-                    .hubs
-                    .iter()
-                    .filter_map(|hub| {
-                        let units = hub
-                            .stock
-                            .iter()
-                            .find(|(name, _)| name.eq_ignore_ascii_case(item))
-                            .map(|(_, units)| *units)?;
-                        (units > 0).then_some((
-                            hub,
-                            units,
-                            horizontal_m(hub.position_world_m, point) / 1000.0,
-                        ))
-                    })
-                    .collect();
-                holders.sort_by(|a, b| a.2.total_cmp(&b.2));
-                if holders.is_empty() {
-                    return format!("No hub has {item}.");
-                }
-                let mut text = format!("Hubs with {item}, nearest {near} first:\n");
-                for (hub, units, distance_km) in holders.iter().take(8) {
-                    let _ = writeln!(
-                        text,
-                        "- hub {}: {units} units, {distance_km:.0} km away",
-                        hub.id
-                    );
-                }
-                text
-            }
-        }
     }
 }

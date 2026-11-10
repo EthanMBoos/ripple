@@ -60,13 +60,14 @@ side. The tests in `tests/region.rs` run short days of the same missions.
 | `skill.rs`, `skill/` | `drop` (parachute release on a pass or hover) and `land` (multirotors only, on rooftops). Either can go out and back through one `via` waypoint for a detour. |
 | `dispatcher.rs` | One per region: stock per hub, the day's requests, events, the rules in force, the fleet manager's calls, and the assignment of each request to a vehicle. Draws the hubs, the sites and the areas closed now in the viewer. Its helpers are the files in `dispatcher/`: the mission keys (`config.rs`), each tick's bookkeeping (`day.rs`), the fleet managers, their scopes and their calls (`calls.rs`), the prompts (`prompt.rs`), each order's checks and effect (`apply.rs`), and assignment (`assign.rs`). |
 | `event.rs` | The eight event kinds, their seeded script, and their texts from the mission. |
-| `order.rs` | The orders a fleet manager can give, the queries it can ask, and how a reply is read. |
+| `order.rs` | The orders a fleet manager can give and how a reply is read. |
 | `rules.rs` | The rules the orders leave in force, read at every assignment: reserves, avoided areas, groundings, priorities, extra serving hubs, open pads. |
 | `scope.rs` | What one fleet manager is responsible for, the whole region or one cluster's hubs: it filters what the manager is shown, gates what it may order, and places the rules it gives that name no hub. |
-| `view.rs` | What the fleet manager sees: a full vehicle list, per-hub summaries, a hub list with queries, or only the exceptions. |
+| `view.rs` | What the fleet manager sees: per-hub summaries, or only the exceptions. |
+| `help.rs` | Help across clusters: a surge or outage hub asks for aircraft, the dispatcher lists the hubs outside the cluster that can spare some and reach it, and the manager above grants one or none; a fixed-rule broker is the control. |
 | `replanner.rs` | The structured replanner: fixed rules per event kind and a greedy pick of donor hubs by distance. |
 | `policy.rs`, `policies/` | Rules written once as YAML, by hand or by a model, in the form `policies/SYNTAX.md` describes; `policies/replanner.yaml` is the replanner in it. |
-| `model.rs`, `client.rs` | The language-model fleet manager: prompt, query loop, saved replies; clients for the `claude` and `codex` commands, the Anthropic and OpenAI APIs, and Ollama. |
+| `model.rs`, `client.rs` | The language-model fleet manager: prompt and saved replies; clients for the `claude` and `codex` commands, the Anthropic and OpenAI APIs, and Ollama. |
 | `score.rs` | DeliveryScore: everything measured from what was flown. |
 | `messages.rs` | The messages between dispatcher, couriers and score. |
 
@@ -128,10 +129,6 @@ JSON object with one key; the same forms are written in YAML for
 | `serve_from` | let other hubs serve a site besides its own |
 | `use_pad` | deliver to a hospital's ground pad by drop instead of landing on its rooftop |
 
-With `manager.view: queries` the fleet manager may instead ask one of
-`find_vehicles`, `hub_status` or `find_stock`, up to `max_queries` times, and
-is asked again with the answer.
-
 ### The fleet manager
 
 `manager.kind` is `none`, `scripted`, `replanner`, `policy`, `model` or
@@ -142,17 +139,10 @@ them, and a call with nothing proposed is not made. With `policy`,
 the file `manager.policy` names is read once and its rules give the orders
 (`policies/SYNTAX.md`); `python3 crates/delivery/write_policy.py` asks a model
 to write one from the mission's description, so the model can be in the loop
-or in the code. The interface to a model is
-three settings, so the study's interfaces are configurations, not code paths:
-
-| Interface | `view` | `feedback` | `checker` |
-| --- | --- | --- | --- |
-| A | `full_list` | false | false |
-| B | `summaries` | false | false |
-| C | `queries` | false | false |
-| D | `summaries` | true | false |
-| E | `summaries` | true | true |
-| exceptions | `exceptions`: only hubs with late or stranded requests, low stock, an outage or lost vehicles | either | either |
+or in the code. The interface to a model is three settings, so the study's
+interfaces are configurations, not code paths: `view` is `summaries`, one
+line per hub, or `exceptions`, only the hubs with late or stranded requests,
+low stock, an outage or lost vehicles; `feedback` and `checker` are below.
 
 `manager.calls_per_hour` is a call budget that does not grow with the fleet:
 calls are at least that far apart, and events that start between calls wait
@@ -171,13 +161,23 @@ splits the same way, which measures what the split alone costs.
 `manager.top_kind` puts a manager above the clusters (`replanner` or
 `model`; `top_model` names its model, or `model` is used). After the cluster
 managers it is called with one line per cluster, totals of vehicles, stock,
-waiting and late requests and the events there, and gives only `move` (idle
-vehicles between clusters) and `send` (stock) orders; the dispatcher picks
-the hubs, to the hub with the most waiting from the nearest hubs that keep
-half their own, or from the hub holding the most to the one holding the
-least. Its calls and orders are counted as `top_calls` and `top_orders`.
+waiting and late requests and its live surges, outages, shortages and
+weather with the item or class, then the new events of those kinds in
+full (closures, corridors, rooftop closures and priorities are the cluster
+managers' alone). It gives only `help` orders: when a surge or outage
+starts at a hub, the hub asks for aircraft, and the manager above is shown
+each request with the hubs outside its cluster that can spare aircraft
+above half their own and reach the hub's farthest site and return
+(`help.rs`). A `help` order lets one of them serve the hub's sites until a
+minute; its aircraft fly each request and come home, so nothing is
+relocated. With `top_kind: replanner` a fixed rule grants each request its
+nearest offer, one donor per request and each donor once per call. Its
+calls and orders are counted as `top_calls` and `top_orders`. The score
+counts `helps`, `hub_NNN_lent` and `hub_NNN_helped`, and for any lending,
+by help or by `serve_from`, the flights from a hub other than the
+request's own as `lent_flights`, `lent_deliveries` and `lent_on_time`.
 With `manager.kind: none` and a top manager, the hubs run local rules only
-through the dispatcher and the top moves between them.
+through the dispatcher and the top grants help between them.
 
 Orders that asked for more than was there (a reposition with fewer idle
 vehicles than `count`, a transfer with fewer units in stock) are applied for
@@ -185,8 +185,7 @@ what is there and counted as `partial_<name>`.
 
 `feedback` reports each order's estimate when it is applied and what was flown
 since the last call; `checker` refuses orders that break an active rule or
-cannot be flown and says why. `events_as` gives the model each event as its
-text or as its fields. `cost_feedback` adds, under feedback, one fixed line
+cannot be flown and says why. `cost_feedback` adds, under feedback, one fixed line
 per relocation or stock flight since the last call: the donor hub's idle
 vehicles now and its late deliveries since. `guard` refuses a reposition
 that would leave the donor under half its vehicles of the class
@@ -217,8 +216,7 @@ urgent 2, trauma 4). The other columns: on-time and late counts by urgency,
 `missed_<reason>`, `closure_breach_s` and `corridor_breach_s`,
 `weather_breaches`, `outage_breaches`, `rooftop_breaches`, `vehicles_lost`,
 transfers, orders by name and outcome, and calls, prompt and reply
-characters, queries and parse failures. Per hub, `hub_001_requests`,
+characters and parse failures. Per hub, `hub_001_requests`,
 `_on_time`, `_late` and `_undelivered` count its own sites' requests, and
 `_gave` and `_got` the relocations and stock flights it donated and
-received, the ones a move or send between clusters chose included, so a
-day's losses can be laid against the hubs that donated.
+received, so a day's losses can be laid against the hubs that donated.

@@ -9,7 +9,8 @@ use anyhow::Result;
 use ripple_core::plugin::AgentContext;
 
 use super::Dispatcher;
-use crate::event::Event;
+use crate::event::{Event, EventKind};
+use crate::help::{self, HelpRequest};
 use crate::messages::{CALL_TOPIC, ManagerCall, ManagerKind, ORDER_TOPIC, OrderRecord};
 use crate::model::ModelManager;
 use crate::order::{Order, Outcome, parse_veto};
@@ -44,7 +45,7 @@ impl Decider {
 /// One fleet manager: what it is responsible for, how it decides, and what
 /// it is told about its last orders at its next call. The manager above the
 /// clusters is one too: its scope is the region, it is shown cluster totals
-/// instead of hubs, and it gives only moves between clusters.
+/// instead of hubs, and it only grants help between clusters.
 pub(super) struct Manager {
     pub scope: Scope,
     pub decider: Decider,
@@ -145,10 +146,47 @@ impl Dispatcher {
         self.last_call_s = now_s;
         self.record(context, now_s, round)?;
         if top_kind != ManagerKind::None {
+            self.ask_for_help(now_s, &due);
             let round = self.decide_tier(now_s, &self.started(&due), true)?;
             self.record(context, now_s, round)?;
         }
         Ok(())
+    }
+
+    /// Raises a help request for each hub where a surge or an outage just
+    /// started, until the event ends, and drops the requests that have
+    /// ended. A hub asks once; a granted request is dropped when applied.
+    fn ask_for_help(&mut self, now_s: f64, due: &[usize]) {
+        self.help_requests.retain(|r| r.until_s > now_s);
+        let clusters = self.region.clusters(self.config.manager.cluster_side);
+        let day_end_s = self.config.requests.until_s + 3600.0;
+        let mut asked = Vec::new();
+        for event in self.started(due) {
+            if !matches!(event.kind, EventKind::Surge | EventKind::Outage) {
+                continue;
+            }
+            let until_s = if event.until_min.is_finite() {
+                event.until_min * 60.0
+            } else {
+                day_end_s
+            };
+            for &hub in &event.hubs {
+                let Some(cluster) = help::cluster_of(hub, &clusters) else {
+                    continue;
+                };
+                asked.push(HelpRequest {
+                    hub,
+                    cluster,
+                    kind: event.kind,
+                    until_s,
+                });
+            }
+        }
+        for request in asked {
+            if !self.help_requests.iter().any(|r| r.hub == request.hub) {
+                self.help_requests.push(request);
+            }
+        }
     }
 
     /// The mission's hand-written orders whose minute has come.
@@ -206,7 +244,6 @@ impl Dispatcher {
             events: mine.iter().map(|e| e.id).collect(),
             prompt_chars: 0,
             reply_chars: 0,
-            queries: 0,
             orders: 0,
             dropped: 0,
             parse_failed: false,
@@ -215,7 +252,7 @@ impl Dispatcher {
         let clusters = || self.region.clusters(self.config.manager.cluster_side);
         let orders = match &manager.decider {
             Decider::Replanner if manager.above => {
-                replanner::plan_top(&mine, &snapshot, &clusters())
+                help::broker(&self.help_requests, &snapshot, &clusters())
             }
             Decider::Replanner => replanner::plan(&mine, &snapshot),
             Decider::Policy(policy) => policy.plan(&mine, &snapshot),
@@ -225,10 +262,9 @@ impl Dispatcher {
                 } else {
                     self.situation(manager, &snapshot, &mine, None)
                 };
-                let asked = model.ask(&situation, &snapshot)?;
+                let asked = model.ask(&situation)?;
                 call.prompt_chars = asked.prompt_chars;
                 call.reply_chars = asked.reply_chars;
-                call.queries = asked.queries;
                 call.parse_failed = asked.parse_failed;
                 unreadable = asked.unreadable;
                 asked.orders
@@ -298,13 +334,12 @@ impl Dispatcher {
             let (outcome, feedback) = if order.is_top() && !above {
                 (
                     Outcome::Refused("top_only"),
-                    "only the manager above the clusters moves between clusters".to_string(),
+                    "only the manager above the clusters grants help".to_string(),
                 )
             } else if above && !order.is_top() {
                 (
-                    Outcome::Refused("moves_only"),
-                    "the manager above the clusters only moves vehicles and stock between clusters"
-                        .to_string(),
+                    Outcome::Refused("help_only"),
+                    "the manager above the clusters only grants help, a hub serving another hub's sites for a time".to_string(),
                 )
             } else if !scope.covers_order(&order, &self.region) {
                 (

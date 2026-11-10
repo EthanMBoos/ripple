@@ -65,20 +65,6 @@ pub enum Phase {
     Lost,
 }
 
-impl Phase {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Phase::Idle => "idle",
-            Phase::Outbound => "outbound",
-            Phase::Landed => "landed",
-            Phase::Returning => "returning",
-            Phase::Relocating => "relocating",
-            Phase::Reloading => "reloading",
-            Phase::Lost => "lost",
-        }
-    }
-}
-
 #[derive(Clone, Copy, Debug, Serialize)]
 pub struct Status {
     pub vehicle_id: i32,
@@ -275,10 +261,9 @@ pub struct ManagerCall {
     pub quiet: bool,
     /// The events that caused it; empty for a check-in.
     pub events: Vec<u32>,
-    /// Characters sent, over every round of the call, and received.
+    /// Characters sent and received.
     pub prompt_chars: usize,
     pub reply_chars: usize,
-    pub queries: u32,
     pub orders: u32,
     /// Proposed orders the veto manager dropped.
     pub dropped: u32,

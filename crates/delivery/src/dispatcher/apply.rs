@@ -13,7 +13,7 @@ use crate::messages::{
 };
 use crate::order::{Order, Outcome};
 use crate::region::{SiteKind, horizontal_m};
-use crate::rules::{Avoid, Grounded, Priority, Reserve};
+use crate::rules::{Avoid, Grounded, Lend, Priority, Reserve};
 use crate::scope::Scope;
 
 /// A refusal: the outcome names the reason, the note says why.
@@ -57,8 +57,7 @@ impl Dispatcher {
             Order::Prioritize { .. } => self.apply_prioritize(now_s, order, scope)?,
             Order::ServeFrom { .. } => self.apply_serve_from(order)?,
             Order::UsePad { .. } => self.apply_use_pad(now_s, order)?,
-            Order::Move { .. } => self.apply_move(context, now_s, order)?,
-            Order::Send { .. } => self.apply_send(context, now_s, order)?,
+            Order::Help { .. } => self.apply_help(now_s, order)?,
         };
         // A relocation or stock flight that went ahead is a cost at its donor
         // hub, reported with the next feedback.
@@ -81,6 +80,91 @@ impl Dispatcher {
 
     fn hub_exists(&self, hub: u32) -> bool {
         self.region.hub(hub).is_some()
+    }
+
+    /// How far out the longest-legged vehicle flies and still returns, in km.
+    /// A fixed-wing round trip at 25 m/s and 60 min reaches 40 km out.
+    fn reach_km(&self) -> f64 {
+        self.fleet
+            .values()
+            .map(|v| {
+                v.card.cruise_speed_mps * v.card.endurance_s * self.config.range_margin / 2000.0
+            })
+            .fold(0.0, f64::max)
+    }
+
+    /// From the manager above the clusters: lets a hub serve another hub's
+    /// sites for a time (`help.rs`). The asking hub's request is answered.
+    fn apply_help(&mut self, now_s: f64, order: &Order) -> Result<(Outcome, String)> {
+        let Order::Help {
+            hub,
+            from_hub,
+            until_min,
+        } = order
+        else {
+            unreachable!("matched in apply")
+        };
+        let checker = self.config.manager.checker;
+        if !self.hub_exists(*hub) || !self.hub_exists(*from_hub) {
+            return refuse(
+                "unknown_hub",
+                format!("hubs are 1 to {}", self.region.hubs.len()),
+            );
+        }
+        if hub == from_hub {
+            return refuse("same_hub", "hub and from_hub are the same".into());
+        }
+        let until_s = match until(now_s, *until_min) {
+            Ok(u) => u,
+            Err(e) => return Ok(e),
+        };
+        let donor = self
+            .region
+            .hub(*from_hub)
+            .expect("checked")
+            .position_world_m;
+        let farthest_km = self
+            .region
+            .sites_of(*hub)
+            .map(|site| horizontal_m(donor, site.position_world_m))
+            .fold(0.0, f64::max)
+            / 1000.0;
+        let reach_km = self.reach_km();
+        let (idle, total) = self.fleet.values().fold((0u32, 0u32), |(idle, total), v| {
+            if v.hub != *from_hub {
+                return (idle, total);
+            }
+            (idle + u32::from(v.free()), total + 1)
+        });
+        if checker && farthest_km > reach_km {
+            return refuse(
+                "out_of_range",
+                format!(
+                    "hub {hub}'s farthest site is {farthest_km:.0} km from hub {from_hub}; nothing flies a {reach_km:.0} km round trip"
+                ),
+            );
+        }
+        if checker && idle == 0 {
+            return refuse("no_idle", format!("hub {from_hub} has no idle vehicle"));
+        }
+        self.rules.lends.push(Lend {
+            hub: *hub,
+            from_hub: *from_hub,
+            until_s,
+        });
+        self.help_requests.retain(|r| r.hub != *hub);
+        let sites = self.region.sites_of(*hub).count();
+        let range = if farthest_km > reach_km {
+            ", beyond every vehicle's reach"
+        } else {
+            ""
+        };
+        Ok((
+            Outcome::Applied,
+            format!(
+                "hub {from_hub}'s {idle} idle of {total} may serve hub {hub}'s {sites} sites, {farthest_km:.0} km to the farthest{range}"
+            ),
+        ))
     }
 
     /// Holds vehicles at a hub for one site.
@@ -594,14 +678,7 @@ impl Dispatcher {
             })
             .fold(0.0, f64::max)
             / 1000.0;
-        // A fixed-wing round trip at 25 m/s and 60 min reaches 40 km out.
-        let reach_km = self
-            .fleet
-            .values()
-            .map(|v| {
-                v.card.cruise_speed_mps * v.card.endurance_s * self.config.range_margin / 2000.0
-            })
-            .fold(0.0, f64::max);
+        let reach_km = self.reach_km();
         if checker && farthest_km > reach_km {
             return refuse(
                 "out_of_range",
@@ -651,175 +728,5 @@ impl Dispatcher {
                 site.code
             ),
         ))
-    }
-
-    /// From the manager above the clusters: idle vehicles from one cluster to the other's hub with the most waiting, from the nearest hubs that keep half their own.
-    fn apply_move(
-        &mut self,
-        context: &mut AgentContext,
-        now_s: f64,
-        order: &Order,
-    ) -> Result<(Outcome, String)> {
-        let Order::Move {
-            class,
-            count,
-            from_cluster,
-            to_cluster,
-        } = order
-        else {
-            unreachable!("matched in apply")
-        };
-        let (from, to) = match self.cluster_pair(*from_cluster, *to_cluster) {
-            Ok(pair) => pair,
-            Err(refused) => return Ok(refused),
-        };
-        if *count == 0 {
-            return refuse("bad_count", "count must be positive".into());
-        }
-        // To the hub with the most waiting; from the nearest hubs that
-        // keep half their own, as the replanner's repositions do.
-        let waiting = self.waiting();
-        let load = |hub: u32| {
-            waiting
-                .iter()
-                .filter(|r| r.hub == hub && r.kind == RequestKind::Delivery)
-                .count()
-        };
-        let to_hub = *to
-            .iter()
-            .max_by_key(|&&h| (load(h), std::cmp::Reverse(h)))
-            .expect("a cluster has hubs");
-        let destination = self.region.hub(to_hub).expect("checked").position_world_m;
-        let mut donors = from;
-        donors.sort_by(|a, b| {
-            let d = |h: u32| {
-                horizontal_m(
-                    self.region.hub(h).expect("checked").position_world_m,
-                    destination,
-                )
-            };
-            d(*a).total_cmp(&d(*b)).then(a.cmp(b))
-        });
-        let mut wanted = *count;
-        let mut sent = 0;
-        let mut notes = Vec::new();
-        for donor in donors {
-            if wanted == 0 {
-                break;
-            }
-            let (idle, total) = self.fleet.values().fold((0u32, 0u32), |(idle, total), v| {
-                if v.hub != donor || class.is_some_and(|c| c != v.card.class) {
-                    return (idle, total);
-                }
-                let free = v.free() && !self.pending_relocations.contains_key(&v.vehicle_id);
-                (idle + u32::from(free), total + 1)
-            });
-            let spare = idle.saturating_sub(total.div_ceil(2));
-            if spare == 0 {
-                continue;
-            }
-            let n = spare.min(wanted);
-            let sub = Order::Reposition {
-                class: *class,
-                count: n,
-                from_hub: donor,
-                to_hub,
-                until_min: None,
-            };
-            let (outcome, note) = self.apply(context, now_s, &sub, &Scope::Region)?;
-            if outcome.is_refused() {
-                continue;
-            }
-            notes.push(format!("hub {donor} to hub {to_hub}: {note}"));
-            wanted -= n;
-            sent += n;
-        }
-        if sent == 0 {
-            return refuse(
-                "too_few_idle",
-                format!("no hub of cluster {from_cluster} can spare a vehicle"),
-            );
-        }
-        let outcome = if sent < *count {
-            Outcome::Partial
-        } else {
-            Outcome::Applied
-        };
-        Ok((outcome, notes.join("; ")))
-    }
-
-    /// From the manager above the clusters: stock from the hub holding the most to the hub holding the least.
-    fn apply_send(
-        &mut self,
-        context: &mut AgentContext,
-        now_s: f64,
-        order: &Order,
-    ) -> Result<(Outcome, String)> {
-        let Order::Send {
-            item,
-            units,
-            from_cluster,
-            to_cluster,
-        } = order
-        else {
-            unreachable!("matched in apply")
-        };
-        let (from, to) = match self.cluster_pair(*from_cluster, *to_cluster) {
-            Ok(pair) => pair,
-            Err(refused) => return Ok(refused),
-        };
-        let Some(item) = self
-            .config
-            .stock
-            .items
-            .iter()
-            .find(|i| i.eq_ignore_ascii_case(item))
-            .cloned()
-        else {
-            return refuse(
-                "unknown_item",
-                format!("the items are {}", self.config.stock.items.join(", ")),
-            );
-        };
-        let held = |hub: u32| self.stock[&hub].get(&item).copied().unwrap_or(0);
-        // From the hub holding the most to the hub holding the least.
-        let from_hub = *from
-            .iter()
-            .max_by_key(|&&h| (held(h), std::cmp::Reverse(h)))
-            .expect("a cluster has hubs");
-        let to_hub = *to
-            .iter()
-            .min_by_key(|&&h| (held(h), h))
-            .expect("a cluster has hubs");
-        let sub = Order::Transfer {
-            item,
-            units: *units,
-            from_hub,
-            to_hub,
-        };
-        let (outcome, note) = self.apply(context, now_s, &sub, &Scope::Region)?;
-        Ok((outcome, format!("hub {from_hub} to hub {to_hub}: {note}")))
-    }
-
-    /// The hubs of two clusters named in a move or send, or why not.
-    #[allow(clippy::type_complexity)]
-    fn cluster_pair(&self, from: u32, to: u32) -> Result<(Vec<u32>, Vec<u32>), (Outcome, String)> {
-        let clusters = self.region.clusters(self.config.manager.cluster_side);
-        let get = |index: u32| {
-            (index >= 1)
-                .then(|| clusters.get(index as usize - 1).cloned())
-                .flatten()
-        };
-        match (get(from), get(to)) {
-            (Some(_), Some(_)) if from == to => Err((
-                Outcome::Refused("same_cluster"),
-                "from_cluster and to_cluster are the same".into(),
-            )),
-            (Some(from), Some(to)) => Ok((from, to)),
-            _ => Err((
-                Outcome::Refused("unknown_cluster"),
-                format!("clusters are 1 to {}", clusters.len()),
-            )),
-        }
     }
 }

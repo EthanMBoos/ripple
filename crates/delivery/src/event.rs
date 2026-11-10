@@ -62,6 +62,17 @@ impl EventKind {
         }
     }
 
+    /// Whether the manager above the clusters is shown the event: a surge or
+    /// an outage asks for help, a shortage or weather explains a cluster's
+    /// state. A closure, corridor, rooftop closure, or priority is handled
+    /// where it happens, by the cluster's own rules.
+    pub fn shown_above(self) -> bool {
+        matches!(
+            self,
+            EventKind::Surge | EventKind::Outage | EventKind::Shortage | EventKind::Weather
+        )
+    }
+
     /// How long the event lasts unless the mission says otherwise.
     fn default_duration_s(self) -> f64 {
         match self {
@@ -127,8 +138,8 @@ impl Event {
         self.at_s() <= time_s && time_s <= self.until_s()
     }
 
-    /// The structured form the replanner reads and the model can be given
-    /// instead of the text.
+    /// The event as its fields, one line; the text of an event kind the
+    /// mission gives no wording for.
     pub fn structured(&self) -> String {
         let mut fields = vec![
             format!("kind: {}", self.kind.as_str()),

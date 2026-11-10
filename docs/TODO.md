@@ -8,46 +8,34 @@ On the main study's eight-hour days, every model tried moves aircraft or
 stock in at least one role, including when it only vetoes a replanner's
 orders or writes rules before the day. Local rules and lending flights do
 better: moving to a stressed hub costs the giving hubs more requests than
-it saves elsewhere. A reserve guard limits the moves directly. These are
-the completed findings in
-[paper/manuscript/main.tex](../paper/manuscript/main.tex).
-
-The main comparisons use matched requests and events on eight-hour days,
-with half an hour to finish the last deliveries. Robustness checks change
-the layout, fleet, event rate, or surge. The policy table at 4 to 1,024
-hubs, forty model runs, loss figure, and interface ladder are written up.
-The surge-length check finds that moving helps on a quiet day with one
-surge lasting one or two hours, especially if aircraft come home. At four
-hours the advantage disappears. The main study has 15-minute surges.
+it saves elsewhere. A reserve guard limits the moves directly. These
+findings are written up in
+[paper/manuscript/main.tex](../paper/manuscript/main.tex), with the policy
+table at 4 to 1,024 hubs, forty model runs, the loss figure, the interface
+ladder, and the surge-length check.
 
 Before submitting:
 
-- Update Figure 2 with Luna's OpenAI API results (Ezra). The API reruns
-  are complete; the local manuscript and appendix now use the ten matched
-  runs (three seeds at 16 hubs, two at 64, both roles). The figure still
-  uses Luna's original CLI runs. Recover the original eight-hour per-hub
-  results used for the pooled bars, replace Luna's contribution with the
-  API results, and regenerate the figure against matched Local-rules runs.
-  Recheck its caption and donor-loss discussion, then remove the caption's
-  TODO. The API-versus-CLI comparison is in the appendix.
-- Commit and push the current appendix PDF so the public repository link
-  in the paper opens the version described there.
+- Update Figure 2 with Luna's OpenAI API results (Ezra): recover the
+  eight-hour per-hub results behind the pooled bars, replace Luna's CLI
+  contribution, regenerate against matched local-rules runs, recheck the
+  caption and the donor-loss discussion, and remove the caption's TODO.
+- Commit and push the current appendix PDF so the paper's repository link
+  opens the version described.
 - Record the demo video from the title-figure recording.
 - Run `reference/suite.py --release --retain` so `paper/data/` reflects
   the current engine.
-- Explain in the setup why identical hubs help isolate the cost of moving
-  capacity. Check whether the cited medical-drone operation supports a
-  service-radius comparison; add one only if it does.
-- Add a demand-sized replanner as one robustness row: it sizes each
-  reposition from the backlog in view at the call instead of moving a
-  fixed four fixed-wing and two multirotors per surge hub. Run it on the
-  4-, 16- and 64-hub days first (no model calls), and at 256
-  and 1,024 only if the small sizes change the picture. Say in the setup
-  why the primary rule sizes by the event: a surge's requests are not yet
-  visible when it is announced, and a rule that waits for the backlog
-  acts a call later, past the trauma deadline. If the demand-sized rule
-  also loses at giving hubs, the claim is stronger; if it wins, the claim
-  becomes that over-moving costs, not moving.
+- Explain in the setup why identical hubs isolate the cost of moving
+  capacity. Add a service-radius comparison only if the cited medical-drone
+  operation supports one.
+- Add a demand-sized replanner as a robustness row: it sizes each
+  reposition from the backlog in view instead of a fixed four fixed-wing
+  and two multirotors per surge hub. Run it at 4, 16 and 64 hubs with no
+  model calls, larger only if those change the picture. Say in the setup
+  why the primary rule sizes by the event: the surge's requests are not
+  yet visible when it is announced. If this rule also loses at giving
+  hubs, the claim is stronger; if it wins, the claim becomes that
+  over-moving costs, not moving.
 
 Submit to RA-L in the first days of December. RA-L takes six pages
 including references, two more at a charge, nothing beyond eight; the
@@ -55,68 +43,50 @@ paper is seven. Check the author page for current terms first.
 
 ## Scaling, still to do
 
-The paper's second question is how to give a manager enough information and
-authority to handle competing needs when the fleet reaches thousands of
-aircraft. The fleet API is the report the model sees and the orders the
-dispatcher accepts. Compare three APIs at 256 and 1,024 hubs on matched
-days:
+What we want to show is plain: an API that lets a model manage a small
+fleet, where it strains as the fleet grows, and a change to the API that
+lets it keep working at the larger size. The fleet API is the report the
+model sees and the orders the dispatcher accepts.
 
-- One manager over the whole region, shown the exceptions report for
-  every hub, giving the eight hub orders anywhere. This keeps the view
-  and order set of the 16- and 64-hub runs, while the report and the
-  reach of each order grow. The call schedule is different (below).
-- One manager per cluster of 16 hubs, 16 or 64 of them. Each is shown
-  its own cluster's exceptions and events. Its orders affect only its
-  cluster's sites and aircraft; cross-cluster orders are refused. The
-  report stays the size of a 16-hub day, but a cluster cannot move stock
-  or aircraft from another cluster on its own.
-- The cluster managers plus a manager above them, shown each cluster's
-  totals and allowed two orders of its own, move aircraft and send stock
-  between clusters. The above manager is the replanner, a deterministic
-  reference, or the same model. This puts region-wide moves back, but
-  only through a thin second layer.
+Run one ladder on the eight-hour day at 16, 64 and 256 hubs, and 1,024 if
+the runs fit, Haiku and Opus, three seeds, against local rules and the
+fixed broker at the same size:
 
-Haiku and Opus run all of it, two seeds at each size. Calls are budgeted
-at three an hour, with events since the last call batched, so every
-manager is asked about 23 times a day. A 1,024-hub day has about 2,900
-events; a call at each event would mean about 190,000 calls for a cluster
-API. Report score, missed requests at giving and receiving hubs, moves
-per hundred hubs, calls, and prompt characters for each API, against the fixed
-policies at the same size. Test whether one model can use the region-wide
-report, whether cluster managers leave needs unmet across boundaries, and
-whether the regional layer helps more than it costs at giving hubs.
+- One manager over the whole region with the main study's orders.
+- One manager over the whole region allowed only temporary help: a hub
+  serves another hub's sites for a time and its aircraft come home,
+  chosen from the hubs the dispatcher lists as able to spare aircraft and
+  reach the sites, or nothing.
+- A manager per 16-hub cluster, each seeing and ordering within its
+  cluster, with a manager above them allowed only the same help.
 
-The fixed-policy half is done and in the paper's policy table: the cost
-of relocating levels off at 13 points from 64 hubs on, and so do the
-moves per hundred hubs.
+If the first arm falls behind as the fleet grows and the second holds, the
+orders were the problem. If the second falls too and the third holds,
+dividing the view and the decisions earned its place. Report score, misses
+at lending and receiving hubs, aircraft lost, calls, prompt characters and
+cost per day for each arm. The sweep's rationale states the question, not
+the expected outcome.
 
-The model half is the `region-256-clusters` and `region-1024-clusters`
-sweep files, sixteen runs each, about 12,800 Opus calls and as many
-Haiku calls in all. The code holds a cluster manager to its cluster: it
-is shown its own hubs, the events and rules that touch them, and its own
-feedback and tally; an order naming a hub or site outside is refused; its
-avoid rules and priorities by urgency reach its own hubs only; a flat
-manager sees and reaches everything. Left to settle when the first case
-with a regional manager runs:
+Before the ladder: give the whole-region manager the help order, which
+means raising requests and listing offers without clusters, and protect
+lenders. On the current day the fixed broker (`crates/delivery/src/help.rs`)
+moves misses from the asking hub to the lending hub rather than removing
+them; keeping half of the lender's aircraft is not enough. Reread the no-model 256-hub comparison after the change.
 
-- The regional manager's prompt is one line per cluster, then every new
-  and ongoing event in full text. Read that case's regional prompts and
-  their size. If the ongoing list is too long, add the item and class to each
-  cluster line's event summary and drop the list; do not trim the list,
-  since a shortage's item is only in the full text.
+Known from the no-model runs: temporary help lands few on-time deliveries
+on this day because hubs are 15 km apart and the trauma deadline is 15
+minutes, permanent moves between clusters lose aircraft even under a fixed
+rule, and an hour-long surge at four times the requests collapses the day
+for every arm. A workload where cross-cluster help pays is a follow-up,
+not a condition for the ladder.
 
-Not doing: calling the clusters in parallel inside the dispatcher. Calls
-stay serial within a run, and the bulk runner runs several runs at once,
-as the 64-hub model sweep did with eight.
-
-Next the 256-hub file, then 1,024, six to eight runs at once. A cluster call
-takes about 12 seconds and a manager is called 23 times a day, so a 256-hub
-cluster run takes about an hour and a half, and a 1,024-hub one needs about
-1.5 GB, two and a half hours of simulation, and some 1,500 calls, about
-seven hours in all. These runs answer the paper's second question, currently
-marked Planned. If they miss submission, move the Fleet API section to
-future work and narrow the introduction's question accordingly; do not
-present a planned comparison as a result.
+Every manager is called three times an hour with events batched, about 23
+calls a day. A 256-hub cluster run takes about an hour and a half; a
+1,024-hub day needs 1.5 GB and some seven hours with calls. Not doing:
+calling the clusters in parallel inside the dispatcher. If the ladder
+misses submission, move the Fleet API section to future work and narrow
+the introduction's question; do not present a planned comparison as a
+result.
 
 ## Loose ends, not needed for submission
 

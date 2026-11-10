@@ -92,8 +92,7 @@ for a fleet manager running through a whole day of events.
 ## What has not been done
 
 1. Measuring how the model should see a fleet as it grows: the same mission at
-   16, 64, 256, 1,024 and 4,096 vehicles, with a full list, summaries and
-   queries compared. LLM-ODDR uses summaries at 300 but does not compare;
+   16, 64, 256, 1,024 and 4,096 vehicles, with the views compared. LLM-ODDR uses summaries at 300 but does not compare;
    Chen et al. compare planner layouts, not views, up to 32.
 2. A model managing hundreds of vehicles with real dynamics on a mission with
    rules. COMPASS flocks point robots, LLM-ODDR moves taxis between grid

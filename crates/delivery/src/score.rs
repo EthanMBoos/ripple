@@ -30,7 +30,7 @@ use crate::messages::{
     MISSED_TOPIC, ManagerCall, Missed, ORDER_TOPIC, OrderRecord, Phase, RELOCATE_TOPIC,
     REQUEST_TOPIC, Relocate, Request, RequestKind, STATUS_TOPIC, SkillName, Status, Urgency,
 };
-use crate::order::Outcome;
+use crate::order::{Order, Outcome};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Deserialize)]
@@ -62,6 +62,8 @@ pub struct DeliveryScore {
     voided: BTreeSet<i32>,
     /// Vehicles that broke a rule on their current flight.
     breached: BTreeSet<i32>,
+    /// Requests flown from a hub other than their own: a lent flight.
+    lent: BTreeSet<i32>,
     missed: BTreeMap<i32, Missed>,
     events: Vec<Event>,
     fleet: BTreeMap<i32, Status>,
@@ -93,6 +95,7 @@ impl Metrics for DeliveryScore {
             delivered: BTreeMap::new(),
             voided: BTreeSet::new(),
             breached: BTreeSet::new(),
+            lent: BTreeSet::new(),
             missed: BTreeMap::new(),
             events: Vec::new(),
             fleet: BTreeMap::new(),
@@ -310,6 +313,16 @@ impl DeliveryScore {
         {
             let order = &message.value;
             count(&mut self.counts, "flights", 1.0);
+            // A flight from another hub than the request's own: lent by a
+            // serve-from rule or a help order.
+            if self
+                .requests
+                .get(&order.request_id)
+                .is_some_and(|r| r.hub != order.hub)
+            {
+                count(&mut self.counts, "lent_flights", 1.0);
+                self.lent.insert(order.request_id);
+            }
             self.sent_s.insert(order.vehicle_id, message.sent_at_s);
             self.breached.remove(&order.vehicle_id);
             for event in self.events.iter().filter(|e| e.active(message.sent_at_s)) {
@@ -381,6 +394,16 @@ impl DeliveryScore {
             } else {
                 self.delivered
                     .insert(delivery.request_id, (delivery.time_s, delivery.skill));
+                if self.lent.contains(&delivery.request_id) {
+                    count(&mut self.counts, "lent_deliveries", 1.0);
+                    if self
+                        .requests
+                        .get(&delivery.request_id)
+                        .is_some_and(|r| delivery.time_s <= r.deadline_s)
+                    {
+                        count(&mut self.counts, "lent_on_time", 1.0);
+                    }
+                }
             }
         }
         Ok(())
@@ -426,6 +449,11 @@ impl DeliveryScore {
                     count(&mut self.counts, &format!("hub_{from_hub:03}_gave"), 1.0);
                     count(&mut self.counts, &format!("hub_{to_hub:03}_got"), 1.0);
                 }
+                if let Order::Help { hub, from_hub, .. } = &record.order {
+                    count(&mut self.counts, "helps", 1.0);
+                    count(&mut self.counts, &format!("hub_{from_hub:03}_lent"), 1.0);
+                    count(&mut self.counts, &format!("hub_{hub:03}_helped"), 1.0);
+                }
                 count(
                     &mut self.counts,
                     &format!("applied_{}", record.order.name()),
@@ -463,7 +491,6 @@ impl DeliveryScore {
             count(&mut self.counts, "dropped", f64::from(call.dropped));
             count(&mut self.counts, "prompt_chars", call.prompt_chars as f64);
             count(&mut self.counts, "reply_chars", call.reply_chars as f64);
-            count(&mut self.counts, "queries", f64::from(call.queries));
             count(
                 &mut self.counts,
                 "parse_failures",

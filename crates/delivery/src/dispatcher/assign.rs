@@ -134,6 +134,7 @@ impl Dispatcher {
         if let Some(extra) = self.rules.serve_from.get(&request.site) {
             eligible.extend(extra.iter().copied());
         }
+        eligible.extend(self.rules.lenders(request.hub));
         let use_pad = request.rooftop && self.rules.uses_pad(&request.site);
         let skill = if request.rooftop && !use_pad {
             SkillName::Land

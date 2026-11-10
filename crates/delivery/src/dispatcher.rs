@@ -41,6 +41,7 @@ use ripple_core::plugin::{
 use serde::Serialize;
 
 use crate::event::{Event, EventKind};
+use crate::help::HelpRequest;
 use crate::messages::{
     DELIVERED_TOPIC, Delivered, ManagerKind, MissReason, Request, STATUS_TOPIC, Status,
 };
@@ -48,7 +49,6 @@ use crate::model::ModelManager;
 use crate::region::{Region, RegionConfig, SiteKind};
 use crate::rules::Rules;
 use crate::scope::Scope;
-use crate::view::ViewKind;
 
 mod apply;
 mod assign;
@@ -130,6 +130,8 @@ pub struct Dispatcher {
     /// The hub pairs the order being applied moved vehicles or stock between,
     /// taken into its record.
     moved: Vec<(u32, u32)>,
+    /// Hubs asking the manager above the clusters for aircraft (`help.rs`).
+    help_requests: Vec<HelpRequest>,
     /// Late deliveries since the last call, by hub.
     late_by_hub: BTreeMap<u32, u32>,
     scripted_fired: usize,
@@ -168,19 +170,13 @@ impl Autonomy for Dispatcher {
                 )
             })
             .collect();
-        let model = |name: &str, max_queries| ModelManager {
+        let model = |name: &str| ModelManager {
             model: name.to_string(),
             sample: config.manager.sample,
             system: config.manager.prompt.system.clone(),
             cache_dir: config.manager.cache_dir.clone().into(),
             client: config.manager.client().expect("checked in configure"),
             offline: config.manager.offline,
-            max_queries,
-        };
-        let queries = if config.manager.view == ViewKind::Queries {
-            config.manager.max_queries
-        } else {
-            0
         };
         // The managers over the region or the clusters, then the one above.
         let decider = match config.manager.kind {
@@ -192,8 +188,8 @@ impl Autonomy for Dispatcher {
                     .expect("checked in configure")
                     .expect("a policy file for kind policy"),
             )),
-            ManagerKind::Model => Some(Decider::Model(model(&config.manager.model, queries))),
-            ManagerKind::Veto => Some(Decider::Veto(model(&config.manager.model, queries))),
+            ManagerKind::Model => Some(Decider::Model(model(&config.manager.model))),
+            ManagerKind::Veto => Some(Decider::Veto(model(&config.manager.model))),
             ManagerKind::None | ManagerKind::Scripted => None,
         };
         let scopes = match config.manager.cluster_side {
@@ -223,7 +219,7 @@ impl Autonomy for Dispatcher {
                 } else {
                     &config.manager.top_model
                 };
-                Some(Decider::Model(model(name, 0)))
+                Some(Decider::Model(model(name)))
             }
             _ => None,
         };
@@ -257,6 +253,7 @@ impl Autonomy for Dispatcher {
             managers,
             move_costs: Vec::new(),
             moved: Vec::new(),
+            help_requests: Vec::new(),
             late_by_hub: BTreeMap::new(),
             scripted_fired: 0,
             last_call_s: 0.0,

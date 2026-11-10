@@ -10,7 +10,7 @@
 //!
 //! The three fleet APIs of the paper are three lists of managers: one with
 //! `Region`; one `Cluster` per block of hubs; and the clusters with a
-//! `Region` manager above them that gives only moves between clusters.
+//! `Region` manager above them that only grants help between clusters.
 
 use crate::event::{Event, EventsConfig};
 use crate::order::Order;

@@ -25,6 +25,18 @@ pub struct Rules {
     pub serve_from: BTreeMap<String, Vec<u32>>,
     /// Hospitals whose pad is in use, by site code, until when.
     pub pads: BTreeMap<String, f64>,
+    /// Hubs serving another hub's sites for a time, granted by the manager
+    /// above the clusters (`help.rs`).
+    pub lends: Vec<Lend>,
+}
+
+/// One hub's aircraft may serve another hub's sites, and come home after
+/// each flight, until `until_s`.
+#[derive(Clone, Debug)]
+pub struct Lend {
+    pub hub: u32,
+    pub from_hub: u32,
+    pub until_s: f64,
 }
 
 #[derive(Clone, Debug)]
@@ -67,6 +79,15 @@ impl Rules {
         self.grounded.retain(|g| g.until_s >= now_s);
         self.priorities.retain(|p| p.until_s >= now_s);
         self.pads.retain(|_, until_s| *until_s >= now_s);
+        self.lends.retain(|l| l.until_s >= now_s);
+    }
+
+    /// The hubs lent to `hub`'s sites now.
+    pub fn lenders(&self, hub: u32) -> impl Iterator<Item = u32> + '_ {
+        self.lends
+            .iter()
+            .filter(move |l| l.hub == hub)
+            .map(|l| l.from_hub)
     }
 
     pub fn is_grounded(&self, hub: u32, class: VehicleClass) -> bool {
@@ -162,6 +183,18 @@ impl Rules {
             lines.push(format!(
                 "{site} takes drops at its ground pad until minute {}",
                 minute(*until_s)
+            ));
+        }
+        for l in self
+            .lends
+            .iter()
+            .filter(|l| at_hub(l.hub) || at_hub(l.from_hub))
+        {
+            lines.push(format!(
+                "hub {} serves hub {}'s sites until minute {}",
+                l.from_hub,
+                l.hub,
+                minute(l.until_s)
             ));
         }
         lines

@@ -133,11 +133,10 @@ entities:
           # veto (the replanner plans, the model drops what it objects to).
           kind: none
           check_in_s: 1800
-          # The model reads events as text, or structured (their fields).
-          events_as: text
-          # The interface: view full_list, summaries, or queries; feedback
-          # reports each order's estimate and what was flown since; checker
-          # refuses orders that break a rule or cannot be flown.
+          # The interface: view summaries (one line per hub) or exceptions
+          # (only hubs with something wrong); feedback reports each order's
+          # estimate and what was flown since; checker refuses orders that
+          # break a rule or cannot be flown.
           view: summaries
           feedback: false
           checker: false
@@ -147,7 +146,6 @@ entities:
           # Refuse a reposition leaving the donor under half its vehicles of
           # the class, or a transfer leaving it under a quarter of its stock.
           guard: false
-          max_queries: 6
           # A call budget: calls at least 3600 / calls_per_hour s apart, events
           # between calls batched; 0 is a call per event.
           calls_per_hour: 0
@@ -161,8 +159,10 @@ entities:
           # (src/policy.rs); a path from the working directory.
           policy: ""
           # The manager above the clusters (needs cluster_side): none,
-          # replanner, or model; it sees cluster totals and moves vehicles
-          # and stock between clusters. top_model empty means model.
+          # replanner, or model; it sees cluster totals and the help its
+          # hubs ask for, and grants help, a hub outside the cluster serving
+          # an asking hub's sites for a time (src/help.rs). top_model empty
+          # means model.
           top_kind: none
           top_model: ""
           # Whose model and how it is reached (src/client.rs): provider

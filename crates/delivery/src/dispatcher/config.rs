@@ -67,13 +67,6 @@ impl Default for RequestsConfig {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum EventsAs {
-    Text,
-    Structured,
-}
-
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ScriptedOrder {
@@ -94,8 +87,6 @@ pub struct PromptConfig {
 pub struct ManagerConfig {
     pub kind: ManagerKind,
     pub check_in_s: f64,
-    /// How the model reads events: their text, or their fields.
-    pub events_as: EventsAs,
     /// The interface: what the model sees of the fleet, whether its orders
     /// come back with estimates and results, and whether a checker refuses
     /// orders that break a rule or cannot be flown.
@@ -110,7 +101,6 @@ pub struct ManagerConfig {
     /// vehicles of the class, or a transfer that leaves it under a quarter
     /// of its starting stock: the replanner's own keep rules as a rule.
     pub guard: bool,
-    pub max_queries: u32,
     /// A call budget that does not grow with the fleet: calls are at least
     /// 3600 / calls_per_hour seconds apart, and events that start between
     /// calls wait for the next one, together. 0 means a call per event.
@@ -128,9 +118,10 @@ pub struct ManagerConfig {
     /// working directory.
     pub policy: String,
     /// The manager above the clusters (`none`, `replanner` or `model`): it
-    /// sees each cluster's totals and moves vehicles and stock between
-    /// clusters, after the cluster managers have been called. Needs
-    /// `cluster_side`.
+    /// sees each cluster's totals and the help its hubs ask for, and may
+    /// only grant help, a hub outside the cluster serving an asking hub's
+    /// sites for a time from the offers the dispatcher lists (`help.rs`).
+    /// Called after the cluster managers. Needs `cluster_side`.
     pub top_kind: ManagerKind,
     /// The model for a `top_kind: model`; empty means `model`.
     pub top_model: String,
@@ -151,13 +142,11 @@ impl Default for ManagerConfig {
         Self {
             kind: ManagerKind::None,
             check_in_s: 1800.0,
-            events_as: EventsAs::Text,
             view: ViewKind::Summaries,
             feedback: false,
             checker: false,
             cost_feedback: false,
             guard: false,
-            max_queries: 6,
             calls_per_hour: 0.0,
             cluster_side: 0,
             scripted: Vec::new(),
@@ -327,9 +316,7 @@ impl DispatcherConfig {
                 !self.manager.prompt.system.trim().is_empty(),
                 "manager.prompt.system is empty"
             );
-            if self.manager.events_as == EventsAs::Text {
-                self.events.texts_complete()?;
-            }
+            self.events.texts_complete()?;
         }
         self.manager.client()?;
         self.manager.policy()?;

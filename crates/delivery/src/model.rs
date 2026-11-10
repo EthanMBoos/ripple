@@ -1,6 +1,5 @@
 //! The language model as fleet manager. It reads the situation the dispatcher
-//! writes (`dispatcher.rs`), may ask questions under the queries interface,
-//! and answers with orders (`order.rs`).
+//! writes (`dispatcher.rs`) and answers with orders (`order.rs`).
 //!
 //! Replies are kept in one folder, one readable JSON file per prompt, named by
 //! a hash of the client, the model, the sample index, the system prompt and
@@ -16,7 +15,6 @@ use sha2::{Digest, Sha256};
 
 use crate::client::Client;
 use crate::order::{Order, Reply, parse_reply};
-use crate::view::Snapshot;
 
 #[derive(Clone)]
 pub struct ModelManager {
@@ -28,8 +26,6 @@ pub struct ModelManager {
     pub client: Client,
     /// Use only the replies already in the folder; a missing one is an error.
     pub offline: bool,
-    /// Questions allowed per call under the queries interface; 0 elsewhere.
-    pub max_queries: u32,
 }
 
 /// What one call produced.
@@ -40,7 +36,6 @@ pub struct Asked {
     pub unreadable: u32,
     /// The final reply could not be read at all.
     pub parse_failed: bool,
-    pub queries: u32,
     pub prompt_chars: usize,
     pub reply_chars: usize,
 }
@@ -56,39 +51,22 @@ struct CachedReply {
 }
 
 impl ModelManager {
-    /// One call: the situation, then as many question rounds as allowed, each
-    /// round resending the transcript so far.
-    pub fn ask(&self, situation: &str, snapshot: &Snapshot<'_>) -> Result<Asked> {
-        let mut transcript = situation.to_string();
-        let mut asked = Asked::default();
-        loop {
-            let reply = self.reply(&transcript)?;
-            asked.prompt_chars += transcript.len();
-            asked.reply_chars += reply.len();
-            match parse_reply(&reply) {
-                Reply::Orders { orders, unreadable } => {
-                    asked.orders = orders;
-                    asked.unreadable = unreadable;
-                    return Ok(asked);
-                }
-                Reply::Query(query) if asked.queries < self.max_queries => {
-                    asked.queries += 1;
-                    let answer = snapshot.answer(&query);
-                    transcript.push_str(&format!(
-                        "\nYou asked: {}\nAnswer: {}\n",
-                        serde_json::to_string(&query)?,
-                        answer.trim_end()
-                    ));
-                    if asked.queries == self.max_queries {
-                        transcript.push_str("No more questions: reply with orders now.\n");
-                    }
-                }
-                Reply::Query(_) | Reply::Unreadable => {
-                    asked.parse_failed = true;
-                    return Ok(asked);
-                }
+    /// One call: the situation in, the orders out.
+    pub fn ask(&self, situation: &str) -> Result<Asked> {
+        let reply = self.reply(situation)?;
+        let mut asked = Asked {
+            prompt_chars: situation.len(),
+            reply_chars: reply.len(),
+            ..Asked::default()
+        };
+        match parse_reply(&reply) {
+            Reply::Orders { orders, unreadable } => {
+                asked.orders = orders;
+                asked.unreadable = unreadable;
             }
+            Reply::Unreadable => asked.parse_failed = true,
         }
+        Ok(asked)
     }
 
     /// One call, the reply as written: for the veto manager, which reads

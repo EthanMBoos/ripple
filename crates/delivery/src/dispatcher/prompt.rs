@@ -6,13 +6,13 @@
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
-use super::config::EventsAs;
 use super::{Dispatcher, Manager, Tally};
 use crate::event::{Event, hub_list};
+use crate::help;
 use crate::messages::{Phase, RequestKind, VehicleClass};
-use crate::order::{Order, QUERY_SYNTAX, SYNTAX, TOP_SYNTAX, VETO_SYNTAX};
+use crate::order::{HELP_SYNTAX, Order, SYNTAX, VETO_SYNTAX};
 use crate::scope::Scope;
-use crate::view::{HubView, Snapshot, ViewKind};
+use crate::view::{HubView, Snapshot};
 
 impl Dispatcher {
     /// The state at one call, limited to the hubs the scope covers.
@@ -79,11 +79,6 @@ impl Dispatcher {
             hubs,
             cards,
             range_margin: self.config.range_margin,
-            vehicles: self
-                .fleet
-                .values()
-                .filter(|v| scope.covers_hub(v.hub))
-                .collect(),
             active_events: scope.events_shown(&active, &self.config.events),
             items: &self.config.stock.items,
             units_per_item: self.config.stock.units_per_item,
@@ -140,10 +135,7 @@ impl Dispatcher {
                 hub_list(hubs)
             );
         }
-        let event_line = |event: &Event| match manager.events_as {
-            EventsAs::Text => event.text.clone(),
-            EventsAs::Structured => event.structured(),
-        };
+        let event_line = |event: &Event| event.text.clone();
         if new_events.is_empty() {
             text.push_str("\nNo new events; this is a check-in.\n");
         } else {
@@ -219,10 +211,6 @@ impl Dispatcher {
         }
         text.push_str(SYNTAX);
         text.push('\n');
-        if manager.view == ViewKind::Queries {
-            text.push_str(QUERY_SYNTAX);
-            text.push('\n');
-        }
         text.push_str(
             "\nReply with {\"orders\": [...]} and nothing else; {\"orders\": []} changes nothing.\n",
         );
@@ -250,30 +238,25 @@ impl Dispatcher {
         let _ = writeln!(
             text,
             "You are the fleet manager above {} cluster managers, each running its own hubs' \
-             flights and local rules. You see each cluster's totals, and you may only move \
-             vehicles and stock between clusters.",
-            clusters.len()
+             flights and local rules. You see each cluster's totals and its surges, outages, \
+             shortages, and weather, and the help its hubs ask for with the hubs outside the \
+             cluster that could give it. You may only grant help: a hub serves another hub's \
+             sites for a time, and its aircraft fly each request and return home.",
+            clusters.len(),
         );
-        let event_line = |event: &Event| match manager.events_as {
-            EventsAs::Text => event.text.clone(),
-            EventsAs::Structured => event.structured(),
-        };
+        let event_line = |event: &Event| event.text.clone();
+        // Only the events the manager above acts on, and the events still in
+        // force are not listed again: each cluster's line below carries its
+        // live ones with their hubs, item, and class. On the 256-hub pilot of
+        // 2026-11-10 the full list of every kind ran to 25,000 characters by
+        // minute 400, more than half the prompt, and priorities, closures,
+        // and rooftop closures filled most of the cluster lines.
+        let new_events: Vec<&&Event> = new_events.iter().filter(|e| e.kind.shown_above()).collect();
         if new_events.is_empty() {
-            text.push_str("\nNo new events; this is a check-in.\n");
+            text.push_str("\nNo new surge, outage, shortage, or weather since your last call.\n");
         } else {
             text.push_str("\nNew events:\n");
             for event in new_events {
-                let _ = writeln!(text, "- {}", event_line(event));
-            }
-        }
-        let ongoing: Vec<&Event> = snapshot
-            .active_events
-            .iter()
-            .filter(|e| !new_events.iter().any(|n| n.id == e.id))
-            .collect();
-        if !ongoing.is_empty() {
-            text.push_str("\nEvents still in force:\n");
-            for event in ongoing {
                 let _ = writeln!(text, "- {}", event_line(event));
             }
         }
@@ -282,17 +265,13 @@ impl Dispatcher {
             for line in &who.feedback {
                 let _ = writeln!(text, "- {line}");
             }
-            if manager.cost_feedback && !self.move_costs.is_empty() {
-                text.push_str("\nAt the hubs your moves took from:\n");
-                for line in self.cost_lines(&Scope::Region) {
-                    let _ = writeln!(text, "- {line}");
-                }
-            }
         }
+        text.push('\n');
+        text.push_str(&help::describe(&self.help_requests, snapshot, clusters));
         text.push('\n');
         text.push_str(&snapshot.clusters(clusters));
         text.push('\n');
-        text.push_str(TOP_SYNTAX);
+        text.push_str(HELP_SYNTAX);
         text.push_str(
             "\n\nReply with {\"orders\": [...]} and nothing else; {\"orders\": []} changes nothing.\n",
         );

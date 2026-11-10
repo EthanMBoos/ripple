@@ -26,6 +26,7 @@ mod client;
 mod courier;
 mod dispatcher;
 mod event;
+mod help;
 mod messages;
 mod model;
 mod order;

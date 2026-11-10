@@ -99,22 +99,13 @@ pub enum Order {
     /// Deliver to a hospital's ground pad by drop instead of landing on its
     /// rooftop.
     UsePad { site: String, until_min: f64 },
-    /// From the manager above the clusters only: idle vehicles from one
-    /// cluster to another. The dispatcher picks the hubs (`dispatcher.rs`).
-    Move {
-        #[serde(default)]
-        class: Option<VehicleClass>,
-        count: u32,
-        from_cluster: u32,
-        to_cluster: u32,
-    },
-    /// From the manager above the clusters only: stock from one cluster to
-    /// another.
-    Send {
-        item: String,
-        units: u32,
-        from_cluster: u32,
-        to_cluster: u32,
+    /// From the manager above the clusters only: let `from_hub` serve
+    /// `hub`'s sites until the minute; its aircraft fly each request and
+    /// return home (`help.rs`).
+    Help {
+        hub: u32,
+        from_hub: u32,
+        until_min: f64,
     },
 }
 
@@ -141,14 +132,13 @@ impl Order {
             Order::Prioritize { .. } => "prioritize",
             Order::ServeFrom { .. } => "serve_from",
             Order::UsePad { .. } => "use_pad",
-            Order::Move { .. } => "move",
-            Order::Send { .. } => "send",
+            Order::Help { .. } => "help",
         }
     }
 
     /// An order only the manager above the clusters may give.
     pub fn is_top(&self) -> bool {
-        matches!(self, Order::Move { .. } | Order::Send { .. })
+        matches!(self, Order::Help { .. })
     }
 
     /// The sites an order names; with `hubs_named`, what a cluster's manager
@@ -175,12 +165,9 @@ impl Order {
             | Order::Transfer {
                 from_hub, to_hub, ..
             } => vec![*from_hub, *to_hub],
+            Order::Help { hub, from_hub, .. } => vec![*hub, *from_hub],
             Order::Ground { hubs, .. } | Order::ServeFrom { hubs, .. } => hubs.clone(),
-            Order::Avoid { .. }
-            | Order::Prioritize { .. }
-            | Order::UsePad { .. }
-            | Order::Move { .. }
-            | Order::Send { .. } => Vec::new(),
+            Order::Avoid { .. } | Order::Prioritize { .. } | Order::UsePad { .. } => Vec::new(),
         }
     }
 
@@ -246,60 +233,19 @@ impl Order {
             Order::UsePad { site, until_min } => {
                 format!("use the ground pad at {site} until minute {until_min:.0}")
             }
-            Order::Move {
-                class: c,
-                count,
-                from_cluster,
-                to_cluster,
-            } => format!(
-                "move {count} {} from cluster {from_cluster} to cluster {to_cluster}",
-                class(c)
-            ),
-            Order::Send {
-                item,
-                units,
-                from_cluster,
-                to_cluster,
-            } => format!(
-                "send {units} units of {item} from cluster {from_cluster} to cluster {to_cluster}"
-            ),
+            Order::Help {
+                hub,
+                from_hub,
+                until_min,
+            } => format!("help hub {hub} from hub {from_hub} until minute {until_min:.0}"),
         }
     }
 }
 
 /// What the manager above the clusters is shown, once per call.
-pub const TOP_SYNTAX: &str = "\
+pub const HELP_SYNTAX: &str = "\
 Orders, each a JSON object with one key:
-- {\"move\": {\"class\": \"fixed_wing\" or \"multirotor\" or null, \"count\": N, \"from_cluster\": A, \"to_cluster\": B}}: fly N idle vehicles from cluster A to cluster B; they go to B's hub with the most waiting, from A's hubs nearest it that can spare them.
-- {\"send\": {\"item\": \"O-\", \"units\": N, \"from_cluster\": A, \"to_cluster\": B}}: fly N units of stock from cluster A's hub holding the most of it to cluster B's hub holding the least.";
-
-/// A question the fleet manager can ask under the queries interface.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case", deny_unknown_fields)]
-pub enum Query {
-    /// Idle vehicles within `within_min` of flight of a hub number or a site
-    /// code.
-    FindVehicles {
-        near: String,
-        within_min: f64,
-        #[serde(default)]
-        class: Option<VehicleClass>,
-    },
-    HubStatus {
-        hub: u32,
-    },
-    /// Hubs holding the item, nearest a hub number or site code first.
-    FindStock {
-        item: String,
-        near: String,
-    },
-}
-
-pub const QUERY_SYNTAX: &str = "\
-Instead of orders you may ask one question, and you will be asked again with the answer:
-- {\"query\": {\"find_vehicles\": {\"near\": \"H\" or \"CODE\", \"within_min\": M, \"class\": \"fixed_wing\" or \"multirotor\" or null}}}
-- {\"query\": {\"hub_status\": {\"hub\": H}}}
-- {\"query\": {\"find_stock\": {\"item\": \"O-\", \"near\": \"H\" or \"CODE\"}}}";
+- {\"help\": {\"hub\": H, \"from_hub\": D, \"until_min\": M}}: let hub D serve hub H's sites until minute M; D's aircraft fly each request and return home. Take D from an offer, or grant nothing.";
 
 /// What the veto manager is told after the proposed orders.
 pub const VETO_SYNTAX: &str = "\
@@ -325,7 +271,6 @@ pub enum Reply {
         orders: Vec<Order>,
         unreadable: u32,
     },
-    Query(Query),
     Unreadable,
 }
 
@@ -344,12 +289,6 @@ pub fn parse_reply(text: &str) -> Reply {
     let Ok(value) = serde_json::from_str::<serde_json::Value>(slice) else {
         return Reply::Unreadable;
     };
-    if let Some(query) = value.get("query") {
-        return match serde_json::from_value::<Query>(query.clone()) {
-            Ok(query) => Reply::Query(query),
-            Err(_) => Reply::Unreadable,
-        };
-    }
     let Some(list) = value.get("orders").and_then(|orders| orders.as_array()) else {
         return Reply::Unreadable;
     };
@@ -369,7 +308,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn replies_parse_as_orders_queries_or_nothing() {
+    fn replies_parse_as_orders_or_nothing() {
         let reply = "Sure:\n```json\n{\"orders\": [{\"reposition\": {\"class\": \"fixed_wing\", \
                      \"count\": 4, \"from_hub\": 2, \"to_hub\": 5}}, {\"fly\": {}}, \
                      {\"avoid\": {\"area\": {\"circle\": {\"center_km\": [1, 2], \"radius_km\": 3}}, \
@@ -395,10 +334,6 @@ mod tests {
             }
             other => panic!("{other:?}"),
         }
-        assert_eq!(
-            parse_reply("{\"query\": {\"hub_status\": {\"hub\": 3}}}"),
-            Reply::Query(Query::HubStatus { hub: 3 })
-        );
         assert_eq!(
             parse_reply("{\"orders\": []}"),
             Reply::Orders {

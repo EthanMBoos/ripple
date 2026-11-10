@@ -122,20 +122,21 @@ fn the_replanner_answers_a_surge_with_help_from_other_hubs() -> Result<()> {
 }
 
 #[test]
-fn a_manager_above_per_hub_clusters_moves_vehicles_to_a_surge() -> Result<()> {
+fn a_manager_above_per_hub_clusters_grants_help_to_a_surge() -> Result<()> {
+    // Sixteen hubs, each its own cluster, so the surge at hub 1 and its
+    // neighbours leaves hubs with spare aircraft within reach.
     let surge = "[{kind: surge, at_min: 10, hubs: [1]}]";
-    let base = with(hubs(short_day(60), 4), "events.scripted", surge);
+    let base = with(hubs(short_day(60), 16), "events.scripted", surge);
     let base = with(base, "manager.kind", "replanner");
     let base = with(base, "manager.cluster_side", "1");
-    let (alone, _) = run("region.yaml", &base, 1)?;
-    // A manager per hub has no neighbour in view, so it moves nothing.
-    assert!(!alone.contains_key("applied_reposition"), "{alone:?}");
-    let topped = with(base, "manager.top_kind", "replanner");
-    let (values, _) = run("region.yaml", &topped, 1)?;
+    let helped = with(base, "manager.top_kind", "replanner");
+    let (values, _) = run("region.yaml", &helped, 1)?;
     assert!(values["top_calls"] >= 1.0, "{values:?}");
-    // The scripted surge spreads to hub 1's neighbours, so three of the four
-    // clusters want vehicles and the fourth runs out of spare: a refusal.
-    assert!(values["applied_move"] >= 1.0, "{values:?}");
+    // Each asking hub gets its nearest hub with spare. The lender's aircraft
+    // fly the asking hub's requests and come home: no relocation.
+    assert!(values["applied_help"] >= 1.0, "{values:?}");
+    assert!(values.keys().any(|k| k.ends_with("_helped")), "{values:?}");
+    assert!(!values.contains_key("applied_reposition"), "{values:?}");
     assert_eq!(values["vehicles_lost"], 0.0);
     Ok(())
 }
@@ -230,8 +231,8 @@ fn the_policy_form_gives_the_replanner_day_for_day() -> Result<()> {
 }
 
 #[test]
-fn a_fake_model_asks_then_orders_and_replays_offline() -> Result<()> {
-    // The fake client answers a question first, then one order.
+fn a_fake_model_orders_and_replays_offline() -> Result<()> {
+    // The fake client answers every call with one order.
     let dir = std::env::temp_dir().join(format!("ripple-fake-model-{}", std::process::id()));
     std::fs::create_dir_all(&dir)?;
     let command = dir.join("model");
@@ -239,12 +240,9 @@ fn a_fake_model_asks_then_orders_and_replays_offline() -> Result<()> {
         &command,
         "#!/usr/bin/env python3\n\
          import sys\n\
-         prompt = sys.stdin.read()\n\
-         if 'You asked' in prompt:\n\
-         \x20   print('{\"orders\": [{\"prioritize\": {\"site\": null, \
-         \"urgency\": \"trauma\", \"until_min\": 120}}]}')\n\
-         else:\n\
-         \x20   print('{\"query\": {\"hub_status\": {\"hub\": 1}}}')\n",
+         sys.stdin.read()\n\
+         print('{\"orders\": [{\"prioritize\": {\"site\": null, \
+         \"urgency\": \"trauma\", \"until_min\": 120}}]}')\n",
     )?;
     #[cfg(unix)]
     {
@@ -256,13 +254,11 @@ fn a_fake_model_asks_then_orders_and_replays_offline() -> Result<()> {
                     area: {circle: {center_km: [6, 2], radius_km: 3}}}]";
     let base = with(hubs(short_day(30), 1), "events.scripted", closure);
     let base = with(base, "manager.kind", "model");
-    let base = with(base, "manager.view", "queries");
     let base = with(base, "manager.feedback", "true");
     let base = with(base, "manager.cache_dir", cache.to_str().unwrap());
     let live = with(base.clone(), "manager.command", command.to_str().unwrap());
     let (asked, _) = run("region.yaml", &live, 1)?;
     assert!(asked["calls"] >= 1.0, "{asked:?}");
-    assert_eq!(asked["queries"], asked["calls"], "{asked:?}");
     assert_eq!(asked["applied_prioritize"], asked["calls"], "{asked:?}");
     assert_eq!(asked["parse_failures"], 0.0);
     assert!(asked["prompt_chars"] > asked["reply_chars"]);

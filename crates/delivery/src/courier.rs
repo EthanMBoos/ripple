@@ -204,12 +204,22 @@ impl Autonomy for Courier {
             .subscribe::<Relocate>("GlobalNetwork", RELOCATE_TOPIC)
     }
 
+    /// One tick: take a new order, advance the running skill or the
+    /// courier's own phase, fly toward the target, and report.
     fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
         let now_s = context.time.time_s;
         let position_world_m = context.state.position_world_m;
         let id = context.entity.id;
+        self.take_orders(context, id)?;
+        self.advance(context, id, now_s, position_world_m)?;
+        self.fly(io, position_world_m, context.time.dt_s)?;
+        self.report(context, id, position_world_m)
+    }
+}
 
-        // Input: a new order, taken only while idle.
+impl Courier {
+    /// A new assignment or relocation, taken only while idle.
+    fn take_orders(&mut self, context: &mut AgentContext, id: i32) -> Result<()> {
         for message in context
             .messages
             .receive::<Assignment>("GlobalNetwork", ASSIGNMENT_TOPIC)?
@@ -238,8 +248,18 @@ impl Autonomy for Courier {
                 self.phase = Phase::Relocating;
             }
         }
+        Ok(())
+    }
 
-        // Calculation: advance the running skill, or the courier's own phase.
+    /// Advances the running skill, or the courier's own phase, and spends
+    /// endurance away from the hub; a vehicle that runs out is lost.
+    fn advance(
+        &mut self,
+        context: &mut AgentContext,
+        id: i32,
+        now_s: f64,
+        position_world_m: Vec3,
+    ) -> Result<()> {
         let fixed_wing = self.card.class == VehicleClass::FixedWing;
         let at_hub = |position: Vec3, hub: Vec3, arrival_m: f64| {
             horizontal_m(position, hub) <= self.hub_radius_m
@@ -312,10 +332,13 @@ impl Autonomy for Courier {
                 self.lost_at_world_m = position_world_m;
             }
         }
+        Ok(())
+    }
 
-        // Output: fly toward the running skill's target, or the phase's.
-        // A multirotor descends onto the hub pad, and onto a site when the
-        // skill says so.
+    /// Flies toward the running skill's target, or the phase's. A multirotor
+    /// descends onto the hub pad, and onto a site when the skill says so.
+    fn fly(&self, io: &mut PluginIo, position_world_m: Vec3, dt_s: f64) -> Result<()> {
+        let fixed_wing = self.card.class == VehicleClass::FixedWing;
         let (target_world_m, descend) = match (&self.running, self.phase) {
             (_, Phase::Lost) => (
                 Vec3::new(self.lost_at_world_m.x, self.lost_at_world_m.y, 0.0),
@@ -336,7 +359,7 @@ impl Autonomy for Courier {
             (None, _) => (self.hub_world_m, true),
         };
         let (heading_rad, mut altitude_m, velocity_world_mps) =
-            self.command(position_world_m, target_world_m, descend, context.time.dt_s);
+            self.command(position_world_m, target_world_m, descend, dt_s);
         if self.phase == Phase::Lost {
             altitude_m = 0.0;
         }
@@ -346,8 +369,16 @@ impl Autonomy for Courier {
         io.write("velocity_x", velocity_world_mps.x)?;
         io.write("velocity_y", velocity_world_mps.y)?;
         io.write("velocity_z", velocity_world_mps.z)?;
+        Ok(())
+    }
 
-        // Report on a change, and on the vehicle's own heartbeat tick.
+    /// Reports status on a change, and on the vehicle's own heartbeat tick.
+    fn report(
+        &mut self,
+        context: &mut AgentContext,
+        id: i32,
+        position_world_m: Vec3,
+    ) -> Result<()> {
         let report_ticks = (self.report_interval_s / context.time.dt_s)
             .round()
             .max(1.0) as i64;
@@ -371,9 +402,7 @@ impl Autonomy for Courier {
         }
         Ok(())
     }
-}
 
-impl Courier {
     /// A point a little ahead on a counterclockwise circle around the hub.
     fn loiter_point(&self, position_world_m: Vec3) -> Vec3 {
         let offset_m = position_world_m - self.hub_world_m;

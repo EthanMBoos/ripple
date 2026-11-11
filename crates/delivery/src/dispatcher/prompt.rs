@@ -1,6 +1,6 @@
 //! What a fleet manager is shown: the snapshot of the fleet at one call and
 //! the prompt written from it, for a manager over its hubs and for the
-//! manager above the clusters. The words are fixed so a saved reply matches
+//! help manager. The words are fixed so a saved reply matches
 //! a rerun (`model.rs`).
 
 use std::collections::BTreeMap;
@@ -217,14 +217,13 @@ impl Dispatcher {
         text
     }
 
-    /// The prompt for the manager above the clusters: the time, the events,
-    /// its feedback, one line per cluster, and its two orders.
+    /// The prompt for the help manager: the time, the events, its feedback,
+    /// the help asked for and offered, the hub view, and its one order.
     pub(super) fn top_situation(
         &self,
         who: &Manager,
         snapshot: &Snapshot<'_>,
         new_events: &[&Event],
-        clusters: &[Vec<u32>],
     ) -> String {
         let manager = &self.config.manager;
         let minute = |s: f64| format!("{:.0}", s / 60.0);
@@ -237,27 +236,22 @@ impl Dispatcher {
         );
         let _ = writeln!(
             text,
-            "You are the fleet manager above {} cluster managers, each running its own hubs' \
-             flights and local rules. You see each cluster's totals and its surges, outages, \
-             shortages, and weather, and the help its hubs ask for with the hubs outside the \
-             cluster that could give it. You may only grant help: a hub serves another hub's \
+            "You are the fleet manager for help across {} hubs; each hub's flights and the \
+             local rules for its events are handled below you. You see the hubs, their \
+             surges, outages, shortages, and weather, and the help a hub asks for with the \
+             hubs that could give it. You may only grant help: a hub serves another hub's \
              sites for a time, and its aircraft fly each request and return home.",
-            clusters.len(),
+            snapshot.hubs.len(),
         );
-        let event_line = |event: &Event| event.text.clone();
-        // Only the events the manager above acts on, and the events still in
-        // force are not listed again: each cluster's line below carries its
-        // live ones with their hubs, item, and class. On the 256-hub pilot of
-        // 2026-11-10 the full list of every kind ran to 25,000 characters by
-        // minute 400, more than half the prompt, and priorities, closures,
-        // and rooftop closures filled most of the cluster lines.
+        // Only the events the help manager acts on; the events still in force
+        // are not listed again, the hub view carries what is live.
         let new_events: Vec<&&Event> = new_events.iter().filter(|e| e.kind.shown_above()).collect();
         if new_events.is_empty() {
             text.push_str("\nNo new surge, outage, shortage, or weather since your last call.\n");
         } else {
             text.push_str("\nNew events:\n");
             for event in new_events {
-                let _ = writeln!(text, "- {}", event_line(event));
+                let _ = writeln!(text, "- {}", event.text);
             }
         }
         if manager.feedback && !who.feedback.is_empty() {
@@ -267,9 +261,9 @@ impl Dispatcher {
             }
         }
         text.push('\n');
-        text.push_str(&help::describe(&self.help_requests, snapshot, clusters));
+        text.push_str(&help::describe(&self.help_requests, snapshot));
         text.push('\n');
-        text.push_str(&snapshot.clusters(clusters));
+        text.push_str(&snapshot.write(manager.view));
         text.push('\n');
         text.push_str(HELP_SYNTAX);
         text.push_str(

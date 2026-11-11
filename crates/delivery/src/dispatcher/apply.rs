@@ -8,6 +8,7 @@ use anyhow::Result;
 use ripple_core::plugin::AgentContext;
 
 use super::{Dispatcher, PendingRelocation, Return};
+use crate::help;
 use crate::messages::{
     Phase, RELOCATE_TOPIC, REQUEST_TOPIC, Relocate, Request, RequestKind, Status, Urgency,
 };
@@ -93,8 +94,10 @@ impl Dispatcher {
             .fold(0.0, f64::max)
     }
 
-    /// From the manager above the clusters: lets a hub serve another hub's
-    /// sites for a time (`help.rs`). The asking hub's request is answered.
+    /// From the help manager: lets a hub serve another hub's sites for a
+    /// time (`help.rs`). The pair must be one the dispatcher offered, which
+    /// is the study's contract whether or not the checker is on. The asking
+    /// hub's request is answered.
     fn apply_help(&mut self, now_s: f64, order: &Order) -> Result<(Outcome, String)> {
         let Order::Help {
             hub,
@@ -104,7 +107,6 @@ impl Dispatcher {
         else {
             unreachable!("matched in apply")
         };
-        let checker = self.config.manager.checker;
         if !self.hub_exists(*hub) || !self.hub_exists(*from_hub) {
             return refuse(
                 "unknown_hub",
@@ -118,6 +120,16 @@ impl Dispatcher {
             Ok(u) => u,
             Err(e) => return Ok(e),
         };
+        if !self.help_requests.iter().any(|r| r.hub == *hub) {
+            return refuse("not_asking", format!("hub {hub} is not asking for help"));
+        }
+        let snapshot = self.snapshot_of(now_s, &Scope::Region);
+        if !help::offered(*hub, *from_hub, &snapshot, &self.help_requests) {
+            return refuse(
+                "not_offered",
+                format!("hub {from_hub} was not offered to hub {hub}; take from_hub from an offer"),
+            );
+        }
         let donor = self
             .region
             .hub(*from_hub)
@@ -129,24 +141,12 @@ impl Dispatcher {
             .map(|site| horizontal_m(donor, site.position_world_m))
             .fold(0.0, f64::max)
             / 1000.0;
-        let reach_km = self.reach_km();
         let (idle, total) = self.fleet.values().fold((0u32, 0u32), |(idle, total), v| {
             if v.hub != *from_hub {
                 return (idle, total);
             }
             (idle + u32::from(v.free()), total + 1)
         });
-        if checker && farthest_km > reach_km {
-            return refuse(
-                "out_of_range",
-                format!(
-                    "hub {hub}'s farthest site is {farthest_km:.0} km from hub {from_hub}; nothing flies a {reach_km:.0} km round trip"
-                ),
-            );
-        }
-        if checker && idle == 0 {
-            return refuse("no_idle", format!("hub {from_hub} has no idle vehicle"));
-        }
         self.rules.lends.push(Lend {
             hub: *hub,
             from_hub: *from_hub,
@@ -154,15 +154,10 @@ impl Dispatcher {
         });
         self.help_requests.retain(|r| r.hub != *hub);
         let sites = self.region.sites_of(*hub).count();
-        let range = if farthest_km > reach_km {
-            ", beyond every vehicle's reach"
-        } else {
-            ""
-        };
         Ok((
             Outcome::Applied,
             format!(
-                "hub {from_hub}'s {idle} idle of {total} may serve hub {hub}'s {sites} sites, {farthest_km:.0} km to the farthest{range}"
+                "hub {from_hub}'s {idle} idle of {total} may serve hub {hub}'s {sites} sites, {farthest_km:.0} km to the farthest; it keeps half idle and flies only what arrives on time"
             ),
         ))
     }

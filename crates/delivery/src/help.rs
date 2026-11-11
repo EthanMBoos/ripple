@@ -1,10 +1,12 @@
-//! Help across clusters, the manager above the clusters' temporary order.
-//! A hub hit by a surge or an outage asks for aircraft. The dispatcher lists
-//! the offers: hubs outside the cluster that can spare aircraft and reach
-//! every one of the hub's sites and return. The manager above grants one
-//! offer with a `help` order or grants nothing. A granted hub serves the
-//! asking hub's sites until the minute given; its aircraft fly each request
-//! and come home, so nothing is relocated (`Lend` in `rules.rs`).
+//! Help between hubs, the help manager's only order. A hub hit by a surge
+//! or an outage asks for aircraft. The dispatcher lists the offers: hubs that
+//! can spare aircraft and reach every one of the hub's sites and return, and
+//! are not asking themselves. The help manager grants one offer with a
+//! `help` order or grants nothing; a pair that was not offered is refused. A granted hub serves the asking
+//! hub's sites until the minute given; its aircraft fly each request and come
+//! home, so nothing is relocated (`Lend` in `rules.rs`). The lender is
+//! protected at every assignment (`assign.rs`): it keeps half of each class
+//! idle, and flies only a request it can deliver on time.
 
 use std::collections::BTreeMap;
 use std::fmt::Write;
@@ -24,46 +26,33 @@ pub const OFFERS: usize = 5;
 #[derive(Clone, Debug, PartialEq)]
 pub struct HelpRequest {
     pub hub: u32,
-    /// 1-based, as `Region::clusters` orders them.
-    pub cluster: u32,
     pub kind: EventKind,
     pub until_s: f64,
 }
 
-/// A hub outside the asking hub's cluster that could serve it: how many
-/// aircraft of each class it can spare and still keep half, and how far it
-/// is. Only classes that reach the asking hub's farthest site and return on
-/// one charge are offered.
+/// A hub that could serve the asking hub: how many aircraft of each class it
+/// can spare and still keep half, and how far it is. Only classes that reach
+/// the asking hub's farthest site and return on one charge are offered.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Offer {
     pub from_hub: u32,
-    pub cluster: u32,
     pub spare: BTreeMap<VehicleClass, u32>,
     pub distance_km: f64,
 }
 
-/// The 1-based cluster a hub belongs to.
-pub fn cluster_of(hub: u32, clusters: &[Vec<u32>]) -> Option<u32> {
-    clusters
-        .iter()
-        .position(|c| c.contains(&hub))
-        .map(|i| i as u32 + 1)
-}
-
-/// The offers for one request, nearest first, at most `OFFERS`.
-pub fn offers(snapshot: &Snapshot<'_>, request: &HelpRequest, clusters: &[Vec<u32>]) -> Vec<Offer> {
+/// The offers for one request, nearest first, at most `OFFERS`. `requests`
+/// are all the open requests: an asking hub does not offer.
+pub fn offers(
+    snapshot: &Snapshot<'_>,
+    request: &HelpRequest,
+    requests: &[HelpRequest],
+) -> Vec<Offer> {
     let Some(asking) = snapshot.region.hub(request.hub) else {
         return Vec::new();
     };
     let mut offers = Vec::new();
     for hub in &snapshot.hubs {
-        if hub.id == request.hub || hub.out {
-            continue;
-        }
-        let Some(cluster) = cluster_of(hub.id, clusters) else {
-            continue;
-        };
-        if cluster == request.cluster {
+        if hub.id == request.hub || hub.out || requests.iter().any(|r| r.hub == hub.id) {
             continue;
         }
         // A round trip to the farthest of the asking hub's sites.
@@ -79,8 +68,7 @@ pub fn offers(snapshot: &Snapshot<'_>, request: &HelpRequest, clusters: &[Vec<u3
             }
             let idle = hub.idle.get(class).copied().unwrap_or(0);
             let total = hub.total.get(class).copied().unwrap_or(0);
-            let keep = (f64::from(total) * KEEP_SHARE).ceil() as u32;
-            let free = idle.saturating_sub(keep);
+            let free = idle.saturating_sub(keep(total));
             if free > 0 {
                 spare.insert(*class, free);
             }
@@ -90,7 +78,6 @@ pub fn offers(snapshot: &Snapshot<'_>, request: &HelpRequest, clusters: &[Vec<u3
         }
         offers.push(Offer {
             from_hub: hub.id,
-            cluster,
             spare,
             distance_km: horizontal_m(hub.position_world_m, asking.position_world_m) / 1000.0,
         });
@@ -104,15 +91,27 @@ pub fn offers(snapshot: &Snapshot<'_>, request: &HelpRequest, clusters: &[Vec<u3
     offers
 }
 
-/// The fixed rule for the manager above: each request gets its nearest
-/// offer whose hub has not been granted to another request this call, the
+/// How many of `total` aircraft a lender keeps for its own hub.
+pub fn keep(total: u32) -> u32 {
+    (f64::from(total) * KEEP_SHARE).ceil() as u32
+}
+
+/// Whether `from_hub` is offered to `hub` now: `hub` is asking and
+/// `from_hub` is in its offers.
+pub fn offered(hub: u32, from_hub: u32, snapshot: &Snapshot<'_>, requests: &[HelpRequest]) -> bool {
+    requests.iter().any(|request| {
+        request.hub == hub
+            && offers(snapshot, request, requests)
+                .iter()
+                .any(|o| o.from_hub == from_hub)
+    })
+}
+
+/// The fixed rule for the help manager: each request gets its nearest offer
+/// whose hub has not been granted to another request this call, the
 /// requests with the most trauma waiting first. One donor per request, one
 /// request per donor, nothing when no offer is left.
-pub fn broker(
-    requests: &[HelpRequest],
-    snapshot: &Snapshot<'_>,
-    clusters: &[Vec<u32>],
-) -> Vec<Order> {
+pub fn broker(requests: &[HelpRequest], snapshot: &Snapshot<'_>) -> Vec<Order> {
     let trauma = |hub: u32| {
         snapshot
             .hub(hub)
@@ -124,7 +123,7 @@ pub fn broker(
     let mut granted = Vec::new();
     let mut orders = Vec::new();
     for request in ordered {
-        let Some(offer) = offers(snapshot, request, clusters)
+        let Some(offer) = offers(snapshot, request, requests)
             .into_iter()
             .find(|o| !granted.contains(&o.from_hub))
         else {
@@ -140,12 +139,8 @@ pub fn broker(
     orders
 }
 
-/// The requests and their offers as the manager above is told them.
-pub fn describe(
-    requests: &[HelpRequest],
-    snapshot: &Snapshot<'_>,
-    clusters: &[Vec<u32>],
-) -> String {
+/// The requests and their offers as the help manager is told them.
+pub fn describe(requests: &[HelpRequest], snapshot: &Snapshot<'_>) -> String {
     if requests.is_empty() {
         return "No hub is asking for help.\n".into();
     }
@@ -158,15 +153,14 @@ pub fn describe(
         let total: u32 = view.map_or(0, |h| h.total.values().sum());
         let _ = write!(
             text,
-            "- hub {} (cluster {}): {} until minute {:.0}; {waiting} waiting ({trauma} trauma), {idle} idle of {total}.",
+            "- hub {}: {} until minute {:.0}; {waiting} waiting ({trauma} trauma), {idle} idle of {total}.",
             request.hub,
-            request.cluster,
             request.kind.as_str(),
             request.until_s / 60.0
         );
-        let offers = offers(snapshot, request, clusters);
+        let offers = offers(snapshot, request, requests);
         if offers.is_empty() {
-            text.push_str(" No hub outside the cluster can reach it with spare aircraft.\n");
+            text.push_str(" No hub can reach it with spare aircraft.\n");
             continue;
         }
         let lines: Vec<String> = offers
@@ -178,9 +172,8 @@ pub fn describe(
                     .map(|(class, n)| format!("{n} {}", class.as_str()))
                     .collect();
                 format!(
-                    "hub {} (cluster {}), {:.0} km, {} spare",
+                    "hub {}, {:.0} km, {} spare",
                     o.from_hub,
-                    o.cluster,
                     o.distance_km,
                     spare.join(" and ")
                 )
@@ -207,7 +200,7 @@ mod tests {
         .unwrap()
     }
 
-    /// Four hubs, each its own cluster; `idle` fixed-wing of 8 at each.
+    /// Four hubs; `idle` fixed-wing of 8 at each.
     fn snapshot<'a>(region: &'a Region, idle: [u32; 4], endurance_s: f64) -> Snapshot<'a> {
         let hubs = (1..=4u32)
             .map(|id| HubView {
@@ -241,18 +234,17 @@ mod tests {
     fn request(hub: u32) -> HelpRequest {
         HelpRequest {
             hub,
-            cluster: hub,
             kind: EventKind::Surge,
             until_s: 3600.0,
         }
     }
 
     #[test]
-    fn offers_keep_half_skip_the_own_cluster_and_need_the_range() {
+    fn offers_keep_half_and_need_the_range() {
         let region = region();
-        let clusters = region.clusters(1);
         let snapshot = snapshot(&region, [8, 8, 4, 6], 3600.0);
-        let offers = offers(&snapshot, &request(1), &clusters);
+        let asking = [request(1)];
+        let offers = offers(&snapshot, &asking[0], &asking);
         // Hub 4 keeps 4 of 8 and spares 2; hub 3 has nothing over half;
         // hub 1 is the asker. Nearest first: hub 2 before hub 4.
         assert_eq!(
@@ -262,26 +254,40 @@ mod tests {
         assert_eq!(offers[0].spare[&VehicleClass::FixedWing], 4);
         assert_eq!(offers[1].spare[&VehicleClass::FixedWing], 2);
         let short = snapshot_short(&region);
-        assert!(
-            offers_for(&short, &clusters).is_empty(),
-            "a 1 km reach offers nothing"
-        );
+        assert!(offers_for(&short).is_empty(), "a 1 km reach offers nothing");
     }
 
     fn snapshot_short(region: &Region) -> Snapshot<'_> {
         snapshot(region, [8, 8, 8, 8], 40.0)
     }
 
-    fn offers_for(snapshot: &Snapshot<'_>, clusters: &[Vec<u32>]) -> Vec<Offer> {
-        offers(snapshot, &request(1), clusters)
+    fn offers_for(snapshot: &Snapshot<'_>) -> Vec<Offer> {
+        let asking = [request(1)];
+        offers(snapshot, &asking[0], &asking)
+    }
+
+    #[test]
+    fn an_asking_hub_does_not_offer() {
+        let region = region();
+        let snapshot = snapshot(&region, [8, 8, 8, 8], 3600.0);
+        let asking = [request(1), request(2)];
+        let offers_1 = offers(&snapshot, &asking[0], &asking);
+        assert_eq!(
+            offers_1.iter().map(|o| o.from_hub).collect::<Vec<_>>(),
+            vec![3, 4],
+            "hub 2 is asking too"
+        );
+        assert!(offered(1, 3, &snapshot, &asking));
+        assert!(!offered(1, 2, &snapshot, &asking));
+        assert!(!offered(3, 4, &snapshot, &asking), "hub 3 is not asking");
+        assert!(describe(&asking, &snapshot).contains("- hub 1: surge"));
     }
 
     #[test]
     fn the_broker_grants_one_hub_per_request_and_each_hub_once() {
         let region = region();
-        let clusters = region.clusters(1);
         let snapshot = snapshot(&region, [8, 8, 8, 8], 3600.0);
-        let orders = broker(&[request(1), request(4)], &snapshot, &clusters);
+        let orders = broker(&[request(1), request(4)], &snapshot);
         assert_eq!(orders.len(), 2);
         let donors: Vec<u32> = orders
             .iter()

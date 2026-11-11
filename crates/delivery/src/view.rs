@@ -45,22 +45,6 @@ pub struct HubView {
     pub out: bool,
 }
 
-/// One cluster's totals, as the manager above the clusters sees it.
-#[derive(Clone, Debug, Default)]
-pub struct ClusterView {
-    /// 1-based, in the order `Region::clusters` gives.
-    pub index: u32,
-    pub idle: BTreeMap<VehicleClass, u32>,
-    pub total: BTreeMap<VehicleClass, u32>,
-    pub flying: u32,
-    pub lost: u32,
-    pub stock: BTreeMap<String, u32>,
-    pub waiting: BTreeMap<Urgency, u32>,
-    pub late: u32,
-    /// Hubs in an outage now.
-    pub out: u32,
-}
-
 /// The state at one call, limited to the hubs the manager's scope covers.
 pub struct Snapshot<'a> {
     pub time_s: f64,
@@ -247,108 +231,6 @@ impl Snapshot<'_> {
         } else {
             format!("Exceptions:\n{}\n", lines.join("\n"))
         };
-        text.push_str(&self.region_line());
-        text
-    }
-
-    /// One cluster's totals, for the manager above the clusters.
-    pub fn cluster_view(&self, index: u32, hubs: &[u32]) -> ClusterView {
-        let mut view = ClusterView {
-            index,
-            ..ClusterView::default()
-        };
-        for hub in self.hubs.iter().filter(|h| hubs.contains(&h.id)) {
-            for (class, n) in &hub.idle {
-                *view.idle.entry(*class).or_insert(0) += n;
-            }
-            for (class, n) in &hub.total {
-                *view.total.entry(*class).or_insert(0) += n;
-            }
-            view.flying += hub.flying;
-            view.lost += hub.lost;
-            for (item, units) in &hub.stock {
-                *view.stock.entry(item.clone()).or_insert(0) += units;
-            }
-            for (urgency, n) in &hub.waiting {
-                *view.waiting.entry(*urgency).or_insert(0) += n;
-            }
-            view.late += hub.late;
-            view.out += u32::from(hub.out);
-        }
-        view
-    }
-
-    /// One line per cluster, then the region line: what the manager above
-    /// the clusters sees. A line carries the totals and only the live events
-    /// shown above, with the item or class.
-    pub fn clusters(&self, clusters: &[Vec<u32>]) -> String {
-        let mut text = String::from("Clusters:\n");
-        for (i, hubs) in clusters.iter().enumerate() {
-            let view = self.cluster_view(i as u32 + 1, hubs);
-            // No hub list: the manager orders by cluster number.
-            let mut line = format!(
-                "- cluster {}: {}/{} fixed-wing idle, {}/{} multirotor idle",
-                view.index,
-                counts(&view.idle, VehicleClass::FixedWing),
-                counts(&view.total, VehicleClass::FixedWing),
-                counts(&view.idle, VehicleClass::Multirotor),
-                counts(&view.total, VehicleClass::Multirotor),
-            );
-            if view.flying > 0 {
-                let _ = write!(line, ", {} flying", view.flying);
-            }
-            if view.lost > 0 {
-                let _ = write!(line, ", {} lost", view.lost);
-            }
-            if view.out > 0 {
-                let _ = write!(line, ", {} hubs in outage", view.out);
-            }
-            let stock: Vec<String> = view
-                .stock
-                .iter()
-                .map(|(item, units)| format!("{item} {units}"))
-                .collect();
-            let total: u32 = view.waiting.values().sum();
-            let _ = write!(line, "; stock {}; {total} waiting", stock.join(", "));
-            if let Some(trauma) = view.waiting.get(&Urgency::Trauma).filter(|n| **n > 0) {
-                let _ = write!(line, " ({trauma} trauma)");
-            }
-            if view.late > 0 {
-                let _ = write!(line, ", {} late", view.late);
-            }
-            let events: Vec<String> = self
-                .active_events
-                .iter()
-                .filter(|e| e.kind.shown_above() && e.hubs.iter().any(|h| hubs.contains(h)))
-                .map(|e| {
-                    let hubs: Vec<u32> = e
-                        .hubs
-                        .iter()
-                        .copied()
-                        .filter(|h| hubs.contains(h))
-                        .collect();
-                    // The item and class are here because the manager above
-                    // the clusters reads no event text: a send needs the
-                    // item, and a move knows which class the weather grounds.
-                    let mut text = e.kind.as_str().to_string();
-                    if !e.item.is_empty() {
-                        let _ = write!(text, " of {}", e.item);
-                    }
-                    let _ = write!(text, " at hubs {}", crate::event::hub_list(&hubs));
-                    if let Some(class) = e.class {
-                        let _ = write!(text, ", {} grounded", class.as_str());
-                    }
-                    if e.until_min.is_finite() {
-                        let _ = write!(text, " until minute {:.0}", e.until_min);
-                    }
-                    text
-                })
-                .collect();
-            if !events.is_empty() {
-                let _ = write!(line, "; events: {}", events.join("; "));
-            }
-            let _ = writeln!(text, "{line}");
-        }
         text.push_str(&self.region_line());
         text
     }

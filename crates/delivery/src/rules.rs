@@ -25,8 +25,8 @@ pub struct Rules {
     pub serve_from: BTreeMap<String, Vec<u32>>,
     /// Hospitals whose pad is in use, by site code, until when.
     pub pads: BTreeMap<String, f64>,
-    /// Hubs serving another hub's sites for a time, granted by the manager
-    /// above the clusters (`help.rs`).
+    /// Hubs serving another hub's sites for a time, granted by the help
+    /// manager (`help.rs`).
     pub lends: Vec<Lend>,
 }
 

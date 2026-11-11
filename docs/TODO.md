@@ -41,52 +41,45 @@ Submit to RA-L in the first days of December. RA-L takes six pages
 including references, two more at a charge, nothing beyond eight; the
 paper is seven. Check the author page for current terms first.
 
-## Scaling, still to do
+## The fleet API, still to do
 
 What we want to show is plain: an API that lets a model manage a small
 fleet, where it strains as the fleet grows, and a change to the API that
 lets it keep working at the larger size. The fleet API is the report the
 model sees and the orders the dispatcher accepts.
 
-Run one ladder on the eight-hour day at 16, 64 and 256 hubs, and 1,024 if
-the runs fit, Haiku and Opus, three seeds, against local rules and the
-fixed broker at the same size:
+On the main day there is no fleet decision for a model to make. Help
+touches about 50 of 7,280 requests, the nearest donor is always the right
+one, and a fixed rule is as good as any choice; a whole-region model never
+beats local rules at any size, and bounding it to help makes it harmless
+and equal to the fixed rule. The plan in [INCIDENT_PLAN.md](INCIDENT_PLAN.md)
+builds a day where the decision matters first, proves that with fixed
+policies on incidents they were not tuned on, and only then compares a
+full report with a compact one, small before large. Its steps, in order:
 
-- One manager over the whole region with the main study's orders.
-- One manager over the whole region allowed only temporary help: a hub
-  serves another hub's sites for a time and its aircraft come home,
-  chosen from the hubs the dispatcher lists as able to spare aircraft and
-  reach the sites, or nothing.
-- A manager per 16-hub cluster, each seeing and ordering within its
-  cluster, with a manager above them allowed only the same help.
+- The offer rule by any reachable site, a backlog and an arrival time in
+  each offer line, and a scripted surge that names its hubs exactly.
+- Per-hub fleet sizes in the dispatcher's config.
+- The feasible help rule and the oracle beside the broker in
+  `crates/delivery/src/help.rs`, and a compact report for the help
+  manager, requests and offers without the hub view.
+- The incident mission beside `region.yaml`, tuned on its build seeds,
+  then frozen; the gate sweep over new seeds and placements. The sweep's
+  header states the question, not the outcome.
+- Models at 16 hubs only after the gate passes; size after that. No model
+  call before the gate.
 
-If the first arm falls behind as the fleet grows and the second holds, the
-orders were the problem. If the second falls too and the third holds,
-dividing the view and the decisions earned its place. Report score, misses
-at lending and receiving hubs, aircraft lost, calls, prompt characters and
-cost per day for each arm. The sweep's rationale states the question, not
-the expected outcome.
+Known from the no-model runs, and settings the incident changes: at 15 km
+spacing and a 15-minute trauma deadline a lent flight reaches almost
+nothing in time; a 15-minute surge is over before a second call; equal
+fleets make the nearest donor the best; one surge at a time leaves donors
+uncontested. Help is on time by construction: a lender keeps half of each
+class idle and flies only what arrives by the deadline, and a pair the
+dispatcher did not offer is refused.
 
-Before the ladder: give the whole-region manager the help order, which
-means raising requests and listing offers without clusters, and protect
-lenders. On the current day the fixed broker (`crates/delivery/src/help.rs`)
-moves misses from the asking hub to the lending hub rather than removing
-them; keeping half of the lender's aircraft is not enough. Reread the no-model 256-hub comparison after the change.
-
-Known from the no-model runs: temporary help lands few on-time deliveries
-on this day because hubs are 15 km apart and the trauma deadline is 15
-minutes, permanent moves between clusters lose aircraft even under a fixed
-rule, and an hour-long surge at four times the requests collapses the day
-for every arm. A workload where cross-cluster help pays is a follow-up,
-not a condition for the ladder.
-
-Every manager is called three times an hour with events batched, about 23
-calls a day. A 256-hub cluster run takes about an hour and a half; a
-1,024-hub day needs 1.5 GB and some seven hours with calls. Not doing:
-calling the clusters in parallel inside the dispatcher. If the ladder
-misses submission, move the Fleet API section to future work and narrow
-the introduction's question; do not present a planned comparison as a
-result.
+If the gate misses submission, the Fleet API section moves to future work
+and the introduction's question narrows; no planned comparison is
+presented as a result.
 
 ## Loose ends, not needed for submission
 

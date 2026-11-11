@@ -2,7 +2,10 @@
 //! deadline order, goes to the idle vehicle at an eligible hub with the right
 //! skill, the stock, and the endurance for the round trip, that arrives
 //! soonest. The orders in force decide which hubs are eligible, what is
-//! grounded or reserved, what comes first, and where flights detour.
+//! grounded or reserved, what comes first, and where flights detour. A hub
+//! lent by a help order (`help.rs`) is eligible with two protections: it
+//! keeps half of each class idle, counting the vehicles taken earlier in the
+//! same pass, and it flies only a request it arrives at before the deadline.
 
 use std::collections::BTreeSet;
 
@@ -12,6 +15,7 @@ use ripple_core::plugin::AgentContext;
 
 use super::Dispatcher;
 use crate::area::detour;
+use crate::help;
 use crate::messages::{
     ASSIGNMENT_TOPIC, Assignment, MISSED_TOPIC, MissReason, Missed, Request, SkillName, Status,
     VehicleClass,
@@ -134,6 +138,7 @@ impl Dispatcher {
         if let Some(extra) = self.rules.serve_from.get(&request.site) {
             eligible.extend(extra.iter().copied());
         }
+        let serving = eligible.clone();
         eligible.extend(self.rules.lenders(request.hub));
         let use_pad = request.rooftop && self.rules.uses_pad(&request.site);
         let skill = if request.rooftop && !use_pad {
@@ -197,7 +202,21 @@ impl Dispatcher {
                 .filter(|r| r.hub == hub && !r.site.eq_ignore_ascii_case(&request.site))
                 .map(|r| r.count)
                 .sum();
+            // A lender, not a hub the main study's serve-from order named.
+            let lent = !serving.contains(&hub);
             for vehicle in &idle_here {
+                if lent {
+                    let class = vehicle.card.class;
+                    let total = self
+                        .fleet
+                        .values()
+                        .filter(|v| v.hub == hub && v.card.class == class)
+                        .count() as u32;
+                    let idle = idle_here.iter().filter(|v| v.card.class == class).count() as u32;
+                    if idle <= help::keep(total) {
+                        continue;
+                    }
+                }
                 if self.rules.is_grounded(hub, vehicle.card.class) {
                     note(MissReason::Grounded, &mut reason);
                     continue;
@@ -237,6 +256,9 @@ impl Dispatcher {
                     continue;
                 }
                 let arrival_s = out_m / vehicle.card.cruise_speed_mps;
+                if lent && now_s + arrival_s > request.deadline_s {
+                    continue;
+                }
                 if best.as_ref().is_none_or(|b| arrival_s < b.arrival_s) {
                     best = Some(Candidate {
                         vehicle_id: vehicle.vehicle_id,

@@ -99,9 +99,9 @@ pub enum Order {
     /// Deliver to a hospital's ground pad by drop instead of landing on its
     /// rooftop.
     UsePad { site: String, until_min: f64 },
-    /// From the manager above the clusters only: let `from_hub` serve
-    /// `hub`'s sites until the minute; its aircraft fly each request and
-    /// return home (`help.rs`).
+    /// From the help manager only: let `from_hub` serve `hub`'s sites until
+    /// the minute; its aircraft fly each request and return home
+    /// (`help.rs`).
     Help {
         hub: u32,
         from_hub: u32,
@@ -136,7 +136,7 @@ impl Order {
         }
     }
 
-    /// An order only the manager above the clusters may give.
+    /// An order only the help manager may give.
     pub fn is_top(&self) -> bool {
         matches!(self, Order::Help { .. })
     }
@@ -242,10 +242,10 @@ impl Order {
     }
 }
 
-/// What the manager above the clusters is shown, once per call.
+/// What the help manager is shown, once per call.
 pub const HELP_SYNTAX: &str = "\
 Orders, each a JSON object with one key:
-- {\"help\": {\"hub\": H, \"from_hub\": D, \"until_min\": M}}: let hub D serve hub H's sites until minute M; D's aircraft fly each request and return home. Take D from an offer, or grant nothing.";
+- {\"help\": {\"hub\": H, \"from_hub\": D, \"until_min\": M}}: let hub D serve hub H's sites until minute M; D's aircraft fly each request and return home, D keeps half of each class idle for its own sites, and flies only what it can deliver on time. Take D from an offer, or grant nothing.";
 
 /// What the veto manager is told after the proposed orders.
 pub const VETO_SYNTAX: &str = "\

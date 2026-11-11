@@ -62,7 +62,7 @@ impl EventKind {
         }
     }
 
-    /// Whether the manager above the clusters is shown the event: a surge or
+    /// Whether the help manager is shown the event: a surge or
     /// an outage asks for help, a shortage or weather explains a cluster's
     /// state. A closure, corridor, rooftop closure, or priority is handled
     /// where it happens, by the cluster's own rules.

@@ -194,7 +194,7 @@ impl Region {
     }
 
     /// The hubs of each cluster: square blocks of `cluster_side` hubs, row
-    /// by row. A fleet manager per cluster is direction 4 of the plan.
+    /// by row, for a fleet manager per cluster.
     pub fn clusters(&self, cluster_side: u32) -> Vec<Vec<u32>> {
         let side = self.side();
         let per_row = side / cluster_side;

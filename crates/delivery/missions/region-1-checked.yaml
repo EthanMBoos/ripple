@@ -161,9 +161,11 @@ entities:
           # The rules file for kind policy, written by hand or by a model once
           # (src/policy.rs); a path from the working directory.
           policy: ""
-          # The manager above the clusters (needs cluster_side): none,
-          # replanner, or model; it sees cluster totals and moves vehicles
-          # and stock between clusters. top_model empty means model.
+          # The help manager, called after the managers above: none,
+          # replanner, or model; it sees the help hubs ask for with the hubs
+          # that could give it, and grants help, a hub serving an asking
+          # hub's sites for a time (src/help.rs), and sees the hub view.
+          # top_model empty means model.
           top_kind: none
           top_model: ""
           # Whose model and how it is reached (src/client.rs): provider

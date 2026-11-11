@@ -8,9 +8,8 @@
 //! urgency carries the giver's scope and binds only within it (`Rules` in
 //! `rules.rs`). Every other rule is placed by the hub or site it names.
 //!
-//! The three fleet APIs of the paper are three lists of managers: one with
-//! `Region`; one `Cluster` per block of hubs; and the clusters with a
-//! `Region` manager above them that only grants help between clusters.
+//! The managers are one with `Region`, or one `Cluster` per block of hubs;
+//! the help manager, when there is one, has `Region` too.
 
 use crate::event::{Event, EventsConfig};
 use crate::order::Order;
@@ -18,8 +17,7 @@ use crate::region::Region;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Scope {
-    /// Every hub: one manager over the region, or the manager above the
-    /// clusters.
+    /// Every hub: one manager over the region, or the help manager.
     Region,
     /// One cluster's hubs.
     Cluster(Vec<u32>),

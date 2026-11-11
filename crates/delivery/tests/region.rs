@@ -1,7 +1,8 @@
 //! The region missions end to end: a day is delivered and identical across
 //! workers, an avoid order keeps flights out of a closure, the replanner
-//! answers a surge with repositions, and a fake model client asks a question,
-//! gives orders, and replays offline from the saved replies.
+//! answers a surge with repositions, the help manager lends a hub within
+//! reach and refuses a pair it did not offer, and a fake model client gives
+//! orders and replays offline from the saved replies.
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -122,22 +123,60 @@ fn the_replanner_answers_a_surge_with_help_from_other_hubs() -> Result<()> {
 }
 
 #[test]
-fn a_manager_above_per_hub_clusters_grants_help_to_a_surge() -> Result<()> {
-    // Sixteen hubs, each its own cluster, so the surge at hub 1 and its
-    // neighbours leaves hubs with spare aircraft within reach.
+fn a_help_manager_over_the_region_lends_only_what_arrives_on_time() -> Result<()> {
+    // No clusters: the fixed broker over the region answers a surge at hub 1
+    // with help from a hub within reach. The lender keeps half of each class
+    // idle and flies only what it can deliver by the deadline, so every lent
+    // delivery is on time.
     let surge = "[{kind: surge, at_min: 10, hubs: [1]}]";
     let base = with(hubs(short_day(60), 16), "events.scripted", surge);
-    let base = with(base, "manager.kind", "replanner");
-    let base = with(base, "manager.cluster_side", "1");
-    let helped = with(base, "manager.top_kind", "replanner");
-    let (values, _) = run("region.yaml", &helped, 1)?;
+    let changes = with(base, "manager.top_kind", "replanner");
+    let (values, _) = run("region.yaml", &changes, 1)?;
     assert!(values["top_calls"] >= 1.0, "{values:?}");
-    // Each asking hub gets its nearest hub with spare. The lender's aircraft
-    // fly the asking hub's requests and come home: no relocation.
     assert!(values["applied_help"] >= 1.0, "{values:?}");
-    assert!(values.keys().any(|k| k.ends_with("_helped")), "{values:?}");
-    assert!(!values.contains_key("applied_reposition"), "{values:?}");
-    assert_eq!(values["vehicles_lost"], 0.0);
+    assert!(values["lent_flights"] >= 1.0, "{values:?}");
+    assert_eq!(
+        values["lent_on_time"], values["lent_deliveries"],
+        "{values:?}"
+    );
+    assert!(!values.contains_key("orders_refused"), "{values:?}");
+    Ok(())
+}
+
+#[test]
+fn a_help_order_for_a_pair_not_offered_is_refused() -> Result<()> {
+    // The fake help manager names the far corner of a 16-hub region, which
+    // no offer lists: too far to fly a round trip to hub 1's sites.
+    let dir = std::env::temp_dir().join(format!("ripple-fake-help-{}", std::process::id()));
+    std::fs::create_dir_all(&dir)?;
+    let command = dir.join("model");
+    std::fs::write(
+        &command,
+        "#!/usr/bin/env python3\n\
+         import sys\n\
+         sys.stdin.read()\n\
+         print('{\"orders\": [{\"help\": {\"hub\": 1, \"from_hub\": 16, \
+         \"until_min\": 60}}]}')\n",
+    )?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&command, std::fs::Permissions::from_mode(0o755))?;
+    }
+    let surge = "[{kind: surge, at_min: 10, hubs: [1]}]";
+    let base = with(hubs(short_day(30), 16), "events.scripted", surge);
+    let base = with(base, "manager.top_kind", "model");
+    let base = with(
+        base,
+        "manager.cache_dir",
+        dir.join("cache").to_str().unwrap(),
+    );
+    let changes = with(base, "manager.command", command.to_str().unwrap());
+    let (values, _) = run("region.yaml", &changes, 1)?;
+    assert!(values["top_calls"] >= 1.0, "{values:?}");
+    assert!(values["refused_not_offered"] >= 1.0, "{values:?}");
+    assert!(!values.contains_key("applied_help"), "{values:?}");
+    std::fs::remove_dir_all(&dir)?;
     Ok(())
 }
 

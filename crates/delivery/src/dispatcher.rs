@@ -122,7 +122,7 @@ pub struct Dispatcher {
     announced: usize,
     rules: Rules,
     /// The fleet managers: one over the region or one per cluster, in
-    /// cluster order, then the manager above the clusters if there is one.
+    /// cluster order, then the help manager if there is one.
     managers: Vec<Manager>,
     /// Relocations and stock flights applied since the last call, for the
     /// cost feedback: the order's words and the donor hub.
@@ -130,7 +130,7 @@ pub struct Dispatcher {
     /// The hub pairs the order being applied moved vehicles or stock between,
     /// taken into its record.
     moved: Vec<(u32, u32)>,
-    /// Hubs asking the manager above the clusters for aircraft (`help.rs`).
+    /// Hubs asking the help manager for aircraft (`help.rs`).
     help_requests: Vec<HelpRequest>,
     /// Late deliveries since the last call, by hub.
     late_by_hub: BTreeMap<u32, u32>,

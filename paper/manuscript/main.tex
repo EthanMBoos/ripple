@@ -653,10 +653,10 @@ reserve.
 The fleet API defines what a manager is shown and which orders the
 dispatcher accepts. A manager responsible for the whole region can move
 aircraft and stock between any hubs, but its report grows as more problems
-arise at once. Dividing the region into clusters gives each manager a
-smaller report and a smaller reach. A manager above the clusters can
-coordinate across them, though its moves may again leave giving hubs short
-when later requests arrive.
+arise at once, and its moves leave giving hubs short when later requests
+arrive. A manager allowed only to grant temporary help, from a list of
+hubs the dispatcher has checked, can do less harm, and its report can be
+reduced to the requests and the offers.
 
 The smaller runs show why both choices matter. With only problem hubs in
 its report, Haiku makes seven moves on each tested 16-hub day, while
@@ -667,22 +667,20 @@ managed a region that large.
 
 \emph{Planned.} The question is plain: which API lets a model manage a
 small fleet, where does it strain as the fleet grows, and what change lets
-it keep working at the larger size. We will run one ladder on matched days
-at 16, 64, and 256 hubs, and at 1,024 where the runs fit, with Haiku and
-Opus on three seeds, against local rules and a fixed rule at each size.
-Three APIs: one model sees the whole region and gives the orders of the
-main study; one model sees the whole region but may only grant temporary
-help, a hub serving another hub's sites for a time with its aircraft
-returning home, chosen from the hubs the dispatcher lists as able to spare
-aircraft and reach the sites; and a model for each 16-hub cluster, seeing
-and acting within it, with a model above the clusters that may only grant
-the same help. Each manager is called at most three times an hour, with
-new events batched until the next call, or about 23 calls per day. We will
-report on-time score, missed requests at lending and receiving hubs,
-aircraft lost, model calls, prompt characters, and cost per day. If the
-first API falls behind as the fleet grows and the second holds, the orders
-were the problem; if the second falls too and the third holds, dividing
-the view and the decisions earned its place.
+it keep working at the larger size. On the main day there is no fleet
+decision for a model to make: temporary help, a hub serving another hub's
+sites for a time with its aircraft returning home, touches under one
+percent of requests, and the nearest donor is always the right one. We
+will first build an incident where the choice of donor matters, several
+hubs asking at once with donors that differ in spare aircraft, backlog,
+and distance, and show with fixed rules on incidents they were not tuned
+on that a load-aware choice beats the nearest donor. Only then will two
+reports be compared with the same help order and call schedule: the hub
+view of every hub with the requests and offers, and the requests and
+offers alone. The comparison runs at 16 hubs first, then with the number
+of simultaneous incidents growing with the fleet at 64 and 256 hubs. We
+will report on-time score, misses at donor hubs, lent flights and their
+on-time share, aircraft lost, model calls, and prompt characters.
 
 \section{Discussion and Future Work}
 \label{sec:discussion}

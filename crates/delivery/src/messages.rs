@@ -237,7 +237,7 @@ impl ManagerKind {
 pub struct OrderRecord {
     pub time_s: f64,
     pub source: ManagerKind,
-    /// From the manager above the clusters.
+    /// From the help manager.
     pub top: bool,
     /// Given on a call with no new event and nothing wrong in view.
     pub quiet: bool,
@@ -255,7 +255,7 @@ pub struct OrderRecord {
 pub struct ManagerCall {
     pub time_s: f64,
     pub source: ManagerKind,
-    /// To the manager above the clusters.
+    /// To the help manager.
     pub top: bool,
     /// No new event and nothing wrong in view: the right reply is nothing.
     pub quiet: bool,

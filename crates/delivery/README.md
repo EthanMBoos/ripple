@@ -64,7 +64,7 @@ side. The tests in `tests/region.rs` run short days of the same missions.
 | `rules.rs` | The rules the orders leave in force, read at every assignment: reserves, avoided areas, groundings, priorities, extra serving hubs, open pads. |
 | `scope.rs` | What one fleet manager is responsible for, the whole region or one cluster's hubs: it filters what the manager is shown, gates what it may order, and places the rules it gives that name no hub. |
 | `view.rs` | What the fleet manager sees: per-hub summaries, or only the exceptions. |
-| `help.rs` | Help across clusters: a surge or outage hub asks for aircraft, the dispatcher lists the hubs outside the cluster that can spare some and reach it, and the manager above grants one or none; a fixed-rule broker is the control. |
+| `help.rs` | Help between hubs: a surge or outage hub asks for aircraft, the dispatcher lists the hubs that can spare some and reach it, and the help manager grants one or none; a fixed-rule broker is the control. |
 | `replanner.rs` | The structured replanner: fixed rules per event kind and a greedy pick of donor hubs by distance. |
 | `policy.rs`, `policies/` | Rules written once as YAML, by hand or by a model, in the form `policies/SYNTAX.md` describes; `policies/replanner.yaml` is the replanner in it. |
 | `model.rs`, `client.rs` | The language-model fleet manager: prompt and saved replies; clients for the `claude` and `codex` commands, the Anthropic and OpenAI APIs, and Ollama. |
@@ -158,26 +158,29 @@ a cluster manager reaches only its own hubs' flights and requests. 0 is one
 manager over the region, which sees and reaches everything. The replanner
 splits the same way, which measures what the split alone costs.
 
-`manager.top_kind` puts a manager above the clusters (`replanner` or
-`model`; `top_model` names its model, or `model` is used). After the cluster
-managers it is called with one line per cluster, totals of vehicles, stock,
-waiting and late requests and its live surges, outages, shortages and
-weather with the item or class, then the new events of those kinds in
-full (closures, corridors, rooftop closures and priorities are the cluster
-managers' alone). It gives only `help` orders: when a surge or outage
-starts at a hub, the hub asks for aircraft, and the manager above is shown
-each request with the hubs outside its cluster that can spare aircraft
-above half their own and reach the hub's farthest site and return
-(`help.rs`). A `help` order lets one of them serve the hub's sites until a
-minute; its aircraft fly each request and come home, so nothing is
-relocated. With `top_kind: replanner` a fixed rule grants each request its
-nearest offer, one donor per request and each donor once per call. Its
-calls and orders are counted as `top_calls` and `top_orders`. The score
-counts `helps`, `hub_NNN_lent` and `hub_NNN_helped`, and for any lending,
-by help or by `serve_from`, the flights from a hub other than the
-request's own as `lent_flights`, `lent_deliveries` and `lent_on_time`.
-With `manager.kind: none` and a top manager, the hubs run local rules only
-through the dispatcher and the top grants help between them.
+`manager.top_kind` adds a help manager (`replanner` or `model`;
+`top_model` names its model, or `model` is used), called after the
+managers over the region or the clusters. It gives only `help` orders.
+When a surge or outage starts at a hub, the hub asks for aircraft, and the
+help manager is shown each request with the hubs that can spare aircraft
+above half their own, reach the hub's farthest site and return, and are
+not asking themselves (`help.rs`). A `help` order lets one of them serve the hub's
+sites until a minute; its aircraft fly each request and come home, so
+nothing is relocated. A pair the dispatcher did not offer is refused
+(`refused_not_offered`) whether or not the checker is on. The lender is
+protected at every assignment: it keeps half of each class idle, counting
+vehicles already taken in the pass, and flies only a request it arrives at
+before the deadline. The main study's `serve_from` keeps its own behavior.
+The help manager sees the new surges, outages, shortages and weather, the
+requests and offers, and the hub view (`view`). With `top_kind: replanner` a fixed
+rule grants each request its nearest offer, one donor per request and each
+donor once per call. Its calls and orders are counted as `top_calls` and
+`top_orders`. The score counts `helps`, `hub_NNN_lent` and
+`hub_NNN_helped`, and for any lending, by help or by `serve_from`, the
+flights from a hub other than the request's own as `lent_flights`,
+`lent_deliveries` and `lent_on_time`. With `manager.kind: policy` and the
+local rules file, the hubs run local rules and the help manager grants
+help between them.
 
 Orders that asked for more than was there (a reposition with fewer idle
 vehicles than `count`, a transfer with fewer units in stock) are applied for

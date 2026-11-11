@@ -109,19 +109,18 @@ pub struct ManagerConfig {
     /// clusters are square blocks of this many hubs a side (0: one manager).
     /// Each is called with its own hubs' view, the events and rules that
     /// touch them, and its own feedback, and may only name its own hubs and
-    /// sites; its rules naming no hub reach its hubs only. `top_kind` puts
-    /// a manager above them.
+    /// sites; its rules naming no hub reach its hubs only.
     pub cluster_side: u32,
     /// Hand-written orders for `kind: scripted`.
     pub scripted: Vec<ScriptedOrder>,
     /// The rules file for `kind: policy` (`policy.rs`), a path from the
     /// working directory.
     pub policy: String,
-    /// The manager above the clusters (`none`, `replanner` or `model`): it
-    /// sees each cluster's totals and the help its hubs ask for, and may
-    /// only grant help, a hub outside the cluster serving an asking hub's
-    /// sites for a time from the offers the dispatcher lists (`help.rs`).
-    /// Called after the cluster managers. Needs `cluster_side`.
+    /// The help manager (`none`, `replanner` or `model`), called after the
+    /// managers over the region or the clusters: it sees the help hubs ask
+    /// for with the offers the dispatcher lists, and may only grant help, a
+    /// hub serving an asking hub's sites for a time (`help.rs`). It sees
+    /// the hub view (`view`).
     pub top_kind: ManagerKind,
     /// The model for a `top_kind: model`; empty means `model`.
     pub top_model: String,
@@ -300,10 +299,6 @@ impl DispatcherConfig {
                 ManagerKind::None | ManagerKind::Replanner | ManagerKind::Model
             ),
             "manager.top_kind must be none, replanner or model"
-        );
-        ensure!(
-            self.manager.top_kind == ManagerKind::None || self.manager.cluster_side > 0,
-            "manager.top_kind needs manager.cluster_side"
         );
         if self.manager.top_kind == ManagerKind::Model {
             ensure!(

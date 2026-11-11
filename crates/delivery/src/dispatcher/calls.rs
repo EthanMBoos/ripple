@@ -2,7 +2,7 @@
 //! what becomes of their orders. Every manager is a `Manager`: a scope, a
 //! way of deciding, and what it was last told. A call goes to one tier at a
 //! time, the managers over the region or over each cluster first, then the
-//! manager above the clusters. A tier's orders are recorded and applied once
+//! help manager. A tier's orders are recorded and applied once
 //! all of its managers have decided, so they decide on the same state.
 
 use anyhow::Result;
@@ -43,9 +43,9 @@ impl Decider {
 }
 
 /// One fleet manager: what it is responsible for, how it decides, and what
-/// it is told about its last orders at its next call. The manager above the
-/// clusters is one too: its scope is the region, it is shown cluster totals
-/// instead of hubs, and it only grants help between clusters.
+/// it is told about its last orders at its next call. The help manager is
+/// one too: its scope is the region, it is shown the help asked for and
+/// offered with the hub view, and it only grants help.
 pub(super) struct Manager {
     pub scope: Scope,
     pub decider: Decider,
@@ -110,7 +110,7 @@ impl Dispatcher {
 
     /// Calls the fleet managers when events start and at check-ins, and
     /// applies what they order: first the managers over the region or the
-    /// clusters, then the manager above the clusters.
+    /// clusters, then the help manager.
     pub(super) fn manage(
         &mut self,
         context: &mut AgentContext,
@@ -135,6 +135,9 @@ impl Dispatcher {
                 return Ok(());
             };
             due = queued;
+            if top_kind != ManagerKind::None {
+                self.ask_for_help(now_s, &due);
+            }
             self.decide_tier(now_s, &self.started(&due), false)?
         };
         if kind.uses_model() {
@@ -146,7 +149,6 @@ impl Dispatcher {
         self.last_call_s = now_s;
         self.record(context, now_s, round)?;
         if top_kind != ManagerKind::None {
-            self.ask_for_help(now_s, &due);
             let round = self.decide_tier(now_s, &self.started(&due), true)?;
             self.record(context, now_s, round)?;
         }
@@ -156,9 +158,10 @@ impl Dispatcher {
     /// Raises a help request for each hub where a surge or an outage just
     /// started, until the event ends, and drops the requests that have
     /// ended. A hub asks once; a granted request is dropped when applied.
+    /// Raised before the first tier decides, so a help manager over the
+    /// region sees them in the same call.
     fn ask_for_help(&mut self, now_s: f64, due: &[usize]) {
         self.help_requests.retain(|r| r.until_s > now_s);
-        let clusters = self.region.clusters(self.config.manager.cluster_side);
         let day_end_s = self.config.requests.until_s + 3600.0;
         let mut asked = Vec::new();
         for event in self.started(due) {
@@ -171,12 +174,8 @@ impl Dispatcher {
                 day_end_s
             };
             for &hub in &event.hubs {
-                let Some(cluster) = help::cluster_of(hub, &clusters) else {
-                    continue;
-                };
                 asked.push(HelpRequest {
                     hub,
-                    cluster,
                     kind: event.kind,
                     until_s,
                 });
@@ -249,16 +248,13 @@ impl Dispatcher {
             parse_failed: false,
         };
         let mut unreadable = 0;
-        let clusters = || self.region.clusters(self.config.manager.cluster_side);
         let orders = match &manager.decider {
-            Decider::Replanner if manager.above => {
-                help::broker(&self.help_requests, &snapshot, &clusters())
-            }
+            Decider::Replanner if manager.above => help::broker(&self.help_requests, &snapshot),
             Decider::Replanner => replanner::plan(&mine, &snapshot),
             Decider::Policy(policy) => policy.plan(&mine, &snapshot),
             Decider::Model(model) => {
                 let situation = if manager.above {
-                    self.top_situation(manager, &snapshot, &mine, &clusters())
+                    self.top_situation(manager, &snapshot, &mine)
                 } else {
                     self.situation(manager, &snapshot, &mine, None)
                 };
@@ -334,12 +330,12 @@ impl Dispatcher {
             let (outcome, feedback) = if order.is_top() && !above {
                 (
                     Outcome::Refused("top_only"),
-                    "only the manager above the clusters grants help".to_string(),
+                    "only the help manager grants help".to_string(),
                 )
             } else if above && !order.is_top() {
                 (
                     Outcome::Refused("help_only"),
-                    "the manager above the clusters only grants help, a hub serving another hub's sites for a time".to_string(),
+                    "the help manager only grants help, a hub serving another hub's sites for a time".to_string(),
                 )
             } else if !scope.covers_order(&order, &self.region) {
                 (

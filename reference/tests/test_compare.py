@@ -12,6 +12,7 @@ import tempfile
 import unittest
 
 import compare
+import equivalence
 import frames
 
 
@@ -66,7 +67,7 @@ def summary_report(plugin, columns, teams):
     return message(1, payload)
 
 
-def write_ripple_run(path, position=0.0, scores=((-2, 0.0),), summary=None):
+def write_ripple_run(path, position=0.0, scores=((-2, 0.0),), summary=None, spawned=False):
     """A tiny unchunked MCAP fixture for the comparison command. The summary is
     one metric plugin's (team, score) `scores`, unless `summary` gives the
     encoded reports."""
@@ -93,9 +94,10 @@ def write_ripple_run(path, position=0.0, scores=((-2, 0.0),), summary=None):
              + message(2, double(1, 1.0))
              + message(3, vec()) + message(4, vec()))
     entity = integer(1, 1) + message(2, state) + integer(3, 1)
-    description = (integer(1, 1) + integer(2, -2) + integer(3, 0)
+    description = (integer(1, 1) + integer(2, -2) + integer(3, 1 if spawned else 0)
                    + message(4, b"test") + message(5, b"aircraft"))
-    scenario = json.dumps({"entities": [{"label": "test"}]})
+    scenario = json.dumps({"entities": [{"label": "depot"}], "recipes": {"test": {}}}
+                          if spawned else {"entities": [{"label": "test"}]})
     metadata = string("ripple.run") + struct.pack("<I", len(string("scenario") + string(scenario)))
     metadata += string("scenario") + string(scenario)
     body = (record(1, string("") + string("test fixture"))
@@ -239,6 +241,16 @@ class ComparisonTests(unittest.TestCase):
 
 
 class FrameReaderTests(unittest.TestCase):
+    def test_equivalence_compares_spawned_recipe_groups_without_static_decoding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            left, right = Path(directory) / "left", Path(directory) / "right"
+            write_ripple_run(left, spawned=True)
+            write_ripple_run(right, spawned=True)
+            self.assertEqual(equivalence.read_output(left), equivalence.read_output(right))
+            write_ripple_run(right, position=1.0, spawned=True)
+            self.assertNotEqual(equivalence.read_output(left)[0]["/frames"],
+                                equivalence.read_output(right)[0]["/frames"])
+
     def test_defaults_negative_ids_unknown_fields_and_field_order(self):
         payload = (message(2, contact(-1)) + integer(100, 42)
                    + message(101, b"unknown") + double(102, 123)

@@ -1,0 +1,22 @@
+[workspace]
+
+[package]
+name = "ripple-receive-proof"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+path = "receive.rs"
+
+[dependencies]
+creusot-std = "=0.14.0"
+anyhow = "=1.0.104"
+serde_json = "1"
+
+[build-dependencies]
+syn = { version = "2", features = ["full", "visit-mut"] }
+quote = "1"
+
+[patch.crates-io]
+creusot-std = { path = "../../target/creusot-std-0.14.0" }

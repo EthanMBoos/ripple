@@ -109,33 +109,34 @@ impl Messages {
         });
     }
     /// Drain this plugin's delivered messages. Other subscribers have independent queues.
+    // DEVNOTE: Creusot 0.14 proves this loop and rejects wrong-channel and
+    // reversed-order mutants: python3 reference/creusot/check.py --mutations.
+    // The explicit loop keeps conversion/order in the proof; only the two
+    // error constructors and specified library operations are trusted.
     pub fn receive<T: Send + Sync + 'static>(
         &mut self,
         network: &str,
         topic: &str,
     ) -> Result<Vec<Message<T>>> {
         let channel = (network.to_owned(), topic.to_owned());
-        ensure!(
-            self.subscriptions.get(&channel) == Some(&TypeId::of::<T>()),
-            "missing or differently typed subscription: {network}/{topic}"
-        );
-        self.inbox
-            .remove(&channel)
-            .unwrap_or_default()
-            .into_iter()
-            .map(|message| {
-                let value = message
-                    .value
-                    .downcast::<T>()
-                    .map_err(|_| anyhow::anyhow!("message type mismatch"))?;
-                Ok(Message {
-                    sender: message.sender,
-                    sent_at_s: message.sent_at_s,
-                    delivered_at_s: message.delivered_at_s,
-                    value,
-                })
-            })
-            .collect()
+        if self.subscriptions.get(&channel) != Some(&TypeId::of::<T>()) {
+            return Err(subscription_error(network, topic));
+        }
+        let queued = self.inbox.remove(&channel).unwrap_or_default();
+        let mut received = Vec::with_capacity(queued.len());
+        for message in queued {
+            let value = match message.value.downcast::<T>() {
+                Ok(value) => value,
+                Err(_) => return Err(payload_type_error()),
+            };
+            received.push(Message {
+                sender: message.sender,
+                sent_at_s: message.sent_at_s,
+                delivered_at_s: message.delivered_at_s,
+                value,
+            });
+        }
+        Ok(received)
     }
     /// No subscriptions and nothing to send: networks have nothing to do here.
     pub(crate) fn is_idle(&self) -> bool {
@@ -154,6 +155,15 @@ impl Messages {
         }
         Ok(())
     }
+}
+
+// Error formatting is outside the queue contract; these functions do not touch a mailbox.
+fn subscription_error(network: &str, topic: &str) -> anyhow::Error {
+    anyhow::anyhow!("missing or differently typed subscription: {network}/{topic}")
+}
+
+fn payload_type_error() -> anyhow::Error {
+    anyhow::anyhow!("message type mismatch")
 }
 
 pub struct Transmission<'a> {
@@ -484,6 +494,85 @@ mod tests {
             })?;
             Ok(())
         }
+    }
+
+    #[test]
+    fn receive_preserves_other_queues_and_checks_subscription_before_draining() -> Result<()> {
+        let mut mailboxes = TestMailboxes::new()?;
+        mailboxes.same_entity.subscribe::<i32>("test", "other")?;
+        for value in [11_i32, 22, 33] {
+            mailboxes.sender.publish("test", "sample", value)?;
+        }
+        mailboxes.sender.publish("test", "other", 44_i32)?;
+        mailboxes.phase(0.0, |context| {
+            context.route(|_, _| Ok(Delivery::After { delay_s: 0.0 }))
+        })?;
+        assert!(
+            mailboxes
+                .same_entity
+                .receive::<u64>("test", "sample")
+                .is_err()
+        );
+        assert!(
+            mailboxes
+                .same_entity
+                .receive::<i32>("missing", "sample")
+                .is_err()
+        );
+        let values = |messages: Vec<Message<i32>>| {
+            messages
+                .into_iter()
+                .map(|message| *message.value)
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            values(mailboxes.same_entity.receive("test", "sample")?),
+            [11, 22, 33]
+        );
+        assert!(
+            mailboxes
+                .same_entity
+                .receive::<i32>("test", "sample")?
+                .is_empty()
+        );
+        assert_eq!(
+            values(mailboxes.same_entity.receive("test", "other")?),
+            [44]
+        );
+        assert_eq!(
+            values(mailboxes.other_entity.receive("test", "sample")?),
+            [11, 22, 33]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn bad_payload_removes_the_selected_queue_without_restoring_earlier_messages() -> Result<()> {
+        let mut mailboxes = TestMailboxes::new()?;
+        for value in [11_i32, 22, 33] {
+            mailboxes.sender.publish("test", "sample", value)?;
+        }
+        mailboxes.phase(0.0, |context| {
+            context.route(|_, _| Ok(Delivery::After { delay_s: 0.0 }))
+        })?;
+        // Routing normally checks types; break that invariant to test the defensive error path.
+        let channel = ("test".to_owned(), "sample".to_owned());
+        mailboxes.same_entity.inbox.get_mut(&channel).unwrap()[1].value = Arc::new("wrong type");
+        let error = mailboxes
+            .same_entity
+            .receive::<i32>("test", "sample")
+            .err()
+            .unwrap();
+        assert_eq!(error.to_string(), "message type mismatch");
+        assert!(!mailboxes.same_entity.inbox.contains_key(&channel));
+        assert_eq!(
+            mailboxes
+                .other_entity
+                .receive::<i32>("test", "sample")?
+                .len(),
+            3
+        );
+        Ok(())
     }
 
     #[test]

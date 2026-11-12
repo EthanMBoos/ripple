@@ -39,17 +39,17 @@ fn serialize_payload<T: Serialize + 'static>(value: &Payload) -> Result<Value> {
 /// first in the key so most comparisons are of integers, not channel names.
 type Subscribers<'a> = BTreeMap<(Option<i32>, &'a Channel), Vec<(usize, TypeId)>>;
 
-struct Publication {
+struct Publication<P = Payload> {
     channel: Channel,
     sent_at_s: f64,
-    value: Payload,
+    value: P,
     serialize: PayloadSerializer,
 }
-struct Envelope {
+struct Envelope<P = Payload> {
     sender: MessageEndpoint,
     sent_at_s: f64,
     delivered_at_s: f64,
-    value: Payload,
+    value: P,
     serialize: PayloadSerializer,
 }
 
@@ -254,18 +254,21 @@ impl NetworkContext<'_, '_> {
     ) -> Result<()> {
         self.route_links(true, decide)
     }
-    fn route_links(
-        &mut self,
-        within_entity: bool,
-        mut decide: impl FnMut(&Transmission<'_>, &PluginRandom) -> Result<Delivery>,
-    ) -> Result<()> {
+    // DEVNOTE: Creusot 0.14 checks this routing body's safety contracts via
+    // python3 reference/creusot/check.py --routing --mutations. Named index
+    // helpers and explicit borrows let it check the real loops; library/type
+    // erasure/serialization assumptions stay in the separate proof harness.
+    fn route_links<F>(&mut self, within_entity: bool, mut decide: F) -> Result<()>
+    where
+        F: FnMut(&Transmission<'_>, &PluginRandom) -> Result<Delivery>,
+    {
         ensure!(!self.routed, "network may route once per phase");
         self.routed = true;
         // Publisher order is stable entity/slot order, never worker completion order.
         let mut publications = Vec::new();
         for mailbox in self.mailboxes.iter_mut() {
             let mut other_networks = Vec::new();
-            for publication in mailbox.messages.outbox.drain(..) {
+            for publication in std::mem::take(&mut mailbox.messages.outbox) {
                 if publication.channel.0 == self.name {
                     publications.push((mailbox.endpoint.clone(), publication));
                 } else {
@@ -287,27 +290,18 @@ impl NetworkContext<'_, '_> {
         // routing (the earlier routing is gone). Building the index in phases
         // without messages made steps without messages 27-49% slower, so it is
         // skipped then.
-        let mut subscribers = Subscribers::new();
-        if !publications.is_empty() {
-            for (index, mailbox) in self.mailboxes.iter().enumerate() {
-                let entity = if within_entity {
-                    mailbox.endpoint.entity_id
-                } else {
-                    None
-                };
-                for (channel, expected_type) in &mailbox.messages.subscriptions {
-                    subscribers
-                        .entry((entity, channel))
-                        .or_default()
-                        .push((index, *expected_type));
-                }
-            }
-        }
+        let subscribers = if publications.is_empty() {
+            Subscribers::new()
+        } else {
+            subscriber_index(self.mailboxes, within_entity)
+        };
         let mut sequences = BTreeMap::new();
         for (sender, publication) in publications {
-            let sequence = sequences
-                .entry((sender.entity_id, publication.channel.1.clone()))
-                .or_insert(0);
+            let sequence = entry_or_insert(
+                &mut sequences,
+                (sender.entity_id, publication.channel.1.clone()),
+                0,
+            );
             let message_sequence = *sequence;
             *sequence += 1;
             let group = match (within_entity, sender.entity_id) {
@@ -317,11 +311,11 @@ impl NetworkContext<'_, '_> {
             };
             let receivers = subscribers
                 .get(&(group, &publication.channel))
-                .map_or(&[][..], Vec::as_slice);
+                .map_or(&[] as &[_], Vec::as_slice);
             for &(index, expected_type) in receivers {
                 let mailbox = &self.mailboxes[index];
                 ensure!(
-                    expected_type == publication.value.as_ref().type_id(),
+                    expected_type == payload_type(&publication.value),
                     "message type mismatch on {}/{}",
                     publication.channel.0,
                     publication.channel.1
@@ -341,44 +335,38 @@ impl NetworkContext<'_, '_> {
                     );
                     let delivered_at_s = self.time.time_s + delay_s;
                     ensure!(delivered_at_s.is_finite(), "network delivery time overflow");
-                    if let Some(trace) = self.trace.as_deref_mut()
+                    if let Some(trace) = &mut self.trace
                         && delay_s > 0.0
                     {
-                        trace.deliveries.push(DeliveryRecord {
+                        let delivery = DeliveryRecord {
                             time_s: self.time.time_s,
                             network: publication.channel.0.clone(),
                             topic: publication.channel.1.clone(),
                             sender: sender.clone(),
                             receiver: mailbox.endpoint.clone(),
                             entity_ids: event_ids(&publication.value),
-                            payload: (publication.serialize)(&publication.value)?,
+                            payload: serialized_payload(&publication.value, publication.serialize)?,
                             deliver_at_s: Some(delivered_at_s),
-                        });
+                        };
+                        trace.deliveries.push(delivery);
                     }
                     self.scheduled.push(ScheduledMessage {
                         receiver: mailbox.endpoint.clone(),
                         channel: publication.channel.clone(),
-                        envelope: Envelope {
-                            sender: sender.clone(),
-                            sent_at_s: publication.sent_at_s,
-                            delivered_at_s,
-                            value: Arc::clone(&publication.value),
-                            serialize: publication.serialize,
-                        },
+                        envelope: message_envelope(&sender, &publication, delivered_at_s),
                     });
                 }
             }
         }
         drop(subscribers);
         // Receivers by endpoint, found once rather than by searching every mailbox.
-        let mut receivers = BTreeMap::new();
-        if !self.scheduled.is_empty() {
-            for (index, mailbox) in self.mailboxes.iter().enumerate() {
-                receivers.entry(mailbox.endpoint).or_insert(index);
-            }
-        }
+        let receivers = if self.scheduled.is_empty() {
+            BTreeMap::new()
+        } else {
+            receiver_index(self.mailboxes)
+        };
         let mut pending = Vec::new();
-        for mut message in self.scheduled.drain(..) {
+        for mut message in std::mem::take(self.scheduled) {
             let Some(&index) = receivers.get(&message.receiver) else {
                 // A removed entity cannot receive delayed messages.
                 continue;
@@ -386,22 +374,26 @@ impl NetworkContext<'_, '_> {
             let receiver = &mut self.mailboxes[index];
             if message.envelope.delivered_at_s <= self.time.time_s + 1e-12 {
                 message.envelope.delivered_at_s = self.time.time_s;
-                let inbox = receiver
-                    .messages
-                    .inbox
-                    .entry(message.channel.clone())
-                    .or_default();
-                if let Some(trace) = self.trace.as_deref_mut() {
-                    trace.deliveries.push(DeliveryRecord {
+                let inbox = entry_or_insert(
+                    &mut receiver.messages.inbox,
+                    message.channel.clone(),
+                    Vec::new(),
+                );
+                if let Some(trace) = &mut self.trace {
+                    let delivery = DeliveryRecord {
                         time_s: self.time.time_s,
                         network: message.channel.0.clone(),
                         topic: message.channel.1.clone(),
                         sender: message.envelope.sender.clone(),
                         receiver: receiver.endpoint.clone(),
                         entity_ids: event_ids(&message.envelope.value),
-                        payload: (message.envelope.serialize)(&message.envelope.value)?,
+                        payload: serialized_payload(
+                            &message.envelope.value,
+                            message.envelope.serialize,
+                        )?,
                         deliver_at_s: None,
-                    });
+                    };
+                    trace.deliveries.push(delivery);
                 }
                 inbox.push(message.envelope);
             } else {
@@ -411,6 +403,57 @@ impl NetworkContext<'_, '_> {
         *self.scheduled = pending;
         Ok(())
     }
+}
+
+fn subscriber_index<'a>(mailboxes: &'a [Mailbox<'_>], within_entity: bool) -> Subscribers<'a> {
+    let mut subscribers = Subscribers::new();
+    for (index, mailbox) in mailboxes.iter().enumerate() {
+        let entity = if within_entity {
+            mailbox.endpoint.entity_id
+        } else {
+            None
+        };
+        for (channel, expected_type) in &mailbox.messages.subscriptions {
+            entry_or_insert(&mut subscribers, (entity, channel), Vec::new())
+                .push((index, *expected_type));
+        }
+    }
+    subscribers
+}
+
+fn receiver_index<'a>(mailboxes: &[Mailbox<'a>]) -> BTreeMap<&'a MessageEndpoint, usize> {
+    let mut receivers = BTreeMap::new();
+    for (index, mailbox) in mailboxes.iter().enumerate() {
+        entry_or_insert(&mut receivers, mailbox.endpoint, index);
+    }
+    receivers
+}
+
+// Standard-library and serialization boundaries used by the routing proof.
+fn entry_or_insert<K: Ord, V>(map: &mut BTreeMap<K, V>, key: K, default: V) -> &mut V {
+    map.entry(key).or_insert(default)
+}
+
+fn message_envelope<T: ?Sized>(
+    sender: &MessageEndpoint,
+    publication: &Publication<Arc<T>>,
+    delivered_at_s: f64,
+) -> Envelope<Arc<T>> {
+    Envelope {
+        sender: sender.clone(),
+        sent_at_s: publication.sent_at_s,
+        delivered_at_s,
+        value: Arc::clone(&publication.value),
+        serialize: publication.serialize,
+    }
+}
+
+fn payload_type(value: &Payload) -> TypeId {
+    value.as_ref().type_id()
+}
+
+fn serialized_payload(value: &Payload, serialize: PayloadSerializer) -> Result<Value> {
+    serialize(value)
 }
 
 #[cfg(test)]

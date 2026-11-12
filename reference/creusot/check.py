@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check production receive; optionally reject two faults in temporary copies."""
+"""Check production mailbox proofs; optionally reject faults in temporary copies."""
 import argparse
 import hashlib
 import json
@@ -48,6 +48,7 @@ def prepare():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mutations", action="store_true")
+    parser.add_argument("--routing", action="store_true")
     parser.add_argument("--prepare-only", action="store_true")
     args = parser.parse_args()
     prepare()
@@ -55,39 +56,73 @@ def main():
         return
     folder = ROOT / "target/creusot-checks"
     folder.mkdir(parents=True, exist_ok=True)
-    output = Path(tempfile.mkdtemp(prefix="receive-", dir=folder))
+    output = Path(tempfile.mkdtemp(prefix="routing-" if args.routing else "receive-", dir=folder))
     results = []
 
-    def check(name, source, expected):
-        command = ["cargo", "creusot", "--no-cache", "--span-mode", "relative"]
+    targets = {
+        "impl_Messages/receive": "vc_receive_T",
+    }
+    if args.routing:
+        targets.update({
+            "impl_NetworkContext/route_links": "vc_route_links_F",
+            "subscriber_index": "vc_subscriber_index",
+            "receiver_index": "vc_receiver_index",
+            "message_envelope": "vc_message_envelope_T",
+        })
+
+    def check(name, source, expected, failed_goal="vc_receive_T"):
         start = time.monotonic()
         env = {**os.environ, "RIPPLE_VERIFY_SOURCE": str(source), "RUST_LOG": "error"}
-        proc = subprocess.run(command, cwd=HERE, env=env, text=True,
-                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        (output / f"{name}.log").write_text(proc.stdout)
+        attempts, logs = [], []
+        # One Why3 process per body: processing all five together retained about
+        # 10 GB on the trial machine. This also excludes stale feature outputs.
+        for target in targets:
+            command = ["cargo", "creusot", "--no-cache", "--span-mode", "relative",
+                       "-j", "4", Path(target).name]
+            if args.routing:
+                command += ["--why3find-arg=--depth", "--why3find-arg=3",
+                            "--", "--features", "routing"]
+            proc = subprocess.run(command, cwd=HERE, env=env, text=True,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            logs.append(proc.stdout)
+            attempts.append(dict(target=target, command=command, exit_code=proc.returncode))
+            (output / f"{name}.log").write_text("\n".join(logs))
+            print(f"{name}: {target}: exit {proc.returncode}", flush=True)
+        stdout = "\n".join(logs)
+        exit_code = next((attempt["exit_code"] for attempt in attempts
+                          if attempt["exit_code"] != 0), 0)
         generated = HERE / "target/receive.generated.rs"
         if generated.exists():
             shutil.copyfile(generated, output / f"{name}.rs")
-        proof = HERE / "verif/ripple_receive_proof_rlib/impl_Messages/receive/proof.json"
-        if proof.exists():
-            shutil.copyfile(proof, output / f"{name}.proof.json")
-        record = dict(name=name, command=command, exit_code=proc.returncode,
+        proofs_by_target = {}
+        for target, goal in targets.items():
+            proof = HERE / "verif/ripple_receive_proof_rlib" / target / "proof.json"
+            if proof.exists():
+                shutil.copyfile(proof, output / f"{name}-{Path(target).name}.proof.json")
+                proofs_by_target[target] = json.loads(proof.read_text())["proofs"]["Coma"]
+        record = dict(name=name, attempts=attempts, exit_code=exit_code,
                       expected=expected, seconds=round(time.monotonic() - start, 3),
                       source_sha256=hashlib.sha256(source.read_bytes()).hexdigest())
         results.append(record)
         (output / "results.json").write_text(json.dumps(results, indent=2) + "\n")
-        print(f"{name}: exit {proc.returncode} (expected {expected}); {record['seconds']} s", flush=True)
-        if expected == 0 and proc.returncode == 0:
-            proofs = json.loads(proof.read_text())["proofs"]["Coma"]
-            if "vc_receive_T" not in proofs or "null" in json.dumps(proofs):
-                raise RuntimeError("Missing or incomplete production receive proof")
-        if proc.returncode != expected:
+        print(f"{name}: exit {exit_code} (expected {expected}); {record['seconds']} s", flush=True)
+        if expected == 0 and exit_code == 0:
+            for target, goal in targets.items():
+                proofs = proofs_by_target.get(target, {})
+                if goal not in proofs or "null" in json.dumps(proofs):
+                    raise RuntimeError(f"Missing or incomplete production proof: {target}")
+        if exit_code != expected:
             raise RuntimeError(f"Unexpected proof result; see {output / (name + '.log')}")
-        if expected != 0 and ("unproved file" not in proc.stdout
-                              or "could not compile" in proc.stdout
-                              or "no contract" in proc.stdout
-                              or "vc_receive_T" not in proc.stdout):
+        if expected != 0 and ("unproved file" not in stdout
+                              or "could not compile" in stdout
+                              or "no contract" in stdout
+                              or failed_goal not in stdout):
             raise RuntimeError(f"Fault did not reach the expected proof failure: {name}")
+        if expected != 0:
+            for attempt in attempts:
+                wanted = 1 if targets[attempt["target"]] == failed_goal else 0
+                if attempt["exit_code"] != wanted:
+                    raise RuntimeError(f"Unexpected failure outside the mutated target: {attempt['target']}")
 
     print(f"Evidence: {output}", flush=True)
     check("production", SOURCE, 0)
@@ -98,13 +133,19 @@ def main():
                               "self.inbox.remove(&(topic.to_owned(), network.to_owned()))"),
             "reversed-order": ("received.push(Message {", "received.insert(0, Message {"),
         }
+        if args.routing:
+            faults = {
+                "wrong-recipient": (
+                    "entry_or_insert(&mut receivers, mailbox.endpoint, index);",
+                    "entry_or_insert(&mut receivers, mailbox.endpoint, 0);"),
+            }
         try:
             for name, (before, after) in faults.items():
                 if original.count(before) != 1:
                     raise RuntimeError(f"Update mutation location for {name}")
                 source = output / f"{name}-source.rs"
                 source.write_text(original.replace(before, after))
-                check(name, source, 1)
+                check(name, source, 1, "vc_receiver_index" if args.routing else "vc_receive_T")
         finally:
             # Leave generated artifacts referring to production, even after a failed check.
             check("production-restored", SOURCE, 0)

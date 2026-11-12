@@ -1,0 +1,4551 @@
+{
+  "date": "2026-11-11",
+  "baseline_revision": "caa6fc0f1b865c5f0d0043f8f191ace16097fb8d",
+  "scope": "Safety assertions on the extracted production NetworkContext::route_links body, subscriber_index, receiver_index, message_envelope, and the existing Messages::receive contracts.",
+  "checked": [
+    "Subscriber-index entries identify in-bounds mailboxes with matching network/topic/type and local/global grouping.",
+    "Links use the selected sender, recipient and topic; current-network and subscription/type assertions hold before policy invocation.",
+    "New scheduled records preserve the selected endpoint, channel, sender, delivery timestamp and publication contents.",
+    "Delivery resolves a scheduled endpoint to the matching mailbox and appends its envelope to the recorded channel, preserving that queue prefix and other channels.",
+    "A repeated routing call returns an error without changing its context; successful routing marks the context routed."
+  ],
+  "not_proved": [
+    "Completeness or exactly-once delivery to all eligible subscribers.",
+    "Floating-point timing properties, latency guarantees or delivery in the first due phase.",
+    "Engine endpoint uniqueness, ID lifecycle, and provenance or subscription lifetime of already-pending messages.",
+    "Policy callback or serialization correctness, and the whole simulation loop."
+  ],
+  "preconditions": [
+    "Mailbox count is below usize::MAX.",
+    "Policy callback is callable for arbitrary callback state, transmission and random source."
+  ],
+  "trusted_boundaries": [
+    "Creusot standard-library specifications and local BTreeMap membership/entry models.",
+    "Derived endpoint ordering, payload type lookup, serialization, trace event IDs and error construction."
+  ],
+  "commands": [
+    "python3 reference/creusot/check.py --routing --mutations",
+    "python3 reference/creusot/check.py --mutations"
+  ],
+  "toolchain": {
+    "creusot": "0.14.0",
+    "rust": "nightly-2026-08-03",
+    "why3": "1.8.2+git",
+    "why3find": "1.3.0+dev",
+    "alt-ergo": "2.6.4",
+    "z3": "5.1.0",
+    "cvc4": "1.8",
+    "cvc5": "1.4.1",
+    "platform": "macOS ARM64"
+  },
+  "files_sha256": {
+    "crates/core/src/pubsub/messages.rs": "6ecdff1aefb9c916b109cbe9ca2cec3db4b467e956e21d757ae6d2f03706a1fa",
+    "reference/creusot/build.rs": "eeedfb4916af418a3d32d5a8d38d079ad2750d3cdd0a3ca7ef3b4811a0ed7476",
+    "reference/creusot/receive.rs": "7516a641c6d4f079ad448147e0bec4d7ec29e926e3addd1fb1185ecb158e7251",
+    "reference/creusot/routing.rs": "d2692633bf0acdcef393e85d63969a5996467b421a103b51c6cd70882f65ca20",
+    "reference/creusot/std_models.rs": "cc3501e34fd9afe00728d05240f4828b752d67d12681c5663b599148071031d7",
+    "reference/creusot/check.py": "890358a8cece3703fdde24a9f25b0c7f0874567ed161bf23a69b1ea058198296",
+    "reference/creusot/Cargo.toml": "0c9cde6164ef7d348d41b9335b091da198d21fded329c7ce51c9c15a07b109eb",
+    "reference/creusot/Cargo.lock": "be08f7f22464ce040fb6ada94fe95ed7b2f2ff329a971fda10ff6d7d98be898b",
+    "reference/creusot/why3find.json": "625ed547c10b3a2c913ad31ca97e39036e42d065c9a688d0b6892e60ab240a3f"
+  },
+  "checks": [
+    {
+      "name": "production",
+      "attempts": [
+        {
+          "target": "impl_Messages/receive",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "receive",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        },
+        {
+          "target": "impl_NetworkContext/route_links",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "route_links",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        },
+        {
+          "target": "subscriber_index",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "subscriber_index",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        },
+        {
+          "target": "receiver_index",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "receiver_index",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        },
+        {
+          "target": "message_envelope",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "message_envelope",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "exit_code": 0,
+      "expected": 0,
+      "seconds": 176.897,
+      "source_sha256": "6ecdff1aefb9c916b109cbe9ca2cec3db4b467e956e21d757ae6d2f03706a1fa"
+    },
+    {
+      "name": "wrong-recipient",
+      "attempts": [
+        {
+          "target": "impl_Messages/receive",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "receive",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        },
+        {
+          "target": "impl_NetworkContext/route_links",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "route_links",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        },
+        {
+          "target": "subscriber_index",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "subscriber_index",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        },
+        {
+          "target": "receiver_index",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "receiver_index",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 1
+        },
+        {
+          "target": "message_envelope",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "message_envelope",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "exit_code": 1,
+      "expected": 1,
+      "seconds": 202.015,
+      "source_sha256": "77eb939ccaaf408ad8709570da908a3806dd6b3306fa7b6cfbe695bcd943e20a"
+    },
+    {
+      "name": "production-restored",
+      "attempts": [
+        {
+          "target": "impl_Messages/receive",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "receive",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        },
+        {
+          "target": "impl_NetworkContext/route_links",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "route_links",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        },
+        {
+          "target": "subscriber_index",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "subscriber_index",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        },
+        {
+          "target": "receiver_index",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "receiver_index",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        },
+        {
+          "target": "message_envelope",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "message_envelope",
+            "--why3find-arg=--depth",
+            "--why3find-arg=3",
+            "--",
+            "--features",
+            "routing"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "exit_code": 0,
+      "expected": 0,
+      "seconds": 196.048,
+      "source_sha256": "6ecdff1aefb9c916b109cbe9ca2cec3db4b467e956e21d757ae6d2f03706a1fa"
+    }
+  ],
+  "receive_regression_checks": [
+    {
+      "name": "production",
+      "attempts": [
+        {
+          "target": "impl_Messages/receive",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "receive"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "exit_code": 0,
+      "expected": 0,
+      "seconds": 25.032,
+      "source_sha256": "6ecdff1aefb9c916b109cbe9ca2cec3db4b467e956e21d757ae6d2f03706a1fa"
+    },
+    {
+      "name": "wrong-channel",
+      "attempts": [
+        {
+          "target": "impl_Messages/receive",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "receive"
+          ],
+          "exit_code": 1
+        }
+      ],
+      "exit_code": 1,
+      "expected": 1,
+      "seconds": 27.365,
+      "source_sha256": "115b9b87612b0712848eb5b46b3c6c069ce33a855b7bbf032e3991df5141d530"
+    },
+    {
+      "name": "reversed-order",
+      "attempts": [
+        {
+          "target": "impl_Messages/receive",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "receive"
+          ],
+          "exit_code": 1
+        }
+      ],
+      "exit_code": 1,
+      "expected": 1,
+      "seconds": 19.608,
+      "source_sha256": "41afe68df42f209a0aeb1c98ecb90a7f59af2c12ca61bf5f23329ef3fc7d882f"
+    },
+    {
+      "name": "production-restored",
+      "attempts": [
+        {
+          "target": "impl_Messages/receive",
+          "command": [
+            "cargo",
+            "creusot",
+            "--no-cache",
+            "--span-mode",
+            "relative",
+            "-j",
+            "4",
+            "receive"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "exit_code": 0,
+      "expected": 0,
+      "seconds": 12.49,
+      "source_sha256": "6ecdff1aefb9c916b109cbe9ca2cec3db4b467e956e21d757ae6d2f03706a1fa"
+    }
+  ],
+  "production_proofs": {
+    "production-restored-message_envelope.proof.json": {
+      "profile": [],
+      "proofs": {
+        "Coma": {
+          "vc_clone_Arc_T_Global": {
+            "prover": "alt-ergo",
+            "time": 0.017
+          },
+          "vc_clone_MessageEndpoint": {
+            "prover": "alt-ergo",
+            "time": 0.017
+          },
+          "vc_clone_Option_i32": {
+            "prover": "alt-ergo",
+            "time": 0.017
+          },
+          "vc_clone_String": {
+            "prover": "alt-ergo",
+            "time": 0.017
+          },
+          "vc_clone_i32": {
+            "prover": "alt-ergo",
+            "time": 0.017
+          },
+          "vc_message_envelope_T": {
+            "tactic": "compute_specified",
+            "children": [
+              {
+                "tactic": "split_vc",
+                "children": [
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.018
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.018
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.018
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "z3",
+                            "time": 0.007
+                          },
+                          {
+                            "prover": "z3",
+                            "time": 0.007
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "production-restored-receive.proof.json": {
+      "profile": [],
+      "proofs": {
+        "Coma": {
+          "vc_default_Vec_Envelope_Arc_dyn_Any_Global_Global": {
+            "prover": "alt-ergo",
+            "time": 0.018
+          },
+          "vc_downcast_Global": {
+            "prover": "alt-ergo",
+            "time": 0.022
+          },
+          "vc_elim_Ok": {
+            "prover": "alt-ergo",
+            "time": 0.022
+          },
+          "vc_elim_Some": {
+            "prover": "alt-ergo",
+            "time": 0.022
+          },
+          "vc_get_tup2_String_String": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_into_iter_Vec_Envelope_Arc_dyn_Any_Global_Global": {
+            "prover": "alt-ergo",
+            "time": 0.017
+          },
+          "vc_len_Envelope_Arc_dyn_Any_Global": {
+            "prover": "alt-ergo",
+            "time": 0.017
+          },
+          "vc_ne_Option_ref_TypeId": {
+            "prover": "alt-ergo",
+            "time": 0.021
+          },
+          "vc_next_IntoIter_Envelope_Arc_dyn_Any_Global_Global": {
+            "prover": "alt-ergo",
+            "time": 0.018
+          },
+          "vc_of_T": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_payload_type_error": {
+            "prover": "alt-ergo",
+            "time": 0.022
+          },
+          "vc_push_Message_T": {
+            "prover": "alt-ergo",
+            "time": 0.023
+          },
+          "vc_receive_T": {
+            "tactic": "compute_specified",
+            "children": [
+              {
+                "tactic": "split_vc",
+                "children": [
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.006
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.071
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.026
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.026
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.026
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.027
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.006
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.015
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.02
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.029
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.019
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.022
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.029
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.03
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.261
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.022
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.427
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.036
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.007
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.075
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.027
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.027
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.027
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.028
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.026
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.015
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.045
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.045
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.009
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.009
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.058
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.043
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "z3",
+                            "time": 0.058
+                          },
+                          {
+                            "prover": "z3",
+                            "time": 0.23
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.028
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.175
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.048
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.051
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.009
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.01
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.054
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.029
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.128
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.029
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.029
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.024
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.005
+                  }
+                ]
+              }
+            ]
+          },
+          "vc_remove_tup2_String_String": {
+            "prover": "alt-ergo",
+            "time": 0.021
+          },
+          "vc_subscription_error": {
+            "prover": "alt-ergo",
+            "time": 0.021
+          },
+          "vc_to_owned_str": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_unwrap_or_default_Vec_Envelope_Arc_dyn_Any_Global_Global": {
+            "prover": "alt-ergo",
+            "time": 0.017
+          },
+          "vc_with_capacity_Message_T": {
+            "prover": "alt-ergo",
+            "time": 0.021
+          }
+        }
+      }
+    },
+    "production-restored-receiver_index.proof.json": {
+      "profile": [],
+      "proofs": {
+        "Coma": {
+          "vc_elim_Some": {
+            "prover": "alt-ergo",
+            "time": 0.022
+          },
+          "vc_entry_or_insert_ref_MessageEndpoint": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_enumerate_Iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.021
+          },
+          "vc_into_iter_Enumerate_Iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_new_ref_MessageEndpoint": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_next_Enumerate_Iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.021
+          },
+          "vc_receiver_index": {
+            "tactic": "compute_specified",
+            "children": [
+              {
+                "tactic": "split_vc",
+                "children": [
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.023
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.025
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.059
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.105
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.022
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.051
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.035
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.049
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.024
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.027
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.308
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.048
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "cvc5",
+                        "time": 0.215
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.553
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.024
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.024
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.036
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.024
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.059
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "production-restored-route_links.proof.json": {
+      "profile": [],
+      "proofs": {
+        "Coma": {
+          "vc_as_slice_tup2_usize_TypeId": {
+            "prover": "alt-ergo",
+            "time": 0.027
+          },
+          "vc_branch_Result_Delivery_Error": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_branch_Result_Value_Error": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_call_mut_F": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_clone_MessageEndpoint": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_clone_Option_i32": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_clone_String": {
+            "prover": "z3",
+            "time": 0.004
+          },
+          "vc_clone_i32": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_clone_tup2_String_String": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_default_Vec_Publication_Arc_dyn_Any_Global_Global": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_default_Vec_ScheduledMessage_Global": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_deref_String": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_drop_BTreeMap_tup2_Option_i32_ref_tup2_String_String_Vec_tup2_usize_TypeId_Global_Global": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_elim_After": {
+            "prover": "alt-ergo",
+            "time": 0.045
+          },
+          "vc_elim_Break": {
+            "prover": "alt-ergo",
+            "time": 0.027
+          },
+          "vc_elim_Break'0": {
+            "prover": "alt-ergo",
+            "time": 0.027
+          },
+          "vc_elim_Continue": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_elim_Continue'0": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_elim_Some": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_elim_Some'0": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_elim_Some'1": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_elim_Some'2": {
+            "prover": "alt-ergo",
+            "time": 0.023
+          },
+          "vc_elim_Some'3": {
+            "prover": "alt-ergo",
+            "time": 0.024
+          },
+          "vc_elim_Some'4": {
+            "prover": "alt-ergo",
+            "time": 0.024
+          },
+          "vc_elim_Some'5": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_elim_Some'6": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_entry_or_insert_tup2_Option_i32_String": {
+            "prover": "alt-ergo",
+            "time": 0.024
+          },
+          "vc_entry_or_insert_tup2_String_String": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_eq_String": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_eq_TypeId": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_event_ids": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_from_Error": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_from_residual_Result_unit_Error": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_get_ref_MessageEndpoint": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_get_tup2_Option_i32_ref_tup2_String_String": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_into_iter_IterMut_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.019
+          },
+          "vc_into_iter_Vec_Publication_Arc_dyn_Any_Global_Global": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_into_iter_Vec_ScheduledMessage_Global": {
+            "prover": "alt-ergo",
+            "time": 0.028
+          },
+          "vc_into_iter_Vec_tup2_MessageEndpoint_Publication_Arc_dyn_Any_Global_Global": {
+            "prover": "alt-ergo",
+            "time": 0.024
+          },
+          "vc_into_iter_ref_slice_tup2_usize_TypeId": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_is_empty_ScheduledMessage": {
+            "prover": "alt-ergo",
+            "time": 0.027
+          },
+          "vc_is_empty_tup2_MessageEndpoint_Publication_Arc_dyn_Any_Global": {
+            "prover": "alt-ergo",
+            "time": 0.021
+          },
+          "vc_is_finite": {
+            "prover": "alt-ergo",
+            "time": 0.049
+          },
+          "vc_iter_mut_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_map_or_ref_Vec_tup2_usize_TypeId_Global": {
+            "prover": "alt-ergo",
+            "time": 0.029
+          },
+          "vc_message_envelope_dyn_Any": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_new_Envelope_Arc_dyn_Any_Global": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_new_Publication_Arc_dyn_Any_Global": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_new_ScheduledMessage": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_new_ref_MessageEndpoint": {
+            "prover": "alt-ergo",
+            "time": 0.027
+          },
+          "vc_new_tup2_MessageEndpoint_Publication_Arc_dyn_Any_Global": {
+            "prover": "alt-ergo",
+            "time": 0.019
+          },
+          "vc_new_tup2_Option_i32_String": {
+            "prover": "alt-ergo",
+            "time": 0.024
+          },
+          "vc_new_tup2_Option_i32_ref_tup2_String_String": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_next_IntoIter_Publication_Arc_dyn_Any_Global_Global": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_next_IntoIter_ScheduledMessage_Global": {
+            "prover": "alt-ergo",
+            "time": 0.027
+          },
+          "vc_next_IntoIter_tup2_MessageEndpoint_Publication_Arc_dyn_Any_Global_Global": {
+            "prover": "alt-ergo",
+            "time": 0.024
+          },
+          "vc_next_IterMut_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_next_Iter_tup2_usize_TypeId": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_payload_type": {
+            "prover": "alt-ergo",
+            "time": 0.024
+          },
+          "vc_push_DeliveryRecord": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_push_Envelope_Arc_dyn_Any_Global": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_push_Publication_Arc_dyn_Any_Global": {
+            "prover": "alt-ergo",
+            "time": 0.019
+          },
+          "vc_push_ScheduledMessage": {
+            "prover": "alt-ergo",
+            "time": 0.027
+          },
+          "vc_push_tup2_MessageEndpoint_Publication_Arc_dyn_Any_Global": {
+            "prover": "alt-ergo",
+            "time": 0.019
+          },
+          "vc_receiver_index": {
+            "prover": "alt-ergo",
+            "time": 0.028
+          },
+          "vc_route_links_F": {
+            "tactic": "compute_specified",
+            "children": [
+              {
+                "tactic": "split_vc",
+                "children": [
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.046
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.046
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.045
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.047
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.048
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.047
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.057
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.048
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.048
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.048
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.049
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.031
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.044
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.049
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.037
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.047
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.053
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.054
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.05
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.164
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.038
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.063
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.072
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.081
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.06
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.014
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.013
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.162
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.138
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.196
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.106
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.13
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.02
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.069
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.07
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.07
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.078
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.077
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.083
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.056
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.067
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.047
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.055
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.057
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.145
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.145
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.146
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.19
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.145
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.146
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.145
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.147
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.144
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.144
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.2
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.144
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.144
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.146
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.088
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.046
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.084
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.053
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.007
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.105
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.045
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.056
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.092
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.007
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.059
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.065
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.07
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.07
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.061
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.013
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.102
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.049
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.148
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.199
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.115
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.13
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.085
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.296
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.099
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.1
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.012
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.101
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.102
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.101
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.099
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.102
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.016
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.12
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.033
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.101
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.163
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.168
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.163
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.166
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.158
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.073
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.104
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.213
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.064
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.068
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.068
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.068
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.018
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.01
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.064
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.326
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.308
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.01
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.012
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.092
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.094
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.08
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.077
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.072
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.028
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.071
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.072
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.086
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.091
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.091
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.1
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.102
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.041
+                      }
+                    ]
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.171
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.177
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.054
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.056
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.118
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.295
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.122
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.01
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.293
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.199
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.289
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.188
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.088
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.015
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.111
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.033
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.256
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.175
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.089
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.114
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.116
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.17
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.26
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.138
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.016
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.014
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.015
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.018
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.015
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.015
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.015
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.014
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.015
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.015
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.015
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.017
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.017
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "cvc5",
+                        "time": 0.043
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.184
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.408
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.133
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.133
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.051
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.202
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.018
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.019
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.123
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.135
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.102
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.184
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.337
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.083
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.086
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.012
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.09
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.014
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.109
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.082
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.093
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.053
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.029
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.027
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.266
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.026
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.085
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.017
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.016
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.16
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "z3",
+                            "time": 0.385
+                          },
+                          {
+                            "prover": "z3",
+                            "time": 0.394
+                          }
+                        ]
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "z3",
+                            "time": 0.255
+                          },
+                          {
+                            "prover": "z3",
+                            "time": 0.436
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.11
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.109
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.359
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.719
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.413
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.314
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.283
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.215
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.22
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.251
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.115
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.119
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.126
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.124
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.117
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.025
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.127
+                      }
+                    ]
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.025
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.143
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.119
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.125
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.028
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.114
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.115
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.196
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.14
+                      }
+                    ]
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.404
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.459
+                          },
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.461
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.134
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.164
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.097
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.159
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.363
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.11
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.069
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.063
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.129
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.018
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.017
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.12
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.109
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.104
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.104
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.099
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.216
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.107
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.117
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.119
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.11
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.11
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.111
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.105
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.232
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.027
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.027
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.04
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.04
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.041
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.192
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.049
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.023
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.33
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.371
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.374
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.394
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.07
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.159
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.044
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.344
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.076
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.087
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.084
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.086
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.026
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.1
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.031
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.09
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.031
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.034
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.035
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.195
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "cvc5",
+                        "time": 0.081
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.079
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.135
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.187
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.136
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.166
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.311
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.01
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.13
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.012
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.036
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.032
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.013
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.012
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.201
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.015
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.01
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.016
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.014
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.035
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.106
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.452
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.097
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.226
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.205
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.123
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.13
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.012
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "cvc5",
+                        "time": 0.311
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.221
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.255
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.038
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.013
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.429
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.017
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.017
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.017
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.034
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.013
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.015
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.017
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.016
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.109
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.405
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.236
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.239
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.437
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.413
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.201
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.307
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.02
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.353
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.331
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.227
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.286
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.014
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.159
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.167
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.3
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.347
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.476
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.186
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.022
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.179
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.126
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.118
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.038
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.166
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.198
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.14
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.027
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.018
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.042
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.257
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.259
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.262
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.033
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.015
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.013
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.012
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.034
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.017
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.26
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.202
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.187
+                      },
+                      {
+                        "tactic": "compute_specified",
+                        "children": [
+                          {
+                            "prover": "cvc5",
+                            "time": 0.607
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.111
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.037
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "cvc5",
+                        "time": 0.103
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.1
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "cvc5",
+                            "time": 0.597
+                          },
+                          {
+                            "prover": "cvc5",
+                            "time": 0.5
+                          }
+                        ]
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.144
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.159
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.2
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.13
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.136
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.199
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.113
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.098
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.11
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.117
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.116
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.122
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.13
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.407
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.402
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.406
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.403
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.112
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.208
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.035
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.029
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.109
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.109
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.431
+                          },
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.572
+                          }
+                        ]
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.356
+                          },
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.395
+                          }
+                        ]
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.368
+                          },
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.354
+                          }
+                        ]
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.719
+                          },
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.722
+                          }
+                        ]
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.371
+                          },
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.414
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.178
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "z3",
+                            "time": 0.201
+                          },
+                          {
+                            "prover": "z3",
+                            "time": 0.129
+                          }
+                        ]
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.37
+                          },
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.309
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.644
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.121
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.118
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.187
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.199
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.013
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.024
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.024
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.056
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.059
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.027
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.033
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.032
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.889
+                          },
+                          {
+                            "prover": "z3",
+                            "time": 0.091
+                          }
+                        ]
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.035
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.033
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.033
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.033
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.042
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.033
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.031
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.031
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.03
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.031
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.03
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.031
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.114
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.347
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.069
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.014
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.011
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.268
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.012
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.158
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.01
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.01
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.01
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.01
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.01
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.01
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.054
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.039
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.064
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.076
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.011
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.012
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.057
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.054
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.017
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.051
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.051
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.058
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.069
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.05
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.05
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.058
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.069
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.05
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.05
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.058
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.069
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.051
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.051
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.059
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.071
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.058
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.054
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.018
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.018
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.031
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.009
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.051
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.052
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.058
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.071
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.072
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.008
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.017
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.018
+                  }
+                ]
+              }
+            ]
+          },
+          "vc_routing_error": {
+            "prover": "alt-ergo",
+            "time": 0.019
+          },
+          "vc_serialized_payload": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_subscriber_index": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_take_Vec_Publication_Arc_dyn_Any_Global_Global": {
+            "prover": "alt-ergo",
+            "time": 0.03
+          },
+          "vc_take_Vec_ScheduledMessage_Global": {
+            "prover": "alt-ergo",
+            "time": 0.027
+          }
+        }
+      }
+    },
+    "production-restored-subscriber_index.proof.json": {
+      "profile": [],
+      "proofs": {
+        "Coma": {
+          "vc_elim_Some": {
+            "prover": "alt-ergo",
+            "time": 0.021
+          },
+          "vc_elim_Some'0": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_entry_or_insert_tup2_Option_i32_ref_tup2_String_String": {
+            "prover": "alt-ergo",
+            "time": 0.026
+          },
+          "vc_enumerate_Iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.022
+          },
+          "vc_into_iter_Enumerate_Iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.021
+          },
+          "vc_into_iter_ref_BTreeMap_tup2_String_String_TypeId_Global": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.023
+          },
+          "vc_new_tup2_Option_i32_ref_tup2_String_String": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_new_tup2_usize_TypeId": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_next_Enumerate_Iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.022
+          },
+          "vc_next_Iter_tup2_String_String_TypeId": {
+            "prover": "alt-ergo",
+            "time": 0.024
+          },
+          "vc_push_tup2_usize_TypeId": {
+            "prover": "alt-ergo",
+            "time": 0.025
+          },
+          "vc_subscriber_index": {
+            "tactic": "compute_specified",
+            "children": [
+              {
+                "tactic": "split_vc",
+                "children": [
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.037
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.041
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.1
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.105
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.039
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.038
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.039
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.083
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.058
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.098
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.04
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.06
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.04
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.04
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.039
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.02
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.045
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.045
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.097
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.07
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.022
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.044
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "alt-ergo",
+                            "time": 0.569
+                          }
+                        ]
+                      },
+                      {
+                        "prover": "cvc4",
+                        "time": 0.526
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.043
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "z3",
+                        "time": 0.05
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.059
+                      },
+                      {
+                        "prover": "z3",
+                        "time": 0.025
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.027
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.013
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.041
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.036
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.283
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.047
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "cvc5",
+                        "time": 0.127
+                      },
+                      {
+                        "tactic": "split_vc",
+                        "children": [
+                          {
+                            "prover": "cvc5",
+                            "time": 0.132
+                          },
+                          {
+                            "prover": "cvc5",
+                            "time": 0.13
+                          }
+                        ]
+                      },
+                      {
+                        "prover": "cvc5",
+                        "time": 0.125
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.084
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.051
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.044
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.042
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.041
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.04
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.04
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.058
+                  },
+                  {
+                    "prover": "cvc5",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.038
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.007
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.038
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.006
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.312
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.062
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.007
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.038
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.037
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.037
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "negative_control": {
+    "mutation": "In receiver_index, replace entry_or_insert(&mut receivers, mailbox.endpoint, index) with entry_or_insert(&mut receivers, mailbox.endpoint, 0).",
+    "expected_unproved_goal": "vc_receiver_index",
+    "proof_record": {
+      "profile": [],
+      "proofs": {
+        "Coma": {
+          "vc_elim_Some": {
+            "prover": "alt-ergo",
+            "time": 0.022
+          },
+          "vc_entry_or_insert_ref_MessageEndpoint": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_enumerate_Iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.021
+          },
+          "vc_into_iter_Enumerate_Iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_new_ref_MessageEndpoint": {
+            "prover": "alt-ergo",
+            "time": 0.02
+          },
+          "vc_next_Enumerate_Iter_Mailbox": {
+            "prover": "alt-ergo",
+            "time": 0.021
+          },
+          "vc_receiver_index": {
+            "tactic": "compute_specified",
+            "children": [
+              {
+                "tactic": "split_vc",
+                "children": [
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.023
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.025
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.059
+                      },
+                      {
+                        "prover": "alt-ergo",
+                        "time": 0.105
+                      }
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.022
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.051
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.035
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.049
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.024
+                  },
+                  {
+                    "prover": "z3",
+                    "time": 0.027
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.308
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.048
+                  },
+                  {
+                    "tactic": "split_vc",
+                    "children": [
+                      {
+                        "prover": "cvc5",
+                        "time": 0.215
+                      },
+                      null
+                    ]
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.024
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.024
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.036
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.024
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.023
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.059
+                  },
+                  {
+                    "prover": "alt-ergo",
+                    "time": 0.025
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "note": "Every unaffected target passed; the checker required the intended goal to remain unproved. Production was restored and all targets passed again."
+  },
+  "validation": {
+    "workspace_build": "passed",
+    "workspace_tests": "313 passed; 1 ignored",
+    "workspace_fmt": "passed",
+    "workspace_clippy": "passed with -D warnings",
+    "routing_proof_crate_clippy": "passed with -D warnings",
+    "reference_unittests": "81 passed",
+    "cpp_comparison": "Not run: ../scrimmage checkout unavailable."
+  },
+  "equivalence": {
+    "old": "/private/tmp/ripple-routing-before-20261111",
+    "new": "/Users/ezraakresh/Documents/ripple/target/release/ripple",
+    "channels_compared": [
+      "/entities",
+      "/frames",
+      "/events",
+      "/summary",
+      "/drawings",
+      "/beliefs",
+      "/readings",
+      "/deliveries",
+      "/outputs"
+    ],
+    "workers": [
+      1,
+      2,
+      8
+    ],
+    "traced_missions": 28,
+    "skipped": [],
+    "missions": 40,
+    "missions_differing": 0,
+    "results": [
+      {
+        "mission": "missions/aerosonde.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/auction-sphere.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/fixed-wing-6dof-rascal.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/fixed-wing-6dof.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/multirotor-velocity.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/multirotor.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/networks-local-global.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/noisy-contacts.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/noisy-state.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/straight-no-gui.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/terrain-mcmillan.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/verification/aircraft-long-horizon.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/verification/aircraft-substeps-scheduled.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/verification/aircraft-substeps-spawning.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/verification/collision-boundary.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/verification/multirotor-fixes.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/verification/noisy-contacts-bias.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/verification/noisy-contacts-noise.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/verification/noisy-state-bias.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/verification/single-integrator.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/verification/sphere-network-auction.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/verification/sphere-network-loss.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/waypoints-aircraft.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "missions/waypoints-point-agents.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "crates/delivery/missions/region-1-checked.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "crates/delivery/missions/region.yaml",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "crates/starter/missions/dead-reckoning.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "crates/starter/missions/follow-nearest.yaml",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "perf motion-64",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "perf motion-512",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "perf substeps-64",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "perf substeps-512",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "perf sensing-32",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "perf sensing-128",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "perf churn-64",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "perf churn-512",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "perf collision-256",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "perf collision-1024",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "NoisyState on 512 aircraft",
+        "traced": false,
+        "identical": true,
+        "differences": []
+      },
+      {
+        "mission": "traced contacts on 16 aircraft",
+        "traced": true,
+        "identical": true,
+        "differences": []
+      }
+    ],
+    "phases": [
+      {
+        "output": "runs/equivalence006",
+        "completed_cases": 27,
+        "note": "These cases completed at every worker count before stopping the process during garbage collection. Its sampled physical footprint was 57.6 GB. Remaining cases run unchanged in a fresh process."
+      },
+      {
+        "output": "runs/equivalence007",
+        "completed_cases": 13,
+        "note": "Remaining cases selected after validating the completed prefix against the unchanged checker case list; identical comparison logic and worker counts."
+      }
+    ],
+    "continuation_script_sha256": "bd688775ee81223147d37f950cc5ee730fa22f4a5c18e62aca162cc8c4473e9a"
+  },
+  "equivalence_command": "python3 reference/equivalence.py /tmp/ripple-routing-before-20261111 target/release/ripple",
+  "equivalence_checker_sha256": "2467137f6d97fbdc36aa5115ad5f77d396c19b1d3113dca8fc3a38cb9fe9a35d",
+  "equivalence_binary_sha256": {
+    "/tmp/ripple-routing-before-20261111": "4a836bcf52bc5ae2b74c231439d10f604ae99758f188cad33de81cf7b368a8f1",
+    "target/release/ripple": "27fb6249fecc3048106f6109e5388f7e95c2fcfa644f0f86b37e46d17d0ce41d"
+  },
+  "implementation_cost": {
+    "runtime_file": "crates/core/src/pubsub/messages.rs",
+    "runtime_lines_added": 101,
+    "runtime_lines_removed": 58,
+    "note": "Proof specifications and extraction support remain in the isolated reference/creusot crate. Normal simulator builds do not require Creusot. Engineering time was not separately measured."
+  }
+}

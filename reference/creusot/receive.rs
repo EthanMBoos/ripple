@@ -1,5 +1,7 @@
 #![cfg_attr(creusot, feature(allocator_api))]
 #![allow(dead_code)]
+#[cfg(feature = "routing")]
+include!("routing.rs");
 include!(concat!(env!("OUT_DIR"), "/messages.rs"));
 
 #[logic(opaque)]

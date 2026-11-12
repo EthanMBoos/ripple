@@ -1,0 +1,33 @@
+# With four incidents at once, where do the models land between the nearest
+# donor and the feasible rule? Haiku and Opus as the help manager with the
+# compact report, local rules below, feedback on, over the incident laid
+# over the four blocks of a 64-hub region, on the grid and on one layout
+# with every hub displaced up to 1.5 km (layout seed 2, hubs at least 4 km
+# apart, drawn by region.layout), demand seeds 21 to 25; the nearest and
+# feasible rules on the same days. Live calls through the signed-in claude
+# client.
+name: incident-models-64
+base_scenario: incident.yaml
+seeds: [21, 22, 23, 24, 25]
+parameters:
+  entities.region.autonomy.Dispatcher.manager.offline: false
+  entities.region.autonomy.Dispatcher.region.hubs: 64
+  entities.region.autonomy.Dispatcher.manager.top_report: compact
+prefix: entities.region.autonomy.Dispatcher
+columns:
+  - manager.top_kind
+  - manager.help_rule
+  - manager.top_model
+  - manager.feedback
+  - region.layout.seed
+cases:
+  # grid
+  - [replanner, nearest, "", false, 0]
+  - [replanner, feasible, "", false, 0]
+  - [model, nearest, claude-haiku-5-5, true, 0]
+  - [model, nearest, claude-opus-5-5, true, 0]
+  # layout 2
+  - [replanner, nearest, "", false, 2]
+  - [replanner, feasible, "", false, 2]
+  - [model, nearest, claude-haiku-5-5, true, 2]
+  - [model, nearest, claude-opus-5-5, true, 2]

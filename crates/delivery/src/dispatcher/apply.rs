@@ -99,12 +99,7 @@ impl Dispatcher {
     /// is the study's contract whether or not the checker is on. The asking
     /// hub's request is answered.
     fn apply_help(&mut self, now_s: f64, order: &Order) -> Result<(Outcome, String)> {
-        let Order::Help {
-            hub,
-            from_hub,
-            until_min,
-        } = order
-        else {
+        let Order::Help { hub, from_hub } = order else {
             unreachable!("matched in apply")
         };
         if !self.hub_exists(*hub) || !self.hub_exists(*from_hub) {
@@ -116,18 +111,27 @@ impl Dispatcher {
         if hub == from_hub {
             return refuse("same_hub", "hub and from_hub are the same".into());
         }
-        let until_s = match until(now_s, *until_min) {
-            Ok(u) => u,
-            Err(e) => return Ok(e),
-        };
-        if !self.help_requests.iter().any(|r| r.hub == *hub) {
+        let Some(request) = self.help_requests.iter().find(|r| r.hub == *hub) else {
             return refuse("not_asking", format!("hub {hub} is not asking for help"));
+        };
+        let until_s = request.until_s;
+        if self.rules.lends.iter().any(|l| l.hub == *hub) {
+            return refuse(
+                "already_helped",
+                format!("hub {hub} has been granted help already"),
+            );
         }
+        // The offers are those shown at the call, less the hubs lent since,
+        // so a hub granted earlier in this call is refused for a second
+        // asking hub. The granted request is dropped before the next call
+        // (`ask_for_help`), not here, so the list of asking hubs holds.
         let snapshot = self.snapshot_of(now_s, &Scope::Region);
         if !help::offered(*hub, *from_hub, &snapshot, &self.help_requests) {
             return refuse(
                 "not_offered",
-                format!("hub {from_hub} was not offered to hub {hub}; take from_hub from an offer"),
+                format!(
+                    "hub {from_hub} is not offered to hub {hub} now; take from_hub from an offer"
+                ),
             );
         }
         let donor = self
@@ -152,12 +156,12 @@ impl Dispatcher {
             from_hub: *from_hub,
             until_s,
         });
-        self.help_requests.retain(|r| r.hub != *hub);
         let sites = self.region.sites_of(*hub).count();
         Ok((
             Outcome::Applied,
             format!(
-                "hub {from_hub}'s {idle} idle of {total} may serve hub {hub}'s {sites} sites, {farthest_km:.0} km to the farthest; it keeps half idle and flies only what arrives on time"
+                "hub {from_hub}'s {idle} idle of {total} may serve hub {hub}'s {sites} sites until minute {:.0}, {farthest_km:.0} km to the farthest; it keeps half idle and flies only what arrives on time",
+                until_s / 60.0
             ),
         ))
     }

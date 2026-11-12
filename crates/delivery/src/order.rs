@@ -99,14 +99,10 @@ pub enum Order {
     /// Deliver to a hospital's ground pad by drop instead of landing on its
     /// rooftop.
     UsePad { site: String, until_min: f64 },
-    /// From the help manager only: let `from_hub` serve `hub`'s sites until
-    /// the minute; its aircraft fly each request and return home
-    /// (`help.rs`).
-    Help {
-        hub: u32,
-        from_hub: u32,
-        until_min: f64,
-    },
+    /// From the help manager only: let `from_hub` serve `hub`'s sites
+    /// until the event `hub` asked over ends; its aircraft fly each request
+    /// and return home (`help.rs`).
+    Help { hub: u32, from_hub: u32 },
 }
 
 /// What the fleet manager is shown about the orders, once per call.
@@ -233,11 +229,7 @@ impl Order {
             Order::UsePad { site, until_min } => {
                 format!("use the ground pad at {site} until minute {until_min:.0}")
             }
-            Order::Help {
-                hub,
-                from_hub,
-                until_min,
-            } => format!("help hub {hub} from hub {from_hub} until minute {until_min:.0}"),
+            Order::Help { hub, from_hub } => format!("help hub {hub} from hub {from_hub}"),
         }
     }
 }
@@ -245,7 +237,7 @@ impl Order {
 /// What the help manager is shown, once per call.
 pub const HELP_SYNTAX: &str = "\
 Orders, each a JSON object with one key:
-- {\"help\": {\"hub\": H, \"from_hub\": D, \"until_min\": M}}: let hub D serve hub H's sites until minute M; D's aircraft fly each request and return home, D keeps half of each class idle for its own sites, and flies only what it can deliver on time. Take D from an offer, or grant nothing.";
+- {\"help\": {\"hub\": H, \"from_hub\": D}}: let hub D serve hub H's sites until H's event ends; D's aircraft fly each request and return home, D keeps half of each class idle for its own sites, and flies only what it can deliver on time. A hub helps one hub at a time. Take D from an offer, or grant nothing.";
 
 /// What the veto manager is told after the proposed orders.
 pub const VETO_SYNTAX: &str = "\

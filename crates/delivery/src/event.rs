@@ -280,11 +280,20 @@ impl EventsConfig {
         .expect("region already validated");
         let mut events = Vec::new();
         if !self.scripted.is_empty() {
-            for (index, event) in self.scripted.iter().enumerate() {
-                let mut event = event.clone();
-                event.id = index as u32 + 1;
-                self.complete(&mut event, &nominal, region, items, random);
-                events.push(event);
+            // The list is written for one block and laid over every block of
+            // the region, the hubs it names turned with the block.
+            for event in &self.scripted {
+                for block in 0..region.blocks() {
+                    let mut event = event.clone();
+                    event.id = events.len() as u32 + 1;
+                    event.hubs = event
+                        .hubs
+                        .iter()
+                        .map(|&hub| region.tiled_hub(block, hub))
+                        .collect();
+                    self.complete(&mut event, &nominal, region, items, random);
+                    events.push(event);
+                }
             }
         } else {
             let draw_until_s = (day_s - 3600.0).max(0.0);
@@ -408,7 +417,8 @@ impl EventsConfig {
     }
 
     /// Defaults for what the event leaves out: the fields its kind needs, drawn
-    /// from its first hub, then its duration.
+    /// from its first hub, then its duration. A scripted event keeps every
+    /// field it gives.
     fn complete(
         &self,
         event: &mut Event,
@@ -421,7 +431,9 @@ impl EventsConfig {
             EventKind::Closure | EventKind::Corridor => event.area.is_none(),
             EventKind::Priority | EventKind::RooftopClosed => event.site.is_empty(),
             EventKind::Shortage => event.item.is_empty(),
-            EventKind::Surge | EventKind::Weather => event.hubs.len() <= 1,
+            // A scripted surge or weather names its hubs exactly; only one
+            // naming none is spread over a neighborhood like a drawn one.
+            EventKind::Surge | EventKind::Weather => event.hubs.is_empty(),
             EventKind::Outage => false,
         };
         if needs_fill {
@@ -570,5 +582,66 @@ mod tests {
             config.text(&events[0]),
             "The rooftop at 2h1 is closed from minute 30 to minute 150."
         );
+    }
+
+    #[test]
+    fn a_scripted_surge_keeps_the_hubs_it_names() {
+        let surge = |hubs: Vec<u32>| Event {
+            kind: EventKind::Surge,
+            at_min: 60.0,
+            hubs,
+            ..Event::default()
+        };
+        let config = EventsConfig {
+            scripted: vec![surge(vec![1]), surge(vec![2, 3]), surge(Vec::new())],
+            ..EventsConfig::default()
+        };
+        let region = Region::new(&RegionConfig {
+            hubs: 4,
+            hub_spacing_m: 15_000.0,
+            ..RegionConfig::default()
+        })
+        .unwrap();
+        let events = config.script(&region, 28_800.0, &[], &PluginRandom::new(1, 1, "test"));
+        assert_eq!(events[0].hubs, vec![1], "one hub named stays one hub");
+        assert_eq!(events[1].hubs, vec![2, 3]);
+        assert_eq!(
+            events[2].hubs,
+            vec![1, 2, 3],
+            "no hub named: a neighborhood"
+        );
+        assert_eq!(events[0].until_min, 120.0);
+    }
+
+    #[test]
+    fn a_scripted_surge_is_laid_over_every_block() {
+        let config = EventsConfig {
+            scripted: vec![Event {
+                kind: EventKind::Surge,
+                at_min: 60.0,
+                hubs: vec![6, 11],
+                ..Event::default()
+            }],
+            ..EventsConfig::default()
+        };
+        let region = Region::new(&RegionConfig {
+            hubs: 64,
+            hub_spacing_m: 7000.0,
+            block_side: 4,
+            ..RegionConfig::default()
+        })
+        .unwrap();
+        let events = config.script(&region, 28_800.0, &[], &PluginRandom::new(1, 1, "test"));
+        assert_eq!(events.len(), 4);
+        for (block, event) in events.iter().enumerate() {
+            assert_eq!(event.id, block as u32 + 1);
+            assert_eq!(event.at_min, 60.0);
+            let expected: Vec<u32> = [6, 11]
+                .iter()
+                .map(|&h| region.tiled_hub(block, h))
+                .collect();
+            assert_eq!(event.hubs, expected, "block {block}");
+        }
+        assert_eq!(events[0].hubs, vec![10, 19]);
     }
 }

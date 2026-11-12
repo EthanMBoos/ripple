@@ -1,0 +1,25 @@
+# Once the dispatcher has listed the offers, how much is the choice among
+# them worth? The help manager granting a random offer, local rules below,
+# with the incident laid over the 16 blocks of a 256-hub region, on the
+# gate's days: the 7 km grid and 2 layouts with every hub
+# displaced up to 1.5 km (layout seeds 101 to 102, hubs at least 4 km
+# apart, drawn by region.layout), demand seeds 11 to 15, so it
+# sits beside the nearest and feasible rules of incident-gate-256 on the same
+# days. No model calls.
+name: incident-random-256
+base_scenario: incident.yaml
+seeds: [11, 12, 13, 14, 15]
+parameters:
+  entities.region.autonomy.Dispatcher.manager.offline: true
+  entities.region.autonomy.Dispatcher.region.hubs: 256
+  entities.region.autonomy.Dispatcher.manager.top_kind: replanner
+  entities.region.autonomy.Dispatcher.manager.help_rule: random
+prefix: entities.region.autonomy.Dispatcher
+columns: [region.layout.seed]
+cases:
+  # grid
+  - [0]
+  # layout 101
+  - [101]
+  # layout 102
+  - [102]

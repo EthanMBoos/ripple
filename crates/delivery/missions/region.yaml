@@ -69,6 +69,10 @@ entities:
           hubs: 16
           hub_spacing_m: 15000
           hub_positions_m: []
+          # Hubs on a side of the block the fleet counts and scripted events
+          # are written for, laid over every block of the grid; 0 is the
+          # whole region as one block.
+          block_side: 0
         # The couriers built at every hub, from the recipes above.
         fleet:
           - {recipe: fixed_wing, per_hub: 3, altitude_m: 120}

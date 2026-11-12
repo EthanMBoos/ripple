@@ -1,0 +1,26 @@
+# Do the models hold the feasible rule's level on incident days they were
+# not built on? Haiku and Opus as the help manager with the full report and
+# with the compact report, local rules below, feedback on, on the gate's
+# grid and its first displaced layout (layout seed 101) with demand seeds 11
+# to 15; the fixed rules on these days are in incident-gate. Live calls
+# through the signed-in claude client.
+name: incident-models-16
+base_scenario: incident.yaml
+seeds: [11, 12, 13, 14, 15]
+parameters:
+  entities.region.autonomy.Dispatcher.manager.offline: false
+  entities.region.autonomy.Dispatcher.manager.top_kind: model
+  entities.region.autonomy.Dispatcher.manager.feedback: true
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.top_model, manager.top_report, region.layout.seed]
+cases:
+  # grid
+  - [claude-haiku-5-5, full, 0]
+  - [claude-haiku-5-5, compact, 0]
+  - [claude-opus-5-5, full, 0]
+  - [claude-opus-5-5, compact, 0]
+  # layout 101
+  - [claude-haiku-5-5, full, 101]
+  - [claude-haiku-5-5, compact, 101]
+  - [claude-opus-5-5, full, 101]
+  - [claude-opus-5-5, compact, 101]

@@ -12,7 +12,7 @@ use crate::help;
 use crate::messages::{Phase, RequestKind, VehicleClass};
 use crate::order::{HELP_SYNTAX, Order, SYNTAX, VETO_SYNTAX};
 use crate::scope::Scope;
-use crate::view::{HubView, Snapshot};
+use crate::view::{HubView, Snapshot, TopReport};
 
 impl Dispatcher {
     /// The state at one call, limited to the hubs the scope covers.
@@ -75,8 +75,10 @@ impl Dispatcher {
         Snapshot {
             time_s: now_s,
             day_s: self.config.requests.until_s,
+            trauma_deadline_s: self.config.requests.trauma_deadline_s,
             region: &self.region,
             hubs,
+            lending: self.rules.lends.iter().map(|l| l.from_hub).collect(),
             cards,
             range_margin: self.config.range_margin,
             active_events: scope.events_shown(&active, &self.config.events),
@@ -218,7 +220,8 @@ impl Dispatcher {
     }
 
     /// The prompt for the help manager: the time, the events, its feedback,
-    /// the help asked for and offered, the hub view, and its one order.
+    /// the help asked for and offered, the hub view unless the report is
+    /// compact, and its one order.
     pub(super) fn top_situation(
         &self,
         who: &Manager,
@@ -234,13 +237,16 @@ impl Dispatcher {
             minute(snapshot.time_s),
             minute(snapshot.day_s)
         );
+        let seen = match manager.top_report {
+            TopReport::Full => "You see the hubs, their surges, outages, shortages, and weather, ",
+            TopReport::Compact => "You see new surges, outages, shortages, and weather, ",
+        };
         let _ = writeln!(
             text,
             "You are the fleet manager for help across {} hubs; each hub's flights and the \
-             local rules for its events are handled below you. You see the hubs, their \
-             surges, outages, shortages, and weather, and the help a hub asks for with the \
-             hubs that could give it. You may only grant help: a hub serves another hub's \
-             sites for a time, and its aircraft fly each request and return home.",
+             local rules for its events are handled below you. {seen}and the help a hub asks \
+             for with the hubs that could give it. You may only grant help: a hub serves \
+             another hub's sites for a time, and its aircraft fly each request and return home.",
             snapshot.hubs.len(),
         );
         // Only the events the help manager acts on; the events still in force
@@ -261,10 +267,16 @@ impl Dispatcher {
             }
         }
         text.push('\n');
-        text.push_str(&help::describe(&self.help_requests, snapshot));
+        text.push_str(&help::describe(
+            &self.help_requests,
+            snapshot,
+            &manager.hide,
+        ));
         text.push('\n');
-        text.push_str(&snapshot.write(manager.view));
-        text.push('\n');
+        if manager.top_report == TopReport::Full {
+            text.push_str(&snapshot.write(manager.view));
+            text.push('\n');
+        }
         text.push_str(HELP_SYNTAX);
         text.push_str(
             "\n\nReply with {\"orders\": [...]} and nothing else; {\"orders\": []} changes nothing.\n",

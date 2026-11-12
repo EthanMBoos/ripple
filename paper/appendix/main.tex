@@ -17,8 +17,7 @@
   xleftmargin=2pt,xrightmargin=2pt,aboveskip=4pt,belowskip=6pt}
 \usepackage[bookmarks=true,hidelinks]{hyperref}
 
-\title{Appendix to Ripple: Measuring the Cost of Over-Helping\\in Robot
-Fleets}
+\title{Ripple: Appendix}
 \author{\IEEEauthorblockN{Ethan Moosbrugger Boos}
 \IEEEauthorblockA{Georgia Institute of Technology}}
 
@@ -28,7 +27,7 @@ Fleets}
 This appendix holds the material the paper refers to but has no room
 for: the system prompt every model call used, the one text for each event
 kind, one complete live call and one veto prompt with their replies, the
-per-seed scores behind the paper's model table, and the per-run counts for
+per-seed scores behind the paper's model figure, and the per-run counts for
 the 40 model runs. It also gives the per-seed results for the interface,
 policy-writing, quiet-day, and surge-length checks. The study code is the
 delivery crate of the Ripple repository, and the prompt and call texts
@@ -107,14 +106,35 @@ the third transfer and its permissions while keeping the other two.
 
 \lstinputlisting{veto-reply.txt}
 
-\section{Per-seed scores}
+\section{Model scores and move orders}
 \label{app:scores}
 
-The paper's model table gives means. Table~\ref{tab:scores} gives the
-on-time score and the moves made (kept, for the veto) on each seed: seeds
+The paper's model figure shows mean scores and individual days relative
+to local rules. Table~\ref{tab:model-means} gives the reported means and
+move counts. Table~\ref{tab:scores} gives the on-time score
+and the moves made (kept, for the veto) on each seed: seeds
 1 to 3 at 16 hubs and 1 and 2 at 64. On the same seeds local rules score
 0.69, 0.78, and 0.75 at 16 hubs and 0.73 and 0.70 at 64; the replanner
 0.68, 0.74, and 0.73, and 0.62 and 0.62.
+
+\begin{table*}[h]
+\caption{Mean weighted on-time score and move orders by model and role.
+Three seeds at 16 hubs; two at 64. For vetoes, moves are retained orders.}
+\label{tab:model-means}
+\centering
+\begin{tabular}{llrrrrrrrr}
+\toprule
+& & \multicolumn{2}{c}{Haiku} & \multicolumn{2}{c}{Sonnet} & \multicolumn{2}{c}{Opus} & \multicolumn{2}{c}{GPT-6 Luna} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+Hubs & Role & Score & Moves & Score & Moves & Score & Moves & Score & Moves \\
+\midrule
+16 & Live & 0.70 & 8   & 0.62 & 47  & 0.69 & 70  & 0.57 & 3  \\
+16 & Veto & 0.71 & 19  & 0.72 & 25  & 0.71 & 23  & 0.72 & 22 \\
+64 & Live & 0.66 & 64  & 0.59 & 301 & 0.56 & 481 & 0.62 & 56 \\
+64 & Veto & 0.63 & 152 & 0.63 & 171 & 0.65 & 146 & 0.62 & 164 \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 \begin{table*}[h]
 \caption{Per-seed on-time score and moves for the 40 model runs, in seed
@@ -132,7 +152,7 @@ We reran Luna through the OpenAI API on the same three seeds at 16 hubs
 and two at 64, in both roles. The mission, study system prompt, exceptions
 view, and feedback setting were unchanged. The API supplies no tools;
 the earlier Codex command-line client retained coding-agent tools.
-Table~\ref{tab:luna-api} compares the means. The paper's model table and
+Table~\ref{tab:luna-api} compares the means. The paper's model figure and
 this appendix's per-seed scores and counts use the API runs.
 
 \begin{table}[h]
@@ -258,7 +278,7 @@ held for 15, 60, 120, and 240 minutes.
 \label{app:counts}
 
 Table~\ref{tab:counts} gives, for each of the 40 model runs in
-the paper's model table, the number of model calls, the orders the model
+the paper's model figure, the number of model calls, the orders the model
 gave (or, for the veto, the replanner's proposals it kept), how many were
 applied and how many refused by the dispatcher, the replies that could not
 be read, the moves (applied relocations and stock flights), the lending

@@ -1,0 +1,29 @@
+# Does the choice of helping hub still matter when the incident is laid
+# over every 16-hub block of a 256-hub region, 16 incidents at once, each
+# block turned by its number, on seeds and hub layouts the incident was not
+# built on? Three help arms, local rules with no help and the help manager
+# granting by the nearest offer or by the feasible rule, on the 7 km grid
+# and on 2 layouts with every hub displaced up to 1.5 km (layout seeds 101
+# to 102, hubs at least 4 km apart, drawn by region.layout), each on demand
+# seeds 11 to 15. No model calls.
+name: incident-gate-256
+base_scenario: incident.yaml
+seeds: [11, 12, 13, 14, 15]
+parameters:
+  entities.region.autonomy.Dispatcher.manager.offline: true
+  entities.region.autonomy.Dispatcher.region.hubs: 256
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.top_kind, manager.help_rule, region.layout.seed]
+cases:
+  # grid
+  - [none, nearest, 0]
+  - [replanner, nearest, 0]
+  - [replanner, feasible, 0]
+  # layout 101
+  - [none, nearest, 101]
+  - [replanner, nearest, 101]
+  - [replanner, feasible, 101]
+  # layout 102
+  - [none, nearest, 102]
+  - [replanner, nearest, 102]
+  - [replanner, feasible, 102]

@@ -1,0 +1,121 @@
+% Model score changes from local rules on matched days. Large markers show
+% means; small markers show days. Luna's day scores are rounded in the
+% appendix; other day scores use saved sweeps.
+\begin{tikzpicture}[x=1cm, y=1cm, font=\scriptsize]
+  \newcommand{\scorex}[1]{1.55 + 0.25*(#1 + 25)}
+  \newcommand{\liveday}[3]{%
+    \pgfmathsetmacro{\px}{\scorex{#2}}%
+    \pgfmathsetmacro{\py}{#1 + 0.14 + #3}%
+    \fill[orange!65] (\px,\py) circle[radius=0.045];%
+  }
+  \newcommand{\vetoday}[3]{%
+    \pgfmathsetmacro{\px}{\scorex{#2}}%
+    \pgfmathsetmacro{\py}{#1 - 0.14 + #3}%
+    \filldraw[fill=white, draw=black!65, line width=0.35pt]
+      (\px,\py) circle[radius=0.045];%
+  }
+  \newcommand{\livepoint}[2]{%
+    \pgfmathsetmacro{\px}{\scorex{#2}}%
+    \pgfmathsetmacro{\py}{#1 + 0.14}%
+    \fill[orange] (\px,\py) circle[radius=0.10];%
+  }
+  \newcommand{\vetopoint}[2]{%
+    \pgfmathsetmacro{\px}{\scorex{#2}}%
+    \pgfmathsetmacro{\py}{#1 - 0.14}%
+    \filldraw[fill=white, draw=black, line width=0.6pt]
+      (\px,\py) circle[radius=0.10];%
+  }
+
+  \foreach \v in {-25,-20,-15,-10,-5,0,5} {
+    \pgfmathsetmacro{\xx}{\scorex{\v}}
+    \draw[black!12, line width=0.4pt] (\xx,0.83) -- (\xx,5.53);
+    \node[anchor=north, text=muted, inner sep=1pt] at (\xx,0.77) {\v};
+  }
+  \draw[black!50, line width=0.6pt] (7.80,0.83) -- (7.80,5.53);
+  \foreach \name/\row in {Haiku/5.15,Sonnet/4.64,Opus/4.13,Luna/3.62,
+                            Haiku/2.64,Sonnet/2.13,Opus/1.62,Luna/1.11} {
+    \draw[black!7, line width=0.4pt] (1.55,\row) -- (9.05,\row);
+    \node[anchor=east, inner sep=2pt] at (1.48,\row) {\name};
+  }
+  \node[anchor=south west, font=\scriptsize\bfseries] at (0.15,5.50)
+    {16 hubs};
+  \node[anchor=south west, font=\scriptsize\bfseries] at (0.15,3.13)
+    {64 hubs};
+  \draw[black!22, line width=0.4pt] (0.15,3.06) -- (9.05,3.06);
+
+  % Three matched days at 16 hubs, in seed order (1, 2, 3).
+  \liveday{5.15}{-5.232}{-0.06}
+  \liveday{5.15}{-3.816}{0}
+  \liveday{5.15}{-2.169}{0.06}
+  \vetoday{5.15}{-0.818}{-0.06}
+  \vetoday{5.15}{-1.679}{0}
+  \vetoday{5.15}{-5.248}{0.06}
+
+  \liveday{4.64}{-8.068}{-0.06}
+  \liveday{4.64}{-11.722}{0}
+  \liveday{4.64}{-14.512}{0.06}
+  \vetoday{4.64}{-1.374}{-0.06}
+  \vetoday{4.64}{-4.396}{0}
+  \vetoday{4.64}{-0.645}{0.06}
+
+  \liveday{4.13}{2.982}{-0.06}
+  \liveday{4.13}{-8.974}{0}
+  \liveday{4.13}{-8.385}{0.06}
+  \vetoday{4.13}{-1.871}{-0.06}
+  \vetoday{4.13}{-4.792}{0}
+  \vetoday{4.13}{-0.645}{0.06}
+
+  \liveday{3.62}{-9.752}{-0.06}
+  \liveday{3.62}{-16.175}{0}
+  \liveday{3.62}{-23.670}{0.06}
+  \vetoday{3.62}{0}{-0.06}
+  \vetoday{3.62}{-4.175}{0}
+  \vetoday{3.62}{-0.670}{0.06}
+
+  % Two matched days at 64 hubs, in seed order (1, 2).
+  \liveday{2.64}{-6.883}{-0.04}
+  \liveday{2.64}{-4.629}{0.04}
+  \vetoday{2.64}{-9.251}{-0.04}
+  \vetoday{2.64}{-7.312}{0.04}
+
+  \liveday{2.13}{-13.337}{-0.04}
+  \liveday{2.13}{-12.526}{0.04}
+  \vetoday{2.13}{-9.909}{-0.04}
+  \vetoday{2.13}{-7.965}{0.04}
+
+  \liveday{1.62}{-18.157}{-0.04}
+  \liveday{1.62}{-11.920}{0.04}
+  \vetoday{1.62}{-8.047}{-0.04}
+  \vetoday{1.62}{-4.214}{0.04}
+
+  \liveday{1.11}{-10.118}{-0.04}
+  \liveday{1.11}{-8.794}{0.04}
+  \vetoday{1.11}{-11.118}{-0.04}
+  \vetoday{1.11}{-6.794}{0.04}
+
+  % Means, drawn over individual days.
+  \livepoint{5.15}{-3.74}
+  \vetopoint{5.15}{-2.58}
+  \livepoint{4.64}{-11.43}
+  \vetopoint{4.64}{-2.14}
+  \livepoint{4.13}{-4.79}
+  \vetopoint{4.13}{-2.44}
+  \livepoint{3.62}{-16.53}
+  \vetopoint{3.62}{-1.53}
+  \livepoint{2.64}{-5.76}
+  \vetopoint{2.64}{-8.28}
+  \livepoint{2.13}{-12.93}
+  \vetopoint{2.13}{-8.94}
+  \livepoint{1.62}{-15.04}
+  \vetopoint{1.62}{-6.13}
+  \livepoint{1.11}{-9.46}
+  \vetopoint{1.11}{-8.96}
+
+  \fill[orange] (1.65,5.99) circle[radius=0.09];
+  \node[anchor=west, inner sep=2pt] at (1.78,5.99) {live manager};
+  \filldraw[fill=white, draw=black, line width=0.5pt]
+    (3.76,5.99) circle[radius=0.09];
+  \node[anchor=west, inner sep=2pt] at (3.89,5.99) {veto};
+  \node[anchor=north, text=muted] at (5.30,0.35)
+    {Score change from local rules (points)};
+\end{tikzpicture}

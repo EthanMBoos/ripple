@@ -1,0 +1,213 @@
+# The incident day: region.yaml's requests and stock on 16 hubs 7 km apart,
+# with a scripted set of events in place of the random ones, built so that
+# which hub helps which matters. Three times a day,
+# two hour-long surges start at once at hubs that share neighbors, and half
+# an hour later a third surge hits the neighbor with the most to spare. The
+# hubs' fleets differ, so the nearest hub is not the one with aircraft to
+# spare, and the hubs with two fixed-wing have a backlog of their own. Each
+# hub runs the local rules; the help manager decides who helps whom.
+#
+#   ripple run crates/delivery/missions/incident.yaml --headless \
+#     entities.region.autonomy.Dispatcher.manager.help_rule:=feasible
+format_version: 1
+name: incident
+
+run:
+  end_s: 30600
+  dt_s: 0.1
+  seed: 1
+
+networks: {GlobalNetwork: {}}
+metrics: {DeliveryScore: {}}
+
+recipes:
+  # Built only when a plugin asks: the Dispatcher's fleet, below, asks for
+  # each hub's couriers at the hub and gives each its hub and the region.
+  fixed_wing:
+    team: 1
+    visual_model: aircraft
+    position_stddev_m: [60, 60, 0]
+    heading_deg: 90
+    velocity_mps: [0, 25, 0]
+    autonomy:
+      Courier:
+        class: fixed_wing
+        cruise_speed_mps: 25
+        endurance_s: 3600
+        cruise_altitude_m: 120
+        # Idle aircraft count as recovered on the ground, so their loiter
+        # (drawn because SimpleAircraft can't stop) stays inside the hub
+        # radius, where flight uses no endurance.
+        hub_radius_m: 400
+        arrival_radius_m: 75
+        loiter_radius_m: 300
+        # An aircraft near a site for a minute without delivering is
+        # circling it: it runs out this far and comes back in straight.
+        run_in_m: 500
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+  multirotor:
+    team: 1
+    visual_model: sphere
+    position_stddev_m: [3, 3, 0]
+    autonomy:
+      Courier:
+        class: multirotor
+        cruise_speed_mps: 12
+        endurance_s: 1500
+        cruise_altitude_m: 80
+        hub_radius_m: 200
+        arrival_radius_m: 3
+        dwell_s: 30
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {max_speed_mps: 12}}
+
+entities:
+  region:
+    team: 1
+    visual_model: sphere
+    position_m: [0, 0, 0]
+    autonomy:
+      Dispatcher:
+        region:
+          # Sixteen hubs 7 km apart, so a neighbor's aircraft reach a hub's
+          # clinics in a few minutes.
+          hubs: 16
+          hub_spacing_m: 7000
+          # The grid displaced by a seed: each hub up to jitter_m from its
+          # grid point, hubs at least min_spacing_m apart; seed 0 is the grid.
+          layout:
+            seed: 0
+            jitter_m: 1500
+            min_spacing_m: 4000
+          # The fleet counts and the scripted surges below are written for a
+          # block of four hubs a side and laid over every block of the grid,
+          # each block turned or mirrored by its number, so a 64- or 256-hub
+          # region is this incident in every block with the large, small and
+          # asking hubs in different places.
+          block_side: 4
+        # The couriers built at each hub, from the recipes above. The grid,
+        # north at the top:
+        #   13 14 15 16
+        #    9 10 11 12
+        #    5  6  7  8
+        #    1  2  3  4
+        # Hubs 5, 12 and 14 are large: eight fixed-wing and four multirotors.
+        # Hubs 2, 4 and 7, the nearest neighbor of one asking hub each, are
+        # small: two fixed-wing. The rest have three fixed-wing and two
+        # multirotors, as on the main day.
+        fleet:
+          - recipe: fixed_wing
+            per_hub: 3
+            counts: [3, 2, 3, 2, 8, 3, 2, 3, 3, 3, 3, 8, 3, 8, 3, 3]
+            altitude_m: 120
+          - recipe: multirotor
+            per_hub: 2
+            counts: [2, 2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 4, 2, 4, 2, 2]
+        stock:
+          items: ["O-", "O+", "A+", "B+"]
+          units_per_item: 100
+          restock_interval_s: 3600
+          restock_units: 30
+          package_units: 4
+        requests:
+          per_hub_per_hour: 12
+          # The day: requests open until then; the run ends 30 min later.
+          until_s: 28800
+          urgent_share: 0.3
+          trauma_share: 0.1
+          routine_deadline_s: 7200
+          urgent_deadline_s: 1800
+          trauma_deadline_s: 900
+        events:
+          # The day's events are the scripted list below; nothing is drawn.
+          per_hub_per_day: {}
+          # Each surge lasts an hour (the kind's default) and names its hubs
+          # exactly. Hubs 6 and 11 share neighbors 7 and 10, hubs 15 and 10
+          # share 11 and 14, hubs 8 and 3 share 4 and 7. Half an hour into
+          # each pair, a surge hits the large hub beside one of them, which
+          # may have been lent.
+          scripted:
+            - {kind: surge, at_min: 60, hubs: [6, 11]}
+            - {kind: surge, at_min: 90, hubs: [5]}
+            - {kind: surge, at_min: 180, hubs: [15, 10]}
+            - {kind: surge, at_min: 210, hubs: [14]}
+            - {kind: surge, at_min: 300, hubs: [8, 3]}
+            - {kind: surge, at_min: 330, hubs: [12]}
+          # Trauma requests per surge hub over the surge's hour.
+          surge_requests_per_hub: 48
+          surge_window_min: 60
+          # One text per kind, written once; only surges happen on this day.
+          # {hubs}, {site}, {item}, {area}, {class}, {from} and {to} are
+          # filled in.
+          text:
+            surge: >-
+              A mass-casualty incident near {hubs}: the hospitals there are sending trauma requests beyond what those hubs can fly alone, starting at minute {from}.
+            shortage: >-
+              {item} has run out at {hubs} as of minute {from}. Requests for {item} at their sites can only be served from hubs that still hold it.
+            closure: >-
+              Airspace is closed in {area} from minute {from} until minute {to}; no flights through it.
+            outage: >-
+              {hubs} cannot launch from minute {from} until minute {to}; its sites must be covered by other hubs.
+            weather: >-
+              Weather at {hubs}: no {class} launches from minute {from} until minute {to}.
+            priority: >-
+              Hospital {site} takes priority over routine deliveries from minute {from} until {to}.
+            rooftop_closed: >-
+              The rooftop at hospital {site} is closed from minute {from} until minute {to}; only drops at its ground pad are allowed.
+            corridor: >-
+              A medevac helicopter corridor is active in {area} from minute {from} until minute {to}; no vehicle may cross it below 150 m.
+        manager:
+          # Each hub runs the local rules (policies/local.yaml); the help
+          # manager below is the one decision of the day.
+          kind: policy
+          check_in_s: 1800
+          # The rules file (src/policy.rs), a path from the working directory.
+          policy: crates/delivery/policies/local.yaml
+          # The hub view a full report carries: summaries, one line per hub.
+          # feedback reports the help manager its last orders' outcomes.
+          view: summaries
+          feedback: false
+          # The help manager, called after the local rules: none, replanner,
+          # or model; it sees the help hubs ask for with the hubs that could
+          # give it, and grants help, a hub serving an asking hub's sites
+          # until its event ends (src/help.rs). help_rule is the fixed rule
+          # for replanner: nearest, feasible (the most to spare over its own
+          # backlog), or random (any offer). top_report is what a model sees
+          # besides the requests and offers: full, the hub view, or compact,
+          # nothing. hide lists offer facts left off every offer line (spare,
+          # reach, backlog, arrival). top_model empty means model.
+          top_kind: replanner
+          help_rule: nearest
+          top_report: full
+          hide: []
+          top_model: ""
+          # Whose model and how it is reached (src/client.rs): provider
+          # claude, openai, or ollama; via cli or api. Replies are kept in
+          # cache_dir; offline: true uses only replies already there.
+          provider: claude
+          via: cli
+          model: claude-haiku-5-5
+          # The help manager's prompt, written once and frozen. The lower
+          # manager is the local rules file, so no model reads this but the
+          # help manager.
+          prompt:
+            system: >-
+              You are the fleet manager for help between the hubs of a regional blood
+              delivery service. Each hub flies its own sites' requests with its own aircraft
+              under fixed local rules, and the dispatcher assigns each request to the idle
+              aircraft that arrives soonest; neither needs you for that. When a surge or an
+              outage hits a hub, the hub asks for help, and the dispatcher lists the hubs
+              that could give it: how many aircraft each can spare and still keep half of
+              its own, how many of the asking hub's sites those aircraft reach in time, how
+              many requests of its own are waiting, and how soon its first aircraft arrives.
+              Your one decision is which offer to grant each asking hub, or none. A granted
+              hub's aircraft fly the asking hub's requests they can deliver on time and
+              return home; nothing is relocated, and a hub helps one hub at a time. Fixed-wing
+              aircraft drop by parachute at clinics and cannot land; multirotors can also land
+              on hospital rooftops and have a short range. Keep trauma deliveries on time.
+              Reply with JSON only, no other text.
+          cache_dir: runs/llm-cache
+          offline: false
+    controller: {SingleIntegratorControllerSimple: {}}
+    motion_model: {SingleIntegrator: {}}

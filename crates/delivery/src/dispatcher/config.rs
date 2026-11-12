@@ -8,11 +8,12 @@ use serde::Deserialize;
 use crate::area::tagged;
 use crate::client::{Client, Provider, Via};
 use crate::event::EventsConfig;
+use crate::help;
 use crate::messages::ManagerKind;
 use crate::order::Order;
 use crate::policy::Policy;
 use crate::region::{Region, RegionConfig};
-use crate::view::ViewKind;
+use crate::view::{TopReport, ViewKind};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
 #[derive(Clone, Debug, Deserialize)]
@@ -119,9 +120,17 @@ pub struct ManagerConfig {
     /// The help manager (`none`, `replanner` or `model`), called after the
     /// managers over the region or the clusters: it sees the help hubs ask
     /// for with the offers the dispatcher lists, and may only grant help, a
-    /// hub serving an asking hub's sites for a time (`help.rs`). It sees
-    /// the hub view (`view`).
+    /// hub serving an asking hub's sites for a time (`help.rs`).
     pub top_kind: ManagerKind,
+    /// The fixed rule a `top_kind: replanner` grants by (`help::Rule`):
+    /// `nearest`, `feasible`, or `random`.
+    pub help_rule: help::Rule,
+    /// What a `top_kind: model` is shown besides the requests and offers:
+    /// `full`, the hub view (`view`), or `compact`, nothing more.
+    pub top_report: TopReport,
+    /// Offer facts left off every offer line for a `top_kind: model`
+    /// (`help::Fact`): `spare`, `reach`, `backlog`, `arrival`.
+    pub hide: Vec<help::Fact>,
     /// The model for a `top_kind: model`; empty means `model`.
     pub top_model: String,
     /// Whose model, and how it is reached (`client.rs`).
@@ -151,6 +160,9 @@ impl Default for ManagerConfig {
             scripted: Vec::new(),
             policy: String::new(),
             top_kind: ManagerKind::None,
+            help_rule: help::Rule::Nearest,
+            top_report: TopReport::Full,
+            hide: Vec::new(),
             top_model: String::new(),
             provider: Provider::Claude,
             via: None,
@@ -194,6 +206,9 @@ impl ManagerConfig {
 pub struct FleetEntry {
     pub recipe: String,
     pub per_hub: u32,
+    /// How many at each hub of the block, in hub order, when the hubs
+    /// differ; empty means `per_hub` at every hub.
+    pub counts: Vec<u32>,
     /// Where they start above the hub; a fixed-wing recipe starts in the air.
     pub altitude_m: f64,
 }
@@ -257,6 +272,13 @@ impl DispatcherConfig {
                 "every fleet entry names a recipe of the mission"
             );
             ensure!(
+                entry.counts.is_empty() || entry.counts.len() == region.block_hubs() as usize,
+                "fleet entry {}: counts has {} entries for {} hubs",
+                entry.recipe,
+                entry.counts.len(),
+                region.block_hubs()
+            );
+            ensure!(
                 entry.altitude_m.is_finite() && entry.altitude_m >= 0.0,
                 "fleet entry {}: altitude_m must be finite and nonnegative",
                 entry.recipe
@@ -282,6 +304,21 @@ impl DispatcherConfig {
             "requests.urgent_share and trauma_share must be nonnegative and sum to at most 1"
         );
         self.events.validate()?;
+        for event in &self.events.scripted {
+            ensure!(
+                event
+                    .hubs
+                    .iter()
+                    .all(|&hub| (1..=region.block_hubs()).contains(&hub)),
+                "events.scripted: a {} names a hub outside the {} hubs of the block",
+                event.kind.as_str(),
+                region.block_hubs()
+            );
+            ensure!(
+                region.blocks() == 1 || (event.site.is_empty() && event.area.is_none()),
+                "events.scripted: with region.block_side, a scripted event names hubs only"
+            );
+        }
         ensure!(
             self.range_margin > 0.0
                 && self.decision_interval_s > 0.0

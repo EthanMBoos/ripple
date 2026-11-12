@@ -30,7 +30,7 @@ use crate::messages::{
     ASSIGNMENT_TOPIC, Assignment, DELIVERED_TOPIC, Delivered, Phase, RELOCATE_TOPIC, Relocate,
     STATUS_TOPIC, SkillName, Status, VehicleCard, VehicleClass,
 };
-use crate::region::{RegionConfig, horizontal_m, side};
+use crate::region::horizontal_m;
 use crate::skill::{self, Settings, Skill};
 
 /// Mission parameters; `Default` supplies any key the mission leaves out.
@@ -39,12 +39,10 @@ use crate::skill::{self, Settings, Skill};
 pub struct CourierConfig {
     /// `fixed_wing` or `multirotor`. Required.
     class: Option<VehicleClass>,
-    /// Its hub, numbered from 1. A recipe leaves it 0 and the Dispatcher's
-    /// spawn request gives it, with `region`.
+    /// Its hub, numbered from 1, and where that hub is. A recipe leaves
+    /// them 0 and the Dispatcher's spawn request gives them.
     hub: u32,
-    /// The region's layout, the same values as the Dispatcher's `region`, so
-    /// `hub` alone says where home is.
-    region: RegionConfig,
+    hub_world_m: Vec3,
     cruise_speed_mps: f64,
     endurance_s: f64,
     cruise_altitude_m: f64,
@@ -53,6 +51,10 @@ pub struct CourierConfig {
     /// How close a skill must get to the site (see each skill).
     arrival_radius_m: f64,
     loiter_radius_m: f64,
+    /// A fixed-wing within this of a site for `CIRCLING_S` without
+    /// delivering is circling it: it runs out to a point this far ahead and
+    /// turns onto a straight run in (`circling`); 0 never does.
+    run_in_m: f64,
     dwell_s: f64,
     reload_s: f64,
     /// Slow toward a target at this rate, speed = rate x distance up to
@@ -62,18 +64,24 @@ pub struct CourierConfig {
     report_interval_s: f64,
 }
 
+/// How long a fixed-wing may stay near a site without delivering before it
+/// is taken to be circling it: a full turn at 25 m/s on a 110 m circle takes
+/// under 30 s, so a pass that misses lines up again well inside a minute.
+const CIRCLING_S: f64 = 60.0;
+
 impl Default for CourierConfig {
     fn default() -> Self {
         Self {
             class: None,
             hub: 0,
-            region: RegionConfig::default(),
+            hub_world_m: Vec3::zeros(),
             cruise_speed_mps: 12.0,
             endurance_s: 1500.0,
             cruise_altitude_m: 100.0,
             hub_radius_m: 200.0,
             arrival_radius_m: 3.0,
             loiter_radius_m: 300.0,
+            run_in_m: 0.0,
             dwell_s: 30.0,
             reload_s: 120.0,
             approach_per_s: 0.0,
@@ -90,10 +98,18 @@ pub struct Courier {
     hub_radius_m: f64,
     arrival_radius_m: f64,
     loiter_radius_m: f64,
+    run_in_m: f64,
     dwell_s: f64,
     reload_s: f64,
     approach_per_s: f64,
     report_interval_s: f64,
+    /// When the aircraft came within `run_in_m` of its site, while it is.
+    near_site_since_s: Option<f64>,
+    /// The fixed point it runs out to from a site it circled, while it does.
+    /// A point that moved with the aircraft would sit dead ahead, so the
+    /// heading controller, which turns heading error into roll rate, would
+    /// hold the bank and the circle.
+    run_out_world_m: Option<Vec3>,
     /// Its own phase; while a skill runs, the skill's.
     phase: Phase,
     running: Option<Box<dyn Skill>>,
@@ -120,13 +136,6 @@ impl Autonomy for Courier {
         config
             .class
             .context("Courier needs class: fixed_wing or multirotor")?;
-        side(&config.region)?;
-        ensure!(
-            config.hub <= config.region.hubs,
-            "Courier hub must be 1 to {}, not {}",
-            config.region.hubs,
-            config.hub
-        );
         ensure!(
             config.cruise_speed_mps > 0.0 && config.endurance_s > 0.0,
             "Courier cruise speed and endurance must be positive"
@@ -150,15 +159,14 @@ impl Autonomy for Courier {
                 endurance_s: config.endurance_s,
             },
             hub: config.hub,
-            hub_world_m: if config.hub == 0 {
-                Vec3::zeros()
-            } else {
-                config.region.position_m(config.hub)
-            },
+            hub_world_m: config.hub_world_m,
             cruise_altitude_m: config.cruise_altitude_m,
             hub_radius_m: config.hub_radius_m,
             arrival_radius_m: config.arrival_radius_m,
             loiter_radius_m: config.loiter_radius_m,
+            run_in_m: config.run_in_m,
+            near_site_since_s: None,
+            run_out_world_m: None,
             dwell_s: config.dwell_s,
             reload_s: config.reload_s,
             approach_per_s: config.approach_per_s,
@@ -211,7 +219,8 @@ impl Autonomy for Courier {
         let position_world_m = context.state.position_world_m;
         let id = context.entity.id;
         self.take_orders(context, id)?;
-        self.advance(context, id, now_s, position_world_m)?;
+        let velocity_world_mps = context.state.velocity_world_mps;
+        self.advance(context, id, now_s, position_world_m, velocity_world_mps)?;
         self.fly(io, position_world_m, context.time.dt_s)?;
         self.report(context, id, position_world_m)
     }
@@ -234,6 +243,8 @@ impl Courier {
                 self.running = Some(running);
                 self.via_world_m = message.value.via_world_m;
                 self.passed_via = false;
+                self.near_site_since_s = None;
+                self.run_out_world_m = None;
                 self.carrying = Some(message.value.request_id);
                 self.skill_name = Some(message.value.skill);
             }
@@ -259,8 +270,31 @@ impl Courier {
         id: i32,
         now_s: f64,
         position_world_m: Vec3,
+        velocity_world_mps: Vec3,
     ) -> Result<()> {
         let fixed_wing = self.card.class == VehicleClass::FixedWing;
+        if fixed_wing
+            && self.run_in_m > 0.0
+            && let Some(site_world_m) = self.running.as_ref().map(|r| r.target().0)
+        {
+            let distance_m = horizontal_m(position_world_m, site_world_m);
+            match self.run_out_world_m {
+                // Out: aim at the site again, with a fresh minute to reach it.
+                Some(point)
+                    if distance_m >= self.run_in_m || self.reached(position_world_m, point) =>
+                {
+                    self.run_out_world_m = None;
+                    self.near_site_since_s = None;
+                }
+                Some(_) => {}
+                None => {
+                    if self.circling(now_s, distance_m) {
+                        self.run_out_world_m =
+                            Some(self.run_out_point(position_world_m, velocity_world_mps));
+                    }
+                }
+            }
+        }
         let at_hub = |position: Vec3, hub: Vec3, arrival_m: f64| {
             horizontal_m(position, hub) <= self.hub_radius_m
                 && (fixed_wing || (position - hub).norm() <= arrival_m)
@@ -289,6 +323,8 @@ impl Courier {
                 }
                 if running.done() {
                     self.running = None;
+                    self.near_site_since_s = None;
+                    self.run_out_world_m = None;
                     self.phase = Phase::Returning;
                     // Return through the waypoint too.
                     self.passed_via = self.via_world_m.is_none();
@@ -347,10 +383,14 @@ impl Courier {
             (Some(_), _) if !self.passed_via => {
                 (self.via_world_m.unwrap_or(self.hub_world_m), false)
             }
-            (Some(running), _) => {
-                let (target_world_m, descend) = running.target();
-                (target_world_m, !fixed_wing && descend)
-            }
+            // The skill's target, or the run-out point from a site it circled.
+            (Some(running), _) => match self.run_out_world_m {
+                Some(point_world_m) => (point_world_m, false),
+                None => {
+                    let (target_world_m, descend) = running.target();
+                    (target_world_m, !fixed_wing && descend)
+                }
+            },
             (None, Phase::Returning) if !self.passed_via => {
                 (self.via_world_m.unwrap_or(self.hub_world_m), false)
             }
@@ -401,6 +441,39 @@ impl Courier {
             self.last_reported = Some((self.phase, self.hub));
         }
         Ok(())
+    }
+
+    /// Whether a fixed-wing has been within `run_in_m` of its site for
+    /// `CIRCLING_S` without delivering. Aimed straight at a site inside its
+    /// turning circle, an aircraft circles the site without ever passing
+    /// over it: a lent flight to a clinic a few hundred meters from its own
+    /// hub, taken up from the loiter, circled it until it ran dry. A pass
+    /// that misses the site turns back and lines up within a turn, so a
+    /// minute nearby without a release means it cannot; it then runs out to
+    /// the fixed point `run_in_m` ahead (`run_out_point`) and aims at the
+    /// site again from there. Flights that never linger are untouched.
+    fn circling(&mut self, now_s: f64, distance_m: f64) -> bool {
+        if distance_m >= self.run_in_m {
+            self.near_site_since_s = None;
+            return false;
+        }
+        let since_s = *self.near_site_since_s.get_or_insert(now_s);
+        now_s - since_s > CIRCLING_S
+    }
+
+    /// Whether the aircraft has come within the arrival radius of a point.
+    fn reached(&self, position_world_m: Vec3, point_world_m: Vec3) -> bool {
+        horizontal_m(position_world_m, point_world_m) <= self.arrival_radius_m.max(20.0)
+    }
+
+    /// The point `run_in_m` straight ahead.
+    fn run_out_point(&self, position_world_m: Vec3, velocity_world_mps: Vec3) -> Vec3 {
+        let speed_mps = velocity_world_mps.x.hypot(velocity_world_mps.y);
+        if speed_mps < 1e-6 {
+            return position_world_m;
+        }
+        let heading = Vec3::new(velocity_world_mps.x, velocity_world_mps.y, 0.0) / speed_mps;
+        position_world_m + heading * self.run_in_m
     }
 
     /// A point a little ahead on a counterclockwise circle around the hub.
@@ -457,13 +530,36 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_courier_uses_the_explicit_home_position() {
-        let mut config = CourierConfig {
+    fn a_fixed_wing_near_a_site_for_a_minute_runs_out_and_back() {
+        let config = CourierConfig {
+            class: Some(VehicleClass::FixedWing),
             hub: 1,
+            arrival_radius_m: 75.0,
+            run_in_m: 500.0,
             ..CourierConfig::default()
         };
-        config.region.hub_positions_m = vec![[2300.0, -1700.0]];
-        let courier = Courier::new(&config);
-        assert_eq!(courier.hub_world_m, Vec3::new(2300.0, -1700.0, 0.0));
+        let mut courier = Courier::new(&config);
+        // Near the site: a pass takes under a minute, then it is circling.
+        assert!(!courier.circling(0.0, 100.0));
+        assert!(!courier.circling(59.0, 120.0));
+        assert!(courier.circling(61.0, 110.0));
+        // Out past run_in_m the clock resets; coming back starts it again.
+        assert!(!courier.circling(70.0, 500.0));
+        assert!(!courier.circling(100.0, 100.0));
+        assert!(!courier.circling(150.0, 100.0));
+        assert!(courier.circling(161.0, 100.0));
+        let east = Vec3::new(25.0, 0.0, 0.0);
+        let point = courier.run_out_point(Vec3::zeros(), east);
+        assert_eq!(point, Vec3::new(500.0, 0.0, 0.0));
+        // The run-out ends within the arrival radius of that fixed point.
+        assert!(!courier.reached(Vec3::new(400.0, 0.0, 120.0), point));
+        assert!(courier.reached(Vec3::new(450.0, 20.0, 120.0), point));
+        // Off, nothing is ever circling.
+        let mut plain = Courier::new(&CourierConfig {
+            run_in_m: 0.0,
+            ..config
+        });
+        assert!(!plain.circling(0.0, 100.0));
+        assert!(!plain.circling(1000.0, 100.0));
     }
 }

@@ -27,15 +27,23 @@ ripple run crates/delivery/missions/region.yaml --headless $D.region.hubs:=256
 ```
 
 `region.hubs` is a square number, 1 to 1,024, five vehicles per hub;
-`fleet` sets how many of each recipe a hub gets. `region-1-checked.yaml` is
-the same day on the Rascal and the Firefly. The sweep files set the size the
+`fleet` sets how many of each recipe a hub gets, `per_hub` for every hub or
+`counts`, one number per hub in hub order. With `region.block_side`, the
+counts and the scripted events are written for a block of that many hubs a
+side and laid over every block of the grid, each block turned or mirrored by
+its number; a scripted event then names hubs only. `region-1-checked.yaml`
+is the same day on the Rascal and the Firefly. The sweep files set the size the
 same way, as a parameter.
 
-For the matched grid and jitter comparison, `region.py --policy-sweeps
-FOLDER` writes five matched days' six-policy sweeps without model calls;
-`--jitter-km` and `--min-spacing-km` displace the hubs, written into the
-sweep as `region.hub_positions_m`, and `--layout-seed` keys the displacement
-apart from the demand seed.
+`region.layout` displaces the hubs from the grid: each moves up to
+`jitter_m` from its grid point, hubs stay `min_spacing_m` apart, and `seed`
+keys the layout apart from the demand seed, so a sweep names a layout by one
+number (0 is the grid). `region.hub_positions_m`, one [east, north] per hub,
+places them by hand instead. For the matched grid and jitter comparison,
+`region.py --policy-sweeps FOLDER` writes five matched days' six-policy
+sweeps without model calls; its `--jitter-km`, `--min-spacing-km` and
+`--layout-seed` draw the same layouts and write them out as
+`region.hub_positions_m`.
 
 Any setting can be changed on the command line. The prefix for the
 dispatcher is `entities.region.autonomy.Dispatcher`:
@@ -56,7 +64,7 @@ side. The tests in `tests/region.rs` run short days of the same missions.
 | Module | What it holds |
 | --- | --- |
 | `region.rs` | Hubs on a square grid, 15 km apart; each hub's six clinics and two hospital rooftops with ground pads. Site codes are `3A` or `3H1`. |
-| `courier.rs` | The vehicle autonomy: flies an assignment with a skill, returns, reloads, relocates to a new hub, reports status, and is lost when its endurance runs out away from a hub. |
+| `courier.rs` | The vehicle autonomy: flies an assignment with a skill, returns, reloads, relocates to a new hub, reports status, and is lost when its endurance runs out away from a hub. A fixed-wing near a site for a minute without delivering is circling it and runs out `run_in_m` to come back in straight. |
 | `skill.rs`, `skill/` | `drop` (parachute release on a pass or hover) and `land` (multirotors only, on rooftops). Either can go out and back through one `via` waypoint for a detour. |
 | `dispatcher.rs` | One per region: stock per hub, the day's requests, events, the rules in force, the fleet manager's calls, and the assignment of each request to a vehicle. Draws the hubs, the sites and the areas closed now in the viewer. Its helpers are the files in `dispatcher/`: the mission keys (`config.rs`), each tick's bookkeeping (`day.rs`), the fleet managers, their scopes and their calls (`calls.rs`), the prompts (`prompt.rs`), each order's checks and effect (`apply.rs`), and assignment (`assign.rs`). |
 | `event.rs` | The eight event kinds, their seeded script, and their texts from the mission. |
@@ -161,20 +169,46 @@ splits the same way, which measures what the split alone costs.
 `manager.top_kind` adds a help manager (`replanner` or `model`;
 `top_model` names its model, or `model` is used), called after the
 managers over the region or the clusters. It gives only `help` orders.
+
 When a surge or outage starts at a hub, the hub asks for aircraft, and the
-help manager is shown each request with the hubs that can spare aircraft
-above half their own, reach the hub's farthest site and return, and are
-not asking themselves (`help.rs`). A `help` order lets one of them serve the hub's
-sites until a minute; its aircraft fly each request and come home, so
-nothing is relocated. A pair the dispatcher did not offer is refused
-(`refused_not_offered`) whether or not the checker is on. The lender is
-protected at every assignment: it keeps half of each class idle, counting
-vehicles already taken in the pass, and flies only a request it arrives at
-before the deadline. The main study's `serve_from` keeps its own behavior.
-The help manager sees the new surges, outages, shortages and weather, the
-requests and offers, and the hub view (`view`). With `top_kind: replanner` a fixed
-rule grants each request its nearest offer, one donor per request and each
-donor once per call. Its calls and orders are counted as `top_calls` and
+help manager is shown each request with its offers (`help.rs`): hubs that
+are not asking or lending themselves, can spare aircraft above half their
+own of a class, and whose aircraft of that class reach at least one of the
+hub's sites within a trauma deadline and return on one charge. Each offer
+gives the hub's distance, how many of the asking hub's sites each class
+reaches in time, the hub's own waiting requests, and the minutes to the
+nearest site, rounded as shown, so a fixed rule and a model choose from
+the same numbers.
+
+A `help` order lets one offered hub serve the asking hub's sites until the
+hub's event ends; its aircraft fly each request and come home, so nothing
+is relocated. A hub helps one hub at a time. A pair the dispatcher does
+not offer is refused (`refused_not_offered`) whether or not the checker is
+on, and so is a second grant to a hub already helped
+(`refused_already_helped`). The lender is protected at every assignment:
+it keeps half of each class idle, counting vehicles already taken in the
+pass, and flies only a request it arrives at before the deadline. The
+main study's `serve_from` keeps its own behavior.
+
+With `top_kind: replanner`, the fixed rule `help_rule` grants each request
+one offer, one donor per request and each donor once per call: `nearest`
+takes the nearest offer; `feasible` the offer with the most aircraft to
+spare over its own waiting requests, then the earliest arrival; `random`
+any offer, drawn by the asking hub and the call's time, which measures
+what the choice is worth once the offers are listed.
+
+With `top_kind: model`, the model sees the new surges, outages, shortages
+and weather, the requests and offers, and with `top_report: full` the hub
+view (`view`); `top_report: compact` leaves the hub view out. `hide` lists
+offer facts left off every offer line, to test which the decision rests
+on: `spare` (the aircraft by class), `reach` (the sites each class reaches
+in time), `backlog` (the hub's own waiting requests), `arrival` (the
+minute its first aircraft arrives); the `spare` phrase carries `reach`, so
+hiding `spare` hides both. An arm that hides a fact should also give
+`prompt.system` a system prompt naming only the facts its lines carry, as
+`incident-hide-16.sweep.yaml` does.
+
+The help manager's calls and orders are counted as `top_calls` and
 `top_orders`. The score counts `helps`, `hub_NNN_lent` and
 `hub_NNN_helped`, and for any lending, by help or by `serve_from`, the
 flights from a hub other than the request's own as `lent_flights`,

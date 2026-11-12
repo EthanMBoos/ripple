@@ -4,15 +4,15 @@
 
 The paper asks how a language-model manager handles competing needs across
 a fleet, and what it should see and be allowed to order as the fleet grows.
-On the main study's eight-hour days, every model tried moves aircraft or
-stock in at least one role, including when it only vetoes a replanner's
+On the main study's 8.5-hour missions, every tested model moves aircraft
+or stock in at least one role, including when it only vetoes a replanner's
 orders or writes rules before the day. Local rules and lending flights do
 better: moving to a stressed hub costs the giving hubs more requests than
 it saves elsewhere. A reserve guard limits the moves directly. These
 findings are written up in
 [paper/manuscript/main.tex](../paper/manuscript/main.tex), with the policy
-table at 4 to 1,024 hubs, forty model runs, the loss figure, the interface
-ladder, and the surge-length check.
+table at 4 to 1,024 hubs, forty model runs, the loss figure, the fleet API
+study, and the surge-length check.
 
 Before submitting:
 
@@ -20,14 +20,20 @@ Before submitting:
   eight-hour per-hub results behind the pooled bars, replace Luna's CLI
   contribution, regenerate against matched local-rules runs, recheck the
   caption and the donor-loss discussion, and remove the caption's TODO.
+- Try a Figure 1 variant that keeps the flight maps but uses the right
+  panel's lower callouts for the fleet API result: the compact report
+  shows requests and feasible lenders, and random < nearest < spare
+  rule ≈ models. Render both versions at page size and keep the clearer
+  one. Add 256-hub numbers only after the final rerun. If the lending
+  mission is still hard to picture, try a small map of its 16-hub block.
 - Commit and push the current appendix PDF so the paper's repository link
   opens the version described.
 - Record the demo video from the title-figure recording.
 - Run `reference/suite.py --release --retain` so `paper/data/` reflects
   the current engine.
 - Explain in the setup why identical hubs isolate the cost of moving
-  capacity. Add a service-radius comparison only if the cited medical-drone
-  operation supports one.
+  aircraft and stock. Add a service-radius comparison only if the cited
+  medical-drone operation supports one.
 - Add a demand-sized replanner as a robustness row: it sizes each
   reposition from the backlog in view instead of a fixed four fixed-wing
   and two multirotors per surge hub. Run it at 4, 16 and 64 hubs with no
@@ -39,47 +45,45 @@ Before submitting:
 
 Submit to RA-L in the first days of December. RA-L takes six pages
 including references, two more at a charge, nothing beyond eight; the
-paper is seven. Check the author page for current terms first.
+last render was seven. Re-render after these edits and check the author
+page for current terms.
 
-## The fleet API, still to do
+## The fleet API
 
-What we want to show is plain: an API that lets a model manage a small
-fleet, where it strains as the fleet grows, and a change to the API that
-lets it keep working at the larger size. The fleet API is the report the
-model sees and the orders the dispatcher accepts.
+The fleet API is the report the model sees and the orders the dispatcher
+accepts. The main mission gives a model little choice about lending: the
+deadline is short and neighboring hubs have equal fleets. The
+`incident.yaml` mission changes the spacing, demand, and fleet sizes so
+several hubs can ask for help from different lenders. Fixed rules first
+show that the choice affects deliveries on held-out days. Models then
+receive the same help order while we vary the report and fleet size.
 
-On the main day there is no fleet decision for a model to make. Help
-touches about 50 of 7,280 requests, the nearest donor is always the right
-one, and a fixed rule is as good as any choice; a whole-region model never
-beats local rules at any size, and bounding it to help makes it harmless
-and equal to the fixed rule. The plan in [INCIDENT_PLAN.md](INCIDENT_PLAN.md)
-builds a day where the decision matters first, proves that with fixed
-policies on incidents they were not tuned on, and only then compares a
-full report with a compact one, small before large. Its steps, in order:
+Results in hand: the rule that favors lenders with aircraft to spare
+over their own backlog beats the nearest-lender rule by 1.9 points at
+16 hubs and about 2.5 at 64. The first ten 256-hub fixed-rule days show
+a similar gap. Haiku and Opus score within 0.3 points of the spare-aware
+rule on ten held-out 16-hub days and ten fresh 64-hub days. A full hub
+report uses more prompt characters without a consistent score gain over
+the compact report in paired runs. The four-day 64-hub pilot suggested
+a gap that ten fresh days did not confirm. This supports the compact
+report for this lending decision through 64 hubs; it does not establish
+a fleet API for every kind of order.
 
-- The offer rule by any reachable site, a backlog and an arrival time in
-  each offer line, and a scripted surge that names its hubs exactly.
-- Per-hub fleet sizes in the dispatcher's config.
-- The feasible help rule and the oracle beside the broker in
-  `crates/delivery/src/help.rs`, and a compact report for the help
-  manager, requests and offers without the hub view.
-- The incident mission beside `region.yaml`, tuned on its build seeds,
-  then frozen; the gate sweep over new seeds and placements. The sweep's
-  header states the question, not the outcome.
-- Models at 16 hubs only after the gate passes; size after that. No model
-  call before the gate.
+Still to do:
 
-Known from the no-model runs, and settings the incident changes: at 15 km
-spacing and a 15-minute trauma deadline a lent flight reaches almost
-nothing in time; a 15-minute surge is over before a second call; equal
-fleets make the nearest donor the best; one surge at a time leaves donors
-uncontested. Help is on time by construction: a lender keeps half of each
-class idle and flies only what arrives by the deadline, and a pair the
-dispatcher did not offer is refused.
+- Finish the 256-hub fixed-rule days and trace the aircraft lost on three
+  help-rule days. Report the loss rather than calling checked help
+  harmless.
+- Run Haiku and Opus at 256 hubs on matched held-out days with the
+  compact report. A claim comparing report choices at 256 also needs
+  full-report runs there. Record score, misses at lending hubs, lent
+  deliveries, aircraft lost, calls, and prompt size.
+- Update the paper's table and text from completed runs. Keep unrun
+  comparisons marked Planned.
 
-If the gate misses submission, the Fleet API section moves to future work
-and the introduction's question narrows; no planned comparison is
-presented as a result.
+The mission and sweep files are in `crates/delivery/missions/incident*`;
+the help order and report fields are in the
+[delivery README](../crates/delivery/README.md).
 
 ## Loose ends, not needed for submission
 

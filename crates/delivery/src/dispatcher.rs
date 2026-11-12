@@ -46,7 +46,7 @@ use crate::messages::{
     DELIVERED_TOPIC, Delivered, ManagerKind, MissReason, Request, STATUS_TOPIC, Status,
 };
 use crate::model::ModelManager;
-use crate::region::{Region, RegionConfig, SiteKind};
+use crate::region::{Region, SiteKind};
 use crate::rules::Rules;
 use crate::scope::Scope;
 
@@ -61,11 +61,11 @@ use calls::{Decider, Manager};
 pub use config::DispatcherConfig;
 use day::TRANSFER_REQUEST_BASE;
 
-/// What a spawn request lays over a courier recipe: its hub and the region.
+/// What a spawn request lays over a courier recipe: its hub and where it is.
 #[derive(Serialize)]
 struct CourierHome {
     hub: u32,
-    region: RegionConfig,
+    hub_world_m: Vec3,
 }
 
 /// When a vehicle was told to relocate, until it reports doing so.
@@ -132,6 +132,8 @@ pub struct Dispatcher {
     moved: Vec<(u32, u32)>,
     /// Hubs asking the help manager for aircraft (`help.rs`).
     help_requests: Vec<HelpRequest>,
+    /// The random help rule's numbers, from the plugin's at start.
+    help_random: Option<PluginRandom>,
     /// Late deliveries since the last call, by hub.
     late_by_hub: BTreeMap<u32, u32>,
     scripted_fired: usize,
@@ -254,6 +256,7 @@ impl Autonomy for Dispatcher {
             move_costs: Vec::new(),
             moved: Vec::new(),
             help_requests: Vec::new(),
+            help_random: None,
             late_by_hub: BTreeMap::new(),
             scripted_fired: 0,
             last_call_s: 0.0,
@@ -289,19 +292,28 @@ impl Autonomy for Dispatcher {
             event.text = self.config.events.text(event);
         }
         self.draw_requests(&context.random.with(&[PluginRandom::name("requests")]))?;
+        self.help_random = Some(context.random.with(&[PluginRandom::name("help")]));
         // The fleet: each hub's couriers, built by the engine from their
         // recipes at the hub, with the hub and the region laid over.
         for hub in &self.region.hubs {
             for entry in &self.config.fleet {
+                let count = entry
+                    .counts
+                    .get(self.region.local_hub(hub.id) as usize - 1)
+                    .copied()
+                    .unwrap_or(entry.per_hub);
+                if count == 0 {
+                    continue;
+                }
                 let start_world_m = hub.position_world_m + Vec3::new(0.0, 0.0, entry.altitude_m);
                 let request = SpawnRequest::recipe(&entry.recipe)
-                    .count(entry.per_hub as usize)
+                    .count(count as usize)
                     .at(start_world_m)
                     .autonomy(
                         "Courier",
                         CourierHome {
                             hub: hub.id,
-                            region: self.config.region.clone(),
+                            hub_world_m: hub.position_world_m,
                         },
                     )?;
                 self.spawn_queue.push_back(request);

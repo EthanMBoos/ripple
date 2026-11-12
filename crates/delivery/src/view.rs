@@ -45,12 +45,28 @@ pub struct HubView {
     pub out: bool,
 }
 
+/// What the help manager's report holds besides the requests and offers.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TopReport {
+    /// The hub view (`ViewKind`) of every hub.
+    #[default]
+    Full,
+    /// Nothing more: the requests and the offers alone.
+    Compact,
+}
+
 /// The state at one call, limited to the hubs the manager's scope covers.
 pub struct Snapshot<'a> {
     pub time_s: f64,
     pub day_s: f64,
+    /// A trauma request's time from opening to deadline, the time a lent
+    /// flight has to arrive.
+    pub trauma_deadline_s: f64,
     pub region: &'a Region,
     pub hubs: Vec<HubView>,
+    /// Hubs lending to another hub now; a hub helps one hub at a time.
+    pub lending: Vec<u32>,
     /// One vehicle card per class, for range estimates.
     pub cards: BTreeMap<VehicleClass, VehicleCard>,
     pub range_margin: f64,

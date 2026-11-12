@@ -5,7 +5,7 @@
 //! help manager. A tier's orders are recorded and applied once
 //! all of its managers have decided, so they decide on the same state.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use ripple_core::plugin::AgentContext;
 
 use super::Dispatcher;
@@ -157,11 +157,13 @@ impl Dispatcher {
 
     /// Raises a help request for each hub where a surge or an outage just
     /// started, until the event ends, and drops the requests that have
-    /// ended. A hub asks once; a granted request is dropped when applied.
-    /// Raised before the first tier decides, so a help manager over the
-    /// region sees them in the same call.
+    /// ended or been granted. A hub asks once. Raised before the first tier
+    /// decides, so a help manager over the region sees them in the same
+    /// call.
     fn ask_for_help(&mut self, now_s: f64, due: &[usize]) {
-        self.help_requests.retain(|r| r.until_s > now_s);
+        let lends = &self.rules.lends;
+        self.help_requests
+            .retain(|r| r.until_s > now_s && !lends.iter().any(|l| l.hub == r.hub));
         let day_end_s = self.config.requests.until_s + 3600.0;
         let mut asked = Vec::new();
         for event in self.started(due) {
@@ -249,7 +251,14 @@ impl Dispatcher {
         };
         let mut unreadable = 0;
         let orders = match &manager.decider {
-            Decider::Replanner if manager.above => help::broker(&self.help_requests, &snapshot),
+            Decider::Replanner if manager.above => help::grant(
+                self.config.manager.help_rule,
+                &self.help_requests,
+                &snapshot,
+                self.help_random
+                    .as_ref()
+                    .context("the help manager was called before the dispatcher started")?,
+            ),
             Decider::Replanner => replanner::plan(&mine, &snapshot),
             Decider::Policy(policy) => policy.plan(&mine, &snapshot),
             Decider::Model(model) => {

@@ -1,5 +1,6 @@
 //! The region missions end to end: a day is delivered and identical across
-//! workers, an avoid order keeps flights out of a closure, the replanner
+//! workers, a fleet entry with counts builds each hub's own number, an avoid
+//! order keeps flights out of a closure, the replanner
 //! answers a surge with repositions, the help manager lends a hub within
 //! reach and refuses a pair it did not offer, and a fake model client gives
 //! orders and replays offline from the saved replies.
@@ -84,6 +85,33 @@ fn a_one_hub_day_is_delivered_and_identical_across_workers() -> Result<()> {
 }
 
 #[test]
+fn a_fleet_entry_with_counts_builds_each_hubs_own_number() -> Result<()> {
+    // Four hubs with 5, 1, 3 and 0 fixed-wing and two multirotors each: the
+    // region entity and 9 + 8 couriers.
+    let fleet = "[{recipe: fixed_wing, per_hub: 3, counts: [5, 1, 3, 0], altitude_m: 120}, \
+                 {recipe: multirotor, per_hub: 2}]";
+    let changes = with(hubs(short_day(20), 4), "fleet", fleet);
+    let (values, positions) = run("region.yaml", &changes, 1)?;
+    assert_eq!(positions.len(), 18, "{values:?}");
+    let wrong = with(
+        hubs(short_day(20), 4),
+        "fleet",
+        "[{recipe: fixed_wing, counts: [1, 2]}]",
+    );
+    assert!(run("region.yaml", &wrong, 1).is_err());
+    // The same counts written for a block of four hubs, laid over the four
+    // blocks of a 16-hub region: 4 x 9 fixed-wing and 32 multirotors.
+    let tiled = with(
+        with(hubs(short_day(20), 16), "fleet", fleet),
+        "region.block_side",
+        "2",
+    );
+    let (values, positions) = run("region.yaml", &tiled, 1)?;
+    assert_eq!(positions.len(), 69, "{values:?}");
+    Ok(())
+}
+
+#[test]
 fn an_avoid_order_keeps_new_flights_out_of_a_closure() -> Result<()> {
     // A closure over hub 1's clinics A and B, not its hospitals, all day.
     let circle = "{circle: {center_km: [3.5, 4.5], radius_km: 3.5}}";
@@ -145,8 +173,10 @@ fn a_help_manager_over_the_region_lends_only_what_arrives_on_time() -> Result<()
 
 #[test]
 fn a_help_order_for_a_pair_not_offered_is_refused() -> Result<()> {
-    // The fake help manager names the far corner of a 16-hub region, which
-    // no offer lists: too far to fly a round trip to hub 1's sites.
+    // The fake help manager grants hub 1 its neighbor hub 2, then names a
+    // second donor for hub 1, refused as already helped, then the far
+    // corner of the 16-hub region, which no offer lists: too far to fly a
+    // round trip to hub 1's sites.
     let dir = std::env::temp_dir().join(format!("ripple-fake-help-{}", std::process::id()));
     std::fs::create_dir_all(&dir)?;
     let command = dir.join("model");
@@ -155,8 +185,9 @@ fn a_help_order_for_a_pair_not_offered_is_refused() -> Result<()> {
         "#!/usr/bin/env python3\n\
          import sys\n\
          sys.stdin.read()\n\
-         print('{\"orders\": [{\"help\": {\"hub\": 1, \"from_hub\": 16, \
-         \"until_min\": 60}}]}')\n",
+         print('{\"orders\": [{\"help\": {\"hub\": 1, \"from_hub\": 2}}, \
+         {\"help\": {\"hub\": 1, \"from_hub\": 5}}, \
+         {\"help\": {\"hub\": 1, \"from_hub\": 16}}]}')\n",
     )?;
     #[cfg(unix)]
     {
@@ -174,8 +205,9 @@ fn a_help_order_for_a_pair_not_offered_is_refused() -> Result<()> {
     let changes = with(base, "manager.command", command.to_str().unwrap());
     let (values, _) = run("region.yaml", &changes, 1)?;
     assert!(values["top_calls"] >= 1.0, "{values:?}");
+    assert_eq!(values["applied_help"], 1.0, "{values:?}");
+    assert!(values["refused_already_helped"] >= 1.0, "{values:?}");
     assert!(values["refused_not_offered"] >= 1.0, "{values:?}");
-    assert!(!values.contains_key("applied_help"), "{values:?}");
     std::fs::remove_dir_all(&dir)?;
     Ok(())
 }

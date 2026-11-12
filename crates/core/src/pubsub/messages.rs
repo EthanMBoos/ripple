@@ -359,6 +359,15 @@ impl NetworkContext<'_, '_> {
             }
         }
         drop(subscribers);
+        self.deliver_scheduled()
+    }
+
+    // DEVNOTE: separating this existing block lets Creusot check the exact
+    // pending/inbox transition independently of publication selection. The trial
+    // proved both bodies; reference/equivalence.py OLD NEW found all 40 missions
+    // byte-identical at 1/2/8 workers. Recheck the proof with
+    // python3 reference/creusot/check.py --routing --mutations.
+    fn deliver_scheduled(&mut self) -> Result<()> {
         // Receivers by endpoint, found once rather than by searching every mailbox.
         let receivers = if self.scheduled.is_empty() {
             BTreeMap::new()

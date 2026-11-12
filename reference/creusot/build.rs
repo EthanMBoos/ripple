@@ -156,6 +156,42 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
             } else {
                 syn::parse_quote!(#[invariant(valid_receivers(receivers, mailboxes@))])
             });
+            if !self.subscriber {
+                expr.body.stmts.insert(0, syn::parse_quote!(proof_assert! {
+                    index@ == produced.inner().len() - 1 && mailboxes@[index@].endpoint.deep_model() == mailbox.endpoint.deep_model()
+                };));
+                expr.body.stmts.insert(0, syn::parse_quote!(proof_assert! {
+                    creusot_std::std::iter::IteratorSpec::produces(iter_old.inner(), produced.inner(), iter)
+                };));
+                expr.body.stmts.insert(
+                    1,
+                    syn::parse_quote!(proof_assert! {
+                    index@ == produced.inner().len() - 1 && index@ < mailboxes@.len() &&
+                    produced.inner()[index@] == (index, mailbox)
+                };),
+                );
+                expr.body.stmts.insert(
+                    3,
+                    syn::parse_quote!(proof_assert! {
+                    mailbox_endpoints(mailboxes@)[index@] == mailbox.endpoint.deep_model() &&
+                    index@ < mailbox_endpoints(mailboxes@).len()
+                };),
+                );
+                expr.body.stmts.insert(4, syn::parse_quote!(proof_assert! {
+                    mailbox_endpoints(mailboxes@).subsequence(0, produced.inner().len()) ==
+                        mailbox_endpoints(mailboxes@).subsequence(0, index@).push_back(mailbox.endpoint.deep_model())
+                };));
+                expr.body.stmts.push(syn::parse_quote!(proof_assert! {
+                    receivers@.ext_eq(endpoint_index(mailbox_endpoints(mailboxes@).subsequence(0, produced.inner().len())))
+                };));
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    receivers@ == endpoint_index(mailbox_endpoints(mailboxes@).subsequence(0, produced.inner().len()))
+                )]));
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    forall<i> 0 <= i && i < produced.inner().len() ==>
+                        receivers@.get(mailboxes@[i].endpoint.deep_model()) != None
+                )]));
+            }
             if self.subscriber
                 && quote!(#expr)
                     .to_string()
@@ -190,7 +226,7 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
                 expr.body.stmts.insert(
                     0,
                     syn::parse_quote!(proof_assert! {
-                    mailboxes@[index@] == *mailbox
+                    mailboxes@[index@].endpoint.deep_model() == mailbox.endpoint.deep_model()
                 };),
                 );
             }
@@ -208,13 +244,75 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
         fn visit_expr_for_loop_mut(&mut self, expr: &mut syn::ExprForLoop) {
             let collection = &expr.expr;
             let text = quote!(#collection).to_string();
+            expr.body.stmts.insert(0, syn::parse_quote!(proof_assert! {
+                creusot_std::std::iter::IteratorSpec::produces(iter_old.inner(), produced.inner(), iter)
+            };));
+            if text.contains("mailboxes . iter_mut") {
+                expr.body.stmts.insert(
+                    1,
+                    syn::parse_quote!(proof_assert! {
+                    produced.inner().len() <= _route_outboxes.inner().len() &&
+                    mailbox.messages.outbox@ == _route_outboxes.inner()[produced.inner().len() - 1]
+                };),
+                );
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    produced.inner().len() + (*iter@)@.len() == _route_outboxes.inner().len() &&
+                    (forall<i> 0 <= i && i < (*iter@)@.len() ==>
+                        (*iter@)@[i].messages.outbox@ == _route_outboxes.inner()[i + produced.inner().len()])
+                )]));
+                expr.body.stmts.insert(2, syn::parse_quote!(proof_assert! {
+                    mailbox.messages.inbox@ == _route_queues.inner()[produced.inner().len() - 1] &&
+                    mailbox.endpoint.deep_model() == _route_endpoints.inner()[produced.inner().len() - 1] &&
+                    (_quiet.inner() ==> forall<j> 0 <= j && j < mailbox.messages.outbox@.len() ==>
+                        mailbox.messages.outbox@[j].channel.0@ != _network_name.inner())
+                };));
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    forall<i> 0 <= i && i < produced.inner().len() ==>
+                        (^produced.inner()[i]).messages.inbox@ == _route_queues.inner()[i] &&
+                        (^produced.inner()[i]).endpoint.deep_model() == _route_endpoints.inner()[i]
+                )]));
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    forall<i> 0 <= i && i < (*iter@)@.len() ==>
+                        (*iter@)@[i].messages.inbox@ == _route_queues.inner()[i + produced.inner().len()] &&
+                        (*iter@)@[i].endpoint.deep_model() == _route_endpoints.inner()[i + produced.inner().len()]
+                )]));
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    _quiet.inner() ==> forall<i, j> 0 <= i && i < (*iter@)@.len() &&
+                        0 <= j && j < (*iter@)@[i].messages.outbox@.len() ==>
+                        (*iter@)@[i].messages.outbox@[j].channel.0@ != _network_name.inner()
+                )]));
+            }
+            if text.contains("messages . outbox") {
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    _publication_source.inner() == produced.inner().concat(iter@)
+                )]));
+                expr.body.stmts.insert(
+                    1,
+                    syn::parse_quote!(proof_assert! {
+                    _quiet.inner() ==> publication.channel.0@ != _network_name.inner()
+                };),
+                );
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    _quiet.inner() ==> forall<i> 0 <= i && i < _publication_source.inner().len() ==>
+                        _publication_source.inner()[i].channel.0@ != _network_name.inner()
+                )]));
+            }
             if text.contains("mailboxes . iter_mut") || text.contains("messages . outbox") {
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    _quiet.inner() ==> publications@.len() == 0
+                )]));
                 expr.attrs.push(syn::parse_quote!(#[invariant(
                     forall<i> 0 <= i && i < publications@.len() ==>
                         publications@[i].1.channel.0@ == _network_name.inner()
                 )]));
             }
             if text == "publications" || text == "receivers" {
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    self.time == _route_time.inner() &&
+                    mailbox_queues(self.mailboxes@) == _route_queues.inner() &&
+                    mailbox_endpoints(self.mailboxes@) == _route_endpoints.inner() &&
+                    (_quiet.inner() ==> self.scheduled@ == _route_scheduled.inner())
+                )]));
                 expr.attrs
                     .push(syn::parse_quote!(#[invariant(self.name@ == _network_name.inner())]));
                 expr.attrs.push(syn::parse_quote!(#[invariant(valid_subscribers(subscribers, self.mailboxes@, within_entity))]));
@@ -245,9 +343,96 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
                 )]));
             }
             if text.contains("self . scheduled") {
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    _scheduled_before.inner().len() == 0 ==>
+                        mailbox_queues(self.mailboxes@) == _queues_before.inner()
+                )]));
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    _scheduled_before.inner() == produced.inner().concat(iter@)
+                )]));
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    self.time == _time_before.inner() &&
+                    mailbox_endpoints(self.mailboxes@) == _endpoints_before.inner()
+                )]));
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    pending@ == pending_messages(produced.inner(), receivers@, _delivery_cutoff_s)
+                )]));
+                expr.attrs.push(syn::parse_quote!(#[invariant(
+                    delivery_queues(_queues_before.inner(), mailbox_queues(self.mailboxes@), produced.inner(),
+                        receivers@, _delivery_cutoff_s, self.time.time_s)
+                )]));
+                expr.body.stmts.insert(
+                    0,
+                    syn::parse_quote!(proof_assert! {
+                    message == produced.inner()[produced.inner().len() - 1] &&
+                    produced.inner() == produced.inner().pop_back().push_back(message)
+                };),
+                );
+                expr.body.stmts.insert(1, syn::parse_quote!(proof_assert! {
+                    pending@ == pending_messages(produced.inner().pop_back(), receivers@, _delivery_cutoff_s) &&
+                    delivery_queues(_queues_before.inner(), mailbox_queues(self.mailboxes@), produced.inner().pop_back(),
+                        receivers@, _delivery_cutoff_s, self.time.time_s)
+                };));
+                expr.body.stmts.insert(2, syn::parse_quote!(proof_assert! {
+                    pending_messages(produced.inner(), receivers@, _delivery_cutoff_s) ==
+                    if receivers@.get(message.receiver.deep_model()) != None &&
+                        !delivery_due(message.envelope.delivered_at_s, _delivery_cutoff_s) {
+                        pending_messages(produced.inner().pop_back(), receivers@, _delivery_cutoff_s).push_back(message)
+                    } else { pending_messages(produced.inner().pop_back(), receivers@, _delivery_cutoff_s) }
+                };));
+                expr.body.stmts.insert(3, syn::parse_quote!(proof_assert! {
+                    forall<i, channel> delivered_messages(produced.inner(), receivers@, i, channel,
+                        _delivery_cutoff_s, self.time.time_s) ==
+                    if (match receivers@.get(message.receiver.deep_model()) {
+                        Some(index) => index@ == i, None => false,
+                    }) && message.channel.deep_model() == channel &&
+                        delivery_due(message.envelope.delivered_at_s, _delivery_cutoff_s) {
+                        delivered_messages(produced.inner().pop_back(), receivers@, i, channel,
+                            _delivery_cutoff_s, self.time.time_s).push_back(delivered_envelope(message.envelope, self.time.time_s))
+                    } else { delivered_messages(produced.inner().pop_back(), receivers@, i, channel,
+                        _delivery_cutoff_s, self.time.time_s) }
+                };));
                 expr.attrs.push(
                     syn::parse_quote!(#[invariant(valid_receivers(receivers, self.mailboxes@))]),
                 );
+                expr.body.stmts.insert(
+                    0,
+                    syn::parse_quote!(
+                        let _iteration_queues = snapshot!(mailbox_queues(self.mailboxes@));
+                    ),
+                );
+                expr.body.stmts.insert(
+                    1,
+                    syn::parse_quote!(let _original_message = snapshot!(message);),
+                );
+                expr.body.stmts.insert(
+                    0,
+                    syn::parse_quote!(let _iteration_mailboxes = snapshot!(self.mailboxes@);),
+                );
+                expr.body
+                    .stmts
+                    .push(syn::parse_quote!(let _updated_mailbox = snapshot!(*receiver);));
+                expr.body.stmts.push(syn::parse_quote!(proof_assert! {
+                    self.mailboxes@.ext_eq(_iteration_mailboxes.inner().set(index@, _updated_mailbox.inner())) &&
+                    _updated_mailbox.inner().endpoint.deep_model() == _iteration_mailboxes.inner()[index@].endpoint.deep_model()
+                };));
+                expr.body.stmts.push(syn::parse_quote!(proof_assert! {
+                    let after = mailbox_queues(self.mailboxes@);
+                    let original = _original_message.inner();
+                    if delivery_due(original.envelope.delivered_at_s, _delivery_cutoff_s) {
+                        after.ext_eq(_iteration_queues.inner().set(index@, after[index@])) &&
+                        queue_appended(_iteration_queues.inner()[index@].get(original.channel.deep_model()),
+                            after[index@].get(original.channel.deep_model()),
+                            Seq::singleton(delivered_envelope(original.envelope, self.time.time_s))) &&
+                        (forall<channel> channel != original.channel.deep_model() ==>
+                            after[index@].get(channel) == _iteration_queues.inner()[index@].get(channel))
+                    } else { after.ext_eq(_iteration_queues.inner()) }
+                };));
+                expr.body.stmts.push(syn::parse_quote!(proof_assert! {
+                    mailbox_endpoints(self.mailboxes@).ext_eq(_endpoints_before.inner()) &&
+                    delivery_queues(_queues_before.inner(), mailbox_queues(self.mailboxes@),
+                        produced.inner(), receivers@, _delivery_cutoff_s, self.time.time_s)
+                };));
             }
             syn::visit_mut::visit_expr_for_loop_mut(self, expr);
         }
@@ -257,12 +442,35 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
             for mut statement in std::mem::take(&mut block.stmts) {
                 let text = quote!(#statement).to_string();
                 if text.starts_with("let mut publications =") {
+                    statements.push(syn::parse_quote!(let _route_time = snapshot!(self.time);));
+                    statements.push(
+                        syn::parse_quote!(let _route_scheduled = snapshot!(self.scheduled@);),
+                    );
+                    statements.push(syn::parse_quote!(let _route_queues = snapshot!(mailbox_queues(self.mailboxes@));));
+                    statements.push(syn::parse_quote!(let _route_endpoints = snapshot!(mailbox_endpoints(self.mailboxes@));));
+                    statements.push(syn::parse_quote!(let _route_outboxes = snapshot!(mailbox_outboxes(self.mailboxes@));));
                     let syn::Stmt::Local(local) = &mut statement else {
                         unreachable!()
                     };
                     local.pat = syn::Pat::Type(
                         syn::parse_quote!(mut publications: Vec<(MessageEndpoint, Publication)>),
                     );
+                }
+                if text.starts_with("let mut other_networks =") {
+                    statements.push(syn::parse_quote!(let _publication_source = snapshot!(mailbox.messages.outbox@);));
+                    statements.push(syn::parse_quote!(proof_assert! {
+                        let _ = sequence_prefixes::<Publication>;
+                        let _ = Seq::<Publication>::concat_empty;
+                        let _ = quiet_suffix;
+                        _quiet.inner() ==> forall<i> 0 <= i && i < _publication_source.inner().len() ==>
+                            _publication_source.inner()[i].channel.0@ != _network_name.inner()
+                    };));
+                }
+                if text.starts_with("let subscribers =") {
+                    statements.push(syn::parse_quote!(proof_assert! {
+                        mailbox_queues(self.mailboxes@).ext_eq(_route_queues.inner()) &&
+                        mailbox_endpoints(self.mailboxes@).ext_eq(_route_endpoints.inner())
+                    };));
                 }
                 if text.starts_with("let mailbox = & self . mailboxes [index]") {
                     statements.push(syn::parse_quote!(proof_assert! {
@@ -292,6 +500,39 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
                             sender.entity_id != None))
                     };));
                 }
+                if text.starts_with("let mut pending =") {
+                    statements.push(syn::parse_quote!(proof_assert! {
+                        let _ = empty_delivery;
+                        let _ = pending_step;
+                        let _ = delivered_step;
+                        let _ = delivery_keep_step;
+                        let _ = delivery_append_step;
+                        let _ = append_suffix::<Envelope>;
+                        let _ = sequence_prefixes::<ScheduledMessage>;
+                        let _ = mailbox_update;
+                        let _ = Seq::<ScheduledMessage>::concat_empty;
+                        let _ = sequence_prefixes::<Envelope>;
+                        true
+                    };));
+                    statements.push(syn::parse_quote!(
+                        let _delivery_cutoff_s = self.time.time_s + 1e-12;
+                    ));
+                    statements.push(syn::parse_quote!(
+                        let _scheduled_before = snapshot!(self.scheduled@);
+                    ));
+                    statements.push(syn::parse_quote!(let _time_before = snapshot!(self.time);));
+                    statements.push(syn::parse_quote!(
+                        let _endpoints_before = snapshot!(mailbox_endpoints(self.mailboxes@));
+                    ));
+                    statements.push(syn::parse_quote!(
+                        let _queues_before = snapshot!(mailbox_queues(self.mailboxes@));
+                    ));
+                }
+                if text.starts_with("let mut pending =") {
+                    statements.push(syn::parse_quote!(proof_assert! {
+                        receivers@.ext_eq(endpoint_index(mailbox_endpoints(self.mailboxes@))) || self.scheduled@.len() == 0
+                    };));
+                }
                 let is_publications = text.starts_with("let mut publications =");
                 if let syn::Stmt::Expr(syn::Expr::ForLoop(expr), _) = &statement {
                     let collection = &expr.expr;
@@ -302,6 +543,13 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
                     }
                 }
                 statements.push(statement);
+                if text.starts_with("* self . scheduled = pending") {
+                    statements.push(syn::parse_quote!(proof_assert! {
+                        self.scheduled@ == pending_messages(_scheduled_before.inner(), receivers@, _delivery_cutoff_s) &&
+                        delivery_queues(_queues_before.inner(), mailbox_queues(self.mailboxes@), _scheduled_before.inner(),
+                            receivers@, _delivery_cutoff_s, self.time.time_s)
+                    };));
+                }
                 if is_publications {
                     statements.push(syn::parse_quote!(let _network_name = snapshot!(self.name@);));
                 }
@@ -313,6 +561,12 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
                 }
                 if text.starts_with("inbox . push (message . envelope)") {
                     self.appends += 1;
+                    statements.push(syn::parse_quote!(proof_assert! {
+                        let previous = match _inbox_before.inner().get(_channel.inner()) {
+                            None => Seq::empty(), Some(queue) => queue@,
+                        };
+                        inbox@ == previous.push_back(_envelope.inner())
+                    };));
                     statements.push(syn::parse_quote!(proof_assert! {
                         forall<key> key != _channel.inner() ==>
                             receiver.messages.inbox@.get(key) == _inbox_before.inner().get(key)
@@ -348,6 +602,10 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
                 if is_receiver {
                     self.deliveries += 1;
                     statements.push(syn::parse_quote!(proof_assert! {
+                        receiver.messages.inbox@ == _iteration_queues.inner()[index@] &&
+                        receiver.endpoint.deep_model() == _endpoints_before.inner()[index@]
+                    };));
+                    statements.push(syn::parse_quote!(proof_assert! {
                         receiver.endpoint.deep_model() == message.receiver.deep_model()
                     };));
                 }
@@ -375,7 +633,20 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
                     .push(syn::parse_quote!(#[requires(mailboxes@.len() < usize::MAX@)]));
                 item.attrs
                     .push(syn::parse_quote!(#[ensures(valid_receivers(result, mailboxes@))]));
+                item.attrs.push(syn::parse_quote!(#[ensures(result@ == endpoint_index(mailbox_endpoints(mailboxes@)))]));
+                item.attrs.push(syn::parse_quote!(#[ensures(
+                    forall<i> 0 <= i && i < mailboxes@.len() ==>
+                        result@.get(mailboxes@[i].endpoint.deep_model()) != None
+                )]));
                 IndexLoops { subscriber: false }.visit_block_mut(&mut item.block);
+                item.block.stmts.insert(
+                    1,
+                    syn::parse_quote!(proof_assert! {
+                    let _ = endpoint_step;
+                    let _ = sequence_prefixes::<(Option<Int>, Seq<char>)>;
+                    receivers@.ext_eq(endpoint_index(Seq::empty()))
+                };),
+                );
                 return;
             }
             if item.sig.ident == "message_envelope" {
@@ -425,6 +696,19 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
             if item.sig.ident == "receive" {
                 annotate_receive(item);
             } else if item.sig.ident == "route_links" {
+                item.block.stmts.insert(
+                    0,
+                    syn::parse_quote!(let _quiet = snapshot!(no_publications(*self));),
+                );
+                item.attrs.push(syn::parse_quote!(#[ensures(match result {
+                    Ok(_) => no_publications(*self) ==>
+                        (^self).scheduled@ == pending_messages(self.scheduled@,
+                            endpoint_index(mailbox_endpoints(self.mailboxes@)), delivery_cutoff(self.time.time_s)) &&
+                        delivery_queues(mailbox_queues(self.mailboxes@), mailbox_queues((^self).mailboxes@),
+                            self.scheduled@, endpoint_index(mailbox_endpoints(self.mailboxes@)),
+                            delivery_cutoff(self.time.time_s), self.time.time_s),
+                    Err(_) => true,
+                })]));
                 item.attrs.push(syn::parse_quote!(#[ensures(match result { Ok(_) => (^self).routed, Err(_) => true })]));
                 item.attrs.push(syn::parse_quote!(#[ensures(
                     self.routed ==> match result { Err(_) => ^self == *self, Ok(_) => false }
@@ -440,12 +724,38 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
                         routing.appends,
                         routing.schedules
                     ),
-                    (1, 1, 1, 1),
+                    (1, 0, 0, 1),
                     "routing proof assertions must match the production body"
                 );
                 item.attrs.push(syn::parse_quote!(#[requires(
                     forall<f: F, t: &Transmission<'_>, r: &PluginRandom> f.precondition((t, r))
                 )]));
+            } else if item.sig.ident == "deliver_scheduled" {
+                item.attrs
+                    .push(syn::parse_quote!(#[requires(self.mailboxes@.len() < usize::MAX@)]));
+                item.attrs
+                    .push(syn::parse_quote!(#[ensures((^self).routed == self.routed)]));
+                item.attrs.push(syn::parse_quote!(#[ensures(match result {
+                    Ok(_) =>
+                        (^self).scheduled@ == pending_messages(self.scheduled@,
+                            endpoint_index(mailbox_endpoints(self.mailboxes@)), delivery_cutoff(self.time.time_s)) &&
+                        delivery_queues(mailbox_queues(self.mailboxes@), mailbox_queues((^self).mailboxes@),
+                            self.scheduled@, endpoint_index(mailbox_endpoints(self.mailboxes@)),
+                            delivery_cutoff(self.time.time_s), self.time.time_s),
+                    Err(_) => true,
+                })]));
+                let mut routing = RoutingLoops::default();
+                routing.visit_block_mut(&mut item.block);
+                assert_eq!(
+                    (
+                        routing.links,
+                        routing.deliveries,
+                        routing.appends,
+                        routing.schedules
+                    ),
+                    (0, 1, 1, 0),
+                    "delivery proof assertions must match the production body"
+                );
             } else {
                 item.attrs.push(syn::parse_quote!(#[trusted]));
             }
@@ -465,7 +775,7 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
         if let Item::Impl(item) = item {
             item.items.retain(|member| {
                 matches!(member, ImplItem::Fn(method)
-                if method.sig.ident == "receive" || method.sig.ident == "route_links")
+                if method.sig.ident == "receive" || method.sig.ident == "route_links" || method.sig.ident == "deliver_scheduled")
             });
         }
     }
@@ -491,6 +801,7 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
     assert_eq!(
         routing.checked,
         [
+            "deliver_scheduled",
             "message_envelope",
             "receive",
             "receiver_index",

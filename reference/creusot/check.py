@@ -54,6 +54,10 @@ def main():
     prepare()
     if args.prepare_only:
         return
+    # The two feature modes share Creusot's output manifest. Re-extract this
+    # small proof crate when switching modes; keep all dependency builds cached.
+    subprocess.run(["cargo", "+nightly-2026-08-03", "clean", "-p", "ripple-receive-proof", "--target-dir",
+                    str(HERE / "target/creusot")], cwd=HERE, check=True)
     folder = ROOT / "target/creusot-checks"
     folder.mkdir(parents=True, exist_ok=True)
     output = Path(tempfile.mkdtemp(prefix="routing-" if args.routing else "receive-", dir=folder))
@@ -65,22 +69,44 @@ def main():
     if args.routing:
         targets.update({
             "impl_NetworkContext/route_links": "vc_route_links_F",
+            "impl_NetworkContext/deliver_scheduled": "vc_deliver_scheduled",
             "subscriber_index": "vc_subscriber_index",
             "receiver_index": "vc_receiver_index",
             "message_envelope": "vc_message_envelope_T",
+            "delayed/pending_messages": "vc_pending_messages",
+            "delayed/delivered_messages": "vc_delivered_messages",
+            "delayed/endpoint_index": "vc_endpoint_index",
+            "delayed/pending_step": "vc_pending_step",
+            "delayed/delivered_step": "vc_delivered_step",
+            "delayed/empty_delivery": "vc_empty_delivery",
+            "delayed/endpoint_step": "vc_endpoint_step",
+            "delayed/sequence_prefixes": "vc_sequence_prefixes_T",
+            "delayed/append_suffix": "vc_append_suffix_T",
+            "delayed/mailbox_update": "vc_mailbox_update",
+            "delayed/quiet_suffix": "vc_quiet_suffix",
+            "delayed/delivery_keep_step": "vc_delivery_keep_step",
+            "delayed/delivery_append_step": "vc_delivery_append_step",
         })
 
     def check(name, source, expected, failed_goal="vc_receive_T"):
         start = time.monotonic()
         env = {**os.environ, "RIPPLE_VERIFY_SOURCE": str(source), "RUST_LOG": "error"}
         attempts, logs = [], []
-        # One Why3 process per body: processing all five together retained about
+        # Production checks every body. A fault changes one body, so rerun only
+        # that target and require a proof failure (not a compilation failure).
+        selected = targets if expected == 0 else {
+            target: goal for target, goal in targets.items() if goal == failed_goal
+        }
+        if expected != 0 and len(selected) != 1:
+            raise RuntimeError(f"Expected one mutated proof target: {failed_goal}")
+        # One Why3 process per body: processing the original five together retained about
         # 10 GB on the trial machine. This also excludes stale feature outputs.
-        for target in targets:
+        for target in selected:
             command = ["cargo", "creusot", "--no-cache", "--span-mode", "relative",
                        "-j", "4", Path(target).name]
             if args.routing:
                 command += ["--why3find-arg=--depth", "--why3find-arg=3",
+                            "--why3find-arg=--time", "--why3find-arg=5",
                             "--", "--features", "routing"]
             proc = subprocess.run(command, cwd=HERE, env=env, text=True,
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -95,7 +121,7 @@ def main():
         if generated.exists():
             shutil.copyfile(generated, output / f"{name}.rs")
         proofs_by_target = {}
-        for target, goal in targets.items():
+        for target, goal in selected.items():
             proof = HERE / "verif/ripple_receive_proof_rlib" / target / "proof.json"
             if proof.exists():
                 shutil.copyfile(proof, output / f"{name}-{Path(target).name}.proof.json")
@@ -138,6 +164,16 @@ def main():
                 "wrong-recipient": (
                     "entry_or_insert(&mut receivers, mailbox.endpoint, index);",
                     "entry_or_insert(&mut receivers, mailbox.endpoint, 0);"),
+                "drop-future-message": ("pending.push(message);", "drop(message);"),
+                "deliver-before-due": (
+                    "if message.envelope.delivered_at_s <= self.time.time_s + 1e-12 {",
+                    "if true {"),
+                "retain-removed-recipient": (
+                    "// A removed entity cannot receive delayed messages.\n                continue;",
+                    "pending.push(message);\n                continue;"),
+                "skip-silent-phase": (
+                    "let subscribers = if publications.is_empty() {",
+                    "if publications.is_empty() { return Ok(()); }\n        let subscribers = if publications.is_empty() {"),
             }
         try:
             for name, (before, after) in faults.items():
@@ -145,7 +181,10 @@ def main():
                     raise RuntimeError(f"Update mutation location for {name}")
                 source = output / f"{name}-source.rs"
                 source.write_text(original.replace(before, after))
-                check(name, source, 1, "vc_receiver_index" if args.routing else "vc_receive_T")
+                failed_goal = ("vc_receiver_index" if name == "wrong-recipient" else
+                               "vc_route_links_F" if name == "skip-silent-phase" else
+                               "vc_deliver_scheduled" if args.routing else "vc_receive_T")
+                check(name, source, 1, failed_goal)
         finally:
             # Leave generated artifacts referring to production, even after a failed check.
             check("production-restored", SOURCE, 0)

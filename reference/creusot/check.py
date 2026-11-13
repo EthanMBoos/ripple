@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check production mailbox proofs; optionally reject faults in temporary copies."""
+"""Check production mailbox and sensor-input proofs; optionally reject faults in temporary copies."""
 import argparse
 import hashlib
 import json
@@ -48,7 +48,9 @@ def prepare():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mutations", action="store_true")
-    parser.add_argument("--routing", action="store_true")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--routing", action="store_true")
+    modes.add_argument("--readings", action="store_true")
     parser.add_argument("--prepare-only", action="store_true")
     args = parser.parse_args()
     prepare()
@@ -60,8 +62,10 @@ def main():
                     str(HERE / "target/creusot")], cwd=HERE, check=True)
     folder = ROOT / "target/creusot-checks"
     folder.mkdir(parents=True, exist_ok=True)
-    output = Path(tempfile.mkdtemp(prefix="routing-" if args.routing else "receive-", dir=folder))
+    output = Path(tempfile.mkdtemp(prefix="readings-" if args.readings else "routing-" if args.routing else "receive-", dir=folder))
     results = []
+    source_path = ROOT / "crates/core/src/plugin/sensor/readings.rs" if args.readings else SOURCE
+    input_path = ROOT / "crates/core/src/plugin/estimator.rs"
 
     targets = {
         "impl_Messages/receive": "vc_receive_T",
@@ -88,9 +92,22 @@ def main():
             "delayed/delivery_append_step": "vc_delivery_append_step",
         })
 
-    def check(name, source, expected, failed_goal="vc_receive_T"):
+    if args.readings:
+        targets = {
+            "impl_Readings/get": "vc_get_T",
+            "impl_Readings/is_fresh": "vc_is_fresh",
+            "impl_Readings/clear_fresh": "vc_clear_fresh",
+            "impl_Readings/deliver": "vc_deliver",
+            "first_input": "vc_first_input",
+            "impl_Inputs/latest": "vc_latest_T",
+            "impl_Inputs/fresh": "vc_fresh_T",
+        }
+
+    def check(name, source, expected, failed_goal="vc_receive_T", input_source=None):
         start = time.monotonic()
         env = {**os.environ, "RIPPLE_VERIFY_SOURCE": str(source), "RUST_LOG": "error"}
+        if args.readings:
+            env["RIPPLE_VERIFY_INPUTS_SOURCE"] = str(input_source or input_path)
         attempts, logs = [], []
         # Production checks every body. A fault changes one body, so rerun only
         # that target and require a proof failure (not a compilation failure).
@@ -104,10 +121,10 @@ def main():
         for target in selected:
             command = ["cargo", "creusot", "--no-cache", "--span-mode", "relative",
                        "-j", "4", Path(target).name]
-            if args.routing:
+            if args.routing or args.readings:
                 command += ["--why3find-arg=--depth", "--why3find-arg=3",
                             "--why3find-arg=--time", "--why3find-arg=5",
-                            "--", "--features", "routing"]
+                            "--", "--features", "readings" if args.readings else "routing"]
             proc = subprocess.run(command, cwd=HERE, env=env, text=True,
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             logs.append(proc.stdout)
@@ -129,6 +146,8 @@ def main():
         record = dict(name=name, attempts=attempts, exit_code=exit_code,
                       expected=expected, seconds=round(time.monotonic() - start, 3),
                       source_sha256=hashlib.sha256(source.read_bytes()).hexdigest())
+        if args.readings:
+            record["inputs_source_sha256"] = hashlib.sha256((input_source or input_path).read_bytes()).hexdigest()
         results.append(record)
         (output / "results.json").write_text(json.dumps(results, indent=2) + "\n")
         print(f"{name}: exit {exit_code} (expected {expected}); {record['seconds']} s", flush=True)
@@ -151,9 +170,9 @@ def main():
                     raise RuntimeError(f"Unexpected failure outside the mutated target: {attempt['target']}")
 
     print(f"Evidence: {output}", flush=True)
-    check("production", SOURCE, 0)
+    check("production", source_path, 0)
     if args.mutations:
-        original = SOURCE.read_text()
+        original = source_path.read_text()
         faults = {
             "wrong-channel": ("self.inbox.remove(&channel)",
                               "self.inbox.remove(&(topic.to_owned(), network.to_owned()))"),
@@ -175,6 +194,14 @@ def main():
                     "let subscribers = if publications.is_empty() {",
                     "if publications.is_empty() { return Ok(()); }\n        let subscribers = if publications.is_empty() {"),
             }
+        if args.readings:
+            faults = {
+                "wrong-sensor": ('let Some(value) = self.values.get(sensor)', 'let Some(value) = self.values.get("wrong")'),
+                "skip-fresh-flag": ('self.fresh.insert(sensor.clone());', ''),
+                "discard-older-readings": ('self.values.append(&mut pending.values);',
+                                          'self.values.clear(); self.values.append(&mut pending.values);'),
+                "clear-erases-readings": ('self.fresh.clear();', 'self.fresh.clear(); self.values.clear();'),
+            }
         try:
             for name, (before, after) in faults.items():
                 if original.count(before) != 1:
@@ -184,10 +211,25 @@ def main():
                 failed_goal = ("vc_receiver_index" if name == "wrong-recipient" else
                                "vc_route_links_F" if name == "skip-silent-phase" else
                                "vc_deliver_scheduled" if args.routing else "vc_receive_T")
+                if args.readings:
+                    failed_goal = "vc_get_T" if name == "wrong-sensor" else "vc_clear_fresh" if name == "clear-erases-readings" else "vc_deliver"
                 check(name, source, 1, failed_goal)
+            if args.readings:
+                inputs = input_path.read_text()
+                input_faults = {
+                    "wrong-input-binding": ('self.readings.get::<T>(sensor)', 'self.readings.get::<T>(input)', "vc_latest_T"),
+                    "stale-as-fresh": ('filter(|sample| sample.fresh)', 'filter(|_| true)', "vc_fresh_T"),
+                    "wrong-perfect-kind": ('ReadingKind::State => self.perfect_state', 'ReadingKind::State => self.perfect_contacts', "vc_latest_T"),
+                }
+                for name, (before, after, goal) in input_faults.items():
+                    if inputs.count(before) != 1:
+                        raise RuntimeError(f"Update mutation location for {name}")
+                    mutated = output / f"{name}-source.rs"
+                    mutated.write_text(inputs.replace(before, after))
+                    check(name, source_path, 1, goal, input_source=mutated)
         finally:
             # Leave generated artifacts referring to production, even after a failed check.
-            check("production-restored", SOURCE, 0)
+            check("production-restored", source_path, 0)
 
 
 if __name__ == "__main__":

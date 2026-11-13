@@ -70,6 +70,14 @@ fn annotate_receive(method: &mut syn::ImplItemFn) {
 fn main() {
     println!("cargo::rustc-check-cfg=cfg(creusot)");
     println!("cargo:rerun-if-env-changed=RIPPLE_VERIFY_SOURCE");
+    if env::var_os("CARGO_FEATURE_READINGS").is_some() {
+        assert!(
+            env::var_os("CARGO_FEATURE_ROUTING").is_none(),
+            "choose one proof mode"
+        );
+        write_output(readings_module());
+        return;
+    }
     let source = env::var_os("RIPPLE_VERIFY_SOURCE")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("../../crates/core/src/pubsub/messages.rs"));
@@ -817,4 +825,235 @@ fn routing_module(mut file: syn::File) -> proc_macro2::TokenStream {
         pub use ripple_core::Event;
         #file
     }
+}
+
+fn readings_module() -> proc_macro2::TokenStream {
+    use syn::visit_mut::VisitMut;
+    let source = env::var_os("RIPPLE_VERIFY_SOURCE")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("../../crates/core/src/plugin/sensor/readings.rs"));
+    println!("cargo:rerun-if-changed={}", source.display());
+    let mut file = syn::parse_file(&fs::read_to_string(source).unwrap()).unwrap();
+    println!("cargo:rerun-if-env-changed=RIPPLE_VERIFY_INPUTS_SOURCE");
+    let estimator = env::var_os("RIPPLE_VERIFY_INPUTS_SOURCE")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("../../crates/core/src/plugin/estimator.rs"));
+    println!("cargo:rerun-if-changed={}", estimator.display());
+    let estimator = syn::parse_file(&fs::read_to_string(estimator).unwrap()).unwrap();
+    for item in estimator.items {
+        let keep = match &item {
+            Item::Struct(s) => ["Inputs", "Sample"].iter().any(|name| s.ident == name),
+            Item::Enum(e) => e.ident == "Source",
+            Item::Impl(i) => quote!(#i)
+                .to_string()
+                .starts_with("impl < 'a > Inputs < 'a >"),
+            _ => false,
+        };
+        if keep {
+            file.items.push(item);
+        }
+    }
+    #[derive(Default)]
+    struct ReadingBodies {
+        coercions: usize,
+        cast_bindings: usize,
+        downcasts: usize,
+        delivery_loops: usize,
+    }
+    impl VisitMut for ReadingBodies {
+        fn visit_arm_mut(&mut self, arm: &mut syn::Arm) {
+            let body = &arm.body;
+            match quote!(#body).to_string().as_str() {
+                "self . perfect_state" => {
+                    self.coercions += 1;
+                    *arm.body = syn::parse_quote!(cast_ref::<T, _>(self.perfect_state))
+                }
+                "self . perfect_contacts" => {
+                    self.coercions += 1;
+                    *arm.body = syn::parse_quote!(cast_ref::<T, _>(self.perfect_contacts))
+                }
+                _ => {}
+            }
+            syn::visit_mut::visit_arm_mut(self, arm);
+        }
+        fn visit_expr_for_loop_mut(&mut self, expr: &mut syn::ExprForLoop) {
+            self.delivery_loops += 1;
+            expr.attrs.extend([
+                syn::parse_quote!(#[invariant(self.values@ == _values_before.inner() && pending.values@ == _pending_before.inner())]),
+                syn::parse_quote!(#[invariant(forall<key> _fresh_before.inner().contains(key) ==> self.fresh@.contains(key))]),
+                syn::parse_quote!(#[invariant(forall<key> self.fresh@.contains(key) ==>
+                    _fresh_before.inner().contains(key) || _pending_before.inner().get(key) != None)]),
+                syn::parse_quote!(#[invariant(forall<i> 0 <= i && i < produced.inner().len() ==>
+                    self.fresh@.contains(produced.inner()[i].0@))]),
+                syn::parse_quote!(#[invariant(forall<key> _pending_before.inner().get(key) != None ==>
+                    (exists<i> 0 <= i && i < produced.inner().len() && produced.inner()[i].0@ == key) ||
+                    (exists<i> 0 <= i && i < iter@.len() && iter@[i].0@ == key))]),
+                syn::parse_quote!(#[invariant(forall<i> 0 <= i && i < produced.inner().len() ==>
+                    _pending_before.inner().get(produced.inner()[i].0@) != None)]),
+            ]);
+            expr.body.stmts.insert(0, syn::parse_quote!(proof_assert! {
+                creusot_std::std::iter::IteratorSpec::produces(iter_old.inner(), produced.inner(), iter)
+            };));
+            expr.body.stmts.insert(
+                1,
+                syn::parse_quote!(proof_assert! {
+                produced.inner()[produced.inner().len() - 1] == (sensor, value)
+            };),
+            );
+            syn::visit_mut::visit_expr_for_loop_mut(self, expr);
+        }
+        fn visit_local_mut(&mut self, local: &mut syn::Local) {
+            if let syn::Pat::Type(pat) = &mut local.pat
+                && quote!(#pat).to_string().starts_with("perfect :")
+            {
+                self.cast_bindings += 1;
+                *pat.ty = syn::parse_quote!(Option<&'a T>);
+            }
+            syn::visit_mut::visit_local_mut(self, local);
+        }
+        fn visit_expr_mut(&mut self, expr: &mut syn::Expr) {
+            if let syn::Expr::MethodCall(call) = expr
+                && call.method == "downcast_ref"
+            {
+                let receiver = &call.receiver;
+                if quote!(#receiver).to_string() == "perfect" {
+                    self.downcasts += 1;
+                    *expr = syn::parse_quote!(perfect);
+                    return;
+                }
+            }
+            if let syn::Expr::MethodCall(call) = expr
+                && call.method == "with_context"
+            {
+                call.method = syn::parse_quote!(ok_or_else);
+                call.args = syn::parse_quote!(reading_error);
+            }
+            if let syn::Expr::Macro(m) = expr
+                && m.mac.path.segments.last().unwrap().ident == "anyhow"
+            {
+                *expr = syn::parse_quote!(reading_error());
+                return;
+            }
+            syn::visit_mut::visit_expr_mut(self, expr);
+            if let syn::Expr::Closure(c) = expr
+                && quote!(#c).to_string() == "| | reading_error ()"
+            {
+                *expr = syn::parse_quote!(reading_error);
+            }
+        }
+    }
+    let mut methods = Vec::new();
+    for item in &mut file.items {
+        if let Item::Enum(e) = item {
+            if e.ident == "ReadingKind" {
+                e.attrs.push(syn::parse_quote!(#[derive(DeepModel)]));
+            } else {
+                e.attrs.clear();
+            }
+        }
+        if let Item::Use(u) = item
+            && quote!(#u).to_string().starts_with("use anyhow ::")
+        {
+            *u = syn::parse_quote!(
+                use anyhow::Result;
+            );
+        }
+        if let Item::Impl(item) = item {
+            for member in &mut item.items {
+                if let ImplItem::Fn(method) = member {
+                    let name = method.sig.ident.to_string();
+                    methods.push(name.clone());
+                    match name.as_str() {
+                        "get" => method.attrs.push(syn::parse_quote!(#[ensures(match result {
+                            Ok(None) => self.values@.get(sensor@) == None,
+                            Ok(Some(reading)) => match self.values@.get(sensor@) {
+                                Some(value) => any_cast::<Reading<T>>(*value) == Some(*reading), None => false,
+                            },
+                            Err(_) => match self.values@.get(sensor@) {
+                                Some(value) => any_cast::<Reading<T>>(*value) == None, None => false,
+                            },
+                        })])),
+                        "latest" => {
+                            method.attrs.push(syn::parse_quote!(#[ensures(input_result(*self, input@, false, result))]));
+                            let syn::Stmt::Local(binding) = &mut method.block.stmts[0] else { unreachable!() };
+                            let pattern = binding.pat.clone();
+                            binding.pat = syn::parse_quote!(_chosen);
+                            method.block.stmts.insert(1, syn::parse_quote!(let #pattern = _chosen;));
+                            method.block.stmts.insert(0, syn::parse_quote!(proof_assert! { let _ = first_input; true };));
+                            method.block.stmts.insert(3, syn::parse_quote!(proof_assert! {
+                                exists<prefix: Seq<&(String, Source)>, rest: Seq<&(String, Source)>>
+                                    creusot_std::std::slice::SliceExt::to_ref_seq(self.sources) == prefix.push_back(_chosen).concat(rest) &&
+                                    _chosen.0@ == input@ &&
+                                    (forall<j> 0 <= j && j < prefix.len() ==> prefix[j].0@ != input@)
+                            };));
+                            method.block.stmts.insert(4, syn::parse_quote!(proof_assert! {
+                                exists<i> selected(self.sources@, input@, i) && self.sources@[i].1 == *source
+                            };));
+                        },
+                        "fresh" => method.attrs.push(syn::parse_quote!(#[ensures(input_result(*self, input@, true, result))])),
+                        "is_fresh" => method.attrs.push(syn::parse_quote!(#[ensures(result == self.fresh@.contains(sensor@))])),
+                        "clear_fresh" => method.attrs.extend([
+                            syn::parse_quote!(#[ensures((^self).values@ == self.values@)]),
+                            syn::parse_quote!(#[ensures((^self).fresh@ == creusot_std::logic::FSet::empty())]),
+                        ]),
+                        "publish" => {}, // Excluded below: owned dyn Any replacement crashes Creusot 0.14.0.
+                        "deliver" => {
+                            method.block.stmts.splice(0..0, [
+                                syn::parse_quote!(let _values_before = snapshot!(self.values@);),
+                                syn::parse_quote!(let _fresh_before = snapshot!(self.fresh@);),
+                                syn::parse_quote!(let _pending_before = snapshot!(pending.values@);),
+                            ]);
+                            method.attrs.push(syn::parse_quote!(#[ensures(match result {
+                                Ok(_) => forall<key> (^self).fresh@.contains(key) ==
+                                    (self.fresh@.contains(key) || pending.values@.get(key) != None),
+                                Err(_) => true,
+                            })]));
+                            method.attrs.push(syn::parse_quote!(#[ensures(match result {
+                                Ok(_) => (forall<key> (^self).values@.get(key) ==
+                                    if pending.values@.get(key) != None { pending.values@.get(key) } else { self.values@.get(key) }) &&
+                                    (^pending).values@ == creusot_std::logic::FMap::empty(),
+                                Err(_) => (^self).values@ == self.values@ && (^pending).values@ == pending.values@,
+                            })]));
+                        }
+                        _ => panic!("review new readings method {name}"),
+                    }
+                }
+            }
+        }
+    }
+    // Publication is not a proof boundary used by these accessors: omit it.
+    // Its owned dyn Any replacement currently crashes Creusot's resolve pass.
+    for item in &mut file.items {
+        if let Item::Impl(item) = item {
+            item.items
+                .retain(|member| !matches!(member, ImplItem::Fn(m) if m.sig.ident == "publish"));
+        }
+    }
+    let mut bodies = ReadingBodies::default();
+    bodies.visit_file_mut(&mut file);
+    assert_eq!(
+        (
+            bodies.coercions,
+            bodies.cast_bindings,
+            bodies.downcasts,
+            bodies.delivery_loops
+        ),
+        (2, 1, 1, 1),
+        "review changed sensor/input proof extraction boundaries"
+    );
+    methods.sort();
+    assert_eq!(
+        methods,
+        [
+            "clear_fresh",
+            "deliver",
+            "fresh",
+            "get",
+            "is_fresh",
+            "latest",
+            "publish"
+        ]
+    );
+    quote! { use creusot_std::prelude::*; use creusot_std::prelude::{Clone, Default, PartialEq};
+    use ripple_core::{KinematicState, plugin::ContactList}; #file }
 }

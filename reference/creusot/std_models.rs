@@ -65,9 +65,23 @@ mod btree_iteration {
         impl<'a, K: DeepModel, V, A: Allocator + Clone> IntoIterator for &'a BTreeMap<K, V, A> {
             #[ensures(source(result) == self@)]
             #[ensures(result@.len() == self@.len())]
+            #[ensures(forall<key> self@.get(key) != None ==> exists<i>
+                0 <= i && i < result@.len() && result@[i].0.deep_model() == key)]
             #[ensures(forall<i> 0 <= i && i < result@.len() ==>
                 self@.get(result@[i].0.deep_model()) == Some(*result@[i].1))]
             fn into_iter(self) -> Iter<'a, K, V>;
         }
+    }
+}
+
+// Sensor delivery uses a set of names that arrived since the last estimate.
+#[cfg(creusot)]
+impl<K: crate::model::DeepModel, A: ::std::alloc::Allocator + Clone> crate::model::View
+    for ::std::collections::BTreeSet<K, A>
+{
+    type ViewTy = crate::logic::FSet<K::DeepModelTy>;
+    #[crate::macros::logic(opaque)]
+    fn view(self) -> Self::ViewTy {
+        dead
     }
 }

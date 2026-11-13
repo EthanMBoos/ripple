@@ -10,6 +10,7 @@ publish = false
 path = "receive.rs"
 
 [features]
+readings = ["dep:ripple-core"]
 routing = ["dep:ripple-core", "dep:serde"]
 
 [dependencies]

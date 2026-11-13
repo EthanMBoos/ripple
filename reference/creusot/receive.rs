@@ -2,13 +2,17 @@
 #![allow(dead_code)]
 #[cfg(feature = "routing")]
 include!("routing.rs");
+#[cfg(feature = "readings")]
+include!("readings.rs");
 include!(concat!(env!("OUT_DIR"), "/messages.rs"));
 
+#[cfg(not(feature = "readings"))]
 #[logic(opaque)]
 fn type_key<T: ?Sized + 'static>() -> TypeId {
     dead
 }
 
+#[cfg(not(feature = "readings"))]
 extern_spec! {
     impl TypeId {
         #[ensures(result == type_key::<T>())]
@@ -29,10 +33,12 @@ extern_spec! {
     }
 }
 
+#[cfg(not(feature = "readings"))]
 #[logic(opaque)]
 fn cast<T: Any + Send + Sync, A: std::alloc::Allocator, P>(value: P) -> Option<Arc<T, A>> {
     dead
 }
+#[cfg(not(feature = "readings"))]
 extern_spec! {
     impl<A: std::alloc::Allocator> Arc<dyn Any + Send + Sync, A> {
         #[ensures(match result {
@@ -43,12 +49,14 @@ extern_spec! {
     }
 }
 
+#[cfg(not(feature = "readings"))]
 #[logic]
 fn subscribed<T: 'static>(messages: Messages, network: Seq<char>, topic: Seq<char>) -> bool {
     pearlite! {
        messages.subscriptions@.get((network, topic)) == Some(type_key::<T>())
     }
 }
+#[cfg(not(feature = "readings"))]
 #[logic]
 fn queue(messages: Messages, network: Seq<char>, topic: Seq<char>) -> Seq<Envelope> {
     pearlite! {
@@ -58,6 +66,7 @@ fn queue(messages: Messages, network: Seq<char>, topic: Seq<char>) -> Seq<Envelo
        }
     }
 }
+#[cfg(not(feature = "readings"))]
 #[logic]
 fn converted<T: Any + Send + Sync>(before: Envelope, after: Message<T>) -> bool {
     pearlite! {
@@ -66,6 +75,7 @@ fn converted<T: Any + Send + Sync>(before: Envelope, after: Message<T>) -> bool 
        cast::<T, std::alloc::Global, _>(before.value) == Some(after.value)
     }
 }
+#[cfg(not(feature = "readings"))]
 #[logic]
 fn conversion_prefix<T: Any + Send + Sync>(before: Seq<Envelope>, after: Seq<Message<T>>) -> bool {
     pearlite! {

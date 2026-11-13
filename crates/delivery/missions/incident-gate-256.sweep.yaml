@@ -2,7 +2,7 @@
 # over every 16-hub block of a 256-hub region, 16 incidents at once, each
 # block turned by its number, on seeds and hub layouts the incident was not
 # built on? Three help arms, local rules with no help and the help manager
-# granting by the nearest offer or by the feasible rule, on the 7 km grid
+# granting by the nearest offer or by the spare rule, on the 7 km grid
 # and on 2 layouts with every hub displaced up to 1.5 km (layout seeds 101
 # to 102, hubs at least 4 km apart, drawn by region.layout), each on demand
 # seeds 11 to 15. No model calls.
@@ -18,12 +18,12 @@ cases:
   # grid
   - [none, nearest, 0]
   - [replanner, nearest, 0]
-  - [replanner, feasible, 0]
+  - [replanner, spare, 0]
   # layout 101
   - [none, nearest, 101]
   - [replanner, nearest, 101]
-  - [replanner, feasible, 101]
+  - [replanner, spare, 101]
   # layout 102
   - [none, nearest, 102]
   - [replanner, nearest, 102]
-  - [replanner, feasible, 102]
+  - [replanner, spare, 102]

@@ -4,7 +4,7 @@
 # gate's days: the 7 km grid and 5 layouts with every hub
 # displaced up to 1.5 km (layout seeds 101 to 105, hubs at least 4 km
 # apart, drawn by region.layout), demand seeds 11 to 15, so it
-# sits beside the nearest and feasible rules of incident-gate-64 on the same
+# sits beside the nearest and spare rules of incident-gate-64 on the same
 # days. No model calls.
 name: incident-random-64
 base_scenario: incident.yaml

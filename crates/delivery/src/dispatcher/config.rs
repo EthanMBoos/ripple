@@ -123,7 +123,7 @@ pub struct ManagerConfig {
     /// hub serving an asking hub's sites for a time (`help.rs`).
     pub top_kind: ManagerKind,
     /// The fixed rule a `top_kind: replanner` grants by (`help::Rule`):
-    /// `nearest`, `feasible`, or `random`.
+    /// `nearest`, `spare`, or `random`.
     pub help_rule: help::Rule,
     /// What a `top_kind: model` is shown besides the requests and offers:
     /// `full`, the hub view (`view`), or `compact`, nothing more.

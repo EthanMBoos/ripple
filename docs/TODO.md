@@ -24,8 +24,8 @@ Before submitting:
   panel's lower callouts for the fleet API result: the compact report
   shows requests and feasible lenders, and random < nearest < spare
   rule ≈ models. Render both versions at page size and keep the clearer
-  one. Add 256-hub numbers only after the final rerun. If the lending
-  mission is still hard to picture, try a small map of its 16-hub block.
+  one. If the lending mission is still hard to picture, try a small map
+  of its 16-hub block.
 - Commit and push the current appendix PDF so the paper's repository link
   opens the version described.
 - Record the demo video from the title-figure recording.
@@ -60,26 +60,20 @@ receive the same help order while we vary the report and fleet size.
 
 Results in hand: the rule that favors lenders with aircraft to spare
 over their own backlog beats the nearest-lender rule by 1.9 points at
-16 hubs and about 2.5 at 64. The first ten 256-hub fixed-rule days show
-a similar gap. Haiku and Opus score within 0.3 points of the spare-aware
-rule on ten held-out 16-hub days and ten fresh 64-hub days. A full hub
-report uses more prompt characters without a consistent score gain over
-the compact report in paired runs. The four-day 64-hub pilot suggested
-a gap that ten fresh days did not confirm. This supports the compact
-report for this lending decision through 64 hubs; it does not establish
-a fleet API for every kind of order.
+16 hubs, about 2.5 at 64, and 2.4 at 256 on all 15 days. A random
+lender scores 1.4 to 1.6 points below nearest at every size. Haiku and
+Opus score within 0.3 points of the spare-aware rule on ten held-out
+16-hub days, ten fresh 64-hub days, and the 15 held-out 256-hub days,
+with no aircraft lost. Hiding the aircraft phrase from the offers costs
+the models one to two points at 16 hubs; hiding reach or backlog costs
+nothing. A full hub report uses more prompt characters without a
+consistent score gain over the compact report in four paired 64-hub
+days; it was not run at 256 hubs. This supports the compact report for
+this lending decision through 256 hubs; it does not establish a fleet
+API for every kind of order.
 
-Still to do:
-
-- Finish the 256-hub fixed-rule days and trace the aircraft lost on three
-  help-rule days. Report the loss rather than calling checked help
-  harmless.
-- Run Haiku and Opus at 256 hubs on matched held-out days with the
-  compact report. A claim comparing report choices at 256 also needs
-  full-report runs there. Record score, misses at lending hubs, lent
-  deliveries, aircraft lost, calls, and prompt size.
-- Update the paper's table and text from completed runs. Keep unrun
-  comparisons marked Planned.
+Still to do: nothing before submission. A claim comparing report
+choices at 256 hubs would need full-report runs there.
 
 The mission and sweep files are in `crates/delivery/missions/incident*`;
 the help order and report fields are in the

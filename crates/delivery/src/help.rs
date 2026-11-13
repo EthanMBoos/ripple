@@ -81,7 +81,7 @@ pub enum Rule {
     Nearest,
     /// The offer with the most aircraft to spare over its own backlog, then
     /// the earliest arrival.
-    Feasible,
+    Spare,
     /// Any offer, drawn by the asking hub and the time of the call.
     Random,
 }
@@ -220,7 +220,7 @@ pub fn grant(
         offers.retain(|o| !granted.contains(&o.from_hub));
         match rule {
             Rule::Nearest => {}
-            Rule::Feasible => offers.sort_by(|a, b| {
+            Rule::Spare => offers.sort_by(|a, b| {
                 b.net_spare()
                     .cmp(&a.net_spare())
                     .then(a.arrival_min.total_cmp(&b.arrival_min))
@@ -500,7 +500,7 @@ mod tests {
     }
 
     #[test]
-    fn the_feasible_rule_takes_the_spare_over_the_backlog() {
+    fn the_spare_rule_takes_the_spare_over_the_backlog() {
         let region = region();
         // Hub 2 is nearest to hub 1 (tied with hub 3, lower id) but has 6
         // waiting; hub 4 is farther, with 4 to spare and nothing waiting.
@@ -512,7 +512,7 @@ mod tests {
             vec![2]
         );
         assert_eq!(
-            donors(&grant(Rule::Feasible, &asking, &snapshot, &random)),
+            donors(&grant(Rule::Spare, &asking, &snapshot, &random)),
             vec![4]
         );
     }

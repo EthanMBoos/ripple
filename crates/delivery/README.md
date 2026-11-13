@@ -192,7 +192,7 @@ main study's `serve_from` keeps its own behavior.
 
 With `top_kind: replanner`, the fixed rule `help_rule` grants each request
 one offer, one donor per request and each donor once per call: `nearest`
-takes the nearest offer; `feasible` the offer with the most aircraft to
+takes the nearest offer; `spare` the offer with the most aircraft to
 spare over its own waiting requests, then the earliest arrival; `random`
 any offer, drawn by the asking hub and the call's time, which measures
 what the choice is worth once the offers are listed.

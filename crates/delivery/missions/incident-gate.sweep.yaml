@@ -1,7 +1,7 @@
 # Does the choice of helping hub matter on the incident day, on seeds and
 # hub layouts the incident was not built on? Three help arms, local rules
 # with no help and the help manager granting by the nearest offer or by the
-# feasible rule, on the 7 km grid and on five layouts with every hub
+# spare rule, on the 7 km grid and on five layouts with every hub
 # displaced up to 1.5 km (layout seeds 101 to 105, hubs at least 4 km
 # apart, drawn by region.layout), each on demand seeds 11 to 15. No model
 # calls.
@@ -16,24 +16,24 @@ cases:
   # grid
   - [none, nearest, 0]
   - [replanner, nearest, 0]
-  - [replanner, feasible, 0]
+  - [replanner, spare, 0]
   # layout 101
   - [none, nearest, 101]
   - [replanner, nearest, 101]
-  - [replanner, feasible, 101]
+  - [replanner, spare, 101]
   # layout 102
   - [none, nearest, 102]
   - [replanner, nearest, 102]
-  - [replanner, feasible, 102]
+  - [replanner, spare, 102]
   # layout 103
   - [none, nearest, 103]
   - [replanner, nearest, 103]
-  - [replanner, feasible, 103]
+  - [replanner, spare, 103]
   # layout 104
   - [none, nearest, 104]
   - [replanner, nearest, 104]
-  - [replanner, feasible, 104]
+  - [replanner, spare, 104]
   # layout 105
   - [none, nearest, 105]
   - [replanner, nearest, 105]
-  - [replanner, feasible, 105]
+  - [replanner, spare, 105]

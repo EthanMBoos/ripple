@@ -8,7 +8,7 @@
 # hub runs the local rules; the help manager decides who helps whom.
 #
 #   ripple run crates/delivery/missions/incident.yaml --headless \
-#     entities.region.autonomy.Dispatcher.manager.help_rule:=feasible
+#     entities.region.autonomy.Dispatcher.manager.help_rule:=spare
 format_version: 1
 name: incident
 
@@ -172,7 +172,7 @@ entities:
           # or model; it sees the help hubs ask for with the hubs that could
           # give it, and grants help, a hub serving an asking hub's sites
           # until its event ends (src/help.rs). help_rule is the fixed rule
-          # for replanner: nearest, feasible (the most to spare over its own
+          # for replanner: nearest, spare (the most to spare over its own
           # backlog), or random (any offer). top_report is what a model sees
           # besides the requests and offers: full, the hub view, or compact,
           # nothing. hide lists offer facts left off every offer line (spare,

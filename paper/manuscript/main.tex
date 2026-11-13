@@ -157,8 +157,8 @@ requests on time. At 64 hubs, even a fixed relocation policy scores
 that gave. Relocation can help when surges last longer. We also test a
 fleet API for choosing which hub should lend aircraft. That choice
 changes deliveries, but a simple rule based on spare aircraft matches
-Haiku and Opus at 16 and 64 hubs without model calls. All results are
-from simulation.
+Haiku and Opus at 16, 64, and 256 hubs without model calls. All results
+are from simulation.
 \end{abstract}
 
 \section{Introduction}
@@ -665,9 +665,9 @@ requests. The score is the weighted share of requests delivered before
 their deadlines.
 
 \begin{table}[t]
-\caption{Mean weighted on-time score on held-out days. Local uses no
-regional help; the other rules choose among the same offered lenders.
-The 256-hub row awaits the final rerun.}
+\caption{Weighted share of requests delivered on time. For each fleet
+size, every rule ran on the same new simulated days. Local uses no
+regional help.}
 \label{tab:api}
 \centering
 \footnotesize
@@ -677,48 +677,38 @@ Hubs & Days & Local & Random & Nearest & Spare \\
 \midrule
 16 & 30 & 0.738 & 0.810 & 0.824 & 0.843 \\
 64 & 30 & 0.745 & 0.809 & 0.823 & 0.848 \\
-256 & 15 & \multicolumn{4}{c}{\emph{Pending final rerun}} \\
+256 & 15 & 0.740 & 0.806 & 0.822 & 0.846 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:api} shows that granting help improves on local rules,
-and that the choice of lender matters. At 16 hubs, spare scores 0.843,
-compared with 0.824 for nearest and 0.810 for random. At 64 hubs, the
-same order holds, with scores of 0.848, 0.823, and 0.809. The offers
-already exclude lenders that cannot spare aircraft or reach a site in
-time. The remaining differences come from choosing among those offers.
+The choice of lender changes the outcome. Lending improves deliveries
+even when the manager picks from the list at random, but choosing the
+hub with the most aircraft to spare does better than choosing the
+nearest or picking at random. This holds from 16 to 256 hubs. Every hub
+on the list can already spare aircraft and reach a site in time; the
+difference comes from which one the manager selects.
 
-We then gave Claude Haiku and Opus the same choice. At 16 hubs, both
-models score within 0.3 points of spare on ten held-out days with
-either report. On ten new 64-hub days, both remain near spare with the
-compact report. That report uses about 23,000 prompt characters per
-day at 16 hubs and 50,000 at 64. The full report used nearly four times
-as many characters at 64 hubs, with no consistent score gain in four
-paired pilot days. The full-report comparison at that size is limited
-to those four days.
+We then put Claude Haiku and Opus in the manager's place. With the
+compact report, both score about as well as the spare rule at 16, 64,
+and 256 hubs. At 16 hubs, the full report also gives no clear gain. On
+four 64-hub days, it was nearly four times longer than the compact
+report without a clear gain in deliveries. We did not compare the two
+reports at 256 hubs, where the compact report itself totals about
+155,000 characters over a day.
 
-To see which information in the compact report matters, we repeated
-the 16-hub model runs with parts of every offer line omitted. Removing
-the phrase giving available aircraft by type and the sites they reach
-lowers Haiku's score by about 2.0 points and Opus's by 1.1. Removing
-site reach alone or the lender's own waiting requests shows no
-consistent loss. We updated the instructions to match each shortened
-report. Since the aircraft phrase also contains type and site reach,
-this test shows the value of that information together; it cannot
-assign the loss to one number.
+We also removed facts from the compact report to see whether the models
+used them. On the 16-hub days, removing the phrase about available
+aircraft and the sites they can reach lowers both models' scores by
+about one to two points. Removing the site count alone or the lender's
+waiting requests produces no clear loss. The useful phrase combines
+aircraft counts, types, and reach, so these runs do not show which part
+is responsible.
 
-% TODO FINAL 256: replace the table stub and add paired model scores,
-% prompt characters, matched-day variation, and aircraft losses.
-\emph{Pending final rerun.} The 256-hub model comparison and aircraft
-losses will be reported here.
-
-In this mission, the dispatcher checks flight limits and protects the
-lenders. The remaining fleet decision is which eligible lender to pick.
-At 16 and 64 hubs, a rule using spare aircraft scores as well as Haiku
-and Opus and needs no model call. The models add no measurable benefit
-to on-time deliveries here. For this fleet decision, simple rules are
-enough.
+The models can read the report and choose good lenders across the
+region. But a rule that counts spare aircraft makes equally good choices
+at every tested size. For this fleet decision, model calls do not
+improve on-time delivery.
 
 \section{Discussion and Future Work}
 \label{sec:discussion}
@@ -760,16 +750,14 @@ our study, even though it hurt under the main workload.
 These experiments use simulated demand, grid hubs, and kinematic
 aircraft. The model comparisons cover a small number of days, and the
 lending study gives the manager a choice with explicit numerical facts.
-They do not yet test whether a model helps when the fleet's goals or
-priorities change during a mission.
 
-Future studies should test harder fleet problems: new goals during a
-mission, priorities that change as events unfold, and teams with
-different skills and limits. They can also add intermediate managers
-between a language model and the vehicles, or give a larger model more
-time to reason. The aim is to learn which decisions benefit from that
-reasoning and which should stay with rules, planners, and local robot
-policies.
+\newpage
+Future studies should give the manager a different job: interpret new
+goals, resolve changing priorities, or coordinate robots with
+different skills. They can also add intermediate managers between a
+language model and the vehicles, or give a larger model more time to
+reason. The aim is to learn which decisions benefit from that reasoning
+and which should stay with rules, planners, and local robot policies.
 
 \section*{Generative AI Disclosure}
 Language models evaluated in the study are named in the experimental

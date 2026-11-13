@@ -1,6 +1,7 @@
 """Save a Stable-Baselines3 PPO policy as the ONNX network a Ripple policy
 plugin runs."""
 
+import onnx
 import torch
 
 
@@ -29,3 +30,12 @@ def export_onnx(model, path):
         output_names=["action"],
         external_data=False,
     )
+    # The exporter records a Python stack trace on every node, which
+    # embeds the exporting machine's home directory in the shipped file.
+    model = onnx.load(str(path))
+    for node in model.graph.node:
+        kept = [p for p in node.metadata_props if "stack_trace" not in p.key]
+        del node.metadata_props[:]
+        node.metadata_props.extend(kept)
+        node.doc_string = ""
+    onnx.save(model, str(path))

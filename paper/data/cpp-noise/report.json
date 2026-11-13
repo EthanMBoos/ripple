@@ -143,7 +143,7 @@
   "cpp_baseline": {
     "branch": "Ubuntu-24.04",
     "commit": "4bdf41fb06facaea358d478d9a07aa4d77fcac27",
-    "source_checkout": "/Users/ethanboos/GitHub/scrimmage",
+    "source_checkout": "scrimmage",
     "source_policy": "committed local branch snapshot; no worktree edits",
     "source_archive_sha256": "09db71eeedd4f239249d47465774c65d7ee55f680a66c2316a0b71c61e71c2b1",
     "dependency_dockerfile_sha256": "a2a8aa72201d52858c918dc698d2b87d3780455b2d6afa424a1955e2b82eacfb",
@@ -163,7 +163,7 @@
   "cpp": {
     "branch": "benchmarking-edits",
     "commit": "6b136c137bd3b9a111ee660fd12bf55c8ececc63",
-    "source_checkout": "/Users/ethanboos/GitHub/scrimmage",
+    "source_checkout": "scrimmage",
     "source_policy": "committed local branch snapshot; no worktree edits",
     "source_archive_sha256": "47605743bae6b1007d01a9a93c27900fba3303adb691261e379a0399d09668ff",
     "dependency_dockerfile_sha256": "a2a8aa72201d52858c918dc698d2b87d3780455b2d6afa424a1955e2b82eacfb",

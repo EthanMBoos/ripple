@@ -197,7 +197,7 @@ def build_reference(args, output, branch, target_platform=PLATFORM):
         "g++ --version && uname -m && cat /etc/os-release && dpkg-query -W",
     ], logs / "cpp-environment.log", timeout=args.timeout)
     info = {
-        "branch": branch, "commit": commit, "source_checkout": str(args.source),
+        "branch": branch, "commit": commit, "source_checkout": args.source.name,
         "source_policy": "committed local branch snapshot; no worktree edits",
         "source_archive_sha256": sha256(context / "source.tar"),
         "dependency_dockerfile_sha256": sha256(dependency_file),

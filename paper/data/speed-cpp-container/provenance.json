@@ -2,7 +2,7 @@
   "cpp": {
     "branch": "benchmarking-edits",
     "commit": "1c8595b912d789d3ae71b99fdd6e129984318a08",
-    "source_checkout": "/Users/ethanboos/Documents/GitHub/scrimmage",
+    "source_checkout": "scrimmage",
     "source_policy": "committed local branch snapshot; no worktree edits",
     "source_archive_sha256": "947b1202a9193ef2b3f8388615c0bf476f049665fd73e93fbb620f99231d5cc3",
     "dependency_dockerfile_sha256": "29d31db1999b6640926b4bf9a1b66ae06396c392bea3e88149ffcd0010406db6",

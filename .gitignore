@@ -12,3 +12,8 @@ graphify-out/
 .vscode/settings.json
 /paper/literature_review/sources/
 /paper/manuscript/ripple.pdf
+
+# Generated Creusot proof output and solver caches
+/reference/creusot/.why3find/
+/reference/creusot/target/
+/reference/creusot/verif/

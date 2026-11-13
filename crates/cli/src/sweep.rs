@@ -1,7 +1,6 @@
 //! `ripple sweep`: run one YAML mission across seeds and parameter values,
-//! whole or as one shard.
+//! on this machine in parallel shards, on a Slurm cluster, or as one shard.
 //!
-//! Implemented, the minimum that sharding needs:
 //! - the `*.sweep.yaml` file: `name`, `base_scenario`, `seeds`, dotted-path
 //!   `parameters`, each a list of values or one value, which every case
 //!   takes, combined by `parameter_combinations` (`cartesian` or `zip`); or,
@@ -10,10 +9,14 @@
 //!   paths (after `prefix`) to values every condition is run with in turn,
 //!   like `seeds` (a model's reply sample, say): a repeat is not a condition;
 //! - a fixed case numbering, so `case-0007` means the same seed and values
-//!   whether the sweep runs whole or in shards;
-//! - `--shard-index i --shard-count n`, which runs cases i, i+n, i+2n, ...;
-//! - one JSON row per case in `results.jsonl`, and `sweep.json` with the case
-//!   counts that `scripts/bulk_run.py collect` checks before merging shards.
+//!   however the sweep is split;
+//! - a campaign (`sweep/campaign.rs`): `--jobs n` runs the sweep as `n`
+//!   shards, one process each, shows progress, stops cleanly on Ctrl-C, and
+//!   resumes the newest unfinished run of the file when run again; `--slurm`
+//!   submits the shards as one array job;
+//! - one shard, `--shard-index i --shard-count n`, runs cases i, i+n,
+//!   i+2n, ... one after another with one worker each, a JSON row per case
+//!   in `results.jsonl` and `sweep.json` with the counts the merge checks.
 //!
 //! To inspect one case, rerun the base mission with its recorded seed and
 //! parameter values. Per-case recordings, digests, input archiving and hashes,
@@ -31,11 +34,27 @@ use std::{
     io::Write,
     path::{Path, PathBuf},
     sync::Arc,
+    time::Instant,
 };
+
+pub(crate) mod campaign;
 
 #[derive(Args)]
 pub(crate) struct SweepOptions {
+    /// The sweep file (`*.sweep.yaml`), or its name in the project's missions/.
     sweep: PathBuf,
+    #[arg(long, short = 'j', help = jobs_help())]
+    jobs: Option<usize>,
+    /// Start a fresh run even if the newest run of this file is unfinished.
+    #[arg(long)]
+    new: bool,
+    /// Submit the shards as one Slurm array job instead of running them here;
+    /// arguments after `--` go to sbatch. Then `ripple collect` when it is done.
+    #[arg(long, requires = "jobs")]
+    slurm: bool,
+    /// The batch script one Slurm task runs; defaults to scripts/ripple-shard.slurm.
+    #[arg(long, requires = "slurm")]
+    script: Option<PathBuf>,
     /// Output directory; defaults to the next <root>/sweeps/<sweep name>/run000, run001, ...
     #[arg(long)]
     output: Option<PathBuf>,
@@ -43,14 +62,62 @@ pub(crate) struct SweepOptions {
     #[arg(long)]
     root: Option<PathBuf>,
     /// Zero-based shard to run; cases index, index + count, index + 2 * count, ...
-    #[arg(long, requires = "shard_count")]
+    #[arg(long, requires = "shard_count", conflicts_with_all = ["jobs", "new", "slurm"])]
     shard_index: Option<usize>,
     /// Number of shards the sweep is divided into.
     #[arg(long, requires = "shard_index")]
     shard_count: Option<usize>,
+    /// For a shard: keep the rows already in its output and run the rest.
+    #[arg(long, hide = true, requires = "shard_index")]
+    resume: bool,
     /// Per-case step limit, as for `ripple run`.
     #[arg(long, default_value_t = 1_000_000)]
     max_steps: usize,
+    /// Arguments passed through to sbatch with --slurm.
+    #[arg(last = true, value_name = "SBATCH ARGS")]
+    slurm_args: Vec<String>,
+}
+
+fn jobs_help() -> String {
+    let cpus = std::thread::available_parallelism().map_or(1, usize::from);
+    format!(
+        "Shards run at once on this machine, one process and one CPU each; this machine has \
+         {cpus}. A model being called or a large mission often wants fewer. Default 1"
+    )
+}
+
+/// `ripple status`: how far the newest run of a sweep file is.
+#[derive(Args)]
+pub(crate) struct StatusOptions {
+    /// A sweep file (its newest run) or a run folder.
+    target: PathBuf,
+    /// Project folder (missions/, runs/, sweeps/); defaults to this repository.
+    #[arg(long)]
+    root: Option<PathBuf>,
+}
+
+/// Resolves a sweep file as typed: a file, or a name in the project's missions/.
+pub(crate) fn resolve_sweep_path(root: &Path, typed: &Path) -> Result<(PathBuf, String)> {
+    let file_name = typed
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or_default();
+    // The suffix tells a sweep apart from a mission; the name without it names
+    // the output folder: straight_speed.sweep.yaml -> sweeps/straight_speed/.
+    let Some(sweep_name) = file_name.strip_suffix(".sweep.yaml") else {
+        bail!("sweep file `{}` must end in .sweep.yaml", typed.display());
+    };
+    let sweep_path = if typed.is_file() {
+        typed.to_path_buf()
+    } else {
+        root.join("missions").join(typed)
+    };
+    Ok((sweep_path, sweep_name.to_owned()))
+}
+
+pub(crate) fn status(options: StatusOptions, project_root: &Path) -> Result<()> {
+    let root = options.root.as_deref().unwrap_or(project_root);
+    campaign::status(&options.target, root)
 }
 
 /// The sweep file.
@@ -110,8 +177,8 @@ enum Combinations {
     Zip,
 }
 
-/// Written once per output directory; `bulk_run.py collect` uses these counts
-/// to check that the shards cover every case exactly once.
+/// Written once per output directory; the merge (`campaign::collect`) uses
+/// these counts to check that the shards cover every case exactly once.
 #[derive(Serialize)]
 struct SweepRecord<'a> {
     name: &'a str,
@@ -141,26 +208,9 @@ pub(crate) fn sweep(
     project_root: &Path,
 ) -> Result<()> {
     let root = options.root.as_deref().unwrap_or(project_root);
-    let file_name = options
-        .sweep
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or_default();
-    // The suffix tells a sweep apart from a mission; the name without it names
-    // the output folder: straight_speed.sweep.yaml -> sweeps/straight_speed/.
-    let Some(sweep_name) = file_name.strip_suffix(".sweep.yaml") else {
-        bail!(
-            "sweep file `{}` must end in .sweep.yaml",
-            options.sweep.display()
-        );
-    };
     // Like a mission, a sweep file given by name is also looked for in the
     // project's missions/ folder.
-    let sweep_path = if options.sweep.is_file() {
-        options.sweep.clone()
-    } else {
-        root.join("missions").join(&options.sweep)
-    };
+    let (sweep_path, sweep_name) = resolve_sweep_path(root, &options.sweep)?;
     let text = fs::read_to_string(&sweep_path)
         .with_context(|| format!("read {}", options.sweep.display()))?;
     let spec: SweepFile = serde_yaml_ng::from_str(&text)
@@ -174,24 +224,51 @@ pub(crate) fn sweep(
     // value combination i / (seeds * repeats), so every seed runs with each
     // combination before the next one.
     let total_case_count = combination_count(&spec) * spec.seeds.len().max(1) * repeat_count(&spec);
-    let (shard_index, shard_count) = match (options.shard_index, options.shard_count) {
-        (Some(index), Some(count)) if count > 0 && index < count => (index, count),
-        (None, None) => (0, 1),
-        _ => bail!("shard index must be less than a positive shard count"),
-    };
-    let cases: Vec<usize> = (shard_index..total_case_count)
-        .step_by(shard_count)
-        .collect();
 
     // Check file syntax and override paths before creating output. Scenario
     // validation happens per case, so a bad configuration is recorded in its row.
     load_case(&spec, &base, root, 0)
         .context("the first case does not load; check the sweep paths")?;
 
-    let output = crate::run::output::create_directory(
-        options.output.as_deref(),
-        &root.join("sweeps").join(sweep_name),
-    )?;
+    let (shard_index, shard_count) = match (options.shard_index, options.shard_count) {
+        (Some(index), Some(count)) if count > 0 && index < count => (index, count),
+        (None, None) => {
+            // The whole sweep: a campaign of shards, this process their parent.
+            let sweep_path = sweep_path
+                .canonicalize()
+                .unwrap_or_else(|_| sweep_path.clone());
+            let root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+            return campaign::run(&campaign::CampaignRequest {
+                typed: &options.sweep,
+                sweep_path,
+                sweep_name: &sweep_name,
+                total_case_count,
+                root: &root,
+                max_steps: options.max_steps,
+                jobs: options.jobs,
+                output: options.output.as_deref(),
+                new: options.new,
+                slurm: options.slurm,
+                script: options.script.as_deref(),
+                slurm_args: &options.slurm_args,
+            });
+        }
+        _ => bail!("shard index must be less than a positive shard count"),
+    };
+    let cases = campaign::shard_cases(shard_index, shard_count, total_case_count);
+
+    // One shard. With --resume its output may exist: the rows already there
+    // are kept, in a fresh file, and only the cases after them run.
+    let output = match (options.resume, options.output.as_deref()) {
+        (true, Some(output)) => {
+            fs::create_dir_all(output)?;
+            output.to_path_buf()
+        }
+        (true, None) => bail!("--resume needs --output, the shard's folder"),
+        (false, explicit) => {
+            crate::run::output::create_directory(explicit, &root.join("sweeps").join(&sweep_name))?
+        }
+    };
     let record = SweepRecord {
         name: &spec.name,
         total_case_count,
@@ -204,15 +281,46 @@ pub(crate) fn sweep(
         serde_json::to_vec_pretty(&record)?,
     )?;
 
+    let kept = campaign::good_rows(&output.join("results.jsonl"), &cases)?;
+    campaign::rotate_results(&output)?;
     let mut rows = fs::File::create_new(output.join("results.jsonl"))?;
     let mut errors = 0;
-    for index in cases {
+    for (line, head) in &kept {
+        errors += usize::from(head.error.is_some());
+        rows.write_all(line.as_bytes())?;
+        rows.write_all(b"\n")?;
+    }
+    rows.flush()?;
+    if !kept.is_empty() {
+        println!("{}: keeping {} finished cases", spec.name, kept.len());
+    }
+
+    // A `stop` file in the campaign folder asks for a clean stop: finish the
+    // case in hand, start no other.
+    let stop = output.parent().map(|campaign| campaign.join("stop"));
+    let mut stopped = false;
+    for &index in &cases[kept.len()..] {
+        if stop.as_ref().is_some_and(|stop| stop.exists()) {
+            stopped = true;
+            println!("{}: stopped before case-{index:04}", spec.name);
+            break;
+        }
+        let started = Instant::now();
         let row = run_case(&spec, &base, root, registry, index, options.max_steps);
         errors += usize::from(row.error.is_some());
-        serde_json::to_writer(&mut rows, &row)?;
-        rows.write_all(b"\n")?;
-        // Flush each finished case, so a stopped shard keeps its completed rows.
+        // One write per row, so a kill between cases cannot cut a line.
+        let mut line = serde_json::to_vec(&row)?;
+        line.push(b'\n');
+        rows.write_all(&line)?;
         rows.flush()?;
+        match &row.error {
+            None => println!(
+                "{}: case-{index:04} done in {}",
+                spec.name,
+                campaign::elapsed_text(started.elapsed())
+            ),
+            Some(error) => println!("{}: case-{index:04} failed: {error}", spec.name),
+        }
     }
 
     println!(
@@ -223,6 +331,7 @@ pub(crate) fn sweep(
         errors,
         output.display()
     );
+    ensure!(!stopped, "stopped before every case ran");
     ensure!(errors == 0, "{errors} cases failed; see results.jsonl");
     Ok(())
 }

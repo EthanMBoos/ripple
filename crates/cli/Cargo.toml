@@ -32,6 +32,12 @@ serde_yaml_ng.workspace = true
 png = "0.18"
 tempfile = "3"
 rerun = { version = "=0.36.2", default-features = false, features = ["sdk"] }
+# A sweep campaign: Ctrl-C handling, a shard's liveness check, and the
+# hashes that tell a resumed run its file and binary are unchanged. All
+# three are already built for other dependencies.
+ctrlc = "3"
+libc = "0.2"
+sha2 = "0.10"
 
 [features]
 ardupilot = ["dep:ardupilot"]

@@ -2,7 +2,7 @@
 //!
 //! `src/main.rs` builds the plugin registry (the stock plugins plus the user
 //! plugin crates in this workspace, such as crates/starter) and hands it to
-//! [`main`]. Every command (`run`, `sweep`) uses that registry, so
+//! [`main`]. Every command that simulates (`run`, `sweep`) uses that registry, so
 //! user plugins work everywhere stock plugins do. See book/src/guides/writing-plugins.md.
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -32,8 +32,16 @@ struct Cli {
 enum Command {
     /// Run a mission, recording frames, events, and metrics in MCAP.
     Run(run::RunOptions),
-    /// Run a YAML mission across seeds and parameter values (a `*.sweep.yaml`), whole or one shard.
+    /// Run a YAML mission across seeds and parameter values (a `*.sweep.yaml`); run again to resume.
     Sweep(sweep::SweepOptions),
+    /// How far a sweep's newest run is: cases done, errors, running or stopped.
+    Status(sweep::StatusOptions),
+    /// Merge the shards of a sweep that was submitted with --slurm.
+    #[command(hide = true)]
+    Collect {
+        /// The run folder `ripple sweep --slurm` printed.
+        campaign: PathBuf,
+    },
     /// View a saved MCAP run without rerunning the mission.
     Replay {
         /// Run directory containing run.mcap, or the MCAP file itself.
@@ -59,6 +67,8 @@ pub fn main(registry: PluginRegistry, project_root: impl AsRef<Path>) -> Result<
     match Cli::parse().command {
         Command::Run(options) => run::run(options, &Arc::new(registry), project_root)?,
         Command::Sweep(options) => sweep::sweep(options, &Arc::new(registry), project_root)?,
+        Command::Status(options) => sweep::status(options, project_root)?,
+        Command::Collect { campaign } => sweep::campaign::collect_command(&campaign)?,
         Command::Replay { path, draw_trails } => replay::replay(&path, draw_trails)?,
     }
     Ok(())

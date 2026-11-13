@@ -1,0 +1,16 @@
+# Replanner with the same half-fleet reserve guard used in the interface
+# comparison, now on all ten main-study days at 16 and 64 hubs. It can
+# still lend aircraft and transfer stock; no model calls.
+name: region-guarded-replanner
+base_scenario: region.yaml
+seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+parameters:
+  entities.region.autonomy.Dispatcher.manager.kind: replanner
+  entities.region.autonomy.Dispatcher.manager.guard: true
+  entities.region.autonomy.Dispatcher.manager.checker: false
+  entities.region.autonomy.Dispatcher.manager.offline: true
+prefix: entities.region.autonomy.Dispatcher
+columns: [region.hubs]
+cases:
+  - [16]
+  - [64]

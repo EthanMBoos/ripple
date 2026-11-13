@@ -1,0 +1,7 @@
+hubs,model,calls,choices,matches,nearest_differs,matches_when_nearest_differs,rule_grants,model_grants,unreadable_calls
+16,claude-haiku-5-5,134,96,69,71,47,96,96,1
+16,claude-opus-5-5,133,96,52,71,32,96,96,0
+64,claude-haiku-5-5,174,336,221,245,142,336,332,0
+64,claude-opus-5-5,171,336,232,246,152,336,336,0
+256,claude-haiku-5-5,164,1632,919,1164,553,1632,1625,0
+256,claude-opus-5-5,154,1568,932,1118,573,1568,1568,1

@@ -8,7 +8,7 @@ validation frameworks for hypothetical needs.
 A multi-agent robotics simulator built from SCRIMMAGE's simulation and plugin
 design. Do not add excluded machinery: runtime plugin loading, legacy
 protobuf/string-map spawning, OpenCL, VTK, ROS, or JSBSim. Keep ArduPilot and
-Burn optional. Scope decisions are in `docs/TODO.md`.
+Burn optional.
 
 - Ripple needs no SCRIMMAGE checkout. The optional C++ checks default to
   `../scrimmage` and accept `--source PATH`. Never modify its `Ubuntu-24.04`

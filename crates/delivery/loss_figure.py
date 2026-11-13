@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 """Draw figure 2: where the loss from moving lands, by hub role.
 
-    python3 crates/delivery/loss_figure.py LOG... > paper/manuscript/figures/loss-by-hub.tex
+    python3 crates/delivery/loss_figure.py > paper/manuscript/figures/loss-by-hub.tex
 
-Each LOG line names one run: `perhub HUBS SEED ARM RUN_DIR` (or `perhubm`
-for a model replay), where HUBS is hubs16 or hubs64, SEED is seedN, ARM is
-local, move, or a model arm such as haiku-X or opus-veto, and RUN_DIR holds
-the run's summary.json with the per-hub columns. For every day with a local
-run, each other arm's hubs are split by their part in that run: hubs that
-gave aircraft or stock, hubs that only received, and the rest. The figure
-shows, per hundred of a group's own requests, how many more were late or
-undelivered than under local rules on the same day, pooled over the runs
-of each condition: the move policy, the models giving the orders (X), and
-the models as a veto over the replanner. The numbers are printed to
-stderr, to check against the text.
+Read the fixed-policy and model sweep results for 16 and 64 hubs. For each
+day, split hubs by their part in the intervention: gave aircraft or stock,
+only received, or neither. Show additional late or undelivered requests
+per hundred of each group's requests relative to local rules on that day.
+The model bars use the three Claude CLI arms; Luna's API run has no saved
+per-hub results, so mixing its original CLI runs into this figure would
+compare different client paths. Print the pooled numbers to stderr.
 """
 
 from __future__ import annotations
@@ -29,31 +25,50 @@ CONDITIONS = (("move", "move policy"), ("X", "models giving orders"),
 SIZES = ("hubs16", "hubs64")
 
 
-def runs_from(logs):
+ROOT = Path(__file__).resolve().parents[2]
+MANAGER = "entities.region.autonomy.Dispatcher.manager."
+SWEEPS = {
+    "hubs16": ("region-16-fixed", "region-16-models"),
+    "hubs64": ("region-64-fixed", "region-64-models"),
+}
+
+
+def rows(sweep):
+    path = ROOT / "sweeps" / sweep / "run000" / "results.jsonl"
+    return [json.loads(line) for line in path.read_text().splitlines()]
+
+
+def results():
     found = {}
-    for log in logs:
-        for line in Path(log).read_text().splitlines():
-            parts = line.split()
-            if len(parts) == 5 and parts[0].startswith("perhub"):
-                found[(parts[1], parts[2], parts[3])] = Path(parts[4])
+    for size, (fixed_sweep, model_sweep) in SWEEPS.items():
+        for row in rows(fixed_sweep) + rows(model_sweep):
+            if row["error"] is not None:
+                raise ValueError(f"failed sweep case: {row['case_id']}")
+            config = row["parameters"]
+            kind = config[MANAGER + "kind"]
+            policy = config.get(MANAGER + "policy", "")
+            model = config.get(MANAGER + "model", "")
+            if kind == "policy" and policy.endswith("/local.yaml"):
+                arm = "local"
+            elif kind == "policy" and policy.endswith("/move.yaml"):
+                arm = "move"
+            elif kind in ("model", "veto") and model.startswith("claude-"):
+                arm = model + "-" + ("X" if kind == "model" else "veto")
+            else:
+                continue
+            found[(size, row["seed"], arm)] = row["metrics"]["metrics/DeliveryScore:0"]["1"]
     return found
-
-
-def summary(run_dir):
-    return json.loads(run_dir.joinpath("summary.json").read_text())
 
 
 def lost(day, hub):
     return day.get(f"hub_{hub:03}_late", 0) + day.get(f"hub_{hub:03}_undelivered", 0)
 
 
-MODELS = ("haiku", "sonnet", "opus", "luna")
+MODELS = ("claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5")
 
 
 def condition_of(arm):
-    """The move policy, or a model arm named `<model>-X` or `<model>-veto`;
-    the first seed-3 replays were logged under the models' full names and
-    are the same days as the short-named replays, so they are left out."""
+    """The move policy or a Claude model acting live or as a veto."""
     if arm == "move":
         return "move"
     model, _, role = arm.rpartition("-")
@@ -66,12 +81,11 @@ def tally(runs):
     """(size, condition) -> group -> [extra lost, requests, days]."""
     totals = defaultdict(lambda: {g: [0.0, 0.0] for g in GROUPS})
     days = defaultdict(int)
-    for (size, seed, arm), run_dir in sorted(runs.items()):
+    for (size, seed, arm), day in sorted(runs.items()):
         condition = condition_of(arm)
-        local_dir = runs.get((size, seed, "local"))
-        if condition is None or local_dir is None:
+        local = runs.get((size, seed, "local"))
+        if condition is None or local is None:
             continue
-        day, local = summary(run_dir), summary(local_dir)
         hubs = range(1, int(size[4:]) + 1)
         gave = {h for h in hubs if day.get(f"hub_{h:03}_gave", 0) > 0}
         received = {h for h in hubs if day.get(f"hub_{h:03}_got", 0) > 0} - gave
@@ -142,9 +156,9 @@ def draw(rates, days):
 
 
 def main():
-    if len(sys.argv) < 2:
+    if len(sys.argv) != 1:
         sys.exit(__doc__)
-    totals, days = tally(runs_from(sys.argv[1:]))
+    totals, days = tally(results())
     rates = per_hundred(totals)
     for key in sorted(rates):
         cells = totals[key]

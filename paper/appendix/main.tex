@@ -1,8 +1,7 @@
-% Appendix to the manuscript in ../manuscript/main.tex: the frozen system
-% prompt, the event texts, one complete model call, and the per-run counts
-% for the 40 model runs. RA-L counts an appendix toward its page limit, so
-% the paper cites this file by its repository URL. The text files beside
-% this one are the prompt and the calls as the delivery crate wrote them.
+% Research record for the delivery manuscript: the frozen prompt, event
+% texts, example calls, and per-run counts. It is not part of the RA-L
+% submission or needed to judge the claims in the letter. Keep its PDF
+% anonymous if it is shared through an anonymous repository mirror.
 % Build: tectonic -o <folder> main.tex
 \documentclass[conference]{IEEEtran}
 \usepackage[T1]{fontenc}
@@ -18,15 +17,14 @@
 \usepackage[bookmarks=true,hidelinks]{hyperref}
 
 \title{Ripple: Appendix}
-\author{\IEEEauthorblockN{Ethan Moosbrugger Boos}
-\IEEEauthorblockA{Georgia Institute of Technology}}
+\author{\IEEEauthorblockN{\strut}\IEEEauthorblockA{\strut}}
 
 \begin{document}
 \maketitle
 
-This appendix holds the material the paper refers to but has no room
-for: the system prompt every model call used, the one text for each event
-kind, one complete live call and one veto prompt with their replies, the
+This research record holds the frozen system prompt for the main manager
+comparisons, the one text for each event kind, one complete live call and
+one veto prompt with their replies, the
 per-seed scores behind the paper's model figure, and the per-run counts for
 the 40 model runs. It also gives the per-seed results for the interface,
 policy-writing, quiet-day, and surge-length checks. The study code is the
@@ -35,8 +33,10 @@ here are the files beside this document, as the crate wrote them.
 
 \section{The frozen system prompt}
 
-Every model call in the study used this system prompt. It was written once,
-before any scored run, and never changed. The mission file holds it.
+Every model call in the main full-authority manager comparison used this
+system prompt. It was written before the scored runs and kept fixed for
+that comparison. The later informed surge and lender-choice studies use
+different prompts recorded in their mission files.
 
 \lstinputlisting{system-prompt.txt}
 
@@ -261,9 +261,14 @@ Sonnet & 0.88 / 37 & 0.90 / 38 \\
 \label{app:surge}
 
 The paper summarizes the surge-length means. Table~\ref{tab:surge}
-gives each seed: one scripted surge at hub 6 and its four neighbors on an
+gives each fixed-policy seed: one scripted surge at hub 6 and its four
+neighbors on an
 otherwise quiet 16-hub day, at 16 trauma requests per hub per 15 minutes,
 held for 15, 60, 120, and 240 minutes.
+The informed Haiku and Opus runs use the same five seeds at each length.
+Their mission files contain the prompt with the surge end and whole-day
+objective, and their per-day outcomes are in
+\texttt{paper/data/fleet-study/results.csv}.
 
 \begin{table}[h]
 \caption{Per-seed on-time score by surge length and policy.}

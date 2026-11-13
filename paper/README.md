@@ -1,20 +1,20 @@
 # Paper and evidence
 
-- **[manuscript/main.tex](manuscript/main.tex): the working paper**. A
-  language-model fleet manager over a rule-based dispatcher
-  over-helps: it relocates vehicles and stock when local rules and lent
-  flights do better, and the cost of moving grows with the region.
-  The study code is `crates/delivery`; what is left before submission is
-  in [docs/TODO.md](../docs/TODO.md).
-  Build it with
-  `tectonic -o <folder> main.tex` in `manuscript/`. The earlier manuscript,
-  a different paper on catching planner mistakes, is on the `llm-fleet`
-  branch.
+- **[manuscript/main.tex](manuscript/main.tex): the working paper**. It
+  studies the cost of fleet-level orders and what information a manager
+  needs when choosing a lender. Language-model managers relocate
+  vehicles and stock when local rules and lent flights do better; on
+  the lending choice, they match a simple numerical rule. The study code
+  is `crates/delivery`; what is left before submission is in
+  [docs/TODO.md](../docs/TODO.md). Build it with
+  `tectonic -C -o <folder> main.tex` in `manuscript/`. The submission
+  draft has a blank byline and no identifying repository link. The earlier
+  manuscript, on catching planner mistakes, is on the `llm-fleet` branch.
 - [appendix/main.tex](appendix/main.tex), built as
-  [appendix.pdf](appendix/appendix.pdf): the paper's appendix as its own
-  document, since RA-L counts an appendix toward its eight pages and the
-  paper cites this folder by URL instead. The frozen system prompt, the
-  event texts, one complete model call and a veto prompt with their
+  [appendix.pdf](appendix/appendix.pdf): a research record. The submission
+  draft does not rely on it for claims or link to it, since RA-L counts
+  an appendix toward its eight pages. It retains the frozen system prompt,
+  the event texts, one complete model call and a veto prompt with their
   replies, per-run counts for the 40 model runs, and per-seed scores for
   the interface and robustness checks. Rebuild the PDF after editing it.
 - [references.bib](references.bib): the reading list, one entry per paper
@@ -22,7 +22,8 @@
   described in [literature_review/README.md](literature_review/README.md).
 - [data/](data/): the retained results of the
   [reference suite](../reference/README.md) and the FollowNearest workflow
-  example, below.
+  example, below. [data/fleet-study/results.csv](data/fleet-study/results.csv)
+  holds the delivery study's per-day outcomes.
 
 ## Release evidence
 

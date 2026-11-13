@@ -25,7 +25,7 @@ than it helps the surge. Models still order or keep moves as live managers,
 vetoes, and authors of rules. A second mission tests the **fleet API**:
 the report a manager receives and the help order it may give. Choosing a
 lender changes deliveries, yet Haiku and Opus match a simple rule based
-on spare aircraft at the 16 and 64 hubs reported in the manuscript. The
+on spare aircraft at 16, 64, and 256 hubs. The
 fixed-policy mission also runs at 1,024 hubs and 5,120 aircraft. All
 results are from simulation.
 

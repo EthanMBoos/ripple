@@ -1,0 +1,46 @@
+# Five matched days at each surge length. This extends the one-day pilot in
+# region-surge-informed-pilot.sweep.yaml. The prompt gives the manager the
+# surge end and the whole-day objective; duration also changes total demand.
+# Compare with region-surge-length.sweep.yaml at the same seeds.
+name: region-surge-informed
+base_scenario: region.yaml
+seeds: [1, 2, 3, 4, 5]
+parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 16
+  entities.region.autonomy.Dispatcher.manager.kind: model
+  entities.region.autonomy.Dispatcher.manager.provider: claude
+  entities.region.autonomy.Dispatcher.manager.via: cli
+  entities.region.autonomy.Dispatcher.manager.view: exceptions
+  entities.region.autonomy.Dispatcher.manager.feedback: true
+  entities.region.autonomy.Dispatcher.manager.checker: false
+  entities.region.autonomy.Dispatcher.manager.offline: false
+  entities.region.autonomy.Dispatcher.events.text.surge: >-
+    A mass-casualty incident near {hubs}: the hospitals there are sending
+    trauma requests beyond what those hubs can fly alone, from minute
+    {from} until minute {to}.
+  entities.region.autonomy.Dispatcher.manager.prompt.system: >-
+    You are the fleet manager for a regional blood delivery service. The
+    dispatcher assigns each request to an idle aircraft with the stock,
+    range, and arrival time for the site; it does not read events. You give
+    orders that change the dispatcher's future choices. Maximize the
+    weighted share of requests delivered before their deadlines over the
+    whole day: routine requests count 1, urgent 2, and trauma 4. A
+    relocation uses a flight and changes an aircraft's home hub; its old
+    hub has less capacity until it returns. A stock transfer also uses an
+    aircraft and leaves the giving hub with less stock. A serve_from order
+    lets a neighbor serve a site and return home. A reposition order with
+    until_min sends the aircraft home once idle after that minute. The
+    surge text gives its end time, but ordinary requests continue across
+    the region until minute 480. Fixed-wing aircraft drop by parachute;
+    multirotors can land on rooftops but have a shorter range. Keep
+    flights out of closed areas and within endurance. Reply with JSON
+    only, no other text.
+prefix: entities.region.autonomy.Dispatcher
+columns: [events.surge_window_min, events.surge_requests_per_hub, events.scripted, manager.model]
+cases:
+  - [15, 16, [{kind: surge, at_min: 60, until_min: 75, hubs: [6, 2, 5, 7, 10]}], claude-haiku-5-5]
+  - [15, 16, [{kind: surge, at_min: 60, until_min: 75, hubs: [6, 2, 5, 7, 10]}], claude-opus-5-5]
+  - [60, 64, [{kind: surge, at_min: 60, until_min: 120, hubs: [6, 2, 5, 7, 10]}], claude-haiku-5-5]
+  - [60, 64, [{kind: surge, at_min: 60, until_min: 120, hubs: [6, 2, 5, 7, 10]}], claude-opus-5-5]
+  - [120, 128, [{kind: surge, at_min: 60, until_min: 180, hubs: [6, 2, 5, 7, 10]}], claude-haiku-5-5]
+  - [120, 128, [{kind: surge, at_min: 60, until_min: 180, hubs: [6, 2, 5, 7, 10]}], claude-opus-5-5]

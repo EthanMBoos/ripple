@@ -8,8 +8,7 @@
   is `crates/delivery`; what is left before submission is in
   [docs/TODO.md](../docs/TODO.md). Build it with
   `tectonic -C -o <folder> main.tex` in `manuscript/`. The submission
-  draft has a blank byline and no identifying repository link. The earlier
-  manuscript, on catching planner mistakes, is on the `llm-fleet` branch.
+  draft has a blank byline and no identifying repository link.
 - [appendix/main.tex](appendix/main.tex), built as
   [appendix.pdf](appendix/appendix.pdf): a research record. The submission
   draft does not rely on it for claims or link to it, since RA-L counts
@@ -17,9 +16,9 @@
   the event texts, one complete model call and a veto prompt with their
   replies, per-run counts for the 40 model runs, and per-seed scores for
   the interface and robustness checks. Rebuild the PDF after editing it.
-- [references.bib](references.bib): the reading list, one entry per paper
-  in [docs/LITERATURE.md](../docs/LITERATURE.md), with local copies built as
-  described in [literature_review/README.md](literature_review/README.md).
+- [references.bib](references.bib): the papers the manuscript cites, with
+  local copies built as described in
+  [literature_review/README.md](literature_review/README.md).
 - [data/](data/): the retained results of the
   [reference suite](../reference/README.md) and the FollowNearest workflow
   example, below. [data/fleet-study/results.csv](data/fleet-study/results.csv)

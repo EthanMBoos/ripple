@@ -1,17 +1,12 @@
 # Cited papers and code
 
-Every source in [references.bib](../references.bib), the reading list for the
-fleet manager study ([claim and results](../../docs/TODO.md), [notes and
-verdict](../../docs/LITERATURE.md)), downloaded for local reading: the PDF, a
-Markdown copy for searching, and shallow clones of the code the authors
-published. It goes in `sources/`, which git ignores, since these are other
-people's papers and code.
+Every source in [references.bib](../references.bib), the papers the
+manuscript cites, downloaded for local reading: the PDF, a Markdown copy for
+searching, and shallow clones of the code the authors published. It goes in
+`sources/`, which git ignores, since these are other people's papers and code.
 
-Entries carried over from the `llm-fleet` branch keep their keys. Their
-downloads, including the two PDFs saved by hand, are in
-`~/ripple-llm-fleet-data/paper/literature_review/sources/` on the machine that
-ran that study; copying a key's folder into `sources/` saves downloading it
-again.
+Catalog entries without a download link carry a note saying where the paper
+is; save that PDF from a browser as `paper.pdf` in the key's folder.
 
 ```sh
 uv run --with "pymupdf4llm<2" scripts/build_paper_sources.py            # everything

@@ -16,18 +16,11 @@ design, with its own YAML mission format.
 
 ## Current study
 
-The [fleet study](paper/README.md) uses Ripple to ask which decisions a
-language-model manager should make above a dispatcher. In a regional
-delivery mission, managers can change local rules, let a neighbor's
-aircraft serve a request and return, or move aircraft and stock between
-hubs. On matched days, moving capacity often costs the giving hubs more
-than it helps the surge. Models still order or keep moves as live managers,
-vetoes, and authors of rules. A second mission tests the **fleet API**:
-the report a manager receives and the help order it may give. Choosing a
-lender changes deliveries, yet Haiku and Opus match a simple rule based
-on spare aircraft at 16, 64, and 256 hubs. The
-fixed-policy mission also runs at 1,024 hubs and 5,120 aircraft. All
-results are from simulation.
+The [fleet study](paper/README.md) puts a language model above a delivery
+dispatcher and asks which decisions it should make: move aircraft and stock
+between hubs, lend a neighbor's aircraft, or leave the local rules alone. The
+mission runs from 4 hubs to 1,024. The code is in
+[crates/delivery](crates/delivery/README.md).
 
 ## Try it
 
@@ -43,9 +36,6 @@ watch a run, use `--viewer`; to inspect a saved run, use
 `ripple replay <run-folder>`. Both need a Rerun viewer matching the SDK
 version in `Cargo.lock`. See [run records](book/src/guides/run-records.md)
 for the files and channels.
-
-The [delivery crate](crates/delivery/README.md) explains the regional
-mission and its sweeps.
 
 ## Make your own mission
 

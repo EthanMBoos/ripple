@@ -9,10 +9,10 @@
   If sharing, create it once, inspect the public view and both tracked PDFs,
   then add its link to the submission.
 - Rerun Luna through the OpenAI API and keep everything (Ezra). Run
-  `python3 scripts/bulk_run.py local
-  crates/delivery/missions/region-16-luna-api.sweep.yaml`, then the same
-  for `region-64-luna-api.sweep.yaml`, on the current binary with one
-  worker per run. Send back the whole output folder each makes under
+  `ripple sweep crates/delivery/missions/region-16-luna-api.sweep.yaml`,
+  then the same for `region-64-luna-api.sweep.yaml`, on the current
+  release binary (`cargo build --release`), one job each, so the API is
+  called one day at a time. Send back the whole run folder each makes under
   `sweeps/` (its `results.jsonl` holds the score, moves, lends, and the
   per-hub columns) and the new reply files under `runs/llm-cache/`, so
   the runs replay here without calls. Then add Luna to Figure 2 through
@@ -27,6 +27,3 @@
 ## Possible additions
 
 - Make a demo video from the title-figure recording.
-- If time permits, try a demand-sized replanner at 4, 16, and 64 hubs to
-  test whether the fixed relocation size drives the loss. Update the
-  claim if it changes the ranking.

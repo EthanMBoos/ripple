@@ -400,12 +400,12 @@ set the bar. \emph{No manager} is the dispatcher alone. \emph{Local rules}
 adds orders that change only what a hub's own aircraft do: priorities,
 closures, grounding, and ground-pad delivery. \emph{Lending} adds
 permission for a neighboring hub to serve a site, after which the aircraft
-comes home. \emph{Relocating} adds aircraft moves and stock transfers to
-local rules, without lending. The \emph{replanner} uses every order and
+comes home. \emph{Relocating} moves up to four fixed-wing aircraft and
+two multirotors per surge hub and transfers stock, without lending. It
+acts at announcement, before surge requests arrive over the next fifteen
+minutes. The \emph{replanner} uses every order and
 also tops up low stock at check-ins. \emph{Return} is the replanner with
-its relocated aircraft sent home once the event ends. The policies give
-the same orders through the same dispatcher and are compared on the same
-days.
+its relocated aircraft sent home once the event ends.
 
 In the main comparisons, the dispatcher checks each delivery flight but
 does not veto a manager's relocation for range or for leaving a hub short.

@@ -22,7 +22,6 @@ fn simulation(altitude_bias: f64, sensor_rate: f64) -> Result<Simulation> {
     Simulation::new(
         mission.scenario,
         Arc::new(ripple_core::plugin::PluginRegistry::with_builtins()),
-        2,
     )
 }
 
@@ -65,7 +64,6 @@ entities:
     Simulation::new(
         mission?.scenario,
         Arc::new(ripple_core::plugin::PluginRegistry::with_builtins()),
-        1,
     )
 }
 
@@ -145,7 +143,6 @@ fn no_sensor_gives_perfect_belief() -> Result<()> {
     let mut simulation = Simulation::new(
         mission.scenario,
         Arc::new(ripple_core::plugin::PluginRegistry::with_builtins()),
-        1,
     )?;
     for _ in 0..3 {
         simulation.step()?;

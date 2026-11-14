@@ -57,7 +57,7 @@ def copy_reference_check(check, output, extra=()):
         if summaries:
             shutil.copyfile(summaries[0], case / "cpp-summary.csv")
             # Ripple's metrics in the C++ layout, at full precision, beside it.
-            header, teams = scrimmage_summary(read_run(result.parent / "rust-1"))
+            header, teams = scrimmage_summary(read_run(result.parent / "rust"))
             rows = [",".join(header)] + [",".join([str(team), *map(repr, values)])
                                          for team, values in teams.items()]
             (case / "rust-summary.csv").write_text("\n".join(rows) + "\n")

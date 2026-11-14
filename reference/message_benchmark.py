@@ -12,8 +12,8 @@ with a benchmark-only pair from the runner: StateBroadcast publishes each
 aircraft's state on LocalNetwork every step, and StateListener subscribes and
 discards it. Both simulators then route one message per aircraft per step to
 every subscriber's network check. C++ is the
-native build (native_build.sh, built on first use); Rust is the core-only runner
-on one worker. A variant's time per step is the whole process minus a one-step
+native build (native_build.sh, built on first use); Rust is the core-only
+runner. A variant's time per step is the whole process minus a one-step
 run of the same mission, the median of the repeats after a warm-up; variants
 alternate run by run. The C++ comparison checks that both deliver the same
 messages (reference_check.py); this measures what delivering them costs.
@@ -72,7 +72,7 @@ def mission(cli, directory, variant, agents, sensors, end_s):
 def command(variant, runner, path, output):
     if variant == "cpp":
         return [native.CPP, path], native.CPP_ENV
-    return [runner, path, ROOT, output, "1"], os.environ
+    return [runner, path, ROOT, output], os.environ
 
 
 def wall_seconds(variant, runner, path, output):

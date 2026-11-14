@@ -293,13 +293,11 @@ def check_mission(args, case, mission, directory, images, rust):
         shutil.copyfile(mission, inputs / "input.yaml")
         # Ripple runs first: its MCAP records the scenario SCRIMMAGE's XML is
         # written from. Both simulators read the saved input; neither rewrites it.
-        for workers in (1, 2, 8):
-            run_logged([
-                rust, "run", inputs / "input.yaml", "--root", ROOT,
-                "--output", directory / f"rust-{workers}",
-                "--workers", workers, "--headless",
-            ], directory / f"rust-{workers}.log", timeout=args.timeout)
-        serial = directory / "rust-1"
+        run_logged([
+            rust, "run", inputs / "input.yaml", "--root", ROOT,
+            "--output", directory / "rust", "--headless",
+        ], directory / "rust.log", timeout=args.timeout)
+        serial = directory / "rust"
         scenario = read_run(serial).scenario
         result["input"] = prepare_mission(inputs, scenario)
         effective = inputs / "effective.xml"
@@ -325,12 +323,9 @@ def check_mission(args, case, mission, directory, images, rust):
         result["cpp_output_hashes"] = {
             name: sha256(cpp_logs / name) for name in CPP_OUTPUT_FILES
         }
-        result["worker_equality"] = {
-            str(workers): same_outputs(serial, directory / f"rust-{workers}") for workers in (2, 8)
-        }
         run_logged([
             rust, "run", inputs / "input.yaml", "--root", ROOT,
-            "--output", directory / "rust-rerun", "--workers", "8", "--headless",
+            "--output", directory / "rust-rerun", "--headless",
             "--export-rrd",
         ], directory / "rust-rerun.log", timeout=args.timeout)
         result["recording_equality"] = same_outputs(serial, directory / "rust-rerun")
@@ -340,11 +335,11 @@ def check_mission(args, case, mission, directory, images, rust):
         result["recording_sha256"] = sha256(recording)
         run_logged([
             rust, "run", inputs / "input.yaml", "--root", ROOT,
-            "--output", directory / "rust-trace", "--workers", "1", "--headless", "--trace",
+            "--output", directory / "rust-trace", "--headless", "--trace",
         ], directory / "rust-trace.log", timeout=args.timeout)
         result["trace_equality"] = same_outputs(serial, directory / "rust-trace")
         result["rust_output_hashes"] = {}
-        for variant in ("rust-1", "rust-2", "rust-8", "rust-rerun", "rust-trace"):
+        for variant in ("rust", "rust-rerun", "rust-trace"):
             channels = read_run(directory / variant).channels
             result["rust_output_hashes"][variant] = {
                 topic: hashlib.sha256(b"".join(channels.get(topic, []))).hexdigest()
@@ -359,7 +354,6 @@ def check_mission(args, case, mission, directory, images, rust):
             result["comparison"]["passed"] and result["trace_comparison"]["passed"]
             and result["summary_agreement"] != "unexplained"
             and all(all(files.values()) for files in result["cpp_non_interference"].values())
-            and all(all(files.values()) for files in result["worker_equality"].values())
             and all(result["recording_equality"].values())
             and all(result["trace_equality"].values())
         )

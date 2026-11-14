@@ -313,9 +313,8 @@ fn fixed_drawings(&self) -> Vec<Drawing> {
 }
 ```
 
-The engine asks every plugin after the metrics phase and on the main
-thread, in entity order then world-plugin order, so the result is the same
-at any worker count. The frame carries both parts under the plugin's name,
+The engine asks every plugin after the metrics phase, in entity order then
+world-plugin order. The frame carries both parts under the plugin's name,
 with the entity's ID for an entity's plugin (`Dispatcher/7`), and the
 record writes them to its `/drawings` channel only when a frame's drawings
 differ from the previous frame's, whether or not a viewer is open. The

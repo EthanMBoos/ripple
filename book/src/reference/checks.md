@@ -14,8 +14,8 @@ it agreed.
   Known SCRIMMAGE defects are fixed on both sides for the comparison. To show
   that the comparison would catch a real mistake, twelve porting bugs are
   planted one at a time; it catches all twelve.
-- **Determinism**: the same missions at 1, 2, and 8 workers, with recording
-  on and off, must give byte-identical output.
+- **Determinism**: the same missions with recording on and off, and with the
+  trace on and off, must give byte-identical output.
 - **Multirotor rotors** match RotorS's motor and rotor code on 720 sampled
   states, to about 10⁻¹⁵.
 - **Multirotor flight** matches Crazyflow, an independent model, on the same

@@ -8,9 +8,8 @@ sensors and metrics can observe physical truth. Included models range from
 point agents to multirotors and fixed-wing aircraft.
 
 You can change the manager, a vehicle model, or its sensors while keeping
-the rest of the mission. A seed defines a repeatable run, and Rust outputs
-are byte-identical with one, two, or eight workers. Each run writes
-an MCAP record; [Rerun](https://rerun.io) can display it. Ripple follows
+the rest of the mission. A seed defines a repeatable run with byte-identical
+output. Each run writes an MCAP record; [Rerun](https://rerun.io) can display it. Ripple follows
 [SCRIMMAGE](https://github.com/gtri/scrimmage)'s simulation and plugin
 design, with its own YAML mission format.
 

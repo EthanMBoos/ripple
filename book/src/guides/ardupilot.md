@@ -52,7 +52,7 @@ B=autonomy.ArduPilotBridge   # shortens the override paths below
 $S run $M/rascal-sitl.yaml --headless run.end_s:=150
 
 # Two aircraft: one flying a looping route (AUTO), one circling
-$S run $M/rascal-sitl-pair.yaml --headless --workers 2 run.end_s:=240 \
+$S run $M/rascal-sitl-pair.yaml --headless run.end_s:=240 \
     "entities.rascal_a.$B.waypoints_m:=[[600,0,0], [600,200,50], [0,200,50], [0,0,0]]"
 
 # Fly to a point and circle it (GUIDED)
@@ -81,8 +81,8 @@ folder per SITL, holding
 - `logs/*.BIN`: ArduPilot's own flight log;
 - its parameter storage.
 
-Give multi-aircraft runs one worker per aircraft (`--workers 2`), so their SITL
-waits overlap; with one worker they take turns and the run is slower.
+With several aircraft the engine waits for each SITL in turn within a tick, so
+a pair runs slower than one aircraft.
 
 The SITL session settings are bridge parameters:
 

@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
-"""Rust determinism: worker counts, recording, tracing, and spatial lookup change no output.
+"""Rust determinism: recording, tracing, and spatial lookup change no output.
 
     python3 reference/determinism.py --output runs/determinism000
 
 Runs every mission (reference/project.py), perf.py's workloads, and three
-crowded collision missions with the command-line executable at 1, 2, and 8
-workers, with an eight-worker headless Rerun recording. Shipped missions and a
-small generated contact-sensing case also run with the observation trace; large
-generated workloads do not duplicate every agent's contacts in the check
-output. Entity, frame, event, and summary
-channel payloads must be byte-identical across the variants used, and the
-optional RRD export nonempty.
-The core-only runner then answers
-spatial queries with a scan at 1 and 8 workers and with grids of several cell
-widths (0.7 to 1,000 m); those must all write identical output too (the
-runner has only the stock plugins, so user-crate missions skip this). Writes
+crowded collision missions with the command-line executable plain and with a
+headless Rerun recording. Shipped missions and a small generated contact-sensing
+case also run with the observation trace; large generated workloads do not
+duplicate every agent's contacts in the check output. Entity, frame, event, and
+summary channel payloads must be byte-identical across the variants used, and
+the optional RRD export nonempty. The core-only runner then answers spatial
+queries with a scan and with grids of several cell widths (0.7 to 1,000 m);
+those must all write identical output too (the runner has only the stock
+plugins, so user-crate missions skip this). Writes
 report.json; exits non-zero on any difference. Standard library only.
 """
 
@@ -29,15 +27,12 @@ from project import ROOT, build_cli, build_runner, missions
 from run import read_run
 
 CHANNELS = ("/entities", "/frames", "/events", "/summary")
-CLI_VARIANTS = [("w1", ["--workers", "1", "--headless"]),
-                ("w2", ["--workers", "2", "--headless"]),
-                ("w8", ["--workers", "8", "--headless"]),
-                ("w8-recording", ["--workers", "8", "--headless", "--export-rrd"]),
-                ("w1-trace", ["--workers", "1", "--headless", "--trace"])]
-# (label, workers, grid cell width in metres or None for the scan)
-LOOKUP_VARIANTS = [("scan-w1", 1, None), ("scan-w8", 8, None), ("grid5-w1", 1, 5),
-                   ("grid5-w8", 8, 5), ("grid0.7-w2", 2, 0.7), ("grid50-w2", 2, 50),
-                   ("grid1000-w1", 1, 1000)]
+CLI_VARIANTS = [("plain", ["--headless"]),
+                ("recording", ["--headless", "--export-rrd"]),
+                ("trace", ["--headless", "--trace"])]
+# (label, grid cell width in metres or None for the scan)
+LOOKUP_VARIANTS = [("scan", None), ("grid5", 5), ("grid0.7", 0.7), ("grid50", 50),
+                   ("grid1000", 1000)]
 # Crowded collision missions: (position spread m, agents).
 CROWDED = [(10, 512), (20, 1024), (50, 2048)]
 
@@ -78,29 +73,29 @@ def check(cli, runner, name, mission, stock, trace, folder):
     folder.mkdir()
     different = []
     for label, options in CLI_VARIANTS:
-        if label == "w1-trace" and not trace:
+        if label == "trace" and not trace:
             continue
         run = subprocess.run([cli, "run", mission, "--root", ROOT, "--output", folder / label,
                               *options], capture_output=True, text=True)
-        if run.returncode and label == "w1":
+        if run.returncode and label == "plain":
             # A mission that does not load (a model key missing from the
             # environment, say) has no output to compare.
             return {"mission": name, "traced": trace, "collisions": 0, "identical": None,
                     "differences": [f"skipped: {run.stderr.strip().splitlines()[-1]}"]}
         run.check_returncode()
-        if label != "w1":
-            different += differences(folder / "w1", folder / label, label)
-    recording = folder / "w8-recording/recording.rrd"
+        if label != "plain":
+            different += differences(folder / "plain", folder / label, label)
+    recording = folder / "recording/recording.rrd"
     if not recording.is_file() or not recording.stat().st_size:
-        different.append("w8-recording: no recording")
-    for label, workers, grid in LOOKUP_VARIANTS if stock else []:
-        subprocess.run([runner, mission, ROOT, folder / label, str(workers),
+        different.append("recording: no recording")
+    for label, grid in LOOKUP_VARIANTS if stock else []:
+        subprocess.run([runner, mission, ROOT, folder / label,
                         *([] if grid is None else [str(grid)])],
                        capture_output=True, text=True, check=True)
-        if label != "scan-w1":
-            different += differences(folder / "scan-w1", folder / label, label,
+        if label != "scan":
+            different += differences(folder / "scan", folder / label, label,
                                      compare_scenario=False)
-    events = read_run(folder / "w1").events
+    events = read_run(folder / "plain").events
     collisions = sum(event["kind"] in ("TeamCollision", "NonTeamCollision") for event in events)
     return {"mission": name, "traced": trace, "collisions": collisions,
             "identical": not different,
@@ -126,7 +121,7 @@ def main(argv=None):
               flush=True)
     report = {"passed": all(result["identical"] is not False for result in results),
               "channels_compared": CHANNELS, "cli_variants": [label for label, _ in CLI_VARIANTS],
-              "lookup_variants": [label for label, _, _ in LOOKUP_VARIANTS],
+              "lookup_variants": [label for label, _ in LOOKUP_VARIANTS],
               "missions": len(results),
               "traced_missions": sum(result["traced"] for result in results),
               "skipped": [result["mission"] for result in results if result["identical"] is None],

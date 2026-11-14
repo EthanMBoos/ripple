@@ -19,7 +19,7 @@ fn run(overrides: &[(&str, &str)]) -> Result<Vec<(f64, f64, f64)>> {
         crate_folder,
         &params,
     )?;
-    let mut simulation = Simulation::new(mission.scenario, Arc::new(registry), 1)?;
+    let mut simulation = Simulation::new(mission.scenario, Arc::new(registry))?;
     let mut ticks = Vec::new();
     while simulation.step()?.is_some() {
         // Entities in mission order: the dead-reckoning robot, then the perfect one.

@@ -89,47 +89,45 @@ fn initialization_failure_step_failure_and_removal_close_each_plugin_once() -> R
     let registry = Arc::new(registry);
 
     // One test owns this counter; parallel tests cannot interfere with it.
-    for workers in [1, 8] {
-        for action in ["fail_init", "fail_step", "normal"] {
-            CLOSED.store(0, Ordering::SeqCst);
-            let overrides = Params::from([
-                (
-                    "entities.agents.sensors".into(),
-                    format!("{{LifecycleSensor: {{action: {action}}}}}"),
-                ),
-                ("interactions".into(), "{RemoveEntities: {}}".into()),
-            ]);
-            let scenario = plugin_fixtures::scenario(&overrides)?;
-            let result = Simulation::new(scenario, Arc::clone(&registry), workers);
-            if action == "fail_init" {
-                let error = result.err().expect("initialization must fail");
-                let message = format!("{error:#}");
-                assert!(message.contains("LifecycleSensor"), "{message}");
-                assert!(message.contains("initialize entity"), "{message}");
-                assert_eq!(CLOSED.load(Ordering::SeqCst), 1);
-                continue;
-            }
-
-            let mut simulation = result?;
-            if action == "fail_step" {
-                let error = simulation.step().unwrap_err();
-                assert!(format!("{error:#}").contains("LifecycleSensor"));
-                assert_eq!(
-                    simulation.termination(),
-                    Some(TerminationReason::PluginFailure)
-                );
-            } else {
-                simulation.step()?;
-                assert!(simulation.entities().is_empty());
-                for (_, report) in simulation.metric_reports() {
-                    assert_eq!(report.teams[&1].values["steps"], 1.0);
-                }
-                while simulation.step()?.is_some() {}
-            }
-            assert_eq!(CLOSED.load(Ordering::SeqCst), 8);
-            drop(simulation);
-            assert_eq!(CLOSED.load(Ordering::SeqCst), 8);
+    for action in ["fail_init", "fail_step", "normal"] {
+        CLOSED.store(0, Ordering::SeqCst);
+        let overrides = Params::from([
+            (
+                "entities.agents.sensors".into(),
+                format!("{{LifecycleSensor: {{action: {action}}}}}"),
+            ),
+            ("interactions".into(), "{RemoveEntities: {}}".into()),
+        ]);
+        let scenario = plugin_fixtures::scenario(&overrides)?;
+        let result = Simulation::new(scenario, Arc::clone(&registry));
+        if action == "fail_init" {
+            let error = result.err().expect("initialization must fail");
+            let message = format!("{error:#}");
+            assert!(message.contains("LifecycleSensor"), "{message}");
+            assert!(message.contains("initialize entity"), "{message}");
+            assert_eq!(CLOSED.load(Ordering::SeqCst), 1);
+            continue;
         }
+
+        let mut simulation = result?;
+        if action == "fail_step" {
+            let error = simulation.step().unwrap_err();
+            assert!(format!("{error:#}").contains("LifecycleSensor"));
+            assert_eq!(
+                simulation.termination(),
+                Some(TerminationReason::PluginFailure)
+            );
+        } else {
+            simulation.step()?;
+            assert!(simulation.entities().is_empty());
+            for (_, report) in simulation.metric_reports() {
+                assert_eq!(report.teams[&1].values["steps"], 1.0);
+            }
+            while simulation.step()?.is_some() {}
+        }
+        assert_eq!(CLOSED.load(Ordering::SeqCst), 8);
+        drop(simulation);
+        assert_eq!(CLOSED.load(Ordering::SeqCst), 8);
     }
     Ok(())
 }

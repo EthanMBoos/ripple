@@ -520,7 +520,7 @@ fn run_case(
         let config = load_case(spec, base, root, index)?;
         row.seed = config.run.seed;
         // One worker per case: Slurm gives each shard one CPU.
-        let mut simulation = Simulation::new(config, Arc::clone(registry), 1)?;
+        let mut simulation = Simulation::new(config, Arc::clone(registry))?;
         while simulation.step()?.is_some() {
             ensure!(
                 simulation.step_count() <= max_steps,

@@ -5,6 +5,12 @@
 - If the simulator changes, refresh the retained evidence with
   `python3 reference/suite.py --release --retain`.
 - Commit and push the final manuscript, study code, and outcome data.
+- The perf baseline predates the worker pool's removal (2026-11-14) and the
+  engine refactors in `docs/FORMAL_VERIFICATION.md` will change timing again.
+  Once those land, or sooner if a run looks slow, re-accept it on an idle
+  machine with `python3 reference/perf.py --accept`. The pool removal's
+  equivalence check was stopped after 24 of 41 cases, all identical; the
+  delivery missions and generated workloads were not compared.
 - Once the paper is final, decide whether to share an anonymous code mirror.
   If sharing, create it once, inspect the public view and both tracked PDFs,
   then add its link to the submission.

@@ -8,7 +8,7 @@ from unittest.mock import patch
 import suite
 
 CLEAN_CASE = {"passed": True, "comparison": {"passed": True, "max_position_error_m": 1e-12},
-              "summary_agreement": "agree", "cpp_non_interference": {}, "worker_equality": {},
+              "summary_agreement": "agree", "cpp_non_interference": {},
               "trace_equality": {}, "recording_equality": {},
               "trace_comparison": {"delivery_mismatches": 0, "max_payload_covariance_error": 0,
                                    "max_output_error": 0, "max_belief_position_error_m": 0,

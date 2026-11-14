@@ -56,7 +56,7 @@ def mission(agents, spread, range_m, collide):
 def run(runner, mission, output, grid):
     """(seconds stepping, steps, peak MB, collisions, output hash) for one run."""
     shutil.rmtree(output, ignore_errors=True)
-    command = [runner, mission, ROOT, output, "1", *([] if grid is None else [str(grid)])]
+    command = [runner, mission, ROOT, output, *([] if grid is None else [str(grid)])]
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     _, status, usage = os.wait4(process.pid, 0)
     stdout, stderr = process.communicate()
@@ -127,7 +127,7 @@ def main(argv=None):
         "date": datetime.date.today().isoformat(), "platform": platform.platform(),
         "machine": perf.environment()["machine"], "rustc": perf.environment()["rustc"],
         "source_sha256": source_identity()["source_sha256"],
-        "repeats": args.repeats, "workers": 1,
+        "repeats": args.repeats,
         "note": "Every variant of each case except none wrote identical frames and events.",
         "cases": results,
     }, indent=1) + "\n")

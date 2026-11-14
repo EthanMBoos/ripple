@@ -32,25 +32,25 @@ class BenchmarkMissionTests(unittest.TestCase):
 
     def test_rust_reads_the_workload_and_one_step_changes_only_the_end(self):
         with tempfile.TemporaryDirectory() as directory:
-            full = json.loads(mission("churn", 64, Path(directory), "rust-1").read_text())
+            full = json.loads(mission("churn", 64, Path(directory), "rust").read_text())
         with tempfile.TemporaryDirectory() as directory:
-            short = json.loads(mission("churn", 64, Path(directory), "rust-1", True).read_text())
+            short = json.loads(mission("churn", 64, Path(directory), "rust", True).read_text())
         self.assertEqual(short["run"]["end_s"], 0.1)
         self.assertEqual(full, {**short, "run": {**short["run"], "end_s": 200}})
 
 
 class BenchmarkPassTests(unittest.TestCase):
-    REPEATABLE = {"cpp-1": True, "cpp-8": False, "rust-1": True, "rust-8": True}
-    MATCH = {"rust-1": {"passed": True}, "rust-8": {"passed": True}}
-    DIFFER = {"rust-1": {"passed": False}, "rust-8": {"passed": False}}
+    REPEATABLE = {"cpp-1": True, "cpp-8": False, "rust": True}
+    MATCH = {"rust": {"passed": True}}
+    DIFFER = {"rust": {"passed": False}}
 
-    def test_rust_worker_counts_must_agree_even_without_cpp_parity(self):
-        self.assertTrue(case_passed("churn", self.REPEATABLE, self.DIFFER, True))
-        self.assertFalse(case_passed("churn", self.REPEATABLE, self.DIFFER, False))
+    def test_rust_must_repeat_even_without_cpp_parity(self):
+        self.assertTrue(case_passed("churn", self.REPEATABLE, self.DIFFER))
+        self.assertFalse(case_passed("churn", {**self.REPEATABLE, "rust": False}, self.DIFFER))
 
     def test_deterministic_workloads_must_match_cpp(self):
-        self.assertTrue(case_passed("motion", self.REPEATABLE, self.MATCH, True))
-        self.assertFalse(case_passed("motion", self.REPEATABLE, self.DIFFER, True))
+        self.assertTrue(case_passed("motion", self.REPEATABLE, self.MATCH))
+        self.assertFalse(case_passed("motion", self.REPEATABLE, self.DIFFER))
 
 
 if __name__ == "__main__":

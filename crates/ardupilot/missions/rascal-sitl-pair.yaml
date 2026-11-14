@@ -1,7 +1,7 @@
 # Two Rascals, each flown by its own ArduPlane SITL, in lockstep: the
 # multi-vehicle case. Same as rascal-sitl.yaml otherwise, which explains the
-# aircraft, the air start, and wind. Run with --workers 2 so the two SITL waits
-# overlap; with one worker they take turns.
+# aircraft, the air start, and wind. The two SITL waits take turns within each
+# tick.
 format_version: 1
 name: Rascal SITL pair
 

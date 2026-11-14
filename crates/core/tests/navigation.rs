@@ -14,7 +14,6 @@ fn run(name: &str, update_at: f64) -> Result<Simulation> {
     let mut simulation = Simulation::new(
         mission.scenario,
         Arc::new(ripple_core::plugin::PluginRegistry::with_builtins()),
-        2,
     )?;
     while simulation.step()?.is_some() {}
     Ok(simulation)

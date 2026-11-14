@@ -284,9 +284,9 @@ fn population(log: &str) -> Result<ScenarioConfig> {
     })
 }
 
-fn run(scenario: ScenarioConfig, workers: usize) -> Result<(Vec<SimulationFrame>, Simulation)> {
+fn run(scenario: ScenarioConfig) -> Result<(Vec<SimulationFrame>, Simulation)> {
     let registry = registry()?;
-    let mut simulation = Simulation::new(scenario, Arc::new(registry), workers)?;
+    let mut simulation = Simulation::new(scenario, Arc::new(registry))?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
         frames.push(frame);
@@ -300,7 +300,7 @@ fn seen(log: &str) -> Vec<Seen> {
 
 #[test]
 fn perfect_belief_equals_truth_at_every_decision_through_collisions_and_spawns() -> Result<()> {
-    let (frames, simulation) = run(population("perfect")?, 1)?;
+    let (frames, simulation) = run(population("perfect")?)?;
     let seen = seen("perfect");
     assert!(
         simulation
@@ -355,7 +355,7 @@ fn perfect_belief_equals_truth_at_every_decision_through_collisions_and_spawns()
 
 #[test]
 fn a_spawned_entity_is_unknown_to_others_until_their_next_measurement() -> Result<()> {
-    let (_, _) = run(population("spawn")?, 2)?;
+    let (_, _) = run(population("spawn")?)?;
     let seen = seen("spawn");
     let late_id = seen
         .iter()
@@ -377,25 +377,6 @@ fn a_spawned_entity_is_unknown_to_others_until_their_next_measurement() -> Resul
         .find(|entry| entry.entity_id == late_id)
         .expect("spawned entity decided");
     assert!(!first.contacts.is_empty());
-    Ok(())
-}
-
-#[test]
-fn decisions_and_belief_are_worker_independent() -> Result<()> {
-    let history = |workers: usize| -> Result<String> {
-        let log = format!("workers-{workers}");
-        run(population(&log)?, workers)?;
-        let mut seen = seen(&log);
-        seen.sort_by(|a, b| {
-            a.time_s
-                .total_cmp(&b.time_s)
-                .then(a.entity_id.cmp(&b.entity_id))
-        });
-        Ok(format!("{seen:?}"))
-    };
-    let serial = history(1)?;
-    assert_eq!(serial, history(2)?);
-    assert_eq!(serial, history(8)?);
     Ok(())
 }
 
@@ -434,16 +415,14 @@ fn a_named_input_selects_its_sensor_and_ambiguity_is_an_error() -> Result<()> {
     let error = Simulation::new(
         scenario(PluginConfig::new("PassThrough"))?,
         Arc::new(registry),
-        1,
     )
     .err()
     .expect("two state sensors and no input named");
     assert!(format!("{error:#}").contains("coarse, fine"), "{error:#}");
     for (sensor, bias_m) in [("coarse", 5.0), ("fine", 0.0)] {
-        let (_, simulation) = run(
-            scenario(PluginConfig::new("PassThrough").input("state", sensor))?,
-            1,
-        )?;
+        let (_, simulation) = run(scenario(
+            PluginConfig::new("PassThrough").input("state", sensor),
+        )?)?;
         let entity = &simulation.entities()[0];
         let error_m = entity.belief().position_world_m.z - entity.truth().position_world_m.z;
         assert_eq!(error_m, bias_m, "{sensor}");
@@ -480,7 +459,7 @@ fn trackers_are_per_entity_and_leave_truth_alone() -> Result<()> {
         entities: vec![biased, perfect],
         ..ScenarioConfig::default()
     };
-    let (frames, simulation) = run(scenario, 2)?;
+    let (frames, simulation) = run(scenario)?;
     let [biased, perfect] = simulation.entities() else {
         panic!("two entities");
     };
@@ -526,7 +505,7 @@ fn localization_receives_what_the_motion_model_read_on_each_substep() -> Result<
         entities: vec![entity],
         ..ScenarioConfig::default()
     };
-    run(scenario, 1)?;
+    run(scenario)?;
     let log = COMMANDS.lock().unwrap().remove("commands").expect("logged");
     let (initial, steps) = log.split_first().expect("entries");
     assert_eq!(initial.0, 0);
@@ -563,7 +542,7 @@ fn substep_positions(localization: Option<PluginConfig>, log: &str) -> Result<Ve
         entities: vec![entity],
         ..ScenarioConfig::default()
     };
-    run(scenario, 1)?;
+    run(scenario)?;
     Ok(POSITIONS.lock().unwrap().remove(log).expect("logged"))
 }
 
@@ -599,7 +578,7 @@ fn estimators_run_every_tick() -> Result<()> {
         entities: vec![entity],
         ..ScenarioConfig::default()
     };
-    let error = Simulation::new(scenario, Arc::new(registry()?), 1)
+    let error = Simulation::new(scenario, Arc::new(registry()?))
         .err()
         .expect("an estimator loop_rate_hz is rejected");
     assert!(
@@ -622,7 +601,7 @@ fn estimators_send_and_receive_messages() -> Result<()> {
         entities: vec![entity],
         ..ScenarioConfig::default()
     };
-    run(scenario, 1)?;
+    run(scenario)?;
     let log = COMMANDS.lock().unwrap().remove("echo").expect("logged");
     // Published at startup or in one estimation step, routed by the next tick's
     // network phase, and read in that tick's estimation step.
@@ -640,7 +619,7 @@ fn a_perfect_input_gives_only_its_declared_kind() -> Result<()> {
         entities: vec![entity],
         ..ScenarioConfig::default()
     };
-    let error = Simulation::new(scenario, Arc::new(registry()?), 1)
+    let error = Simulation::new(scenario, Arc::new(registry()?))
         .err()
         .expect("asking a state input for contacts fails");
     assert!(

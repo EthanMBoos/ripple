@@ -102,12 +102,7 @@ fn fake_sitl(
 
 /// Load a SITL mission with test settings: no hold, starting at 20 m/s, short
 /// timeouts, and each named aircraft's bridge on the given port.
-fn simulation(
-    mission: &str,
-    aircraft: &[(&str, u16)],
-    end_s: f64,
-    workers: usize,
-) -> Result<Simulation> {
+fn simulation(mission: &str, aircraft: &[(&str, u16)], end_s: f64) -> Result<Simulation> {
     let crate_folder = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut registry = PluginRegistry::with_builtins();
     ardupilot::register(&mut registry)?;
@@ -135,12 +130,12 @@ fn simulation(
         crate_folder,
         &params,
     )?;
-    Simulation::new(mission.scenario, Arc::new(registry), workers)
+    Simulation::new(mission.scenario, Arc::new(registry))
 }
 
 /// Run the one-aircraft mission to its end.
 fn run(port: u16, end_s: f64) -> Result<()> {
-    let mut simulation = simulation("rascal-sitl.yaml", &[("rascal", port)], end_s, 1)?;
+    let mut simulation = simulation("rascal-sitl.yaml", &[("rascal", port)], end_s)?;
     while simulation.step()?.is_some() {}
     Ok(())
 }
@@ -250,7 +245,7 @@ fn the_first_reply_includes_the_first_step_acceleration() -> Result<()> {
 fn closing_frees_the_port() -> Result<()> {
     let port = free_port()?;
     let sitl = fake_sitl(port, FakeSitl::Normal, HALF_THROTTLE_US)?;
-    let mut simulation = simulation("rascal-sitl.yaml", &[("rascal", port)], 0.1, 1)?;
+    let mut simulation = simulation("rascal-sitl.yaml", &[("rascal", port)], 0.1)?;
     while simulation.step()?.is_some() {}
     // The finished simulation is still alive, but its bridge has closed.
     UdpSocket::bind(("0.0.0.0", port))?;
@@ -261,31 +256,21 @@ fn closing_frees_the_port() -> Result<()> {
 
 #[test]
 fn two_aircraft_share_one_clock_and_keep_their_own_commands() -> Result<()> {
-    for workers in [1, 2] {
-        let (port_a, port_b) = (free_port()?, free_port()?);
-        // Aircraft A at full throttle, B at idle.
-        let sitl_a = fake_sitl(port_a, FakeSitl::Normal, 2000)?;
-        let sitl_b = fake_sitl(port_b, FakeSitl::Normal, 1000)?;
-        let aircraft = [("rascal_a", port_a), ("rascal_b", port_b)];
-        let mut simulation = simulation("rascal-sitl-pair.yaml", &aircraft, 0.5, workers)?;
-        while simulation.step()?.is_some() {}
-        let (replies_a, replies_b) = (sitl_a.join().unwrap()?, sitl_b.join().unwrap()?);
+    let (port_a, port_b) = (free_port()?, free_port()?);
+    // Aircraft A at full throttle, B at idle.
+    let sitl_a = fake_sitl(port_a, FakeSitl::Normal, 2000)?;
+    let sitl_b = fake_sitl(port_b, FakeSitl::Normal, 1000)?;
+    let aircraft = [("rascal_a", port_a), ("rascal_b", port_b)];
+    let mut simulation = simulation("rascal-sitl-pair.yaml", &aircraft, 0.5)?;
+    while simulation.step()?.is_some() {}
+    let (replies_a, replies_b) = (sitl_a.join().unwrap()?, sitl_b.join().unwrap()?);
 
-        assert!(
-            replies_a.len() >= 49,
-            "{workers} workers: {} replies",
-            replies_a.len()
-        );
-        assert_eq!(
-            timestamps(&replies_a),
-            timestamps(&replies_b),
-            "{workers} workers"
-        );
-        for (reply_a, reply_b) in replies_a.iter().zip(&replies_b) {
-            // Full throttle pushes forward; idle leaves only drag.
-            assert!(forward_accel(reply_a) > 1.0, "{workers} workers: {reply_a}");
-            assert!(forward_accel(reply_b) < 0.0, "{workers} workers: {reply_b}");
-        }
+    assert!(replies_a.len() >= 49, "{} replies", replies_a.len());
+    assert_eq!(timestamps(&replies_a), timestamps(&replies_b));
+    for (reply_a, reply_b) in replies_a.iter().zip(&replies_b) {
+        // Full throttle pushes forward; idle leaves only drag.
+        assert!(forward_accel(reply_a) > 1.0, "{reply_a}");
+        assert!(forward_accel(reply_b) < 0.0, "{reply_b}");
     }
     Ok(())
 }

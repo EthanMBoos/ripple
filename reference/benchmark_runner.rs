@@ -1,7 +1,7 @@
 //! Headless core benchmark executable, not an application API or simulator command.
 //! Both implementations write frames and summaries. No viewer dependency is timed.
 //! Prints one JSON line: steps, setup_s (load and construct), and run_s (stepping
-//! and writing frames), for reference/perf.py. An optional fifth argument, a cell
+//! and writing frames), for reference/perf.py. An optional fourth argument, a cell
 //! width in metres, answers spatial queries with a grid instead of a scan.
 //! It also registers StateBroadcast and StateListener, a message pair that only
 //! reference/message_benchmark.py uses.
@@ -52,20 +52,20 @@ impl Autonomy for StateListener {
 fn main() -> Result<()> {
     let args: Vec<_> = env::args().collect();
     ensure!(
-        args.len() == 5 || args.len() == 6,
-        "usage: reference MISSION ROOT OUTPUT WORKERS [GRID_CELL_WIDTH_M]"
+        args.len() == 4 || args.len() == 5,
+        "usage: reference MISSION ROOT OUTPUT [GRID_CELL_WIDTH_M]"
     );
     let started = Instant::now();
     let mut registry = PluginRegistry::with_builtins();
     registry.register_sensor::<StateBroadcast>("StateBroadcast")?;
     registry.register_autonomy::<StateListener>("StateListener")?;
     let mut config = Mission::load(Path::new(&args[1]), Path::new(&args[2]), &Params::new())?;
-    if let Some(cell_width_m) = args.get(5) {
+    if let Some(cell_width_m) = args.get(4) {
         config.scenario.spatial_lookup = SpatialLookup::Grid {
             cell_width_m: cell_width_m.parse()?,
         };
     }
-    let mut simulation = Simulation::new(config.scenario, Arc::new(registry), args[4].parse()?)?;
+    let mut simulation = Simulation::new(config.scenario, Arc::new(registry))?;
     let setup_s = started.elapsed().as_secs_f64();
     let started = Instant::now();
     let output = Path::new(&args[3]);

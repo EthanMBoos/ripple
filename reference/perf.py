@@ -6,8 +6,8 @@
     python3 reference/perf.py --accept    # measure and make this the accepted baseline
 
 Runs a fixed set of workloads natively (release build, core-only runner
-reference/benchmark_runner.rs, no viewer), each at a few agent counts and at 1
-and 8 workers: one warm-up, then --repeats timed runs. It reports the median
+reference/benchmark_runner.rs, no viewer), each at a few agent counts: one
+warm-up, then --repeats timed runs. It reports the median
 stepping time (setup excluded), its min-max spread, and peak memory.
 
 The baseline is one record, not a history. It names the workloads (a hash of
@@ -93,8 +93,6 @@ WORKLOADS = {
         end=20, spread=1000, interactions=COLLISION, grid_cell_m=5)),
 }
 
-WORKERS = (1, 8)
-
 
 def workload(name, agents, **changes):
     """WORKLOADS[name] at `agents` aircraft as a mission, with any fields changed."""
@@ -105,14 +103,14 @@ def workload(name, agents, **changes):
 
 def workloads_hash():
     missions = {name: workload(name, 1) for name in WORKLOADS}
-    definition = json.dumps([missions, WORKLOADS, WORKERS], sort_keys=True)
+    definition = json.dumps([missions, WORKLOADS], sort_keys=True)
     return hashlib.sha256(definition.encode()).hexdigest()[:16]
 
 
-def run_once(runner, mission, output, workers, grid_cell_m=None):
+def run_once(runner, mission, output, grid_cell_m=None):
     """(stepping seconds, steps, peak resident memory in MB) for one run."""
     grid = [] if grid_cell_m is None else [str(grid_cell_m)]
-    process = subprocess.Popen([runner, mission, ROOT, output, str(workers), *grid],
+    process = subprocess.Popen([runner, mission, ROOT, output, *grid],
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     _, status, usage = os.wait4(process.pid, 0)
     stdout, stderr = process.communicate()
@@ -129,21 +127,19 @@ def measure(runner, repeats, quick, scratch):
     for name, (_, sizes, fields) in WORKLOADS.items():
         for agents in sizes[:1] if quick else sizes:
             path = write_mission(scratch / f"{name}-{agents}.yaml", workload(name, agents))
-            for workers in WORKERS:
-                key = f"{name}-{agents}-w{workers}"
-                times, memory = [], 0.0
-                for repeat in range(repeats + 1):  # the first run is a warm-up
-                    seconds, steps, peak_mb = run_once(
-                        runner, path, scratch / f"{key}-{repeat}", workers,
-                        fields.get("grid_cell_m"))
-                    if repeat:
-                        times.append(seconds)
-                        memory = max(memory, peak_mb)
-                results[key] = {"median_s": statistics.median(times), "min_s": min(times),
-                                "max_s": max(times), "times_s": times, "steps": steps,
-                                "peak_mb": round(memory, 1)}
-                print(f"  {key:<22} {results[key]['median_s']:8.3f} s   "
-                      f"[{min(times):.3f}, {max(times):.3f}]   {memory:7.1f} MB", flush=True)
+            key = f"{name}-{agents}"
+            times, memory = [], 0.0
+            for repeat in range(repeats + 1):  # the first run is a warm-up
+                seconds, steps, peak_mb = run_once(
+                    runner, path, scratch / f"{key}-{repeat}", fields.get("grid_cell_m"))
+                if repeat:
+                    times.append(seconds)
+                    memory = max(memory, peak_mb)
+            results[key] = {"median_s": statistics.median(times), "min_s": min(times),
+                            "max_s": max(times), "times_s": times, "steps": steps,
+                            "peak_mb": round(memory, 1)}
+            print(f"  {key:<22} {results[key]['median_s']:8.3f} s   "
+                  f"[{min(times):.3f}, {max(times):.3f}]   {memory:7.1f} MB", flush=True)
     return results
 
 

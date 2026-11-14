@@ -28,7 +28,6 @@ crates/core/src/
   simulation.rs
   simulation/
     generation.rs
-    scheduler.rs
     trace.rs
     world_plugins.rs
   plugin.rs
@@ -66,7 +65,6 @@ Paths are relative to `crates/core/src/`.
 | --- | --- |
 | [simulation.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/simulation.rs) | Simulation ownership, the tick's phases in order, termination and cleanup |
 | [simulation/generation.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/simulation/generation.rs) | Spawn timing, IDs and coordinator-owned random draws |
-| [simulation/scheduler.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/simulation/scheduler.rs) | Joined parallel entity phases, including failures/panics |
 | [simulation/world_plugins.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/simulation/world_plugins.rs) | Interaction/network/metrics ownership and dispatch, not model equations |
 | `simulation/trace.rs` | The optional observation trace (`--trace`) |
 | [entity.rs](https://github.com/EthanMBoos/ripple/blob/main/crates/core/src/entity.rs) | Entity state and lifecycle |
@@ -122,8 +120,7 @@ registry supports [Rust-built scenarios](../guides/rust-scenarios.md).
    entities; run autonomy; for each substep, controllers then motion; sensors;
    interactions; networks; estimation; metrics; then remove inactive entities
    and advance the simulation.
-5. `simulation/scheduler.rs`: join each entity phase before the next starts.
-   `pubsub/messages.rs` commits communication at the defined delivery phase;
+5. `pubsub/messages.rs` commits communication at the defined delivery phase;
    `plugin/sensor/readings.rs` holds each sensor's latest reading for the
    estimators in `plugin/estimator.rs`, which write belief.
 6. `record.rs`: writes frames, events, and each metric plugin's results. The

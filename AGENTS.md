@@ -63,8 +63,10 @@ URLs are exempt.
   motion; sensors; interactions; networks; delivery and estimation
   (localization, then tracking); metrics; removal/output/time. Each of these is
   its own phase: never run a whole entity chain as one parallel task.
-- Workers own disjoint entity state; every phase joins every task. Rust output
-  must be byte-identical at 1, 2, and 8 workers and with Rerun on or off.
+- A phase sees its own entity plus read-only snapshots taken before the
+  phase, and every phase finishes before the next starts. The engine runs on
+  one thread; `simulation.rs` records why. Rust output must be byte-identical
+  with Rerun on or off and with the trace on or off.
 - Every subscriber has its own queue. Key random numbers by purpose and stable
   IDs, never draw order; see [Randomness and
   seeds](book/src/concepts/randomness.md).

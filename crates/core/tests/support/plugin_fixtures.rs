@@ -41,8 +41,8 @@ pub(super) fn scenario(overrides: &Params) -> Result<ripple_core::ScenarioConfig
     }
     Ok(scenario)
 }
-pub(super) fn simulate(workers: usize, overrides: &Params) -> Result<Simulation> {
-    let mut simulation = Simulation::new(scenario(overrides)?, Arc::new(registry()?), workers)?;
+pub(super) fn simulate(overrides: &Params) -> Result<Simulation> {
+    let mut simulation = Simulation::new(scenario(overrides)?, Arc::new(registry()?))?;
     while simulation.step()?.is_some() {}
     Ok(simulation)
 }

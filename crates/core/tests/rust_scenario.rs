@@ -56,9 +56,8 @@ struct Outputs {
     summary: String,
 }
 
-fn outputs(config: ScenarioConfig, workers: usize) -> Result<Outputs> {
-    let mut simulation =
-        Simulation::new(config, Arc::new(PluginRegistry::with_builtins()), workers)?;
+fn outputs(config: ScenarioConfig) -> Result<Outputs> {
+    let mut simulation = Simulation::new(config, Arc::new(PluginRegistry::with_builtins()))?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
         serde_json::to_writer(&mut frames, &frame)?;
@@ -77,7 +76,7 @@ fn outputs(config: ScenarioConfig, workers: usize) -> Result<Outputs> {
 }
 
 #[test]
-fn rust_and_yaml_setups_match_with_scheduled_spawns_across_workers() -> Result<()> {
+fn rust_and_yaml_setups_match_with_scheduled_spawns() -> Result<()> {
     let core = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let yaml = Mission::load(
         &core.join("tests/fixtures/rust_scenario.yaml"),
@@ -105,10 +104,7 @@ fn rust_and_yaml_setups_match_with_scheduled_spawns_across_workers() -> Result<(
         Ok(value)
     };
     assert_eq!(setup(&scenario()?)?, setup(&yaml.scenario)?);
-    let expected = outputs(yaml.scenario, 1)?;
-    for workers in [1, 2, 8] {
-        assert_eq!(expected, outputs(scenario()?, workers)?);
-    }
+    assert_eq!(outputs(yaml.scenario)?, outputs(scenario()?)?);
     Ok(())
 }
 
@@ -136,7 +132,7 @@ fn rust_inputs_receive_shared_validation_before_execution() -> Result<()> {
         PluginConfig::new("WaypointFollower").with_params(serde_json::json!({"speeed": 5}))?;
     invalid.push(config);
     for config in invalid {
-        assert!(Simulation::new(config, Arc::clone(&registry), 1).is_err());
+        assert!(Simulation::new(config, Arc::clone(&registry)).is_err());
     }
     Ok(())
 }
@@ -181,7 +177,7 @@ fn thousands_of_agents_spawned_together_reach_metrics() -> Result<()> {
         }],
         ..ScenarioConfig::default()
     };
-    let mut simulation = Simulation::new(config, Arc::new(PluginRegistry::with_builtins()), 4)?;
+    let mut simulation = Simulation::new(config, Arc::new(PluginRegistry::with_builtins()))?;
     while simulation.step()?.is_some() {}
     let team = &simulation.metric_reports()[0].1.teams[&1];
     assert_eq!(team.score, 0.0);
@@ -225,7 +221,7 @@ fn thousands_of_agents_removed_together_reach_metrics() -> Result<()> {
         }],
         ..ScenarioConfig::default()
     };
-    let mut simulation = Simulation::new(config, Arc::new(PluginRegistry::with_builtins()), 4)?;
+    let mut simulation = Simulation::new(config, Arc::new(PluginRegistry::with_builtins()))?;
     while simulation.step()?.is_some() {}
     assert!(simulation.entities().is_empty());
     assert_eq!(

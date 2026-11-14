@@ -16,13 +16,11 @@ use crate::{
     plugin::{Messages, MetricReport, PluginRegistry, StepTime},
     pubsub::messages::NetworkTrace,
     scenario::{EndConditions, ResolvedScenario, ScenarioConfig},
-    simulation::scheduler::Scheduler,
     simulation::trace::Trace,
     simulation::world_plugins::WorldPlugins,
 };
 
 pub(crate) mod generation;
-mod scheduler;
 mod trace;
 pub(crate) mod world_plugins;
 
@@ -96,7 +94,6 @@ pub struct Simulation {
     /// is built one step before the start time. Labels random draws.
     tick: i64,
     termination: Option<TerminationReason>,
-    scheduler: Scheduler,
     generators: Vec<Generator>,
     world: WorldPlugins,
     messages: Messages,
@@ -112,11 +109,7 @@ pub struct Simulation {
 }
 
 impl Simulation {
-    pub fn new(
-        scenario: ScenarioConfig,
-        registry: Arc<PluginRegistry>,
-        worker_count: usize,
-    ) -> Result<Self> {
+    pub fn new(scenario: ScenarioConfig, registry: Arc<PluginRegistry>) -> Result<Self> {
         let scenario = scenario.resolve(&registry)?;
         let ResolvedScenario {
             config,
@@ -125,7 +118,6 @@ impl Simulation {
             world,
             end_conditions,
         } = scenario;
-        let scheduler = Scheduler::new(worker_count)?;
         let terrain = config.terrain.as_deref().map(Terrain::load).transpose()?;
 
         let world = world.instantiate(config.run.seed);
@@ -139,7 +131,6 @@ impl Simulation {
             step_count: 0,
             tick: -1,
             termination: None,
-            scheduler,
             generators,
             world,
             messages: Messages::default(),
@@ -213,14 +204,8 @@ impl Simulation {
         self.termination
     }
 
-    fn run_phase(&mut self, update: impl Fn(&mut Entity) -> Result<()> + Sync) -> Result<()> {
-        let result = self.scheduler.run_phase(&mut self.entities, |entity| {
-            if entity.is_active() {
-                update(entity)
-            } else {
-                Ok(())
-            }
-        });
+    fn run_phase(&mut self, update: impl Fn(&mut Entity) -> Result<()>) -> Result<()> {
+        let result = run_each(&mut self.entities, update);
         self.record_phase(result)
     }
 
@@ -368,17 +353,10 @@ impl Simulation {
             // simulation's fields one by one instead of going through
             // `run_phase`, which needs all of `self`.
             let Self {
-                scheduler,
-                entities,
-                terrain,
-                ..
+                entities, terrain, ..
             } = self;
-            let result = scheduler.run_phase(entities, |entity| {
-                if entity.is_active() {
-                    entity.step_motion(time, terrain.as_ref())
-                } else {
-                    Ok(())
-                }
+            let result = run_each(entities, |entity| {
+                entity.step_motion(time, terrain.as_ref())
             });
             self.record_phase(result)?;
             substep_time_s += motion_dt_s;
@@ -596,5 +574,83 @@ fn perfect_contacts(snapshot: &[EntitySnapshot], sampled_at_s: f64) -> ContactLi
 impl Drop for Simulation {
     fn drop(&mut self) {
         let _ = self.close_plugins();
+    }
+}
+
+/// One phase: `update` on every active entity, in entity order, on this
+/// thread. Every entity runs before the first error is returned, so a failing
+/// plugin never leaves the rest of the fleet one phase behind.
+///
+/// DEVNOTE: this replaced a Rayon worker pool (`--workers N`) on 2026-11-14.
+/// On every run measured, one worker beat eight: profiling perf.py's motion
+/// workload (64 aircraft, 20,000 steps) with macOS `sample` showed the main
+/// thread waiting on the pool's latch, since handing a phase to pool threads
+/// and joining them cost about 7 µs with one pool thread and 35 µs with eight,
+/// against phases whose work over all entities was a few microseconds. Running
+/// inline took that run from 2.04 s to 1.28 s with identical output; a 64-hub
+/// delivery day was slower on eight workers than on one. A pool pays back only
+/// when a phase's total work exceeds roughly 50 µs. Before adding one back:
+/// - The only predicted plugin that would pay for threads is a ray-casting
+///   sensor (lidar or camera against terrain) at fleet scale. That is sensor
+///   threading, not engine threading: the sensor casts its rays in parallel
+///   inside its own `step`, and the engine never knows.
+/// - Learned policies want one batched forward pass over every entity's
+///   observation, a world-level step the inference library threads itself.
+/// - Model calls wait on the network; concurrent requests fix that, not
+///   CPU workers.
+/// - Research throughput comes from many episodes, and `ripple sweep --jobs`
+///   gives that with no join between runs.
+/// - The MCAP recorder's zstd compression still runs on its own threads; only
+///   entity scheduling is single-threaded.
+///
+/// The invariant the pool enforced stays: a phase sees its own entity plus
+/// read-only snapshots taken before the phase (contacts before sensing, the
+/// perfect contacts before estimation, the outbox merge in routing), which is
+/// what keeps each entity's phase independently checkable.
+fn run_each(entities: &mut [Entity], update: impl Fn(&mut Entity) -> Result<()>) -> Result<()> {
+    all_then_first_error(
+        entities
+            .iter_mut()
+            .filter(|entity| entity.is_active())
+            .map(update),
+    )
+}
+
+/// Drives every result, then returns the first error, if any.
+fn all_then_first_error(results: impl Iterator<Item = Result<()>>) -> Result<()> {
+    let mut first_error = None;
+    for result in results {
+        if let Err(error) = result {
+            first_error.get_or_insert(error);
+        }
+    }
+    first_error.map_or(Ok(()), Err)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_failed_task_does_not_skip_other_entities() {
+        let mut updates = [0; 32];
+        let result = all_then_first_error(updates.iter_mut().map(|count| {
+            *count += 1;
+            anyhow::bail!("deliberate plugin failure");
+        }));
+        assert!(result.is_err());
+        assert_eq!(updates, [1; 32]);
+    }
+
+    #[test]
+    fn first_error_keeps_its_cause_after_all_tasks_finish() {
+        let mut entities = [1, 2];
+        let error =
+            all_then_first_error(entities.iter_mut().map(|id| {
+                Err(anyhow::anyhow!("invalid model state").context(format!("entity {id}")))
+            }))
+            .unwrap_err();
+        assert_eq!(error.to_string(), "entity 1");
+        assert_eq!(error.root_cause().to_string(), "invalid model state");
     }
 }

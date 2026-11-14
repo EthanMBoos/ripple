@@ -79,13 +79,12 @@ def results(folder):
 
 
 def ran_cleanly(result):
-    """The case ran, instrumentation changed nothing, Rust was deterministic, and its
-    output did not depend on tracing or recording. A missing check counts as a failure."""
+    """The case ran, instrumentation changed nothing, and Rust output did not depend
+    on tracing or recording. A missing check counts as a failure."""
     if result is None or "error" in result:
         return False
     try:
         return (all(all(files.values()) for files in result["cpp_non_interference"].values())
-                and all(all(files.values()) for files in result["worker_equality"].values())
                 and all(result["trace_equality"].values())
                 and all(result["recording_equality"].values()))
     except KeyError:
@@ -126,7 +125,7 @@ def run_agreement(context):
         # Quoted in the report: the unmodified build's random engine differs, so
         # compare.py is expected to report a mismatch (exit 1), not an error.
         code = context.step("cpp-agreement-unmodified-spawning", REFERENCE / "compare.py",
-                            next((spawning / "cpp-baseline/logs").iterdir()), spawning / "rust-1",
+                            next((spawning / "cpp-baseline/logs").iterdir()), spawning / "rust",
                             "--report", folder / "unmodified-linux-randomized-spawning.json")
         passed = passed and code == 1
     cases = [case for case in results(folder) if case]
@@ -267,7 +266,7 @@ CHECKS = [
           "runs complete; differences are reported", (RELEASE,), run_platform, keep_named("report.json")),
     Check("speed-cpp-container", "C++ and Rust speed and memory in one Linux container",
           "C++ SCRIMMAGE comparison branch, same container",
-          "Rust identical at 1 and 8 workers and to C++ where both draw the same numbers",
+          "Rust repeatable and identical to C++ where both draw the same numbers",
           (RELEASE,), script_check("benchmark.py", "speed-cpp-container", with_source=True),
           keep_named("timings.json", "provenance.json")),
     Check("speed-cpp-native", "C++ and Rust speed and memory on bare-metal macOS",

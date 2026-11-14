@@ -18,7 +18,6 @@ pub type Params = BTreeMap<String, String>;
 /// A loaded scenario and the defaults supplied by its mission file.
 pub struct Mission {
     pub scenario: ScenarioConfig,
-    pub workers: usize,
     pub viewer: bool,
     pub source: PathBuf,
 }
@@ -94,7 +93,6 @@ fn parse(text: &str, source: PathBuf, overrides: &Params) -> Result<Mission> {
     }
     Ok(Mission {
         scenario,
-        workers: 1,
         viewer,
         source,
     })
@@ -472,7 +470,6 @@ entities:
         let text = MISSION.replace("  end_s: 1", "  end_s: 1\n  viewer: true");
         let mission = parse(&text, PathBuf::from("test.yaml"), &Params::new())?;
         assert!(mission.viewer);
-        assert_eq!(mission.workers, 1);
         assert_eq!(mission.source, PathBuf::from("test.yaml"));
         assert_eq!(mission.scenario.run.end_s, 1.0);
         assert!(mission.scenario.end_conditions.time);

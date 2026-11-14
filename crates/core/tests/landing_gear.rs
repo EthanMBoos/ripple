@@ -136,7 +136,7 @@ fn scenario(rascal: EntityGroupConfig, dt_s: f64, end_s: f64) -> ScenarioConfig 
 fn run(scenario: ScenarioConfig) -> Result<Vec<SimulationFrame>> {
     let mut registry = PluginRegistry::with_builtins();
     registry.register_controller::<FixedInputs>("FixedInputs")?;
-    let mut simulation = Simulation::new(scenario, Arc::new(registry), 1)?;
+    let mut simulation = Simulation::new(scenario, Arc::new(registry))?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
         frames.push(frame);

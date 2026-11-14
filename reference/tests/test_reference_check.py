@@ -138,7 +138,6 @@ class ReferenceCheckTests(unittest.TestCase):
             self.assertEqual(result["comparison"]["mismatch_count"], 3)
             self.assertTrue(all(result["recording_equality"].values()))
             self.assertTrue(all(result["trace_equality"].values()))
-            self.assertTrue(all(all(values.values()) for values in result["worker_equality"].values()))
             self.assertEqual(json.loads((directory / "result.json").read_text()), result)
 
     def test_unexplained_summary_or_trace_difference_fails_the_case(self):

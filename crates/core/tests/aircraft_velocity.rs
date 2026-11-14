@@ -40,11 +40,8 @@ entities:
     )?;
     let mission = Mission::load(&path, &root, &Params::new());
     std::fs::remove_file(&path)?;
-    let mut simulation = Simulation::new(
-        mission?.scenario,
-        Arc::new(PluginRegistry::with_builtins()),
-        1,
-    )?;
+    let mut simulation =
+        Simulation::new(mission?.scenario, Arc::new(PluginRegistry::with_builtins()))?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
         frames.push(frame);
@@ -164,11 +161,8 @@ entities:
     )?;
     let mission = Mission::load(&path, &root, &Params::new());
     std::fs::remove_file(&path)?;
-    let mut simulation = Simulation::new(
-        mission?.scenario,
-        Arc::new(PluginRegistry::with_builtins()),
-        1,
-    )?;
+    let mut simulation =
+        Simulation::new(mission?.scenario, Arc::new(PluginRegistry::with_builtins()))?;
     let mut last = None;
     while let Some(frame) = simulation.step()? {
         last = Some(frame);

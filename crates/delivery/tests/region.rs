@@ -1,5 +1,5 @@
-//! The region missions end to end: a day is delivered and identical across
-//! workers, a fleet entry with counts builds each hub's own number, an avoid
+//! The region missions end to end: a day is delivered, a fleet entry with
+//! counts builds each hub's own number, an avoid
 //! order keeps flights out of a closure, the replanner
 //! answers a surge with repositions, the help manager lends a hub within
 //! reach and refuses a pair it did not offer, and a fake model client gives
@@ -17,18 +17,14 @@ const D: &str = "entities.region.autonomy.Dispatcher";
 
 /// Runs a region mission with `changes` applied and returns the DeliveryScore
 /// values and every entity's final true position.
-fn run(
-    mission: &str,
-    changes: &[(String, String)],
-    workers: usize,
-) -> Result<(BTreeMap<String, f64>, Vec<Vec3>)> {
+fn run(mission: &str, changes: &[(String, String)]) -> Result<(BTreeMap<String, f64>, Vec<Vec3>)> {
     let crate_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let path = crate_dir.join("missions").join(mission);
     let params: Params = changes.iter().cloned().collect();
     let mission = Mission::load(&path, &crate_dir.join("../.."), &params)?;
     let mut registry = PluginRegistry::with_builtins();
     delivery::register(&mut registry)?;
-    let mut simulation = Simulation::new(mission.scenario, Arc::new(registry), workers)?;
+    let mut simulation = Simulation::new(mission.scenario, Arc::new(registry))?;
     while simulation.step()?.is_some() {}
     let reports = simulation.metric_reports();
     let (_, report) = reports
@@ -69,18 +65,15 @@ fn hubs(changes: Vec<(String, String)>, count: u32) -> Vec<(String, String)> {
 }
 
 #[test]
-fn a_one_hub_day_is_delivered_and_identical_across_workers() -> Result<()> {
+fn a_one_hub_day_is_delivered() -> Result<()> {
     let changes = hubs(short_day(60), 1);
-    let (one, positions_one) = run("region.yaml", &changes, 1)?;
-    let (two, positions_two) = run("region.yaml", &changes, 2)?;
+    let (one, positions) = run("region.yaml", &changes)?;
     // The region entity and the fleet the dispatcher asked for: 3 + 2.
-    assert_eq!(positions_one.len(), 6);
+    assert_eq!(positions.len(), 6);
     assert!(one["requests"] >= 4.0, "{one:?}");
     assert_eq!(one["on_time"], one["requests"], "{one:?}");
     assert_eq!(one["undelivered"], 0.0);
     assert_eq!(one["vehicles_lost"], 0.0);
-    assert_eq!(one, two);
-    assert_eq!(positions_one, positions_two);
     Ok(())
 }
 
@@ -91,14 +84,14 @@ fn a_fleet_entry_with_counts_builds_each_hubs_own_number() -> Result<()> {
     let fleet = "[{recipe: fixed_wing, per_hub: 3, counts: [5, 1, 3, 0], altitude_m: 120}, \
                  {recipe: multirotor, per_hub: 2}]";
     let changes = with(hubs(short_day(20), 4), "fleet", fleet);
-    let (values, positions) = run("region.yaml", &changes, 1)?;
+    let (values, positions) = run("region.yaml", &changes)?;
     assert_eq!(positions.len(), 18, "{values:?}");
     let wrong = with(
         hubs(short_day(20), 4),
         "fleet",
         "[{recipe: fixed_wing, counts: [1, 2]}]",
     );
-    assert!(run("region.yaml", &wrong, 1).is_err());
+    assert!(run("region.yaml", &wrong).is_err());
     // The same counts written for a block of four hubs, laid over the four
     // blocks of a 16-hub region: 4 x 9 fixed-wing and 32 multirotors.
     let tiled = with(
@@ -106,7 +99,7 @@ fn a_fleet_entry_with_counts_builds_each_hubs_own_number() -> Result<()> {
         "region.block_side",
         "2",
     );
-    let (values, positions) = run("region.yaml", &tiled, 1)?;
+    let (values, positions) = run("region.yaml", &tiled)?;
     assert_eq!(positions.len(), 69, "{values:?}");
     Ok(())
 }
@@ -117,14 +110,14 @@ fn an_avoid_order_keeps_new_flights_out_of_a_closure() -> Result<()> {
     let circle = "{circle: {center_km: [3.5, 4.5], radius_km: 3.5}}";
     let closure = format!("[{{kind: closure, at_min: 5, until_min: 300, area: {circle}}}]");
     let base = with(hubs(short_day(240), 1), "events.scripted", &closure);
-    let (ignored, _) = run("region.yaml", &base, 1)?;
+    let (ignored, _) = run("region.yaml", &base)?;
     let avoid = format!("[{{at_min: 5, order: {{avoid: {{area: {circle}, until_min: 300}}}}}}]");
     let changes = with(
         with(base, "manager.kind", "scripted"),
         "manager.scripted",
         &avoid,
     );
-    let (avoided, _) = run("region.yaml", &changes, 1)?;
+    let (avoided, _) = run("region.yaml", &changes)?;
     assert!(ignored["closure_breach_s"] > 0.0, "{ignored:?}");
     assert_eq!(avoided["applied_avoid"], 1.0, "{avoided:?}");
     assert!(
@@ -141,7 +134,7 @@ fn the_replanner_answers_a_surge_with_help_from_other_hubs() -> Result<()> {
     let surge = "[{kind: surge, at_min: 10, hubs: [1]}]";
     let base = with(hubs(short_day(60), 4), "events.scripted", surge);
     let changes = with(base, "manager.kind", "replanner");
-    let (values, _) = run("region.yaml", &changes, 1)?;
+    let (values, _) = run("region.yaml", &changes)?;
     assert!(values["trauma_requests"] >= 16.0, "{values:?}");
     assert!(values["applied_reposition"] >= 1.0, "{values:?}");
     assert!(values["applied_serve_from"] >= 1.0, "{values:?}");
@@ -159,7 +152,7 @@ fn a_help_manager_over_the_region_lends_only_what_arrives_on_time() -> Result<()
     let surge = "[{kind: surge, at_min: 10, hubs: [1]}]";
     let base = with(hubs(short_day(60), 16), "events.scripted", surge);
     let changes = with(base, "manager.top_kind", "replanner");
-    let (values, _) = run("region.yaml", &changes, 1)?;
+    let (values, _) = run("region.yaml", &changes)?;
     assert!(values["top_calls"] >= 1.0, "{values:?}");
     assert!(values["applied_help"] >= 1.0, "{values:?}");
     assert!(values["lent_flights"] >= 1.0, "{values:?}");
@@ -203,7 +196,7 @@ fn a_help_order_for_a_pair_not_offered_is_refused() -> Result<()> {
         dir.join("cache").to_str().unwrap(),
     );
     let changes = with(base, "manager.command", command.to_str().unwrap());
-    let (values, _) = run("region.yaml", &changes, 1)?;
+    let (values, _) = run("region.yaml", &changes)?;
     assert!(values["top_calls"] >= 1.0, "{values:?}");
     assert_eq!(values["applied_help"], 1.0, "{values:?}");
     assert!(values["refused_already_helped"] >= 1.0, "{values:?}");
@@ -225,8 +218,8 @@ fn a_reposition_with_an_end_sends_the_vehicles_home() -> Result<()> {
         "[{at_min: 5, order: {reposition: {class: fixed_wing, count: 2, \
           from_hub: 2, to_hub: 1}}}]",
     );
-    let (back, _) = run("region.yaml", &returning, 1)?;
-    let (gone, _) = run("region.yaml", &staying, 1)?;
+    let (back, _) = run("region.yaml", &returning)?;
+    let (gone, _) = run("region.yaml", &staying)?;
     assert_eq!(back["applied_reposition"], 1.0, "{back:?}");
     assert_eq!(gone["applied_reposition"], 1.0, "{gone:?}");
     // The vehicles flew home: two more relocation flights than staying put.
@@ -263,14 +256,13 @@ fn a_veto_manager_drops_the_proposed_order_it_names() -> Result<()> {
         dir.join("cache").to_str().unwrap(),
     );
     let base = with(base, "manager.command", command.to_str().unwrap());
-    let (values, _) = run("region.yaml", &base, 1)?;
+    let (values, _) = run("region.yaml", &base)?;
     let (planned, _) = run(
         "region.yaml",
         &with(hubs(short_day(60), 4), "events.scripted", surge)
             .into_iter()
             .chain(with(Vec::new(), "manager.kind", "replanner"))
             .collect::<Vec<_>>(),
-        1,
     )?;
     assert!(values["calls"] >= 1.0, "{values:?}");
     assert_eq!(values["dropped"], values["calls"], "{values:?}");
@@ -293,8 +285,8 @@ fn the_policy_form_gives_the_replanner_day_for_day() -> Result<()> {
     let policy = with(base, "manager.kind", "policy");
     let file = concat!(env!("CARGO_MANIFEST_DIR"), "/policies/replanner.yaml");
     let policy = with(policy, "manager.policy", file);
-    let (replanned, _) = run("region.yaml", &replanner, 1)?;
-    let (written, _) = run("region.yaml", &policy, 1)?;
+    let (replanned, _) = run("region.yaml", &replanner)?;
+    let (written, _) = run("region.yaml", &policy)?;
     assert!(replanned["calls"] >= 4.0, "{replanned:?}");
     assert!(replanned["orders"] >= 4.0, "{replanned:?}");
     assert_eq!(replanned, written);
@@ -328,7 +320,7 @@ fn a_fake_model_orders_and_replays_offline() -> Result<()> {
     let base = with(base, "manager.feedback", "true");
     let base = with(base, "manager.cache_dir", cache.to_str().unwrap());
     let live = with(base.clone(), "manager.command", command.to_str().unwrap());
-    let (asked, _) = run("region.yaml", &live, 1)?;
+    let (asked, _) = run("region.yaml", &live)?;
     assert!(asked["calls"] >= 1.0, "{asked:?}");
     assert_eq!(asked["applied_prioritize"], asked["calls"], "{asked:?}");
     assert_eq!(asked["parse_failures"], 0.0);
@@ -337,7 +329,7 @@ fn a_fake_model_orders_and_replays_offline() -> Result<()> {
     // Offline, the saved replies stand in for the client, which is gone.
     let offline = with(base, "manager.offline", "true");
     let offline = with(offline, "manager.command", "/nonexistent/model");
-    let (replayed, _) = run("region.yaml", &offline, 1)?;
+    let (replayed, _) = run("region.yaml", &offline)?;
     assert_eq!(asked, replayed);
     std::fs::remove_dir_all(&dir)?;
     Ok(())

@@ -5,7 +5,7 @@
 
 Builds the ripple CLI natively (here, macOS/arm64) and in a linux/amd64
 container (the cli target of reference/rust.Dockerfile), runs every mission but
-the delivery crate's (and any --mission-dir missions) at 1 and 8 workers with the comparison trace, and
+the delivery crate's (and any --mission-dir missions) with the comparison trace, and
 compares MCAP channel payloads and result metadata byte for byte.
 Different CPU architectures, operating systems, and math libraries can change
 floating-point results; this shows whether they do for this code. Standard
@@ -63,30 +63,28 @@ def main(argv=None):
         container_path = f"/work/{mission.relative_to(ROOT)}" if in_repo \
             else f"/extra/{mission.name}"
         name = str(mission.relative_to(ROOT) if in_repo else mission.name).replace("/", "_")
-        for workers in (1, 8):
-            label = f"{name}-w{workers}"
-            common = ["--headless", "--trace", "--workers", str(workers)]
-            subprocess.run([native, "run", mission, "--root", ROOT, "--output",
-                            output / "native" / label, *common],
-                           check=True, capture_output=True)
-            subprocess.run(["docker", "run", "--rm", "--network", "none", "--platform",
-                            "linux/amd64", *mount, IMAGE, "run", container_path, "--root",
-                            "/work", "--output", f"/out/linux/{label}", *common],
-                           check=True, capture_output=True)
-            native_run = read_run(output / "native" / label)
-            linux_run = read_run(output / "linux" / label)
-            equal = {topic: native_run.channels.get(topic, []) == linux_run.channels.get(topic, [])
-                     for topic in CHANNELS}
-            equal["metadata"] = (native_run.scenario == linux_run.scenario
-                                 and native_run.metadata == linux_run.metadata)
-            difference = 0.0
-            if not equal["/frames"]:
-                difference = compare_frames(
-                    read_frames(output / "native" / label / "run.mcap"),
-                    read_frames(output / "linux" / label / "run.mcap")).max_position_error_m
-            cases.append({"mission": name, "workers": workers, "identical": equal,
-                          "max_position_difference_m": difference})
-            print(f"{'SAME' if all(equal.values()) else 'DIFF'} {label}", flush=True)
+        common = ["--headless", "--trace"]
+        subprocess.run([native, "run", mission, "--root", ROOT, "--output",
+                        output / "native" / name, *common],
+                       check=True, capture_output=True)
+        subprocess.run(["docker", "run", "--rm", "--network", "none", "--platform",
+                        "linux/amd64", *mount, IMAGE, "run", container_path, "--root",
+                        "/work", "--output", f"/out/linux/{name}", *common],
+                       check=True, capture_output=True)
+        native_run = read_run(output / "native" / name)
+        linux_run = read_run(output / "linux" / name)
+        equal = {topic: native_run.channels.get(topic, []) == linux_run.channels.get(topic, [])
+                 for topic in CHANNELS}
+        equal["metadata"] = (native_run.scenario == linux_run.scenario
+                             and native_run.metadata == linux_run.metadata)
+        difference = 0.0
+        if not equal["/frames"]:
+            difference = compare_frames(
+                read_frames(output / "native" / name / "run.mcap"),
+                read_frames(output / "linux" / name / "run.mcap")).max_position_error_m
+        cases.append({"mission": name, "identical": equal,
+                      "max_position_difference_m": difference})
+        print(f"{'SAME' if all(equal.values()) else 'DIFF'} {name}", flush=True)
 
     report = {
         "native": {"platform": platform.platform(), "compiler": subprocess.check_output(

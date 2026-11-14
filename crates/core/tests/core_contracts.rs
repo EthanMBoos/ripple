@@ -49,7 +49,7 @@ fn run(name: &str, yaml: &str) -> Result<(Vec<SimulationFrame>, Simulation)> {
     registry.register_motion::<Still>("Still")?;
     let mission = Mission::load(&path, &root, &Params::new());
     std::fs::remove_file(&path)?;
-    let mut simulation = Simulation::new(mission?.scenario, Arc::new(registry), 1)?;
+    let mut simulation = Simulation::new(mission?.scenario, Arc::new(registry))?;
     let mut frames = Vec::new();
     while let Some(frame) = simulation.step()? {
         frames.push(frame);
@@ -218,7 +218,7 @@ fn contact_errors(
     registry.register_motion::<Still>("Still")?;
     let mission = Mission::load(&path, &root, &Params::new());
     std::fs::remove_file(&path)?;
-    let mut simulation = Simulation::new(mission?.scenario, Arc::new(registry), 1)?;
+    let mut simulation = Simulation::new(mission?.scenario, Arc::new(registry))?;
     let mut errors = std::collections::BTreeMap::new();
     let mut tick = 0;
     while simulation.step()?.is_some() {

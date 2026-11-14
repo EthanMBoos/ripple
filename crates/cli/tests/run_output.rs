@@ -34,7 +34,7 @@ fn every_shipped_mission_runs_identically_with_recording_on_and_off() {
                 .arg(mission)
                 .arg("--output")
                 .arg(output)
-                .args(["--workers", "8", mode])
+                .arg(mode)
                 .output()
                 .unwrap();
             assert!(

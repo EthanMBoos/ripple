@@ -22,9 +22,9 @@ plugins asked for with a spawn request alike, and removal of destroyed
 agents at the end. The arrows on the right mark where each kind of disturbance enters
 (see [Disturbances](../guides/disturbances.md)).
 
-Because each phase is joined before the next, everything in a phase sees the
-same state of the world, whatever order the agents run in. That is why output
-is byte-identical at 1 worker or 8, and with recording on or off.
+Because each phase finishes before the next starts, everything in a phase sees
+the same state of the world. That is why output is byte-identical with
+recording on or off.
 
 ## What runs in each phase
 
@@ -68,9 +68,10 @@ truth](belief-vs-truth.md) explains why decisions read belief and never truth.
   tick rate keeps its previous outputs on the ticks it skips. Estimators run
   every tick.
 
-Each parallel phase costs a hand-off to the worker pool, about 35 µs with
-eight workers on bare metal. Light missions run fastest on one worker; many
-sensors or heavy models are where more workers pay off.
+Every phase runs on one thread, entity by entity, and finishes before the
+next starts. There is no worker pool: on every mission measured, handing
+phases to threads cost more than the work in them. A plugin that needs
+parallelism, such as a ray-casting sensor, threads inside its own `step`.
 
 ## Messages
 
@@ -99,7 +100,7 @@ When a message is read depends on when the reader runs. Estimators and
 metrics run after delivery, so they read it in the tick it arrives; autonomy
 and controllers run before, so they read it next tick. A delayed message
 arrives in a later tick, never an earlier one. Delivery order follows entity
-and plugin order, never worker timing.
+and plugin order.
 
 Queues have capacities: 1,024 unsent messages per entity plugin, and 65,536
 per world plugin and per subscriber's unread queue. A network's pending
@@ -134,7 +135,7 @@ From Rust, the same loop is:
 ```rust,ignore
 let mission = Mission::load(path, root, &Params::new())?;
 let registry = Arc::new(PluginRegistry::with_builtins());
-let mut simulation = Simulation::new(mission.scenario, registry, workers)?;
+let mut simulation = Simulation::new(mission.scenario, registry)?;
 while let Some(frame) = simulation.step()? {
     inspect(frame);
 }

@@ -87,8 +87,8 @@ with a grid instead of testing every agent. Results are identical; only speed
 changes. See [Finding nearby
 agents](../reference/plugin-api.md#finding-nearby-agents).
 
-Worker count and the viewer are command-line choices (`--workers`,
-`--headless`); runs are not paced to wall-clock time.
+The viewer is a command-line choice (`--viewer`, `--headless`); runs are not
+paced to wall-clock time.
 
 ### Entity
 

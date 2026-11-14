@@ -56,11 +56,10 @@ fn chain(spatial_lookup: SpatialLookup) -> Result<ScenarioConfig> {
     })
 }
 
-fn collisions(spatial_lookup: SpatialLookup, workers: usize) -> Result<Vec<Vec<i32>>> {
+fn collisions(spatial_lookup: SpatialLookup) -> Result<Vec<Vec<i32>>> {
     let mut simulation = Simulation::new(
         chain(spatial_lookup)?,
         Arc::new(PluginRegistry::with_builtins()),
-        workers,
     )?;
     while simulation.step()?.is_some() {}
     Ok(simulation
@@ -74,16 +73,14 @@ fn collisions(spatial_lookup: SpatialLookup, workers: usize) -> Result<Vec<Vec<i
 #[test]
 fn the_first_pair_in_entity_order_collides_and_the_third_agent_survives() -> Result<()> {
     // Entity order visits 30-10 before 10-20; id order would visit 10-20 first.
-    assert_eq!(collisions(SpatialLookup::Scan, 1)?, vec![vec![30, 10]]);
+    assert_eq!(collisions(SpatialLookup::Scan)?, vec![vec![30, 10]]);
     // 5 and 50 m cells use the grid; 1 m cells need too many columns, so scan.
     for cell_width_m in [1.0, 5.0, 50.0] {
-        for workers in [1, 8] {
-            assert_eq!(
-                collisions(SpatialLookup::Grid { cell_width_m }, workers)?,
-                vec![vec![30, 10]],
-                "grid {cell_width_m} m, {workers} workers"
-            );
-        }
+        assert_eq!(
+            collisions(SpatialLookup::Grid { cell_width_m })?,
+            vec![vec![30, 10]],
+            "grid {cell_width_m} m"
+        );
     }
     Ok(())
 }
@@ -94,7 +91,6 @@ fn a_grid_needs_a_positive_cell_width() -> Result<()> {
         let error = Simulation::new(
             chain(SpatialLookup::Grid { cell_width_m })?,
             Arc::new(PluginRegistry::with_builtins()),
-            1,
         )
         .err()
         .expect("invalid cell width");
@@ -144,7 +140,7 @@ fn a_collision_caused_by_an_earlier_interaction_is_seen() -> Result<()> {
         scenario
             .interactions
             .insert(0, PluginConfig::new("MoveOnto"));
-        let mut simulation = Simulation::new(scenario, Arc::clone(&registry), 1)?;
+        let mut simulation = Simulation::new(scenario, Arc::clone(&registry))?;
         while simulation.step()?.is_some() {}
         let collisions: Vec<_> = simulation
             .events()

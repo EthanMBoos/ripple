@@ -28,7 +28,7 @@ def run(variant, mission_path, directory, runner):
     if variant.startswith("cpp"):
         command, env = [native.CPP, mission_path], native.CPP_ENV
     else:
-        command, env = [runner, mission_path, ROOT, directory / "rust", variant.split("-")[1]], os.environ
+        command, env = [runner, mission_path, ROOT, directory / "rust"], os.environ
     with (directory / "console.log").open("w") as console:
         started = time.perf_counter()
         process = subprocess.Popen([str(p) for p in command], stdout=console, stderr=subprocess.STDOUT,

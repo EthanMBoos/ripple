@@ -52,13 +52,13 @@ in order, stated over the simulation's state at entry and exit. A reader
 checks `step` by reading its one contract and the predicates it names, and
 trusts the rest to the prover.
 
-Two things stay outside the proof and are declared so. Plugins are called
+One thing stays outside the proof and is declared so. Plugins are called
 through traits with no stated behavior, so a tick's claims are about what
 the engine does around them: what each plugin was lent, when it ran, and
-what reached it. The worker scheduler that runs a phase's entity loop in
-parallel is trusted with one contract, that the update ran once on every
-active entity on disjoint state, so the tick's claims hold at one worker
-and at eight. Everything else between a leaf and `step` is proved.
+what reached it. The engine runs on one thread, so the loop that applies a
+phase to every active entity (`run_each` in `simulation.rs`) is ordinary
+code and is proved like the rest. Everything between a leaf and `step` is
+proved.
 
 ## Behaviors worth checking
 
@@ -68,7 +68,7 @@ Paths are relative to `crates/core/src/`.
 | Rank | Engine behavior | Code |
 | --- | --- | --- |
 | 1 | Autonomy and controllers see belief; sensors and motion get their declared truth access. Estimators see only their selected readings. | `plugin.rs`, `entity/plugin_stack.rs` |
-| 2 | Each phase finishes before the next. Controllers precede motion; sensing follows motion; localization precedes tracking. An error stops later phases after launched work joins. | `simulation.rs`, `simulation/scheduler.rs` |
+| 2 | Each phase finishes before the next. Controllers precede motion; sensing follows motion; localization precedes tracking. An error stops later phases once every entity in the failing phase has run. | `simulation.rs` |
 | 3 | Publications reach only subscribers of the right network, topic, and type. Each subscriber has its own queue. | `pubsub/messages.rs` |
 | 4 | Delayed messages arrive at the first routing phase at or after their due time, even if the publisher is silent. Removed receivers get nothing. | `pubsub/messages.rs` |
 | 5 | Spawns receive unique IDs, and removal never reuses an old ID. | `simulation/generation.rs` |
@@ -449,10 +449,11 @@ trusted contracts go in `proof.rs` and the production file gains only
    need. Faults: a delayed message delivered early, a subscriber skipped, a
    removed receiver's message delivered.
 8. Phase order and the tick (row 2). Give each entity-level phase function
-   its contract, trust `Scheduler::run_phase` with the one contract above,
-   and prove `step_inner`: the phases ran in this order, each on every
-   active entity once, an error stopped the later phases after launched
-   work joined, and time advanced once. The remaining rows follow as the
+   its contract, prove `run_each` (the update ran once on every active
+   entity, in order, and the first error is returned after every entity
+   ran), and prove `step_inner`: the phases ran in this order, each on every
+   active entity once, an error stopped the later phases, and time advanced
+   once. The remaining rows follow as the
    earlier steps show what a phase-level claim costs.
 
 For each step, hand back the property, the production functions checked,

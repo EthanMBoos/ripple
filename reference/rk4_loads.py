@@ -50,7 +50,7 @@ class Runner:
 
     def run_rust(self, mission, folder):
         run_logged([self.rust, "run", mission, "--root", ROOT, "--output", folder / "rust",
-                    "--workers", "1", "--headless"], folder / "rust.log",
+                    "--headless"], folder / "rust.log",
                    timeout=self.settings.timeout)
         return folder / "rust"
 

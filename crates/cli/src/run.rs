@@ -15,8 +15,6 @@ pub(crate) struct RunOptions {
     /// Output directory; defaults to the next <root>/runs/<mission file name>/run000, run001, ...
     #[arg(long)]
     output: Option<PathBuf>,
-    #[arg(long)]
-    workers: Option<usize>,
     /// Project folder (missions/, runs/, sweeps/); defaults to this repository.
     #[arg(long)]
     root: Option<PathBuf>,
@@ -70,7 +68,6 @@ pub(crate) fn run(
             root: root.to_path_buf(),
             name,
             output: options.output,
-            workers: options.workers.unwrap_or(mission.workers),
             viewer: !options.headless && (options.viewer || mission.viewer),
             export_rrd: options.export_rrd,
             draw_trails: options.draw_trails,
@@ -92,7 +89,6 @@ pub struct RunSettings {
     pub name: String,
     /// Explicit output directory, which must not already exist.
     pub output: Option<PathBuf>,
-    pub workers: usize,
     /// Launch the live viewer.
     pub viewer: bool,
     /// Export `recording.rrd` in addition to run.mcap.
@@ -111,7 +107,6 @@ impl Default for RunSettings {
             root: PathBuf::from("."),
             name: "experiment".into(),
             output: None,
-            workers: 1,
             viewer: false,
             export_rrd: false,
             draw_trails: false,
@@ -138,7 +133,7 @@ pub fn run_scenario(
         !settings.name.is_empty(),
         "experiment name must not be empty"
     );
-    let mut simulation = Simulation::new(scenario, Arc::clone(registry), settings.workers)?;
+    let mut simulation = Simulation::new(scenario, Arc::clone(registry))?;
     let runs = settings.root.join("runs").join(&settings.name);
     let output = output::create_directory(settings.output.as_deref(), &runs)?;
     // One ArduPlane SITL container per ArduPilotBridge aircraft, stopped when

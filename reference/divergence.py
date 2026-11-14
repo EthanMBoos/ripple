@@ -102,13 +102,13 @@ def main(argv=None):
         case = result.parent
         info = json.loads(result.read_text())
         mission = missions.write(args.output / f"{case.name}.yaml",
-                                 missions.as_yaml(nudged(missions.recorded(case / "rust-1"))))
+                                 missions.as_yaml(nudged(missions.recorded(case / "rust"))))
         run = args.output / case.name
         subprocess.run([binary, "run", mission, "--root", ROOT, "--output", run,
-                        "--workers", "1", "--headless"], check=True, capture_output=True)
+                        "--headless"], check=True, capture_output=True)
         cpp = case / info["cpp_log_directory"] / "frames.bin"
-        port, control = growth(cpp, case / "rust-1/run.mcap"), growth(
-            case / "rust-1/run.mcap", run / "run.mcap")
+        port, control = growth(cpp, case / "rust/run.mcap"), growth(
+            case / "rust/run.mcap", run / "run.mcap")
         cases.append({
             "case": info.get("case", case.name),
             "end_s": port[-1][0],

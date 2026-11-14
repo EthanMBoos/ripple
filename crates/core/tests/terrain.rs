@@ -91,37 +91,30 @@ fn agents_hit_a_ridge_crossed_between_steps_and_flat_ground_off_the_grid() -> Re
         ],
         ..ScenarioConfig::default()
     };
-    for workers in [1, 2, 8] {
-        let mut simulation = Simulation::new(
-            scenario.clone(),
-            Arc::new(PluginRegistry::with_builtins()),
-            workers,
-        )?;
-        while simulation.step()?.is_some() {}
-        let collided: Vec<_> = simulation
-            .events()
-            .iter()
-            .filter(|event| event.kind == EventKind::GroundCollision)
-            .map(|event| (event.time_s, event.entity_ids.clone()))
-            .collect();
-        // An event carries the time at the start of the step that moved the agent.
-        assert_eq!(
-            collided,
-            vec![
-                (0.0, vec![3]),
-                (0.0, vec![4]),
-                (3.0, vec![1]),
-                (3.0, vec![5])
-            ],
-            "{workers} workers"
-        );
-        let alive: Vec<_> = simulation
-            .entities()
-            .iter()
-            .map(|entity| entity.id())
-            .collect();
-        assert_eq!(alive, vec![2]);
-    }
+    let mut simulation = Simulation::new(scenario, Arc::new(PluginRegistry::with_builtins()))?;
+    while simulation.step()?.is_some() {}
+    let collided: Vec<_> = simulation
+        .events()
+        .iter()
+        .filter(|event| event.kind == EventKind::GroundCollision)
+        .map(|event| (event.time_s, event.entity_ids.clone()))
+        .collect();
+    // An event carries the time at the start of the step that moved the agent.
+    assert_eq!(
+        collided,
+        vec![
+            (0.0, vec![3]),
+            (0.0, vec![4]),
+            (3.0, vec![1]),
+            (3.0, vec![5])
+        ]
+    );
+    let alive: Vec<_> = simulation
+        .entities()
+        .iter()
+        .map(|entity| entity.id())
+        .collect();
+    assert_eq!(alive, vec![2]);
     fs::remove_dir_all(terrain.parent().unwrap())?;
     Ok(())
 }
@@ -156,7 +149,7 @@ fn flying_onto_the_grid_does_not_mix_the_ground_outside_with_the_edge() -> Resul
         entities: vec![agent(1, Vec3::new(-10.0, 5.0, 1.0), [10.0, 0.0, 0.0])?],
         ..ScenarioConfig::default()
     };
-    let mut simulation = Simulation::new(scenario, Arc::new(PluginRegistry::with_builtins()), 1)?;
+    let mut simulation = Simulation::new(scenario, Arc::new(PluginRegistry::with_builtins()))?;
     while simulation.step()?.is_some() {}
     fs::remove_dir_all(&directory)?;
     assert!(
@@ -205,8 +198,7 @@ fn fixed_wing_flies_a_terrain_mission() -> Result<()> {
             ..ScenarioConfig::default()
         })
     };
-    let mut simulation =
-        Simulation::new(scenario()?, Arc::new(PluginRegistry::with_builtins()), 1)?;
+    let mut simulation = Simulation::new(scenario()?, Arc::new(PluginRegistry::with_builtins()))?;
     while simulation.step()?.is_some() {}
     fs::remove_dir_all(terrain.parent().unwrap())?;
     Ok(())
@@ -221,7 +213,7 @@ fn terrain_collision_needs_complete_terrain() -> Result<()> {
         entities: vec![agent(1, Vec3::new(0.0, 5.0, 10.0), [0.0, 0.0, 0.0])?],
         ..ScenarioConfig::default()
     };
-    let error = Simulation::new(scenario, Arc::new(PluginRegistry::with_builtins()), 1)
+    let error = Simulation::new(scenario, Arc::new(PluginRegistry::with_builtins()))
         .err()
         .expect("terrain with a hole");
     fs::remove_dir_all(terrain.parent().unwrap())?;
@@ -239,7 +231,7 @@ fn terrain_collision_needs_a_terrain() -> Result<()> {
         entities: vec![agent(1, Vec3::new(0.0, 0.0, 10.0), [0.0, 0.0, 0.0])?],
         ..ScenarioConfig::default()
     };
-    let error = Simulation::new(scenario, Arc::new(PluginRegistry::with_builtins()), 1)
+    let error = Simulation::new(scenario, Arc::new(PluginRegistry::with_builtins()))
         .err()
         .expect("no terrain");
     assert!(format!("{error:#}").contains("needs the mission to name a terrain"));

@@ -2,8 +2,8 @@
 
 Sensor noise, message loss, randomized spawns, and auction bids are random.
 Every one of them comes from the mission's `seed`, so a run repeats exactly:
-the same mission and seed give the same output, byte for byte, at any worker
-count. Change the seed and you get a different, equally repeatable run.
+the same mission and seed give the same output, byte for byte. Change the
+seed and you get a different, equally repeatable run.
 
 ## Streams and keyed draws
 
@@ -81,7 +81,7 @@ network it is the network's name.
 ## What is reproducible where
 
 - **One platform:** bit for bit. Same mission, seed, and executable give the
-  same bytes, at 1, 2, or 8 workers, with Rerun on or off.
+  same bytes, with Rerun on or off.
 - **Across platforms:** the labels and hashes are integer arithmetic and agree
   exactly. Turning them into normal numbers takes a logarithm and a cosine,
   and those can differ in the last bit between macOS's and Linux's math

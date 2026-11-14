@@ -347,7 +347,7 @@ fn chaser_catches_the_target() -> Result<()> {
         crate_folder,
         &Params::new(),
     )?;
-    let mut simulation = Simulation::new(mission.scenario, Arc::new(registry), 1)?;
+    let mut simulation = Simulation::new(mission.scenario, Arc::new(registry))?;
     while simulation.step()?.is_some() {}
 
     let caught = simulation
@@ -370,10 +370,6 @@ whole simulation and checks the outcome. It catches problems that only show up
 when plugins work together, such as a wrong sign in a heading.
 The test builds the same registry as `ripple` (stock plugins plus
 `starter::register`) and runs the mission with it.
-
-> [!NOTE]
-> The `1` in `Simulation::new(..., 1)` is the worker count. Results are identical
-> for any worker count, so tests can use 1.
 
 ## 7. Sweep the speed
 

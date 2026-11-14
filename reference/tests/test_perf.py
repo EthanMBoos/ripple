@@ -13,13 +13,13 @@ def record(median, low, high):
 
 def baseline(result, **environment):
     return {"date": "2026-01-01", "environment": {**ENVIRONMENT, **environment},
-            "results": {"motion-64-w1": result}}
+            "results": {"motion-64": result}}
 
 
 class PerfTests(unittest.TestCase):
     def slower(self, before, after):
         with contextlib.redirect_stdout(io.StringIO()):
-            return perf.compare({"motion-64-w1": after}, baseline(before))
+            return perf.compare({"motion-64": after}, baseline(before))
 
     def test_only_slowdowns_beyond_the_old_range_and_noise_count(self):
         self.assertEqual(self.slower(record(1.0, 0.98, 1.02), record(1.2, 1.2, 1.2)), 1)
@@ -29,7 +29,7 @@ class PerfTests(unittest.TestCase):
         self.assertEqual(self.slower(record(1.0, 0.99, 1.01), record(1.03, 1.03, 1.03)), 0)
 
     def test_an_incompatible_baseline_is_not_a_pass(self):
-        results = {"motion-64-w1": record(1, 1, 1)}
+        results = {"motion-64": record(1, 1, 1)}
         self.assertIsNone(perf.incompatibility(baseline(record(1, 1, 1)), ENVIRONMENT, results))
         self.assertIn("no accepted baseline", perf.incompatibility(None, ENVIRONMENT, results))
         for key in ENVIRONMENT:
@@ -37,8 +37,8 @@ class PerfTests(unittest.TestCase):
                                           ENVIRONMENT, results)
             self.assertIn(f"different {key}", reason)
         reason = perf.incompatibility(baseline(record(1, 1, 1)), ENVIRONMENT,
-                                      {**results, "new-64-w1": record(1, 1, 1)})
-        self.assertIn("new-64-w1", reason)
+                                      {**results, "new-64": record(1, 1, 1)})
+        self.assertIn("new-64", reason)
 
     def test_changing_a_workload_changes_its_hash(self):
         before = perf.workloads_hash()

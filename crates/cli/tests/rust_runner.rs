@@ -48,29 +48,30 @@ entities:
     )
     .unwrap();
     let registry = Arc::new(PluginRegistry::with_builtins());
-    for (workers, recording) in [(1, false), (8, true)] {
-        let name = format!("rust-{workers}");
+    for recording in [false, true] {
+        let name = if recording {
+            "rust-recorded"
+        } else {
+            "rust-plain"
+        };
         let output = run_scenario(
             scenario(),
             &registry,
             RunSettings {
                 root: temp.path().to_owned(),
-                name: name.clone(),
-                workers,
+                name: name.to_string(),
                 export_rrd: recording,
                 ..RunSettings::default()
             },
         )
         .unwrap();
         assert_eq!(output, temp.path().join("runs").join(name).join("run000"));
-        let file_output = temp.path().join(format!("file-{workers}"));
+        let file_output = temp.path().join(format!("file-{name}"));
         let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
             .arg("run")
             .arg(&mission)
             .arg("--output")
             .arg(&file_output)
-            .arg("--workers")
-            .arg(workers.to_string())
             .arg("--headless")
             .args(if recording {
                 vec!["--export-rrd"]
@@ -103,17 +104,16 @@ entities:
 fn invalid_rust_setup_does_not_create_outputs() {
     let temp = tempfile::tempdir().unwrap();
     let registry = Arc::new(PluginRegistry::with_builtins());
-    for invalid in 0..3 {
+    for invalid in 0..2 {
         let mut scenario = scenario();
-        let mut settings = RunSettings {
+        let settings = RunSettings {
             root: temp.path().to_owned(),
             export_rrd: false,
             ..RunSettings::default()
         };
         match invalid {
             0 => scenario.run.dt_s = 0.0,
-            1 => scenario.entities[0].motion_model = PluginConfig::new("MissingMotion"),
-            _ => settings.workers = 0,
+            _ => scenario.entities[0].motion_model = PluginConfig::new("MissingMotion"),
         }
         assert!(run_scenario(scenario, &registry, settings).is_err());
         assert!(!temp.path().join("runs").exists());

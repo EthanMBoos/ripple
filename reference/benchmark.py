@@ -5,12 +5,12 @@
 
 The C++ comparison branch and Rust's core-only runner use the host's
 architecture inside Docker, so neither is emulated. Both run the same
-workloads at three fleet sizes: C++ at 1 and 8 threads, Rust at 1 and 8
-workers. Timed process durations subtract a one-step startup measurement;
+workloads at three fleet sizes: C++ at 1 and 8 threads, Rust on its one
+thread. Timed process durations subtract a one-step startup measurement;
 peak memory is reported separately.
 
-Rust output must be identical across worker counts and match serial C++ on
-workloads with shared inputs. C++ multithreaded output is reported but not
+Rust output must repeat and match serial C++ on workloads with shared
+inputs. C++ multithreaded output is reported but not
 required to repeat: its worker can deadlock, so that variant is timed out,
 counted, and retried. Writes timing and provenance reports; retained results
 are in paper/data/speed-cpp-container/.
@@ -38,7 +38,7 @@ import scrimmage_xml
 
 COUNTS = {"motion": (64, 256, 1024), "substeps": (64, 256, 1024),
           "sensing": (32, 64, 128), "churn": (64, 256, 1024), "collision": (256, 1024, 2048)}
-VARIANTS = ("cpp-1", "cpp-8", "rust-1", "rust-8")
+VARIANTS = ("cpp-1", "cpp-8", "rust")
 HANG_S = 120  # far longer than any run here takes
 HANG_RETRIES = 5
 RUST_FILES = ("run.mcap",)
@@ -73,8 +73,7 @@ def run(variant, mission_path, directory):
         command = ["/opt/build/bin/scrimmage", mission_path]
         environment = os.environ.copy()
     else:
-        command = ["/usr/local/bin/ripple-benchmark", mission_path, ROOT,
-                   directory / "rust", variant.split("-")[1]]
+        command = ["/usr/local/bin/ripple-benchmark", mission_path, ROOT, directory / "rust"]
         environment = os.environ.copy()
     peak = directory / "peak-kb.txt"
     command = ["/usr/bin/time", "-f", "%M", "-o", peak] + command
@@ -158,20 +157,18 @@ def measure(name, agents, case, repetitions):
         for variant, values in samples.items()}
     comparisons = {variant: asdict(compare_runs(warmups["cpp-1"], warmups[variant]))
                    for variant in VARIANTS[1:]}
-    rust_workers_match = same_output(warmups["rust-1"], warmups["rust-8"], RUST_FILES)
     return {"workload": name, "agents": agents, "steps": round(WORKLOADS[name][2]["end"] / 0.1),
             "statistics": statistics_by_variant, "repeatable": repeatable, "hangs": hangs,
-            "comparisons": comparisons, "rust_workers_match": rust_workers_match,
-            "matches_cpp": name not in RANDOM,
-            "passed": case_passed(name, repeatable, comparisons, rust_workers_match)}
+            "comparisons": comparisons, "matches_cpp": name not in RANDOM,
+            "passed": case_passed(name, repeatable, comparisons)}
 
 
-def case_passed(name, repeatable, comparisons, rust_workers_match):
-    """Rust must be deterministic across worker counts; it must match C++ where both
-    draw the same random numbers. C++'s multithreaded mode is reported only."""
-    required = [repeatable["cpp-1"], repeatable["rust-1"], repeatable["rust-8"], rust_workers_match]
+def case_passed(name, repeatable, comparisons):
+    """Rust must repeat its output and match C++ where both draw the same random
+    numbers. C++'s multithreaded mode is reported only."""
+    required = [repeatable["cpp-1"], repeatable["rust"]]
     if name not in RANDOM:
-        required += [comparisons["rust-1"]["passed"], comparisons["rust-8"]["passed"]]
+        required.append(comparisons["rust"]["passed"])
     return all(required)
 
 

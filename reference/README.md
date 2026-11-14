@@ -1,6 +1,6 @@
 # Checks and release evidence
 
-The reference suite checks output stability across workers and recording
+The reference suite checks output stability across recording and tracing
 modes, agreement with SCRIMMAGE and vehicle-model references, and speed
 regressions. `reference/suite.py` runs each check by ID and keeps its inputs
 and reports.
@@ -104,9 +104,8 @@ Each case runs upstream C++ once and the comparison branch three times:
 plain, with tracing, and with tracing plus keyed random draws. Tracing must
 leave the comparison branch's `frames.bin` and `summary.csv` byte-identical.
 Upstream equality is recorded, not required. The keyed run is what Ripple is
-compared with. Rust runs at 1, 2, and 8 workers, then with tracing and with a
-headless Rerun recording, and its simulation output must stay byte-identical
-throughout.
+compared with. Rust runs plain, then with tracing and with a headless Rerun
+recording, and its simulation output must stay byte-identical throughout.
 
 The comparison requires the same entity IDs and removal times, and compares
 position within 1e-6 m, velocity within 1e-6 m/s, orientation within 1e-7
@@ -170,8 +169,8 @@ fields Ripple writes.
 ## Performance and behavior-preserving changes
 
 `perf.py` runs the core-only [benchmark runner](benchmark_runner.rs) on six
-workloads at two fleet sizes and 1 and 8 workers, and reports median step
-time, its range, and peak memory. The accepted
+workloads at two fleet sizes, and reports median step time, its range, and
+peak memory. The accepted
 [baseline](perf_baseline.json) records the workload hash, machine, and Rust
 toolchain. `speed-regression` fails when a median is outside the baseline
 range and more than 10% slower. An incompatible baseline fails for review
@@ -195,7 +194,7 @@ python3 reference/equivalence.py OLD_EXECUTABLE NEW_EXECUTABLE
 ```
 
 This runs the shipped missions, the benchmark workloads, and a message-heavy
-mission at 1, 2, and 8 workers and compares entities, frames, events,
+mission and compares entities, frames, events,
 summaries, traces, scenarios, and result metadata. Its report goes to
 `runs/equivalenceNNN/`.
 

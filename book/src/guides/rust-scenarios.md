@@ -63,7 +63,6 @@ use ripple_cli::{RunSettings, run_scenario};
 let output = run_scenario(my_lab::ring()?, &registry, RunSettings {
     root: repo_root.into(),
     name: "ring".into(),
-    workers: 8,
     ..RunSettings::default()
 })?;
 ```
@@ -89,14 +88,14 @@ use ripple_core::{Mission, Params, Simulation};
 // shared (`Arc`): the simulation keeps it to build the entities plugins
 // request during the run, and a program can run many simulations from one.
 let mission = Mission::load(path, root, &Params::new())?;
-let mut simulation = Simulation::new(mission.scenario, Arc::new(registry), 8)?;
+let mut simulation = Simulation::new(mission.scenario, Arc::new(registry))?;
 while let Some(frame) = simulation.step()? {
     // Inspect state or collect experiment-specific output.
 }
 ```
 
-`Mission` also contains the source path and the file's worker/viewer defaults;
-these are separate from simulation data. Scenario serialization records
+`Mission` also contains the source path and the file's viewer default; these
+are separate from simulation data. Scenario serialization records
 normalized data for manifests, not reloadable mission YAML. The default end
 condition is the time limit, for both Rust and YAML.
 

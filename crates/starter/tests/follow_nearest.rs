@@ -15,7 +15,7 @@ fn chaser_catches_the_target() -> Result<()> {
         crate_folder,
         &Params::new(),
     )?;
-    let mut simulation = Simulation::new(mission.scenario, Arc::new(registry), 1)?;
+    let mut simulation = Simulation::new(mission.scenario, Arc::new(registry))?;
     while simulation.step()?.is_some() {}
 
     let caught = simulation

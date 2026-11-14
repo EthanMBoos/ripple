@@ -83,7 +83,7 @@ impl Simulation {
             let mut registry = PluginRegistry::with_builtins();
             learning::register_for_training(&mut registry, &actions)?;
             Ok(Self {
-                simulation: ripple_core::Simulation::new(scenario, Arc::new(registry), 1)?,
+                simulation: ripple_core::Simulation::new(scenario, Arc::new(registry))?,
                 actions,
                 tasks,
             })

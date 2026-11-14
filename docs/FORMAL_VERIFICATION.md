@@ -336,6 +336,16 @@ from what the call was lent, since a plugin stepped with `&mut self` and a
 context can change nothing else. The build half of each trait, behind
 `where Self: Sized`, is simply not listed and stays invisible to proofs.
 
+The engine's maps stay. Verus ships contracts for `BTreeMap` and `BTreeSet`
+with a `Map<K, V>` view, so `ports.rs`, `readings.rs`, and `messages.rs` keep
+their string-keyed maps, and no proof asks for a list searched by position.
+Nothing is refactored ahead of its step: each production change named in
+the steps below lands in that step's commit, where the proof shows what the
+change bought and `reference/equivalence.py` shows it changed no output. At
+a proved site `ensure!` becomes `if !c { bail!(..) }`, written out; there is
+no crate macro that looks like `ensure!`, and sites outside proved functions
+keep `ensure!`.
+
 Three engine shapes needed workarounds, each tried in a scratch file:
 
 - Erased payloads. Verus rejects `Arc<dyn Any + Send + Sync>` and function
@@ -407,9 +417,13 @@ trusted contracts go in `proof.rs` and the production file gains only
    `BTreeMap<String, f64>` (row 6's runtime half): a value reaches the port
    it was wired to and no other. Production change: one `ensure!` in
    `write` becomes `if`/`bail!`. Trusted: the `String` ordering axiom, the
-   `&str` lookup axioms, the `with_context` contract. `receive` waits for
-   an `iter_mut` contract. Faults: a write that lands on a neighbor's port,
-   a read of the wrong input.
+   `&str` lookup axioms, the `with_context` contract. `receive` walks its
+   inputs with `iter_mut`, which has no contract and whose signature carries
+   the unstable allocator parameter; the step chooses between one
+   `cfg_attr(verus_only, feature(allocator_api))` line in `lib.rs`, which
+   plain builds never see, with a trusted contract, and a rewrite of that
+   loop, and records the choice in the proof file. Faults: a write that
+   lands on a neighbor's port, a read of the wrong input.
 4. Readings. Prove `get`, `publish`, `deliver`, and `clear_fresh` (row 7)
    over the existing maps. Production change: the reading box becomes an
    opaque newtype with trusted `downcast_ref`, `is`, and `type_id`; two
@@ -439,22 +453,28 @@ trusted contracts go in `proof.rs` and the production file gains only
 7. Routing. Prove the two loops of `route_links` (rows 3 and 4): a
    publication is offered to each subscriber of its channel once, in
    mailbox order, and a delayed message is delivered at the first routing
-   phase at or after its due time. The proof works over the existing
-   per-phase maps: `entry` and `drain` take trusted contracts under the
-   `allocator_api` feature line, or `drain(..)` becomes
-   `std::mem::take(..).into_iter()`. Production change: four `ensure!`s and
-   one let chain; the `decide` callback's precondition is stated in the
-   contract. Whether the branch's list-and-index rewrite of this function
-   is worth taking is a performance decision, measured there, not a proof
-   need. Faults: a delayed message delivered early, a subscriber skipped, a
-   removed receiver's message delivered.
+   phase at or after its due time. Production change: `route_links` is one
+   function of about 180 lines with five loops, and it becomes its four
+   named parts (collect this network's publications, index the subscribers,
+   decide the links, deliver the due messages), each with its own contract;
+   that reads better on its own and keeps each proof to one or two loops.
+   Four `ensure!`s and one let chain change as above; `entry` and `drain`
+   take trusted contracts under the `allocator_api` feature line, or
+   `drain(..)` becomes `std::mem::take(..).into_iter()`; the `decide`
+   callback's precondition is stated in the contract. The proof works over
+   the existing per-phase maps: integer channel ids and a cached subscriber
+   index would be a speed change, not a proof need. Faults: a delayed
+   message delivered early, a subscriber skipped, a removed receiver's
+   message delivered.
 8. Phase order and the tick (row 2). Give each entity-level phase function
    its contract, prove `run_each` (the update ran once on every active
    entity, in order, and the first error is returned after every entity
    ran), and prove `step_inner`: the phases ran in this order, each on every
    active entity once, an error stopped the later phases, and time advanced
-   once. The remaining rows follow as the
-   earlier steps show what a phase-level claim costs.
+   once. Production change: the iterator chain in `run_each` and
+   `all_then_first_error` probably becomes one plain `for` loop over the
+   entities, decided there. The remaining rows follow as the earlier steps
+   show what a phase-level claim costs.
 
 For each step, hand back the property, the production functions checked,
 the trusted items added, the proof command and result, and what remains

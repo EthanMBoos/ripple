@@ -43,3 +43,4 @@
 - [Source map](development/source-layout.md)
 - [Rust style](development/rust-style.md)
 - [Editing this book](development/documentation.md)
+- [Verifying the engine](development/verification.md)

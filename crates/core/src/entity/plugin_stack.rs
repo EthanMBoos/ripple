@@ -150,7 +150,7 @@ impl<T: ?Sized> Slot<T> {
             endpoint,
             plugin: (compiled.instantiate)(),
             io: PluginIo::new(&compiled.ports),
-            rate: compiled.rate.clone(),
+            rate: compiled.rate,
             instance_name: compiled.instance_name.clone(),
             reading_kind: compiled.reading_kind,
             messages: Messages::default(),

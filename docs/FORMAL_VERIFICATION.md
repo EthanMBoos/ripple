@@ -179,13 +179,13 @@ says how much.
 | `Vec::drain`, `BTreeMap::entry` with `or_default`/`or_insert`, `BTreeMap::iter_mut` | route_links (2 drains, 4 entries), ports `receive` | Not specified, and their std signatures carry the unstable allocator parameter. | A trusted contract is writable once the crate carries `#![cfg_attr(verus_only, feature(allocator_api))]`, which plain builds never see (tried); or `drain(..)` becomes `std::mem::take(..).into_iter()` (tried). |
 | `anyhow!`, `bail!`, `with_context`, `Error::msg` | everywhere | Unknown functions. | Four trusted one-line contracts over `anyhow::Error` declared opaque; all four forms then verify. |
 | `ensure!` | 16 sites in the target files: rate 1, ports 3, readings 2, messages 9 (receive 1, route_links 4) | Its expansion calls a private trait of `anyhow`, which no contract can name. | `if !c { bail!(...) }` at the proved sites only. |
-| A closure that captures `&mut`: `due.then(\|\| std::mem::take(&mut self.elapsed_s))` | loop_rate.rs | Rejected: "closures capturing a mutable reference". | `if due { let e = self.elapsed_s; self.elapsed_s = 0.0; Some(e) } else { None }`; verified in the pilot. |
+| A closure that captures `&mut`: `due.then(\|\| std::mem::take(&mut self.elapsed_s))` | loop_rate.rs | Rejected: "closures capturing a mutable reference". | `if due { let e = self.elapsed_s; self.elapsed_s = 0.0; Some(e) } else { None }`; done in step 2. |
 | Let chains (`if let Some(t) = x && c`) | route_links 1, plugin stack 2 | Rejected: "let expressions in conditions", though the crate's 2024 edition allows them. | A nested `if`. |
 | `Arc<dyn Any + Send + Sync>`, `Box<dyn Any + Send + Sync>`, and `fn(&Payload) -> Result<Value>` fields | messages (`Payload`, `PayloadSerializer`), readings (`values`) | Rejected: "dyn with more than one trait" and "function pointer types". No open issue tracks the first; the check is a hard `preds.len() != 1` in the translator. | A one-line newtype around each, opaque to Verus, whose two or three methods (`downcast`, `type_id`, the serializer call) are trusted; or the whole struct opaque when the proof reads none of its fields (a `Vec<Envelope>` of opaque values moves and proves fine). |
-| Private fields a proof reads | Messages, Slot, PluginStack, Readings, Rate, PluginIo | A struct outside the block must have `pub` fields to be declared with fields; inside a block, `pub(crate)` fields and `pub open(crate)` predicates verify. | Wrap the struct's unchanged text in `verus! { }` and mark the fields a predicate reads `pub(crate)`. |
+| Private fields a proof reads | Messages, Slot, PluginStack, Readings, Rate, PluginIo | A struct outside any block must have `pub` fields to be declared with fields; inside a block, `pub(crate)` fields and `pub open(crate)` predicates verify. | Mark the fields a predicate reads `pub` and declare the struct from the proof file with a one-line `external_type_specification`. On a `pub(crate)` struct, `pub` fields stay crate-private, so nothing widens and the production file needs no `verus!` block (step 2). |
 | `serde::Serialize` derive on a struct in a block | DeliveryRecord and other output records | Rejected: the serializer trait is not declared to Verus. | Keep such structs outside the block; they have `pub` fields and can be declared with an `external_type_specification`. |
 | An `impl FnMut` parameter (`decide`) | route_links | Supported; the call needs the caller's `call_requires` stated in the contract. | A clause in the contract, no code. |
-| `f64` arithmetic and comparison | rate, routing times | An exec `+`, `-`, `/`, `<`, `==` yields only an uninterpreted relation (`add_ensures(a, b, o)` and so on), because Rust does not promise bit-identical results across platforms; spec float arithmetic is uninterpreted too, and spec `==` on floats is bit equality (`0.0 == -0.0` is false). | Claims are stated as "the new field equals the IEEE operation of the old fields" and each exec operator is tied to its spec operator by a one-line trusted lemma; the Verus float tests use the same assumption. Equality with zero goes through a named spec function, never spec `==`. |
+| `f64` arithmetic and comparison | rate, routing times | An exec `+`, `-`, `/`, `<`, `==` yields only an uninterpreted relation (`add_ensures(a, b, o)` and so on), because Rust does not promise bit-identical results across platforms. Spec `+`, `-`, `/`, `<` on floats are the IEEE operations (`ieee_float_add` and so on in the solver), spec `==` is bit equality (`0.0 == -0.0` is false), and `a.ieee_eq(b)` is IEEE equality. `+=` and `-=` on `f64` have no library contract. A lemma over bare floats never fires on a struct field: this release gives a float parameter its 64-bit range fact but a float field none (`datatypes_invs` in `vir/context.rs` skips `TypX::Float`, though `typ_invariant` handles it), so the lemma's hidden `has_type` guard fails; a lemma over the struct itself fires, because a struct without invariants is always well typed. | Claims are stated as "the new field equals the IEEE operation of the old fields" and each exec operator is tied to its spec operator by a one-line trusted lemma, quantified over the struct whose field is the operand (`rate: Rate`); two trusted contracts give `+=` and `-=` the binary operators' meaning. Equality with zero is `ieee_eq`, never spec `==`. Done in step 2. |
 
 Everything in the first group, and the whole mailbox and autonomy-phase
 shapes, verified with the production definitions copied verbatim.
@@ -267,38 +267,38 @@ nonlinearly as proof size increases", and use `broadcast` lemmas sparingly,
 ## How Ripple uses it
 
 Production files stay Rust a plugin author can read. A proved function keeps
-its body and takes one attribute, `#[verus_spec(requires p(..), ensures
-q(..))]`, whose two clauses name predicates in `<module>/proof.rs`; the
-predicate holds the quantifiers and the field-by-field statements, so the
-production file shows only what is claimed, not how. The struct the proof
-reads has its definition wrapped in `verus! { }` with its text unchanged,
-and the fields the predicates read become `pub(crate)`. The production
-module says `mod proof;` and, in the same block as the struct, `broadcast
-use proof::<module>_facts;`, the one group of library facts and trusted
-axioms the module's proofs need. This is the layout that verified in the
-probe crate and passed `cargo build`, `cargo clippy -- -D warnings`, and
-`cargo fmt --check`. For the mailbox it reads:
+its body and takes one attribute, `#[verus_spec(ret => ensures q(..))]`
+(with `requires p(..)` when it makes a demand on its caller), whose clauses
+name predicates in `<module>/proof.rs`; the predicate holds the quantifiers
+and the field-by-field statements, so the production file shows only what
+is claimed, not how. The struct the proof reads is declared to Verus from
+`proof.rs` with a one-line `external_type_specification`, so its own text
+is untouched apart from the fields the predicates read becoming `pub`
+(still crate-private, on a `pub(crate)` struct). The production module says
+`mod proof;`, and the proved function's first line, `proof! { broadcast use
+proof::<module>_facts; }`, names the one group of library facts and trusted
+axioms its proof needs; a module with several proved functions can say it
+once instead, in a three-line `verus! { }` block. This is the layout
+`Rate::due` is proved with, and it passes `cargo build`, `cargo test`,
+`cargo clippy -- -D warnings`, and `cargo fmt --check` unchanged:
 
 ```rust
-verus! {
+mod proof;
 
-broadcast use proof::mailbox_facts;
-
-pub struct Messages {
-    pub(crate) subscriptions: BTreeMap<Channel, TypeId>,
-    pub(crate) inbox: BTreeMap<Channel, Vec<Envelope>>,
-    pub(crate) outbox: Vec<Publication>,
-    pub(crate) time_s: f64,
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Rate {
+    pub period_s: f64,
+    pub remaining_s: f64,
+    pub elapsed_s: f64,
 }
 
-} // verus!
-
-impl Messages {
-    #[verus_spec(received =>
-        requires proof::subscribed(old(self), &channel),
-        ensures proof::received_only(old(self), final(self), &channel, &received),
-    )]
-    pub fn receive(...)
+impl Rate {
+    // Verus proves the body meets this claim; proof.rs spells the claim out.
+    #[verus_spec(ran => ensures proof::stepped(old(self), final(self), dt_s, ran))]
+    pub(crate) fn due(&mut self, dt_s: f64) -> Option<f64> {
+        proof! { broadcast use proof::rate_facts; }
+        self.elapsed_s += dt_s;
+        ...
 ```
 
 `proof.rs` is `pub open(crate) spec fn`s with doc comments in plain words,
@@ -306,20 +306,24 @@ like the Rust book's convention for anything a reader will meet, and is the
 only place `verus` vocabulary spreads out:
 
 ```rust
-/// Receiving drained exactly this channel's queue, in order, and nothing else moved.
-pub open(crate) spec fn received_only(before: &Messages, after: &Messages,
-                                      channel: &Channel, received: &Vec<Envelope>) -> bool {
-    &&& after.inbox@ == before.inbox@.remove(*channel)
-    &&& before.inbox@.contains_key(*channel) ==> received@ == before.inbox@[*channel]@
-    &&& !before.inbox@.contains_key(*channel) ==> received@.len() == 0
-    &&& after.subscriptions@ == before.subscriptions@
-    &&& after.time_s == before.time_s
+/// Lets Verus read `Rate`'s fields without a `verus!` block around the struct.
+#[verifier::external_type_specification]
+pub(crate) struct ExRate(Rate);
+
+/// One call of `due` ran the plugin exactly when its countdown was within half
+/// a step of due; when it ran, it handed over the time since the last run ...
+pub open(crate) spec fn stepped(before: &Rate, after: &Rate, dt_s: f64, ran: Option<f64>) -> bool {
+    &&& after.period_s == before.period_s
+    &&& (ran is Some) == (before.remaining_s < half(dt_s))
+    &&& ran is Some ==> ran == Some(before.elapsed_s + dt_s) && after.elapsed_s == 0.0f64
+    ...
 }
 ```
 
-Its `use` lines carry `#[cfg(verus_only)]`, since the items they import are
-erased from a plain build; a `broadcast group` or ghost struct survives
-erasure as a stub and takes `#[allow(dead_code)]`.
+The `use` lines only proofs need carry `#[cfg(verus_only)]`, since the
+items they import are erased from a plain build; a `broadcast group` or an
+external type declaration survives erasure as a stub and takes
+`#[allow(dead_code)]`.
 
 Trusted items live in an `axioms` module inside `proof.rs`, each a
 `#[verifier::external_body]` lemma or an `assume_specification` with a doc
@@ -351,13 +355,16 @@ Three engine shapes needed workarounds, each tried in a scratch file:
   The plugin API does not change.
 - Floats, as the table says: each exec operator is tied to its IEEE spec by
   a one-line trusted lemma, claims are written as equalities of IEEE
-  expressions over the old fields, and equality with zero goes through a
-  named spec function so a negative zero keeps its meaning.
+  expressions over the old fields, and equality with zero is IEEE equality
+  (`ieee_eq`), so a negative zero keeps its meaning. Because this release
+  knows nothing about a float field's range, the lemmas for `due` quantify
+  over the `Rate` whose field is the operand; when Verus gains the missing
+  field fact they collapse to five lemmas over bare floats.
 
 The checks that are not Verus stay as they are. `reference/verus.py` plants
 each fault from the catalog below in the production file, runs `cargo verus
-verify -p ripple-core`, and requires the named function to fail; the
-retained run goes to `paper/data/verification/`. Never build, run
+verify -p ripple-core`, and requires the proof to fail; the retained run
+goes to `paper/data/verification/`. Never build, run
 equivalence, or commit while it runs: it edits production files in place and
 restores them when it finishes, and after any interruption, confirm every
 fault's anchor text occurs exactly once before committing.
@@ -371,22 +378,31 @@ Each step ends with the proof passing, the faults failing, equivalence
 identical where code changed, and the claims and trusted-items tables
 updated. Each names its production change up front, so the cost is known
 before the work starts; where the change is "none", the predicates and
-trusted contracts go in `proof.rs` and the production file gains only the
-attribute, the block around the struct, and `pub(crate)` on read fields.
+trusted contracts go in `proof.rs` and the production file gains only
+`mod proof;`, the attribute, the `proof!` line, and `pub` on read fields.
 
 1. Toolchain and opt-in. Add `vstd`, the package metadata, and the
    workspace `check-cfg` for `verus_only` to `ripple-core`; confirm `cargo
    build`, `cargo test`, `cargo clippy`, and `cargo fmt --check` are
    unchanged; put the install steps in the Rust book's development chapter;
    write `reference/verus.py` with the compile-fault and test-fault checks.
-   Production change: none.
+   Production change: none. Done on `verus-verification`: `vstd` is a
+   workspace dependency, the first `cargo verus verify` takes about a
+   minute (it verifies `vstd` and builds the crate's dependencies with the
+   pinned toolchain) and later runs about three seconds, and the book has a
+   "Verifying the engine" chapter.
 2. Rate. Prove `Rate::due` (row 8): the plugin runs exactly when its
    countdown is within half a step of due, the elapsed time handed over is
    the IEEE sum of the steps since it last ran, and a plugin without a rate
-   runs every call. Production change: the closure that captures `&mut
-   self` becomes an `if`, as in the pilot; `Rate::new` and its `ensure!`
-   stay unproved. Trusted: the five float lemmas. Faults: a plugin that
-   ignores its rate, an elapsed time that is not reset.
+   keeps its countdown at zero, so it runs every call. Production change:
+   the closure that captures `&mut self` becomes an `if`; the three fields
+   become `pub`; `Rate` derives `Copy`, which it is, so Verus meets no
+   unspecified `clone`; `Rate::new` and its `ensure!` stay unproved.
+   Trusted: the eight items in the table below. Faults: the reload
+   deleted, the elapsed time not reset, the countdown zeroed for every
+   rate, due compared with a whole step. Done: one item verified, four
+   faults fail, `cargo build`, `cargo test`, `cargo clippy`, and `cargo
+   fmt --check` unchanged.
 3. Ports. Prove `PluginIo::read`, `write`, and `reads` over the existing
    `BTreeMap<String, f64>` (row 6's runtime half): a value reaches the port
    it was wired to and no other. Production change: one `ensure!` in
@@ -449,7 +465,7 @@ written.
 
 | Claim | Status |
 | --- | --- |
-| A rate-limited plugin runs when due and receives the elapsed time since its last run | Planned (step 2) |
+| A rate-limited plugin runs when due and receives the elapsed time since its last run | Proved on `verus-verification` (step 2): `Rate::due`; four planted faults fail; `reference/verus.py` record retained |
 | Port values reach the port they were wired to and no other | Planned (step 3) |
 | A reading reaches only its sensor's slot; `latest` and `fresh` mean what they say | Planned (step 4) |
 | Receiving from a mailbox drains only the asked channel, in order, and changes nothing else | Planned (step 5) |
@@ -458,7 +474,13 @@ written.
 
 ## Trusted items
 
-None yet. Each step adds its `external_body` lemmas, `assume_specification`
-contracts, and opaque type declarations here with the reason, so the table
-is the audit list a reader needs, in the sense of the `_t.rs` convention
-above.
+Each lives in the `axioms` module of a `proof.rs`, with a doc comment that
+begins `Trusted:` and says why it is true; this table is the audit list a
+reader needs, in the sense of the `_t.rs` convention above.
+
+| Item | File | Why it is true |
+| --- | --- | --- |
+| `assume_specification` for `<f64 as AddAssign>::add_assign` and `<f64 as SubAssign>::sub_assign` | `common/loop_rate/proof.rs` | Rust defines `x += y` as `x = x + y`; `vstd` states only the binary operators. |
+| `div_is_ieee` | same | Rust's `f64` operators are IEEE 754 double arithmetic, rounding to nearest even. |
+| `elapsed_add_is_ieee`, `reload_is_ieee`, `remaining_sub_is_ieee`, `remaining_lt_is_ieee`, `period_eq_is_ieee` | same | The same, for `+`, `-`, `<`, `==`; stated over the `Rate` fields they are applied to because this Verus release gives a float field no range fact (see the table above). |
+| `ExRate` external type declaration | same | Declares `Rate` to Verus with its fields visible; it assumes nothing about their values. |

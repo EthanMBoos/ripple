@@ -1,0 +1,46 @@
+{
+ "tools": [
+  "Verus",
+  "Version: 0.2026.11.02.8bf68ee",
+  "Profile: release",
+  "Platform: macos_aarch64",
+  "Toolchain: 1.99.1-aarch64-apple-darwin (overridden by environment variable RUSTUP_TOOLCHAIN)"
+ ],
+ "passed": true,
+ "prove_seconds": 3.1,
+ "verified_items": 1,
+ "sources": {
+  "crates/core/src/common/loop_rate/proof.rs": "74f4e6423e30cbe4664579f09ddb72bbc1056143b39fb51530758277b347afb7",
+  "crates/core/src/common/loop_rate.rs": "c4d35955e89c52a9b94f17f6533d319d325b4ac48535974f85226665031f8e7c"
+ },
+ "faults": [
+  {
+   "fault": "rate reload deleted",
+   "check": "proof",
+   "file": "common/loop_rate.rs",
+   "fails_as_required": true,
+   "seconds": 1.7
+  },
+  {
+   "fault": "elapsed time not reset when the plugin runs",
+   "check": "proof",
+   "file": "common/loop_rate.rs",
+   "fails_as_required": true,
+   "seconds": 1.7
+  },
+  {
+   "fault": "countdown zeroed for every rate",
+   "check": "proof",
+   "file": "common/loop_rate.rs",
+   "fails_as_required": true,
+   "seconds": 1.7
+  },
+  {
+   "fault": "due compared with a whole step instead of half",
+   "check": "proof",
+   "file": "common/loop_rate.rs",
+   "fails_as_required": true,
+   "seconds": 1.7
+  }
+ ]
+}

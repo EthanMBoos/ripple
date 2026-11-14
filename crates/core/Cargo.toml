@@ -14,6 +14,7 @@ serde.workspace = true
 serde_json.workspace = true
 serde_yaml_ng.workspace = true
 sha2 = "0.10"
+vstd.workspace = true
 
 [[bench]]
 name = "reference"
@@ -22,3 +23,7 @@ harness = false
 
 [lints]
 workspace = true
+
+# `cargo verus verify -p ripple-core` proves the contracts in this crate.
+[package.metadata.verus]
+verify = true

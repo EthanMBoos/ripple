@@ -1,14 +1,18 @@
 //! Per-plugin simulation-time update rates.
 use anyhow::{Result, ensure};
+use vstd::prelude::*;
 
-#[derive(Clone, Debug)]
+mod proof;
+
+#[derive(Clone, Copy, Debug)]
 pub(crate) struct Rate {
-    period_s: f64,
+    pub period_s: f64,
     /// Time until the plugin is next due.
-    remaining_s: f64,
+    pub remaining_s: f64,
     /// Time since the plugin last ran.
-    elapsed_s: f64,
+    pub elapsed_s: f64,
 }
+
 impl Rate {
     pub(crate) fn new(rate_hz: f64) -> Result<Self> {
         ensure!(rate_hz >= 0.0, "loop_rate_hz must be nonnegative");
@@ -23,7 +27,10 @@ impl Rate {
     /// its first call and then on the call nearest each due time, so rounding
     /// in the countdown cannot make it a tick late. When it runs, returns the
     /// time since it last ran: `dt_s` on its first run and without a rate.
+    // Verus proves the body meets this claim; proof.rs spells the claim out.
+    #[verus_spec(ran => ensures proof::stepped(old(self), final(self), dt_s, ran))]
     pub(crate) fn due(&mut self, dt_s: f64) -> Option<f64> {
+        proof! { broadcast use proof::rate_facts; }
         self.elapsed_s += dt_s;
         let due = self.remaining_s < dt_s / 2.0;
         if due {
@@ -33,7 +40,13 @@ impl Rate {
         if self.period_s == 0.0 {
             self.remaining_s = 0.0;
         }
-        due.then(|| std::mem::take(&mut self.elapsed_s))
+        if due {
+            let elapsed_s = self.elapsed_s;
+            self.elapsed_s = 0.0;
+            Some(elapsed_s)
+        } else {
+            None
+        }
     }
 }
 

@@ -199,6 +199,20 @@ mission at 1, 2, and 8 workers and compares entities, frames, events,
 summaries, traces, scenarios, and result metadata. Its report goes to
 `runs/equivalenceNNN/`.
 
+## Verification
+
+`verus.py` proves the core crate's Verus contracts (`cargo verus verify -p
+ripple-core`), then plants each fault it lists in the production source, one
+at a time, and requires the proof to fail. The record goes to `runs/verusNNN/`
+and, with `--retain`, to `paper/data/verification/`. It edits source files in
+place and restores them, so do not build, run `equivalence.py`, or commit
+while it runs. It needs `cargo-verus` and `verus` on the PATH; the Rust book's
+verification chapter says how to install them.
+
+```sh
+python3 reference/verus.py
+```
+
 ## Retained evidence
 
 `paper/data/<check>/` holds compact reports, summaries, missions, and

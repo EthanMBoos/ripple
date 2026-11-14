@@ -1,8 +1,8 @@
 //! Plugin registration: typed factories by category and the built-in list.
 use super::{
     Autonomy, Controller, Input, Interaction, Localization, Metrics, MotionModel, Network,
-    PluginParams, Ports, ReadingKind, Sensor, Tracking, autonomy, controller, estimator,
-    interaction, metrics, motion, network, sensor,
+    PluginParams, Ports, Sensor, Tracking, autonomy, controller, estimator, interaction, metrics,
+    motion, network, sensor, sensor::ReadingType,
 };
 use crate::{common::Rate, scenario::PluginConfig};
 use anyhow::{Context, Result, ensure};
@@ -17,8 +17,8 @@ pub(crate) struct CompiledPlugin<T: ?Sized> {
     pub rate: Rate,
     /// Estimators only: the readings they read.
     pub inputs: Vec<Input>,
-    /// Sensors only: what their readings contain.
-    pub reading_kind: ReadingKind,
+    /// Sensors only: the declared reading type.
+    pub reading: ReadingType,
     /// Sensors only: the sensor instance name, which its readings are keyed
     /// by and estimators select it by. The mission's `instance`, else
     /// `<plugin>:<count>`, filled in by the entity's stack.
@@ -35,7 +35,7 @@ impl<T: ?Sized> CompiledPlugin<T> {
             ports: Ports::default(),
             rate: Rate::new(params.loop_rate_hz)?,
             inputs: Vec::new(),
-            reading_kind: ReadingKind::Other,
+            reading: ReadingType::of::<()>(),
             instance_name: String::new(),
             instantiate: Box::new(instantiate),
         })
@@ -117,7 +117,7 @@ impl Default for PluginRegistry {
     }
 }
 // Each `register_*` runs the build half of a plugin's trait (`configure`,
-// `ports`, `inputs`, `reading_kind`) here, where the concrete type `P` is
+// `ports`, `inputs`, `Reading`) here, where the concrete type `P` is
 // known, and keeps only `new` in a closure that boxes instances as the
 // category's trait object. After this, nothing but the box exists.
 impl PluginRegistry {
@@ -184,11 +184,10 @@ impl PluginRegistry {
             name,
             Box::new(|params| {
                 let config = P::configure(params)?;
-                let reading_kind = P::reading_kind(&config);
                 let mut plugin = CompiledPlugin::new(params, move || -> Box<dyn Sensor> {
                     Box::new(P::new(&config))
                 })?;
-                plugin.reading_kind = reading_kind;
+                plugin.reading = ReadingType::of::<P::Reading>();
                 Ok(plugin)
             }),
         )

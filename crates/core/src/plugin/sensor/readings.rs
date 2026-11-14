@@ -1,4 +1,4 @@
-use anyhow::{Result, ensure};
+use anyhow::Result;
 use std::{
     any::Any,
     collections::{BTreeMap, BTreeSet},
@@ -42,18 +42,14 @@ impl Readings {
     pub fn is_fresh(&self, sensor: &str) -> bool {
         self.fresh.contains(sensor)
     }
+    /// Stores the reading in the sensor's slot; `SensorContext::publish_reading`
+    /// has checked its type against the sensor's declared `Reading`.
     pub(crate) fn publish<T: Send + Sync + 'static>(
         &mut self,
         sensor: &str,
         time_s: f64,
         value: T,
-    ) -> Result<()> {
-        if let Some(previous) = self.values.get(sensor) {
-            ensure!(
-                previous.is::<Reading<T>>(),
-                "reading from '{sensor}' changed type"
-            );
-        }
+    ) {
         self.values.insert(
             sensor.to_owned(),
             Box::new(Reading {
@@ -61,20 +57,13 @@ impl Readings {
                 value,
             }),
         );
-        Ok(())
     }
-    pub(crate) fn deliver(&mut self, pending: &mut Self) -> Result<()> {
-        for (sensor, value) in &pending.values {
-            if let Some(previous) = self.values.get(sensor) {
-                ensure!(
-                    (**previous).type_id() == (**value).type_id(),
-                    "reading from '{sensor}' changed type"
-                );
-            }
+    /// Moves this tick's readings into their slots and marks their sensors fresh.
+    pub(crate) fn deliver(&mut self, pending: &mut Self) {
+        for sensor in pending.values.keys() {
             self.fresh.insert(sensor.clone());
         }
         self.values.append(&mut pending.values);
-        Ok(())
     }
     pub(crate) fn clear_fresh(&mut self) {
         self.fresh.clear();

@@ -20,6 +20,7 @@ const TOPIC: &str = "StateWithCovariance";
 struct StateBroadcast;
 impl Sensor for StateBroadcast {
     type Config = ();
+    type Reading = ();
     fn new(_: &()) -> Self {
         Self
     }

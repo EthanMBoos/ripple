@@ -5,7 +5,7 @@
 //! A plugin is one type with one trait, its category's (`Autonomy`, `Sensor`,
 //! ...). The trait has two halves. The first says how the plugin is built:
 //! `Config`, `configure`, `new`, and the facts the engine needs before any
-//! instance exists (`ports`, `inputs`, `reading_kind`). The second is what it
+//! instance exists (`ports`, `inputs`, `Reading`). The second is what it
 //! does each tick: `initialize`, `step`, `close`.
 //!
 //! Why the engine holds plugins as trait objects (`Box<dyn Autonomy>`). The

@@ -10,7 +10,7 @@ use nalgebra::UnitQuaternion;
 use serde::Deserialize;
 
 use crate::math::{KinematicState, Quaternion, Vec3};
-use crate::plugin::{PluginParams, PluginRandom, ReadingKind, Sensor, SensorContext};
+use crate::plugin::{PluginParams, PluginRandom, Sensor, SensorContext};
 
 /// Gaussian measurement error, shared by NoisyState and NoisyContacts so both
 /// take the same parameters, keys, and attitude perturbation. Each error has a
@@ -34,6 +34,7 @@ pub struct NoisyState {
 
 impl Sensor for NoisyState {
     type Config = StateNoise;
+    type Reading = KinematicState;
 
     fn configure(params: &PluginParams) -> Result<StateNoise> {
         let noise: StateNoise = params.parse()?;
@@ -43,10 +44,6 @@ impl Sensor for NoisyState {
 
     fn new(noise: &StateNoise) -> Self {
         Self { noise: *noise }
-    }
-
-    fn reading_kind(_config: &StateNoise) -> ReadingKind {
-        ReadingKind::State
     }
 
     /// The first reading, sampled like every later one, so the first decision

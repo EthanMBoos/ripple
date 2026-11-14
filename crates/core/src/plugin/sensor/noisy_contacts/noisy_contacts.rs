@@ -10,9 +10,7 @@ use anyhow::Result;
 
 use super::noisy_state::StateNoise;
 use crate::math::KinematicState;
-use crate::plugin::{
-    Contact, ContactList, PluginParams, PluginRandom, ReadingKind, Sensor, SensorContext,
-};
+use crate::plugin::{Contact, ContactList, PluginParams, PluginRandom, Sensor, SensorContext};
 
 /// Takes NoisyState's parameters: a bias and standard deviation per axis for
 /// position, velocity, and attitude, each defaulting to zero.
@@ -22,6 +20,7 @@ pub struct NoisyContacts {
 
 impl Sensor for NoisyContacts {
     type Config = StateNoise;
+    type Reading = ContactList;
 
     fn configure(params: &PluginParams) -> Result<StateNoise> {
         let noise: StateNoise = params.parse()?;
@@ -31,10 +30,6 @@ impl Sensor for NoisyContacts {
 
     fn new(noise: &StateNoise) -> Self {
         Self { noise: *noise }
-    }
-
-    fn reading_kind(_config: &StateNoise) -> ReadingKind {
-        ReadingKind::Contacts
     }
 
     fn step(&mut self, context: &mut SensorContext) -> Result<()> {

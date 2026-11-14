@@ -70,6 +70,7 @@ struct Observer {
 
 impl Sensor for Observer {
     type Config = ();
+    type Reading = ObserverReading;
     fn new(_: &()) -> Self {
         Self {
             trace: AuctionTrace::default(),

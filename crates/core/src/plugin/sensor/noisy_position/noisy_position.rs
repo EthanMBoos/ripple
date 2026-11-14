@@ -39,6 +39,7 @@ pub struct NoisyPosition {
 
 impl Sensor for NoisyPosition {
     type Config = SensorConfig;
+    type Reading = PositionObservation;
 
     fn configure(params: &PluginParams) -> Result<SensorConfig> {
         let config: SensorConfig = params.parse()?;
@@ -77,9 +78,8 @@ impl Sensor for NoisyPosition {
 #[cfg(test)]
 mod tests {
     use super::{NoisyPosition, PositionObservation, Sensor, SensorConfig, SensorContext};
-    use crate::plugin::{
-        EntityInfo, Messages, PluginRandom, ReadingKind, Readings, StepTime, TruthContacts,
-    };
+    use crate::plugin::sensor::ReadingType;
+    use crate::plugin::{EntityInfo, Messages, PluginRandom, Readings, StepTime, TruthContacts};
     use crate::{KinematicState, Vec3};
 
     #[test]
@@ -128,7 +128,7 @@ mod tests {
             contacts_truth: TruthContacts::from(&[][..]),
             random,
             name: "gps",
-            kind: ReadingKind::Other,
+            reading: ReadingType::of::<PositionObservation>(),
             pending: &mut pending,
         })?;
         let observation = pending

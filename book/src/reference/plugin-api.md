@@ -30,11 +30,11 @@ pub trait Autonomy: Send {
 ```
 
 The other traits have the same shape with their own context. Their build
-halves differ in one method: `Controller` and `MotionModel` also have
-`ports`; `Sensor` has `reading_kind` instead, the kind of reading it
-publishes; `Localization` and `Tracking` have `inputs`, the readings they
-read; `Interaction`, `Network`, and `Metrics` have only `Config`,
-`configure`, and `new`.
+halves differ in one member: `Controller` and `MotionModel` also have
+`ports`; `Sensor` has a `Reading` type instead, the type it publishes;
+`Localization` and `Tracking` have `inputs`, the readings they read;
+`Interaction`, `Network`, and `Metrics` have only `Config`, `configure`,
+and `new`.
 
 `Config` must deserialize from the mission's parameters. A config that is
 built from them rather than read as is, such as an airframe table filled in
@@ -147,10 +147,12 @@ impl Localization for DeadReckoning {
 
 - **Readings.** A sensor hands each sample to its entity's estimators with
   `context.publish_reading(value)`, keyed by the sensor's name in the mission.
-  The sensor's `reading_kind` says what it holds: `State` (a `KinematicState`),
-  `Contacts` (a `ContactList`), or `Other` (any type, checked when read).
-  `inputs.latest` returns the newest reading; `inputs.fresh` only one that
-  arrived since the last estimation step.
+  The value is the sensor's declared `Reading` type, which also gives its
+  kind: a `KinematicState` is a `State` reading, a `ContactList` a `Contacts`
+  reading, and any other type an `Other` reading that estimators name
+  explicitly and that is checked when read. A sensor that publishes nothing
+  declares `type Reading = ();`. `inputs.latest` returns the newest reading;
+  `inputs.fresh` only one that arrived since the last estimation step.
 - **Choosing sources.** A mission's `inputs` names the sensor for each input,
   or `perfect` for the engine's perfect measurement. An input left out takes
   the one sensor of its kind, or the perfect measurement if there is none;

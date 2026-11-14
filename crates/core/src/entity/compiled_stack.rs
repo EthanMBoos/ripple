@@ -48,7 +48,7 @@ fn select_sources(
                 let kind = sensors
                     .iter()
                     .find(|candidate| &candidate.instance_name == sensor)
-                    .map(|candidate| candidate.reading_kind)
+                    .map(|candidate| candidate.reading.kind)
                     .with_context(|| {
                         format!(
                             "{role} input '{}' names sensor '{sensor}', but the entity's sensors are: {}",
@@ -67,7 +67,7 @@ fn select_sources(
         } else if perfect_allowed(input) {
             let candidates: Vec<_> = sensors
                 .iter()
-                .filter(|candidate| candidate.reading_kind == input.kind)
+                .filter(|candidate| candidate.reading.kind == input.kind)
                 .collect();
             match candidates.as_slice() {
                 [] => Source::Perfect(input.kind),

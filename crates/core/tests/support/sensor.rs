@@ -16,6 +16,7 @@ pub struct PositionSensor {
 }
 impl Sensor for PositionSensor {
     type Config = PositionSensorConfig;
+    type Reading = PositionReading;
     fn new(config: &PositionSensorConfig) -> Self {
         Self {
             bias_m: config.bias_m,

@@ -9,10 +9,37 @@ use crate::{
 };
 use anyhow::{Result, ensure};
 use serde::de::DeserializeOwned;
-use std::any::TypeId;
+use std::any::{TypeId, type_name};
 
 mod readings;
 pub use readings::{Reading, ReadingKind, Readings};
+
+/// A sensor's declared reading type, fixed when the mission loads, so a
+/// published reading can be checked against it and estimators can match the
+/// sensor by kind.
+#[derive(Clone, Copy)]
+pub(crate) struct ReadingType {
+    pub id: TypeId,
+    pub name: &'static str,
+    pub kind: ReadingKind,
+}
+impl ReadingType {
+    pub(crate) fn of<T: 'static>() -> Self {
+        let id = TypeId::of::<T>();
+        let kind = if id == TypeId::of::<KinematicState>() {
+            ReadingKind::State
+        } else if id == TypeId::of::<ContactList>() {
+            ReadingKind::Contacts
+        } else {
+            ReadingKind::Other
+        };
+        Self {
+            id,
+            name: type_name::<T>(),
+            kind,
+        }
+    }
+}
 
 pub struct SensorContext<'a> {
     pub messages: &'a mut Messages,
@@ -26,29 +53,25 @@ pub struct SensorContext<'a> {
     pub random: PluginRandom,
     /// This sensor's instance name, which estimators use to select its readings.
     pub(crate) name: &'a str,
-    pub(crate) kind: ReadingKind,
+    pub(crate) reading: ReadingType,
     pub(crate) pending: &'a mut Readings,
 }
 impl SensorContext<'_> {
     /// Hand this tick's reading to the entity's estimators, which receive it in the
     /// estimation step at the end of the tick. It replaces the previous reading.
-    /// This is not a network message. A `State` sensor's reading is a
-    /// `KinematicState` and a `Contacts` sensor's is a `ContactList`.
+    /// This is not a network message. The value must be the sensor's declared
+    /// `Reading` type.
     pub fn publish_reading<T: Send + Sync + 'static>(&mut self, value: T) -> Result<()> {
-        let expected = match self.kind {
-            ReadingKind::State => Some(TypeId::of::<KinematicState>()),
-            ReadingKind::Contacts => Some(TypeId::of::<ContactList>()),
-            ReadingKind::Other => None,
-        };
         ensure!(
-            expected.is_none_or(|expected| expected == TypeId::of::<T>()),
-            "sensor '{}' declares {:?} readings but published a {}",
+            TypeId::of::<T>() == self.reading.id,
+            "sensor '{}' declares {} readings but published a {}",
             self.name,
-            self.kind,
-            std::any::type_name::<T>()
+            self.reading.name,
+            type_name::<T>()
         );
         self.pending
-            .publish(self.name, self.time.time_s + self.time.dt_s, value)
+            .publish(self.name, self.time.time_s + self.time.dt_s, value);
+        Ok(())
     }
 }
 
@@ -61,6 +84,12 @@ pub trait Sensor: Send {
     type Config: DeserializeOwned + Send + Sync + 'static
     where
         Self: Sized;
+    /// What `publish_reading` publishes: `KinematicState` for a state sensor,
+    /// `ContactList` for a contacts sensor, any other type for a sensor that
+    /// estimators name explicitly, or `()` for one that publishes nothing.
+    type Reading: Send + Sync + 'static
+    where
+        Self: Sized;
     /// Parses the mission's parameters; override it to check them.
     fn configure(params: &PluginParams) -> Result<Self::Config>
     where
@@ -71,13 +100,6 @@ pub trait Sensor: Send {
     fn new(config: &Self::Config) -> Self
     where
         Self: Sized;
-    /// What its readings contain; see `ReadingKind`.
-    fn reading_kind(_config: &Self::Config) -> ReadingKind
-    where
-        Self: Sized,
-    {
-        ReadingKind::Other
-    }
 
     fn initialize(&mut self, _context: &mut SensorContext) -> Result<()> {
         Ok(())

@@ -36,6 +36,7 @@ struct LifecycleSensor {
 
 impl Sensor for LifecycleSensor {
     type Config = LifecycleConfig;
+    type Reading = ();
 
     fn new(config: &LifecycleConfig) -> Self {
         Self {

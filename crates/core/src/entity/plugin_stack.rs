@@ -10,6 +10,7 @@
 //! code. `dyn Autonomy` and the other `dyn` traits mean "some plugin of this
 //! kind, chosen by the mission"; a `Slot<T: ?Sized>` holds one of any kind.
 use crate::plugin::estimator::{Inputs, Source};
+use crate::plugin::sensor::ReadingType;
 use crate::plugin::*;
 use crate::{
     KinematicState, Vec3,
@@ -137,7 +138,7 @@ struct Slot<T: ?Sized> {
     rate: Rate,
     /// Sensors only: see `CompiledPlugin`.
     instance_name: String,
-    reading_kind: ReadingKind,
+    reading: ReadingType,
     messages: Messages,
     random: PluginRandom,
     /// The plugin's fixed drawings, asked once in `start`.
@@ -152,7 +153,7 @@ impl<T: ?Sized> Slot<T> {
             io: PluginIo::new(&compiled.ports),
             rate: compiled.rate,
             instance_name: compiled.instance_name.clone(),
-            reading_kind: compiled.reading_kind,
+            reading: compiled.reading,
             messages: Messages::default(),
             random,
             fixed_drawings: Arc::from(Vec::new()),
@@ -291,7 +292,7 @@ impl PluginStack {
                     contacts_truth: TruthContacts::from(&[][..]),
                     random: sensor.random.at_tick(time.tick),
                     name: &sensor.instance_name,
-                    kind: sensor.reading_kind,
+                    reading: sensor.reading,
                     pending: &mut self.pending,
                 })
                 .with_context(|| format!("initialize '{}'", sensor.name))?;
@@ -307,7 +308,7 @@ impl PluginStack {
         truth: &KinematicState,
         perfect_contacts: &ContactList,
     ) -> Result<()> {
-        self.readings.deliver(&mut self.pending)?;
+        self.readings.deliver(&mut self.pending);
         let inputs = |sources| Inputs {
             sources,
             readings: &self.readings,
@@ -378,7 +379,7 @@ impl PluginStack {
         let mut measurements = Vec::new();
         for slot in &self.sensors {
             let name = &slot.instance_name;
-            let states = match slot.reading_kind {
+            let states = match slot.reading.kind {
                 ReadingKind::State => self
                     .pending
                     .get::<KinematicState>(name)?
@@ -517,7 +518,7 @@ impl PluginStack {
                     contacts_truth,
                     random: sensor.random.at_tick(time.tick),
                     name: &sensor.instance_name,
-                    kind: sensor.reading_kind,
+                    reading: sensor.reading,
                     pending: &mut self.pending,
                 })
                 .with_context(|| format!("step '{}' on entity {}", sensor.name, entity.id))?;
@@ -542,7 +543,7 @@ impl PluginStack {
         truth: &KinematicState,
         perfect_contacts: &ContactList,
     ) -> Result<()> {
-        self.readings.deliver(&mut self.pending)?;
+        self.readings.deliver(&mut self.pending);
         let inputs = |sources| Inputs {
             sources,
             readings: &self.readings,

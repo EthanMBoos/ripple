@@ -65,6 +65,7 @@ pub struct SitlState {
 
 impl Sensor for SitlState {
     type Config = SitlStateConfig;
+    type Reading = ();
 
     fn configure(params: &PluginParams) -> Result<SitlStateConfig> {
         let config: SitlStateConfig = params.parse()?;

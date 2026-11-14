@@ -81,8 +81,8 @@ Use the same reading order in every concrete plugin module:
 3. Port/event constants, named configuration, and state/measurement types.
 4. The plugin struct, which owns its per-instance state.
 5. The category implementation, build half first: `Config`, `configure`
-   when it validates, `new`, and the load-time facts (`ports`;
-   `reading_kind` for sensors; `inputs` for estimators).
+   when it validates, `new`, and the load-time facts (`ports`; `Reading`
+   for sensors; `inputs` for estimators).
 6. Then its per-tick half: optional initialization, step, reporting, and an
    optional close.
 7. Private model/conversion helpers, followed by module tests.

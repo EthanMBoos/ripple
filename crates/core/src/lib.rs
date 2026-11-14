@@ -1,8 +1,10 @@
 //! Ripple's simulation core: missions, entities, plugins, and the tick.
 // Verus reads a loop's invariant from an attribute on the loop, which only a
-// nightly feature lets rustc parse; `cargo verus` turns `verus_only` on, and a
-// plain build never sees the attribute (it is behind `cfg_attr`) or this line.
-#![cfg_attr(verus_only, feature(proc_macro_hygiene))]
+// nightly feature lets rustc parse, and a trusted contract for a map method
+// names the map's allocator parameter, which another feature gates; `cargo
+// verus` turns `verus_only` on, and a plain build never sees the attribute (it
+// is behind `cfg_attr`) or these lines.
+#![cfg_attr(verus_only, feature(proc_macro_hygiene, allocator_api))]
 mod common;
 mod drawing;
 mod entity;

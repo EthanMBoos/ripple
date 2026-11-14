@@ -90,11 +90,40 @@ FAULTS = [
           "                bail!(\"missing connected input '{name}'\");\n            }\n",
           "            let _ = (name, upstream);\n",
           "proof"),
+    Fault("publish stores every reading in one slot", "plugin/sensor/readings.rs",
+          "            sensor.to_owned(),\n",
+          "            String::new(),\n",
+          "proof"),
+    Fault("a reading of another type reads as missing", "plugin/sensor/readings.rs",
+          "        Ok(Some(value.downcast_ref::<T>().ok_or_else(|| {\n"
+          "            anyhow::anyhow!(\"reading from '{sensor}' has a different type\")\n"
+          "        })?))\n",
+          "        Ok(value.downcast_ref::<T>())\n",
+          "proof"),
+    Fault("any fresh reading makes every sensor fresh", "plugin/sensor/readings.rs",
+          "        self.fresh.contains(sensor)\n",
+          "        !self.fresh.is_empty()\n",
+          "proof"),
+    Fault("deliver marks no sensor fresh", "plugin/sensor/readings.rs",
+          "            self.fresh.insert(sensor.clone());\n",
+          "            let _ = sensor;\n",
+          "proof"),
+    Fault("deliver leaves the readings pending", "plugin/sensor/readings.rs",
+          "        self.values.append(&mut pending.values);\n",
+          "        let _ = pending;\n",
+          "proof"),
+    Fault("clear_fresh keeps every sensor fresh", "plugin/sensor/readings.rs",
+          "        self.fresh.clear();\n",
+          "        let _ = self;\n",
+          "proof"),
 ]
 
 
 def prove(env):
-    """(exit code, seconds, output) of `cargo verus verify` on the core crate."""
+    """(exit code, seconds, output) of `cargo verus verify` on the core crate.
+    The crate's root file is touched first: cargo skips a crate it has already
+    built, and a skipped crate reports no verification."""
+    os.utime(CORE / "lib.rs")
     started = time.perf_counter()
     result = subprocess.run(["cargo", "verus", "verify", "-p", CORE_PACKAGE], cwd=ROOT, env=env,
                             capture_output=True, text=True)
@@ -180,8 +209,8 @@ def main(argv=None):
 
     code, seconds, log = prove(env)
     (output / "prove.log").write_text(log)
-    proved = code == 0
     verified = verified_count(log)
+    proved = code == 0 and verified is not None
     print(f"{'proved' if proved else 'UNPROVED'} in {seconds} s: {verified} items verified",
           flush=True)
     faults = []

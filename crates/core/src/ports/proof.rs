@@ -15,9 +15,8 @@ pub struct ExPluginIo(PluginIo);
 #[allow(dead_code)]
 pub broadcast group port_facts {
     crate::proof::string_key_facts,
+    crate::proof::text_facts,
     vstd::seq_lib::group_seq_lib_default,
-    key_is_port,
-    port_is_key,
     str_key_mutation_is_insert,
     one_missing,
     all_connected,
@@ -26,15 +25,7 @@ pub broadcast group port_facts {
 
 /// The ports a signal map holds, by name, with their values.
 pub open(crate) spec fn signals(m: &Signals) -> Map<Seq<char>, f64> {
-    signals_of(m@)
-}
-
-/// The same, over the map's mathematical view.
-pub open(crate) spec fn signals_of(m: Map<String, f64>) -> Map<Seq<char>, f64> {
-    Map::new(
-        m.dom().map(|s: String| s@),
-        |name: Seq<char>| m[choose|s: String| #[trigger] m.contains_key(s) && s@ == name],
-    )
+    crate::proof::by_text(m@)
 }
 
 /// `name` is one of the plugin's input ports.
@@ -80,41 +71,18 @@ pub open(crate) spec fn connected_so_far(inputs: &Signals, upstream: &Signals, n
 /// have been copied to the inputs that declare them, and no input was added or
 /// removed.
 pub open(crate) spec fn copied_so_far(before: &PluginIo, now: &PluginIo, upstream: &Signals, pairs: Seq<(&String, &f64)>, count: int) -> bool {
-    &&& lists(upstream, pairs)
+    &&& crate::proof::lists(upstream@, pairs)
     &&& forall|k: String| #[trigger] now.inputs@.contains_key(k) <==> #[trigger] before.inputs@.contains_key(k)
     &&& forall|i: int| 0 <= i < count && now.inputs@.contains_key(*#[trigger] pairs[i].0) ==> now.inputs@[*pairs[i].0] == *pairs[i].1
     &&& now.outputs@ == before.outputs@
 }
 
-/// `pairs` holds exactly the map's entries.
-pub open(crate) spec fn lists(upstream: &Signals, pairs: Seq<(&String, &f64)>) -> bool {
-    &&& forall|i: int| 0 <= i < pairs.len()
-        ==> upstream@.contains_key(*#[trigger] pairs[i].0) && upstream@[*pairs[i].0] == *pairs[i].1
-    &&& forall|k: String| #[trigger] upstream@.contains_key(k) ==> pairs.contains((&k, &upstream@[k]))
-}
-
-/// A key of the map is a port of its signals, with the key's value.
-pub broadcast proof fn key_is_port(m: Map<String, f64>, s: String)
-    requires #[trigger] m.contains_key(s),
-    ensures signals_of(m).contains_key(s@) && signals_of(m)[s@] == m[s],
-{
-    broadcast use crate::proof::string_text_is_identity;
-    assert(m.dom().map(|t: String| t@).contains(s@));
-}
-
-/// A port of the signals is some key of the map with that text.
-pub broadcast proof fn port_is_key(m: Map<String, f64>, name: Seq<char>)
-    requires #[trigger] signals_of(m).contains_key(name),
-    ensures exists|s: String| #[trigger] m.contains_key(s) && s@ == name,
-{
-}
-
 /// Changing the value behind a `&str` key changes that one port's value.
 pub broadcast proof fn str_key_mutation_is_insert(before: Map<String, f64>, after: Map<String, f64>, name: &str, was: f64, now: f64)
     requires #[trigger] vstd::std_specs::btree::borrowed_key_mutated::<String, f64, str>(before, after, name, was, now),
-    ensures signals_of(after) == signals_of(before).insert(name@, now),
+    ensures crate::proof::by_text(after) == crate::proof::by_text(before).insert(name@, now),
 {
-    broadcast use crate::proof::string_key_facts, key_is_port, port_is_key;
+    broadcast use crate::proof::string_key_facts, crate::proof::text_facts;
     let s = choose|s: String| #[trigger] before.contains_key(s) && s@ == name@ && before[s] == was;
     let rest = choose|rest: Map<String, f64>|
         vstd::std_specs::btree::borrowed_key_removed::<String, f64, str>(before, rest, name)
@@ -129,15 +97,15 @@ pub broadcast proof fn str_key_mutation_is_insert(before: Map<String, f64>, afte
         assert(before.remove(s).contains_key(k) == before.contains_key(k));
     }
     assert(after =~= before.insert(s, now));
-    assert forall|name2: Seq<char>| #![auto] signals_of(after).contains_key(name2)
-        implies signals_of(after)[name2] == signals_of(before).insert(name@, now)[name2] by {
+    assert forall|name2: Seq<char>| #![auto] crate::proof::by_text(after).contains_key(name2)
+        implies crate::proof::by_text(after)[name2] == crate::proof::by_text(before).insert(name@, now)[name2] by {
         let t = choose|t: String| #[trigger] after.contains_key(t) && t@ == name2;
-        assert(signals_of(after)[name2] == after[t]);
+        assert(crate::proof::by_text(after)[name2] == after[t]);
         if t != s {
-            assert(signals_of(before)[name2] == before[t]);
+            assert(crate::proof::by_text(before)[name2] == before[t]);
         }
     }
-    assert(signals_of(after) =~= signals_of(before).insert(name@, now));
+    assert(crate::proof::by_text(after) =~= crate::proof::by_text(before).insert(name@, now));
 }
 
 /// When an input name has no upstream value, the inputs are not all connected.
@@ -148,7 +116,7 @@ pub broadcast proof fn one_missing(inputs: &Signals, upstream: &Signals, names: 
         !upstream@.contains_key(*names[i]),
     ensures !signals(inputs).dom().subset_of(signals(upstream).dom()),
 {
-    broadcast use crate::proof::string_key_facts, vstd::seq_lib::group_seq_lib_default, key_is_port, port_is_key;
+    broadcast use crate::proof::string_key_facts, crate::proof::text_facts, vstd::seq_lib::group_seq_lib_default;
     let s = *names[i];
     assert(names.unref()[i] == s);
     assert(names.unref().contains(s));
@@ -164,7 +132,7 @@ pub broadcast proof fn all_connected(inputs: &Signals, upstream: &Signals, names
         count == names.len(),
     ensures signals(inputs).dom().subset_of(signals(upstream).dom()),
 {
-    broadcast use crate::proof::string_key_facts, vstd::seq_lib::group_seq_lib_default, key_is_port, port_is_key;
+    broadcast use crate::proof::string_key_facts, crate::proof::text_facts, vstd::seq_lib::group_seq_lib_default;
     assert forall|name: Seq<char>| signals(inputs).contains_key(name)
         implies signals(upstream).contains_key(name) by {
         let s = choose|s: String| #[trigger] inputs@.contains_key(s) && s@ == name;
@@ -187,7 +155,7 @@ pub broadcast proof fn all_copied(before: &PluginIo, now: &PluginIo, upstream: &
         forall|name: Seq<char>| signals(&now.inputs).contains_key(name)
             ==> #[trigger] signals(&now.inputs)[name] == signals(upstream)[name],
 {
-    broadcast use crate::proof::string_key_facts, vstd::seq_lib::group_seq_lib_default, key_is_port, port_is_key;
+    broadcast use crate::proof::string_key_facts, crate::proof::text_facts, vstd::seq_lib::group_seq_lib_default;
     let (was, is) = (&before.inputs, &now.inputs);
     assert(is@.dom() =~= was@.dom());
     assert forall|name: Seq<char>| #![auto] signals(is).contains_key(name)

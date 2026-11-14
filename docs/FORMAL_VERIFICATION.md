@@ -187,15 +187,15 @@ says how much.
 | `?`, `unwrap_or_default`, `map`, `and_then`, `ok_or_else`, `copied`, `String == &str`, `format!`, `Arc::clone`, `Arc<[T]>` | everywhere | Supported. | None. |
 | `Box<dyn Autonomy>` and the other plugin traits | plugin stack | Supported for a trait with one bound, through an external trait specification in the proof file; implementations in this crate and in plugin crates stay unverified. Verified with the stack's exact `Slot<T: ?Sized>` and `AgentContext<'_>` shapes. | None. |
 | A context holding `&mut Messages` and shared references | plugin.rs | Supported; the trusted call's contract names `*final(old(ctx).messages)`. | None. |
-| `TypeId` | messages | Unknown type. | One trusted type declaration and one-line contracts for `TypeId::of` and `==`. |
+| `TypeId` | messages | Unknown type, and exec `==` on it can take no contract: the equality spec is a `vstd` trait, and the orphan rule forbids implementing it for a std type (found while probing step 4). | A trusted opaque declaration, and the comparison moved into a trusted method on the newtype that holds the erased value, whose contract compares an uninterpreted tag. Readings no longer compare types at all (step 4). |
 | `#[derive]` of `Clone`, `Debug`, `Default`, `PartialEq`, `Eq`, `PartialOrd`, `Ord` on a struct in a block | all | Accepted (the derived `Clone` gets no contract). | None. |
-| `Option::map_or`, `as_deref_mut`, `f64::is_finite`, `mem::take`, `BTreeMap::append`, `Vec::retain`, `Vec::extend`, `sort_by_key` | messages, readings, simulation | Not specified. | One trusted `assume_specification` each; `is_finite` and `map_or` tried. |
+| `Option::map_or`, `as_deref_mut`, `f64::is_finite`, `mem::take`, `BTreeMap::append`, `Vec::retain`, `Vec::extend`, `sort_by_key` | messages, readings, simulation | Not specified. | One trusted `assume_specification` each; `is_finite` and `append` done, `map_or` tried. `append`'s contract must name the map's allocator parameter, so `lib.rs` carries `#![cfg_attr(verus_only, feature(allocator_api))]`, which plain builds never see. |
 | `Vec::drain`, `BTreeMap::entry` with `or_default`/`or_insert`, `BTreeMap::iter_mut` | route_links (2 drains, 4 entries), ports `receive` | Not specified, and their std signatures carry the unstable allocator parameter. | For `entry`, a trusted contract is writable once the crate carries `#![cfg_attr(verus_only, feature(allocator_api))]`, which plain builds never see (tried). A `for` loop over `drain(..)` or `iter_mut()` cannot be given one: Verus's `for` needs the iterator type to implement vstd's iterator trait, and the orphan rule forbids that for a std type outside vstd (tried in step 3; Verus main has no `iter_mut` contract either). So `drain(..)` becomes `std::mem::take(..).into_iter()` (tried) and `receive` became a check loop and a copy loop over `keys()` and `iter()` (step 3). |
 | `anyhow!`, `bail!`, `with_context`, `Error::msg` | everywhere | Unknown functions. | Four trusted one-line contracts over `anyhow::Error` declared opaque; all four forms then verify. |
 | `ensure!` | 16 sites in the target files: rate 1, ports 3, readings 2, messages 9 (receive 1, route_links 4) | Its expansion calls a private trait of `anyhow`, which no contract can name. | `if !c { bail!(...) }` at the proved sites only. |
 | A closure that captures `&mut`: `due.then(\|\| std::mem::take(&mut self.elapsed_s))` | loop_rate.rs | Rejected: "closures capturing a mutable reference". | `if due { let e = self.elapsed_s; self.elapsed_s = 0.0; Some(e) } else { None }`; done in step 2. |
-| Let chains (`if let Some(t) = x && c`) | route_links 1, plugin stack 2 | Rejected: "let expressions in conditions", though the crate's 2024 edition allows them. | A nested `if`. |
-| `Arc<dyn Any + Send + Sync>`, `Box<dyn Any + Send + Sync>`, and `fn(&Payload) -> Result<Value>` fields | messages (`Payload`, `PayloadSerializer`), readings (`values`) | Rejected: "dyn with more than one trait" and "function pointer types". No open issue tracks the first; the check is a hard `preds.len() != 1` in the translator. | A one-line newtype around each, opaque to Verus, whose two or three methods (`downcast`, `type_id`, the serializer call) are trusted; or the whole struct opaque when the proof reads none of its fields (a `Vec<Envelope>` of opaque values moves and proves fine). |
+| Let chains (`if let Some(t) = x && c`) | route_links 1, plugin stack 2 | Rejected: "let expressions in conditions", though the crate's 2024 edition allows them. | A nested `if`; clippy then asks for the chain, so the proved site will need a lint allowance or another shape, decided in step 6. |
+| `Arc<dyn Any + Send + Sync>`, `Box<dyn Any + Send + Sync>`, and `fn(&Payload) -> Result<Value>` fields | messages (`Payload`, `PayloadSerializer`), readings (`values`) | Rejected. `dyn Any` is refused outright, with any bounds ("Verus disallows dyn for trait core::any::Any because it has an unsized blanket impl"), two-bound `dyn` and function pointers besides; the first check is a hard `preds.len() != 1` in the translator. | A one-line newtype around each, in a small module of plain Rust that Verus skips (`#[cfg_attr(verus_only, verus_verify(external))]` on its `mod` line), whose methods (`new`, `downcast_ref`, the serializer call) take trusted contracts in `proof.rs`; or the whole struct opaque when the proof reads none of its fields (a `Vec<Envelope>` of opaque values moves and proves fine). Done for readings in step 4. |
 | Private fields a proof reads | Messages, Slot, PluginStack, Readings, Rate, PluginIo | A struct outside any block must have `pub` fields to be declared with fields; inside a block, `pub(crate)` fields and `pub open(crate)` predicates verify. | Mark the fields a predicate reads `pub` and declare the struct from the proof file with a one-line `external_type_specification`. On a `pub(crate)` struct, `pub` fields stay crate-private, so nothing widens and the production file needs no `verus!` block (step 2). |
 | `serde::Serialize` derive on a struct in a block | DeliveryRecord and other output records | Rejected: the serializer trait is not declared to Verus. | Keep such structs outside the block; they have `pub` fields and can be declared with an `external_type_specification`. |
 | An `impl FnMut` parameter (`decide`) | route_links | Supported; the call needs the caller's `call_requires` stated in the contract. | A clause in the contract, no code. |
@@ -380,15 +380,18 @@ keep `ensure!`.
 
 Three engine shapes needed workarounds, each tried in a scratch file:
 
-- Erased payloads. Verus rejects `Arc<dyn Any + Send + Sync>` and function
-  pointer fields, so `Payload` and `PayloadSerializer` in `messages.rs` and
-  the reading box in `readings.rs` become one-line newtypes outside any
-  block, declared opaque with an empty `external_type_specification`. The
-  prover sees a value it can move, compare for identity, and store; the
-  methods that look inside (`downcast`, `type_id`, the serializer call) are
-  trusted two-line helpers whose contracts say what they return. This is
-  the one change the plan makes to a type for the prover, and it is named
-  here so it is not mistaken for a design choice.
+- Erased payloads. Verus refuses `dyn Any` and function pointer fields, so
+  `Payload` and `PayloadSerializer` in `messages.rs` and the reading box in
+  `readings.rs` become one-line newtypes, each in a small module of plain
+  Rust that Verus skips, named by one attribute on its `mod` line
+  (`#[cfg_attr(verus_only, verus_verify(external))]`; the `cfg_attr` because
+  stable `rustc` rejects a macro attribute on a `mod` line). The `dyn Any`
+  code reads exactly as it did; the prover sees a value it can move and
+  store, and the methods that look inside (`downcast_ref`, the serializer
+  call) are trusted, with contracts in `proof.rs` saying what they return.
+  This is the one change the plan makes to a type for the prover, and it is
+  named here so it is not mistaken for a design choice. Done for readings in
+  step 4 (`readings/any_reading.rs`).
 - Contexts holding `&mut`. Verus's mutable-reference model is new (its
   [migration note](https://github.com/verus-lang/verus/blob/main/source/docs/migration-mut-ref.md)
   explains `final`). A context struct with a `&mut Messages` field, built in
@@ -468,21 +471,40 @@ proved function, and one invariant line on each loop.
    dropped, receive copies nothing, receive accepts a missing input. Done
    on `verus-verification`: thirteen items verified, six faults fail, ten
    quick equivalence cases identical, the four cargo checks unchanged.
-4. Readings. Prove `get`, `publish`, `deliver`, and `clear_fresh` (row 7)
-   over the existing maps. Production change: the reading box becomes an
-   opaque newtype with trusted `downcast_ref`, `is`, and `type_id`; two
-   `ensure!`s become `if`/`bail!`; `for .. in &pending.values` becomes
-   `.iter()`. Trusted: those three methods and a `BTreeMap::append`
-   contract. Faults: get reads another sensor's slot, deliver skips a fresh
-   sensor, deliver clears a sensor that took no reading, `fresh` returns a
-   stale reading.
+4. Readings. Prove `get`, `is_fresh`, `publish`, `deliver`, and
+   `clear_fresh` (row 7) over the existing maps: a reading is stored in its
+   sensor's slot and no other; `get` returns it when it is of the asked
+   type, nothing before the first reading, and an error for another type;
+   `deliver` moves every pending reading into its slot, marks exactly those
+   sensors fresh, and leaves nothing pending. A design change came first,
+   in its own commit: `Sensor` declares its `Reading` type, replacing
+   `reading_kind`, and `publish_reading` checks a published value against
+   it once, so `Readings` no longer compares types on every publish and
+   delivery. That is the better engine on its own (a sensor's reading type
+   is a fact about the sensor, not something to re-check each tick), and it
+   is what made the proof small: without the type checks there is nothing
+   to model but two maps and one loop. Production change in the step
+   itself: the reading box became the `AnyReading` newtype in
+   `readings/any_reading.rs`, a module Verus skips, with `new` and
+   `downcast_ref`; `for .. in &pending.values` became a loop over `keys()`;
+   `values` and `fresh` became `pub`; `lib.rs` gained the allocator feature
+   line. Trusted: the two newtype methods, `append`, and a `&str`
+   membership axiom for string sets. Faults: publish stores every reading
+   in one slot, another type reads as missing, any fresh reading makes
+   every sensor fresh, deliver marks no sensor fresh, deliver leaves the
+   readings pending, clear_fresh keeps every sensor fresh. Done on
+   `verus-verification`: twenty-three items verified, six faults fail, the
+   quick equivalence cases identical, the four cargo checks unchanged.
+   `Inputs::latest` and `fresh` in `estimator.rs`, the methods an estimator
+   calls, sit one layer above and belong to the context-level step.
 5. Mailbox. Prove `receive` and `subscribe` (row 3) over the existing
    `BTreeMap<Channel, Vec<Envelope>>`: only the asked channel's queue
    leaves, in order, with its sender, times, and payload, and nothing else
    in the mailbox changes. Production change: the `Payload` and
    `PayloadSerializer` newtypes; two `ensure!`s become `if`/`bail!`. The
-   iterator chain that builds the result stays. Trusted: the `TypeId`
-   contracts, the payload `downcast`. Faults: receive drains the wrong
+   iterator chain that builds the result stays. Trusted: the payload
+   newtype's methods, including the type comparison, since `==` on `TypeId`
+   can take no contract (the table above). Faults: receive drains the wrong
    channel, receive leaves the queue in place, a subscription that changes
    type is accepted.
 6. Autonomy phase. Prove the phase loop in `plugin_stack.rs` (rows 1 and
@@ -533,7 +555,8 @@ written.
 | --- | --- |
 | A rate-limited plugin runs when due and receives the elapsed time since its last run | Proved on `verus-verification` (step 2): `Rate::due`; four planted faults fail; `reference/verus.py` record retained |
 | Port values reach the port they were wired to and no other | Proved on `verus-verification` (step 3): `read`, `write`, `reads`, and `receive` in `ports.rs`; six planted faults fail; `reference/verus.py` record retained |
-| A reading reaches only its sensor's slot; `latest` and `fresh` mean what they say | Planned (step 4) |
+| A reading is stored in its sensor's slot and no other; delivery marks exactly the delivered sensors fresh | Proved on `verus-verification` (step 4): `get`, `is_fresh`, `publish`, `deliver`, and `clear_fresh` in `plugin/sensor/readings.rs`; six planted faults fail; `reference/verus.py` record retained |
+| An estimator's `latest` and `fresh` inputs mean what they say | Planned (context-level step, after step 6) |
 | Receiving from a mailbox drains only the asked channel, in order, and changes nothing else | Planned (step 5) |
 | The autonomy phase steps every autonomy once, in order, through the trusted plugin call | Planned (step 6) |
 | A publication is offered to each subscriber once; a delayed message arrives at its due phase | Planned (step 7) |
@@ -558,3 +581,7 @@ reader needs, in the sense of the `_t.rs` convention above.
 | `assume_specification` for `Option::with_context` | same | `anyhow` keeps a present value as `Ok` and turns an absent one into an error; the message is not modeled. |
 | `assume_specification` for `anyhow::__private::format_err` and `must_use` | same | `bail!` and `anyhow!` build an error value and do nothing else. |
 | `assume_specification` for `f64::is_finite` | `ports/proof.rs` | Tied to an uninterpreted `is_finite`, so the claims say nothing about which floats are finite. |
+| `str_in_set` | same | The set form of `str_key_contained`: a `&str` is in a string set exactly when some member has its text. |
+| `ExAnyReading` external type declaration | `plugin/sensor/readings/proof.rs` | Declares the reading box as an opaque value. |
+| `assume_specification` for `AnyReading::new` and `downcast_ref` | same | `Box<dyn Any>` keeps the value it was given, and `downcast_ref` returns it exactly when asked for its type. |
+| `assume_specification` for `BTreeMap::append` | same | std documents `append` as moving every entry of `other` into `self`, `other`'s value winning on a shared key, and leaving `other` empty. |

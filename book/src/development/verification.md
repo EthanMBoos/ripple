@@ -83,6 +83,11 @@ edits source files in place and restores them, so do not build, run
   where `it.seq()` is what the loop walks and `it.index()` how far it has
   got. The `cfg_attr` keeps stable `rustc` from seeing an attribute on a
   loop, which it rejects.
+- Code Verus cannot read (anything touching `dyn Any`) goes in a small
+  module of its own, with `#[cfg_attr(verus_only, verus_verify(external))]`
+  on its `mod` line so Verus skips it, and `proof.rs` states what its
+  methods return as trusted contracts. `plugin/sensor/readings/any_reading.rs`
+  is the pattern.
 - Mark `use` lines that only proofs need with `#[cfg(verus_only)]`, since
   the items they import do not exist in a plain build.
 - Add each new assumption to the `axioms` module with a `Trusted:` comment

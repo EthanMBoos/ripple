@@ -7,14 +7,16 @@
   "Toolchain: 1.99.1-aarch64-apple-darwin (overridden by environment variable RUSTUP_TOOLCHAIN)"
  ],
  "passed": true,
- "prove_seconds": 2.5,
- "verified_items": 13,
+ "prove_seconds": 2.4,
+ "verified_items": 23,
  "sources": {
   "crates/core/src/common/loop_rate/proof.rs": "74f4e6423e30cbe4664579f09ddb72bbc1056143b39fb51530758277b347afb7",
   "crates/core/src/common/loop_rate.rs": "c4d35955e89c52a9b94f17f6533d319d325b4ac48535974f85226665031f8e7c",
-  "crates/core/src/ports/proof.rs": "abb06587698b6cd62077ae7f70737b18099e39dbca84cf7ded09b69b159d5bf4",
+  "crates/core/src/plugin/sensor/readings/proof.rs": "60dcb13ff085ff2f2f494c157bb0f353be0b854bbe1dff7f602efe7a8487f83d",
+  "crates/core/src/plugin/sensor/readings.rs": "febeac8454c5b3ec2fb1fd5fd37a7323151ec183c8ce7b0a2bb5a723519eedfb",
+  "crates/core/src/ports/proof.rs": "bcf8822df0d31b086f02ffe7c688de609e2aaf5c81f44477dde12ee1f1c83da1",
   "crates/core/src/ports.rs": "60c13dd3dbf15061d3beab505e5bd01a378cd1ab57be49b3559ee2c1577d2863",
-  "crates/core/src/proof.rs": "005c47b26664bfcada871b988375e0af50505c9b3d824814d729c8c0d9e10de9"
+  "crates/core/src/proof.rs": "5713f184dd18095115e55d9d490b974756ba8842ae4a8dee4d5a55fe231775fe"
  },
  "faults": [
   {
@@ -29,63 +31,105 @@
    "check": "proof",
    "file": "common/loop_rate.rs",
    "fails_as_required": true,
-   "seconds": 1.9
+   "seconds": 2.0
   },
   {
    "fault": "countdown zeroed for every rate",
    "check": "proof",
    "file": "common/loop_rate.rs",
    "fails_as_required": true,
-   "seconds": 1.9
+   "seconds": 2.0
   },
   {
    "fault": "due compared with a whole step instead of half",
    "check": "proof",
    "file": "common/loop_rate.rs",
    "fails_as_required": true,
-   "seconds": 1.9
+   "seconds": 2.0
   },
   {
    "fault": "every name counts as a declared input",
    "check": "proof",
    "file": "ports.rs",
    "fails_as_required": true,
-   "seconds": 1.9
+   "seconds": 2.0
   },
   {
    "fault": "reading an undeclared input gives zero instead of an error",
    "check": "proof",
    "file": "ports.rs",
    "fails_as_required": true,
-   "seconds": 2.0
+   "seconds": 2.1
   },
   {
    "fault": "nonfinite output accepted",
    "check": "proof",
    "file": "ports.rs",
    "fails_as_required": true,
-   "seconds": 2.0
+   "seconds": 2.1
   },
   {
    "fault": "writing an undeclared output is silently dropped",
    "check": "proof",
    "file": "ports.rs",
    "fails_as_required": true,
-   "seconds": 1.9
+   "seconds": 2.0
   },
   {
    "fault": "receive leaves every input at its old value",
    "check": "proof",
    "file": "ports.rs",
    "fails_as_required": true,
-   "seconds": 2.0
+   "seconds": 2.1
   },
   {
    "fault": "receive accepts an input with no upstream value",
    "check": "proof",
    "file": "ports.rs",
    "fails_as_required": true,
+   "seconds": 2.1
+  },
+  {
+   "fault": "publish stores every reading in one slot",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
    "seconds": 2.0
+  },
+  {
+   "fault": "a reading of another type reads as missing",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
+   "seconds": 2.0
+  },
+  {
+   "fault": "any fresh reading makes every sensor fresh",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
+   "seconds": 2.0
+  },
+  {
+   "fault": "deliver marks no sensor fresh",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
+   "seconds": 2.0
+  },
+  {
+   "fault": "deliver leaves the readings pending",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
+   "seconds": 2.1
+  },
+  {
+   "fault": "clear_fresh keeps every sensor fresh",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
+   "seconds": 2.1
   }
  ]
 }

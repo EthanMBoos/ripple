@@ -1,8 +1,10 @@
 % Model score changes from local rules on matched days. Large markers show
-% means; small markers show days. Luna's day scores are rounded in the
-% appendix; other day scores use saved sweeps.
+% means; small markers show days. Luna uses unrounded scores from:
+% sweeps/region-16-luna-api/run001 (both roles),
+% sweeps/region-64-luna-api/run003 (veto), and
+% sweeps/region-64-luna-api-live-retry/run000 (live).
 \begin{tikzpicture}[x=1cm, y=1cm, font=\scriptsize]
-  \newcommand{\scorex}[1]{1.55 + 0.25*(#1 + 25)}
+  \newcommand{\scorex}[1]{1.55 + (7.5/35)*(#1 + 30)}
   \newcommand{\liveday}[3]{%
     \pgfmathsetmacro{\px}{\scorex{#2}}%
     \pgfmathsetmacro{\py}{#1 + 0.14 + #3}%
@@ -26,12 +28,13 @@
       (\px,\py) circle[radius=0.10];%
   }
 
-  \foreach \v in {-25,-20,-15,-10,-5,0,5} {
+  \foreach \v in {-30,-25,-20,-15,-10,-5,0,5} {
     \pgfmathsetmacro{\xx}{\scorex{\v}}
     \draw[black!12, line width=0.4pt] (\xx,0.83) -- (\xx,5.83);
     \node[anchor=north, text=muted, inner sep=1pt] at (\xx,0.77) {\v};
   }
-  \draw[black!50, line width=0.6pt] (7.80,0.83) -- (7.80,5.83);
+  \pgfmathsetmacro{\zerox}{\scorex{0}}
+  \draw[black!50, line width=0.6pt] (\zerox,0.83) -- (\zerox,5.83);
   \foreach \name/\row in {Haiku/5.45,Sonnet/4.94,Opus/4.43,Luna/3.92,
                             Haiku/2.64,Sonnet/2.13,Opus/1.62,Luna/1.11} {
     \draw[black!7, line width=0.4pt] (1.55,\row) -- (9.05,\row);
@@ -65,12 +68,12 @@
   \vetoday{4.43}{-4.792}{0}
   \vetoday{4.43}{-0.645}{0.06}
 
-  \liveday{3.92}{-9.752}{-0.06}
-  \liveday{3.92}{-16.175}{0}
-  \liveday{3.92}{-23.670}{0.06}
-  \vetoday{3.92}{0}{-0.06}
-  \vetoday{3.92}{-4.175}{0}
-  \vetoday{3.92}{-0.670}{0.06}
+  \liveday{3.92}{-7.366}{-0.06}
+  \liveday{3.92}{-26.282}{0}
+  \liveday{3.92}{-18.323}{0.06}
+  \vetoday{3.92}{-2.309}{-0.06}
+  \vetoday{3.92}{-5.006}{0}
+  \vetoday{3.92}{-0.645}{0.06}
 
   % Two matched days at 64 hubs, in seed order (1, 2).
   \liveday{2.64}{-6.883}{-0.04}
@@ -88,10 +91,10 @@
   \vetoday{1.62}{-8.047}{-0.04}
   \vetoday{1.62}{-4.214}{0.04}
 
-  \liveday{1.11}{-10.118}{-0.04}
-  \liveday{1.11}{-8.794}{0.04}
-  \vetoday{1.11}{-11.118}{-0.04}
-  \vetoday{1.11}{-6.794}{0.04}
+  \liveday{1.11}{-12.984}{-0.04}
+  \liveday{1.11}{-15.086}{0.04}
+  \vetoday{1.11}{-10.380}{-0.04}
+  \vetoday{1.11}{-7.087}{0.04}
 
   % Means, drawn over individual days.
   \livepoint{5.45}{-3.74}
@@ -100,16 +103,16 @@
   \vetopoint{4.94}{-2.14}
   \livepoint{4.43}{-4.79}
   \vetopoint{4.43}{-2.44}
-  \livepoint{3.92}{-16.53}
-  \vetopoint{3.92}{-1.53}
+  \livepoint{3.92}{-17.324}
+  \vetopoint{3.92}{-2.653}
   \livepoint{2.64}{-5.76}
   \vetopoint{2.64}{-8.28}
   \livepoint{2.13}{-12.93}
   \vetopoint{2.13}{-8.94}
   \livepoint{1.62}{-15.04}
   \vetopoint{1.62}{-6.13}
-  \livepoint{1.11}{-9.46}
-  \vetopoint{1.11}{-8.96}
+  \livepoint{1.11}{-14.035}
+  \vetopoint{1.11}{-8.734}
 
   \fill[orange] (1.65,6.29) circle[radius=0.09];
   \node[anchor=west, inner sep=2pt] at (1.78,6.29) {live manager};

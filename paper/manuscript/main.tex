@@ -471,8 +471,9 @@ Hubs & No manager & Local rules & Lending & Relocating & Replanner & Return \\
 \centering
 % Drawn by crates/delivery/loss_figure.py from the per-hub columns of the
 % relocating policy and the three Claude CLI models in both roles, each
-% against local rules on the same day. Luna's API per-hub totals were not
-% retained, so its older CLI results are excluded here.
+% against local rules on the same day.
+% TODO: add the new Luna API runs once the original Claude and
+% relocating-policy per-hub files are available.
 \resizebox{\columnwidth}{!}{\input{figures/loss-by-hub.tex}}
 \caption{Where additional missed requests fall. Hubs are grouped by whether
 they gave aircraft or stock, only received, or neither. Bars show additional
@@ -534,8 +535,7 @@ it gains.
 \caption{Models score below local rules in both roles. Large points show
 mean score changes from local rules on matched days; small points show
 each day: three at 16 hubs, two at 64. Orange points are live managers;
-outlined points are vetoes over replanner orders. Luna's day marks use
-scores rounded to hundredths.}
+outlined points are vetoes over replanner orders.}
 \label{fig:models}
 \end{figure}
 
@@ -547,10 +547,10 @@ results are retained with the study code. These means use the three
 at each size. Of the 40 runs, 39 score below local rules.
 Shown only hubs with a problem, Haiku as a live manager makes 7 to 10
 moves per 16-hub day; Sonnet makes 36 to 56, and Opus 54 to 85. GPT-6
-Luna makes 1 to 6, yet also trails local rules: it grants 164 to 193
+Luna makes 1 to 4, yet also trails local rules: it grants 144 to 206
 lending permissions instead. At 64 hubs all four models score below
 local rules' 0.71. Sonnet and Opus make hundreds of moves; Luna grants
-1,096 and 1,000 lending permissions on its two days. Live managers can
+973 and 719 lending permissions on its two days. Live managers can
 also lose aircraft to exhausted endurance away from a hub, up to 56 of
 320 at 64 hubs. Opus beats local rules on one 16-hub seed despite making
 85 moves, but trails on the other four tested days. Few moves alone do
@@ -564,8 +564,7 @@ move. No veto run loses an aircraft.
 
 Figure~\ref{fig:loss} compares the three Claude models with local rules
 on the same days. For both roles, most of their additional lost requests
-are at hubs that gave aircraft or stock. Luna is omitted because its
-per-hub API results were not retained.
+are at hubs that gave aircraft or stock.
 
 A model can also write the policy that runs the day. We gave Haiku and
 Sonnet the mission description and the policy language, ran what they

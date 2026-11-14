@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Check that a change left every output unchanged: two executables, byte for byte.
 
-    python3 reference/equivalence.py OLD_EXECUTABLE NEW_EXECUTABLE
+    python3 reference/equivalence.py OLD_EXECUTABLE NEW_EXECUTABLE [--only WORD ...]
 
-For refactors and renames. Build the old executable from any source you trust
+For refactors and renames. `--only` keeps the cases whose name contains one
+of the words, for a quick check between the full runs; the full run is what
+a branch needs before it merges. Build the old executable from any source you trust
 (for example `cargo build --release` in an exported copy) and the new one from
 this checkout. Runs every mission (reference/project.py), perf.py's workloads,
 and a message-heavy mission. Shipped missions use the
@@ -65,12 +67,16 @@ def main(argv=None):
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("old", type=Path)
     parser.add_argument("new", type=Path)
+    parser.add_argument("--only", nargs="+", default=[], metavar="WORD",
+                        help="run only the cases whose name contains one of these words")
     args = parser.parse_args(argv)
     output = allocate(RUNS, "equivalence")
     scratch = output / "missions"
     scratch.mkdir()
     results, differing = [], 0
-    for index, (name, path, trace) in enumerate(cases(scratch)):
+    chosen = [case for case in cases(scratch)
+              if not args.only or any(word in case[0] for word in args.only)]
+    for index, (name, path, trace) in enumerate(chosen):
         topics = CHANNELS if trace else BASE_CHANNELS
         old, new = output / f"{index:02}-old", output / f"{index:02}-new"
         failures = (run(args.old, path, old, trace), run(args.new, path, new, trace))

@@ -1,7 +1,14 @@
 //! Named, unit-checked ports that connect a plugin stack's autonomy, controller,
 //! and motion model.
-use anyhow::{Context, Result, ensure};
+use anyhow::{Context, Result, bail, ensure};
 use std::collections::BTreeMap;
+use vstd::prelude::*;
+
+mod proof;
+
+verus! {
+    broadcast use proof::port_facts;
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Unit {
@@ -93,10 +100,12 @@ impl Ports {
 pub(crate) type Signals = BTreeMap<String, f64>;
 
 /// Inputs and outputs are distinct, including when a controller reuses a channel name.
-/// Values persist when a rate-limited plugin does not execute.
+/// Values persist when a rate-limited plugin does not execute. Plugins go through
+/// `read` and `write`; the maps are public so a proof, including a future proof
+/// of a plugin, can state what they hold.
 pub struct PluginIo {
-    inputs: Signals,
-    pub(crate) outputs: Signals,
+    pub inputs: Signals,
+    pub outputs: Signals,
 }
 impl PluginIo {
     pub(crate) fn new(ports: &Ports) -> Self {
@@ -120,28 +129,45 @@ impl PluginIo {
         self.inputs.values().copied()
     }
     /// Whether this plugin declares `name` as an input port.
+    #[verus_spec(declared => ensures declared == proof::has_port(self, name))]
     pub(crate) fn reads(&self, name: &str) -> bool {
         self.inputs.contains_key(name)
     }
+    #[verus_spec(value => ensures proof::read_port(self, name, &value))]
     pub fn read(&self, name: &str) -> Result<f64> {
         self.inputs
             .get(name)
             .copied()
             .with_context(|| format!("undeclared input '{name}'"))
     }
+    #[verus_spec(outcome => ensures proof::wrote_port(old(self), final(self), name, value, &outcome))]
     pub fn write(&mut self, name: &str, value: f64) -> Result<()> {
-        ensure!(value.is_finite(), "nonfinite output '{name}'");
+        if !value.is_finite() {
+            bail!("nonfinite output '{name}'");
+        }
         *self
             .outputs
             .get_mut(name)
             .with_context(|| format!("undeclared output '{name}'"))? = value;
         Ok(())
     }
+    // DEVNOTE: this checks every input and then copies, in two loops, because
+    // Verus 0.2026.11.02 has no contract for `iter_mut` (nor has its main
+    // branch as of 2026-11-14). The outputs are the same byte for byte
+    // (reference/equivalence.py), and so is the error for a missing input.
+    #[verus_spec(outcome => ensures proof::received(old(self), final(self), upstream, &outcome))]
     pub(crate) fn receive(&mut self, upstream: &Signals) -> Result<()> {
-        for (name, value) in &mut self.inputs {
-            *value = *upstream
-                .get(name)
-                .with_context(|| format!("missing connected input '{name}'"))?;
+        #[cfg_attr(verus_only, verus_spec(it => invariant proof::connected_so_far(&self.inputs, upstream, it.seq(), it.index())))]
+        for name in self.inputs.keys() {
+            if !upstream.contains_key(name) {
+                bail!("missing connected input '{name}'");
+            }
+        }
+        #[cfg_attr(verus_only, verus_spec(it => invariant proof::copied_so_far(old(self), self, upstream, it.seq(), it.index())))]
+        for (name, value) in upstream.iter() {
+            if let Some(input) = self.inputs.get_mut(name) {
+                *input = *value;
+            }
         }
         Ok(())
     }

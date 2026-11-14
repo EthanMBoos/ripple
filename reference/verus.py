@@ -63,6 +63,33 @@ FAULTS = [
           "        let due = self.remaining_s < dt_s / 2.0;\n",
           "        let due = self.remaining_s < dt_s;\n",
           "proof"),
+    Fault("every name counts as a declared input", "ports.rs",
+          "        self.inputs.contains_key(name)\n    }\n",
+          "        !self.inputs.is_empty()\n    }\n",
+          "proof"),
+    Fault("reading an undeclared input gives zero instead of an error", "ports.rs",
+          "        self.inputs\n            .get(name)\n            .copied()\n"
+          "            .with_context(|| format!(\"undeclared input '{name}'\"))\n",
+          "        Ok(self.inputs.get(name).copied().unwrap_or(0.0))\n",
+          "proof"),
+    Fault("nonfinite output accepted", "ports.rs",
+          "        if !value.is_finite() {\n            bail!(\"nonfinite output '{name}'\");\n        }\n",
+          "",
+          "proof"),
+    Fault("writing an undeclared output is silently dropped", "ports.rs",
+          "        *self\n            .outputs\n            .get_mut(name)\n"
+          "            .with_context(|| format!(\"undeclared output '{name}'\"))? = value;\n",
+          "        if let Some(output) = self.outputs.get_mut(name) {\n            *output = value;\n        }\n",
+          "proof"),
+    Fault("receive leaves every input at its old value", "ports.rs",
+          "                *input = *value;\n",
+          "                let _ = (input, value);\n",
+          "proof"),
+    Fault("receive accepts an input with no upstream value", "ports.rs",
+          "            if !upstream.contains_key(name) {\n"
+          "                bail!(\"missing connected input '{name}'\");\n            }\n",
+          "            let _ = (name, upstream);\n",
+          "proof"),
 ]
 
 

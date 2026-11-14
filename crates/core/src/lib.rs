@@ -1,4 +1,8 @@
 //! Ripple's simulation core: missions, entities, plugins, and the tick.
+// Verus reads a loop's invariant from an attribute on the loop, which only a
+// nightly feature lets rustc parse; `cargo verus` turns `verus_only` on, and a
+// plain build never sees the attribute (it is behind `cfg_attr`) or this line.
+#![cfg_attr(verus_only, feature(proc_macro_hygiene))]
 mod common;
 mod drawing;
 mod entity;
@@ -6,6 +10,7 @@ mod math;
 mod mission;
 pub mod plugin;
 mod ports;
+mod proof;
 mod pubsub;
 pub mod record;
 mod scenario;

@@ -52,8 +52,9 @@ edits source files in place and restores them, so do not build, run
   present, is what the function demands of its caller.
 - `proof! { broadcast use proof::rate_facts; }` as the body's first line
   tells Verus which library facts and assumptions this proof may use. A
-  module with several proved functions says it once instead, in a
-  three-line `verus! { }` block.
+  module with several proved functions, or with a loop, says it once
+  instead in a three-line `verus! { }` block after `mod proof;`, as
+  `ports.rs` does.
 - `loop_rate/proof.rs` holds the claim as `spec fn`s with doc comments in
   plain words, a one-line declaration that lets Verus read the struct's
   fields, and an `axioms` module whose items each begin with a `Trusted:`
@@ -66,11 +67,22 @@ edits source files in place and restores them, so do not build, run
   becomes. The replacement must read as well as what it replaces, and
   `reference/equivalence.py` must show byte-identical outputs.
 - Put every predicate and lemma in `<module>/proof.rs`. The production file
-  gets `mod proof;`, the attribute, and the `proof!` line, nothing more.
+  gets `mod proof;`, the `broadcast use` block, the attribute on each proved
+  function, and one invariant line on each loop, nothing more. Facts every
+  module needs, strings as map keys and the `anyhow` error path, are in
+  `crates/core/src/proof.rs`.
 - Declare the struct from `proof.rs` with
   `#[verifier::external_type_specification]` rather than wrapping its
-  definition in a block. The fields a predicate
-  reads become `pub`; on a `pub(crate)` struct that changes nothing.
+  definition in a block. Verus reads the fields only when they are exactly
+  as visible as the struct, so a `pub(crate)` struct keeps `pub(crate)`
+  fields and a `pub` struct such as `PluginIo` gets `pub` ones, with a doc
+  line saying callers go through the methods. The contracts stay on the
+  public methods, so a plugin proof can use them later.
+- Give a loop its invariant on the loop itself:
+  `#[cfg_attr(verus_only, verus_spec(it => invariant proof::pred(.., it.seq(), it.index())))]`,
+  where `it.seq()` is what the loop walks and `it.index()` how far it has
+  got. The `cfg_attr` keeps stable `rustc` from seeing an attribute on a
+  loop, which it rejects.
 - Mark `use` lines that only proofs need with `#[cfg(verus_only)]`, since
   the items they import do not exist in a plain build.
 - Add each new assumption to the `axioms` module with a `Trusted:` comment

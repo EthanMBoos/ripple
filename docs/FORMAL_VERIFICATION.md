@@ -60,6 +60,20 @@ phase to every active entity (`run_each` in `simulation.rs`) is ordinary
 code and is proved like the rest. Everything between a leaf and `step` is
 proved.
 
+The door to proving a plugin stays open, as future work for whoever wants
+it. A plugin proof would call `read`, `write`, `receive`, and the mailbox
+and readings methods and need their contracts, and it would state its own
+claim over what the ports, readings, and mailbox hold. So the contracts of
+this plan sit on the public methods a plugin calls, not on private helpers
+behind them, and the state those contracts describe is public too: a
+proof can only read a struct's fields when they are as visible as the
+struct, so `PluginIo`, `Readings`, and `Messages` carry `pub` fields with a
+doc line saying plugins go through the methods. The predicates are
+`open(crate)` in a private `proof` module today; a plugin proof flips them
+to `pub open` in a `pub mod proof` and nothing else moves. The cost of the
+open door is that a plugin can touch those fields directly, and only the
+comment and its own proof keep it from doing so.
+
 ## Behaviors worth checking
 
 The ranking is about value to someone using Ripple, not proof difficulty.
@@ -176,7 +190,7 @@ says how much.
 | `TypeId` | messages | Unknown type. | One trusted type declaration and one-line contracts for `TypeId::of` and `==`. |
 | `#[derive]` of `Clone`, `Debug`, `Default`, `PartialEq`, `Eq`, `PartialOrd`, `Ord` on a struct in a block | all | Accepted (the derived `Clone` gets no contract). | None. |
 | `Option::map_or`, `as_deref_mut`, `f64::is_finite`, `mem::take`, `BTreeMap::append`, `Vec::retain`, `Vec::extend`, `sort_by_key` | messages, readings, simulation | Not specified. | One trusted `assume_specification` each; `is_finite` and `map_or` tried. |
-| `Vec::drain`, `BTreeMap::entry` with `or_default`/`or_insert`, `BTreeMap::iter_mut` | route_links (2 drains, 4 entries), ports `receive` | Not specified, and their std signatures carry the unstable allocator parameter. | A trusted contract is writable once the crate carries `#![cfg_attr(verus_only, feature(allocator_api))]`, which plain builds never see (tried); or `drain(..)` becomes `std::mem::take(..).into_iter()` (tried). |
+| `Vec::drain`, `BTreeMap::entry` with `or_default`/`or_insert`, `BTreeMap::iter_mut` | route_links (2 drains, 4 entries), ports `receive` | Not specified, and their std signatures carry the unstable allocator parameter. | For `entry`, a trusted contract is writable once the crate carries `#![cfg_attr(verus_only, feature(allocator_api))]`, which plain builds never see (tried). A `for` loop over `drain(..)` or `iter_mut()` cannot be given one: Verus's `for` needs the iterator type to implement vstd's iterator trait, and the orphan rule forbids that for a std type outside vstd (tried in step 3; Verus main has no `iter_mut` contract either). So `drain(..)` becomes `std::mem::take(..).into_iter()` (tried) and `receive` became a check loop and a copy loop over `keys()` and `iter()` (step 3). |
 | `anyhow!`, `bail!`, `with_context`, `Error::msg` | everywhere | Unknown functions. | Four trusted one-line contracts over `anyhow::Error` declared opaque; all four forms then verify. |
 | `ensure!` | 16 sites in the target files: rate 1, ports 3, readings 2, messages 9 (receive 1, route_links 4) | Its expansion calls a private trait of `anyhow`, which no contract can name. | `if !c { bail!(...) }` at the proved sites only. |
 | A closure that captures `&mut`: `due.then(\|\| std::mem::take(&mut self.elapsed_s))` | loop_rate.rs | Rejected: "closures capturing a mutable reference". | `if due { let e = self.elapsed_s; self.elapsed_s = 0.0; Some(e) } else { None }`; done in step 2. |
@@ -275,10 +289,12 @@ is claimed, not how. The struct the proof reads is declared to Verus from
 `proof.rs` with a one-line `external_type_specification`, so its own text
 is untouched apart from the fields the predicates read becoming `pub`
 (still crate-private, on a `pub(crate)` struct). The production module says
-`mod proof;`, and the proved function's first line, `proof! { broadcast use
-proof::<module>_facts; }`, names the one group of library facts and trusted
-axioms its proof needs; a module with several proved functions can say it
-once instead, in a three-line `verus! { }` block. This is the layout
+`mod proof;` and, in a three-line `verus! { }` block, `broadcast use
+proof::<module>_facts;`, which names the one group of library facts and
+trusted axioms its proofs may use (`Rate::due`, the only proved function in
+its module, says it as the body's first line, `proof! { broadcast use
+proof::rate_facts; }`; a function with a loop cannot, because Verus checks
+a loop body on its own and does not see that line). This is the layout
 `Rate::due` is proved with, and it passes `cargo build`, `cargo test`,
 `cargo clippy -- -D warnings`, and `cargo fmt --check` unchanged:
 
@@ -324,6 +340,22 @@ The `use` lines only proofs need carry `#[cfg(verus_only)]`, since the
 items they import are erased from a plain build; a `broadcast group` or an
 external type declaration survives erasure as a stub and takes
 `#[allow(dead_code)]`.
+
+Verus reads a struct's fields only when every field is exactly as visible
+as the struct, so a `pub(crate)` struct keeps `pub(crate)` fields and a
+`pub` struct needs `pub` ones. `PluginIo`, `Readings`, and `Messages` are
+public because plugins hold them, so their fields become `pub` with a doc
+line saying plugins go through the methods; the alternative, crate-private
+functions over the fields behind one-line public delegates, was built and
+dropped because it closes the door on plugin proofs ("What we are working
+to"). A loop carries its invariant as one line on the loop,
+`#[cfg_attr(verus_only, verus_spec(it => invariant proof::pred(.., it.seq(),
+it.index())))]`, where `it.seq()` is the sequence the loop walks and
+`it.index()` how far it has got; the `cfg_attr` is there because stable
+`rustc` rejects an attribute on a loop, and `lib.rs` carries
+`#![cfg_attr(verus_only, feature(proc_macro_hygiene))]` so Verus's own
+`rustc` accepts it. Trusted items every module shares, strings as map keys
+and the `anyhow` error path, live in `crates/core/src/proof.rs`.
 
 Trusted items live in an `axioms` module inside `proof.rs`, each a
 `#[verifier::external_body]` lemma or an `assume_specification` with a doc
@@ -384,12 +416,17 @@ until then the claim is Planned.
 
 ## Steps
 
-Each step ends with the proof passing, the faults failing, equivalence
-identical where code changed, and the claims and trusted-items tables
-updated. Each names its production change up front, so the cost is known
+Each step ends with the proof passing, the faults failing, a quick
+equivalence run identical where code changed (`reference/equivalence.py OLD
+NEW --only ...` over a handful of short missions that exercise the changed
+code), the claims and trusted-items tables updated, and a commit on the
+branch; the full equivalence run happens once, before the branch merges
+into `main`, and any difference it finds is traced back to its step's
+commit. Each names its production change up front, so the cost is known
 before the work starts; where the change is "none", the predicates and
 trusted contracts go in `proof.rs` and the production file gains only
-`mod proof;`, the attribute, the `proof!` line, and `pub` on read fields.
+`mod proof;`, the three-line `broadcast use` block, the attribute on each
+proved function, and one invariant line on each loop.
 
 1. Toolchain and opt-in. Add `vstd`, the package metadata, and the
    workspace `check-cfg` for `verus_only` to `ripple-core`; confirm `cargo
@@ -413,17 +450,24 @@ trusted contracts go in `proof.rs` and the production file gains only
    rate, due compared with a whole step. Done: one item verified, four
    faults fail, `cargo build`, `cargo test`, `cargo clippy`, and `cargo
    fmt --check` unchanged.
-3. Ports. Prove `PluginIo::read`, `write`, and `reads` over the existing
-   `BTreeMap<String, f64>` (row 6's runtime half): a value reaches the port
-   it was wired to and no other. Production change: one `ensure!` in
-   `write` becomes `if`/`bail!`. Trusted: the `String` ordering axiom, the
-   `&str` lookup axioms, the `with_context` contract. `receive` walks its
-   inputs with `iter_mut`, which has no contract and whose signature carries
-   the unstable allocator parameter; the step chooses between one
-   `cfg_attr(verus_only, feature(allocator_api))` line in `lib.rs`, which
-   plain builds never see, with a trusted contract, and a rewrite of that
-   loop, and records the choice in the proof file. Faults: a write that
-   lands on a neighbor's port, a read of the wrong input.
+3. Ports. Prove `PluginIo::read`, `write`, `reads`, and `receive` over the
+   existing `BTreeMap<String, f64>` (row 6's runtime half): `read` returns
+   the named input's value and fails exactly when there is no such input;
+   `write` stores a finite value in the named output and changes no other,
+   and a nonfinite value or unknown name fails and changes nothing;
+   `receive` gives every input the upstream value of its name and fails,
+   changing nothing, exactly when an input has none. Production change:
+   `inputs` and `outputs` became `pub` so Verus can read them (see above);
+   `write`'s `ensure!` became `if`/`bail!`;
+   `receive` became two loops, one checking every input has an upstream
+   value and one copying over `upstream.iter()`, because a `for` over
+   `iter_mut` can take no contract (the table above). Trusted: the ten
+   shared items in `crates/core/src/proof.rs` and `is_finite` in
+   `ports/proof.rs`. Faults: every name counts as declared, an undeclared
+   input reads as zero, a nonfinite output accepted, an undeclared output
+   dropped, receive copies nothing, receive accepts a missing input. Done
+   on `verus-verification`: thirteen items verified, six faults fail, ten
+   quick equivalence cases identical, the four cargo checks unchanged.
 4. Readings. Prove `get`, `publish`, `deliver`, and `clear_fresh` (row 7)
    over the existing maps. Production change: the reading box becomes an
    opaque newtype with trusted `downcast_ref`, `is`, and `type_id`; two
@@ -458,10 +502,11 @@ trusted contracts go in `proof.rs` and the production file gains only
    named parts (collect this network's publications, index the subscribers,
    decide the links, deliver the due messages), each with its own contract;
    that reads better on its own and keeps each proof to one or two loops.
-   Four `ensure!`s and one let chain change as above; `entry` and `drain`
-   take trusted contracts under the `allocator_api` feature line, or
-   `drain(..)` becomes `std::mem::take(..).into_iter()`; the `decide`
-   callback's precondition is stated in the contract. The proof works over
+   Four `ensure!`s and one let chain change as above; `entry` takes a
+   trusted contract under the `allocator_api` feature line, and `drain(..)`
+   becomes `std::mem::take(..).into_iter()`, since a loop over `drain` can
+   take no contract (the table above); the `decide` callback's
+   precondition is stated in the contract. The proof works over
    the existing per-phase maps: integer channel ids and a cached subscriber
    index would be a speed change, not a proof need. Faults: a delayed
    message delivered early, a subscriber skipped, a removed receiver's
@@ -487,7 +532,7 @@ written.
 | Claim | Status |
 | --- | --- |
 | A rate-limited plugin runs when due and receives the elapsed time since its last run | Proved on `verus-verification` (step 2): `Rate::due`; four planted faults fail; `reference/verus.py` record retained |
-| Port values reach the port they were wired to and no other | Planned (step 3) |
+| Port values reach the port they were wired to and no other | Proved on `verus-verification` (step 3): `read`, `write`, `reads`, and `receive` in `ports.rs`; six planted faults fail; `reference/verus.py` record retained |
 | A reading reaches only its sensor's slot; `latest` and `fresh` mean what they say | Planned (step 4) |
 | Receiving from a mailbox drains only the asked channel, in order, and changes nothing else | Planned (step 5) |
 | The autonomy phase steps every autonomy once, in order, through the trusted plugin call | Planned (step 6) |
@@ -505,3 +550,11 @@ reader needs, in the sense of the `_t.rs` convention above.
 | `div_is_ieee` | same | Rust's `f64` operators are IEEE 754 double arithmetic, rounding to nearest even. |
 | `elapsed_add_is_ieee`, `reload_is_ieee`, `remaining_sub_is_ieee`, `remaining_lt_is_ieee`, `period_eq_is_ieee` | same | The same, for `+`, `-`, `<`, `==`; stated over the `Rate` fields they are applied to because this Verus release gives a float field no range fact (see the table above). |
 | `ExRate` external type declaration | same | Declares `Rate` to Verus with its fields visible; it assumes nothing about their values. |
+| `ExAnyhowError` external type declaration | `proof.rs` (crate root) | Declares `anyhow::Error` as an opaque value; nothing about its contents is assumed. |
+| `string_obeys_cmp` | same | std's `String` ordering is a total order consistent with equality, so a string-keyed `BTreeMap` behaves as a map. |
+| `str_lookup_matches_string_order` | same | std's `Borrow<str>` for `String` promises the same ordering for the borrowed text. |
+| `str_key_contained`, `str_key_maps_to_value`, `str_key_removed` | same | What vstd leaves open for borrowed key types: a `&str` is contained, maps to a value, or is removed exactly when the `String` with its text is. |
+| `string_text_is_identity` | same | Two `String`s with the same characters are the same string. |
+| `assume_specification` for `Option::with_context` | same | `anyhow` keeps a present value as `Ok` and turns an absent one into an error; the message is not modeled. |
+| `assume_specification` for `anyhow::__private::format_err` and `must_use` | same | `bail!` and `anyhow!` build an error value and do nothing else. |
+| `assume_specification` for `f64::is_finite` | `ports/proof.rs` | Tied to an uninterpreted `is_finite`, so the claims say nothing about which floats are finite. |

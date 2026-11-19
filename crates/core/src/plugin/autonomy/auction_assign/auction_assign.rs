@@ -1,0 +1,166 @@
+//! A single random-bid auction initiated by entity 1; no task execution or navigation.
+//!
+//! Derived from SCRIMMAGE: src/plugins/autonomy/AuctionAssign/AuctionAssign.cpp (LGPL-3.0-or-later).
+//! Autonomy phase: consume delivered starts/bids, then publish bids or the final winner.
+//! Its zero velocity commands hold the vehicle still.
+//! Each bid is the random number keyed by its auction's auctioneer.
+
+use anyhow::{Result, ensure};
+use serde::{Deserialize, Serialize};
+
+use crate::plugin::{AgentContext, Autonomy, Frame, PluginIo, PluginParams, Port, Ports, Unit};
+
+pub const START_AUCTION_TOPIC: &str = "StartAuction";
+pub const BID_AUCTION_TOPIC: &str = "BidAuction";
+pub const RESULT_AUCTION_TOPIC: &str = "ResultAuction";
+
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct AuctionAssignConfig {
+    auctioneer: bool,
+    auction_duration_s: f64,
+    network: String,
+}
+
+impl Default for AuctionAssignConfig {
+    fn default() -> Self {
+        Self {
+            auctioneer: true,
+            auction_duration_s: 5.0,
+            network: "SphereNetwork".into(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+pub struct AuctionStart {
+    pub auctioneer_id: i32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+pub struct AuctionBid {
+    pub bidder_id: i32,
+    pub bid: f64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+pub struct AuctionResult {
+    /// None when no bid reached the auctioneer before it closed.
+    pub winner: Option<AuctionBid>,
+}
+
+pub struct AuctionAssign {
+    auctioneer: bool,
+    auction_duration_s: f64,
+    network: String,
+    started_at_s: Option<f64>,
+    completed: bool,
+    best_bid: Option<AuctionBid>,
+}
+
+impl Autonomy for AuctionAssign {
+    type Config = AuctionAssignConfig;
+
+    fn configure(params: &PluginParams) -> Result<AuctionAssignConfig> {
+        let config: AuctionAssignConfig = params.parse()?;
+        ensure!(
+            config.auction_duration_s >= 0.0,
+            "auction_duration_s must be nonnegative"
+        );
+        ensure!(
+            !config.network.trim().is_empty(),
+            "AuctionAssign network_name must not be empty"
+        );
+        Ok(config)
+    }
+
+    fn new(config: &AuctionAssignConfig) -> Self {
+        Self {
+            auctioneer: config.auctioneer,
+            auction_duration_s: config.auction_duration_s,
+            network: config.network.clone(),
+            started_at_s: None,
+            completed: false,
+            best_bid: None,
+        }
+    }
+
+    fn ports(_config: &AuctionAssignConfig) -> Ports {
+        let mut ports = Ports::default();
+        for name in ["velocity_x", "velocity_y", "velocity_z"] {
+            ports = ports.output(Port::new(name, Unit::MetersPerSecond, Frame::World));
+        }
+        ports
+    }
+
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> {
+        context
+            .messages
+            .subscribe::<AuctionStart>(&self.network, START_AUCTION_TOPIC)?;
+        context
+            .messages
+            .subscribe::<AuctionBid>(&self.network, BID_AUCTION_TOPIC)?;
+        Ok(())
+    }
+
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
+        for message in context
+            .messages
+            .receive::<AuctionStart>(&self.network, START_AUCTION_TOPIC)?
+        {
+            // One bid per auction, keyed by the auctioneer's entity.
+            let auctioneer = i64::from(message.sender.entity_id.unwrap_or(0)) as u64;
+            let bid = AuctionBid {
+                bidder_id: context.entity.id,
+                bid: context.random.uniform(&[auctioneer]) * 10.0,
+            };
+            context
+                .messages
+                .publish(&self.network, BID_AUCTION_TOPIC, bid)?;
+        }
+        for message in context
+            .messages
+            .receive::<AuctionBid>(&self.network, BID_AUCTION_TOPIC)?
+        {
+            // Equal bids retain the first delivered bidder. Completed results never change.
+            if !self.completed
+                && self
+                    .best_bid
+                    .is_none_or(|best| message.value.bid > best.bid)
+            {
+                self.best_bid = Some(*message.value);
+            }
+        }
+
+        // Only entity 1 runs the auction; `auctioneer` elsewhere does nothing.
+        if self.auctioneer && context.entity.id == 1 {
+            if let Some(started_at_s) = self.started_at_s {
+                // Strict deadline: close on the first tick after five seconds.
+                if !self.completed && context.time.time_s > started_at_s + self.auction_duration_s {
+                    context.messages.publish(
+                        &self.network,
+                        RESULT_AUCTION_TOPIC,
+                        AuctionResult {
+                            winner: self.best_bid,
+                        },
+                    )?;
+                    self.completed = true;
+                }
+            } else {
+                context.messages.publish(
+                    &self.network,
+                    START_AUCTION_TOPIC,
+                    AuctionStart {
+                        auctioneer_id: context.entity.id,
+                    },
+                )?;
+                self.started_at_s = Some(context.time.time_s);
+            }
+        }
+        for name in ["velocity_x", "velocity_y", "velocity_z"] {
+            io.write(name, 0.0)?;
+        }
+        Ok(())
+    }
+}

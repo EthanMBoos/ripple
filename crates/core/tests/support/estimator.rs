@@ -1,0 +1,37 @@
+//! Localization from east-position fixes alone. The initial position is a known
+//! prior, not a reading, so belief differs from truth when the sensor is biased.
+use super::sensor::PositionReading;
+use anyhow::Result;
+use ripple_core::plugin::*;
+use serde::Deserialize;
+
+#[derive(Default, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct EastFixConfig {
+    initial_x_world_m: f64,
+}
+pub struct EastFix {
+    initial_x_world_m: f64,
+}
+impl Localization for EastFix {
+    type Config = EastFixConfig;
+    fn new(config: &EastFixConfig) -> Self {
+        Self {
+            initial_x_world_m: config.initial_x_world_m,
+        }
+    }
+    fn inputs(_: &EastFixConfig) -> Vec<Input> {
+        vec![Input::new("fix", ReadingKind::Other)]
+    }
+
+    fn initialize(&mut self, context: &mut LocalizationContext) -> Result<()> {
+        context.state.mean.position_world_m.x = self.initial_x_world_m;
+        Ok(())
+    }
+    fn step(&mut self, context: &mut LocalizationContext) -> Result<()> {
+        if let Some(fix) = context.inputs.fresh::<PositionReading>("fix")? {
+            context.state.mean.position_world_m.x = fix.value.x_world_m;
+        }
+        Ok(())
+    }
+}

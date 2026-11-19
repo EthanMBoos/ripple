@@ -1,0 +1,20 @@
+# ArduPilot SITL adapter: an optional user crate, outside the default build.
+# The `ripple` command includes it only with `--features ardupilot`
+# (crates/cli). User guide: book/src/guides/ardupilot.md.
+[package]
+name = "ardupilot"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+ripple-core = { path = "../core" }
+# The SitlState sensor and the SITL containers, shared with crates/px4.
+sitl = { path = "../sitl" }
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+"""Compare C++ and Rust NoisyContacts noise distributions from comparison traces.
+
+    python3 reference/reference_check.py --mission missions/verification/noisy-contacts-noise.yaml
+    python3 reference/noise_statistics.py runs/reference-checkNNN/00-noisy-contacts-noise
+
+The comparison trace already matches the samples one for one (both simulators
+draw keyed random numbers); this second check compares the error
+distributions, independent of how the numbers are drawn. An error is
+a measured contact state (C++'s publication, Rust's reading) minus that
+contact's true state when it was measured (the next tick's logged belief; the
+mission has no own-state sensor, so belief is truth). For position and velocity axes and the attitude error angle, a two-sample
+Kolmogorov-Smirnov test compares C++ and Rust samples. The case passes when
+every p-value exceeds 0.05 divided by the number of tests (Bonferroni).
+Standard library only.
+"""
+
+import argparse
+import json
+import math
+from pathlib import Path
+import sys
+
+from compare import orientation_distance_rad
+from traces import read_trace, tick
+
+ALPHA = 0.05
+
+
+def errors(records):
+    beliefs, measurements = {}, []
+    for record in records:
+        if record["kind"] == "belief":
+            beliefs[(tick(record), record["id"])] = record
+        elif record["kind"] in ("publication", "reading") and record["from"][1].startswith(
+                "NoisyContacts"):
+            measurements.append(record)
+    ticks = sorted({key[0] for key in beliefs})
+    following = dict(zip(ticks, ticks[1:]))
+    samples = {name: [] for name in ("pos_x", "pos_y", "pos_z", "vel_x", "vel_y", "vel_z",
+                                     "attitude_rad")}
+    for measurement in measurements:
+        now = tick(measurement)
+        for state in measurement["states"]:
+            # Measured after motion: the next logged belief (the terminal frame
+            # after the last step).
+            truth = beliefs.get((following.get(now), state["id"]))
+            if truth is None:
+                continue
+            for axis, name in enumerate("xyz"):
+                samples[f"pos_{name}"].append(state["p"][axis] - truth["p"][axis])
+                samples[f"vel_{name}"].append(state["v"][axis] - truth["v"][axis])
+            samples["attitude_rad"].append(orientation_distance_rad(truth["q"], state["q"]))
+    return samples
+
+
+def ks_two_sample(first, second):
+    """Kolmogorov-Smirnov statistic and asymptotic p-value (Numerical Recipes form)."""
+    first, second = sorted(first), sorted(second)
+    n, m = len(first), len(second)
+    i = j = 0
+    statistic = 0.0
+    while i < n and j < m:
+        value = min(first[i], second[j])
+        while i < n and first[i] <= value:
+            i += 1
+        while j < m and second[j] <= value:
+            j += 1
+        statistic = max(statistic, abs(i / n - j / m))
+    effective = math.sqrt(n * m / (n + m))
+    lam = (effective + 0.12 + 0.11 / effective) * statistic
+    if lam == 0:
+        return statistic, 1.0
+    if lam < 1.18:  # The alternating series converges slowly here; use its complement.
+        y = math.exp(-math.pi ** 2 / (8 * lam * lam))
+        p = 1 - math.sqrt(2 * math.pi) / lam * sum(y ** ((2 * k - 1) ** 2) for k in range(1, 20))
+    else:
+        p = 2 * sum((-1) ** (k - 1) * math.exp(-2 * k * k * lam * lam) for k in range(1, 101))
+    return statistic, min(max(p, 0.0), 1.0)
+
+
+def summary(values):
+    mean = sum(values) / len(values)
+    variance = sum((value - mean) ** 2 for value in values) / (len(values) - 1)
+    return mean, math.sqrt(variance)
+
+
+def compare_noise(cpp_records, rust_records):
+    cpp, rust = errors(cpp_records), errors(rust_records)
+    threshold = ALPHA / len(cpp)
+    quantities = {}
+    for name in cpp:
+        if len(cpp[name]) < 30 or len(rust[name]) < 30:
+            raise ValueError(f"too few samples for {name}: {len(cpp[name])}, {len(rust[name])}")
+        statistic, p = ks_two_sample(cpp[name], rust[name])
+        cpp_mean, cpp_std = summary(cpp[name])
+        rust_mean, rust_std = summary(rust[name])
+        quantities[name] = {"cpp_samples": len(cpp[name]), "rust_samples": len(rust[name]),
+                            "cpp_mean": cpp_mean, "rust_mean": rust_mean,
+                            "cpp_std": cpp_std, "rust_std": rust_std,
+                            "ks_statistic": statistic, "p_value": p, "passed": p > threshold}
+    return {"passed": all(q["passed"] for q in quantities.values()),
+            "per_test_threshold": threshold, "quantities": quantities}
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("case", type=Path, help="reference_check case directory")
+    parser.add_argument("--report", type=Path, help="save a new JSON report")
+    args = parser.parse_args(argv)
+    try:
+        result = compare_noise(read_trace(args.case / "cpp/trace.jsonl"),
+                               read_trace(args.case / "rust-trace/run.mcap"))
+    except (OSError, ValueError, KeyError) as error:
+        print(f"noise comparison error: {error}", file=sys.stderr)
+        return 2
+    text = json.dumps(result, indent=2) + "\n"
+    if args.report is not None:
+        with args.report.open("x", encoding="utf-8") as stream:
+            stream.write(text)
+    print(text, end="")
+    return 0 if result["passed"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

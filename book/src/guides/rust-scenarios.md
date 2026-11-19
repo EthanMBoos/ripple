@@ -1,0 +1,111 @@
+# Building a scenario in Rust
+
+A `ScenarioConfig` describes the experiment. A `PluginRegistry` supplies its
+available behaviors. `Simulation::new` validates the description and constructs
+the running simulation. A YAML mission is read into the same scenario.
+
+Use Rust when you want loops or calculations to generate a setup. Keep scenario
+functions in your workspace research crate alongside your plugins.
+
+## Describe the experiment
+
+```rust,ignore
+use ripple_core::{EntityGroupConfig, PluginConfig, ScenarioConfig, Vec3};
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct Route {
+    waypoints_m: Vec<[f64; 3]>,
+    speed_mps: f64,
+}
+
+pub fn ring() -> anyhow::Result<ScenarioConfig> {
+    let mut scenario = ScenarioConfig::default();
+    scenario.run.end_s = 60.0;
+    for i in 0..20 {
+        let angle = i as f64 * std::f64::consts::TAU / 20.0;
+        scenario.entities.push(EntityGroupConfig {
+            label: format!("agent{i}"),
+            team: 1,
+            position_m: Vec3::new(200.0 * angle.cos(), 200.0 * angle.sin(), 100.0),
+            autonomy: vec![PluginConfig::new("WaypointFollower").with_params(Route {
+                waypoints_m: vec![[0.0, 0.0, 100.0]],
+                speed_mps: 5.0,
+            })?],
+            motion_model: PluginConfig::new("SingleIntegrator"),
+            ..EntityGroupConfig::default()
+        });
+    }
+    Ok(scenario)
+}
+```
+
+An entity group specifies `count` independent agents and an optional `Spawn`
+schedule. The example uses the default count of one. Positions and velocities
+are local ENU world coordinates, in meters and meters/second. The position
+spread (a standard deviation) defaults to zero. Select a motion model
+explicitly; omitted physics is an error.
+
+`PluginConfig::new` uses the plugin's defaults. `with_params` replaces its
+supplied values with a serializable struct or map; the plugin's existing
+`configure` checks them at construction. This is programmatic configuration:
+plugin names and parameter compatibility are checked at startup.
+
+## Use the shared runner
+
+The existing CLI crate can call your research crate's scenario function and
+pass it to the same runner used by `ripple run`:
+
+```rust,ignore
+use ripple_cli::{RunSettings, run_scenario};
+
+let output = run_scenario(my_lab::ring()?, &registry, RunSettings {
+    root: repo_root.into(),
+    name: "ring".into(),
+    ..RunSettings::default()
+})?;
+```
+
+`registry` includes the stock models and your workspace plugins. The runner
+allocates `runs/ring/runNNN` under `root` and writes a `run.mcap` with frames,
+events, summaries, and the resolved scenario. Set `viewer: true` to launch Rerun,
+`export_rrd: true` to save the recording, or `output: Some(path)` to use a new
+explicit output directory. Invalid configurations fail before output allocation.
+
+The CLI already depends on your plugin crate; keep this call in the CLI rather
+than adding a dependency from the plugin crate back to the CLI. A Rust scenario
+function is not automatically a command or sweep. Existing YAML sweeps and Slurm
+shards continue to use the shared tools described in [YAML
+missions](yaml-missions.md).
+
+## Step directly in a test
+
+```rust,ignore
+use ripple_core::{Mission, Params, Simulation};
+
+// Either load a mission or call your Rust setup function. The registry is
+// shared (`Arc`): the simulation keeps it to build the entities plugins
+// request during the run, and a program can run many simulations from one.
+let mission = Mission::load(path, root, &Params::new())?;
+let mut simulation = Simulation::new(mission.scenario, Arc::new(registry))?;
+while let Some(frame) = simulation.step()? {
+    // Inspect state or collect experiment-specific output.
+}
+```
+
+`Mission` also contains the source path and the file's viewer default; these
+are separate from simulation data. Scenario serialization records
+normalized data for manifests, not reloadable mission YAML. The default end
+condition is the time limit, for both Rust and YAML.
+
+## What stays the same as YAML
+
+Rust code and YAML both produce a `ScenarioConfig`. Plugin names and parameters
+therefore get the same startup checks, and both use the same simulation loop.
+`EntityGroupConfig` describes a population and its spawn schedule; the engine
+creates an `Entity` for each agent that is alive during the run.
+
+Use a parameter struct for computed floats. A prebuilt JSON value may already
+have converted NaN or infinity to null before the engine checks it. A saved
+scenario describes what ran, but it is not reloadable mission YAML: mission
+files also have labeled maps, templates, and an envelope.

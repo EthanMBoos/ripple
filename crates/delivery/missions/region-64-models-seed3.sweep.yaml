@@ -1,0 +1,25 @@
+# Seed 3 of the 64-hub model day for the three Claude models, as live
+# managers (exceptions view with feedback) and as vetoes over the replanner,
+# so the model comparison has three seeds at both sizes. Seeds 1 and 2 are
+# in region-64-models.sweep.yaml. Live calls through the signed-in claude
+# command, replies cached under runs/llm-cache; a rerun with the same
+# settings makes no calls.
+name: region-64-models-seed3
+base_scenario: region.yaml
+seeds: [3]
+parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 64
+  entities.region.autonomy.Dispatcher.manager.view: exceptions
+  entities.region.autonomy.Dispatcher.manager.feedback: true
+  entities.region.autonomy.Dispatcher.manager.checker: false
+  entities.region.autonomy.Dispatcher.manager.via: cli
+  entities.region.autonomy.Dispatcher.manager.offline: false
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.kind, manager.provider, manager.model]
+cases:
+  - [model, claude, claude-haiku-5-5]
+  - [model, claude, claude-sonnet-5-5]
+  - [model, claude, claude-opus-5-5]
+  - [veto, claude, claude-haiku-5-5]
+  - [veto, claude, claude-sonnet-5-5]
+  - [veto, claude, claude-opus-5-5]

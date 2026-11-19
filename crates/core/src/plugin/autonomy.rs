@@ -1,0 +1,73 @@
+//! Autonomy: the plugin interface and the built-in algorithms.
+use crate::{
+    drawing::Drawing,
+    plugin::{AgentContext, PluginParams, StepTime},
+    ports::{PluginIo, Ports},
+};
+use anyhow::Result;
+use serde::de::DeserializeOwned;
+
+/// What an autonomy does each tick, and how it is built.
+/// `Send`, like every category trait, because entities step on worker threads.
+pub trait Autonomy: Send {
+    // The build half; see the module doc in `plugin.rs`.
+    /// Immutable, validated configuration, parsed once per mission and shared
+    /// by every instance.
+    type Config: DeserializeOwned + Send + Sync + 'static
+    where
+        Self: Sized;
+    /// Parses the mission's parameters; override it to check them.
+    fn configure(params: &PluginParams) -> Result<Self::Config>
+    where
+        Self: Sized,
+    {
+        params.parse()
+    }
+    fn new(config: &Self::Config) -> Self
+    where
+        Self: Sized;
+    fn ports(_config: &Self::Config) -> Ports
+    where
+        Self: Sized,
+    {
+        Ports::default()
+    }
+
+    fn initialize(&mut self, _context: &mut AgentContext) -> Result<()> {
+        Ok(())
+    }
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()>;
+    /// Runs once: when the entity is removed, the run ends, or it fails. Not
+    /// a destructor: it has the simulation time, it can fail, and the plugin
+    /// stays in memory until the simulation is dropped.
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
+    /// Shapes this plugin draws in the viewer for the whole run, asked once
+    /// when it starts: see `Drawing`. Empty unless overridden.
+    fn fixed_drawings(&self) -> Vec<Drawing> {
+        Vec::new()
+    }
+    /// Shapes that come and go, asked every tick at `time_s`. Empty unless
+    /// overridden.
+    fn drawings(&self, _time_s: f64) -> Vec<Drawing> {
+        Vec::new()
+    }
+}
+
+// Built-ins selected by missions.
+#[path = "autonomy/straight/straight.rs"]
+mod straight;
+pub use straight::Straight;
+#[path = "autonomy/waypoint_follower/waypoint_follower.rs"]
+mod waypoint_follower;
+pub use waypoint_follower::WaypointFollower;
+#[path = "autonomy/auction_assign/auction_assign.rs"]
+mod auction_assign;
+pub use auction_assign::{
+    AuctionAssign, AuctionBid, AuctionResult, AuctionStart, BID_AUCTION_TOPIC,
+    RESULT_AUCTION_TOPIC, START_AUCTION_TOPIC,
+};
+#[path = "autonomy/constant_velocity/constant_velocity.rs"]
+mod constant_velocity;
+pub use constant_velocity::ConstantVelocity;

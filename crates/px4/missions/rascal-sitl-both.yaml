@@ -1,0 +1,69 @@
+# Two Rascals in one run, one flown by ArduPlane SITL and one by PX4 SITL, in
+# lockstep with each other: the two bridges side by side. Needs `ripple` built
+# with both features (--features px4,ardupilot). Same as rascal-sitl.yaml
+# otherwise, which explains the aircraft, the air start, and wind. ArduPlane
+# arms in LOITER and circles its release point; PX4 arms in TAKEOFF and
+# circles 20 m above its own.
+format_version: 1
+name: Rascal ArduPlane and PX4 SITL pair
+
+run:
+  end_s: 150
+  dt_s: 0.0025
+  seed: 1
+
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  rascal:
+    visual_model: sphere
+    sensors:
+      SitlState:
+        wind_mps: [0, 0, 0]
+    motion_model:
+      FixedWing6DOF:
+        # The Rascal 110: ArduPilot's JSBSim Rascal (see airframe.rs).
+        airframe: rascal
+        enable_launcher: true
+        launch_at_s: 40
+        launch_speed_mps: 20
+        launch_acceleration_mps2: 20
+        wind_mps: [0, 0, 0]
+
+entities:
+  arduplane:
+    template: rascal
+    team: 1
+    position_m: [0, 0, 200]
+    velocity_mps: [0, 0, 0]
+    heading_deg: 0
+    autonomy:
+      ArduPilotBridge:
+        port: 9002
+        frame_timeout_s: 10
+        first_frame_timeout_s: 60
+        mode: null
+        waypoints_m: []
+        takeoff_altitude_m: null
+        land: false
+        goto_m: null
+        speedup: 100
+        ardupilot_params: {}
+  px4:
+    template: rascal
+    team: 2
+    position_m: [0, 300, 200]
+    velocity_mps: [0, 0, 0]
+    heading_deg: 0
+    autonomy:
+      Px4Bridge:
+        port: 4560
+        frame_timeout_s: 10
+        first_frame_timeout_s: 60
+        mode: null
+        waypoints_m: []
+        takeoff_altitude_m: null
+        land: false
+        speedup: 100
+        px4_params: {}

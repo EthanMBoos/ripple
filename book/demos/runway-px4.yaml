@@ -1,0 +1,26 @@
+# A Rascal flown by PX4 SITL takes off from the runway south of McMillan
+# Airfield, flies a left-hand circuit, and lands. The run starts the SITL
+# container (`--features px4`, Docker). Every thirteenth 2.5 ms step is
+# kept, about 31 poses a second, from the moment the autopilot is ready to
+# the end of the landing roll. The terrain is drawn at full resolution in a
+# 3 km window around the circuit, with the runway from the mission's notes
+# drawn on it, because the camera flies 40 m behind the aircraft.
+name: runway-px4
+source: crates/px4/missions/rascal-runway.yaml
+features: [px4]
+preset: flight
+start_s: 20
+end_s: 185
+every: 13
+speed: 1
+camera: {follow: {group: rascal, distance_m: 40}}
+featured: [{group: rascal}]
+model_span_m: 6
+terrain_samples: 340
+terrain_window: {center_m: [244, 56], half_span_m: 1500}
+runway: {center_m: [125, -400], length_m: 600, width_m: 20, heading_deg: 114}
+captions:
+  - {at_s: 20, text: "A Rascal on its wheels at the end of the runway south of McMillan Airfield. PX4 has booted, aligned, and armed inside its container while the simulator held the aircraft still."}
+  - {at_s: 32, text: "Takeoff in AUTO: PX4 flies the surfaces and throttle over the JSON link; Ripple's six-degree-of-freedom Rascal, landing gear, and terrain do the rest."}
+  - {at_s: 90, text: "A left-hand circuit at 60 m, then final at 30 m, 400 m behind the start."}
+  - {at_s: 140, text: "Final approach and landing on the strip it left. TerrainCollision would remove the aircraft if its nose or a wingtip touched."}

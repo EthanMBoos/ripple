@@ -1,0 +1,167 @@
+#!/usr/bin/env python3
+"""Seeded-defect sensitivity study: can the C++ comparison catch plausible porting bugs?
+
+    python3 reference/sensitivity.py --check runs/reference-check003 --output runs/sensitivity000
+
+Reuses the saved C++ runs from a completed reference_check.py directory. Copies
+the Rust workspace to the output directory (the working tree is never edited),
+first runs it unmodified as a control, which must pass every case, and then
+applies one defect at a time. Each defect is a one-line change of the kind a
+port can plausibly get wrong. For each defect it reports which layer detected it
+in which missions, by the checker's own criteria: frames (compare.py state and
+entity IDs), summary (not explained by metrics_model.py), or trace
+(traces.py deliveries, payloads, beliefs, outputs). An undetected defect is a
+gap in the comparison, not a pass. Standard library only; needs Cargo.
+"""
+
+import argparse
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+
+from project import ROOT, build_cli
+from reference_check import compare_case, write_json
+
+CORE = "crates/core/src/"
+# (name, file, original text, defective text). Each original must occur exactly once.
+DEFECTS = [
+    ("controller substeps receive the full step dt", CORE + "simulation.rs",
+     "                entity.step_controller(time)\n",
+     "                entity.step_controller(StepTime { dt_s, ..time })\n"),
+    ("frame timestamp labels the time after the step", CORE + "simulation.rs",
+     "before this tick's step.\n            time_s: self.time_s,",
+     "before this tick's step.\n            time_s: self.time_s + self.config.run.dt_s,"),
+    ("rate-limited plugins receive the tick's dt", CORE + "entity/plugin_stack.rs",
+     "            dt_s: elapsed_s,\n",
+     "            dt_s: time.dt_s,\n"),
+    ("network delivers one tick late", CORE + "pubsub/messages.rs",
+     "if message.envelope.delivered_at_s <= self.time.time_s + 1e-12 {",
+     "if message.envelope.delivered_at_s < self.time.time_s - 1e-12 {"),
+    ("SphereNetwork range becomes inclusive",
+     CORE + "plugin/network/sphere_network/sphere_network.rs",
+     "(sender_position_m - receiver_position_m).norm() >= self.range_m",
+     "(sender_position_m - receiver_position_m).norm() > self.range_m"),
+    # SimpleCollision's range test is the engine's spatial-query test.
+    ("SimpleCollision range becomes inclusive", CORE + "common/spatial.rs",
+     "!((position_world_m - other_world_m).norm() >= range_m)",
+     "!((position_world_m - other_world_m).norm() > range_m)"),
+    ("sensor attitude errors applied in yaw-pitch-roll order",
+     CORE + "plugin/sensor/noisy_state/noisy_state.rs",
+     "truth_orientation * roll_error * pitch_error * yaw_error",
+     "truth_orientation * yaw_error * pitch_error * roll_error"),
+    ("NoisyState reports zero angular velocity",
+     CORE + "plugin/sensor/noisy_state/noisy_state.rs",
+     "        self.noise.apply(truth, random, reading)\n",
+     "        let mut measured = self.noise.apply(truth, random, reading)?;\n"
+     "        measured.angular_velocity_world_radps = Vec3::zeros();\n"
+     "        Ok(measured)\n"),
+    # "Straight ignores the NoisyState estimate" was an equivalent mutant: Rust
+    # already passes the NoisyState belief as the plugin's state. Its
+    # replacement, "LocalNetwork delivers across entities", became one too once
+    # sensors stopped publishing readings on LocalNetwork (no compared mission
+    # sends a LocalNetwork message), so it was undetectable. Replaced by a
+    # defect in the keyed loss draws, which sphere-network-loss compares draw
+    # for draw:
+    ("SphereNetwork loss key swaps sender and receiver",
+     CORE + "plugin/network/sphere_network/sphere_network.rs",
+     "entity(link.sender.entity_id),\n                entity(link.receiver.entity_id),",
+     "entity(link.receiver.entity_id),\n                entity(link.sender.entity_id),"),
+    ("SingleIntegrator yaw swaps atan2 arguments",
+     CORE + "plugin/motion/single_integrator/single_integrator.rs",
+     "yaw_world_from_body_rad: velocity_mps.y.atan2(velocity_mps.x),",
+     "yaw_world_from_body_rad: velocity_mps.x.atan2(velocity_mps.y),"),
+    ("heading PID proportional gain 1% high",
+     CORE + "plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs",
+     "heading_pid: AngleGains {\n                kp: 1.0,",
+     "heading_pid: AngleGains {\n                kp: 1.01,"),
+    ("SimpleAircraft yaw rate 0.1% high", CORE + "plugin/motion/simple_aircraft/simple_aircraft.rs",
+     "let yaw_rate = -g * phi.tan() / v;",
+     "let yaw_rate = -g * phi.tan() / v * 1.001;"),
+]
+
+
+def copy_workspace(destination):
+    destination.mkdir(parents=True)
+    for name in ("Cargo.toml", "Cargo.lock"):
+        shutil.copy2(ROOT / name, destination / name)
+    shutil.copytree(ROOT / "crates", destination / "crates",
+                    ignore=shutil.ignore_patterns("target"))
+
+
+def build(source, target, log):
+    with log.open("w") as stream:
+        return build_cli(cwd=source, env={**os.environ, "CARGO_TARGET_DIR": str(target)},
+                         log=stream)
+
+
+def evaluate(binary, cases, output):
+    """Run every case and compare with its saved C++ run; returns per-case findings."""
+    findings = {}
+    for case in cases:
+        result = json.loads((case / "result.json").read_text())
+        mission = result.get("case", case.name)
+        run = output / case.name
+        completed = subprocess.run([
+            binary, "run", case / "input/input.yaml", "--root", ROOT, "--output", run,
+            "--headless", "--trace",
+        ], capture_output=True, text=True)
+        if completed.returncode:
+            findings[mission] = ["run failed: " + completed.stderr.strip()[-200:]]
+            continue
+        comparison = compare_case(case / result["cpp_log_directory"], case / "cpp/trace.jsonl",
+                                  run, run, case / "input/input.xml")
+        layers = []
+        if not comparison["comparison"]["passed"]:
+            layers.append("frames")
+        if comparison["summary_agreement"] == "unexplained":
+            layers.append("summary")
+        if not comparison["trace_comparison"]["passed"]:
+            layers.append("trace")
+        findings[mission] = layers
+    return findings
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--check", type=Path, required=True, help="completed reference check")
+    parser.add_argument("--output", type=Path, required=True, help="new directory")
+    args = parser.parse_args(argv)
+    args.output = args.output.resolve()  # Cargo runs in the copied source folder.
+    cases = sorted(path.parent for path in args.check.glob("*/result.json"))
+    args.output.mkdir(parents=True)
+    source, target = args.output / "source", args.output / "target"
+    copy_workspace(source)
+    report = {"check": str(args.check), "defects": []}
+
+    binary = build(source, target, args.output / "control-build.log")
+    control = evaluate(binary, cases, args.output / "control")
+    report["control"] = control
+    write_json(args.output / "report.json", report)
+    if any(control.values()):
+        raise SystemExit(f"control run is not clean: {control}")
+
+    for index, (name, relative, original, defective) in enumerate(DEFECTS):
+        path = source / relative
+        text = path.read_text()
+        if text.count(original) != 1:
+            raise SystemExit(f"defect {name!r}: original text not found exactly once in {relative}")
+        path.write_text(text.replace(original, defective))
+        try:
+            binary = build(source, target, args.output / f"defect-{index:02}-build.log")
+            findings = evaluate(binary, cases, args.output / f"defect-{index:02}")
+        finally:
+            path.write_text(text)
+        detected = {mission: layers for mission, layers in findings.items() if layers}
+        report["defects"].append({"name": name, "file": relative, "detected": bool(detected),
+                                  "missions": detected})
+        write_json(args.output / "report.json", report)
+        print(f"{'DETECTED' if detected else 'MISSED  '} {name}: "
+              f"{sorted({layer for layers in detected.values() for layer in layers})}", flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

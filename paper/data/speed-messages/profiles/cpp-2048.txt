@@ -1,0 +1,8 @@
+Sort by top of stack, same collapsed (when >= 5):
+        scrimmage::network::LocalNetwork::is_reachable(std::shared_ptr<scrimmage::EntityPlugin> const&, std::shared_ptr<scrimmage::EntityPlugin> const&)  (in libLocalNetwork_plugin.0.0.1.dylib)        1112
+        scrimmage::EntityPlugin::parent()  (in libscrimmage-core.0.0.1.dylib)        970
+        scrimmage::Network::step(std::map<std::basic_string<char>, std::list<std::shared_ptr<scrimmage::NetworkDevice>>>&, std::map<std::basic_string<char>, std::list<std::shared_ptr<scrimmage::NetworkDevice>>>&)  (in libscrimmage-core.0.0.1.dylib)        96
+        scrimmage::NetworkDevice::plugin()  (in libscrimmage-core.0.0.1.dylib)        45
+        std::normal_distribution<double>::operator()<std::linear_congruential_engine<unsigned int, 48271u, 0u, 2147483647u>>(std::linear_congruential_engine<unsigned int, 48271u, 0u, 2147483647u>&, std::normal_distribution<double>::param_type const&)  (in libNoisyState_plugin.0.0.1.dylib)        6
+        _xzm_free  (in libsystem_malloc.dylib)        5
+

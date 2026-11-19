@@ -1,0 +1,253 @@
+//! What the fleet manager sees of the fleet: a snapshot the dispatcher builds
+//! at each call, written out as one line per hub, or as only the hubs with
+//! something wrong. The words around them are the same for both.
+//!
+//! Distances are kilometers and times minutes, rounded, so the prompt depends
+//! only on the state and a saved reply matches a rerun.
+
+use std::collections::BTreeMap;
+use std::fmt::Write as _;
+
+use ripple_core::Vec3;
+use serde::Deserialize;
+
+use crate::event::Event;
+use crate::messages::{Urgency, VehicleCard, VehicleClass};
+use crate::region::Region;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ViewKind {
+    Summaries,
+    /// Only what is going wrong: late or stranded requests, low stock,
+    /// outages, lost vehicles.
+    Exceptions,
+}
+
+/// One hub as the fleet manager may see it.
+#[derive(Clone, Debug, Default)]
+pub struct HubView {
+    pub id: u32,
+    pub position_world_m: Vec3,
+    pub idle: BTreeMap<VehicleClass, u32>,
+    pub total: BTreeMap<VehicleClass, u32>,
+    /// Vehicles flying for this hub, or relocating to it.
+    pub flying: u32,
+    pub incoming: u32,
+    pub lost: u32,
+    pub stock: BTreeMap<String, u32>,
+    /// Units of each item on transfer flights to this hub, ordered but not
+    /// yet landed.
+    pub arriving: BTreeMap<String, u32>,
+    pub waiting: BTreeMap<Urgency, u32>,
+    pub late: u32,
+    /// In an outage now.
+    pub out: bool,
+}
+
+/// What the help manager's report holds besides the requests and offers.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TopReport {
+    /// The hub view (`ViewKind`) of every hub.
+    #[default]
+    Full,
+    /// Nothing more: the requests and the offers alone.
+    Compact,
+}
+
+/// The state at one call, limited to the hubs the manager's scope covers.
+pub struct Snapshot<'a> {
+    pub time_s: f64,
+    pub day_s: f64,
+    /// A trauma request's time from opening to deadline, the time a lent
+    /// flight has to arrive.
+    pub trauma_deadline_s: f64,
+    pub region: &'a Region,
+    pub hubs: Vec<HubView>,
+    /// Hubs lending to another hub now; a hub helps one hub at a time.
+    pub lending: Vec<u32>,
+    /// One vehicle card per class, for range estimates.
+    pub cards: BTreeMap<VehicleClass, VehicleCard>,
+    pub range_margin: f64,
+    /// The events in force as the manager is told them (`Scope::events_shown`).
+    pub active_events: Vec<Event>,
+    pub items: &'a [String],
+    /// A hub's starting stock of each item, the scale for stock decisions.
+    pub units_per_item: u32,
+}
+
+pub fn km(point: Vec3) -> String {
+    format!("({:.1}, {:.1}) km", point.x / 1000.0, point.y / 1000.0)
+}
+
+fn counts(map: &BTreeMap<VehicleClass, u32>, class: VehicleClass) -> u32 {
+    map.get(&class).copied().unwrap_or(0)
+}
+
+impl Snapshot<'_> {
+    pub fn hub(&self, id: u32) -> Option<&HubView> {
+        self.hubs.iter().find(|hub| hub.id == id)
+    }
+
+    /// How far a class flies one way on a full charge, within the margin.
+    pub fn reach_m(&self, class: VehicleClass) -> f64 {
+        self.cards.get(&class).map_or(0.0, |card| {
+            card.cruise_speed_mps * card.endurance_s * self.range_margin
+        })
+    }
+
+    pub fn stock_line(&self, hub: &HubView) -> String {
+        hub.stock
+            .iter()
+            .map(|(item, units)| match hub.arriving.get(item) {
+                Some(arriving) if *arriving > 0 => format!("{item} {units} (+{arriving} arriving)"),
+                _ => format!("{item} {units}"),
+            })
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+
+    fn waiting_line(&self, hub: &HubView) -> String {
+        let total: u32 = hub.waiting.values().sum();
+        let mut text = format!("{total} waiting");
+        let parts: Vec<String> = [Urgency::Trauma, Urgency::Urgent, Urgency::Routine]
+            .into_iter()
+            .filter_map(|u| {
+                hub.waiting
+                    .get(&u)
+                    .filter(|n| **n > 0)
+                    .map(|n| format!("{n} {}", u.as_str()))
+            })
+            .collect();
+        if !parts.is_empty() {
+            let _ = write!(text, " ({})", parts.join(", "));
+        }
+        if hub.late > 0 {
+            let _ = write!(text, ", {} late", hub.late);
+        }
+        text
+    }
+
+    /// One line per hub: the summaries view, and the hub status answer.
+    pub fn hub_line(&self, hub: &HubView) -> String {
+        let mut text = format!(
+            "- hub {} at {}: {}/{} fixed-wing idle, {}/{} multirotor idle",
+            hub.id,
+            km(hub.position_world_m),
+            counts(&hub.idle, VehicleClass::FixedWing),
+            counts(&hub.total, VehicleClass::FixedWing),
+            counts(&hub.idle, VehicleClass::Multirotor),
+            counts(&hub.total, VehicleClass::Multirotor),
+        );
+        if hub.flying > 0 {
+            let _ = write!(text, ", {} flying", hub.flying);
+        }
+        if hub.incoming > 0 {
+            let _ = write!(text, ", {} arriving", hub.incoming);
+        }
+        if hub.lost > 0 {
+            let _ = write!(text, ", {} lost", hub.lost);
+        }
+        if hub.out {
+            text.push_str(", cannot launch (outage)");
+        }
+        let _ = write!(
+            text,
+            "; stock {}; {}",
+            self.stock_line(hub),
+            self.waiting_line(hub)
+        );
+        text
+    }
+
+    pub fn summaries(&self) -> String {
+        let mut text = String::from("Hubs:\n");
+        for hub in &self.hubs {
+            let _ = writeln!(text, "{}", self.hub_line(hub));
+        }
+        text.push_str(&self.region_line());
+        text
+    }
+
+    /// Totals over the region, one line.
+    pub fn region_line(&self) -> String {
+        let idle: u32 = self.hubs.iter().map(|h| h.idle.values().sum::<u32>()).sum();
+        let total: u32 = self
+            .hubs
+            .iter()
+            .map(|h| h.total.values().sum::<u32>())
+            .sum();
+        let waiting: u32 = self
+            .hubs
+            .iter()
+            .map(|h| h.waiting.values().sum::<u32>())
+            .sum();
+        let late: u32 = self.hubs.iter().map(|h| h.late).sum();
+        format!(
+            "Region: {} hubs, {idle}/{total} vehicles idle, {waiting} requests waiting, {late} late.\n",
+            self.hubs.len()
+        )
+    }
+
+    pub fn write(&self, kind: ViewKind) -> String {
+        match kind {
+            ViewKind::Summaries => self.summaries(),
+            ViewKind::Exceptions => self.exceptions(),
+        }
+    }
+
+    /// What is wrong at a hub: late or stranded requests, low stock, lost
+    /// vehicles, an outage. Empty when nothing is.
+    fn faults(&self, hub: &HubView) -> Vec<String> {
+        let low = (f64::from(self.units_per_item) * 0.25).round() as u32;
+        let idle: u32 = hub.idle.values().sum();
+        let waiting: u32 = hub.waiting.values().sum();
+        let mut faults = Vec::new();
+        if hub.late > 0 {
+            faults.push(format!("{} late", hub.late));
+        }
+        if waiting > 0 && idle == 0 {
+            faults.push(format!("{} with no idle vehicle", self.waiting_line(hub)));
+        }
+        let low_items: Vec<String> = hub
+            .stock
+            .iter()
+            .filter(|(_, units)| **units < low)
+            .map(|(item, units)| format!("{item} {units}"))
+            .collect();
+        if !low_items.is_empty() {
+            faults.push(format!("stock low: {}", low_items.join(", ")));
+        }
+        if hub.lost > 0 {
+            faults.push(format!("{} lost", hub.lost));
+        }
+        if hub.out {
+            faults.push("cannot launch (outage)".into());
+        }
+        faults
+    }
+
+    /// Something is wrong at some hub in view.
+    pub fn has_exceptions(&self) -> bool {
+        self.hubs.iter().any(|hub| !self.faults(hub).is_empty())
+    }
+
+    /// Hubs with something wrong, one line each, then the region line.
+    pub fn exceptions(&self) -> String {
+        let mut lines = Vec::new();
+        for hub in &self.hubs {
+            let faults = self.faults(hub);
+            if !faults.is_empty() {
+                lines.push(format!("- hub {}: {}", hub.id, faults.join("; ")));
+            }
+        }
+        let mut text = if lines.is_empty() {
+            String::from("No exceptions at any hub.\n")
+        } else {
+            format!("Exceptions:\n{}\n", lines.join("\n"))
+        };
+        text.push_str(&self.region_line());
+        text
+    }
+}

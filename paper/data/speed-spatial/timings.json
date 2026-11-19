@@ -1,0 +1,387 @@
+{
+ "date": "2026-10-12",
+ "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+ "machine": "Darwin arm64, Apple M2 Pro, 10 CPUs",
+ "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)",
+ "source_sha256": "29ead33e5bef3588295b72c3e82ebd38e15b29acbda40ec39175710a3adba61c",
+ "repeats": 5,
+ "workers": 1,
+ "note": "Every variant of each case except none wrote identical frames and events.",
+ "cases": {
+  "sparse-256": {
+   "agents": 256,
+   "position_variance_m2": 1000000,
+   "collision_range_m": 5,
+   "variants": {
+    "none": {
+     "median_ms_per_step": 0.18403208,
+     "min_ms_per_step": 0.18317833499999997,
+     "max_ms_per_step": 0.18593875,
+     "peak_mb": 5.9,
+     "run_s": [
+      0.03718775,
+      0.0368885,
+      0.036777584,
+      0.036806416,
+      0.036635667
+     ]
+    },
+    "scan": {
+     "median_ms_per_step": 0.21067437500000002,
+     "min_ms_per_step": 0.21007166500000002,
+     "max_ms_per_step": 0.216145625,
+     "peak_mb": 5.8,
+     "run_s": [
+      0.042134875,
+      0.043229125,
+      0.042522666,
+      0.042094958,
+      0.042014333
+     ]
+    },
+    "5": {
+     "median_ms_per_step": 0.231215,
+     "min_ms_per_step": 0.23013354,
+     "max_ms_per_step": 0.23752874999999998,
+     "peak_mb": 6.0,
+     "run_s": [
+      0.046369542,
+      0.04750575,
+      0.046193583,
+      0.046026708,
+      0.046243
+     ]
+    }
+   },
+   "collisions": 0,
+   "steps": 200
+  },
+  "sparse-1024": {
+   "agents": 1024,
+   "position_variance_m2": 1000000,
+   "collision_range_m": 5,
+   "variants": {
+    "none": {
+     "median_ms_per_step": 0.70944,
+     "min_ms_per_step": 0.70873979,
+     "max_ms_per_step": 0.710694375,
+     "peak_mb": 11.6,
+     "run_s": [
+      0.142138875,
+      0.142013584,
+      0.141888,
+      0.141818667,
+      0.141747958
+     ]
+    },
+    "scan": {
+     "median_ms_per_step": 1.104535,
+     "min_ms_per_step": 1.101914585,
+     "max_ms_per_step": 1.12020042,
+     "peak_mb": 12.7,
+     "run_s": [
+      0.222255458,
+      0.224040084,
+      0.220615,
+      0.220907,
+      0.220382917
+     ]
+    },
+    "5": {
+     "median_ms_per_step": 0.92686271,
+     "min_ms_per_step": 0.9209022899999999,
+     "max_ms_per_step": 0.9348025000000001,
+     "peak_mb": 12.9,
+     "run_s": [
+      0.184582792,
+      0.185372542,
+      0.1869605,
+      0.186130542,
+      0.184180458
+     ]
+    }
+   },
+   "collisions": 1,
+   "steps": 200
+  },
+  "sparse-2048": {
+   "agents": 2048,
+   "position_variance_m2": 1000000,
+   "collision_range_m": 5,
+   "variants": {
+    "none": {
+     "median_ms_per_step": 1.420829165,
+     "min_ms_per_step": 1.4123949999999998,
+     "max_ms_per_step": 1.4939331249999999,
+     "peak_mb": 19.3,
+     "run_s": [
+      0.298786625,
+      0.286936167,
+      0.282479,
+      0.283535084,
+      0.284165833
+     ]
+    },
+    "scan": {
+     "median_ms_per_step": 2.993805415,
+     "min_ms_per_step": 2.9656160399999996,
+     "max_ms_per_step": 3.008681875,
+     "peak_mb": 20.7,
+     "run_s": [
+      0.601736375,
+      0.598761083,
+      0.593123208,
+      0.593493666,
+      0.599305458
+     ]
+    },
+    "5": {
+     "median_ms_per_step": 1.85552875,
+     "min_ms_per_step": 1.8331137499999999,
+     "max_ms_per_step": 2.179813335,
+     "peak_mb": 22.1,
+     "run_s": [
+      0.435962667,
+      0.37482175,
+      0.36662275,
+      0.368494584,
+      0.37110575
+     ]
+    }
+   },
+   "collisions": 7,
+   "steps": 200
+  },
+  "sparse-4096": {
+   "agents": 4096,
+   "position_variance_m2": 1000000,
+   "collision_range_m": 5,
+   "variants": {
+    "none": {
+     "median_ms_per_step": 2.99147479,
+     "min_ms_per_step": 2.98427125,
+     "max_ms_per_step": 3.0152741649999997,
+     "peak_mb": 39.1,
+     "run_s": [
+      0.603054833,
+      0.602038125,
+      0.59685425,
+      0.598294958,
+      0.596926333
+     ]
+    },
+    "scan": {
+     "median_ms_per_step": 8.970989170000001,
+     "min_ms_per_step": 8.9539525,
+     "max_ms_per_step": 9.01336708,
+     "peak_mb": 40.3,
+     "run_s": [
+      1.801090584,
+      1.794197834,
+      1.802673416,
+      1.7924620409999998,
+      1.7907905
+     ]
+    },
+    "2.5": {
+     "median_ms_per_step": 4.742913125,
+     "min_ms_per_step": 4.728888335,
+     "max_ms_per_step": 4.780941875,
+     "peak_mb": 37.7,
+     "run_s": [
+      0.956188375,
+      0.948582625,
+      0.945777667,
+      0.9490335,
+      0.946793458
+     ]
+    },
+    "5": {
+     "median_ms_per_step": 3.807717705,
+     "min_ms_per_step": 3.7956624999999997,
+     "max_ms_per_step": 3.8190141649999996,
+     "peak_mb": 36.9,
+     "run_s": [
+      0.763181291,
+      0.7591325,
+      0.761276625,
+      0.761543541,
+      0.763802833
+     ]
+    },
+    "10": {
+     "median_ms_per_step": 3.626706875,
+     "min_ms_per_step": 3.6143875,
+     "max_ms_per_step": 3.662436875,
+     "peak_mb": 44.0,
+     "run_s": [
+      0.732487375,
+      0.7228775,
+      0.725341375,
+      0.728485,
+      0.7246465
+     ]
+    },
+    "20": {
+     "median_ms_per_step": 3.55577625,
+     "min_ms_per_step": 3.540144375,
+     "max_ms_per_step": 3.751344795,
+     "peak_mb": 40.7,
+     "run_s": [
+      0.71115525,
+      0.709910875,
+      0.708028875,
+      0.750268959,
+      0.714541167
+     ]
+    },
+    "50": {
+     "median_ms_per_step": 3.5016233349999997,
+     "min_ms_per_step": 3.484600625,
+     "max_ms_per_step": 3.52189292,
+     "peak_mb": 40.4,
+     "run_s": [
+      0.702683833,
+      0.700324667,
+      0.699606583,
+      0.704378584,
+      0.696920125
+     ]
+    }
+   },
+   "collisions": 43,
+   "steps": 200
+  },
+  "clustered-1024": {
+   "agents": 1024,
+   "position_variance_m2": 400,
+   "collision_range_m": 5,
+   "variants": {
+    "scan": {
+     "median_ms_per_step": 0.109591875,
+     "min_ms_per_step": 0.109240415,
+     "max_ms_per_step": 0.10980021,
+     "peak_mb": 12.1,
+     "run_s": [
+      0.0219375,
+      0.021848083,
+      0.021861458,
+      0.021960042,
+      0.021918375
+     ]
+    },
+    "5": {
+     "median_ms_per_step": 0.120564795,
+     "min_ms_per_step": 0.12041479000000001,
+     "max_ms_per_step": 0.12083104000000001,
+     "peak_mb": 12.3,
+     "run_s": [
+      0.024149917,
+      0.024082958,
+      0.024166208,
+      0.024111375,
+      0.024112959
+     ]
+    },
+    "50": {
+     "median_ms_per_step": 0.12451104500000001,
+     "min_ms_per_step": 0.12426875000000001,
+     "max_ms_per_step": 0.12505708000000001,
+     "peak_mb": 12.1,
+     "run_s": [
+      0.024902209,
+      0.025011416,
+      0.02485375,
+      0.024908833,
+      0.024870584
+     ]
+    }
+   },
+   "collisions": 453,
+   "steps": 200
+  },
+  "clustered-4096": {
+   "agents": 4096,
+   "position_variance_m2": 400,
+   "collision_range_m": 5,
+   "variants": {
+    "scan": {
+     "median_ms_per_step": 0.28069646,
+     "min_ms_per_step": 0.279008955,
+     "max_ms_per_step": 0.28125000000000006,
+     "peak_mb": 38.0,
+     "run_s": [
+      0.056141291,
+      0.055801791,
+      0.056139292,
+      0.05603275,
+      0.05625
+     ]
+    },
+    "5": {
+     "median_ms_per_step": 0.279211875,
+     "min_ms_per_step": 0.278978955,
+     "max_ms_per_step": 0.33083229000000003,
+     "peak_mb": 38.5,
+     "run_s": [
+      0.056102708,
+      0.066166458,
+      0.055816,
+      0.055795791,
+      0.055842375
+     ]
+    }
+   },
+   "collisions": 1930,
+   "steps": 200
+  },
+  "large-range-4096": {
+   "agents": 4096,
+   "position_variance_m2": 1000000,
+   "collision_range_m": 50,
+   "variants": {
+    "scan": {
+     "median_ms_per_step": 1.544314165,
+     "min_ms_per_step": 1.542671045,
+     "max_ms_per_step": 1.54917729,
+     "peak_mb": 38.4,
+     "run_s": [
+      0.309140625,
+      0.308862833,
+      0.308534209,
+      0.309835458,
+      0.308800917
+     ]
+    },
+    "5": {
+     "median_ms_per_step": 1.6419031249999998,
+     "min_ms_per_step": 1.6379041650000001,
+     "max_ms_per_step": 1.6440156249999998,
+     "peak_mb": 37.7,
+     "run_s": [
+      0.328255333,
+      0.328803125,
+      0.328380625,
+      0.3284225,
+      0.327580833
+     ]
+    },
+    "50": {
+     "median_ms_per_step": 1.26043229,
+     "min_ms_per_step": 1.2590568750000002,
+     "max_ms_per_step": 1.26866021,
+     "peak_mb": 37.8,
+     "run_s": [
+      0.252869083,
+      0.251811375,
+      0.253732042,
+      0.252086458,
+      0.252014708
+     ]
+    }
+   },
+   "collisions": 1421,
+   "steps": 200
+  }
+ }
+}

@@ -1,0 +1,33 @@
+# Spawn requests: the launcher asks for two scouts while it initializes, so
+# they exist from tick 1. `idle` is a recipe nothing asks for.
+format_version: 1
+name: spawn-requests
+
+run:
+  end_s: 1
+  dt_s: 0.1
+  seed: 7
+
+entities:
+  launcher:
+    team: 1
+    position_m: [0, 0, 5]
+    visual_model: sphere
+    autonomy:
+      Launcher:
+        recipe: scouts
+        starts_m: [[10, 0, 0], [20, 0, 0]]
+        goal_world_m: 12
+        goal_plugin: DriveToGoal
+    motion_model: {EastwardMotion: {}}
+
+recipes:
+  scouts:
+    team: 1
+    visual_model: sphere
+    autonomy: {DriveToGoal: {goal_world_m: 1}}
+    motion_model: {EastwardMotion: {}}
+  idle:
+    team: 2
+    autonomy: {DriveToGoal: {}}
+    motion_model: {EastwardMotion: {}}

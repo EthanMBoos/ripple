@@ -1,0 +1,48 @@
+# A point robot drives a 100 m square, believing what this project's
+# PositionKalman estimator tells it. Its motors only reach 8 m/s although it
+# asks for 10; the estimator's speed_gain is what it assumes. A position fix
+# arrives every 5 s. A second robot with perfect localization drives the same
+# route for comparison.
+format_version: 1
+name: A Kalman filter between position fixes
+
+run:
+  end_s: 60
+  dt_s: 0.1
+  seed: 1
+
+networks:
+  GlobalNetwork:          # WaypointFollower listens here for route changes
+
+templates:
+  robot:
+    position_m: [0, 0, 0]
+    position_stddev_m: [0, 0, 0]
+    visual_model: sphere
+    autonomy:
+      WaypointFollower:
+        waypoints_m: [[100, 0, 0], [100, 100, 0], [0, 100, 0], [0, 0, 0]]
+        repeat: true
+        arrival_radius_m: 2
+        speed_mps: 10
+    motion_model:
+      SingleIntegrator:
+        max_speed_mps: 8      # the hidden truth: its motors only reach 8 m/s
+
+entities:
+  kalman:
+    template: robot
+    team: 1
+    sensors:
+      gps:
+        plugin: NoisyState
+        loop_rate_hz: 0.2    # one fix every 5 s
+        position_stddev_m: [0, 0, 0]   # exact fixes; raise to add GPS noise
+    localization:
+      PositionKalman:
+        speed_gain: 1.0          # assumes it moves as commanded: 2 m/s too fast
+        process_noise_m2ps: 1.0  # position variance it adds per second between fixes
+
+  perfect:
+    template: robot
+    team: 2

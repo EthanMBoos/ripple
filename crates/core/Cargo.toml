@@ -1,0 +1,28 @@
+[package]
+name = "ripple-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+nalgebra.workspace = true
+prost.workspace = true
+mcap = "0.25"
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml_ng.workspace = true
+sha2 = "0.10"
+vstd.workspace = true
+
+[[bench]]
+name = "reference"
+path = "../../reference/benchmark_runner.rs"
+harness = false
+
+[lints]
+workspace = true
+
+# `cargo verus verify -p ripple-core` proves the contracts in this crate.
+[package.metadata.verus]
+verify = true

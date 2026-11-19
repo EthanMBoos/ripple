@@ -1,0 +1,139 @@
+//! Sensors: the plugin interface, reading delivery, and the built-in models.
+use crate::{
+    GaussianState, KinematicState,
+    common::{PluginRandom, TruthContacts},
+    drawing::Drawing,
+    plugin::estimator::DetectionList,
+    plugin::{EntityInfo, PluginParams, StepTime},
+    pubsub::Messages,
+};
+use anyhow::{Result, ensure};
+use serde::de::DeserializeOwned;
+use std::any::{TypeId, type_name};
+use vstd::prelude::*;
+
+pub(crate) mod readings;
+pub use readings::{Reading, ReadingKind, Readings};
+
+/// A sensor's declared reading type, fixed when the mission loads, so a
+/// published reading can be checked against it and estimators can match the
+/// sensor by kind.
+#[derive(Clone, Copy)]
+pub(crate) struct ReadingType {
+    pub id: TypeId,
+    pub name: &'static str,
+    pub kind: ReadingKind,
+}
+impl ReadingType {
+    pub(crate) fn of<T: 'static>() -> Self {
+        let id = TypeId::of::<T>();
+        let kind = if id == TypeId::of::<GaussianState>() {
+            ReadingKind::State
+        } else if id == TypeId::of::<DetectionList>() {
+            ReadingKind::Detections
+        } else {
+            ReadingKind::Other
+        };
+        Self {
+            id,
+            name: type_name::<T>(),
+            kind,
+        }
+    }
+}
+
+verus! {
+
+/// What a sensor step is handed. The struct sits in the Verus block so the
+/// proof of the sensor phase can read what the engine put in it.
+pub struct SensorContext<'a> {
+    pub messages: &'a mut Messages,
+    pub entity: EntityInfo,
+    pub time: StepTime,
+    /// Sensors sample committed truth after all motion substeps.
+    pub truth: &'a KinematicState,
+    /// Every entity's true state, after this tick's motion.
+    pub contacts_truth: TruthContacts<'a>,
+    /// This sensor's random numbers at this tick.
+    pub random: PluginRandom,
+    /// This sensor's instance name, which estimators use to select its readings.
+    pub(crate) name: &'a str,
+    pub(crate) reading: ReadingType,
+    pub(crate) pending: &'a mut Readings,
+}
+
+} // verus!
+
+impl SensorContext<'_> {
+    /// Hand this tick's reading to the entity's estimators, which receive it in the
+    /// estimation step at the end of the tick. It replaces the previous reading.
+    /// This is not a network message. The value must be the sensor's declared
+    /// `Reading` type.
+    pub fn publish_reading<T: Send + Sync + 'static>(&mut self, value: T) -> Result<()> {
+        ensure!(
+            TypeId::of::<T>() == self.reading.id,
+            "sensor '{}' declares {} readings but published a {}",
+            self.name,
+            self.reading.name,
+            type_name::<T>()
+        );
+        self.pending
+            .publish(self.name, self.time.time_s + self.time.dt_s, value);
+        Ok(())
+    }
+}
+
+pub trait Sensor: Send {
+    // The build half; see the module doc in `plugin.rs`.
+    /// Immutable, validated configuration, parsed once per mission and shared
+    /// by every instance.
+    type Config: DeserializeOwned + Send + Sync + 'static
+    where
+        Self: Sized;
+    /// What `publish_reading` publishes: `GaussianState` for a state sensor,
+    /// `DetectionList` for a contact sensor, any other type for a sensor that
+    /// estimators name explicitly, or `()` for one that publishes nothing.
+    type Reading: Send + Sync + 'static
+    where
+        Self: Sized;
+    /// Parses the mission's parameters; override it to check them.
+    fn configure(params: &PluginParams) -> Result<Self::Config>
+    where
+        Self: Sized,
+    {
+        params.parse()
+    }
+    fn new(config: &Self::Config) -> Self
+    where
+        Self: Sized;
+
+    fn initialize(&mut self, _context: &mut SensorContext) -> Result<()> {
+        Ok(())
+    }
+    fn step(&mut self, context: &mut SensorContext) -> Result<()>;
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
+    /// Shapes this plugin draws in the viewer for the whole run, asked once
+    /// when it starts: see `Drawing`. Empty unless overridden.
+    fn fixed_drawings(&self) -> Vec<Drawing> {
+        Vec::new()
+    }
+    /// Shapes that come and go, asked every tick at `time_s`. Empty unless
+    /// overridden.
+    fn drawings(&self, _time_s: f64) -> Vec<Drawing> {
+        Vec::new()
+    }
+}
+
+// Built-ins selected by missions.
+#[path = "sensor/noisy_position/noisy_position.rs"]
+mod noisy_position;
+pub use noisy_position::NoisyPosition;
+pub use noisy_position::NoisyPositionConfig;
+#[path = "sensor/noisy_state/noisy_state.rs"]
+mod noisy_state;
+pub use noisy_state::NoisyState;
+#[path = "sensor/noisy_contacts/noisy_contacts.rs"]
+mod noisy_contacts;
+pub use noisy_contacts::NoisyContacts;

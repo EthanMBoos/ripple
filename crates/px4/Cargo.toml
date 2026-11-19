@@ -1,0 +1,25 @@
+# PX4 SITL adapter: an optional user crate, outside the default build. The
+# `ripple` command includes it only with `--features px4` (crates/cli).
+# User guide: book/src/guides/px4.md.
+[package]
+name = "px4"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+ripple-core = { path = "../core" }
+# The SitlState sensor and the SITL containers, shared with crates/ardupilot.
+sitl = { path = "../sitl" }
+anyhow.workspace = true
+# PX4's simulator API is MAVLink: HIL_SENSOR and HIL_GPS in, HIL_ACTUATOR_CONTROLS out.
+mavlink = { version = "0.21", default-features = false, features = ["std", "dialect-common"] }
+nalgebra.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[lints]
+workspace = true

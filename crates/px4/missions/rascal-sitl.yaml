@@ -1,0 +1,72 @@
+# One Rascal flown by PX4 SITL over its simulator MAVLink API. `ripple run`
+# (built with --features px4) starts the PX4 container and stops it when the
+# run ends; see book/src/guides/px4.md. The ArduPlane twin of this mission is
+# crates/ardupilot/missions/rascal-sitl.yaml: only the bridge differs.
+#
+# Aircraft: FixedWing6DOF's Rascal (`airframe: rascal`), whose surface limits
+# (elevator +-0.30, aileron and rudder +-0.35 rad) match Px4Bridge's default
+# control maps. No controller: the bridge writes the motion inputs. dt 0.0025 s
+# (400 Hz) is PX4's default control rate, so one controls message answers each
+# tick.
+#
+# Air start from rest: FixedWing6DOF's launcher zeroes every force until
+# launch_time, so the aircraft hangs still in the air while PX4 boots, its
+# estimator aligns, and it arms in TAKEOFF; then it is catapulted to
+# launch_speed, PX4 detects the takeoff, climbs out, and circles. It must be
+# still at boot: PX4 zeroes its airspeed sensor then.
+#
+# Wind: set wind_E and wind_N (m/s) on both the sensor and the motion model.
+# They are the air's velocity over the ground, so wind_E 5 on an eastbound
+# aircraft is a tailwind.
+format_version: 1
+name: Rascal PX4 SITL
+
+run:
+  end_s: 60
+  dt_s: 0.0025
+  seed: 1
+
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  rascal:
+    visual_model: sphere
+    autonomy:
+      Px4Bridge:
+        # PX4 instance 0 connects to 4560, instance 1 to 4561, and so on.
+        port: 4560
+        frame_timeout_s: 10
+        first_frame_timeout_s: 60
+        # SITL session settings: the mode to arm in, or a MISSION route
+        # (optionally starting with a takeoff and ending with a landing), each
+        # point in metres [east, north, up] from the start. The mode defaults
+        # to MISSION with waypoints_m, else TAKEOFF: PX4 climbs 20 m above
+        # where it armed and circles there (its LOITER does nothing when
+        # entered on the ground).
+        mode: null
+        waypoints_m: []
+        takeoff_altitude_m: null
+        land: false
+        speedup: 100
+        px4_params: {}
+    sensors:
+      SitlState:
+        wind_mps: [0, 0, 0]
+    motion_model:
+      FixedWing6DOF:
+        # The Rascal 110: ArduPilot's JSBSim Rascal (see airframe.rs).
+        airframe: rascal
+        enable_launcher: true
+        launch_at_s: 40
+        launch_speed_mps: 20
+        launch_acceleration_mps2: 20
+        wind_mps: [0, 0, 0]
+
+entities:
+  rascal:
+    template: rascal
+    team: 1
+    position_m: [0, 0, 200]
+    velocity_mps: [0, 0, 0]
+    heading_deg: 0

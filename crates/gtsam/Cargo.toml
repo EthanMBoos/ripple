@@ -1,0 +1,32 @@
+# A GTSAM factor-graph smoother as a localization plugin: an optional user
+# crate, outside the default build because it links the GTSAM C++ library,
+# which is installed separately. The `ripple` command includes it only with
+# `--features gtsam` (crates/cli). User guide: book/src/guides/gtsam.md.
+#
+# It is excluded from the root workspace so `cargo build --workspace` passes on
+# a machine without GTSAM; as a workspace of its own it is tested from this
+# folder, which is why nothing here says `.workspace = true`.
+[package]
+name = "gtsam"
+version = "0.1.0"
+edition = "2024"
+license = "LGPL-3.0-or-later"
+publish = false
+
+[dependencies]
+ripple-core = { path = "../core" }
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+cxx = "1"
+
+[build-dependencies]
+cxx-build = "1"
+
+[dev-dependencies]
+# The PositionKalman filter the mission runs beside the smoother.
+starter = { path = "../starter" }
+
+[workspace]
+
+[lints.clippy]
+needless_range_loop = "allow"

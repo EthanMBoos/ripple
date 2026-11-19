@@ -1,0 +1,68 @@
+# One Rascal flown by ArduPlane SITL over the JSON backend. `ripple run`
+# (built with --features ardupilot) starts the SITL container and stops it when
+# the run ends; see book/src/guides/ardupilot.md.
+#
+# Aircraft: FixedWing6DOF's Rascal (`airframe: rascal`), whose surface limits
+# (elevator +-0.30, aileron and rudder +-0.35 rad) match ArduPilotBridge's
+# default PWM maps. No controller: the bridge writes the motion inputs. dt
+# 0.0025 s (400 Hz) is a whole multiple of ArduPlane's 50 Hz loop.
+#
+# Air start from rest: FixedWing6DOF's launcher zeroes every force until
+# launch_time, so the aircraft hangs still in the air while ArduPlane boots,
+# aligns, and arms; then it is catapulted to launch_speed and flies freely. It
+# must be still at boot: ArduPlane zeroes its airspeed sensor then, so a hold
+# moving at 20 m/s left it reading 20 m/s low. A free start crashes, since
+# ArduPlane cannot arm while maneuvering and steers the surfaces even disarmed.
+#
+# Wind: set wind_E and wind_N (m/s) on both the sensor and the motion model.
+# They are the air's velocity over the ground, so wind_E 5 on an eastbound
+# aircraft is a tailwind.
+format_version: 1
+name: Rascal SITL
+
+run:
+  end_s: 60
+  dt_s: 0.0025
+  seed: 1
+
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  rascal:
+    visual_model: sphere
+    autonomy:
+      ArduPilotBridge:
+        port: 9002
+        frame_timeout_s: 10
+        first_frame_timeout_s: 60
+        # SITL session settings: the mode to arm in, an AUTO route (optionally
+        # starting with a takeoff and ending with a landing), or a GUIDED
+        # target, each point in metres [east, north, up] from the start. The
+        # mode defaults to AUTO with waypoints_m, GUIDED with goto_m, else LOITER.
+        mode: null
+        waypoints_m: []
+        takeoff_altitude_m: null
+        land: false
+        goto_m: null
+        speedup: 100
+    sensors:
+      SitlState:
+        wind_mps: [0, 0, 0]
+    motion_model:
+      FixedWing6DOF:
+        # The Rascal 110: ArduPilot's JSBSim Rascal (see airframe.rs).
+        airframe: rascal
+        enable_launcher: true
+        launch_at_s: 40
+        launch_speed_mps: 20
+        launch_acceleration_mps2: 20
+        wind_mps: [0, 0, 0]
+
+entities:
+  rascal:
+    template: rascal
+    team: 1
+    position_m: [0, 0, 200]
+    velocity_mps: [0, 0, 0]
+    heading_deg: 0

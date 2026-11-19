@@ -1,0 +1,824 @@
+{
+  "native": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "compiler": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)\nbinary: rustc\ncommit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea\ncommit-date: 2026-08-18\nhost: aarch64-apple-darwin\nrelease: 1.98.0\nLLVM version: 22.1.8\n"
+  },
+  "linux": {
+    "platform": "linux/amd64 (Docker)",
+    "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n"
+  },
+  "channels": [
+    "/entities",
+    "/frames",
+    "/events",
+    "/summary",
+    "/beliefs",
+    "/readings",
+    "/deliveries",
+    "/outputs"
+  ],
+  "identical": false,
+  "max_position_difference_m": 1.6435515470676547e-12,
+  "cases": [
+    {
+      "mission": "missions_auction-sphere.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_auction-sphere.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_fixed-wing-6dof-rascal.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 2.2737367544323206e-13
+    },
+    {
+      "mission": "missions_fixed-wing-6dof-rascal.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 2.2737367544323206e-13
+    },
+    {
+      "mission": "missions_fixed-wing-6dof.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 6.12222357532858e-13
+    },
+    {
+      "mission": "missions_fixed-wing-6dof.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 6.12222357532858e-13
+    },
+    {
+      "mission": "missions_multirotor-velocity.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_multirotor-velocity.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_multirotor.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_multirotor.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_networks-local-global.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 8.003626044415298e-13
+    },
+    {
+      "mission": "missions_networks-local-global.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 8.003626044415298e-13
+    },
+    {
+      "mission": "missions_noisy-contacts.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_noisy-contacts.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_noisy-state.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 1.1368683772161603e-12
+    },
+    {
+      "mission": "missions_noisy-state.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 1.1368683772161603e-12
+    },
+    {
+      "mission": "missions_straight-no-gui.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_straight-no-gui.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_terrain-mcmillan.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": false
+      },
+      "max_position_difference_m": 1.6435515470676547e-12
+    },
+    {
+      "mission": "missions_terrain-mcmillan.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": false
+      },
+      "max_position_difference_m": 1.6435515470676547e-12
+    },
+    {
+      "mission": "missions_verification_aircraft-long-horizon.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_aircraft-long-horizon.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_aircraft-substeps-scheduled.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 3.552713678800501e-15
+    },
+    {
+      "mission": "missions_verification_aircraft-substeps-scheduled.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 3.552713678800501e-15
+    },
+    {
+      "mission": "missions_verification_aircraft-substeps-spawning.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 6.23498720201505e-14
+    },
+    {
+      "mission": "missions_verification_aircraft-substeps-spawning.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 6.23498720201505e-14
+    },
+    {
+      "mission": "missions_verification_collision-boundary.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_collision-boundary.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_multirotor-fixes.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_multirotor-fixes.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_noisy-contacts-bias.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_noisy-contacts-bias.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_noisy-contacts-noise.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 1.2710574864626038e-13
+    },
+    {
+      "mission": "missions_verification_noisy-contacts-noise.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 1.2710574864626038e-13
+    },
+    {
+      "mission": "missions_verification_noisy-state-bias.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 7.105427357601002e-15
+    },
+    {
+      "mission": "missions_verification_noisy-state-bias.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": false,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 7.105427357601002e-15
+    },
+    {
+      "mission": "missions_verification_single-integrator.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_single-integrator.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_sphere-network-auction.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_sphere-network-auction.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_sphere-network-loss.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_verification_sphere-network-loss.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": true,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": true,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_waypoints-aircraft.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 7.652779469160725e-13
+    },
+    {
+      "mission": "missions_waypoints-aircraft.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 7.652779469160725e-13
+    },
+    {
+      "mission": "missions_waypoints-point-agents.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "missions_waypoints-point-agents.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "crates_starter_missions_dead-reckoning.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "crates_starter_missions_dead-reckoning.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": true,
+        "metadata": true
+      },
+      "max_position_difference_m": 0.0
+    },
+    {
+      "mission": "crates_starter_missions_follow-nearest.yaml",
+      "workers": 1,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 1.4369837526939964e-13
+    },
+    {
+      "mission": "crates_starter_missions_follow-nearest.yaml",
+      "workers": 8,
+      "identical": {
+        "/entities": true,
+        "/frames": false,
+        "/events": true,
+        "/summary": true,
+        "/beliefs": false,
+        "/readings": true,
+        "/deliveries": true,
+        "/outputs": false,
+        "metadata": true
+      },
+      "max_position_difference_m": 1.4369837526939964e-13
+    }
+  ]
+}

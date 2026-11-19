@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""Rust determinism: recording, tracing, and spatial lookup change no output.
+
+    python3 reference/determinism.py --output runs/determinism000
+
+Runs every mission (reference/project.py), the benchmark workloads, and three
+crowded collision missions with the command-line executable plain and with a
+headless Rerun recording. Shipped missions and a small generated contact-sensing
+case also run with the observation trace; large generated workloads do not
+duplicate every agent's contacts in the check output, and the delivery study's
+day-long missions do not either, since their trace runs for hours and fills
+tens of gigabytes. Entity, frame, event, and
+summary channel payloads must be byte-identical across the variants used, and
+the optional RRD export nonempty. The core-only runner then answers spatial
+queries with a scan and with grids of several cell widths (0.7 to 1,000 m);
+those must all write identical output too (the runner has only the stock
+plugins, so user-crate missions skip this). Writes
+report.json; exits non-zero on any difference. Standard library only.
+"""
+
+import argparse
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+import workloads
+from project import ROOT, build_cli, build_runner, missions
+from run import read_run
+
+CHANNELS = ("/entities", "/frames", "/events", "/summary")
+CLI_VARIANTS = [("plain", ["--headless"]),
+                ("recording", ["--headless", "--export-rrd"]),
+                ("trace", ["--headless", "--trace"])]
+# (label, grid cell width in metres or None for the scan)
+LOOKUP_VARIANTS = [("scan", None), ("grid5", 5), ("grid0.7", 0.7), ("grid50", 50),
+                   ("grid1000", 1000)]
+# Crowded collision missions: (position spread m, agents).
+CROWDED = [(10, 512), (20, 1024), (50, 2048)]
+
+
+def cases(scratch):
+    """(name, mission path, stock plugins only, trace) for each case."""
+    # The delivery study's days run 8.5 h of simulated time with hundreds of
+    # couriers: their trace is tens of gigabytes and hours of writing, so they
+    # are checked plain and recorded only.
+    found = [(str(path.relative_to(ROOT)), path,
+              path.relative_to(ROOT).parts[0] == "missions",
+              path.relative_to(ROOT).parts[:2] != ("crates", "delivery"))
+             for path in missions()]
+    for name, (_, sizes, fields) in workloads.WORKLOADS.items():
+        if "grid_cell_m" in fields:
+            continue  # the same mission as `collision`; grids are checked below
+        for agents in sizes:
+            path = workloads.write_mission(scratch / f"workload-{name}-{agents}.yaml",
+                                           workloads.workload(name, agents))
+            found.append((f"workload {name}-{agents}", path, True, False))
+    for spread, agents in CROWDED:
+        path = workloads.write_mission(scratch / f"crowded-{spread}-{agents}.yaml",
+                                       workloads.workload("collision", agents, spread=spread))
+        found.append((f"crowded collision, spread {spread} m, {agents} agents",
+                      path, True, False))
+    path = workloads.write_mission(scratch / "traced-contacts-16.yaml",
+                                   workloads.workload("sensing", 16, end=0.5))
+    found.append(("traced contacts on 16 aircraft", path, True, True))
+    return found
+
+
+def differences(base, other, label, compare_scenario=True):
+    left, right = read_run(base), read_run(other)
+    different = [f"{label}:{topic}" for topic in CHANNELS
+                 if left.channels.get(topic, []) != right.channels.get(topic, [])]
+    if left.metadata != right.metadata or (compare_scenario and left.scenario != right.scenario):
+        different.append(f"{label}:metadata")
+    return different
+
+
+def check(cli, runner, name, mission, stock, trace, folder):
+    folder.mkdir()
+    different = []
+    for label, options in CLI_VARIANTS:
+        if label == "trace" and not trace:
+            continue
+        run = subprocess.run([cli, "run", mission, "--root", ROOT, "--output", folder / label,
+                              *options], capture_output=True, text=True)
+        if run.returncode and label == "plain":
+            # A mission that does not load (a model key missing from the
+            # environment, say) has no output to compare.
+            return {"mission": name, "traced": trace, "collisions": 0, "identical": None,
+                    "differences": [f"skipped: {run.stderr.strip().splitlines()[-1]}"]}
+        run.check_returncode()
+        if label != "plain":
+            different += differences(folder / "plain", folder / label, label)
+    recording = folder / "recording/recording.rrd"
+    if not recording.is_file() or not recording.stat().st_size:
+        different.append("recording: no recording")
+    for label, grid in LOOKUP_VARIANTS if stock else []:
+        subprocess.run([runner, mission, ROOT, folder / label,
+                        *([] if grid is None else [str(grid)])],
+                       capture_output=True, text=True, check=True)
+        if label != "scan":
+            different += differences(folder / "scan", folder / label, label,
+                                     compare_scenario=False)
+    events = read_run(folder / "plain").events
+    collisions = sum(event["kind"] in ("TeamCollision", "NonTeamCollision") for event in events)
+    return {"mission": name, "traced": trace, "collisions": collisions,
+            "identical": not different,
+            "differences": different}
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--output", type=Path, required=True, help="new directory")
+    args = parser.parse_args(argv)
+    output = args.output.resolve()
+    output.mkdir(parents=True)
+    scratch = output / "missions"
+    scratch.mkdir()
+    cli, runner = build_cli("release"), build_runner()
+    results = []
+    for index, (name, mission, stock, trace) in enumerate(cases(scratch)):
+        result = check(cli, runner, name, mission, stock, trace, output / f"{index:02}")
+        results.append(result)
+        print(f"{'skip' if result['identical'] is None else 'same' if result['identical'] else 'DIFF'} {name}"
+              f"{' ' + ' '.join(result['differences']) if result['differences'] else ''}",
+              flush=True)
+    report = {"passed": all(result["identical"] is not False for result in results),
+              "channels_compared": CHANNELS, "cli_variants": [label for label, _ in CLI_VARIANTS],
+              "lookup_variants": [label for label, _ in LOOKUP_VARIANTS],
+              "missions": len(results),
+              "traced_missions": sum(result["traced"] for result in results),
+              "skipped": [result["mission"] for result in results if result["identical"] is None],
+              "missions_differing": sum(result["identical"] is False for result in results),
+              "results": results}
+    (output / "report.json").write_text(json.dumps(report, indent=1) + "\n")
+    print(f"{len(results)} missions, {report['missions_differing']} differing")
+    return 0 if report["passed"] else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

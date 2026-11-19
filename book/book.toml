@@ -1,0 +1,17 @@
+[book]
+title = "Ripple"
+description = "A Rust multi-agent robotics simulator for research and teaching."
+language = "en"
+src = "src"
+
+[output.html]
+site-url = "/ripple/"
+default-theme = "light"
+preferred-dark-theme = "coal"
+additional-css = ["theme/custom.css"]
+additional-js = ["theme/demos.js"]
+smart-punctuation = true
+
+[output.html.fold]
+enable = true
+level = 1

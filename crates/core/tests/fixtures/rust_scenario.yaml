@@ -1,0 +1,25 @@
+format_version: 1
+name: Rust scenario equivalence
+run:
+  end_s: 1.2
+  dt_s: 0.1
+  seed: 17
+metrics: {SimpleCollisionMetrics: {}}
+entities:
+  scouts:
+    team: 1
+    count: 3
+    position_m: [0, 0, 20]
+    position_stddev_m: [2, 2, 0]
+    heading_deg: 90
+    heading_stddev_deg: 3
+    spawn:
+      rate_hz: 2
+      batch_size: 1
+      start_s: 0
+      time_stddev_s: 0.01
+    autonomy:
+      WaypointFollower:
+        waypoints_m: [[100, 0, 20]]
+        speed_mps: 5
+    motion_model: {SingleIntegrator: {}}

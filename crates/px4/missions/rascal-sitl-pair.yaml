@@ -1,0 +1,66 @@
+# Two Rascals, each flown by its own PX4 SITL, in lockstep: the multi-vehicle
+# case. Same as rascal-sitl.yaml otherwise, which explains the aircraft, the
+# air start, and wind. The two SITL waits take turns within each tick.
+format_version: 1
+name: Rascal PX4 SITL pair
+
+run:
+  end_s: 60
+  dt_s: 0.0025
+  seed: 1
+
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  rascal:
+    visual_model: sphere
+    autonomy:
+      Px4Bridge:
+        port: 4560
+        frame_timeout_s: 10
+        first_frame_timeout_s: 60
+        mode: null
+        waypoints_m: []
+        takeoff_altitude_m: null
+        land: false
+        speedup: 100
+        px4_params: {}
+    sensors:
+      SitlState:
+        wind_mps: [0, 0, 0]
+    motion_model:
+      FixedWing6DOF:
+        # The Rascal 110: ArduPilot's JSBSim Rascal (see airframe.rs).
+        airframe: rascal
+        enable_launcher: true
+        launch_at_s: 40
+        launch_speed_mps: 20
+        launch_acceleration_mps2: 20
+        wind_mps: [0, 0, 0]
+
+entities:
+  rascal_a:
+    template: rascal
+    team: 1
+    position_m: [0, 0, 200]
+    velocity_mps: [0, 0, 0]
+    heading_deg: 0
+  rascal_b:
+    template: rascal
+    team: 2
+    position_m: [0, 300, 200]
+    velocity_mps: [0, 0, 0]
+    heading_deg: 0
+    autonomy:
+      Px4Bridge:
+        # PX4 instance 1.
+        port: 4561
+        frame_timeout_s: 10
+        first_frame_timeout_s: 60
+        mode: null
+        waypoints_m: []
+        takeoff_altitude_m: null
+        land: false
+        speedup: 100
+        px4_params: {}

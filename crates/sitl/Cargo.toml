@@ -1,0 +1,21 @@
+# What the autopilot adapters share: the truth sensor they feed their SITL
+# with and the Docker containers they run it in. Built only as a dependency of
+# crates/ardupilot and crates/px4; the `ripple` command registers its sensor
+# with either `--features ardupilot` or `--features px4` (crates/cli).
+[package]
+name = "sitl"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+ripple-core = { path = "../core" }
+anyhow.workspace = true
+# Stops the SITL containers when a run is interrupted.
+ctrlc = "3"
+nalgebra.workspace = true
+serde.workspace = true
+
+[lints]
+workspace = true

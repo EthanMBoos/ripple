@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='utf-8'?>
+<runscript name="mission">
+  <run start="0.0" end="10.0" dt="0.1" motion_multiplier="5" enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+  <seed>1922008926</seed>
+  <end_condition>time</end_condition>
+  <network>GlobalNetwork</network>
+  <network>LocalNetwork</network>
+  <metrics>SimpleCollisionMetrics</metrics>
+  <entity>
+    <team_id>1</team_id>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>2</count>
+    <generate_rate>3.66467</generate_rate>
+    <generate_count>1</generate_count>
+    <generate_start_time>0.22856</generate_start_time>
+    <generate_time_variance>0.05</generate_time_variance>
+    <x>-397.141</x>
+    <variance_x>25.0</variance_x>
+    <vx>0.0</vx>
+    <y>257.776</y>
+    <variance_y>25.0</variance_y>
+    <vy>0.0</vy>
+    <z>245.856</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>25.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy velocity="4.12523 -1.76714 -1.47919">ConstantVelocity</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
+    <motion_model max_speed="7.169">SingleIntegrator</motion_model>
+  </entity>
+  <entity>
+    <team_id>2</team_id>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>3</count>
+    <x>334.446</x>
+    <variance_x>25.0</variance_x>
+    <vx>0.0</vx>
+    <y>9.36564</y>
+    <variance_y>25.0</variance_y>
+    <vy>0.0</vy>
+    <z>289.173</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>25.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy velocity="-2.64631 -0.589019 -0.64642" loop_rate="10.0">ConstantVelocity</autonomy>
+    <controller>SingleIntegratorControllerSimple</controller>
+    <motion_model max_speed="2.993">SingleIntegrator</motion_model>
+  </entity>
+  <entity>
+    <team_id>2</team_id>
+    <visual_model>sphere</visual_model>
+    <health>1</health>
+    <count>2</count>
+    <generate_rate>0.947728</generate_rate>
+    <generate_count>1</generate_count>
+    <generate_start_time>0.698349</generate_start_time>
+    <generate_time_variance>0.0</generate_time_variance>
+    <x>34.7632</x>
+    <variance_x>0.0</variance_x>
+    <vx>0.0</vx>
+    <y>-441.838</y>
+    <variance_y>0.0</variance_y>
+    <vy>0.0</vy>
+    <z>165.201</z>
+    <variance_z>0.0</variance_z>
+    <vz>0.0</vz>
+    <heading>118.45</heading>
+    <variance_heading>25.0</variance_heading>
+    <roll>-4.49969</roll>
+    <pitch>-1.9675</pitch>
+    <use_variance_all_ents>false</use_variance_all_ents>
+    <autonomy speed="24.5289">Straight</autonomy>
+    <controller>SimpleAircraftControllerPID</controller>
+    <motion_model max_roll="34.0815">SimpleAircraft</motion_model>
+  </entity>
+</runscript>

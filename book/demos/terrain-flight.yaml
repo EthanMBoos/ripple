@@ -1,0 +1,21 @@
+# Six aircraft on waypoint routes through the hills south-west of McMillan
+# Airfield; two are routed into the ridge. The mission steps at 0.02 s here
+# so the recording shows 50 poses a second (docs/demos-plan.md). The
+# terrain keeps 512 samples a side, every second one, so the ground under
+# the camera is a 20 m mesh with a 10 m texel: 256 was a blur.
+name: terrain-flight
+source: missions/terrain-mcmillan.yaml
+overrides: {run.dt_s: "0.02", run.motion_multiplier: "1"}
+preset: flight
+start_s: 0
+end_s: 120
+every: 1
+speed: 1
+camera: {follow: {group: climber, distance_m: 250}}
+terrain_samples: 512
+featured: [{group: climber}, {group: ridge_crash}, {group: spiral_down}]
+model_span_m: 40
+captions:
+  - {at_s: 0, text: "Six aircraft fly waypoint routes through the hills. The camera follows the one climbing out of the valley over the ridge."}
+  - {at_s: 30, text: "Two of the six are routed below the ridge on purpose; TerrainCollision removes an aircraft the moment it reaches the ground. The map shows their trails."}
+  - {at_s: 75, text: "The map keeps every route in view; the plot shows each aircraft's height above the ground, and a line that reaches zero is a crash."}

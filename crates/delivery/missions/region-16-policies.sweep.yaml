@@ -1,0 +1,17 @@
+# The policies two models wrote once from the mission description, and
+# their one revision each, run as fixed policies on a 16-hub day, three
+# seeds; no model calls.
+name: region-16-policies
+base_scenario: region.yaml
+seeds: [1, 2, 3]
+parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 16
+  entities.region.autonomy.Dispatcher.manager.kind: policy
+  entities.region.autonomy.Dispatcher.manager.offline: true
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.policy]
+cases:
+  - [crates/delivery/policies/haiku.yaml]
+  - [crates/delivery/policies/haiku-revised.yaml]
+  - [crates/delivery/policies/sonnet.yaml]
+  - [crates/delivery/policies/sonnet-revised.yaml]

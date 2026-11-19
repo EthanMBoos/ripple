@@ -1,0 +1,33 @@
+[workspace]
+members = ["crates/core", "crates/cli", "crates/starter", "crates/delivery", "crates/sitl", "crates/ardupilot", "crates/px4", "crates/learning", "crates/learning/python"]
+default-members = ["crates/core", "crates/cli"]
+# The GTSAM smoother links the GTSAM C++ library, so it is not a member:
+# `cargo build --workspace` passes without GTSAM, and `ripple` takes the crate
+# in only with `--features gtsam` (crates/cli). See book/src/guides/gtsam.md.
+exclude = ["crates/gtsam"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "LGPL-3.0-or-later"
+
+# Physics loops are written indexed, as the equations are (the book's
+# "Writing physics"); clippy would rather they zipped.
+[workspace.lints.clippy]
+needless_range_loop = "allow"
+
+# Verus erases proof items from a plain build; `use` lines that exist only
+# for them carry `#[cfg(verus_only)]`, a cfg that `cargo verus` turns on.
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(verus_only)'] }
+
+[workspace.dependencies]
+anyhow = "1"
+nalgebra = { version = "0.35", default-features = false, features = ["std", "serde-serialize"] }
+clap = { version = "4", features = ["derive"] }
+prost = "0.14"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml_ng = "0.10"
+vstd = "=0.0.0-2026-11-01-0251"

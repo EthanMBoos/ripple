@@ -1,0 +1,293 @@
+//! Collision scores are an event subscriber, not mutable state inside SimControl.
+//!
+//! Derived from SCRIMMAGE: src/plugins/metrics/SimpleCollisionMetrics/SimpleCollisionMetrics.cpp.
+//! Metrics phase: consume delivered lifecycle/collision events; report team totals.
+
+use std::collections::{BTreeMap, BTreeSet};
+
+use anyhow::Result;
+use serde::Deserialize;
+
+use crate::plugin::{MetricReport, Metrics, TeamMetrics, Update, WorldContext};
+use crate::{Event, EventKind};
+
+// Subscription and consumption order must stay the same.
+const EVENT_KINDS: [EventKind; 6] = [
+    EventKind::EntityGenerated,
+    EventKind::EntityRemoved,
+    EventKind::TeamCollision,
+    EventKind::NonTeamCollision,
+    EventKind::GroundCollision,
+    EventKind::EntityPresentAtEnd,
+];
+
+/// Score weights from the mission; `Default` supplies any key the mission leaves out.
+#[derive(Clone, Copy, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct CollisionWeights {
+    flight_time_weight: f64,
+    team_collision_weight: f64,
+    non_team_collision_weight: f64,
+}
+
+impl Default for CollisionWeights {
+    fn default() -> Self {
+        Self {
+            flight_time_weight: 0.0,
+            team_collision_weight: -1.0,
+            non_team_collision_weight: -1.0,
+        }
+    }
+}
+
+#[derive(Default)]
+struct Score {
+    team_id: i32,
+    flight_start_s: f64,
+    // None while the entity is alive; survivors fly until the report time.
+    flight_end_s: Option<f64>,
+    same_team_collisions: usize,
+    opposing_team_collisions: usize,
+    ground_collisions: usize,
+}
+
+pub struct SimpleCollisionMetrics {
+    weights: CollisionWeights,
+    scores: BTreeMap<i32, Score>,
+}
+
+impl Metrics for SimpleCollisionMetrics {
+    type Config = CollisionWeights;
+
+    fn new(weights: &CollisionWeights) -> Self {
+        Self {
+            weights: *weights,
+            scores: BTreeMap::new(),
+        }
+    }
+
+    fn initialize(&mut self, context: &mut WorldContext) -> Result<()> {
+        for kind in EVENT_KINDS {
+            context
+                .messages
+                .subscribe::<Event>("GlobalNetwork", kind.topic())?;
+        }
+        Ok(())
+    }
+
+    fn step(&mut self, context: &mut WorldContext) -> Result<Update> {
+        for kind in EVENT_KINDS {
+            let messages = context
+                .messages
+                .receive::<Event>("GlobalNetwork", kind.topic())?;
+            for message in messages {
+                for id in &message.value.entity_ids {
+                    let score = self.scores.entry(*id).or_default();
+                    score.team_id = context.entity_teams.get(id).copied().unwrap_or(-1);
+                    match kind {
+                        EventKind::EntityGenerated => score.flight_start_s = message.delivered_at_s,
+                        EventKind::EntityRemoved | EventKind::EntityPresentAtEnd => {
+                            score.flight_end_s = Some(message.delivered_at_s)
+                        }
+                        EventKind::TeamCollision => score.same_team_collisions += 1,
+                        EventKind::NonTeamCollision => score.opposing_team_collisions += 1,
+                        EventKind::GroundCollision => score.ground_collisions += 1,
+                    }
+                }
+            }
+        }
+        Ok(Update::Applied)
+    }
+
+    fn report(&self, time_s: f64) -> MetricReport {
+        let mut report = MetricReport {
+            headers: [
+                "entity_count",
+                "flight_time_s",
+                "flight_time_fraction",
+                "non_team_collisions",
+                "team_collisions",
+                "ground_collisions",
+            ]
+            .map(str::to_owned)
+            .to_vec(),
+            ..MetricReport::default()
+        };
+        // An entity without a recorded end flies until the report time.
+        let mut first_spawn_s = f64::INFINITY;
+        let mut last_end_s = f64::NEG_INFINITY;
+        for score in self.scores.values() {
+            first_spawn_s = first_spawn_s.min(score.flight_start_s);
+            last_end_s = last_end_s.max(score.flight_end_s.unwrap_or(time_s));
+        }
+        let effective_end_s = if last_end_s <= first_spawn_s {
+            time_s
+        } else {
+            last_end_s
+        };
+
+        // Every team with a generated entity is reported, including teams that
+        // first spawn late.
+        let teams: BTreeSet<i32> = self.scores.values().map(|score| score.team_id).collect();
+        for team_id in &teams {
+            let mut entity_count = 0;
+            let mut flight_time_s = 0.0;
+            let mut same_team_collisions = 0;
+            let mut opposing_team_collisions = 0;
+            let mut ground_collisions = 0;
+            for score in self.scores.values() {
+                if score.team_id != *team_id {
+                    continue;
+                }
+                entity_count += 1;
+                let entity_end_s = score.flight_end_s.unwrap_or(time_s);
+                flight_time_s += entity_end_s - score.flight_start_s;
+                same_team_collisions += score.same_team_collisions;
+                opposing_team_collisions += score.opposing_team_collisions;
+                ground_collisions += score.ground_collisions;
+            }
+
+            let normalized_flight_time = flight_time_s / (effective_end_s - first_spawn_s);
+            let score = normalized_flight_time * self.weights.flight_time_weight
+                + opposing_team_collisions as f64 * self.weights.non_team_collision_weight
+                + same_team_collisions as f64 * self.weights.team_collision_weight;
+            report.teams.insert(
+                *team_id,
+                TeamMetrics {
+                    score,
+                    values: BTreeMap::from([
+                        ("entity_count".into(), entity_count as f64),
+                        ("flight_time_s".into(), flight_time_s),
+                        ("flight_time_fraction".into(), normalized_flight_time),
+                        (
+                            "non_team_collisions".into(),
+                            opposing_team_collisions as f64,
+                        ),
+                        ("team_collisions".into(), same_team_collisions as f64),
+                        ("ground_collisions".into(), ground_collisions as f64),
+                    ]),
+                },
+            );
+        }
+        report
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{CollisionWeights, Metrics, Score, SimpleCollisionMetrics};
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn team_totals_do_not_mix_entities_or_collision_weights() {
+        let mut metrics = SimpleCollisionMetrics::new(&CollisionWeights {
+            flight_time_weight: 1.0,
+            team_collision_weight: 2.0,
+            non_team_collision_weight: 3.0,
+        });
+        metrics.scores = BTreeMap::from([
+            (
+                1,
+                Score {
+                    team_id: 1,
+                    flight_start_s: 0.0,
+                    flight_end_s: Some(2.0),
+                    same_team_collisions: 1,
+                    opposing_team_collisions: 0,
+                    ground_collisions: 1,
+                },
+            ),
+            (
+                2,
+                Score {
+                    team_id: 1,
+                    flight_start_s: 1.0,
+                    flight_end_s: Some(3.0),
+                    same_team_collisions: 0,
+                    opposing_team_collisions: 1,
+                    ground_collisions: 0,
+                },
+            ),
+            (
+                3,
+                Score {
+                    team_id: 2,
+                    flight_start_s: 0.0,
+                    flight_end_s: Some(1.0),
+                    same_team_collisions: 0,
+                    opposing_team_collisions: 0,
+                    ground_collisions: 0,
+                },
+            ),
+        ]);
+        let report = metrics.report(3.0);
+        let first_team = &report.teams[&1];
+        let second_team = &report.teams[&2];
+        assert!((first_team.values["entity_count"] - 2.0).abs() < 1e-12);
+        assert!((first_team.values["flight_time_s"] - 4.0).abs() < 1e-12);
+        assert!((first_team.score - (4.0 / 3.0 + 3.0 + 2.0)).abs() < 1e-12);
+        assert!((second_team.values["entity_count"] - 1.0).abs() < 1e-12);
+        assert!((second_team.values["flight_time_s"] - 1.0).abs() < 1e-12);
+        assert!((second_team.score - 1.0 / 3.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn survivors_fly_until_the_report_time_after_another_entity_is_removed() {
+        let mut metrics = SimpleCollisionMetrics::new(&CollisionWeights {
+            flight_time_weight: 1.0,
+            team_collision_weight: 0.0,
+            non_team_collision_weight: 0.0,
+        });
+        metrics.scores = BTreeMap::from([
+            (
+                1,
+                Score {
+                    team_id: 1,
+                    flight_end_s: None,
+                    ..Score::default()
+                },
+            ),
+            (
+                2,
+                Score {
+                    team_id: 2,
+                    flight_end_s: Some(0.4),
+                    ..Score::default()
+                },
+            ),
+        ]);
+        let report = metrics.report(30.0);
+        assert!((report.teams[&1].values["flight_time_s"] - 30.0).abs() < 1e-12);
+        assert!((report.teams[&1].values["flight_time_fraction"] - 1.0).abs() < 1e-12);
+        assert!((report.teams[&2].values["flight_time_s"] - 0.4).abs() < 1e-12);
+    }
+
+    #[test]
+    fn a_team_that_first_spawns_late_is_still_reported() {
+        let mut metrics = SimpleCollisionMetrics::new(&CollisionWeights {
+            flight_time_weight: 1.0,
+            team_collision_weight: 0.0,
+            non_team_collision_weight: 0.0,
+        });
+        metrics.scores = BTreeMap::from([
+            (
+                1,
+                Score {
+                    team_id: 1,
+                    ..Score::default()
+                },
+            ),
+            (
+                2,
+                Score {
+                    team_id: 2,
+                    flight_start_s: 1.0,
+                    ..Score::default()
+                },
+            ),
+        ]);
+        let report = metrics.report(4.0);
+        assert!((report.teams[&2].values["flight_time_s"] - 3.0).abs() < 1e-12);
+        assert!((report.teams[&2].score - 0.75).abs() < 1e-12);
+    }
+}

@@ -1,0 +1,98 @@
+//! Remove live entities at or below a flat ground height and publish GroundCollision.
+//! Derived from SCRIMMAGE: interaction/GroundCollision; startup check and interaction phase.
+//! No terrain lookup, geodetic conversion, or external-force response in this version.
+
+use anyhow::{Context, Result};
+use serde::Deserialize;
+
+use crate::plugin::{Interaction, InteractionContext, Update};
+use crate::{Entity, EventKind, Terrain, Vec3};
+
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize)]
+#[serde(default, deny_unknown_fields)]
+struct GroundCollisionParams {
+    ground_altitude_m: f64,
+    enable_startup_collisions: bool,
+    /// `all`, or one team ID.
+    team: String,
+}
+
+impl Default for GroundCollisionParams {
+    fn default() -> Self {
+        Self {
+            ground_altitude_m: 0.0,
+            enable_startup_collisions: true,
+            team: "all".into(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Deserialize)]
+#[serde(try_from = "GroundCollisionParams")]
+pub struct GroundCollisionConfig {
+    height_world_m: f64,
+    startup_collisions: bool,
+    team_id: Option<i32>,
+}
+
+pub struct GroundCollision {
+    config: GroundCollisionConfig,
+}
+
+// Config via serde's `try_from`, so the trait's default `configure` fits.
+impl TryFrom<GroundCollisionParams> for GroundCollisionConfig {
+    type Error = anyhow::Error;
+    fn try_from(params: GroundCollisionParams) -> Result<Self> {
+        let team_id = match params.team.as_str() {
+            "all" => None,
+            team => Some(
+                team.parse()
+                    .context("GroundCollision team must be 'all' or an integer")?,
+            ),
+        };
+        Ok(GroundCollisionConfig {
+            height_world_m: params.ground_altitude_m,
+            startup_collisions: params.enable_startup_collisions,
+            team_id,
+        })
+    }
+}
+
+impl Interaction for GroundCollision {
+    type Config = GroundCollisionConfig;
+
+    fn new(config: &GroundCollisionConfig) -> Self {
+        Self { config: *config }
+    }
+
+    fn collision_exists(
+        &self,
+        _entities: &[Entity],
+        _terrain: Option<&Terrain>,
+        position_world_m: Vec3,
+    ) -> bool {
+        // Startup candidates have no team filter here.
+        self.config.startup_collisions && position_world_m.z <= self.config.height_world_m
+    }
+
+    fn step(&mut self, context: &mut InteractionContext) -> Result<Update> {
+        for index in 0..context.entities.len() {
+            let entity = &mut context.entities[index];
+            if entity.health() <= 0
+                || self
+                    .config
+                    .team_id
+                    .is_some_and(|team| team != entity.team_id())
+            {
+                continue;
+            }
+            if entity.truth().position_world_m.z <= self.config.height_world_m {
+                entity.set_health(0);
+                let id = entity.id();
+                context.emit(EventKind::GroundCollision, vec![id])?;
+            }
+        }
+        Ok(Update::Applied)
+    }
+}

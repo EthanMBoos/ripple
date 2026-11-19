@@ -1,0 +1,326 @@
+{
+  "frozen": {
+    "implementation": "upstream C++",
+    "branch": "Ubuntu-24.04",
+    "commit": "4bdf41fb06facaea358d478d9a07aa4d77fcac27",
+    "image": "sha256:74cba8d50900c97609317a4bef97bfda1a9d841119de681101b02f685f3081f6"
+  },
+  "stage": {
+    "implementation": "this checkout",
+    "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7"
+  },
+  "part_a": [
+    {
+      "mission": "multirotor",
+      "dt_s": 0.01,
+      "reference_multiplier": 1024,
+      "reference_self_check_m": 3.383100337709099e-10,
+      "frozen": [
+        {
+          "multiplier": 1,
+          "motion_dt_s": 0.01,
+          "position_m": 0.06113914739773104,
+          "attitude_rad": 0.001067105524676394
+        },
+        {
+          "multiplier": 2,
+          "motion_dt_s": 0.005,
+          "position_m": 0.030576778136976613,
+          "attitude_rad": 0.0005341446498952986
+        },
+        {
+          "multiplier": 4,
+          "motion_dt_s": 0.0025,
+          "position_m": 0.01529018114833523,
+          "attitude_rad": 0.0002672203528165468
+        },
+        {
+          "multiplier": 8,
+          "motion_dt_s": 0.00125,
+          "position_m": 0.007645537660286127,
+          "attitude_rad": 0.00013364718702672164
+        },
+        {
+          "multiplier": 16,
+          "motion_dt_s": 0.000625,
+          "position_m": 0.0038228806750439134,
+          "attitude_rad": 6.6832843305976e-05
+        }
+      ],
+      "stage": [
+        {
+          "multiplier": 1,
+          "motion_dt_s": 0.01,
+          "position_m": 7.794098324395013e-10,
+          "attitude_rad": 4.394370709834501e-11
+        },
+        {
+          "multiplier": 2,
+          "motion_dt_s": 0.005,
+          "position_m": 6.79895305505877e-10,
+          "attitude_rad": 4.4046295223120215e-11
+        },
+        {
+          "multiplier": 4,
+          "motion_dt_s": 0.0025,
+          "position_m": 6.742177616821453e-10,
+          "attitude_rad": 4.398448074749704e-11
+        },
+        {
+          "multiplier": 8,
+          "motion_dt_s": 0.00125,
+          "position_m": 6.713410534895527e-10,
+          "attitude_rad": 4.382154936677997e-11
+        },
+        {
+          "multiplier": 16,
+          "motion_dt_s": 0.000625,
+          "position_m": 6.6606696671397e-10,
+          "attitude_rad": 4.3490771256448895e-11
+        }
+      ],
+      "frozen_order": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "stage_order": [
+        0.2,
+        0.01,
+        0.01,
+        0.01
+      ]
+    },
+    {
+      "mission": "fixed-wing-open-loop",
+      "dt_s": 0.05,
+      "reference_multiplier": 1024,
+      "reference_self_check_m": 3.719829932587242e-09,
+      "frozen": [
+        {
+          "multiplier": 1,
+          "motion_dt_s": 0.05,
+          "position_m": 16.870806409855597,
+          "attitude_rad": 0.006626904980782877
+        },
+        {
+          "multiplier": 2,
+          "motion_dt_s": 0.025,
+          "position_m": 8.410657189344029,
+          "attitude_rad": 0.0033033776353386074
+        },
+        {
+          "multiplier": 4,
+          "motion_dt_s": 0.0125,
+          "position_m": 4.19913632549894,
+          "attitude_rad": 0.0016491712908725169
+        },
+        {
+          "multiplier": 8,
+          "motion_dt_s": 0.00625,
+          "position_m": 2.098020671137478,
+          "attitude_rad": 0.0008239561701958706
+        },
+        {
+          "multiplier": 16,
+          "motion_dt_s": 0.003125,
+          "position_m": 1.0486235472129402,
+          "attitude_rad": 0.0004118207306168363
+        }
+      ],
+      "stage": [
+        {
+          "multiplier": 1,
+          "motion_dt_s": 0.05,
+          "position_m": 1.4904881390795857e-05,
+          "attitude_rad": 6.749951825681699e-07
+        },
+        {
+          "multiplier": 2,
+          "motion_dt_s": 0.025,
+          "position_m": 3.916513205962644e-06,
+          "attitude_rad": 4.0149734932988554e-08
+        },
+        {
+          "multiplier": 4,
+          "motion_dt_s": 0.0125,
+          "position_m": 2.6956720622385215e-07,
+          "attitude_rad": 2.467218085600792e-09
+        },
+        {
+          "multiplier": 8,
+          "motion_dt_s": 0.00625,
+          "position_m": 9.659882819546155e-08,
+          "attitude_rad": 1.52752602432843e-10
+        },
+        {
+          "multiplier": 16,
+          "motion_dt_s": 0.003125,
+          "position_m": 8.359495487127509e-08,
+          "attitude_rad": 4.864568085321497e-11
+        }
+      ],
+      "frozen_order": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "stage_order": [
+        1.93,
+        3.86,
+        1.48,
+        0.21
+      ]
+    }
+  ],
+  "part_b": [
+    {
+      "mission": "fixed-wing-recovery",
+      "dt_s": 0.01,
+      "frozen_vs_stage_position_m": 4457.491306082035,
+      "frozen_vs_stage_attitude_rad": 1.5687894622950103
+    },
+    {
+      "mission": "fixed-wing-recovery",
+      "dt_s": 0.05,
+      "frozen_vs_stage_position_m": 4399.129045070766,
+      "frozen_vs_stage_attitude_rad": 1.5662259722634464
+    },
+    {
+      "mission": "fixed-wing-recovery",
+      "dt_s": 0.1,
+      "frozen_vs_stage_position_m": 3269.764401646858,
+      "frozen_vs_stage_attitude_rad": 3.136472339649153
+    }
+  ],
+  "part_c": [
+    {
+      "loads": "frozen",
+      "altitude_d": 0.01,
+      "dt_s": 0.01,
+      "altitude_error_m": 558.2866423191972,
+      "after_5_s_m": 558.2866423191972
+    },
+    {
+      "loads": "frozen",
+      "altitude_d": 0.01,
+      "dt_s": 0.005,
+      "altitude_error_m": 558.4626330165381,
+      "after_5_s_m": 558.4626330165381
+    },
+    {
+      "loads": "frozen",
+      "altitude_d": 0.01,
+      "dt_s": 0.0025,
+      "altitude_error_m": 558.49744807971,
+      "after_5_s_m": 558.49744807971
+    },
+    {
+      "loads": "frozen",
+      "altitude_d": 0.002,
+      "dt_s": 0.01,
+      "altitude_error_m": 558.2866423191972,
+      "after_5_s_m": 558.2866423191972
+    },
+    {
+      "loads": "frozen",
+      "altitude_d": 0.002,
+      "dt_s": 0.005,
+      "altitude_error_m": 558.4626330165381,
+      "after_5_s_m": 558.4626330165381
+    },
+    {
+      "loads": "frozen",
+      "altitude_d": 0.002,
+      "dt_s": 0.0025,
+      "altitude_error_m": 558.49744807971,
+      "after_5_s_m": 558.49744807971
+    },
+    {
+      "loads": "frozen",
+      "altitude_d": 0.0,
+      "dt_s": 0.01,
+      "altitude_error_m": 558.2866423191972,
+      "after_5_s_m": 558.2866423191972
+    },
+    {
+      "loads": "frozen",
+      "altitude_d": 0.0,
+      "dt_s": 0.005,
+      "altitude_error_m": 558.4626330165381,
+      "after_5_s_m": 558.4626330165381
+    },
+    {
+      "loads": "frozen",
+      "altitude_d": 0.0,
+      "dt_s": 0.0025,
+      "altitude_error_m": 558.49744807971,
+      "after_5_s_m": 558.49744807971
+    },
+    {
+      "loads": "stage",
+      "altitude_d": 0.01,
+      "dt_s": 0.01,
+      "altitude_error_m": 61.67438894230361,
+      "after_5_s_m": 61.67438894230361
+    },
+    {
+      "loads": "stage",
+      "altitude_d": 0.01,
+      "dt_s": 0.005,
+      "altitude_error_m": 11.609729931544166,
+      "after_5_s_m": 11.609729931544166
+    },
+    {
+      "loads": "stage",
+      "altitude_d": 0.01,
+      "dt_s": 0.0025,
+      "altitude_error_m": 55.068325746078244,
+      "after_5_s_m": 55.068325746078244
+    },
+    {
+      "loads": "stage",
+      "altitude_d": 0.002,
+      "dt_s": 0.01,
+      "altitude_error_m": 1.3909489013304892,
+      "after_5_s_m": 0.6417329519388204
+    },
+    {
+      "loads": "stage",
+      "altitude_d": 0.002,
+      "dt_s": 0.005,
+      "altitude_error_m": 1.3670818254036021,
+      "after_5_s_m": 0.6167113989488371
+    },
+    {
+      "loads": "stage",
+      "altitude_d": 0.002,
+      "dt_s": 0.0025,
+      "altitude_error_m": 1.3559241050289756,
+      "after_5_s_m": 0.6114876903142203
+    },
+    {
+      "loads": "stage",
+      "altitude_d": 0.0,
+      "dt_s": 0.01,
+      "altitude_error_m": 1.4827072144544218,
+      "after_5_s_m": 0.7216724089220179
+    },
+    {
+      "loads": "stage",
+      "altitude_d": 0.0,
+      "dt_s": 0.005,
+      "altitude_error_m": 1.4643116510731033,
+      "after_5_s_m": 0.7271565501017676
+    },
+    {
+      "loads": "stage",
+      "altitude_d": 0.0,
+      "dt_s": 0.0025,
+      "altitude_error_m": 1.4558184112175923,
+      "after_5_s_m": 0.7295673912138909
+    }
+  ]
+}

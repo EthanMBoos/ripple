@@ -1,0 +1,355 @@
+# Flying ArduPlane (SITL)
+
+The optional `ardupilot` crate lets real ArduPlane firmware fly FixedWing6DOF
+aircraft in a Ripple mission. Each aircraft gets its own ArduPilot SITL
+(software in the loop) running in a Docker container. You can fly one aircraft
+or many, in LOITER, AUTO, GUIDED, or TAKEOFF, with wind. The same missions
+fly under PX4 with the [PX4 bridge](px4.md); the two crates share the
+`SitlState` sensor and the container handling (`crates/sitl`).
+
+## How to think about it
+
+Two programs share each aircraft:
+
+| | Owns |
+| --- | --- |
+| **Ripple** | The world: time, physics (FixedWing6DOF), other entities, interactions, metrics, Rerun. Also sensing that ArduPilot doesn't do, such as other aircraft (`NoisyContacts`). |
+| **ArduPlane** | The aircraft's flight controller. Its sensors (IMU, GPS, barometer, compass, airspeed) are simulated from the true state it is sent; its EKF estimates the state; its control loops and flight modes fly. |
+
+Each Ripple tick:
+
+1. The aircraft's true state goes to its SITL.
+2. ArduPlane runs one step and answers with servo outputs (PWM).
+3. Ripple applies them to the control surfaces and throttle.
+
+This is **lockstep**. Ripple advances only when every aircraft's SITL has
+answered, so all aircraft share one clock, and ArduPlane's clock follows
+Ripple's. Three things follow from that:
+
+- **A slow SITL slows the whole run.** A dead one fails it after 10 s with "no
+  new frame from ArduPilot SITL".
+- **Repeatability depends on ArduPilot too,** so it is not guaranteed as it is
+  for other Ripple runs. In practice the lockstep exchange makes runs
+  repeat: three runs of `rascal-runway.yaml` on one machine (2026-10-05) wrote
+  byte-identical frames, events, and summaries. Check before relying on it
+  across machines or ArduPilot versions.
+- **Sensor noise belongs to ArduPilot.** SITL is sent the true state on
+  purpose. Don't put `NoisyState` on an ArduPilot aircraft; set ArduPilot's
+  `SIM_` sensor-noise parameters instead, through `ardupilot_params` (see
+  [Quick start](#quick-start)).
+
+## Quick start
+
+You need Docker running. Build `ripple` with the ArduPilot feature; the
+first run builds the SITL image, which compiles ArduPlane. That takes about 25
+minutes, and later runs reuse it. From the repository root:
+
+```sh
+cargo build --release -p ripple --features ardupilot
+S=target/release/ripple
+M=crates/ardupilot/missions
+B=autonomy.ArduPilotBridge   # shortens the override paths below
+
+# One aircraft circling (LOITER)
+$S run $M/rascal-sitl.yaml --headless run.end_s:=150
+
+# Two aircraft: one flying a looping route (AUTO), one circling
+$S run $M/rascal-sitl-pair.yaml --headless run.end_s:=240 \
+    "entities.rascal_a.$B.waypoints_m:=[[600,0,0], [600,200,50], [0,200,50], [0,0,0]]"
+
+# Fly to a point and circle it (GUIDED)
+$S run $M/rascal-sitl.yaml --headless run.end_s:=180 "entities.rascal.$B.goto_m:=[800,400,50]"
+
+# Catapult takeoff from the ground, climbing to 50 m (TAKEOFF)
+$S run $M/rascal-sitl.yaml --headless run.end_s:=120 \
+    "entities.rascal.position_m:=[0,0,0]" entities.rascal.$B.mode:=TAKEOFF
+
+# Wind: 6 m/s from the south, so the air moves north (see "Wind" below for the
+# sign); the sensor and the motion model both take it
+$S run $M/rascal-sitl.yaml --headless run.end_s:=150 \
+    entities.rascal.sensors.SitlState.wind_mps.1:=6 entities.rascal.motion_model.FixedWing6DOF.wind_mps.1:=6
+```
+
+`ripple run` starts one SITL container per `ArduPilotBridge` aircraft once the
+mission has loaded, and stops them all when the run ends, fails, or is
+interrupted with Ctrl-C
+([sitl_launcher.rs](../../../crates/ardupilot/src/sitl_launcher.rs)).
+It reads the resolved mission, so templates and overrides apply, and the
+containers always match it. `ripple sweep` starts no SITL. Each run
+writes `runs/<mission>/runNNN/` as usual, plus `sitl/<port>/` inside it: one
+folder per SITL, holding
+
+- `session.log`: ArduPilot's messages, arming, and errors;
+- `logs/*.BIN`: ArduPilot's own flight log;
+- its parameter storage.
+
+With several aircraft the engine waits for each SITL in turn within a tick, so
+a pair runs slower than one aircraft.
+
+The SITL session settings are bridge parameters:
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `mode` | AUTO with `waypoints_m`, GUIDED with `goto_m`, else LOITER | ArduPlane mode to arm in |
+| `waypoints_m` | none | AUTO route `[[east, north, up], ...]`; it repeats |
+| `goto_m` | none | GUIDED target `[east, north, up]`, sent once armed |
+| `takeoff_altitude_m` | none | Start the AUTO route with a takeoff to this height, m |
+| `land` | false | Make the last waypoint a landing; the route does not repeat. Its `up` is the ground's height there relative to the start (0 on the same runway). |
+| `speedup` | 100 | SITL's cap on running faster than real time |
+| `ardupilot_params` | none | ArduPilot parameters for this aircraft, `{NAME: value}`, loaded after `rascal.parm` |
+
+Points are in metres **from that aircraft's start**, so each aircraft flies its
+own route. Conflicting settings, such as both `waypoints_m` and `goto_m`, or `goto_m`
+with mode AUTO, are refused. Home, where local (0, 0, 0) is, is the mission
+terrain's origin, or McMillan Airfield without terrain.
+
+## What is supported
+
+| | |
+| --- | --- |
+| Aircraft | The Rascal: FixedWing6DOF's `airframe: rascal` (see [The aircraft](#the-aircraft)) |
+| Number | Any; one container each. ArduPilot aircraft exist from t = 0. |
+| Modes | Any ArduPlane mode by name with `mode`. LOITER, AUTO (`waypoints_m`), GUIDED (`goto_m`), and TAKEOFF have been flown. |
+| Starts | Held at rest, then catapulted at the release time, in the air or from the ground; or on wheels from a runway ([Takeoff and landing](#takeoff-and-landing)) |
+| Wind | Steady wind, also sent to ArduPlane as airspeed |
+| Speed (macOS Docker) | About 9× real time for one aircraft, 5× for two, 2.5× for four |
+
+Not supported:
+
+- **ArduPilot aircraft spawned mid-run.** The containers start before the run.
+- **Changing GUIDED targets during a run,** for example from a Ripple
+  autonomy.
+- **A ground station on the host.** MAVLink stays inside each container.
+
+## Starting: hold, release, catapult
+
+ArduPlane needs the aircraft **still** while it boots:
+
+- **It won't arm while the aircraft maneuvers.** Its pre-arm checks fail.
+- **It steers the surfaces even when disarmed,** so a free-flying start dives
+  into the ground.
+- **It zeroes its airspeed sensor at boot,** assuming the aircraft is still.
+  Holding it at 20 m/s instead leaves that sensor 20 m/s wrong for the rest of
+  the flight.
+
+So the SITL missions use FixedWing6DOF's launcher.
+
+- **Until the release time,** every force is off and the aircraft hangs still.
+  ArduPlane aligns, gets a GPS fix, and arms.
+- **At release,** the aircraft is catapulted to flying speed, and ArduPlane
+  takes over.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| FixedWing6DOF `launch_at_s` | 40 | Release time, s. ArduPlane must be armed in its mode 1 s before, or the run fails and prints why. |
+| FixedWing6DOF `launch_speed_mps`, `launch_acceleration_mps2` | 20, 20 | Catapult to 20 m/s at 20 m/s² (1 s) |
+| `position_m` | [0, 0, 200] | Start position, m. With height 0 the aircraft sits on the ground. |
+| `wind_mps` on `SitlState` and FixedWing6DOF | [0, 0, 0] | Wind, m/s, `[east, north, up]` |
+| ArduPilotBridge `port` | 9002, 9012 | Each aircraft's UDP port |
+
+## ArduPlane basics
+
+ArduPilot's documentation is the reference. These are the parts you need here.
+
+**Flight modes** ([ArduPlane flight
+modes](https://ardupilot.org/plane/docs/flight-modes.html)):
+
+| Mode | What it does |
+| --- | --- |
+| LOITER | Circles the point where the mode started, at `WP_LOITER_RAD` (80 m), holding altitude and `AIRSPEED_CRUISE` (22 m/s) |
+| AUTO | Flies the uploaded mission ([missions](https://ardupilot.org/plane/docs/common-planning-a-mission-with-waypoints-and-events.html)) |
+| GUIDED | Flies to one target point and circles it ([GUIDED](https://ardupilot.org/plane/docs/guided-mode.html)) |
+| TAKEOFF | Climbs to `TKOFF_ALT` (50 m), then loiters; used with the ground catapult |
+| FBWA, CRUISE, MANUAL | Pilot-driven; the session script only sends centred sticks |
+
+**Arming** ([arming](https://ardupilot.org/plane/docs/arming-your-plane.html)).
+The session script waits for a GPS fix and a healthy EKF, then arms normally.
+A failed pre-arm check shows up as `PreArm:` lines in `session.log`.
+
+**Home.** ArduPlane moves home to where it arms, and waypoint altitudes are
+relative to home. That is why routes and targets are given relative to each
+aircraft's start.
+
+**Airspeed.** ArduPlane flies on airspeed, not ground speed. In wind its ground
+speed varies around a circle while airspeed stays near 22 m/s.
+
+<a id="parameters"></a>**Parameters** ([parameter list](https://ardupilot.org/plane/docs/parameters.html)).
+SITL loads two files:
+
+- **`plane.parm`:** ArduPilot's own SITL plane defaults, taken from the pinned
+  ArduPilot checkout in the image.
+- **[rascal.parm](../../../crates/ardupilot/docker/rascal.parm),
+  on top:**
+  - `AIRSPEED_MIN 15`, because the model has no stall;
+  - `SERVO2_REVERSED` and `SERVO4_REVERSED`: FixedWing6DOF uses the standard
+    convention, where positive elevator pitches the nose down and positive
+    rudder yaws it left, which is the opposite of ArduPlane's outputs.
+
+To change ArduPlane's behavior (speeds, loiter radius, takeoff altitude, sensor
+noise), edit `rascal.parm`, or set them for one mission with the bridge's
+`ardupilot_params`. `ripple run` rebuilds the image from
+`crates/ardupilot/docker` before every run, so edits (and a newer session
+script after an update) are always used; Docker's cache makes that about a
+second when nothing changed.
+
+**More on SITL:** [SITL
+overview](https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html),
+[the JSON interface this crate
+uses](https://ardupilot.org/dev/docs/sitl-with-JSON.html), and [MAVLink's
+mission protocol](https://mavlink.io/en/services/mission.html).
+
+## The aircraft
+
+The Rascal is a 6 kg RC plane: FixedWing6DOF's `airframe: rascal`, built from
+ArduPilot's JSBSim Rascal. `airframe.rs` cites each value and lists where it
+differs from JSBSim (span, angle-of-attack drag, induced and elevator drag,
+elevator range).
+Flown by AircraftPIDController instead of ArduPlane, `airframe: rascal` on the
+controller gives gains measured on the Rascal and ArduPlane's attitude limits
+(pitch 20, roll 45 degrees). Know its limits:
+
+- **No stall by default.** Lift keeps rising with angle of attack. JSBSim's
+  Rascal stalls near 8.3 m/s level (from its lift table), and
+  higher in turns. Keep to moderate-angle flight around 20 m/s. This
+  integration has not been checked against the real aircraft.
+
+  **Stall:** FixedWing6DOF takes tables against angle of attack that
+  replace its linear lift and zero-lift drag, interpolated and held at their
+  ends like a JSBSim `<table>`. The `rascal` airframe carries JSBSim's:
+
+  ```yaml
+  # [alpha_rad, C_L]: C_L0 + C_L_alpha * alpha up to the 0.23 rad peak, then falling
+  lift_table: [[-0.2, -0.75], [0.0, 0.25], [0.23, 1.4], [0.6, 0.71]]
+  # [alpha_rad, C_D]: zero-lift drag, rising steeply past the stall
+  drag_table: [[-1.57, 1.5], [-0.26, 0.056], [0.0, 0.028], [0.26, 0.056], [1.57, 1.5]]
+  ```
+
+  A mission turns them off with `lift_table: []` and `drag_table: []`,
+  which is how the SCRIMMAGE comparison flies it. Keep both or neither:
+  induced drag follows `C_L`, so with `lift_table` alone drag falls past
+  the stall. Induced, elevator, and sideslip drag are still added to the
+  table's. Accepted limitation: there is no spin model. A deep stall or
+  flying far sideways counts as already a failure; the model is not meant
+  to recover from either faithfully.
+- **Thrust is a fixed 0-25 N with no propeller model,** so top level speed is
+  about 35 m/s.
+- **Surface limits in radians are JSBSim's:** elevator −0.35 to +0.30,
+  aileron and rudder ±0.35. The bridge's default PWM map spans ±0.30 for the
+  elevator, so ArduPilot never asks for the model's last 0.05 rad of
+  up-elevator.
+
+## Adding ArduPilot to a mission
+
+Start from
+[rascal-sitl.yaml](../../../crates/ardupilot/missions/rascal-sitl.yaml).
+An ArduPilot aircraft is an entity group with count 1 and:
+
+```yaml
+autonomy:
+  ArduPilotBridge:
+    port: 9002                  # one port per aircraft
+sensors:
+  SitlState:
+    wind_mps: [0, 0, 0]         # wind must match the motion model
+# no controller: the bridge writes throttle, elevator, aileron, rudder
+motion_model:
+  FixedWing6DOF:
+    airframe: rascal
+    enable_launcher: true
+    launch_at_s: 40
+```
+
+- **The mission needs the `LocalNetwork` network.** The sensor reaches
+  the bridge through it.
+- **Use dt = 0.0025 s (400 Hz),** a whole multiple of ArduPlane's 50 Hz loop.
+- **Both plugins must run every tick,** so give them no `loop_rate_hz`.
+- **`ArduPilotBridge` maps each servo channel** with optional `throttle`,
+  `elevator`, `aileron`, and `rudder` keys, each giving all of `channel`,
+  `pwm_min_us`, `pwm_max_us`, `output_min`, and `output_max` (PWM maps
+  linearly onto the outputs; swap them to reverse a channel). The defaults
+  are ArduPlane's outputs 1-4 on the Rascal's throws.
+- **Wind** is the air's velocity over the ground (ENU), so `wind_mps: [5, 0, 0]` on an
+  eastbound aircraft is a tailwind. `SitlState` uses the same values to
+  compute airspeed.
+
+## Troubleshooting
+
+| Symptom | Look at |
+| --- | --- |
+| `no new frame from ArduPilot SITL on UDP port …` | A SITL stopped. `ripple run` prints the session's `error:` line, such as "not armed in LOITER by the 40 s release". Then read that aircraft's `session.log`. |
+| Never arms | `PreArm:` lines in `session.log` |
+| Odd flight | ArduPilot's flight log. Decode a message type with the image's tools: `docker run --rm -v "$PWD/runs/<mission>/runNNN/sitl/9002/logs:/logs" --entrypoint /opt/ardupilot-venv/bin/python ripple-arduplane -m pymavlink.tools.mavlogdump --types ARSP --format csv /logs/00000001.BIN` (`ARSP` airspeed, `CTUN` attitude control, `TECS` speed and height control). |
+| Containers left over after `ripple` was killed (Ctrl-C stops them) | `docker stop $(docker ps -q --filter label=ripple-sitl)` |
+
+For maintainers, the exchange rules (exactly one reply per frame, resends
+ignored, a frame gap fails the run) and the frame conversions are documented in
+the [crate's
+source](../../../crates/ardupilot/src) and
+covered by its tests, with no Docker needed: `cargo test -p ardupilot`, plus
+`python3 -m unittest discover -s crates/ardupilot/docker` for the session's
+command timing. The session paces its commands by ArduPilot's clock, not wall
+time, because sim time runs many times faster.
+
+## Takeoff and landing
+
+{{#include ../demos/runway-ardupilot/embed.html}}
+
+[rascal-runway.yaml](../../../crates/ardupilot/missions/rascal-runway.yaml)
+takes off from the runway south of McMillan Airfield, flies a left-hand circuit,
+and lands:
+
+```sh
+target/release/ripple run crates/ardupilot/missions/rascal-runway.yaml --headless
+```
+
+- **On its wheels.** The Rascal has FixedWing6DOF landing gear with JSBSim's
+  Rascal values (see the Terrain chapter's
+  [Landing gear](terrain.md#landing-gear)), on the McMillan terrain. It
+  starts at rest on the runway, so there is no hold or catapult: still on the
+  ground, ArduPlane boots, aligns, and arms. The starting height and the
+  14° nose-up attitude are set by hand, from the ground height there.
+- **The route.** The bridge's `takeoff_altitude_m` starts the AUTO mission with
+  a takeoff to 50 m, and `land: true` makes its last waypoint a landing. With
+  a takeoff, the session arms on the ground first and then switches to AUTO,
+  as a pilot would: in AUTO while still disarmed, ArduPlane runs through the
+  mission and then refuses to arm "in landing sequence". After landing it
+  disarms and stays down.
+- **Crash or touchdown.** TerrainCollision checks the propeller and wingtips,
+  not the centre, so rolling on the wheels is not a crash.
+- **Tuning, in the mission's `ardupilot_params`:** ground steering
+  (`GROUND_STEER_ALT` and `STEER2SRV_*`, ArduPilot's recommended starting
+  values with the Rascal's turning circle as `STEER2SRV_P`), and
+  `LAND_PITCH_DEG 14` to flare to the three-point attitude. These are not in
+  `rascal.parm`: ArduPlane measures `GROUND_STEER_ALT` from home, so an air
+  start, which arms at its start height, would steer its rudder for the
+  ground in flight.
+- **The tail wheel turns with the rudder** (`steered_by_rudder`), as on RC
+  taildraggers. JSBSim's castors, and a castering tail wheel ground-looped on
+  the landing roll.
+
+What a run looked like with the Rascal's earlier numbers (run on
+2026-10-01): ArduPlane rolls 22 m and lifts off at
+12 m/s within 0.3 m of the centreline, climbs out, flies the circuit, and
+touches down at 13 m/s after a 3.9° glide. The rollout stays within 1.6 m of the
+centreline and stops 0.7 m from it, aligned with the runway. The landing is not
+pretty: it lands level at 1.4 m/s sink and bounces (up to 1.7 m) before
+settling. With ArduPilot's default 1° flare it touches down once, tail-high at
+17 m/s, but swerves 14 m off the centreline when the tail drops.
+
+The bounce is not a missing stall. Rerun on 2026-11-02 with the Rascal's
+JSBSim numbers, with and without the `lift_table` (the airframe carries it;
+`lift_table: []` turns it off), the landing was the same to within
+centimetres: first touch at 14.0 m/s and 1.7 m/s sink, bounces up to 0.8 m,
+rollout within 3.2 m of the centreline (3.0 m with the table). (These numbers
+come from a different touchdown measure than the run above: the first frame
+after the circuit with the centre within 5 cm of its resting height.) Adding
+`drag_table` too, the extra drag at small angles helped: first touch at 13.5
+m/s, bounces up to 0.4 m, rollout within 2.3 m. Airborne, the angle of attack
+peaks at 7.7° (8.6° with both tables), below the 13.2° stall; only rolling
+tail-down on the wheels (above 5 m/s) does it pass the stall angle, at 14.3°.
+The unmodified mission repeats exactly, so these differences are the tables'
+effect, not run-to-run noise (`reference/stall_landing.py`, evidence in
+`paper/data/stall-landing/`). Each touchdown pitches the nose up, as a
+taildragger's mains ahead of the centre of gravity do. A likely cause is the
+fast touchdown, 14 m/s against the 8.8 m/s the table's peak lift gives as a
+stall speed, but that is untested.

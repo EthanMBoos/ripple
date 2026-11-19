@@ -1,0 +1,14 @@
+# Rascal settings layered on ArduPilot's plane.parm (--defaults plane.parm,rascal.parm).
+# FixedWing6DOF has no stall model (level-flight stall would be near 8.3 m/s),
+# so keep ArduPlane well above it.
+AIRSPEED_MIN 15
+# Elevator and rudder are reversed, as ArduPilot's own JSBSim Rascal frame does
+# (models/plane-reverse-servo-pitch-yaw.parm) and C++'s servo_map did (x-1).
+# FixedWing6DOF uses the standard sign convention: positive elevator pitches the
+# nose down (C_M_delta_elevator < 0) and positive rudder yaws it left
+# (C_N_delta_rudder < 0), while ArduPlane's positive outputs mean nose up and
+# nose right. Aileron already agrees (C_L_delta_aileron > 0 rolls right).
+# Reversed here only: ArduPilotBridge's maps stay plain.
+SERVO2_REVERSED 1
+SERVO4_REVERSED 1
+# Sensor noise: SITL's SIM_ defaults for now. Noise belongs here, not in scrimmage.

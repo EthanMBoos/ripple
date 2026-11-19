@@ -1,0 +1,36 @@
+"""A small resolved scenario for tests that need no Cargo."""
+import copy
+
+
+def plugin(name, instance=None, **params):
+    return {"name": name, "instance": instance, "loop_rate_hz": 0.0, "params": params}
+
+
+_SCENARIO = {
+    "run": {"start_s": 0.0, "end_s": 200.0, "dt_s": 0.1, "seed": 12345, "motion_multiplier": 1},
+    "end_conditions": {"time": True, "no_entities": False, "one_team_left": False},
+    "spatial_lookup": {"method": "scan"},
+    "terrain": None,
+    "interactions": [plugin("SimpleCollision", collision_range_m=5)],
+    "networks": [plugin("GlobalNetwork"), plugin("SphereNetwork", "CommsNetwork", range_m=100)],
+    "metrics": [plugin("SimpleCollisionMetrics")],
+    "entities": [{
+        "label": "blue", "team": 1, "visual_model": "aircraft",
+        "health": 1, "id": None, "count": 64, "spawn": None,
+        "position_m": [23.0, 0.0, 200.0], "position_stddev_m": [0.0, 0.0, 0.0],
+        "heading_deg": 0.0, "heading_stddev_deg": 0.0, "roll_deg": 0.0, "pitch_deg": 0.0,
+        "velocity_mps": [0.0, 0.0, 0.0],
+        "autonomy": [plugin("Straight", speed_mps=27)],
+        "controller": [plugin("SimpleAircraftControllerPID", heading_pid={
+            "kp": 1, "ki": 0.01, "kd": 2, "integrate_within_deg": 9})],
+        "motion_model": plugin("SimpleAircraft"),
+        "sensors": [plugin("NoisyState", position_stddev_m=[1, 2, 3])],
+        "localization": {**plugin("PassThrough"), "inputs": {"state": "NoisyState:0"}},
+        "tracking": {**plugin("PassThrough"), "inputs": {"detections": "perfect"}},
+    }],
+}
+
+
+def scenario():
+    """A fresh copy, free to edit."""
+    return copy.deepcopy(_SCENARIO)

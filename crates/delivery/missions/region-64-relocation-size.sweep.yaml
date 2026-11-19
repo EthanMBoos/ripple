@@ -1,0 +1,19 @@
+# Four classical policies x ten matched main-study days; no model calls.
+# Only surge relocation counts change: (fixed-wing, multirotor) =
+# (0, 0), (1, 0), (2, 1), (4, 2). Stock rules remain identical.
+# Counts are requested per receiving hub, not guaranteed actual movements.
+# All arms retain the full 8-hour request day plus 30 minutes to finish.
+name: region-64-relocation-size
+base_scenario: region.yaml
+seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 64
+  entities.region.autonomy.Dispatcher.manager.kind: policy
+  entities.region.autonomy.Dispatcher.manager.offline: true
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.policy]
+cases:
+  - [crates/delivery/policies/move-none.yaml]
+  - [crates/delivery/policies/move-small.yaml]
+  - [crates/delivery/policies/move-moderate.yaml]
+  - [crates/delivery/policies/move.yaml]

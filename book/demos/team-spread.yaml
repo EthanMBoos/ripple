@@ -1,0 +1,18 @@
+# Three agents running one trained network spread out to cover three
+# landmarks, MPE's simple_spread on Ripple's point model, at half speed: the
+# team is in place within three seconds, and the demo ends at six. The
+# mission steps at 0.01 s here so the viewer gets fifty poses a video
+# second.
+name: team-spread
+source: crates/learning/missions/spread.yaml
+features: [learning]
+overrides: {run.dt_s: "0.01"}
+preset: fleet
+end_s: 6
+speed: 0.5
+featured: [{group: team}]
+labels: false
+model_span_m: 1
+captions:
+  - {at_s: 0, text: "Three agents, scattered a few metres around the origin, run one network trained on this mission, at half speed. Each sees its own velocity and the offsets to the landmarks (yellow) and its teammates."}
+  - {at_s: 2, text: "Nobody is told which landmark is theirs: the team learned, from a shared reward for the least-covered landmark, to split them without colliding."}

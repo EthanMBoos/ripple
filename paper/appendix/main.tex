@@ -1,0 +1,334 @@
+% Research record for the delivery manuscript: the frozen prompt, event
+% texts, example calls, and per-run counts. It is not part of the RA-L
+% submission or needed to judge the claims in the letter. Keep its PDF
+% anonymous if it is shared through an anonymous repository mirror.
+% Build: tectonic -o <folder> main.tex
+\documentclass[conference]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage[varqu]{zi4}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{listings}
+\lstset{basicstyle=\footnotesize\ttfamily,breaklines=true,
+  breakatwhitespace=true,
+  columns=fullflexible,keepspaces=true,frame=single,framerule=0.2pt,
+  xleftmargin=2pt,xrightmargin=2pt,aboveskip=4pt,belowskip=6pt}
+\usepackage[bookmarks=true,hidelinks]{hyperref}
+
+\title{Ripple: Appendix}
+\author{\IEEEauthorblockN{\strut}\IEEEauthorblockA{\strut}}
+
+\begin{document}
+\maketitle
+
+This research record holds the frozen system prompt for the main manager
+comparisons, the one text for each event kind, one complete live call and
+one veto prompt with their replies, the
+per-seed scores behind the paper's model figure, and the per-run counts for
+the 48 model runs. It also gives the per-seed results for the interface,
+policy-writing, quiet-day, and surge-length checks. The study code is the
+delivery crate of the Ripple repository, and the prompt and call texts
+here are the files beside this document, as the crate wrote them.
+
+\section{The frozen system prompt}
+
+Every model call in the main full-authority manager comparison used this
+system prompt. It was written before the scored runs and kept fixed for
+that comparison. The later informed surge and lender-choice studies use
+different prompts recorded in their mission files.
+
+\lstinputlisting{system-prompt.txt}
+
+\section{Event texts}
+\label{app:events}
+
+Each event kind has one text, written once and filled in from the event's
+fields. The model reads events as these sentences under \emph{New events}
+and \emph{Events still in force} (Section~\ref{app:call}). The placeholders
+are the hub or hubs, the site, the stock item, the area, the vehicle class,
+and the start and end minutes.
+
+\begin{center}
+\footnotesize
+\begin{tabularx}{\columnwidth}{@{}lX@{}}
+\toprule
+Kind & Text \\
+\midrule
+Surge & A mass-casualty incident near \{hubs\}: the hospitals there are
+sending trauma requests beyond what those hubs can fly alone, starting at
+minute \{from\}. \\
+Shortage & \{item\} has run out at \{hubs\} as of minute \{from\}. Requests
+for \{item\} at their sites can only be served from hubs that still hold
+it. \\
+Closure & Airspace is closed in \{area\} from minute \{from\} until minute
+\{to\}; no flights through it. \\
+Outage & \{hubs\} cannot launch from minute \{from\} until minute \{to\};
+its sites must be covered by other hubs. \\
+Weather & Weather at \{hubs\}: no \{class\} launches from minute \{from\}
+until minute \{to\}. \\
+Priority & Hospital \{site\} takes priority over routine deliveries from
+minute \{from\} until \{to\}. \\
+Rooftop closed & The rooftop at hospital \{site\} is closed from minute
+\{from\} until minute \{to\}; only drops at its ground pad are allowed. \\
+Corridor & A medevac helicopter corridor is active in \{area\} from minute
+\{from\} until minute \{to\}; no vehicle may cross it below 150 m. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{One complete model call}
+\label{app:call}
+
+The prompt below is one call to Opus as a live manager with the exceptions
+view and feedback on a 16-hub day, at minute 35, and the reply that came
+back. The prompt is what the delivery crate wrote; nothing was removed. The
+order format at the end is part of every live prompt. The reply switched
+the hospital whose rooftop had just closed to its ground pad, then moved
+two fixed-wing aircraft from hub 5 to hub 3 and one from hub 7 to hub 1,
+two of the hubs with waiting requests and no idle vehicle, each with a
+return time.
+
+\lstinputlisting{call-prompt.txt}
+
+The reply:
+
+\lstinputlisting{call-reply.txt}
+
+A veto prompt has the same head and, instead of the order format, the
+replanner's numbered proposals and a one-line instruction. The tail of one
+such prompt to Haiku, at minute 88 on a 16-hub day after a stock shortage,
+and its reply: the replanner proposed three stock transfers, each with
+lending permissions for the receiving hub's sites, and the model dropped
+the third transfer and its permissions while keeping the other two.
+
+\lstinputlisting{veto-tail.txt}
+
+\lstinputlisting{veto-reply.txt}
+
+\section{Model scores and move orders}
+\label{app:scores}
+
+The paper's model figure shows mean scores and individual days relative
+to local rules. Table~\ref{tab:model-means} gives the reported means and
+move counts. Table~\ref{tab:scores} gives the on-time score
+and the moves made (kept, for the veto) on each seed: seeds
+1 to 3 at both sizes. On the same seeds local rules score
+0.69, 0.78, and 0.75 at 16 hubs and 0.73, 0.70, and 0.75 at 64; the
+replanner scores 0.68, 0.73, and 0.73, and 0.62, 0.62, and 0.67.
+
+\begin{table*}[h]
+\caption{Mean weighted on-time score and move orders by model and role.
+Three seeds at both 16 and 64 hubs. For vetoes, moves are retained orders.}
+\label{tab:model-means}
+\centering
+\begin{tabular}{llrrrrrrrr}
+\toprule
+& & \multicolumn{2}{c}{Haiku} & \multicolumn{2}{c}{Sonnet} & \multicolumn{2}{c}{Opus} & \multicolumn{2}{c}{GPT-6 Luna} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+Hubs & Role & Score & Moves & Score & Moves & Score & Moves & Score & Moves \\
+\midrule
+16 & Live & 0.70 & 8 & 0.62 & 47 & 0.69 & 70 & 0.60 & 2 \\
+16 & Veto & 0.71 & 19 & 0.72 & 25 & 0.71 & 23 & 0.72 & 21 \\
+64 & Live & 0.68 & 52 & 0.58 & 254 & 0.57 & 459 & 0.56 & 69 \\
+64 & Veto & 0.64 & 148 & 0.64 & 165 & 0.67 & 137 & 0.64 & 155 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[h]
+\caption{Per-seed on-time score and moves for the 48 model runs, in seed
+order within each cell.}
+\label{tab:scores}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\input{scores.tex}
+\end{table*}
+
+\section{Luna through the API and command-line client}
+\label{app:luna-api}
+
+An earlier comparison reran Luna through the OpenAI API on the same
+three seeds at 16 hubs and two at 64 as the CLI runs, in both roles. The
+mission, study system prompt, exceptions view, and feedback setting were
+unchanged. The API supplies no tools;
+the earlier Codex command-line client retained coding-agent tools.
+Table~\ref{tab:luna-api} retains that comparison. The paper's model figure
+and this appendix's model-score and count tables instead use the newer
+API runs on three seeds at both sizes.
+
+\begin{table}[h]
+\caption{Earlier Luna comparison on matched seeds through the
+command-line client (CLI) and API: three seeds at 16 hubs, two at 64.
+Scores are weighted on-time shares; moves are mean applied relocation
+and stock-transfer orders. CLI scores retain the original table's rounding.}
+\label{tab:luna-api}
+\centering
+\footnotesize
+\begin{tabular}{llrrrr}
+\toprule
+& & \multicolumn{2}{c}{Score} & \multicolumn{2}{c}{Moves} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Hubs & Role & CLI & API & CLI & API \\
+\midrule
+16 & Live & 0.62 & 0.57 & 3.3 & 2.7 \\
+16 & Veto & 0.72 & 0.71 & 13.7 & 21.7 \\
+64 & Live & 0.55 & 0.57 & 22.0 & 48.0 \\
+64 & Veto & 0.67 & 0.63 & 88.5 & 163.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In this earlier comparison, the API does not consistently improve the
+score. At 64 hubs it improves the live manager's mean but lowers the
+veto's; both roles make more moves.
+All ten API runs score below local rules on their matched seeds. All
+live-manager and veto replies were readable.
+These few reruns compare the two client paths, not tool availability in
+isolation, and do not separate client effects from model sampling.
+
+\section{Interface and policy checks}
+\label{app:interface}
+
+Table~\ref{tab:interface} gives the two 16-hub seeds behind the interface
+comparison in the paper. Each cell is the on-time score and number of
+applied moves. The checker and the donor-state line are separate changes
+to the outcome-feedback setting; the reserve row also uses the checker.
+On these seeds, local rules score 0.69 and 0.78, and the unguarded
+replanner scores 0.68 with 23 moves and 0.73 with 27.
+
+\begin{table*}[h]
+\caption{Interface check: on-time score / moves, seeds 1 and 2.}
+\label{tab:interface}
+\centering
+\footnotesize
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+View and checks & Haiku 1 & Haiku 2 & Sonnet 1 & Sonnet 2 \\
+\midrule
+Hub summaries & 0.66 / 52 & 0.70 / 44 & 0.66 / 66 & 0.68 / 37 \\
+Summaries + feedback & 0.68 / 51 & 0.75 / 27 & 0.63 / 72 & 0.65 / 46 \\
+Feedback + checker & 0.68 / 42 & 0.75 / 23 & 0.61 / 70 & 0.64 / 58 \\
+Feedback + donor state & 0.62 / 58 & 0.73 / 32 & 0.62 / 74 & 0.69 / 47 \\
+Feedback + checker + reserve & 0.70 / 25 & 0.76 / 10 & 0.65 / 38 & 0.68 / 28 \\
+Exceptions + feedback & 0.64 / 7 & 0.74 / 7 & 0.61 / 36 & 0.67 / 48 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+With the same reserve guard and no model, the replanner scores 0.69 with
+20 moves on seed 1 and 0.74 with 21 on seed 2.
+
+Table~\ref{tab:authored} gives the policies Haiku and Sonnet wrote before
+the day, and their single revisions after seeing two day summaries. The
+local-rules scores on the same three seeds are 0.69, 0.78, and 0.75.
+
+\begin{table}[h]
+\caption{Model-written policies: on-time score / moves by seed.}
+\label{tab:authored}
+\centering
+\footnotesize
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Policy & Seed 1 & Seed 2 & Seed 3 \\
+\midrule
+Haiku & 0.66 / 62 & 0.71 / 60 & 0.65 / 71 \\
+Haiku revised & 0.66 / 62 & 0.71 / 60 & 0.65 / 71 \\
+Sonnet & 0.63 / 67 & 0.69 / 60 & 0.65 / 71 \\
+Sonnet revised & 0.63 / 36 & 0.69 / 32 & 0.65 / 39 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:quiet} gives the quiet-day check, with every event kind
+at a quarter of its usual rate. The model rows use hub summaries and
+outcome feedback.
+
+\begin{table}[h]
+\caption{Quiet 16-hub days: on-time score / moves by seed.}
+\label{tab:quiet}
+\centering
+\footnotesize
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Manager & Seed 1 & Seed 2 \\
+\midrule
+None & 0.90 / 0 & 0.92 / 0 \\
+Local rules & 0.92 / 0 & 0.94 / 0 \\
+Haiku & 0.90 / 22 & 0.93 / 17 \\
+Sonnet & 0.88 / 37 & 0.90 / 38 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Surge length}
+\label{app:surge}
+
+The paper summarizes the surge-length means. Table~\ref{tab:surge}
+gives each fixed-policy seed: one scripted surge at hub 6 and its four
+neighbors on an
+otherwise quiet 16-hub day, at 16 trauma requests per hub per 15 minutes,
+held for 15, 60, 120, and 240 minutes.
+The informed Haiku and Opus runs use the same five seeds at each length.
+Their mission files contain the prompt with the surge end and whole-day
+objective, and their per-day outcomes are in
+\texttt{paper/data/fleet-study/results.csv}.
+
+\begin{table}[h]
+\caption{Per-seed on-time score by surge length and policy.}
+\label{tab:surge}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\input{surge.tex}
+\end{table}
+
+\section{Fleet API baselines}
+
+The lender-choice study compares rules on matched days: 30 at 16 and
+64 hubs and 15 at 256. Random chooses any offered lender, Nearest the
+closest, and Spare the lender with the most available aircraft after
+subtracting its waiting requests. Local uses no regional help.
+Table~\ref{tab:api} gives their mean weighted on-time scores. The
+paper reports the models and Spare on their own matched set of days.
+
+\begin{table}[t]
+\caption{Weighted share of requests delivered on time. For each fleet
+size, every rule ran on the same new simulated days. Local uses no
+regional help.}
+\label{tab:api}
+\centering
+\footnotesize
+\begin{tabular}{@{}rrcccc@{}}
+\toprule
+Hubs & Days & Local & Random & Nearest & Spare \\
+\midrule
+16 & 30 & 0.738 & 0.810 & 0.824 & 0.843 \\
+64 & 30 & 0.745 & 0.809 & 0.823 & 0.848 \\
+256 & 15 & 0.740 & 0.806 & 0.822 & 0.846 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Per-run counts}
+\label{app:counts}
+
+Table~\ref{tab:counts} gives, for each of the 48 model runs in
+the paper's model figure, the number of model calls, the orders the model
+gave (or, for the veto, the replanner's proposals it kept), how many were
+applied and how many refused by the dispatcher, the replies that could not
+be read, the moves (applied relocations and stock flights), the lending
+permissions, and the vehicles lost.
+
+\begin{table*}[h]
+\caption{Per-run counts for the 48 model runs. Refused orders are those
+the dispatcher could not apply, almost all for too few idle vehicles.
+Unreadable replies were not JSON in the expected form and changed nothing.}
+\label{tab:counts}
+\centering
+\footnotesize
+\input{counts.tex}
+\end{table*}
+
+\end{document}

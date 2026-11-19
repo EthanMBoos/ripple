@@ -1,0 +1,114 @@
+# Which fact on an offer line does the model's choice rest on? Haiku and
+# Opus as the help manager with the compact report, local rules below,
+# feedback on, each offer line written without one fact: the aircraft to
+# spare (whose phrase also carries how many sites they reach), the sites
+# reached, or the hub's own backlog. The system prompt of each arm names
+# only the facts its lines carry, otherwise the frozen prompt word for word;
+# the matched control is incident-models-16 (compact). On the gate's grid
+# and its first displaced layout (layout seed 101) with demand seeds 11 to
+# 15, the days of incident-models-16. Live calls through the signed-in
+# claude client.
+name: incident-hide-16
+base_scenario: incident.yaml
+seeds: [11, 12, 13, 14, 15]
+parameters:
+  entities.region.autonomy.Dispatcher.manager.offline: false
+  entities.region.autonomy.Dispatcher.manager.top_kind: model
+  entities.region.autonomy.Dispatcher.manager.top_report: compact
+  entities.region.autonomy.Dispatcher.manager.feedback: true
+prefix: entities.region.autonomy.Dispatcher
+columns:
+  [manager.top_model, manager.hide, manager.prompt.system, region.layout.seed]
+cases:
+  # grid
+  - - claude-haiku-5-5
+    - [spare]
+    - &without_spare >-
+      You are the fleet manager for help between the hubs of a regional blood
+      delivery service. Each hub flies its own sites' requests with its own
+      aircraft under fixed local rules, and the dispatcher assigns each
+      request to the idle aircraft that arrives soonest; neither needs you for
+      that. When a surge or an outage hits a hub, the hub asks for help, and
+      the dispatcher lists the hubs that could give it: how many requests of
+      its own are waiting, and how soon its first aircraft arrives. Your one
+      decision is which offer to grant each asking hub, or none. A granted
+      hub's aircraft fly the asking hub's requests they can deliver on time
+      and return home; nothing is relocated, and a hub helps one hub at a
+      time. Fixed-wing aircraft drop by parachute at clinics and cannot land;
+      multirotors can also land on hospital rooftops and have a short range.
+      Keep trauma deliveries on time. Reply with JSON only, no other text.
+    - 0
+  - - claude-haiku-5-5
+    - [reach]
+    - &without_reach >-
+      You are the fleet manager for help between the hubs of a regional blood
+      delivery service. Each hub flies its own sites' requests with its own
+      aircraft under fixed local rules, and the dispatcher assigns each
+      request to the idle aircraft that arrives soonest; neither needs you for
+      that. When a surge or an outage hits a hub, the hub asks for help, and
+      the dispatcher lists the hubs that could give it: how many aircraft each
+      can spare and still keep half of its own, how many requests of its own
+      are waiting, and how soon its first aircraft arrives. Your one decision
+      is which offer to grant each asking hub, or none. A granted hub's
+      aircraft fly the asking hub's requests they can deliver on time and
+      return home; nothing is relocated, and a hub helps one hub at a time.
+      Fixed-wing aircraft drop by parachute at clinics and cannot land;
+      multirotors can also land on hospital rooftops and have a short range.
+      Keep trauma deliveries on time. Reply with JSON only, no other text.
+    - 0
+  - - claude-haiku-5-5
+    - [backlog]
+    - &without_backlog >-
+      You are the fleet manager for help between the hubs of a regional blood
+      delivery service. Each hub flies its own sites' requests with its own
+      aircraft under fixed local rules, and the dispatcher assigns each
+      request to the idle aircraft that arrives soonest; neither needs you for
+      that. When a surge or an outage hits a hub, the hub asks for help, and
+      the dispatcher lists the hubs that could give it: how many aircraft each
+      can spare and still keep half of its own, how many of the asking hub's
+      sites those aircraft reach in time, and how soon its first aircraft
+      arrives. Your one decision is which offer to grant each asking hub, or
+      none. A granted hub's aircraft fly the asking hub's requests they can
+      deliver on time and return home; nothing is relocated, and a hub helps
+      one hub at a time. Fixed-wing aircraft drop by parachute at clinics and
+      cannot land; multirotors can also land on hospital rooftops and have a
+      short range. Keep trauma deliveries on time. Reply with JSON only, no
+      other text.
+    - 0
+  - - claude-opus-5-5
+    - [spare]
+    - *without_spare
+    - 0
+  - - claude-opus-5-5
+    - [reach]
+    - *without_reach
+    - 0
+  - - claude-opus-5-5
+    - [backlog]
+    - *without_backlog
+    - 0
+  # layout 101
+  - - claude-haiku-5-5
+    - [spare]
+    - *without_spare
+    - 101
+  - - claude-haiku-5-5
+    - [reach]
+    - *without_reach
+    - 101
+  - - claude-haiku-5-5
+    - [backlog]
+    - *without_backlog
+    - 101
+  - - claude-opus-5-5
+    - [spare]
+    - *without_spare
+    - 101
+  - - claude-opus-5-5
+    - [reach]
+    - *without_reach
+    - 101
+  - - claude-opus-5-5
+    - [backlog]
+    - *without_backlog
+    - 101

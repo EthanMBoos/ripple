@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='utf-8'?>
+<runscript name="mission">
+  <run start="0.0" end="200.0" dt="0.1" motion_multiplier="1" enable_gui="false" network_gui="false" start_paused="false" time_warp="0" />
+  <seed>2147483648</seed>
+  <end_condition>all_dead, time</end_condition>
+  <network>GlobalNetwork</network>
+  <network>LocalNetwork</network>
+  <metrics>SimpleCollisionMetrics</metrics>
+  <entity>
+    <team_id>1</team_id>
+    <visual_model>zephyr-blue</visual_model>
+    <health>1</health>
+    <count>1</count>
+    <x>-900.0</x>
+    <variance_x>20.25</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>20.25</variance_y>
+    <vy>0.0</vy>
+    <z>195.0</z>
+    <variance_z>10.240000000000002</variance_z>
+    <vz>0.0</vz>
+    <heading>0.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>true</use_variance_all_ents>
+    <autonomy enable_boundary_control="true">Straight</autonomy>
+    <controller>SimpleAircraftControllerPID</controller>
+    <motion_model>SimpleAircraft</motion_model>
+  </entity>
+  <entity>
+    <team_id>2</team_id>
+    <visual_model>zephyr-red</visual_model>
+    <health>1</health>
+    <count>0</count>
+    <x>50.0</x>
+    <variance_x>20.25</variance_x>
+    <vx>0.0</vx>
+    <y>0.0</y>
+    <variance_y>20.25</variance_y>
+    <vy>0.0</vy>
+    <z>200.0</z>
+    <variance_z>20.25</variance_z>
+    <vz>0.0</vz>
+    <heading>180.0</heading>
+    <variance_heading>0.0</variance_heading>
+    <roll>0.0</roll>
+    <pitch>0.0</pitch>
+    <use_variance_all_ents>true</use_variance_all_ents>
+    <autonomy enable_boundary_control="true" speed="21">Straight</autonomy>
+    <controller>SimpleAircraftControllerPID</controller>
+    <motion_model>SimpleAircraft</motion_model>
+  </entity>
+</runscript>

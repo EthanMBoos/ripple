@@ -1,0 +1,26 @@
+# The four models as live managers (exceptions view with feedback) and as
+# vetoes over the replanner on a 64-hub day, seeds [1, 2]: the paper's
+# model table. Live calls through the signed-in command-line clients
+# (claude and codex), replies cached under runs/llm-cache; a rerun with the
+# same settings makes no calls.
+name: region-64-models
+base_scenario: region.yaml
+seeds: [1, 2]
+parameters:
+  entities.region.autonomy.Dispatcher.region.hubs: 64
+  entities.region.autonomy.Dispatcher.manager.view: exceptions
+  entities.region.autonomy.Dispatcher.manager.feedback: true
+  entities.region.autonomy.Dispatcher.manager.checker: false
+  entities.region.autonomy.Dispatcher.manager.via: cli
+  entities.region.autonomy.Dispatcher.manager.offline: false
+prefix: entities.region.autonomy.Dispatcher
+columns: [manager.kind, manager.provider, manager.model]
+cases:
+  - [model, claude, claude-haiku-5-5]
+  - [model, claude, claude-sonnet-5-5]
+  - [model, claude, claude-opus-5-5]
+  - [model, openai, gpt-6-luna]
+  - [veto, claude, claude-haiku-5-5]
+  - [veto, claude, claude-sonnet-5-5]
+  - [veto, claude, claude-opus-5-5]
+  - [veto, openai, gpt-6-luna]

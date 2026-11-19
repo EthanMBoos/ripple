@@ -1,0 +1,84 @@
+{
+  "cases": [
+    {
+      "case": "generated-000",
+      "end_s": 1000.0,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 2.1832609280241383e-11,
+      "rust_vs_nudged_rust_final_m": 4.874925537754242e-11
+    },
+    {
+      "case": "generated-001",
+      "end_s": 1000.0,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 1.1064480586898243e-11,
+      "rust_vs_nudged_rust_final_m": 5.752149554916067e-11
+    },
+    {
+      "case": "generated-002",
+      "end_s": 1000.0,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 1.4551915228366852e-11,
+      "rust_vs_nudged_rust_final_m": 4.9481861456062484e-11
+    },
+    {
+      "case": "generated-003",
+      "end_s": 1000.0,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 1.2202151870040997e-11,
+      "rust_vs_nudged_rust_final_m": 6.67100569294862e-11
+    },
+    {
+      "case": "generated-004",
+      "end_s": 1000.0,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 7.275957614183426e-12,
+      "rust_vs_nudged_rust_final_m": 2.0579515874459978e-11
+    },
+    {
+      "case": "generated-005",
+      "end_s": 1000.0,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 0.0,
+      "rust_vs_nudged_rust_final_m": 0.0
+    },
+    {
+      "case": "generated-006",
+      "end_s": 1000.0,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 1.324244274525066e-11,
+      "rust_vs_nudged_rust_final_m": 7.499885442698834e-12
+    },
+    {
+      "case": "generated-007",
+      "end_s": 100.0,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 6.947837871669484e-10,
+      "rust_vs_nudged_rust_final_m": 2.4931800470196714e-09
+    },
+    {
+      "case": "generated-008",
+      "end_s": 100.0,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 1.6783073085301064e-10,
+      "rust_vs_nudged_rust_final_m": 1.3587323681939991e-09
+    },
+    {
+      "case": "generated-009",
+      "end_s": 1000.0,
+      "cpp_vs_rust_exceeds_tolerance_at_s": null,
+      "rust_vs_nudged_rust_exceeds_tolerance_at_s": null,
+      "cpp_vs_rust_final_m": 9.094947017729282e-12,
+      "rust_vs_nudged_rust_final_m": 3.7322542136613616e-11
+    }
+  ]
+}

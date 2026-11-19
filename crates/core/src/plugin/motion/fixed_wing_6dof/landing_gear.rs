@@ -1,0 +1,280 @@
+//! Landing gear: wheels that roll on the ground, after JSBSim's FGLGear
+//! (`BOGEY` contacts), simplified where noted. Without it, FixedWing6DOF has
+//! only a flat spring at `z = 0`.
+//!
+//! Each wheel is a point on a strut along the aircraft's down axis. Below the
+//! ground (`Terrain::ground_height`, or flat `z = 0` without terrain) it
+//! pushes along the ground normal and adds friction in the ground plane, with
+//! the moments of both about the centre of gravity. Per wheel, as in JSBSim:
+//!
+//! - **Strut:** compression is the depth below the ground measured along the
+//!   strut; force is spring times compression plus damper times compression
+//!   speed, never pulling. On first touching, compression speed is capped at
+//!   compression / dt, so the damper builds up with the compression.
+//! - **Friction:** the force that stops the wheel sliding within one step, up
+//!   to a limit. Rolling it is limited to `rolling_friction` times the load
+//!   (no brakes). Sideways the limit is Pacejka's Magic Formula of the slip
+//!   angle, with JSBSim's default factors and peak `static_friction`. A
+//!   castered wheel swivels to its motion, so it has no side force.
+//! - **Steering:** a wheel `steered_by_rudder` turns by the rudder's angle,
+//!   pointing right for positive rudder (which yaws the nose left), as a
+//!   tail wheel linked to the rudder does on RC taildraggers. A wheel
+//!   `steered_by_input` turns by the model's `wheel` input instead, for an
+//!   autopilot that steers the wheel itself (PX4's wheel controller); the
+//!   input exists only when a wheel asks for it. JSBSim steers by a separate
+//!   command scaled by `max_steer`.
+//!
+//! Simplified from JSBSim: friction is solved per wheel, each stopping its
+//! share of the mass (the mass over the wheels touching), where JSBSim solves
+//! all contacts together with the full mass and inertia; and forces act at
+//! the uncompressed wheel point, not the compressed one (millimetres here).
+//!
+//! The forces are recomputed at every RK4 stage. The strut damper is stiff:
+//! `check_step` refuses a step where `dt × total damping / mass` is beyond
+//! RK4's stable range. That is a basic damping check, not a stability
+//! guarantee (it leaves out the springs, rotation, and wheel layout); 0.0025 s
+//! is the tested Rascal setting.
+
+use anyhow::{Result, ensure};
+use serde::Deserialize;
+
+use crate::plugin::motion::aircraft_state::{AircraftState, enu_from_ned, ned_from_enu};
+use crate::{Quaternion, Terrain, Vec3};
+
+/// The furthest RK4 stays stable along the negative real axis: a damper
+/// with `dt × damping / mass` beyond this grows instead of settling.
+const RK4_STABLE_LIMIT: f64 = 2.785;
+/// JSBSim's Magic Formula factors for side friction (FGLGear's defaults):
+/// stiffness per degree of slip, shape, and curvature.
+const SLIP_STIFFNESS_PER_DEG: f64 = 0.06;
+const SLIP_SHAPE: f64 = 2.8;
+const SLIP_CURVATURE: f64 = 1.03;
+/// Below this ground-plane speed (JSBSim's 0.001 ft/s) JSBSim keeps the last
+/// slip angle; here it is zero, so a wheel at rest has no side-force limit.
+const SLIP_MIN_SPEED_MPS: f64 = 1e-3 * 0.3048;
+/// Below this speed (JSBSim's 0.1 ft/s) a castered wheel keeps its heading;
+/// here it faces forward.
+const CASTER_MIN_SPEED_MPS: f64 = 0.1 * 0.3048;
+
+/// One wheel, an entry in FixedWing6DOF's `landing_gear` list.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct Wheel {
+    /// Where the uncompressed wheel touches, from the centre of gravity:
+    /// forward, right, down (m).
+    position_frd_m: [f64; 3],
+    /// Strut spring (N/m).
+    spring_n_per_m: f64,
+    /// Strut damper, compressing and rebounding (N·s/m).
+    damping_n_s_per_m: f64,
+    /// Peak side friction coefficient (JSBSim's `static_friction`).
+    static_friction: f64,
+    rolling_friction: f64,
+    /// Swivels freely to its direction of motion (JSBSim's max_steer 360).
+    #[serde(default)]
+    castered: bool,
+    /// Turns with the rudder, by the same angle.
+    #[serde(default)]
+    steered_by_rudder: bool,
+    /// Turns by the `wheel` input (radians, positive right).
+    #[serde(default)]
+    steered_by_input: bool,
+}
+
+impl Wheel {
+    fn position_m(&self) -> Vec3 {
+        Vec3::from(self.position_frd_m)
+    }
+}
+
+/// Check a mission's wheels.
+pub(super) fn check_wheels(wheels: &[Wheel]) -> Result<()> {
+    for wheel in wheels {
+        ensure!(
+            wheel.position_frd_m.iter().all(|value| value.is_finite())
+                && wheel.spring_n_per_m > 0.0
+                && wheel.damping_n_s_per_m >= 0.0
+                && wheel.static_friction >= 0.0
+                && wheel.rolling_friction >= 0.0,
+            "FixedWing6DOF landing_gear wheels need a finite position, a positive spring, \
+             and nonnegative damping and friction"
+        );
+        let steering = [
+            wheel.castered,
+            wheel.steered_by_rudder,
+            wheel.steered_by_input,
+        ];
+        ensure!(
+            steering.iter().filter(|set| **set).count() <= 1,
+            "a FixedWing6DOF wheel is castered, steered_by_rudder, or steered_by_input, \
+             not more than one"
+        );
+    }
+    Ok(())
+}
+
+/// Whether any wheel turns by the `wheel` input, so the model declares it.
+pub(super) fn needs_wheel_input(wheels: &[Wheel]) -> bool {
+    wheels.iter().any(|wheel| wheel.steered_by_input)
+}
+
+/// Refuse a motion step too long for the gear's dampers: with every wheel
+/// down, `dt × total damping / mass` must stay inside RK4's stable range. A
+/// basic check only; passing it does not guarantee a stable step.
+pub(super) fn check_step(wheels: &[Wheel], mass_kg: f64, dt_s: f64) -> Result<()> {
+    let damping_n_s_per_m: f64 = wheels.iter().map(|wheel| wheel.damping_n_s_per_m).sum();
+    let ratio = dt_s * damping_n_s_per_m / mass_kg;
+    ensure!(
+        ratio < RK4_STABLE_LIMIT,
+        "FixedWing6DOF landing gear needs a shorter motion step: dt {dt_s} s gives \
+         dt x damping / mass = {ratio:.2}, above RK4's stable {RK4_STABLE_LIMIT}; \
+         lower dt_s or raise motion_multiplier below {:.4} s",
+        RK4_STABLE_LIMIT * mass_kg / damping_n_s_per_m
+    );
+    Ok(())
+}
+
+/// The steering angles the wheels may follow, positive right.
+#[derive(Clone, Copy)]
+pub(super) struct Steering {
+    pub(super) rudder_rad: f64,
+    pub(super) wheel_rad: f64,
+}
+
+/// A wheel touching the ground, before friction.
+struct Contact<'a> {
+    wheel: &'a Wheel,
+    /// Upward ground normal, body (FRD) axes.
+    normal_frd: Vec3,
+    /// The wheel point's velocity, body (FRD) axes.
+    velocity_frd_mps: Vec3,
+    normal_force_n: f64,
+}
+
+/// The gear's force and moment about the centre of gravity, body (FRD) axes.
+pub(super) fn loads(
+    wheels: &[Wheel],
+    state: &AircraftState,
+    rotation: Quaternion,
+    terrain: Option<&Terrain>,
+    steering: Steering,
+    mass_kg: f64,
+    dt_s: f64,
+) -> (Vec3, Vec3) {
+    let mut contacts = Vec::new();
+    for wheel in wheels {
+        let offset_frd_m = wheel.position_m();
+        // The terrain is in the engine's east/north/up frame.
+        let position_m =
+            enu_from_ned(state.position_ned_m + rotation.rotate_body_to_world(offset_frd_m));
+        let (ground_z, normal_world) = match terrain {
+            Some(terrain) => (
+                terrain.ground_height(position_m.x, position_m.y),
+                terrain.ground_normal(position_m.x, position_m.y),
+            ),
+            None => (Terrain::OFF_GRID_Z, Vec3::z()),
+        };
+        let height_m = position_m.z - ground_z;
+        if height_m >= 0.0 {
+            continue;
+        }
+        let normal_frd = rotation.rotate_world_to_body(ned_from_enu(normal_world));
+        // How far the strut (the model down axis) points into the ground.
+        let strut_projection = -normal_frd.z;
+        if strut_projection <= 0.0 {
+            continue;
+        }
+        let velocity_frd_mps = state.velocity_frd_mps + state.rates_frd_radps.cross(&offset_frd_m);
+        let compression_m = -height_m * normal_world.z / strut_projection;
+        let max_speed_mps = compression_m / dt_s;
+        let compression_speed_mps = (-velocity_frd_mps.dot(&normal_frd) / strut_projection)
+            .clamp(-max_speed_mps, max_speed_mps);
+        let strut_force_n = (wheel.spring_n_per_m * compression_m
+            + wheel.damping_n_s_per_m * compression_speed_mps)
+            .max(0.0);
+        contacts.push(Contact {
+            wheel,
+            normal_frd,
+            velocity_frd_mps,
+            normal_force_n: strut_force_n / strut_projection,
+        });
+    }
+
+    let (mut force_frd_n, mut moment_frd_nm) = (Vec3::zeros(), Vec3::zeros());
+    let mass_share_kg = mass_kg / contacts.len().max(1) as f64;
+    for contact in &contacts {
+        let normal = contact.normal_frd;
+        let velocity = contact.velocity_frd_mps;
+        let along_ground = velocity - velocity.dot(&normal) * normal;
+        // Rolling direction: the wheel's heading on the ground, or for a
+        // castered wheel the way it is moving. Steering turns it about the
+        // model down axis, so a positive angle points it right.
+        let wheel_angle_rad = if contact.wheel.steered_by_rudder {
+            steering.rudder_rad
+        } else if contact.wheel.steered_by_input {
+            steering.wheel_rad
+        } else {
+            0.0
+        };
+        let pointing = Vec3::new(wheel_angle_rad.cos(), wheel_angle_rad.sin(), 0.0);
+        let heading = if contact.wheel.castered && along_ground.norm() > CASTER_MIN_SPEED_MPS {
+            along_ground
+        } else {
+            pointing - pointing.dot(&normal) * normal
+        };
+        let roll = heading.normalize();
+        let side = normal.cross(&roll);
+        let (roll_speed, side_speed) = (velocity.dot(&roll), velocity.dot(&side));
+        let load_n = contact.normal_force_n;
+        let roll_force_n = stopping_force(
+            roll_speed,
+            contact.wheel.rolling_friction * load_n,
+            mass_share_kg,
+            dt_s,
+        );
+        let side_force_n = if contact.wheel.castered {
+            0.0
+        } else {
+            let slip_deg = if along_ground.norm() > SLIP_MIN_SPEED_MPS {
+                side_speed.atan2(roll_speed.abs()).to_degrees()
+            } else {
+                0.0
+            };
+            let limit = side_friction(contact.wheel.static_friction, slip_deg).abs();
+            stopping_force(side_speed, limit * load_n, mass_share_kg, dt_s)
+        };
+        let force_n = load_n * normal + roll_force_n * roll + side_force_n * side;
+        force_frd_n += force_n;
+        moment_frd_nm += contact.wheel.position_m().cross(&force_n);
+    }
+    (force_frd_n, moment_frd_nm)
+}
+
+/// The force that stops `speed_mps` within one step for this wheel's share of
+/// the mass, up to `limit_n` either way.
+fn stopping_force(speed_mps: f64, limit_n: f64, mass_share_kg: f64, dt_s: f64) -> f64 {
+    (-mass_share_kg * speed_mps / dt_s).clamp(-limit_n, limit_n)
+}
+
+/// Side friction coefficient at a slip angle: Pacejka's Magic Formula with
+/// JSBSim's default factors, reaching `peak` at about 12 degrees of slip.
+fn side_friction(peak: f64, slip_deg: f64) -> f64 {
+    let stiff_slip = SLIP_STIFFNESS_PER_DEG * slip_deg;
+    peak * (SLIP_SHAPE * (stiff_slip - SLIP_CURVATURE * (stiff_slip - stiff_slip.atan())).atan())
+        .sin()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn side_friction_rises_to_its_peak_and_keeps_the_slip_sign() {
+        assert_eq!(side_friction(0.8, 0.0), 0.0);
+        let peak = (1..90)
+            .map(|deg| side_friction(0.8, f64::from(deg)))
+            .fold(0.0, f64::max);
+        assert!((peak - 0.8).abs() < 1e-3, "{peak}");
+        assert!(side_friction(0.8, -10.0) < 0.0);
+    }
+}

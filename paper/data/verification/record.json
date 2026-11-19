@@ -1,0 +1,1240 @@
+{
+ "tools": [
+  "Verus",
+  "Version: 0.2026.11.02.8bf68ee",
+  "Profile: release",
+  "Platform: macos_aarch64",
+  "Toolchain: 1.99.1-aarch64-apple-darwin (overridden by environment variable RUSTUP_TOOLCHAIN)"
+ ],
+ "passed": true,
+ "prove_seconds": 12.3,
+ "verified_items": 179,
+ "sources": {
+  "crates/core/src/common/loop_rate/proof.rs": "399f5a85aa593c7a71307ab9ab7c55f8184b3fc1d66b0fea7c9a5dfa685d74f6",
+  "crates/core/src/common/loop_rate.rs": "3ad570fb8ab8d6835806b126240709b73ec2f23d3f366ed19bebd3c6d4263587",
+  "crates/core/src/entity/plugin_stack/proof.rs": "a677606e17c5d21ae5eaa70236d8860f281d06e1ae402e94de464d71203b9009",
+  "crates/core/src/entity/plugin_stack.rs": "401a49d5c8af255c23de6dd64c4c53166a91c04fa484563bb25b74eb6b29b393",
+  "crates/core/src/entity/plugin_stack/agent.rs": "8f64f88fbebe653f480be00e6218bad6e323c289c4d1c54ed5602915e2a98dd3",
+  "crates/core/src/entity/proof.rs": "2446ad600dcc08cded807dd13b1385b814ec19f66185b493a985dbdd40c36d8e",
+  "crates/core/src/entity.rs": "3f802a23adc5ae59c54c719c32a0eb8f1b3efdf1d5a204a125539730170af989",
+  "crates/core/src/plugin/estimator.rs": "973eb2b6d8d9f0d1c2b807b9254d0e33a574dd70c89bde80d0c904c67f2e11a0",
+  "crates/core/src/plugin/interaction.rs": "7b93794e22e010677a5e4c40e217682da39b3864ae143f51e85a44c2298e3f35",
+  "crates/core/src/plugin/sensor/readings/proof.rs": "d701547b7297a4a3858a798cb4465e4d0dcd644d27e73b00e2c1c07816fb75f6",
+  "crates/core/src/plugin/sensor/readings.rs": "ebf10f1dd81869c6996c5ab5eaf042f7bf591401299166862735c88b2409e487",
+  "crates/core/src/plugin/sensor/readings/any_reading.rs": "bb2758c1f444e3ad6de8d1fff562e0a54b24add52764f8b6b3ae4b40efcee296",
+  "crates/core/src/plugin/sensor.rs": "c9e9d754b0923b85a33904105c0104bebde952f73628df01c28932cbf384b8ca",
+  "crates/core/src/ports/proof.rs": "cec5bcbe0853fa412ccf8747db4866d9931ffa9eb5a892423e120a6c86650eef",
+  "crates/core/src/ports.rs": "a119bb9c6efa0c641848074e395a7721ae839d424cd5a58d1e1afa8f7ac6ddb0",
+  "crates/core/src/proof.rs": "b4b7a098ee044d0160b95ddf4fbbda53bded76c6e4c21b356d4e2a3487c90181",
+  "crates/core/src/pubsub/messages/proof.rs": "b3780246d2785b951eb5e317d6ce37814d8fabaaf2adf6e688e6c45a736786db",
+  "crates/core/src/pubsub/messages.rs": "a9a5bef4ea4e9a842a060b3eff5d3caa3131ee507fd309aae4c408aa0d1bac06",
+  "crates/core/src/pubsub/messages/payload.rs": "2884470ac9fc25368d39f92d1e17d59e1434362ff3951769bf224d58d6befd17",
+  "crates/core/src/pubsub/routing/proof.rs": "f7b9b50920928a4aed055acdb2c1ded49d0852322a66bc8469ea4a461ee6c5a1",
+  "crates/core/src/pubsub/routing.rs": "b18b59ee4deed7cf68dd24797caf8061ad35f613113a678e4193366215bed511",
+  "crates/core/src/pubsub/routing/trace.rs": "3abe176b7d50e0763d9e84170ecbec9cc2ada3bfb993df1eef09342ba90869b9",
+  "crates/core/src/scenario.rs": "df76644ed9f3296171d4ed0e7c37462758e83598f44e3ad78d2a773985b7298a",
+  "crates/core/src/simulation/generation.rs": "a7a99e66f863d1e798d05215a8392450ddfcbabd1d0c22375b385f31d480842d",
+  "crates/core/src/simulation/proof.rs": "195d8fe85091c5ca69a65963345846b0bdb58c10fc3fbab347bf1f02051902c6",
+  "crates/core/src/simulation/spawning/proof.rs": "95c06bb6b140c147b43a656adec163f643bd7f0898069417895fd24747d54712",
+  "crates/core/src/simulation/spawning.rs": "afe49749dc11eea37d69c062801f18e627b934c186f992be25a961d24101ad42",
+  "crates/core/src/simulation/world_plugins/proof.rs": "5415a5d662f21f578a3b9ba832f054801d2aec9fd19f8668b5c75f6d7b8b5411",
+  "crates/core/src/simulation/world_plugins.rs": "0dbfabc3d671c78b4fd14b5583e0c10539b48213a7cd94364116d90954bd8a60",
+  "crates/core/src/simulation.rs": "058d8c8c922270c91c60ec84782c928b8433447af3cd6b29ed8b017256e426f5",
+  "crates/delivery/src/dispatcher/guard/proof.rs": "b45f05ddd6809e0340f5489f0c528270281cce906a4844a10a88884bbf60006c",
+  "crates/delivery/src/dispatcher/guard.rs": "e29108301112d3b302bad6b501d4a04ab7f19024884cdbcaca19d9e877713723",
+  "crates/delivery/src/messages/proof.rs": "c83cd01c1e07ad54d918908fa34e0aeba4e8f7940cc60216b9fbfa6048425421",
+  "crates/delivery/src/messages.rs": "5ad9a3fdcc62ba6c14a1e2492c166f6fed10a576b90259198c8e7a83b19e6f10"
+ },
+ "faults": [
+  {
+   "fault": "rate reload deleted",
+   "check": "proof",
+   "file": "common/loop_rate.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "elapsed time not reset when the plugin runs",
+   "check": "proof",
+   "file": "common/loop_rate.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "countdown zeroed for every rate",
+   "check": "proof",
+   "file": "common/loop_rate.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "due compared with a whole step instead of half",
+   "check": "proof",
+   "file": "common/loop_rate.rs",
+   "fails_as_required": true,
+   "seconds": 8.6
+  },
+  {
+   "fault": "reading an undeclared input is accepted",
+   "check": "proof",
+   "file": "ports.rs",
+   "fails_as_required": true,
+   "seconds": 8.8
+  },
+  {
+   "fault": "nonfinite output accepted",
+   "check": "proof",
+   "file": "ports.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "writing an undeclared output is accepted",
+   "check": "proof",
+   "file": "ports.rs",
+   "fails_as_required": true,
+   "seconds": 8.4
+  },
+  {
+   "fault": "a write to a seeded port is dropped",
+   "check": "proof",
+   "file": "ports.rs",
+   "fails_as_required": true,
+   "seconds": 8.2
+  },
+  {
+   "fault": "a write lands under another name",
+   "check": "proof",
+   "file": "ports.rs",
+   "fails_as_required": true,
+   "seconds": 8.3
+  },
+  {
+   "fault": "a plugin steps when it is not due",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "the plugin sees the tick's dt instead of the time since it last ran",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the plugin call is deleted",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the plugin's error is dropped",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "publish stores every reading in one slot",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
+   "seconds": 8.1
+  },
+  {
+   "fault": "a reading of another type reads as missing",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
+   "seconds": 8.1
+  },
+  {
+   "fault": "any fresh reading makes every sensor fresh",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "deliver marks no sensor fresh",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "deliver leaves the readings pending",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "clear_fresh keeps every sensor fresh",
+   "check": "proof",
+   "file": "plugin/sensor/readings.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "a subscription that changes type is accepted",
+   "check": "proof",
+   "file": "pubsub/messages.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "receive accepts a subscription of another type",
+   "check": "proof",
+   "file": "pubsub/messages.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "receive drains the wrong channel",
+   "check": "proof",
+   "file": "pubsub/messages.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "receive returns nothing and leaves the queue in place",
+   "check": "proof",
+   "file": "pubsub/messages.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "receive returns the queue out of order",
+   "check": "proof",
+   "file": "pubsub/messages.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "receive refuses every valid receive",
+   "check": "proof",
+   "file": "pubsub/messages.rs",
+   "fails_as_required": true,
+   "seconds": 8.1
+  },
+  {
+   "fault": "open drops the sender",
+   "check": "proof",
+   "file": "pubsub/messages.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "a delayed message is delivered early",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 8.1
+  },
+  {
+   "fault": "a delivered message keeps its scheduled time",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a due message stays on the schedule",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a message is scheduled for its sender",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a negative delay is accepted",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a publication on another network is taken",
+   "check": "proof",
+   "file": "pubsub/messages.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "the network's publications are taken out of order",
+   "check": "proof",
+   "file": "pubsub/messages.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "a mailbox's publications are never collected",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 8.1
+  },
+  {
+   "fault": "a subscriber is indexed in the wrong group",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 8.1
+  },
+  {
+   "fault": "every subscriber is indexed as the first mailbox",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "sequence numbers start at one",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "a world plugin's publication is routed within an entity",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "a publication of another type is offered",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a dropped link is scheduled",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "an endpoint's last mailbox receives",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "a message to a removed receiver is kept",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a network routes twice in a phase",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "scheduled messages are never delivered",
+   "check": "proof",
+   "file": "pubsub/routing.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "an active entity is skipped by the phase",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.4
+  },
+  {
+   "fault": "an entity runs the phase twice",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.3
+  },
+  {
+   "fault": "a phase error is dropped",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.7
+  },
+  {
+   "fault": "an inactive entity runs the phase",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.9
+  },
+  {
+   "fault": "the phase stops at the first error",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.8
+  },
+  {
+   "fault": "a dead entity is kept",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 17.0
+  },
+  {
+   "fault": "a live entity is removed",
+   "check": "proof",
+   "file": "entity.rs",
+   "fails_as_required": true,
+   "seconds": 8.4
+  },
+  {
+   "fault": "a close error is dropped",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 22.2
+  },
+  {
+   "fault": "a live entity is closed",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.2
+  },
+  {
+   "fault": "a dead entity is not closed",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.1
+  },
+  {
+   "fault": "two tick phases are swapped",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 8.8
+  },
+  {
+   "fault": "a tick phase is skipped",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 10.4
+  },
+  {
+   "fault": "a tick phase runs twice",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 20.5
+  },
+  {
+   "fault": "time advances twice",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 12.5
+  },
+  {
+   "fault": "time advances after a failed phase",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 10.5
+  },
+  {
+   "fault": "a failed phase's error is dropped",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 9.5
+  },
+  {
+   "fault": "contacts are taken before the interactions",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the frame is taken before the entities start",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.7
+  },
+  {
+   "fault": "a finished run keeps stepping",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 9.7
+  },
+  {
+   "fault": "a failed step is not marked finished",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 8.1
+  },
+  {
+   "fault": "motion runs before the controllers in a substep",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.0
+  },
+  {
+   "fault": "the first substep's controllers are told they follow motion",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 14.9
+  },
+  {
+   "fault": "no substep's controllers are told they follow motion",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.4
+  },
+  {
+   "fault": "the substep time does not advance",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.2
+  },
+  {
+   "fault": "the substeps run once",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.4
+  },
+  {
+   "fault": "a failed controllers phase does not stop the substeps",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.5
+  },
+  {
+   "fault": "the substeps run with the whole step",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.7
+  },
+  {
+   "fault": "belief follows truth before the first substep too",
+   "check": "proof",
+   "file": "entity.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "belief never follows truth between substeps",
+   "check": "proof",
+   "file": "entity.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "belief follows truth without a perfect state measurement",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the controllers are skipped after belief follows truth",
+   "check": "proof",
+   "file": "entity.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "the motion model's inputs are not recorded for localization",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "a motion input's value is not recorded",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the substep time is not recorded for localization",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "the motion model runs without the applied forces",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "the motion model runs without the terrain",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "the motion mailbox is not stamped with the substep time",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "a failed motion step is reported as Ok",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "a sensor not due is stepped",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "a sensor's mailbox is not stamped with the tick's time",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a sensor is told another sensor's name",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "a sensor is skipped",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a sensor runs twice",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a failing sensor's error is dropped",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "a sensor's readings are dropped before the next sensor runs",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the readings are not delivered before estimation",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "tracking is given localization's sources",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "tracking is given the truth as its pose",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "an estimate is made for the start of the step",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "the fresh marks are kept after estimation",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the commands are kept after estimation",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "the localization mailbox is not stamped with the phase time",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a failed localization step is reported as Ok",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "the autonomy phase runs the controllers",
+   "check": "proof",
+   "file": "entity.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "an agent slot is skipped",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "an agent slot runs twice",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a failing agent slot's error is dropped",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "the autonomy phase steps the controller slots",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the autonomy phase closes the stack",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the autonomy phase deactivates the entity",
+   "check": "proof",
+   "file": "entity.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "the port board is cleared before each agent slot",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "an agent's mailbox is not stamped with the phase time",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the autonomy phase steps its plugins on a copy of the port board",
+   "check": "proof",
+   "file": "entity/plugin_stack.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "an interaction's mailbox is not stamped",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the stop flag is raised on Applied",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "an interaction's stop request is dropped",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "a failed interaction is reported as Applied",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 8.1
+  },
+  {
+   "fault": "an interaction runs twice",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 8.4
+  },
+  {
+   "fault": "interactions are skipped before the start time",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 9.6
+  },
+  {
+   "fault": "the applied forces are kept",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 17.1
+  },
+  {
+   "fault": "the dead are left in play",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.3
+  },
+  {
+   "fault": "the interactions' stop request is dropped",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.0
+  },
+  {
+   "fault": "the mailbox is not stamped before the removals",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.3
+  },
+  {
+   "fault": "a dead entity stays active",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.6
+  },
+  {
+   "fault": "a removal is not announced",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.7
+  },
+  {
+   "fault": "a removal is announced on the wrong network",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.4
+  },
+  {
+   "fault": "a removal is announced as a generation",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.2
+  },
+  {
+   "fault": "a removal event names no entity",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.5
+  },
+  {
+   "fault": "a removal event is not recorded",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.8
+  },
+  {
+   "fault": "an entity with one health point is removed",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.9
+  },
+  {
+   "fault": "an inactive dead entity is removed again",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.1
+  },
+  {
+   "fault": "a publication is sent at time zero",
+   "check": "proof",
+   "file": "pubsub/messages.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "a publication's network and topic are swapped",
+   "check": "proof",
+   "file": "pubsub/messages.rs",
+   "fails_as_required": true,
+   "seconds": 8.5
+  },
+  {
+   "fault": "a cloned event forgets its entities",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 8.7
+  },
+  {
+   "fault": "an event's topic is another kind's",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "a metrics plugin's mailbox is not stamped",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "the metrics stop flag is raised on Applied",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 8.2
+  },
+  {
+   "fault": "a metrics plugin's stop request is dropped",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 8.8
+  },
+  {
+   "fault": "a failed metrics plugin is reported as Applied",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 8.8
+  },
+  {
+   "fault": "a metrics plugin runs twice",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 8.2
+  },
+  {
+   "fault": "metrics are skipped before the start time",
+   "check": "proof",
+   "file": "simulation/world_plugins.rs",
+   "fails_as_required": true,
+   "seconds": 8.8
+  },
+  {
+   "fault": "the sensor phase runs twice",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.6
+  },
+  {
+   "fault": "a failed sensor phase still returns the index",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.7
+  },
+  {
+   "fault": "the sensors' index is built from no entities",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.0
+  },
+  {
+   "fault": "the perfect detections are not kept for the entities that start next",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.3
+  },
+  {
+   "fault": "the estimators see the last tick's perfect detections",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.3
+  },
+  {
+   "fault": "the metrics' stop request is dropped",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.4
+  },
+  {
+   "fault": "the metrics see no teams",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.9
+  },
+  {
+   "fault": "an entity ID in use is reused",
+   "check": "proof",
+   "file": "simulation/spawning.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "a new entity's group is zero",
+   "check": "proof",
+   "file": "simulation/spawning.rs",
+   "fails_as_required": true,
+   "seconds": 8.3
+  },
+  {
+   "fault": "a new entity is born at time zero",
+   "check": "proof",
+   "file": "simulation/spawning.rs",
+   "fails_as_required": true,
+   "seconds": 8.3
+  },
+  {
+   "fault": "a new entity's team is not recorded",
+   "check": "proof",
+   "file": "simulation/spawning.rs",
+   "fails_as_required": true,
+   "seconds": 8.2
+  },
+  {
+   "fault": "a generation is announced as a removal",
+   "check": "proof",
+   "file": "simulation/spawning.rs",
+   "fails_as_required": true,
+   "seconds": 8.1
+  },
+  {
+   "fault": "the mailbox is not stamped before the announcement",
+   "check": "proof",
+   "file": "simulation/spawning.rs",
+   "fails_as_required": true,
+   "seconds": 7.8
+  },
+  {
+   "fault": "the generation event is not recorded",
+   "check": "proof",
+   "file": "simulation/spawning.rs",
+   "fails_as_required": true,
+   "seconds": 8.3
+  },
+  {
+   "fault": "a built entity is dropped",
+   "check": "proof",
+   "file": "simulation/spawning.rs",
+   "fails_as_required": true,
+   "seconds": 8.1
+  },
+  {
+   "fault": "a batch builds one entity too few",
+   "check": "proof",
+   "file": "simulation/spawning.rs",
+   "fails_as_required": true,
+   "seconds": 8.1
+  },
+  {
+   "fault": "a failed request's error is dropped",
+   "check": "proof",
+   "file": "simulation/spawning.rs",
+   "fails_as_required": true,
+   "seconds": 8.6
+  },
+  {
+   "fault": "the schedules' batches are built before the requests",
+   "check": "proof",
+   "file": "simulation/spawning.rs",
+   "fails_as_required": true,
+   "seconds": 7.9
+  },
+  {
+   "fault": "an entity is started twice",
+   "check": "proof",
+   "file": "entity.rs",
+   "fails_as_required": true,
+   "seconds": 8.2
+  },
+  {
+   "fault": "an entity is never marked started",
+   "check": "proof",
+   "file": "entity.rs",
+   "fails_as_required": true,
+   "seconds": 8.0
+  },
+  {
+   "fault": "a failing start's error is dropped",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.1
+  },
+  {
+   "fault": "the tick is not moved on",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.0
+  },
+  {
+   "fault": "time accumulates instead of being counted",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.1
+  },
+  {
+   "fault": "time is counted from zero instead of the run's start",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 16.1
+  },
+  {
+   "fault": "the end condition is not refreshed",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 15.8
+  },
+  {
+   "fault": "scoring runs after a failed estimation",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 9.0
+  },
+  {
+   "fault": "the dead are removed after a failed scoring",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 11.3
+  },
+  {
+   "fault": "a failed estimation is run again",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 9.3
+  },
+  {
+   "fault": "failed interactions are run again",
+   "check": "proof",
+   "file": "simulation.rs",
+   "fails_as_required": true,
+   "seconds": 6.8
+  },
+  {
+   "fault": "the guard counts every hub's vehicles",
+   "check": "proof",
+   "file": "dispatcher/guard.rs",
+   "fails_as_required": true,
+   "seconds": 10.7
+  },
+  {
+   "fault": "the guard ignores the class",
+   "check": "proof",
+   "file": "dispatcher/guard.rs",
+   "fails_as_required": true,
+   "seconds": 10.6
+  },
+  {
+   "fault": "a vehicle already told to move counts as idle",
+   "check": "proof",
+   "file": "dispatcher/guard.rs",
+   "fails_as_required": true,
+   "seconds": 10.7
+  },
+  {
+   "fault": "a vehicle carrying a request is free",
+   "check": "proof",
+   "file": "messages.rs",
+   "fails_as_required": true,
+   "seconds": 10.6
+  },
+  {
+   "fault": "the guard keeps a third instead of half",
+   "check": "proof",
+   "file": "dispatcher/guard.rs",
+   "fails_as_required": true,
+   "seconds": 10.4
+  },
+  {
+   "fault": "the stock guard ignores what leaves",
+   "check": "proof",
+   "file": "dispatcher/guard.rs",
+   "fails_as_required": true,
+   "seconds": 10.4
+  }
+ ]
+}

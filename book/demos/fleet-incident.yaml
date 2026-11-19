@@ -1,0 +1,23 @@
+# Eighty minutes of the incident day on 16 hubs, at 60 times speed: the
+# couriers at work before, during, and after the first mass-casualty surge.
+# The run stops at the end of the interval, since the rest of the day is not
+# shown; the hours before it are the same as on the full day. Every
+# twentieth 0.1 s step is kept, thirty poses a video second.
+name: fleet-incident
+source: crates/delivery/missions/incident.yaml
+overrides: {run.end_s: "7800"}
+preset: fleet
+start_s: 3000
+end_s: 7800
+every: 20
+speed: 60
+featured: []
+highlights:
+  - {label: "hub 6", from_s: 3600, to_s: 7200, radius_m: 2500}
+  - {label: "hub 11", from_s: 3600, to_s: 7200, radius_m: 2500}
+  - {label: "hub 5", from_s: 5400, to_s: 7800, radius_m: 2500}
+captions:
+  - {at_s: 3000, text: "Sixteen hubs 7 km apart fly blood to the clinics (grey) and hospitals (white) around them, a request every five minutes per hub; the faint lines join each site to its hub. The couriers are the blue points. Minute 50 of the day, at sixty times speed."}
+  - {at_s: 3600, text: "Minute 60: a mass-casualty incident at hubs 6 and 11 (ringed). Their hospitals send trauma requests beyond what those hubs can fly alone, so the fleet manager lends them aircraft from hubs with spare."}
+  - {at_s: 5400, text: "Minute 90: a second surge hits hub 5, the large hub beside hub 6, which may already have lent aircraft. Each help decision now weighs a backlog of its own."}
+  - {at_s: 6600, text: "Minute 110: the first surges end. Lent aircraft fly home and the backlog at the asking hubs drains."}

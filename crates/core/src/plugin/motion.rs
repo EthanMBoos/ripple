@@ -1,0 +1,95 @@
+//! Motion models: the plugin interface, its context, and the built-in dynamics.
+use crate::{
+    KinematicState, Vec3,
+    common::Terrain,
+    drawing::Drawing,
+    plugin::{EntityInfo, PluginParams, StepTime},
+    ports::{PluginIo, Ports},
+    pubsub::Messages,
+};
+use anyhow::Result;
+use serde::de::DeserializeOwned;
+
+pub struct MotionContext<'a> {
+    pub messages: &'a mut Messages,
+    pub entity: EntityInfo,
+    pub time: StepTime,
+    pub truth: &'a mut KinematicState,
+    /// The mission's ground heights, if it names terrain. FixedWing6DOF's
+    /// landing gear reads the ground here (`Terrain::ground_height` and
+    /// `ground_normal`); without terrain it is flat at `z = 0`.
+    pub terrain: Option<&'a Terrain>,
+    /// Forces interactions applied to this entity in the last interaction
+    /// phase (`Entity::apply_force`), in the order applied. They act on every
+    /// motion step of this tick. No built-in model reads them.
+    pub applied_forces_world_n: &'a [Vec3],
+}
+
+pub trait MotionModel: Send {
+    // The build half; see the module doc in `plugin.rs`.
+    /// Immutable, validated configuration, parsed once per mission and shared
+    /// by every instance.
+    type Config: DeserializeOwned + Send + Sync + 'static
+    where
+        Self: Sized;
+    /// Parses the mission's parameters; override it to check them.
+    fn configure(params: &PluginParams) -> Result<Self::Config>
+    where
+        Self: Sized,
+    {
+        params.parse()
+    }
+    fn new(config: &Self::Config) -> Self
+    where
+        Self: Sized;
+    fn ports(_config: &Self::Config) -> Ports
+    where
+        Self: Sized,
+    {
+        Ports::default()
+    }
+
+    fn initialize(&mut self, _context: &mut MotionContext) -> Result<()> {
+        Ok(())
+    }
+    fn step(&mut self, context: &mut MotionContext, io: &mut PluginIo) -> Result<()>;
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
+    /// Shapes this plugin draws in the viewer for the whole run, asked once
+    /// when it starts: see `Drawing`. Empty unless overridden.
+    fn fixed_drawings(&self) -> Vec<Drawing> {
+        Vec::new()
+    }
+    /// Shapes that come and go, asked every tick at `time_s`. Empty unless
+    /// overridden.
+    fn drawings(&self, _time_s: f64) -> Vec<Drawing> {
+        Vec::new()
+    }
+}
+
+// The aircraft state the fixed-wing models integrate, in the aerospace frames.
+#[path = "motion/aircraft_state.rs"]
+mod aircraft_state;
+
+// Built-ins selected by missions.
+#[path = "motion/aerosonde/aerosonde.rs"]
+mod aerosonde;
+// Each model's config has a public `advance`, one step of the model outside
+// the engine, so a plugin can predict with the code the motion phase runs.
+// FixedWing6DOF's is still to come.
+pub use aerosonde::{Aerosonde, AerosondeConfig, AerosondeControl};
+#[path = "motion/fixed_wing_6dof/fixed_wing_6dof.rs"]
+mod fixed_wing_6dof;
+pub use fixed_wing_6dof::FixedWing6Dof;
+pub(crate) use fixed_wing_6dof::FixedWingAirframe;
+#[path = "motion/multirotor/multirotor.rs"]
+mod multirotor;
+pub(crate) use multirotor::{AirframeName, AirframeOverrides, RotorParams};
+pub use multirotor::{Multirotor, MultirotorAirframe, MultirotorConfig, Rotor, RotorDirection};
+#[path = "motion/simple_aircraft/simple_aircraft.rs"]
+mod simple_aircraft;
+pub use simple_aircraft::{SimpleAircraft, SimpleAircraftConfig, SimpleAircraftControl};
+#[path = "motion/single_integrator/single_integrator.rs"]
+mod single_integrator;
+pub use single_integrator::{SingleIntegrator, SingleIntegratorConfig};

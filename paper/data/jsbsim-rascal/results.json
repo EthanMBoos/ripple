@@ -1,0 +1,701 @@
+{
+  "passed": true,
+  "jsbsim": "jsbsim==1.3.3",
+  "jsbsim_version": "1.3.3 [GitHub build 2002/commit 66f7fafc07fe13e7ede9db20873030fed2881713] Oct 16 2026 00:36:17",
+  "ardupilot_commit": "5628b8d2305db00fcc4a93aa2a8c386f5516ef6a",
+  "ardupilot_files": {
+    "Rascal.xml": "01e0e0962ef62c9d3a216d7214dc3355b8a8f85b4886e97b5eb558967d98f11d",
+    "Engines/Zenoah_G-26A.xml": "72d265659bcab24ba7b959c98b6cd4da2b04ed134745c6201a0126b44f84d150",
+    "Engines/18x8.xml": "0689018b7621e302331bb718856ffb9951f50b75f8ea53035eb7f74ebf04ed26"
+  },
+  "grid": {
+    "samples": 378,
+    "errors": {
+      "jsbsim_form": {
+        "force": 8.538760727871904e-16,
+        "moment": 3.273771428468772e-17
+      },
+      "limit": 1e-12,
+      "preset": {
+        "force": 0.04000000000000027,
+        "moment": 0.0012852154597707134
+      },
+      "samples": 378,
+      "terms": {
+        "alpha_dot": 0.029423906178610258,
+        "constant_yaw": 0.0007000000000000003,
+        "mach": 0.0010002694178028965,
+        "reference_point": 0.012382915143981297,
+        "sideslip_drag": 0.028846153846155072,
+        "signed_elevator_drag": 0.040000000000000015,
+        "wind_to_body": 0.027947571076463378
+      }
+    },
+    "fixture_largest_relative_difference": 0.0
+  },
+  "glides": {
+    "held": {
+      "trim": {
+        "alpha_rad": 0.0071768571576192,
+        "elevator_rad": -0.05958190092461832,
+        "gamma_rad": -0.0939563514259702,
+        "theta_rad": -0.08677949426835088,
+        "iterations": 4,
+        "residual": 1.4210854715202004e-13
+      },
+      "controls": {
+        "throttle": 0.0,
+        "elevator_rad": -0.05958190092461832,
+        "aileron_rad": 0.0,
+        "rudder_rad": 0.0
+      },
+      "vehicle": {
+        "mass_kg": 6.577089274324543,
+        "inertia_slug_ft2": [
+          [
+            1.960082815452557,
+            0.0,
+            -6.843056086570756e-05
+          ],
+          [
+            0.0,
+            1.5600832798805415,
+            0.0
+          ],
+          [
+            -6.843056086570756e-05,
+            0.0,
+            1.9100004644279847
+          ]
+        ],
+        "center_of_mass_structural_in": [
+          36.39586206896552,
+          0.0,
+          3.390301724137931
+        ],
+        "aero_reference_structural_in": [
+          37.4,
+          0.0,
+          0.0
+        ],
+        "air_density_kgpm3": 1.1901168636526112,
+        "speed_of_sound_mps": 339.1401845758834,
+        "gravity_mps2": 9.779355385694343,
+        "gravitational_attraction_mps2": 9.813272686919555
+      },
+      "air_density_end_kgpm3": 1.1912359154677512,
+      "preset": {
+        "samples_compared": 5001,
+        "largest": {
+          "position_m": 4.797832593512333,
+          "velocity_mps": 1.7784889161523945,
+          "attitude_rad": 0.08904787935314751
+        },
+        "position_error_at_1s_m": 0.2189673155575354,
+        "position_error_at_2s_m": 0.8749920463069301,
+        "position_error_at_3s_m": 1.9060645946896724,
+        "position_error_at_4s_m": 3.2398869175670817,
+        "position_error_at_5s_m": 4.797832593512333
+      },
+      "jsbsim_form": {
+        "samples_compared": 5001,
+        "largest": {
+          "position_m": 0.02001647317887855,
+          "velocity_mps": 0.009513444826443663,
+          "attitude_rad": 0.0002958114849351823
+        },
+        "position_error_at_1s_m": 0.0010047173105424971,
+        "position_error_at_2s_m": 0.0025938155924650663,
+        "position_error_at_3s_m": 0.005801053897665536,
+        "position_error_at_4s_m": 0.01144662074441263,
+        "position_error_at_5s_m": 0.02001647317887855
+      },
+      "sensitivities": {
+        "jsbsim_step": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 0.0001636145302429414,
+            "velocity_mps": 0.00011848661284764469,
+            "attitude_rad": 1.5455656730889444e-05
+          },
+          "position_error_at_1s_m": 4.167079901342674e-05,
+          "position_error_at_2s_m": 7.992514667606458e-05,
+          "position_error_at_3s_m": 0.00011575321170415527,
+          "position_error_at_4s_m": 0.00014356656342254405,
+          "position_error_at_5s_m": 0.0001636145302429414
+        },
+        "ripple_step": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 7.390137553953083e-12,
+            "velocity_mps": 9.919725364997822e-13,
+            "attitude_rad": 6.17284001691587e-14
+          },
+          "position_error_at_1s_m": 2.7868515210891495e-12,
+          "position_error_at_2s_m": 6.368399360197756e-13,
+          "position_error_at_3s_m": 6.482785156991864e-12,
+          "position_error_at_4s_m": 1.538679394523095e-12,
+          "position_error_at_5s_m": 1.6597001121526521e-12
+        },
+        "air_density_rise": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 0.045035647640189136,
+            "velocity_mps": 0.01590202336915022,
+            "attitude_rad": 0.00039585674653963565
+          },
+          "position_error_at_1s_m": 0.002145811028726769,
+          "position_error_at_2s_m": 0.008324249937820462,
+          "position_error_at_3s_m": 0.018104066588587948,
+          "position_error_at_4s_m": 0.03067981288825526,
+          "position_error_at_5s_m": 0.045035647640189136
+        }
+      }
+    },
+    "elevator": {
+      "trim": {
+        "alpha_rad": 0.0071768571576192,
+        "elevator_rad": -0.05958190092461832,
+        "gamma_rad": -0.0939563514259702,
+        "theta_rad": -0.08677949426835088,
+        "iterations": 4,
+        "residual": 1.4210854715202004e-13
+      },
+      "controls": {
+        "throttle": 0.0,
+        "elevator_rad": -0.009581900924618317,
+        "aileron_rad": 0.0,
+        "rudder_rad": 0.0
+      },
+      "vehicle": {
+        "mass_kg": 6.577089274324543,
+        "inertia_slug_ft2": [
+          [
+            1.960082815452557,
+            0.0,
+            -6.843056086570756e-05
+          ],
+          [
+            0.0,
+            1.5600832798805415,
+            0.0
+          ],
+          [
+            -6.843056086570756e-05,
+            0.0,
+            1.9100004644279847
+          ]
+        ],
+        "center_of_mass_structural_in": [
+          36.39586206896552,
+          0.0,
+          3.390301724137931
+        ],
+        "aero_reference_structural_in": [
+          37.4,
+          0.0,
+          0.0
+        ],
+        "air_density_kgpm3": 1.1901168636526112,
+        "speed_of_sound_mps": 339.1401845758834,
+        "gravity_mps2": 9.779355385694343,
+        "gravitational_attraction_mps2": 9.813272686919555
+      },
+      "air_density_end_kgpm3": 1.1942873654049528,
+      "preset": {
+        "samples_compared": 5001,
+        "largest": {
+          "position_m": 0.9764196144106743,
+          "velocity_mps": 0.4376944183502999,
+          "attitude_rad": 0.015871554078062733
+        },
+        "position_error_at_1s_m": 0.03473383692923316,
+        "position_error_at_2s_m": 0.14295111636209418,
+        "position_error_at_3s_m": 0.32767420449520984,
+        "position_error_at_4s_m": 0.6006262921936331,
+        "position_error_at_5s_m": 0.9764196144106743
+      },
+      "jsbsim_form": {
+        "samples_compared": 5001,
+        "largest": {
+          "position_m": 0.0354504084840045,
+          "velocity_mps": 0.025575959092219134,
+          "attitude_rad": 0.0006252831269097925
+        },
+        "position_error_at_1s_m": 0.0010805198027994528,
+        "position_error_at_2s_m": 0.002689680860469617,
+        "position_error_at_3s_m": 0.006610956840796119,
+        "position_error_at_4s_m": 0.016141998486793204,
+        "position_error_at_5s_m": 0.0354504084840045
+      },
+      "sensitivities": {
+        "jsbsim_step": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 0.002815372571620421,
+            "velocity_mps": 0.0011678464932338838,
+            "attitude_rad": 3.533464544869247e-05
+          },
+          "position_error_at_1s_m": 9.372875942954744e-05,
+          "position_error_at_2s_m": 0.0003645978006239679,
+          "position_error_at_3s_m": 0.0009143641961977904,
+          "position_error_at_4s_m": 0.0017502725250835667,
+          "position_error_at_5s_m": 0.002815372571620421
+        },
+        "ripple_step": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 9.00302399538424e-09,
+            "velocity_mps": 2.206754515261948e-09,
+            "attitude_rad": 9.377032483826042e-11
+          },
+          "position_error_at_1s_m": 1.7213404248433571e-09,
+          "position_error_at_2s_m": 3.692365864421629e-09,
+          "position_error_at_3s_m": 5.5331255768998094e-09,
+          "position_error_at_4s_m": 7.315976452850088e-09,
+          "position_error_at_5s_m": 9.00302399538424e-09
+        },
+        "air_density_rise": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 0.15089001040760794,
+            "velocity_mps": 0.057562598640961936,
+            "attitude_rad": 0.0011449189476748778
+          },
+          "position_error_at_1s_m": 0.006209632511942496,
+          "position_error_at_2s_m": 0.024485374265852237,
+          "position_error_at_3s_m": 0.055346796330823414,
+          "position_error_at_4s_m": 0.098026491125485,
+          "position_error_at_5s_m": 0.15089001040760794
+        }
+      }
+    },
+    "aileron": {
+      "trim": {
+        "alpha_rad": 0.0071768571576192,
+        "elevator_rad": -0.05958190092461832,
+        "gamma_rad": -0.0939563514259702,
+        "theta_rad": -0.08677949426835088,
+        "iterations": 4,
+        "residual": 1.4210854715202004e-13
+      },
+      "controls": {
+        "throttle": 0.0,
+        "elevator_rad": -0.05958190092461832,
+        "aileron_rad": 0.1,
+        "rudder_rad": 0.0
+      },
+      "vehicle": {
+        "mass_kg": 6.577089274324543,
+        "inertia_slug_ft2": [
+          [
+            1.960082815452557,
+            0.0,
+            -6.843056086570756e-05
+          ],
+          [
+            0.0,
+            1.5600832798805415,
+            0.0
+          ],
+          [
+            -6.843056086570756e-05,
+            0.0,
+            1.9100004644279847
+          ]
+        ],
+        "center_of_mass_structural_in": [
+          36.39586206896552,
+          0.0,
+          3.390301724137931
+        ],
+        "aero_reference_structural_in": [
+          37.4,
+          0.0,
+          0.0
+        ],
+        "air_density_kgpm3": 1.1901168636526112,
+        "speed_of_sound_mps": 339.1401845758834,
+        "gravity_mps2": 9.779355385694343,
+        "gravitational_attraction_mps2": 9.813272686919555
+      },
+      "air_density_end_kgpm3": 1.1946437274382444,
+      "preset": {
+        "samples_compared": 5001,
+        "largest": {
+          "position_m": 3.988958144241119,
+          "velocity_mps": 1.6413218416495563,
+          "attitude_rad": 0.06553136960855976
+        },
+        "position_error_at_1s_m": 0.21751295354035752,
+        "position_error_at_2s_m": 0.8553858854318394,
+        "position_error_at_3s_m": 1.8075059002076932,
+        "position_error_at_4s_m": 2.922371375772146,
+        "position_error_at_5s_m": 3.988958144241119
+      },
+      "jsbsim_form": {
+        "samples_compared": 5001,
+        "largest": {
+          "position_m": 0.02454248144008582,
+          "velocity_mps": 0.019658095538945996,
+          "attitude_rad": 0.00047994335917955766
+        },
+        "position_error_at_1s_m": 0.0011062013504739632,
+        "position_error_at_2s_m": 0.0026384748072286798,
+        "position_error_at_3s_m": 0.005373329229912238,
+        "position_error_at_4s_m": 0.011229332341159306,
+        "position_error_at_5s_m": 0.02454248144008582
+      },
+      "sensitivities": {
+        "jsbsim_step": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 0.007616334792633052,
+            "velocity_mps": 0.0028474481775949663,
+            "attitude_rad": 0.00015002691138921165
+          },
+          "position_error_at_1s_m": 0.00044708169596229447,
+          "position_error_at_2s_m": 0.0013919957407075123,
+          "position_error_at_3s_m": 0.002935930520893005,
+          "position_error_at_4s_m": 0.005147405919719573,
+          "position_error_at_5s_m": 0.007616334792633052
+        },
+        "ripple_step": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 2.8201050049908597e-09,
+            "velocity_mps": 1.1328703606197336e-09,
+            "attitude_rad": 5.681366488374806e-11
+          },
+          "position_error_at_1s_m": 3.2969389030502984e-12,
+          "position_error_at_2s_m": 3.297100766090703e-10,
+          "position_error_at_3s_m": 1.3898172495640235e-09,
+          "position_error_at_4s_m": 2.2796351428076918e-09,
+          "position_error_at_5s_m": 2.8201050049908597e-09
+        },
+        "air_density_rise": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 0.15797333945242584,
+            "velocity_mps": 0.05068042831883348,
+            "attitude_rad": 0.0011671323832063152
+          },
+          "position_error_at_1s_m": 0.008555281815316722,
+          "position_error_at_2s_m": 0.03231558194585881,
+          "position_error_at_3s_m": 0.06788057080552613,
+          "position_error_at_4s_m": 0.11080081040221822,
+          "position_error_at_5s_m": 0.15797333945242584
+        }
+      }
+    },
+    "rudder": {
+      "trim": {
+        "alpha_rad": 0.0071768571576192,
+        "elevator_rad": -0.05958190092461832,
+        "gamma_rad": -0.0939563514259702,
+        "theta_rad": -0.08677949426835088,
+        "iterations": 4,
+        "residual": 1.4210854715202004e-13
+      },
+      "controls": {
+        "throttle": 0.0,
+        "elevator_rad": -0.05958190092461832,
+        "aileron_rad": 0.0,
+        "rudder_rad": 0.1
+      },
+      "vehicle": {
+        "mass_kg": 6.577089274324543,
+        "inertia_slug_ft2": [
+          [
+            1.960082815452557,
+            0.0,
+            -6.843056086570756e-05
+          ],
+          [
+            0.0,
+            1.5600832798805415,
+            0.0
+          ],
+          [
+            -6.843056086570756e-05,
+            0.0,
+            1.9100004644279847
+          ]
+        ],
+        "center_of_mass_structural_in": [
+          36.39586206896552,
+          0.0,
+          3.390301724137931
+        ],
+        "aero_reference_structural_in": [
+          37.4,
+          0.0,
+          0.0
+        ],
+        "air_density_kgpm3": 1.1901168636526112,
+        "speed_of_sound_mps": 339.1401845758834,
+        "gravity_mps2": 9.779355385694343,
+        "gravitational_attraction_mps2": 9.813272686919555
+      },
+      "air_density_end_kgpm3": 1.1915370518998143,
+      "preset": {
+        "samples_compared": 5001,
+        "largest": {
+          "position_m": 4.652642130106285,
+          "velocity_mps": 1.7255799021810923,
+          "attitude_rad": 0.08121138427678387
+        },
+        "position_error_at_1s_m": 0.2170835492783237,
+        "position_error_at_2s_m": 0.8597746298562257,
+        "position_error_at_3s_m": 1.8605541265403525,
+        "position_error_at_4s_m": 3.1494096271424934,
+        "position_error_at_5s_m": 4.652642130106285
+      },
+      "jsbsim_form": {
+        "samples_compared": 5001,
+        "largest": {
+          "position_m": 0.018618765476542183,
+          "velocity_mps": 0.008942326286145396,
+          "attitude_rad": 0.000252543936302807
+        },
+        "position_error_at_1s_m": 0.0010961672231146406,
+        "position_error_at_2s_m": 0.0026706209837247794,
+        "position_error_at_3s_m": 0.005601942946706552,
+        "position_error_at_4s_m": 0.010696180077346908,
+        "position_error_at_5s_m": 0.018618765476542183
+      },
+      "sensitivities": {
+        "jsbsim_step": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 0.001391665362310021,
+            "velocity_mps": 0.0007690210269671101,
+            "attitude_rad": 9.785526719152671e-05
+          },
+          "position_error_at_1s_m": 0.00028209811981056316,
+          "position_error_at_2s_m": 0.0005749754646117414,
+          "position_error_at_3s_m": 0.0008730743490547892,
+          "position_error_at_4s_m": 0.0011421890659050248,
+          "position_error_at_5s_m": 0.001391665362310021
+        },
+        "ripple_step": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 1.6704928097118057e-11,
+            "velocity_mps": 2.1318204871037675e-12,
+            "attitude_rad": 3.455014052633487e-13
+          },
+          "position_error_at_1s_m": 1.6557646919876997e-12,
+          "position_error_at_2s_m": 6.3698542763801165e-12,
+          "position_error_at_3s_m": 9.266741726948921e-12,
+          "position_error_at_4s_m": 1.428952595976602e-11,
+          "position_error_at_5s_m": 1.6529227850545304e-11
+        },
+        "air_density_rise": {
+          "samples_compared": 5001,
+          "largest": {
+            "position_m": 0.057056347841857674,
+            "velocity_mps": 0.02013018267799706,
+            "attitude_rad": 0.0004716019552315487
+          },
+          "position_error_at_1s_m": 0.00274186995273179,
+          "position_error_at_2s_m": 0.010603895089538044,
+          "position_error_at_3s_m": 0.022998563479282554,
+          "position_error_at_4s_m": 0.03889915688824479,
+          "position_error_at_5s_m": 0.057056347841857674
+        }
+      }
+    }
+  },
+  "source": {
+    "source_sha256": "f54848cb5f529e7ebd7a44312f46ca90250e3e8f03ffe8b5a36a9c2ed78c79d7",
+    "files": {
+      "Cargo.lock": "bf0d3d1a1d33e690a12197d69206f6c2c5fbdd2090f0277a2cd26a1f433528f6",
+      "Cargo.toml": "9b07eee579ef0108f7b9955f92e9aa8c9529bfe426ee5cc5f29882e5dc4a1001",
+      "crates/ardupilot/Cargo.toml": "2a48d141823532739d08d58ac5cf5b4effc6694c037ea65e3defce6a7b86e6d0",
+      "crates/ardupilot/missions/rascal-runway.yaml": "79e82c214696d1aaa0c2a0515adca196726ed5512d21d8849b2740fc017829b9",
+      "crates/ardupilot/missions/rascal-sitl-pair.yaml": "2e4be45ec049e3383c06736ddefaf707a4f4251d4be9f5c9e9321f365bab8824",
+      "crates/ardupilot/missions/rascal-sitl.yaml": "8063fcf82bfb9f6e426232a0a570a90fb696457644eabf2baae9a27fbd9434bc",
+      "crates/ardupilot/src/ardupilot_bridge.rs": "c4689cd989424d7c83fb6777fbd70aec8a9894967fd2957f2ea07f196a1597b2",
+      "crates/ardupilot/src/json_sitl.rs": "ed21b6fbaf8de7de6b9bec12e3c4c67c5fb29c0685967661de62f816b826a85f",
+      "crates/ardupilot/src/lib.rs": "3a908025d815f45689a648bc6c0f09a62e1eafc592309769630ffd2639884371",
+      "crates/ardupilot/src/sitl_launcher.rs": "d962ba28e051b119a64dfe22f84469a0db276443befba93034833f481a1e507f",
+      "crates/ardupilot/src/sitl_state.rs": "da45233cf370f737752c20994cfb8ca8795b46d87a8ca0d077a519261dca47d5",
+      "crates/ardupilot/tests/lockstep.rs": "a11f492de1b88cb263d2722c7ea003284e1c369d5de5329b43584315e45cc826",
+      "crates/cli/Cargo.toml": "5f940d7fd3379b46c69915666def5fd34e11b193b7aa31bc1d6b9d05acc0fd0e",
+      "crates/cli/src/lib.rs": "dd0ce1de6c1d72649cb632ab604bd453d82dacca8e9d374a026097d698d08d58",
+      "crates/cli/src/main.rs": "df95d5964fe057b37a08fbec94e1be99a1cb19033601a0be20abab6d4aa629ab",
+      "crates/cli/src/replay.rs": "8b5bcc0012aff584519e33815a046f536f910107dbd003899bfa3145643392ff",
+      "crates/cli/src/run/output/tests.rs": "6f96857399dde983b6309bf5d82efd54ab37e722bf07f1d56c2b526de0eb15a5",
+      "crates/cli/src/run/output.rs": "7c15d767bd163ccdcbdd6776301bf0e000e8253884aeb2b5b988ec2891179bd6",
+      "crates/cli/src/run.rs": "d46cb7ccd3d66e500df8625f4304057cb8652d84bdf108bd1d275f3fef94b0df",
+      "crates/cli/src/sweep.rs": "b4afbd2874e8b08e587f6c469795588765d471b0752906ac53f4920ed3a341ff",
+      "crates/cli/src/viewer/blueprint.rs": "7b7bf379c812638f567f29ab6b5d5c69b3bd169abf566087c2e2a43d23981765",
+      "crates/cli/src/viewer/map.rs": "23afe901c794da7de7b7fe2929caef63ea7651df67ba8f6a3dd2c09307a8580c",
+      "crates/cli/src/viewer/terrain.rs": "114e47753cd025ec928e49b40f0ee3a2452266b3de2d07210611f8fc8c7d02de",
+      "crates/cli/src/viewer/trails.rs": "455d923ab02fdf9f1b5baab0efa226bc3208d932080131e9feba564211e238ac",
+      "crates/cli/src/viewer.rs": "cfdc511b4098a884320da41f387d8222f656fe0d3307e2115afea8bc069243c2",
+      "crates/cli/tests/replay.rs": "cdd1cf9b3dc9e7ee8d7696e1179f767d72f4d16adde793c31a1a560b31762c74",
+      "crates/cli/tests/run_output.rs": "6073698a1b0a60509b94bb869bbc6da8e93c536b6b681ff4a37b02b86fefcc81",
+      "crates/cli/tests/rust_runner.rs": "d4b6fa9c6481b321b84ecbecf9095fc0b9f8bf5f5c57f97e1cc8e58fd2c9d9ad",
+      "crates/cli/tests/sweep.rs": "ef74f0ac78965bfdc99b3f7e0ec9fca39afa2108dd52f9329675dd2333e3c0be",
+      "crates/core/Cargo.toml": "7b7fb760093227816e0e4800f9e846975a471de13818a1043c22801b983c45e7",
+      "crates/core/proto/record.desc": "6870195cf42c840426a23f1086539f5666d8fbaf04c128cef9c76d33a6939fb3",
+      "crates/core/proto/record.proto": "2c0228fe3e5e25f5512b8e58917f88195ac494848e2e3e2c7d2659846cdd96e0",
+      "crates/core/src/common/loop_rate.rs": "2fbbd6d825835ace27e084be67ec69cdccf5a16491635aeb80d83740a3c2c725",
+      "crates/core/src/common/pid.rs": "3cdc9b9e6ff7cdcd1abccd6ed0fc281fdabf6e3978f50b010e030bbcecf6278f",
+      "crates/core/src/common/plugin_random.rs": "6f186e0fe4721caeed825693c1d0a179e3e31bf20d4acbca738be2af68afe32b",
+      "crates/core/src/common/random.rs": "894116ee00f663cbb255d748c617153dad99117ae672ed860ed158d4ebdac787",
+      "crates/core/src/common/spatial.rs": "b7f5756bcc346fa803e2b97d03bf2a144939fa1a8a015f12b21210c02dd100c0",
+      "crates/core/src/common/terrain.rs": "1f913f0426d81ccbeedd5cc15772ee6ed17618c19600c29923aabad666ba7ecd",
+      "crates/core/src/common/waypoints.rs": "45d2dadad192d8568af02287ca19f7349db70922048f1d8be92a6532f9b0724f",
+      "crates/core/src/common.rs": "671ea65d3a9ea42570523605273336f6e05d48bed8567d782af7a0af8746b854",
+      "crates/core/src/entity/plugin_stack.rs": "0dab22216ad7833398119dc2b85969f954d0eb545a4d56a5ab8be4e7a507a9f7",
+      "crates/core/src/entity.rs": "12776405ea02a9279269d467eaa7e581cef76a78d5b1622cb9b5e6eeacdb5c50",
+      "crates/core/src/lib.rs": "1e5a7ba5ca740d26aad4937317c64d85ae9a75e1d209af1db3b34ea73799d4a4",
+      "crates/core/src/math/angles.rs": "9628498ed1c135b0b28f6d241bd2d0656e430b57cfb7bcaef27203dae3d396a1",
+      "crates/core/src/math/integration.rs": "1b3a613d404f2e4cb23efd1e967b4db169a4efd13feea4c190f0be23ce6f733a",
+      "crates/core/src/math/quaternion.rs": "d354722fe7e8d8d4b9978bfa74c26292162a06cc9666e3edfcb197c347fa0cf2",
+      "crates/core/src/math/state.rs": "9996135ae60e9af01a2659b9ea7434720823a78f3fdd6c498c99c2863c76de6b",
+      "crates/core/src/math/tests.rs": "a93987c2743a28a39746edc3c6a10f0341a6e283c0e129df97e2690e3a4a74b8",
+      "crates/core/src/math.rs": "751b3b3ed1985782eebbc09464f2a60ab4346734a655c9619f4c53be8deffeb4",
+      "crates/core/src/mission.rs": "a8fe1bf0c582e7b362a69cd499cf7a0657b44bfd16fc45436cf36962e20b5c6e",
+      "crates/core/src/plugin/autonomy/auction_assign/auction_assign.rs": "d6da51e55b39ceb64652d80b7242362e3b511bb32560056f5c660ba968e5a26f",
+      "crates/core/src/plugin/autonomy/constant_velocity/constant_velocity.rs": "8e253da8099c3b38ab1474c9934ee12e56472baf8f7fa3acdbfe8b103c8e7277",
+      "crates/core/src/plugin/autonomy/straight/straight.rs": "25965a4c53415c896adc3d9f63bd2b747bf96ef64b9b7eedcfd358d108b1a845",
+      "crates/core/src/plugin/autonomy/waypoint_follower/waypoint_follower.rs": "3a15028c5b1200677ae4f3df3b2dcda34d7bcd833548f93e42af5736c8c34366",
+      "crates/core/src/plugin/autonomy.rs": "f1feb87738ef7ec7014fd2c0a2f62df12e59bfc5fd3b2408793b04e97aa17453",
+      "crates/core/src/plugin/controller/aircraft_pid/aircraft_pid.rs": "132eb93f3254c1ab84d53a4c7c1d8f2d99659d6bc7a55648dbf740425ec707c6",
+      "crates/core/src/plugin/controller/aircraft_velocity/aircraft_velocity.rs": "aa67e0c7c6e2fb9beab8cc14c127e275ad9741d26bd314335ba5e8029a6a50a8",
+      "crates/core/src/plugin/controller/held_controls/held_controls.rs": "b5c8a481e6b262a3362b695b5a46d68df3b94a0f8338db9bd4dd18af8c880e3b",
+      "crates/core/src/plugin/controller/motor_speeds/motor_speeds.rs": "232e6e1617af05615b0a414daf1cbbcd4463d0e3a3f7c76d6ad480b04393ee8b",
+      "crates/core/src/plugin/controller/multirotor_velocity/multirotor_velocity.rs": "959120d49a58586df4a04352daee31ccb78c8c768a76c39b7a0fbc085d004e08",
+      "crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs": "a85a47cb97fc9d6102d82d87d2e21dd60604c2eb3113a0e14537277d0efba4d8",
+      "crates/core/src/plugin/controller/single_integrator_simple/single_integrator_simple.rs": "6f228f526c8a44fb266bf15c557abf17a754a2f9585414d7d61cd0311166a0bc",
+      "crates/core/src/plugin/controller.rs": "ed69196bdc45981147bd311a6ef1156dc4c6d40ee7cead1d58a558365ce5b745",
+      "crates/core/src/plugin/estimator/pass_through/pass_through.rs": "201a22acde5cacb9502287b163c819b657acae02690ef4005bb7fc9e8f0a0df6",
+      "crates/core/src/plugin/estimator.rs": "019d11fc03aa3bb1a361e966c63ccd9d1ef548ec45426e0f11be620046626a0a",
+      "crates/core/src/plugin/interaction/boundary/boundary.rs": "727b83fe1fbddea10cede7544c48512c2d8e2ab8c36b55c881989b4874045d2f",
+      "crates/core/src/plugin/interaction/ground_collision/ground_collision.rs": "b79fe28d5c412b1c9b4ba784a27e7e4caaddbaba85fdb7962be88d4cedb7db52",
+      "crates/core/src/plugin/interaction/simple_collision/simple_collision.rs": "478c40e26656705f66955d849b51bbb22ac24f529567a1dee5e18ec43dafdc7d",
+      "crates/core/src/plugin/interaction/terrain_collision/terrain_collision.rs": "ffb596dd31776daf921480ba68c2549efc744458fb5f3d2f9877f1cac64dc561",
+      "crates/core/src/plugin/interaction/waypoint_broadcast/waypoint_broadcast.rs": "5a729bf7316cbf498f106394d65973c7bb40623b6d3dc308417fcfdceed93ff1",
+      "crates/core/src/plugin/interaction.rs": "ec59d2f4f0f4ecb3430f20bb70f7d9128c63eb060a6402a40e02c84012596e25",
+      "crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs": "320838275e1c5930061e465e94ae2b837a4898e9ce88410ff288c76e0422bf96",
+      "crates/core/src/plugin/metrics.rs": "df08ab22fcc9dfd15014e7f09483d73e3eabeee05350e2d46bf9777c11b05e67",
+      "crates/core/src/plugin/motion/fixed_wing_6dof/aerodynamics.rs": "0fd651dee24f98a64127b88ab47e028741dd6f337ddd11a442c02a08b5d78f57",
+      "crates/core/src/plugin/motion/fixed_wing_6dof/airframe.rs": "8bd2d48245e74d43d56f49ef5fb35190d26888ce9bd1176342e943d09baf4232",
+      "crates/core/src/plugin/motion/fixed_wing_6dof/dynamics.rs": "d6b7bbb95b709983f6035b3d88c271993e24253f0332e8cb91cf1fffd66d5edb",
+      "crates/core/src/plugin/motion/fixed_wing_6dof/fixed_wing_6dof.rs": "a27f73521ff4208ec76d73a30da1403bcfb02dae09c64e5ea80ff40539320409",
+      "crates/core/src/plugin/motion/fixed_wing_6dof/landing_gear.rs": "8f0242d1f6a9730e5dda5843cdb9c0c20915fa8ab52b7a992ed7da4f43fd0417",
+      "crates/core/src/plugin/motion/multirotor/airframe.rs": "17fa6ce9a794923282d0564dd2f141ba6f52d58f3a1dc3380e80d21804d085ef",
+      "crates/core/src/plugin/motion/multirotor/dynamics.rs": "0708168209e68444f679267bbdf0f199a919b987909fe06031c74dead180d499",
+      "crates/core/src/plugin/motion/multirotor/multirotor.rs": "01d8224c149f5fe2f57486a555d0216fec578ace42a4da8c131cc6dcc8bbea54",
+      "crates/core/src/plugin/motion/multirotor/rotor.rs": "13409d7d5cc40bfd39642394c69bc1d873fc9d2d1287df6ad1b4e16b45101bf1",
+      "crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs": "63a79e6f697cb2866b77ddb0efce759884f6481bfae8171596b64d90a85055b9",
+      "crates/core/src/plugin/motion/single_integrator/single_integrator.rs": "3b855f1332fc9f8946f4ad6c9b93f03b34c77b770209fc66ec60f83a4c16d165",
+      "crates/core/src/plugin/motion.rs": "6170984bb4972fbcc324c48df534e11052a2bb1a8ac987a2bf3946dd2001ea80",
+      "crates/core/src/plugin/network/global_network/global_network.rs": "a54a7001dc6adcb830d9ad5e27f270cef1ba88919cc0f1a0d34df4e5a0ba1a50",
+      "crates/core/src/plugin/network/local_network/local_network.rs": "9fc57b60fa6138b21cf368ee859b12a793bc65bd0dd9227e1b7ada324b652ea4",
+      "crates/core/src/plugin/network/sphere_network/sphere_network.rs": "e608ade017fc6898b3160df49375f8e132449288195313f67915d2e9a62a58ab",
+      "crates/core/src/plugin/network.rs": "cd1f2dcc90507373b6f66d9e4645c5c53ae5cb02ca3900b9d94fa8632500b2a5",
+      "crates/core/src/plugin/registry.rs": "98308c01144d8b88a7676a59077e4bba7aebd863c376c2ca3a1613d88fc8ef09",
+      "crates/core/src/plugin/sensor/noisy_contacts/noisy_contacts.rs": "2201facfe58ed7b56da31fbf1e57f669bce0f3cf167fc9115965d5407f10fd86",
+      "crates/core/src/plugin/sensor/noisy_position/noisy_position.rs": "863f92e17128161faa0a703f5f3ad5b52dcef133ed7a95914f508a7f9e5c1a45",
+      "crates/core/src/plugin/sensor/noisy_state/noisy_state.rs": "b945423884a1891f9ddd2cc48a6af1f55e1fd2654676b7b38de228cb29733df6",
+      "crates/core/src/plugin/sensor/readings.rs": "301668467260e133fb739c9667eb50de5f03cb5a695d308410f8a611cc9e3545",
+      "crates/core/src/plugin/sensor.rs": "f25bb7713534678c0549b3c53238719b69fdc8cfcc40162b5c76e611a894235c",
+      "crates/core/src/plugin/tests.rs": "8d43171ecf3ee9fbd987fca7827b19657bd6f93ff08f3d94462dab82e8e1e9d4",
+      "crates/core/src/plugin.rs": "7f95f6d85dbc6479af5d8a47200a3073c27ed117ca5128155dae1561004ac087",
+      "crates/core/src/ports.rs": "0a18beefc83a894ecaa0baa898af532a84ab8556e564d15f2cf3fe9dc5d7db1c",
+      "crates/core/src/pubsub/messages.rs": "abc9741d6e7f238af20d93c728550cf93dd4257c5433fcafac2b39d3274b3dd6",
+      "crates/core/src/pubsub.rs": "6aa7e3fc7bf89b21b7488361a4207065c94524ae2bef37768d3fc324010be57d",
+      "crates/core/src/record.rs": "dacfe6aa8ebb94f7fe39fe6da619df94f156495cc2c033bd8adebde99daff183",
+      "crates/core/src/scenario.rs": "fa296423c9e45a9f1f8f6f6452ef603b65e3f245e9ee3b736fa39ad811338f4e",
+      "crates/core/src/simulation/generation.rs": "c691db27f5c39e7e749c51420a590a610ca048cbd2cba117ac8fe2ed258e7617",
+      "crates/core/src/simulation/scheduler.rs": "548073ec1e897ec6f19148b74f1d96499d432a6e5f5893e88ea5b319f7328325",
+      "crates/core/src/simulation/trace.rs": "ab76298543f10e13ab32ccf0ce930d289ca60be2cce04102f9de816e57c52253",
+      "crates/core/src/simulation/world_plugins.rs": "810a2340baee5562b7f80dd6df436f860856230976e6df0a5534e990e732cd05",
+      "crates/core/src/simulation.rs": "1702215b9abd30036f5815fa25b9daf83cebcd840d5a4f02a81883655b87fd76",
+      "crates/core/tests/aircraft_velocity.rs": "1e7551ba4d39eab0b4d5f0683ecac0076989b15c5f29cee32559633a4bb8a946",
+      "crates/core/tests/core_contracts.rs": "dcb152cb0a7941cc44b833176126665f407c2446c316056fc7e39a6241d1d3f0",
+      "crates/core/tests/estimation.rs": "232219c88e27d66ee2f414e277ad5528425177d59d46e3dc4e8fa23ca3ce5ee8",
+      "crates/core/tests/fixtures/perception_communication.yaml": "a6602b32723fedf160b45271360792bb66509ad9102deef91c2f8e95de7f4aec",
+      "crates/core/tests/fixtures/plugin_contracts.yaml": "532a04a14ade20d32214c23e9eea501c174d2b075ba7b109663d5e1d9711e3c1",
+      "crates/core/tests/fixtures/plugin_defaults.yaml": "1ccaf5c12eae9e45476173684657dff1a511221a919a2fa7016e3590b1c166ba",
+      "crates/core/tests/fixtures/rust_scenario.yaml": "28a62bf83656b1a0481485d94c1942e5a66c47e776895facfea7d2295dcc9eb8",
+      "crates/core/tests/landing_gear.rs": "4627c09ac85b38e6e3709dee3ce4ca03ab8f325aa3885a72ba5603f342580a11",
+      "crates/core/tests/math_helpers.rs": "56e0b067385a5e2a7dd39fceb08ce9e026f6be00ee4b4abfce074c0e8d463e0d",
+      "crates/core/tests/navigation.rs": "956fb995096ae9eddd709228fd10500a4579594e55c449224942586105e030ab",
+      "crates/core/tests/noisy_state.rs": "8493fd5a5265f3d91b9119db0fba1e44e179c0de5db20d968c996ed28164e821",
+      "crates/core/tests/plugin_contracts.rs": "6c90fa396b0e0b6a6e7ce0bc9fc9959bbce7335c536e5fd961aaef43a6ff102e",
+      "crates/core/tests/rust_scenario.rs": "532d29ee42b694907bbe00b7f41726655af616f7912b5bfcf909734b218a50f8",
+      "crates/core/tests/simulation_regression.rs": "df7fca914122d38de39699ab8497987baf781d5f34c30ffacbfe50e9137ac0ef",
+      "crates/core/tests/spatial_lookup.rs": "a9d01ee864e6d747c081ebb84aba72cc0e1eb43030846f37b34f60e04a99591c",
+      "crates/core/tests/support/autonomy.rs": "52cd7b16080a073bd8edd6baa8e73cf787813ac142307e741a7c8881c361ed11",
+      "crates/core/tests/support/controller.rs": "ec70a1b5d9fde24db1a32929717af844d6cc6e2471c7d987e4d6d4fcbf892808",
+      "crates/core/tests/support/estimator.rs": "8a13871a24063b233374d1a315b1fcb45b587acbb394447cac4c7eac4c459d07",
+      "crates/core/tests/support/interaction.rs": "97a691efa5e903f0784bc0baef671820db2f407b032c50d6daa166983e4af5f7",
+      "crates/core/tests/support/lifecycle.rs": "0758f242b9c645ac03d83e4a31ba9ec50280d2bf8cd0a7c6a9d0af642bf618bc",
+      "crates/core/tests/support/metrics.rs": "a3b88bdfb750fa454163d5b57b006ca68a307ec7093aa5f6c4e89d12ffc25c7a",
+      "crates/core/tests/support/motion.rs": "161f07af0798207977c45018e9da108dd675dab10ce6d4e0ac3149815830241a",
+      "crates/core/tests/support/network.rs": "d12f1d94528115b374bfce1b51c4c3defc57dd9a45d239abe745d1255f6786f4",
+      "crates/core/tests/support/perception_communication.rs": "766b77f5102c246f2e8384db3fdbf62a23a3bab5df2b01417662cdf1925d5548",
+      "crates/core/tests/support/plugin_fixtures.rs": "6cbe136f36a3e5db690277ad02b2a500bee916fe5f9ed20c681f03d3a24df8b9",
+      "crates/core/tests/support/sensor.rs": "8cb67f0162492fdfc90384457fcf702b1fd9bb91b1f313d0f8f71d60036c3de1",
+      "crates/core/tests/terrain.rs": "04b8cb9fb1c2480009cf228283bf95ce960ec7bfcf6af7c65c7e6f263a539afd",
+      "crates/core/tests/world_models.rs": "954c118e21ad2bd19cb7471390b90771839e5dfb25ae87f02ff9718804285e49",
+      "crates/delivery/Cargo.toml": "c3384819c66e5cf7d7461c670d5f8903b392d9c0c03faa154d264a05a17008ce",
+      "crates/delivery/missions/delivery-6dof.yaml": "8da0d30c8f945377c0ee1eba56ba76562642a5cb22a6b7dc0078741a816acde3",
+      "crates/delivery/missions/delivery-firefly.yaml": "11e8797e3885e67c2a43fd88042e5b688d52117126dd3696fd2c47f4a45b8d89",
+      "crates/delivery/missions/delivery.yaml": "df9cdae3d02039c621547f2130531724dfbad9e8f087b49d620aa6044e08369a",
+      "crates/delivery/missions/directives-6dof.sweep.yaml": "e0b022ce2b7e01a531c96871f0a25668c3bc72660ac9f2f048a42bc7e4ce1c8f",
+      "crates/delivery/missions/directives-small-opus.sweep.yaml": "d4c462ef193d8560aa783805f32febbdc72d0434e363230675ef229113992732",
+      "crates/delivery/missions/directives-test-haiku.sweep.yaml": "c6f3bce667093c48aedb6433a89ad751dc872adbc20235cc0793aa3d87456947",
+      "crates/delivery/missions/directives-test-sonnet.sweep.yaml": "33d65c4c5b757a1215355952547109611c496dee740b0e10752917cb8ac950e3",
+      "crates/delivery/missions/directives.sweep.yaml": "10f76eac8068a72a82c719b47780c46e53a86e9f6a3dfbdb4fc2c840496c2cdf",
+      "crates/delivery/missions/soft-avoidance-baseline.sweep.yaml": "57811a70c6012b2656fb5134324dff9f79bdfec49e5a228af59ab551ac88b600",
+      "crates/delivery/missions/soft-avoidance-risk-weight-reference.sweep.yaml": "f40c10d4e0361a187c0187e876536ae308d147b52b04fc9e5ccbd1e4d28a976f",
+      "crates/delivery/missions/soft-avoidance-risk-weight.sweep.yaml": "f42642fd36e36a5301b5a9bf1c6a2166b767eaffba363bf764f3993aec6c71d6",
+      "crates/delivery/missions/soft-avoidance.yaml": "fb1f93a5fb34d0b5427708c23820537f8676b5db706426432da1503f738e78ee",
+      "crates/delivery/missions/soft-fleet-reference.sweep.yaml": "366072b657f979666b174b99e6b6c881c8489fca58cbb67cd548fd862b71b237",
+      "crates/delivery/missions/soft-fleet.sweep.yaml": "0c5772036664e3ca0c4e1b82e7b0771b36d930d257fe94520c0f232b4dc1096c",
+      "crates/delivery/missions/soft-fleet.yaml": "4797ef0f0bec409542eab153784755d57a9548320529f8417de7ecaf9c916427",
+      "crates/delivery/missions/vehicle-info.sweep.yaml": "615de258bb6443177ec59299a9888327a047ff701dc59e02ee05083119015dae",
+      "crates/delivery/src/client.rs": "117800eb8aadcf1c4a004019c69023294fd1bda0e74e1dd9b8f324ec916f5945",
+      "crates/delivery/src/courier.rs": "9076fc9acdb74fabc627a3f0ddae9c2bd40de019eb6c62a202dd504fb7913140",
+      "crates/delivery/src/directive.rs": "4e44064a8530ef6f0f8a08e45d5d1347e887823e809d83b78eaf881e59682432",
+      "crates/delivery/src/dispatcher.rs": "7aaa50a621e9ad0def243b83904269007efb0d23f140a93195f566d4651623ff",
+      "crates/delivery/src/lib.rs": "df243731cfb596a37874bf752bffd134e63631ef7bcf4b7e1c56de62e2d471d9",
+      "crates/delivery/src/messages.rs": "80f6cc28f68d04b6c25dd2e6ea169d5a2fe3be5abedc8754dbf2e9f0b83bd344",
+      "crates/delivery/src/planner.rs": "c1702060e5d36a67c796c1e1ee7f000c6ae295844a0c2b353295e024b127a8dc",
+      "crates/delivery/src/score.rs": "1cadbfa4b00d20fbeb5f52a841f43bd95f46b53c469af5e7020b5c32fd517d09",
+      "crates/delivery/src/skill/drop.rs": "77d6916bf45160aa521567e546ce38e62735365488940f71fe682e835a3d9227",
+      "crates/delivery/src/skill/drop_via.rs": "c3efb4c14636d9d6f047cfcdead1470721e6a87d2bb7be55e60fda2dfe8ca564",
+      "crates/delivery/src/skill/land.rs": "0181dd380f0f90569de16da36cbf96d69ee297b3fe60d5a3f855e011369eb975",
+      "crates/delivery/src/skill.rs": "53f031132ad37df05c822aafc94d4a699126baf092e613278ab6e7112f62a47e",
+      "crates/delivery/tests/delivery.rs": "32a5b0ee67ee7d840e4744d1034581c8e9d3d858bb69d9bf532adc50e8982059",
+      "crates/learning/Cargo.toml": "11ecee6f0ef9a182aac404320c44ceac0470d358abfd1af953a8712a79a3c2e1",
+      "crates/learning/missions/hover.yaml": "41494ef57383b9a2fc0b7c63dfc87bdca784eff8cc49e43032c272c36885a665",
+      "crates/learning/missions/spread.yaml": "ef2a8ebc779b064e9ad469d9063406aefacafe6b9b79927b1b9ccfb11d24fa61",
+      "crates/learning/python/Cargo.toml": "5adf9a8cb77393a5e127228b93b7cfec5e7f5872dec9a313370e014af06a9db8",
+      "crates/learning/python/pyproject.toml": "bd26d5db97762c5cc5b57555050aa52ba97b9058af9b6acdd8a068324fbef96d",
+      "crates/learning/python/src/lib.rs": "739bb3ad66d9b6335ba43c286c10608d88edc81ced4229a471a96b03baae72bd",
+      "crates/learning/src/hover.rs": "7eb86c6ce84cff4ba3d1a61ebe772931818412542b9999b90c7821137a73128a",
+      "crates/learning/src/lib.rs": "a29cd3298bfe081336f536680aad0893947a8cda54a0e199bff64cb43c6a550a",
+      "crates/learning/src/policy.rs": "6c775e23580f3bb3644e36e6900dff13968381d630b6bbc96954e90b21ac07de",
+      "crates/learning/src/spread.rs": "a11eebfe36af74014fe15473c3b402ac35ea8d09aaeef899bd7325b9853fac87",
+      "crates/learning/tests/policies.rs": "c4cc0ef00e4a839e915a76a8cd9468e82be93d150eac65d2ac0e5ea6ee619cb9",
+      "crates/starter/Cargo.toml": "a55eb0cf204833585726107509e8dde7f422bd42152369d88320014bfe787fff",
+      "crates/starter/missions/dead-reckoning.yaml": "b94b53ace348010e62d34e06edcd3d5659a6a111daf5bd46d5403a3f87e3c8ab",
+      "crates/starter/missions/follow-nearest.sweep.yaml": "abb4b75686bd642eebc1837f0aa7b55c7acca4432c9014f85a3a13da5502bb32",
+      "crates/starter/missions/follow-nearest.yaml": "64e77e27bf55a182537ccdc724c35d0f939dec0080e32a4e1ef276567d774c1e",
+      "crates/starter/src/dead_reckoning.rs": "5a92402e1922df0a598234e804d9b9d110fa63c542001ea32620eedfb7701847",
+      "crates/starter/src/follow_nearest.rs": "db35bc674b4f5c4eda06b43c5fbaa1901a46bf00bd4bb2c03b5215d658f3aac5",
+      "crates/starter/src/lib.rs": "85e565441948827702a760d74a0f6463cb560069cf6620d6d115d42c6ee4f708",
+      "crates/starter/tests/dead_reckoning.rs": "1b53597e072afddb7b33b677119377eedcf61eaaca8b3802bb1950563b23c45b",
+      "crates/starter/tests/follow_nearest.rs": "02cf60041b19d7ab95c3587721729a2b35e79b733b030ba6b79a6f5af5e0b3d5",
+      "reference/benchmark_runner.rs": "13b607b7bf9b9285e6846be113a03fa74ea9448b9516a531cc37e23bf6573935"
+    }
+  }
+}

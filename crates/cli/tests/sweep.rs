@@ -1,0 +1,310 @@
+//! `ripple sweep`: shards must reproduce the whole sweep, row for row.
+use std::{fs, path::Path, process::Command};
+
+fn sweep(root: &Path, extra: &[&str]) -> std::process::Output {
+    let sweep = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../missions/waypoints-point-agents.sweep.yaml");
+    Command::new(env!("CARGO_BIN_EXE_ripple"))
+        .arg("sweep")
+        .arg(sweep)
+        .arg("--root")
+        .arg(root)
+        .args(extra)
+        .output()
+        .unwrap()
+}
+
+#[test]
+fn shards_together_equal_the_whole_sweep() {
+    let temp = tempfile::tempdir().unwrap();
+    let whole = sweep(temp.path(), &[]);
+    assert!(
+        whole.status.success(),
+        "{}",
+        String::from_utf8_lossy(&whole.stderr)
+    );
+    // Without --output, sweeps are numbered under <root>/sweeps/<sweep name>.
+    let whole_rows = fs::read_to_string(
+        temp.path()
+            .join("sweeps/waypoints-point-agents/run000/results.jsonl"),
+    )
+    .unwrap();
+
+    let mut shard_rows = Vec::new();
+    for index in ["0", "1", "2"] {
+        let output = temp.path().join(format!("shard-{index}"));
+        let shard = sweep(
+            temp.path(),
+            &[
+                "--shard-index",
+                index,
+                "--shard-count",
+                "3",
+                "--output",
+                output.to_str().unwrap(),
+            ],
+        );
+        assert!(
+            shard.status.success(),
+            "{}",
+            String::from_utf8_lossy(&shard.stderr)
+        );
+        shard_rows.extend(
+            fs::read_to_string(output.join("results.jsonl"))
+                .unwrap()
+                .lines()
+                .map(str::to_owned),
+        );
+    }
+    // Each row starts with its case ID, so sorting restores case order.
+    shard_rows.sort();
+    assert_eq!(whole_rows.lines().collect::<Vec<_>>(), shard_rows);
+    assert_eq!(shard_rows.len(), 8);
+    // The whole sweep is a campaign of one shard: its record, logs, the
+    // shard, and the merged rows. A shard run by hand holds only its own two files.
+    let whole_dir = temp.path().join("sweeps/waypoints-point-agents/run000");
+    let mut entries: Vec<String> = fs::read_dir(&whole_dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    entries.sort();
+    assert_eq!(
+        entries,
+        ["campaign.json", "logs", "results.jsonl", "shard-0000"]
+    );
+    for index in ["0", "1", "2"] {
+        assert_eq!(
+            fs::read_dir(temp.path().join(format!("shard-{index}")))
+                .unwrap()
+                .count(),
+            2
+        );
+    }
+
+    // Three jobs at once give the same file, byte for byte.
+    let parallel = sweep(temp.path(), &["--jobs", "3"]);
+    assert!(
+        parallel.status.success(),
+        "{}",
+        String::from_utf8_lossy(&parallel.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&parallel.stdout);
+    assert!(stdout.contains("8 cases in 3 jobs"), "{stdout}");
+    let parallel_rows = fs::read_to_string(
+        temp.path()
+            .join("sweeps/waypoints-point-agents/run001/results.jsonl"),
+    )
+    .unwrap();
+    assert_eq!(parallel_rows, whole_rows);
+}
+
+/// A run that stopped short is finished by the same command; a changed
+/// sweep file is refused instead.
+#[test]
+fn an_unfinished_run_is_resumed_by_the_same_command() {
+    let temp = tempfile::tempdir().unwrap();
+    let missions = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../missions");
+    let text = fs::read_to_string(missions.join("waypoints-point-agents.sweep.yaml")).unwrap();
+    let spec = temp.path().join("waypoints-point-agents.sweep.yaml");
+    fs::write(
+        &spec,
+        text.replace(
+            "base_scenario: waypoints-point-agents.yaml",
+            &format!(
+                "base_scenario: {}",
+                missions.join("waypoints-point-agents.yaml").display()
+            ),
+        ),
+    )
+    .unwrap();
+    let run = |extra: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_ripple"))
+            .arg("sweep")
+            .arg(&spec)
+            .arg("--root")
+            .arg(temp.path())
+            .args(extra)
+            .output()
+            .unwrap()
+    };
+    let first = run(&["--jobs", "2"]);
+    assert!(first.status.success());
+    let campaign = temp.path().join("sweeps/waypoints-point-agents/run000");
+    let complete = fs::read_to_string(campaign.join("results.jsonl")).unwrap();
+
+    // As if shard 1 had been stopped after its first case: drop its last three
+    // rows and the merge.
+    let shard = campaign.join("shard-0001/results.jsonl");
+    let rows = fs::read_to_string(&shard).unwrap();
+    let first_row = rows.lines().next().unwrap().to_owned() + "\n";
+    fs::write(&shard, &first_row).unwrap();
+    fs::remove_file(campaign.join("results.jsonl")).unwrap();
+
+    let status = Command::new(env!("CARGO_BIN_EXE_ripple"))
+        .arg("status")
+        .arg(&spec)
+        .arg("--root")
+        .arg(temp.path())
+        .output()
+        .unwrap();
+    let status = String::from_utf8_lossy(&status.stdout);
+    assert!(status.contains("run000 stopped, 5 of 8 done"), "{status}");
+
+    let resumed = run(&["--jobs", "5"]);
+    let stdout = String::from_utf8_lossy(&resumed.stdout);
+    assert!(resumed.status.success(), "{stdout}");
+    assert!(
+        stdout.contains("run000 is unfinished, 5 of 8 done; resuming with its 2 jobs, not --jobs"),
+        "{stdout}"
+    );
+    assert!(stdout.contains("3 cases to run"), "{stdout}");
+    assert_eq!(
+        fs::read_to_string(campaign.join("results.jsonl")).unwrap(),
+        complete
+    );
+    // The stopped attempt is kept beside the resumed one.
+    assert_eq!(
+        fs::read_to_string(campaign.join("shard-0001/results.jsonl.1")).unwrap(),
+        first_row
+    );
+    assert!(campaign.join("logs/shard-0001.1.log").is_file());
+    assert!(!campaign.join("shard-0000/results.jsonl.1").exists());
+
+    // A complete run is never resumed: the next command starts run001.
+    let again = run(&[]);
+    let stdout = String::from_utf8_lossy(&again.stdout);
+    assert!(stdout.contains("8 cases in 1 job -> "), "{stdout}");
+    assert!(stdout.contains("run001"), "{stdout}");
+
+    // An unfinished run whose sweep file changed is refused, and --new goes around it.
+    fs::remove_file(campaign.join("results.jsonl")).unwrap();
+    fs::remove_dir_all(temp.path().join("sweeps/waypoints-point-agents/run001")).unwrap();
+    fs::write(&spec, fs::read_to_string(&spec).unwrap() + "\n# edited\n").unwrap();
+    let refused = run(&[]);
+    assert!(!refused.status.success());
+    let stderr = String::from_utf8_lossy(&refused.stderr);
+    assert!(
+        stderr.contains("run000 is unfinished, but")
+            && stderr.contains("changed since it started; use --new"),
+        "{stderr}"
+    );
+    let fresh = run(&["--new"]);
+    let stdout = String::from_utf8_lossy(&fresh.stdout);
+    assert!(fresh.status.success(), "{stdout}");
+    assert!(
+        stdout.contains("run000 is unfinished and left as is"),
+        "{stdout}"
+    );
+    assert!(stdout.contains("run001"), "{stdout}");
+}
+
+#[test]
+fn a_misspelled_path_fails_before_creating_output() {
+    let temp = tempfile::tempdir().unwrap();
+    let text = fs::read_to_string(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../missions/waypoints-point-agents.sweep.yaml"),
+    )
+    .unwrap();
+    let missions = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../missions");
+    let broken = temp.path().join("broken.sweep.yaml");
+    fs::write(
+        &broken,
+        text.replace("speed_mps:", "sped_mps:").replace(
+            "base_scenario: waypoints-point-agents.yaml",
+            &format!(
+                "base_scenario: {}",
+                missions.join("waypoints-point-agents.yaml").display()
+            ),
+        ),
+    )
+    .unwrap();
+    let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
+        .arg("sweep")
+        .arg(&broken)
+        .arg("--root")
+        .arg(temp.path())
+        .output()
+        .unwrap();
+    assert!(!result.status.success());
+    assert!(String::from_utf8_lossy(&result.stderr).contains("field `sped_mps` does not exist"));
+    assert!(!temp.path().join("sweeps").exists());
+}
+
+/// User plugin crates are compiled into `ripple`: the starter's FollowNearest
+/// runs through the stock command's sweep like a stock plugin.
+#[test]
+fn the_command_sweeps_a_user_plugin() {
+    let temp = tempfile::tempdir().unwrap();
+    let sweep =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../starter/missions/follow-nearest.sweep.yaml");
+    let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
+        .arg("sweep")
+        .arg(sweep)
+        .arg("--root")
+        .arg(temp.path())
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let rows = fs::read_to_string(
+        temp.path()
+            .join("sweeps/follow-nearest/run000/results.jsonl"),
+    )
+    .unwrap();
+    assert_eq!(rows.lines().count(), 4);
+    assert!(
+        rows.lines().all(|row| row.contains(r#""error":null"#)),
+        "{rows}"
+    );
+}
+
+#[test]
+fn invalid_case_values_remain_error_rows_when_sharded() {
+    let temp = tempfile::tempdir().unwrap();
+    let base =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../missions/waypoints-point-agents.yaml");
+    let spec = temp.path().join("invalid-value.sweep.yaml");
+    fs::write(
+        &spec,
+        format!(
+            "name: invalid-value\nbase_scenario: {}\nparameter_combinations: cartesian\nparameters:\n  run.dt_s: [0.1, 0]\n  run.end_s: [0.2]\n",
+            base.display()
+        ),
+    ).unwrap();
+    for index in 0..2 {
+        let output = temp.path().join(format!("shard-{index}"));
+        let result = Command::new(env!("CARGO_BIN_EXE_ripple"))
+            .arg("sweep")
+            .arg(&spec)
+            .arg("--shard-index")
+            .arg(index.to_string())
+            .args(["--shard-count", "2", "--output"])
+            .arg(&output)
+            .output()
+            .unwrap();
+        let rows = fs::read_to_string(output.join("results.jsonl")).unwrap();
+        assert_eq!(rows.lines().count(), 1);
+        let row: serde_json::Value = serde_json::from_str(rows.trim()).unwrap();
+        assert_eq!(row["case_id"], format!("case-{index:04}"));
+        if index == 0 {
+            assert!(
+                result.status.success(),
+                "{}",
+                String::from_utf8_lossy(&result.stderr)
+            );
+            assert!(row["error"].is_null());
+        } else {
+            assert!(!result.status.success());
+            assert!(
+                row["error"]
+                    .as_str()
+                    .unwrap()
+                    .contains("dt must be positive and finite")
+            );
+        }
+    }
+}

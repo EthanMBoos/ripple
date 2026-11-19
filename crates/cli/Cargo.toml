@@ -1,0 +1,59 @@
+[package]
+name = "ripple"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+# The library is the command-line interface; src/main.rs builds the plugin
+# registry (stock plugins plus the user crates below) and calls it.
+[lib]
+name = "ripple_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ripple"
+path = "src/main.rs"
+
+[dependencies]
+ripple-core = { path = "../core" }
+nalgebra.workspace = true
+# User plugin crates compiled into `ripple`; each is registered in src/main.rs.
+starter = { path = "../starter" }
+delivery = { path = "../delivery" }
+# Optional ArduPilot SITL adapter, outside the default build: `--features ardupilot`.
+ardupilot = { path = "../ardupilot", optional = true }
+# Optional PX4 SITL adapter, outside the default build: `--features px4`.
+px4 = { path = "../px4", optional = true }
+# What the SITL adapters share (the SitlState sensor); comes with either.
+sitl = { path = "../sitl", optional = true }
+# Optional reinforcement-learning demos, outside the default build: `--features learning`.
+learning = { path = "../learning", optional = true }
+# Optional GTSAM smoother, outside the default build because it links the GTSAM
+# C++ library: `--features gtsam`, with GTSAM_PREFIX set (book/src/guides/gtsam.md).
+gtsam = { path = "../gtsam", optional = true }
+anyhow.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+serde_yaml_ng.workspace = true
+# Reads a terrain's aerial image for the viewer; already a dependency of rerun.
+png = "0.18"
+tempfile = "3"
+rerun = { version = "=0.36.2", default-features = false, features = ["sdk"] }
+# Blueprint paths for the demo presets (src/viewer/preset.rs); a rerun dependency.
+uuid = { version = "1", features = ["v4"] }
+# A sweep campaign: Ctrl-C handling, a shard's liveness check, and the
+# hashes that tell a resumed run its file and binary are unchanged. All
+# three are already built for other dependencies.
+ctrlc = "3"
+libc = "0.2"
+sha2 = "0.10"
+
+[features]
+ardupilot = ["dep:ardupilot", "dep:sitl"]
+px4 = ["dep:px4", "dep:sitl"]
+learning = ["dep:learning"]
+gtsam = ["dep:gtsam"]
+
+[lints]
+workspace = true

@@ -1,0 +1,41 @@
+# Two aircraft follow a looping route; a GlobalNetwork replacement at 12 s
+# changes both goals.
+format_version: 1
+name: waypoints-aircraft
+
+run:
+  end_s: 60
+  dt_s: 0.1
+  seed: 12345
+
+interactions:
+  WaypointBroadcast:
+    waypoints_m: [[300, 0, 200], [300, 300, 200], [-300, 300, 200], [-300, -300, 200]]
+    update_at_s: 12
+    update_waypoints_m: [[0, -300, 200], [-300, -300, 200], [-300, 300, 200], [300, 300, 200]]
+networks: {GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  aircraft:
+    visual_model: sphere
+    velocity_mps: [20, 0, 0]
+    heading_deg: 0
+    autonomy:
+      WaypointFollower:
+        waypoints_m: [[300, 0, 200]]
+        arrival_radius_m: 40
+        speed_mps: 20
+        repeat: true
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+
+entities:
+  blue:
+    template: aircraft
+    team: 1
+    position_m: [0, -30, 200]
+  red:
+    template: aircraft
+    team: 2
+    position_m: [0, 30, 200]

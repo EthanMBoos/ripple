@@ -1,0 +1,46 @@
+# Plugin contract regression fixture: every plugin category from the test
+# models in crates/core/tests/support/. Tests swap a slot's plugins with an
+# override such as `entities.agents.sensors:={LifecycleSensor: {action: stop}}`.
+format_version: 1
+name: plugin-contracts
+
+run:
+  end_s: 1
+  dt_s: 0.1
+  seed: 12345
+
+interactions: {Floor: {}}
+networks:
+  LocalNetwork:
+  ExampleNetwork:
+    delay_s: 0
+    drop_messages: false
+metrics:
+  first:
+    plugin: PopulationMetrics
+  second:
+    plugin: PopulationMetrics
+
+entities:
+  agents:
+    team: 1
+    count: 8
+    position_m: [0, 0, -1]  # exact: the tests check where every agent ends
+    visual_model: sphere
+    autonomy:
+      DriveToGoal:
+        goal_world_m: 1
+    controller:
+      double:
+        plugin: ScaleSpeed
+        gain: 2
+        output: doubled_speed
+      half:
+        plugin: ScaleSpeed
+        gain: 0.5
+        input: doubled_speed
+        output: drive_speed
+    motion_model: {EastwardMotion: {input: drive_speed}}
+    sensors:
+      PositionSensor:
+        bias_m: 0

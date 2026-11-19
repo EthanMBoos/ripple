@@ -1,0 +1,300 @@
+# Writing plugins
+
+This guide covers what every plugin type has in common. It assumes you have
+done [Your first autonomy plugin](../tutorial/first-autonomy.md). The [plugin
+API reference](../reference/plugin-api.md) lists each trait and context.
+
+## Where your plugins live
+
+Write plugins in a user crate in this repository, such as
+[crates/starter](../../../crates/starter).
+Plugins are compiled into the one `ripple` command rather than loaded at run
+time, so your missions use `ripple run`, `sweep`, and `replay` exactly as the
+stock missions do. The command builds a *registry*, the table from the names
+missions use to Rust types, in
+[crates/cli/src/main.rs](../../../crates/cli/src/main.rs):
+
+```rust,ignore
+let mut registry = PluginRegistry::with_builtins();   // stock plugins
+starter::register(&mut registry)?;                    // your plugins
+ripple_cli::main(registry, repo_root)                 // run, sweep, replay
+```
+
+Changing a plugin means rebuilding; `cargo run -- ...` does that for you.
+
+The starter holds the two tutorials' plugins, `FollowNearest` and
+`PositionKalman`, with their missions, a sweep, and tests:
+
+```sh
+cargo run -- run crates/starter/missions/follow-nearest.yaml --headless
+cargo run -- replay runs/follow-nearest/run000
+cargo test -p starter
+```
+
+## The plugin types
+
+| Type | Trait | Gets | Built-in to copy |
+| --- | --- | --- | --- |
+| Autonomy | `Autonomy` | Own belief, tracks, messages, random numbers; writes ports | [Straight](../../../crates/core/src/plugin/autonomy/straight/straight.rs) |
+| Controller | `Controller` | The same; reads and writes ports | [SimpleAircraftControllerPID](../../../crates/core/src/plugin/controller/simple_aircraft_pid/simple_aircraft_pid.rs) |
+| Motion model | `MotionModel` | Mutable truth; reads ports | [SimpleAircraft](../../../crates/core/src/plugin/motion/simple_aircraft/simple_aircraft.rs) |
+| Sensor | `Sensor` | Read-only truth, contacts, random numbers; publishes readings | [NoisyPosition](../../../crates/core/src/plugin/sensor/noisy_position/noisy_position.rs) |
+| Localization | `Localization` | Readings, messages, the commands motion read; writes own-state belief | [PassThrough](../../../crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
+| Tracking | `Tracking` | Readings, messages, localization's pose; writes tracks | [PassThrough](../../../crates/core/src/plugin/estimator/pass_through/pass_through.rs) |
+| Interaction | `Interaction` | Every entity, mutable; emits events | [GroundCollision](../../../crates/core/src/plugin/interaction/ground_collision/ground_collision.rs) |
+| Network | `Network` | Every message, random numbers; decides delivery | [LocalNetwork](../../../crates/core/src/plugin/network/local_network/local_network.rs) |
+| Metrics | `Metrics` | Events, messages, truth; reports team scores | [SimpleCollisionMetrics](../../../crates/core/src/plugin/metrics/simple_collision_metrics/simple_collision_metrics.rs) |
+
+Start by copying the built-in for your type; they all follow the same layout.
+A motion model also opens with a fidelity header saying where its equations
+and numbers come from; see [Adding a measured-data vehicle
+model](measured-vehicle-models.md).
+
+## Anatomy of a plugin
+
+```rust,ignore
+#[derive(Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct MyConfig { /* mission parameters */ }
+impl Default for MyConfig { /* the value of each parameter a mission omits */ }
+pub struct MyPlugin { /* per-entity state that persists between ticks */ }
+
+impl Autonomy for MyPlugin {           // or Controller, MotionModel, Sensor, ...
+    // How it is built, while the mission loads.
+    type Config = MyConfig;
+    fn configure(params: &PluginParams) -> Result<MyConfig> { /* optional: validate */ }
+    fn new(config: &MyConfig) -> Self { /* fresh state for one instance */ }
+    fn ports(config: &MyConfig) -> Ports { /* inputs and outputs, if any */ }
+
+    // What it does, each tick.
+    fn initialize(&mut self, context: &mut AgentContext) -> Result<()> { /* optional */ }
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> { /* each tick */ }
+    fn close(&mut self, time: StepTime) -> Result<()> { /* optional: once, at the end */ }
+}
+```
+
+- **Configuration is separate from state.** `configure` runs once per mission.
+  Its default parses the config struct; write your own only to reject bad
+  values with a clear error. `new` runs once per instance, so each vehicle
+  gets its own state.
+- **The context is borrowed, not stored.** Each call gets a short-lived
+  context. Keep only your own configuration and state in the struct.
+- **No threads, locks, or shared state.** The engine runs entities in
+  parallel for you; your plugin is ordinary single-threaded Rust.
+- **Write `step` in three stages:** read inputs, calculate, write outputs.
+  Name every physical quantity with its unit and frame (`distance_m`,
+  `heading_world_rad`); see [Coordinate
+  frames](../concepts/coordinate-frames.md).
+
+## Parameters and defaults
+
+Serde fills the parameter struct from the mission, and `Default` supplies
+every key the mission leaves out:
+
+```rust,ignore
+#[derive(Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct StraightConfig {
+    speed_mps: f64,   // the mission key and the Rust name, with its unit
+}
+
+impl Default for StraightConfig {
+    fn default() -> Self {
+        Self { speed_mps: 21.0 }
+    }
+}
+
+fn configure(params: &PluginParams) -> Result<StraightConfig> {
+    let config: StraightConfig = params.parse()?;
+    ensure!(config.speed_mps >= 0.0, "speed_mps must be nonnegative");
+    Ok(config)
+}
+```
+
+- The field name is the mission key, with its unit, so each parameter has one
+  name ([Parameter names](../development/rust-style.md#parameter-names)).
+- Values are ordinary YAML: `speed_mps: 25`, `center_m: [0, 0, 200]`,
+  `heading_pid: {kp: 1, ki: 0.01, kd: 2, integrate_within_deg: 9}`. Numbers
+  must be finite.
+- `deny_unknown_fields` makes a misspelled key an error that names it, so a
+  typo never silently gives you the default. An option the plugin doesn't
+  implement simply isn't a field.
+- When the runtime needs derived values (radians, an inverse inertia), parse
+  a private `...Params` struct and build the config from it, as SimpleAircraft
+  and Multirotor do.
+- A plugin with no parameters uses `Config = ()`; `params.parse()` still
+  rejects any key the mission gives it. The engine reads `loop_rate_hz` itself.
+
+## Register it
+
+Put each plugin in its own file under `crates/starter/src/`, add a `mod`
+line to `src/lib.rs`, and register it in `register()` under the name missions
+will use:
+
+```rust,ignore
+registry.register_sensor::<MySensor>("MySensor")?;
+```
+
+Use the call for its type: `register_autonomy`, `register_controller`,
+`register_motion`, `register_sensor`, `register_localization`,
+`register_tracking`, `register_interaction`, `register_network`, or
+`register_metrics`. Registering a name already used in the same category is an
+error at startup, so nothing is silently replaced.
+
+`register_autonomy_with` takes a closure that builds each instance in place of
+`Autonomy::new`, for a program that owns the simulation and must hand every
+instance something of its own. The learning demos use it to pass in a Python
+trainer's actions ([Training a single
+agent](training-single-agent.md#the-pieces)).
+
+## Ports: the control chain
+
+Autonomy, controllers, and motion models pass commands down a chain of named
+ports:
+
+```text
+autonomy outputs -> controller inputs, controller outputs -> motion model inputs
+```
+
+Declare them in `ports` with a unit and a frame:
+
+```rust,ignore
+Ports::default()
+    .input(Port::new("desired_speed", Unit::MetersPerSecond, Frame::None))
+    .output(Port::new("throttle", Unit::Dimensionless, Frame::None))
+```
+
+Read and write them in `step` with `io.read("desired_speed")?` and
+`io.write("throttle", value)?`. Before the mission runs, the engine checks that
+every input is connected to an output of the stage before with the same
+name, unit, and frame, and that no two plugins on an entity write the same
+port name. A controller that changes a value gives the result a new name;
+one that would only pass a value through is not needed, since the motion
+model reads the autonomies directly when a mission lists no controller
+([What a mission can leave
+out](../concepts/how-a-run-works.md#what-a-mission-can-leave-out)).
+Port names can come from configuration: Multirotor declares one input per
+rotor, `Port::new(format!("motor_{index}"), ...)`.
+
+A controller that needs to know where a command will take the vehicle, as a
+model predictive controller does, should not retype the vehicle's equations:
+it steps the motion model itself ([Stepping a motion model
+yourself](../reference/plugin-api.md#stepping-a-motion-model-yourself)).
+
+## Messages
+
+For anything that isn't a command down the chain, publish and subscribe to
+typed messages on a named network:
+
+```rust,ignore
+// In initialize: subscribe once.
+context.messages.subscribe::<BoundaryRegion>("GlobalNetwork", "Boundary")?;
+
+// In step: publish ...
+context.messages.publish("GlobalNetwork", "Boundary", region)?;
+
+// ... and receive everything delivered to you since your last step.
+for message in context.messages.receive::<BoundaryRegion>("GlobalNetwork", "Boundary")? {
+    self.boundary = Some(*message.value);
+}
+```
+
+GlobalNetwork reaches every plugin, and the engine publishes events such as
+`EntityGenerated` and `NonTeamCollision` on it. Any other network must be
+listed in the mission. An autonomy reads a message on the tick after it was
+sent; [How a run works](../concepts/how-a-run-works.md#messages) explains the
+timing.
+
+## Returning from `step`
+
+- `Ok(())`: normal.
+- `Err(...)`: something went wrong, such as an invalid state or a nonfinite
+  number. The run stops and the error names your plugin. Use
+  `ensure!(condition, "message")` for these checks.
+
+An interaction or a metrics plugin returns `Ok(Update::Applied)` instead, or
+`Ok(Update::Stop)` to end the run after this tick. The entity slots and
+networks cannot end a run.
+
+## When an autonomy grows
+
+Most research happens in autonomy, and its `step` can turn into one long
+mixture of mission logic, navigation, and special cases. The plugin is what
+the mission selects, but it doesn't have to be the smallest unit of code:
+give it ordinary fields for parts with their own job and state (a mission
+phase, a navigator), and have `step` call them. Those parts need no
+registration or messages between them. Extract one when it owns a distinct
+responsibility, not for every short calculation. World rules, such as
+boundaries and collisions, belong in interactions, not in every autonomy.
+
+## Several behaviors on one vehicle
+
+A vehicle that is told what to do next by a planner (wait, fly to a site,
+land, come home) is best written as one autonomy plugin that hosts a library
+of *skills*, each an ordinary struct in its own file, with the autonomy
+owning the vehicle's ports and running whichever skill is current.
+
+Coordination above the vehicle, such as a fleet planner, is another entity's
+autonomy that sends orders as messages.
+
+## Drawing in the viewer
+
+Override `fixed_drawings` to show mission geometry in Rerun that holds for
+the run, such as a goal or a depot, and `drawings` for shapes that come and
+go, such as an area to keep out of for an hour. Return world meters; the
+engine records and redraws them only when they change. The shapes and the
+rules are in the [plugin API](../reference/plugin-api.md#drawings).
+
+## Testing
+
+- **Unit tests** go in a `#[cfg(test)] mod tests` block at the bottom of the
+  plugin file. Call `configure`, `new`, and your equations directly with
+  hand-picked inputs: "at zero noise, the measurement equals truth plus
+  bias".
+- **Mission tests** go in your crate's `tests/` folder. Build the registry
+  `ripple` uses, load a mission, run it to the end, and check the events or
+  scores; the [tutorial](../tutorial/first-autonomy.md#6-test-it) shows one.
+
+Before submitting a change, run the project's checks:
+
+```sh
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+```
+
+## Another user crate
+
+Copy `crates/starter` to `crates/my-lab` and rename the package in its
+`Cargo.toml`. Remove the copied `FollowNearest` and `PositionKalman` (files,
+`mod` lines, registrations, missions, and tests), since the starter already
+registers those names. Then:
+
+1. add it to the workspace `members` in the root `Cargo.toml`;
+2. add `my-lab = { path = "../my-lab" }` to `crates/cli/Cargo.toml`, and call
+   `my_lab::register(&mut registry)?;` in `crates/cli/src/main.rs`.
+
+## A plugin that ships with Ripple
+
+Only a plugin meant for everyone goes in the simulator's own source. It gets
+its own folder, `crates/core/src/plugin/<type>/<my_plugin>/my_plugin.rs`,
+and two edits:
+
+1. **Load the module** in the type's file, such as
+   `crates/core/src/plugin/motion.rs`, in alphabetical order:
+
+   ```rust,ignore
+   #[path = "motion/my_plugin/my_plugin.rs"]
+   mod my_plugin;
+   pub use my_plugin::MyPlugin;
+   ```
+
+2. **Register a name** in `register_builtins` in
+   `crates/core/src/plugin/registry.rs`:
+
+   ```rust,ignore
+   registry.register_motion::<motion::MyPlugin>("MyPlugin")?;
+   ```
+
+Its tests go beside it and in `crates/core/tests/`, and it needs a section in
+[Built-in models](../reference/models.md).

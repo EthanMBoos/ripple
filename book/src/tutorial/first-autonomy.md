@@ -1,0 +1,436 @@
+# Your first autonomy plugin
+
+In this tutorial you will write an autonomy plugin called `FollowNearest`. Each
+tick, it finds the closest vehicle on another team and steers toward it. You
+will then run it in a mission, watch it in Rerun, write a test that checks the
+chaser actually catches its target, and sweep its speed to find how fast it
+must be.
+
+Along the way you will touch every part of a plugin:
+
+- reading your own state and the other vehicles' states,
+- writing commands for the controller through *ports*,
+- reading a parameter from the mission file,
+- registering the plugin so missions can use it by name.
+
+You work in the `starter` user crate, not in the simulator's source.
+
+It takes about 30 lines of Rust.
+
+> [!TIP]
+> Keep the finished example,
+> [Straight](../../../crates/core/src/plugin/autonomy/straight/straight.rs),
+> open while you work. It has the same shape as the plugin you are about to write.
+
+## What an autonomy plugin does
+
+An autonomy plugin *decides*. It does not move the vehicle. It writes goals such
+as "fly heading 90° at 25 m/s and 200 m altitude", and the controller and motion
+model below it turn those goals into motion:
+
+```text
+FollowNearest  --desired_heading, desired_altitude, desired_speed-->
+SimpleAircraftControllerPID  --throttle, roll_rate, pitch_rate-->
+SimpleAircraft  --> new position and attitude
+```
+
+The names in that chain are **ports**. An autonomy's output ports must match the
+controller's input ports. The simulator checks this before the mission starts,
+so a typo is an error, not a silently ignored command.
+
+## 1. Find the starter crate
+
+User plugins live in a crate in the repository, `crates/starter`. The
+`ripple` command is compiled with that crate's plugins, so its missions run
+with `ripple run` and `ripple sweep` like any other (see
+[Writing plugins](../guides/writing-plugins.md)).
+
+```text
+crates/starter/
+  src/lib.rs               register(): adds the crate's plugins
+  src/follow_nearest.rs    the plugin you are about to write
+  missions/                follow-nearest.yaml and follow-nearest.sweep.yaml
+  tests/                   follow_nearest.rs
+```
+
+The starter already contains the finished plugin, so everything builds and runs
+straight away. To write it yourself, empty `src/follow_nearest.rs` and follow
+along; the next sections explain every line.
+
+## 2. Write the plugin
+
+Put this in `crates/starter/src/follow_nearest.rs`. We'll walk through it below.
+
+```rust,ignore
+//! Head toward the nearest active entity on another team, matching its altitude.
+//! Autonomy phase: read contacts, write desired heading, altitude, and speed.
+
+use anyhow::{Result, ensure};
+use ripple_core::plugin::{
+    AgentContext, Autonomy, Frame, Plugin, PluginIo, PluginParams, Port, Ports, Unit, Update,
+};
+use serde::Deserialize;
+
+/// Mission parameters; `Default` supplies any key the mission leaves out.
+#[derive(Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct FollowNearestConfig {
+    speed_mps: f64,
+}
+
+impl Default for FollowNearestConfig {
+    fn default() -> Self {
+        Self { speed_mps: 25.0 }
+    }
+}
+
+pub struct FollowNearest {
+    speed_mps: f64,
+}
+
+impl Autonomy for FollowNearest {
+    type Config = FollowNearestConfig;
+
+    fn configure(params: &PluginParams) -> Result<FollowNearestConfig> {
+        let config: FollowNearestConfig = params.parse()?;
+        ensure!(
+            config.speed_mps > 0.0,
+            "FollowNearest speed must be positive"
+        );
+        Ok(config)
+    }
+
+    fn new(config: &FollowNearestConfig) -> Self {
+        Self {
+            speed_mps: config.speed_mps,
+        }
+    }
+
+    fn ports(_config: &FollowNearestConfig) -> Ports {
+        Ports::default()
+            .output(Port::new("desired_heading", Unit::Radians, Frame::World))
+            .output(Port::new("desired_altitude", Unit::Meters, Frame::World))
+            .output(Port::new(
+                "desired_speed",
+                Unit::MetersPerSecond,
+                Frame::None,
+            ))
+    }
+
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()> {
+        // Input: our own estimated state and the tracks we keep on others.
+        // Each is a Gaussian; the policy here reads the means.
+        let own_position_world_m = context.state.mean.position_world_m;
+
+        // Calculation: find the closest opponent.
+        let mut nearest = None;
+        let mut nearest_distance_m = f64::INFINITY;
+        for track in context.tracks.iter() {
+            // A track the sensor could not identify might be a teammate; the
+            // stock sensors identify every one.
+            let on_own_team = track
+                .identity
+                .is_some_and(|identity| identity.team_id == context.entity.team_id);
+            if on_own_team {
+                continue;
+            }
+            let distance_m = (track.state.mean.position_world_m - own_position_world_m).norm();
+            if distance_m < nearest_distance_m {
+                nearest_distance_m = distance_m;
+                nearest = Some(track);
+            }
+        }
+
+        // Output: head toward it, or hold the current heading and altitude if none remain.
+        let (heading_world_rad, altitude_world_m) = match nearest {
+            Some(target) => {
+                let offset_world_m = target.state.position_world_m - own_position_world_m;
+                (
+                    offset_world_m.y.atan2(offset_world_m.x),
+                    target.state.position_world_m.z,
+                )
+            }
+            None => (
+                context
+                    .state
+                    .orientation_world_from_body
+                    .yaw_world_from_body_rad(),
+                own_position_world_m.z,
+            ),
+        };
+        io.write("desired_heading", heading_world_rad)?;
+        io.write("desired_altitude", altitude_world_m)?;
+        io.write("desired_speed", self.speed_mps)?;
+        Ok(())
+    }
+}
+```
+
+### The two structs
+
+- `FollowNearestConfig` is the **validated configuration**. It is built once
+  from the mission, before the simulation starts. Its fields are the mission
+  parameters, under the same names: the mission's `speed_mps` is the field
+  `speed_mps`, and the name carries the unit. `Default` gives the value
+  used when the mission doesn't set one.
+- `FollowNearest` is the **per-vehicle state**. Each vehicle using this plugin
+  gets its own copy. This plugin only needs the speed. A plugin that remembers
+  things between ticks, such as a PID controller's integral, keeps them here.
+
+### How it is built
+
+The first half of `impl Autonomy` runs while the mission loads, before any
+vehicle exists:
+
+| Method | When it runs | What it does here |
+| --- | --- | --- |
+| `configure` | Once, while the mission loads | `params.parse()` fills the config from the mission, using 25 when it has no `speed_mps`. Then it rejects bad values. |
+| `new` | Once per vehicle | Copies the configuration into the vehicle's state. |
+| `ports` | While the mission loads | Declares the three outputs, with units and frames. The simulator checks them against the controller's inputs. |
+
+Because `configure` runs before anything moves, a mistake like `speed_mps: -5`
+stops the mission immediately with a clear error. You won't discover it halfway
+through a run. So does a typo: `sped: 30` is rejected as an unknown field
+instead of silently leaving the speed at 25.
+
+### The decision
+
+`step` runs once per tick. It follows the same three stages as every plugin in
+this project:
+
+1. **Input.** `context.state` is where this vehicle believes it is.
+   `context.tracks` are the other entities it knows about (not itself). Both
+   are a mean with a covariance; this plugin reads the means
+   ([Uncertainty](../concepts/uncertainty.md)).
+2. **Calculation.** Skip tracks on our own team. Keep the closest of the rest.
+3. **Output.** Point at the target. `atan2(dy, dx)` is the heading from us to
+   it: 0 means east and π/2 means north (see [Coordinate
+   frames](../concepts/coordinate-frames.md)). Match its altitude and fly at the
+   configured speed. If no opponent is left, hold the current heading and
+   altitude.
+
+Both are *belief*. With no sensors they are perfect, measured at the end of the
+previous tick; add a noisy sensor and the same code acts on noisy estimates,
+without changes. See [Belief vs truth](../concepts/belief-vs-truth.md).
+
+`Ok(())` means "the step succeeded". Returning `Err(...)` stops the
+simulation and names this plugin in the error. Use it for real failures, not
+for "no target found".
+
+## 3. Register the plugin
+
+`crates/starter/src/lib.rs` lists the crate's plugins. It loads the module and
+registers the type under the name missions will use:
+
+```rust,ignore
+mod follow_nearest;
+pub use follow_nearest::FollowNearest;
+
+/// Adds this crate's plugins to `registry`.
+pub fn register(registry: &mut PluginRegistry) -> Result<()> {
+    registry.register_autonomy::<FollowNearest>("FollowNearest")?;
+    Ok(())
+}
+```
+
+Missions refer to the plugin by this name. The `ripple` command calls
+`starter::register` when it starts, next to the stock plugins, so you don't
+touch the command itself.
+
+## 4. Write a mission
+
+`crates/starter/missions/follow-nearest.yaml` pits the plugin against a target.
+Team 1 flies east in a straight line. Team 2 starts behind it, to the side and
+higher, and chases it with your plugin:
+
+```yaml
+format_version: 1
+name: Follow the nearest opponent
+
+run:
+  end_s: 60
+  dt_s: 0.1
+  seed: 1
+end_conditions: [time, one_team_left]
+
+interactions: {SimpleCollision: {}}
+networks: {GlobalNetwork: {}}   # Straight listens on it for a boundary
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  aircraft:
+    visual_model: aircraft
+    controller: {SimpleAircraftControllerPID: {}}
+    motion_model: {SimpleAircraft: {}}
+
+entities:
+  target:
+    template: aircraft
+    team: 1
+    position_m: [0, 0, 200]
+    heading_deg: 0
+    autonomy:
+      Straight:
+        speed_mps: 18
+
+  chaser:
+    template: aircraft
+    team: 2
+    position_m: [-300, 150, 220]
+    heading_deg: 0
+    autonomy:
+      FollowNearest:
+        speed_mps: 30
+```
+
+A few things to notice:
+
+- `speed_mps: 30` under `FollowNearest` overrides the default of 25.
+  Values in the mission always win over plugin defaults.
+- The `aircraft` template holds what both vehicles share; each group adds its
+  own team, position, and autonomy.
+- `heading_deg` is in degrees, with 0 meaning east.
+- `SimpleCollision` removes two vehicles that come within 2 m of each other, and
+  `SimpleCollisionMetrics` scores it.
+- `GlobalNetwork` is listed because `Straight` listens on it for a boundary.
+  Ripple also adds it when a mission leaves it out.
+
+The full mission format is in
+[YAML missions](../guides/yaml-missions.md).
+
+## 5. Run it and watch
+
+From the repository root:
+
+```sh
+cargo run -- run crates/starter/missions/follow-nearest.yaml --headless
+cargo run -- replay runs/follow-nearest/run000
+```
+
+Use the run folder that the first command prints.
+
+> [!IMPORTANT]
+> Plugins are compiled into `ripple`. A `ripple` you installed earlier
+> with `cargo install` does not know about `FollowNearest` until you reinstall
+> it, so use `cargo run` while developing.
+
+The red chaser turns toward the blue target, descends to its altitude, and
+closes in. At about 32 s they collide and both are removed. The `/events`
+channel in `run.mcap` shows it. From the repository root, use the Python reader
+described in [Run records](../guides/run-records.md#read-it-from-python):
+
+```sh
+PYTHONPATH=reference python3 - <<'PY'
+from run import read_run
+
+for event in read_run("runs/follow-nearest/run000").events:
+    if event["kind"] in ("NonTeamCollision", "EntityRemoved"):
+        print(event)
+PY
+```
+
+```text
+{'time_s': 32.0, 'kind': 'NonTeamCollision', 'entity_ids': [1, 2]}
+{'time_s': 32.0, 'kind': 'EntityRemoved', 'entity_ids': [1]}
+{'time_s': 32.0, 'kind': 'EntityRemoved', 'entity_ids': [2]}
+```
+
+## 6. Test it
+
+Watching a run is useful, but a test keeps the behavior from breaking silently
+later. `crates/starter/tests/follow_nearest.rs` contains this one:
+
+```rust,ignore
+use anyhow::Result;
+use ripple_core::{EventKind, Mission, Params, Simulation, plugin::PluginRegistry};
+use std::{path::Path, sync::Arc};
+
+#[test]
+fn chaser_catches_the_target() -> Result<()> {
+    let crate_folder = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut registry = PluginRegistry::with_builtins();
+    starter::register(&mut registry)?;
+    let mission = Mission::load(
+        &crate_folder.join("missions/follow-nearest.yaml"),
+        crate_folder,
+        &Params::new(),
+    )?;
+    let mut simulation = Simulation::new(mission.scenario, Arc::new(registry))?;
+    while simulation.step()?.is_some() {}
+
+    let caught = simulation
+        .events()
+        .iter()
+        .any(|event| event.kind == EventKind::NonTeamCollision);
+    assert!(caught, "the chaser never reached the target");
+    Ok(())
+}
+```
+
+Run it:
+
+```sh
+cargo test -p starter
+```
+
+This is a *mission-level* test. Instead of checking one function, it runs the
+whole simulation and checks the outcome. It catches problems that only show up
+when plugins work together, such as a wrong sign in a heading.
+The test builds the same registry as `ripple` (stock plugins plus
+`starter::register`) and runs the mission with it.
+
+## 7. Sweep the speed
+
+How fast must the chaser be? `crates/starter/missions/follow-nearest.sweep.yaml`
+runs the mission once for each chaser speed:
+
+```yaml
+name: follow-nearest
+base_scenario: follow-nearest.yaml
+seeds: [1]
+parameter_combinations: cartesian
+parameters:
+  entities.chaser.autonomy.FollowNearest.speed_mps: [18, 22, 26, 30]
+```
+
+```sh
+cargo run --release -- sweep crates/starter/missions/follow-nearest.sweep.yaml
+```
+
+Each case is one line of `sweeps/follow-nearest/run000/results.jsonl`, with the
+speed and the final metrics. `non_team_collisions` shows whether the chaser
+caught the target: at 26 and 30 m/s it does, at 18 and 22 m/s it does not
+within 60 s. To watch one case, run it with that speed and open Rerun: `cargo
+run -- run
+crates/starter/missions/follow-nearest.yaml
+entities.chaser.autonomy.FollowNearest.speed_mps:=22 --viewer`.
+
+## Exercises
+
+1. **Slow chaser.** The sweep shows that at 22 m/s, faster than the target's
+   18, the chaser still does not catch up within 60 s. Watch that case in Rerun.
+   Why not?
+2. **Lead the target.** Pure pursuit aims at where the target *is*. Aim at where
+   it *will be* instead: add `target.state.velocity_world_mps * t_go`, where
+   `t_go` is distance divided by closing speed. Rerun the sweep: which speeds
+   catch the target now? Update the test to check the time.
+3. **Keep your distance.** Add a `standoff_m` parameter. Fly toward the target
+   while farther than `standoff_m`, and away from it when closer.
+4. **Many chasers.** Give the chaser group `count: 3`, and add a second target
+   group at another position. Do the chasers all pick the same target?
+
+## What you learned
+
+- A plugin is a configuration struct, a state struct, and one trait (here
+  `impl Autonomy`): how it is built, then the per-tick work.
+- Ports connect the plugin stack and are checked before the mission runs.
+- Parameters are a serde struct with a `Default`. Mission values override the
+  defaults, and unknown keys are errors.
+- A user crate registers its plugins in one `register()`, which the `ripple`
+  command and the crate's tests both call.
+- Mission-level tests run the full simulation and check events or scores, and
+  sweeps run it across parameter values.
+
+Next, read [Coordinate frames](../concepts/coordinate-frames.md) before
+writing anything that uses angles, then give a robot an imperfect idea of where
+it is in [Your first localization estimator](noisy-localization.md).

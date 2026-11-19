@@ -1,0 +1,19 @@
+# A point robot drives a 100 m square believing a Kalman filter over its
+# commanded velocity and a position fix every 5 s. Its motors reach 8 m/s
+# though it asks for 10, so the belief runs ahead of the truth between fixes
+# and snaps back at each one. A second robot with perfect localization drives
+# the same route. The mission steps at 0.02 s here for smooth motion.
+name: belief-fixes
+source: crates/starter/missions/position-kalman.yaml
+overrides: {run.dt_s: "0.02"}
+preset: belief
+end_s: 45
+speed: 1
+camera: {follow: {group: kalman, distance_m: 18}}
+featured: [{group: kalman}, {group: perfect}]
+labels: false
+model_span_m: 2
+captions:
+  - {at_s: 0, text: "Two point robots drive the same 100 m square. The camera follows the blue one, which believes a Kalman filter over its commanded velocity; the red one knows its position exactly."}
+  - {at_s: 6, text: "The filter assumes the robot moves as commanded, 10 m/s, but its motors reach 8 m/s: between fixes the belief runs ahead of the truth, and the ellipsoid grows with the process noise."}
+  - {at_s: 20, text: "A position fix (yellow) arrives every 5 s and pulls the belief back onto the truth; the error plot shows the sawtooth. The robot steers by its belief, so it turns early at each corner."}

@@ -1,0 +1,207 @@
+#!/usr/bin/env python3
+"""Measure what changes when RK4 evaluates loads at every stage.
+
+    python3 reference/rk4_loads.py --output DIR [--source PATH]
+
+Upstream SCRIMMAGE holds FixedWing6DOF and Multirotor forces and moments at
+the start-of-step state. Ripple and the C++ comparison branch recompute them
+at each RK4 stage. This check compares the upstream and corrected models:
+constant-control step-size convergence, controlled fixed-wing recovery, and
+altitude-gain sensitivity after an upset. Multi-substep cases use constant
+controls so the controller schedule does not confound the comparison.
+
+Each variant starts from a recorded Ripple scenario; SCRIMMAGE receives XML
+written from it. Writes OUTPUT/results.json and OUTPUT/summary.md. Needs
+Docker, Cargo, and a C++ checkout with the Ubuntu-24.04 branch.
+"""
+
+import argparse
+import json
+import math
+from pathlib import Path
+import sys
+from types import SimpleNamespace
+
+from compare import distance, orientation_distance_rad
+from frames import read_frames
+from project import ROOT, build_cli, source_identity
+from reference_check import BASELINE_BRANCH, build_reference, prepare_mission, run_cpp, run_logged
+import scenario as missions
+
+INPUTS = ROOT / "reference/inputs"
+MULTIPLIERS = [1, 2, 4, 8, 16]
+REFERENCE_MULTIPLIER = 1024
+PART_A = [("multirotor", ROOT / "missions/multirotor.yaml", 0.01),
+          ("fixed-wing-open-loop", INPUTS / "fixed-wing-open-loop.yaml", 0.05)]
+PART_B = [("fixed-wing-recovery", INPUTS / "fixed-wing-recovery.yaml", dt) for dt in (0.01, 0.05, 0.1)]
+UPSET = INPUTS / "aircraft-pid-upset.yaml"
+UPSET_GAINS = [0.01, 0.002, 0.0]
+UPSET_STEPS_S = [0.01, 0.005, 0.0025]
+UPSET_ALTITUDE_M = 1000.0
+
+
+class Runner:
+    """Runs one mission variant in Rust ("stage") or upstream C++ ("frozen")."""
+
+    def __init__(self, output, rust, image, settings):
+        self.output, self.rust, self.image, self.settings = output, rust, image, settings
+        self.count = 0
+        self.scenarios = {}
+
+    def run_rust(self, mission, folder):
+        run_logged([self.rust, "run", mission, "--root", ROOT, "--output", folder / "rust",
+                    "--headless"], folder / "rust.log",
+                   timeout=self.settings.timeout)
+        return folder / "rust"
+
+    def scenario(self, mission):
+        """The scenario Ripple records for `mission`, from one run of it."""
+        if mission not in self.scenarios:
+            folder = self.output / f"base-{mission.stem}"
+            folder.mkdir()
+            self.scenarios[mission] = missions.recorded(self.run_rust(mission, folder))
+        return json.loads(json.dumps(self.scenarios[mission]))  # a copy to edit
+
+    def frames(self, mission, loads, dt_s=None, multiplier=None, altitude_d=None):
+        scenario = self.scenario(mission)
+        if dt_s is not None:
+            scenario["run"]["dt_s"] = dt_s
+        if multiplier is not None:
+            scenario["run"]["motion_multiplier"] = multiplier
+        if altitude_d is not None:
+            scenario["entities"][0]["controller"][0]["params"]["altitude_pid"] = {
+                "kp": 0.1, "ki": 0.0001, "kd": altitude_d, "integrate_within_m": 10}
+        self.count += 1
+        folder = self.output / f"{self.count:03}-{mission.stem}-{loads}"
+        inputs = folder / "input"
+        inputs.mkdir(parents=True)
+        edited = missions.write(inputs / "input.yaml", missions.as_yaml(scenario))
+        if loads == "stage":
+            return read_frames(self.run_rust(edited, folder) / "run.mcap")
+        prepare_mission(inputs, scenario)
+        logs = run_cpp(self.settings, self.image, folder / "cpp", inputs / "effective.xml", {})
+        return read_frames(logs / "frames.bin")
+
+
+def largest_difference(frames, reference):
+    """Largest position (m) and attitude (rad) difference over every frame and entity."""
+    position = attitude = 0.0
+    for candidate, expected in zip(frames, reference, strict=True):
+        for key, entity in expected.entities.items():
+            other = candidate.entities[key]
+            if not all(math.isfinite(value) for value in other.position):
+                return math.inf, math.inf
+            position = max(position, distance(other.position, entity.position))
+            attitude = max(attitude, orientation_distance_rad(entity.orientation,
+                                                              other.orientation))
+    return position, attitude
+
+
+def order(errors):
+    """Observed order between successive halvings: log2(e(h) / e(h/2))."""
+    return [round(math.log2(a / b), 2) if a > 0 and b > 0 and math.isfinite(a) else None
+            for a, b in zip(errors, errors[1:])]
+
+
+def altitude_errors(frames):
+    """Largest altitude error (m) over the run and after the first 5 s."""
+    whole = after_5_s = 0.0
+    for frame in frames:
+        for entity in frame.entities.values():
+            error = abs(entity.position[2] - UPSET_ALTITUDE_M)
+            whole = max(whole, error)
+            if frame.time_s >= 5.0:
+                after_5_s = max(after_5_s, error)
+    return whole, after_5_s
+
+
+def summary(results):
+    """The results as Markdown tables."""
+    lines = ["# RK4 loads: frozen (upstream C++) against every stage (this checkout)", "",
+             "Generated by reference/rk4_loads.py; see its docstring for the method.", "",
+             "## A. Largest position error against stage loads at 1024 substeps", "",
+             "| Substeps | " + " | ".join(
+                 f"{case['mission']} frozen / stage (m)" for case in results["part_a"]) + " |",
+             "|---|" + "---|" * len(results["part_a"])]
+    for index, multiplier in enumerate(MULTIPLIERS):
+        cells = [f"{case['frozen'][index]['position_m']:.2g} / {case['stage'][index]['position_m']:.2g}"
+                 for case in results["part_a"]]
+        lines.append(f"| {multiplier} | " + " | ".join(cells) + " |")
+    lines += ["", "Reference self-check (512 against 1024 substeps): " + ", ".join(
+        f"{case['mission']} {case['reference_self_check_m']:.2g} m" for case in results["part_a"]),
+        "", "## B. Frozen against stage, one substep", "",
+        "| Step (s) | Position (m) | Attitude (rad) |", "|---|---|---|"]
+    lines += [f"| {row['dt_s']} | {row['frozen_vs_stage_position_m']:.3g} | "
+              f"{row['frozen_vs_stage_attitude_rad']:.3g} |" for row in results["part_b"]]
+    lines += ["", "## C. Largest altitude error of the upset flight, whole run (after 5 s)", "",
+              "| Altitude D | Step (s) | Frozen (m) | Stage (m) |", "|---|---|---|---|"]
+    rows = {(row["loads"], row["altitude_d"], row["dt_s"]): row for row in results["part_c"]}
+    for gain in UPSET_GAINS:
+        for dt_s in UPSET_STEPS_S:
+            cells = [f"{rows[loads, gain, dt_s]['altitude_error_m']:.3g} "
+                     f"({rows[loads, gain, dt_s]['after_5_s_m']:.3g})" for loads in ("frozen", "stage")]
+            lines.append(f"| {gain} | {dt_s} | " + " | ".join(cells) + " |")
+    return "\n".join(lines) + "\n"
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--output", type=Path, required=True, help="new directory")
+    parser.add_argument("--source", type=Path, default=ROOT.parent / "scrimmage",
+                        help="C++ checkout with a local Ubuntu-24.04 branch")
+    args = parser.parse_args(argv)
+    output = args.output.resolve()
+    output.mkdir(parents=True)
+    settings = SimpleNamespace(source=args.source.resolve(), jobs=4, build_timeout=3600, timeout=600)
+    cpp = build_reference(settings, output, BASELINE_BRANCH)
+    with (output / "rust-build.log").open("w") as log:
+        rust = build_cli("release", log=log)
+    runs = output / "runs"
+    runs.mkdir()
+    runner = Runner(runs, rust, cpp["image"], settings)
+
+    part_a = []
+    for name, mission, dt_s in PART_A:
+        reference = runner.frames(mission, "stage", dt_s, REFERENCE_MULTIPLIER)
+        check = largest_difference(runner.frames(mission, "stage", dt_s, REFERENCE_MULTIPLIER // 2),
+                                   reference)[0]
+        rows = {"frozen": [], "stage": []}
+        for loads in rows:
+            for multiplier in MULTIPLIERS:
+                position, attitude = largest_difference(
+                    runner.frames(mission, loads, dt_s, multiplier), reference)
+                rows[loads].append({"multiplier": multiplier, "motion_dt_s": dt_s / multiplier,
+                                    "position_m": position, "attitude_rad": attitude})
+        part_a.append({"mission": name, "dt_s": dt_s, "reference_multiplier": REFERENCE_MULTIPLIER,
+                       "reference_self_check_m": check, **rows,
+                       "frozen_order": order([row["position_m"] for row in rows["frozen"]]),
+                       "stage_order": order([row["position_m"] for row in rows["stage"]])})
+        print(json.dumps(part_a[-1]), flush=True)
+    part_b = []
+    for name, mission, dt_s in PART_B:
+        position, attitude = largest_difference(runner.frames(mission, "frozen", dt_s, 1),
+                                                runner.frames(mission, "stage", dt_s, 1))
+        part_b.append({"mission": name, "dt_s": dt_s, "frozen_vs_stage_position_m": position,
+                       "frozen_vs_stage_attitude_rad": attitude})
+        print(json.dumps(part_b[-1]), flush=True)
+    part_c = []
+    for loads in ("frozen", "stage"):
+        for gain in UPSET_GAINS:
+            for dt_s in UPSET_STEPS_S:
+                whole, after = altitude_errors(runner.frames(UPSET, loads, dt_s, altitude_d=gain))
+                part_c.append({"loads": loads, "altitude_d": gain, "dt_s": dt_s,
+                               "altitude_error_m": whole, "after_5_s_m": after})
+                print(json.dumps(part_c[-1]), flush=True)
+    results = {"frozen": {"implementation": "upstream C++", "branch": cpp["branch"],
+                          "commit": cpp["commit"], "image": cpp["image"]},
+               "stage": {"implementation": "this checkout",
+                         "source_sha256": source_identity()["source_sha256"]},
+               "part_a": part_a, "part_b": part_b, "part_c": part_c}
+    (output / "results.json").write_text(json.dumps(results, indent=2) + "\n")
+    (output / "summary.md").write_text(summary(results))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

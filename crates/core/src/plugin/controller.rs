@@ -1,0 +1,71 @@
+//! Controllers: the plugin interface and the built-in control laws.
+use crate::{
+    drawing::Drawing,
+    plugin::{AgentContext, PluginParams, StepTime},
+    ports::{PluginIo, Ports},
+};
+use anyhow::Result;
+use serde::de::DeserializeOwned;
+
+pub trait Controller: Send {
+    // The build half; see the module doc in `plugin.rs`.
+    /// Immutable, validated configuration, parsed once per mission and shared
+    /// by every instance.
+    type Config: DeserializeOwned + Send + Sync + 'static
+    where
+        Self: Sized;
+    /// Parses the mission's parameters; override it to check them.
+    fn configure(params: &PluginParams) -> Result<Self::Config>
+    where
+        Self: Sized,
+    {
+        params.parse()
+    }
+    fn new(config: &Self::Config) -> Self
+    where
+        Self: Sized;
+    fn ports(_config: &Self::Config) -> Ports
+    where
+        Self: Sized,
+    {
+        Ports::default()
+    }
+
+    fn initialize(&mut self, _context: &mut AgentContext) -> Result<()> {
+        Ok(())
+    }
+    fn step(&mut self, context: &mut AgentContext, io: &mut PluginIo) -> Result<()>;
+    fn close(&mut self, _time: StepTime) -> Result<()> {
+        Ok(())
+    }
+    /// Shapes this plugin draws in the viewer for the whole run, asked once
+    /// when it starts: see `Drawing`. Empty unless overridden.
+    fn fixed_drawings(&self) -> Vec<Drawing> {
+        Vec::new()
+    }
+    /// Shapes that come and go, asked every tick at `time_s`. Empty unless
+    /// overridden.
+    fn drawings(&self, _time_s: f64) -> Vec<Drawing> {
+        Vec::new()
+    }
+}
+
+// Built-ins selected by missions.
+#[path = "controller/aircraft_pid/aircraft_pid.rs"]
+mod aircraft_pid;
+pub use aircraft_pid::AircraftPidController;
+#[path = "controller/aircraft_velocity/aircraft_velocity.rs"]
+mod aircraft_velocity;
+pub use aircraft_velocity::AircraftVelocityController;
+#[path = "controller/held_controls/held_controls.rs"]
+mod held_controls;
+pub use held_controls::HeldControls;
+#[path = "controller/motor_speeds/motor_speeds.rs"]
+mod motor_speeds;
+pub use motor_speeds::MotorSpeeds;
+#[path = "controller/multirotor_velocity/multirotor_velocity.rs"]
+mod multirotor_velocity;
+pub use multirotor_velocity::MultirotorVelocityController;
+#[path = "controller/simple_aircraft_pid/simple_aircraft_pid.rs"]
+mod simple_aircraft_pid;
+pub use simple_aircraft_pid::SimpleAircraftControllerPid;

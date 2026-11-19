@@ -1,0 +1,26 @@
+//! The `ripple` command: the stock plugins plus the user plugin crates in
+//! this workspace, with this repository as the project folder.
+//!
+//! This project deliberately does not load plugins at runtime, so user plugins
+//! are compiled in: each user crate is a dependency of this package and adds
+//! its plugins here.
+//! To add another user crate, add it to crates/cli/Cargo.toml and call its
+//! `register` below (see book/src/guides/writing-plugins.md).
+use ripple_core::plugin::PluginRegistry;
+
+fn main() -> anyhow::Result<()> {
+    let mut registry = PluginRegistry::with_builtins();
+    starter::register(&mut registry)?;
+    delivery::register(&mut registry)?;
+    #[cfg(any(feature = "ardupilot", feature = "px4"))]
+    sitl::register(&mut registry)?;
+    #[cfg(feature = "ardupilot")]
+    ardupilot::register(&mut registry)?;
+    #[cfg(feature = "px4")]
+    px4::register(&mut registry)?;
+    #[cfg(feature = "learning")]
+    learning::register(&mut registry)?;
+    #[cfg(feature = "gtsam")]
+    gtsam::register(&mut registry)?;
+    ripple_cli::main(registry, concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))
+}

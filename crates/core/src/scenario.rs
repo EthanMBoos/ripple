@@ -1,0 +1,406 @@
+//! The experiment description shared by Rust setup code and mission readers.
+use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
+
+use anyhow::{Context, Result, bail, ensure};
+use serde::{Deserialize, Serialize};
+use serde_yaml_ng::{Mapping, Value};
+use vstd::prelude::*;
+
+use crate::{
+    entity::EntityDefinition,
+    math::Vec3,
+    plugin::PluginRegistry,
+    simulation::{generation::Generator, world_plugins::CompiledWorld},
+};
+
+/// Validated configuration and factories, ready for runtime construction.
+pub(crate) struct ResolvedScenario {
+    pub config: ScenarioConfig,
+    pub definitions: Vec<Arc<EntityDefinition>>,
+    pub generators: Vec<Generator>,
+    pub world: CompiledWorld,
+    pub end_conditions: EndConditions,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(try_from = "Vec<String>")]
+pub struct EndConditions {
+    pub time: bool,
+    pub no_entities: bool,
+    pub one_team_left: bool,
+}
+
+impl Default for EndConditions {
+    fn default() -> Self {
+        Self {
+            time: true,
+            no_entities: false,
+            one_team_left: false,
+        }
+    }
+}
+
+impl EndConditions {
+    pub(crate) fn from_names<'a>(names: impl IntoIterator<Item = &'a str>) -> Result<Self> {
+        let mut conditions = Self {
+            time: false,
+            no_entities: false,
+            one_team_left: false,
+        };
+        for name in names {
+            match name {
+                "time" => conditions.time = true,
+                "no_entities" => conditions.no_entities = true,
+                "one_team_left" => conditions.one_team_left = true,
+                "none" => {}
+                invalid => bail!("unknown end condition: {invalid}"),
+            }
+        }
+        Ok(conditions)
+    }
+}
+
+impl TryFrom<Vec<String>> for EndConditions {
+    type Error = anyhow::Error;
+
+    fn try_from(names: Vec<String>) -> Result<Self> {
+        Self::from_names(names.iter().map(String::as_str))
+    }
+}
+
+/// A registered behavior and its parameters, configured once for independent instances.
+#[derive(Clone, Debug, Serialize)]
+pub struct PluginConfig {
+    pub name: String,
+    /// Stable instance identity, which also keys a sensor's random numbers.
+    pub instance: Option<String>,
+    /// Zero runs the plugin every step.
+    pub loop_rate_hz: f64,
+    /// Estimators only: which sensor feeds each input, by sensor instance name
+    /// (or `perfect`). Loading fills in the inputs a mission leaves out.
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub inputs: BTreeMap<String, String>,
+    pub(crate) params: Mapping,
+}
+
+impl PluginConfig {
+    pub fn new(name: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            instance: None,
+            loop_rate_hz: 0.0,
+            inputs: BTreeMap::new(),
+            params: Mapping::new(),
+        }
+    }
+
+    /// Feed an estimator input from a sensor instance (or `perfect`).
+    pub fn input(mut self, input: impl Into<String>, sensor: impl Into<String>) -> Self {
+        self.inputs.insert(input.into(), sensor.into());
+        self
+    }
+
+    /// Replace parameters with a serializable struct or map. Values must be finite.
+    pub fn with_params<T: Serialize>(mut self, params: T) -> Result<Self> {
+        let values = serde_yaml_ng::to_value(params)?;
+        check_values(&values)?;
+        let Value::Mapping(params) = values else {
+            bail!("plugin parameters must be a map");
+        };
+        self.params = params;
+        Ok(self)
+    }
+
+    pub(crate) fn validate(&self) -> Result<()> {
+        ensure!(
+            self.loop_rate_hz.is_finite() && self.loop_rate_hz >= 0.0,
+            "loop_rate_hz must be finite and nonnegative"
+        );
+        for value in self.params.values() {
+            check_values(value)?;
+        }
+        Ok(())
+    }
+}
+
+fn check_values(value: &Value) -> Result<()> {
+    match value {
+        Value::Tagged(_) => bail!("plugin parameters cannot contain YAML tags"),
+        Value::Number(number) => ensure!(
+            number.as_f64().is_none_or(f64::is_finite),
+            "plugin parameters must be finite"
+        ),
+        Value::Sequence(items) => {
+            for item in items {
+                check_values(item)?;
+            }
+        }
+        Value::Mapping(entries) => {
+            for (key, item) in entries {
+                ensure!(
+                    key.as_str().is_some(),
+                    "plugin parameter keys must be strings"
+                );
+                check_values(item)?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+/// A repeating batch, until the group's total `count` has spawned.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Spawn {
+    pub rate_hz: f64,
+    pub batch_size: usize,
+    #[serde(default)]
+    pub start_s: f64,
+    #[serde(default)]
+    pub time_stddev_s: f64,
+}
+
+/// How to build one group of entities and when to create them.
+/// Positions and velocities use the local ENU world frame.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct EntityGroupConfig {
+    #[serde(skip_deserializing)]
+    pub label: String,
+    pub team: i32,
+    pub visual_model: String,
+    pub health: i32,
+    pub id: Option<i32>,
+    pub count: usize,
+    pub spawn: Option<Spawn>,
+    pub position_m: Vec3,
+    /// Standard deviation of the start positions; an entity with a spread is
+    /// always sampled around `position_m`.
+    pub position_stddev_m: Vec3,
+    pub heading_deg: f64,
+    pub heading_stddev_deg: f64,
+    pub roll_deg: f64,
+    pub pitch_deg: f64,
+    pub velocity_mps: Vec3,
+    #[serde(deserialize_with = "crate::mission::plugins")]
+    pub autonomy: Vec<PluginConfig>,
+    #[serde(deserialize_with = "crate::mission::plugins")]
+    pub controller: Vec<PluginConfig>,
+    #[serde(deserialize_with = "crate::mission::motion_plugin")]
+    pub motion_model: PluginConfig,
+    #[serde(deserialize_with = "crate::mission::plugins")]
+    pub sensors: Vec<PluginConfig>,
+    /// Maintains the entity's own-state belief; `PassThrough` by default.
+    #[serde(deserialize_with = "crate::mission::estimator_plugin")]
+    pub localization: PluginConfig,
+    /// Maintains the entity's tracks on other entities; `PassThrough` by default.
+    #[serde(deserialize_with = "crate::mission::estimator_plugin")]
+    pub tracking: PluginConfig,
+}
+
+impl Default for EntityGroupConfig {
+    fn default() -> Self {
+        Self {
+            label: String::new(),
+            team: -1,
+            visual_model: "aircraft".into(),
+            health: 1,
+            id: None,
+            count: 1,
+            spawn: None,
+            position_m: Vec3::zeros(),
+            position_stddev_m: Vec3::zeros(),
+            heading_deg: 0.0,
+            heading_stddev_deg: 0.0,
+            roll_deg: 0.0,
+            pitch_deg: 0.0,
+            velocity_mps: Vec3::zeros(),
+            autonomy: Vec::new(),
+            controller: Vec::new(),
+            // Construction rejects a missing model rather than choosing physics implicitly.
+            motion_model: PluginConfig::new(""),
+            sensors: Vec::new(),
+            localization: PluginConfig::new("PassThrough"),
+            tracking: PluginConfig::new("PassThrough"),
+        }
+    }
+}
+
+// The run settings sit in the Verus block so the proofs of the tick can read
+// the step and the substep count a mission asks for.
+verus! {
+
+#[verifier::external_derive]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct RunConfig {
+    pub start_s: f64,
+    pub end_s: f64,
+    pub dt_s: f64,
+    pub seed: u32,
+    pub motion_multiplier: usize,
+}
+
+#[verifier::external]
+impl Default for RunConfig {
+    fn default() -> Self {
+        Self {
+            start_s: 0.0,
+            end_s: 100.0,
+            dt_s: 0.1,
+            seed: 2_147_483_648,
+            motion_multiplier: 1,
+        }
+    }
+}
+
+/// How the engine answers "which agents are within range of a point?"; see
+/// `common/spatial.rs`. Both methods give identical answers; only speed differs.
+#[verifier::external_derive]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "method", rename_all = "snake_case", deny_unknown_fields)]
+pub enum SpatialLookup {
+    /// Test every agent.
+    #[default]
+    Scan,
+    /// Test only agents in grid cells near the query; `cell_width_m` sets the cell size.
+    Grid { cell_width_m: f64 },
+}
+
+/// Plain experiment data; `Simulation::new` validates it before execution.
+/// Serialization records normalized data for manifests, not mission-file syntax.
+#[verifier::external_derive]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct ScenarioConfig {
+    pub run: RunConfig,
+    pub end_conditions: EndConditions,
+    pub spatial_lookup: SpatialLookup,
+    /// A terrain header (see `common/terrain.rs`); world plugins read its ground
+    /// heights. A relative path in a YAML mission is relative to the mission file.
+    pub terrain: Option<PathBuf>,
+    #[serde(deserialize_with = "crate::mission::entity_groups")]
+    pub entities: Vec<EntityGroupConfig>,
+    /// Groups built only when a plugin asks, by a `SpawnRequest` naming one.
+    /// They are numbered after `entities` and have no `count` or `spawn`.
+    #[serde(
+        deserialize_with = "crate::mission::entity_groups",
+        skip_serializing_if = "Vec::is_empty"
+    )]
+    pub recipes: Vec<EntityGroupConfig>,
+    #[serde(deserialize_with = "crate::mission::plugins")]
+    pub interactions: Vec<PluginConfig>,
+    #[serde(deserialize_with = "crate::mission::plugins")]
+    pub networks: Vec<PluginConfig>,
+    #[serde(deserialize_with = "crate::mission::plugins")]
+    pub metrics: Vec<PluginConfig>,
+}
+
+} // verus!
+
+impl ScenarioConfig {
+    /// Every group in group-index order: the entities, then the recipes.
+    pub(crate) fn groups(&self) -> impl Iterator<Item = &EntityGroupConfig> {
+        self.entities.iter().chain(self.recipes.iter())
+    }
+
+    pub(crate) fn resolve(mut self, registry: &PluginRegistry) -> Result<ResolvedScenario> {
+        ensure!(
+            self.run.dt_s.is_finite() && self.run.dt_s > 0.0,
+            "dt must be positive and finite"
+        );
+        ensure!(
+            self.run.start_s.is_finite()
+                && self.run.end_s.is_finite()
+                && self.run.end_s >= self.run.start_s,
+            "invalid simulation interval"
+        );
+        ensure!(
+            self.run.motion_multiplier > 0,
+            "motion_multiplier must be positive"
+        );
+        if let SpatialLookup::Grid { cell_width_m } = self.spatial_lookup {
+            ensure!(
+                cell_width_m.is_finite() && cell_width_m > 0.0,
+                "spatial_lookup cell_width_m must be positive and finite"
+            );
+        }
+
+        for recipe in &mut self.recipes {
+            ensure!(
+                recipe.spawn.is_none(),
+                "recipe {}: a recipe is built only when a plugin asks, not on a schedule",
+                recipe.label
+            );
+            recipe.count = 0;
+        }
+        let mut definitions = Vec::new();
+        let mut generators = Vec::new();
+        let entities = self.entities.iter_mut().map(|group| ("entity", group));
+        let recipes = self.recipes.iter_mut().map(|group| ("recipe", group));
+        for (index, (kind, group)) in entities.chain(recipes).enumerate() {
+            group
+                .validate()
+                .with_context(|| format!("{kind} {}", group.label))?;
+            let definition = EntityDefinition::parse(group, registry)
+                .with_context(|| format!("{kind} {}", group.label))?;
+            // Record every estimator input's source, including the defaults.
+            [group.localization.inputs, group.tracking.inputs] = definition.estimator_inputs();
+            definitions.push(Arc::new(definition));
+            generators.push(Generator::new(group, index, self.run.start_s)?);
+        }
+        let world = CompiledWorld::compile(&self, registry)?;
+        let end_conditions = self.end_conditions;
+        Ok(ResolvedScenario {
+            config: self,
+            definitions,
+            generators,
+            world,
+            end_conditions,
+        })
+    }
+}
+
+impl EntityGroupConfig {
+    pub(crate) fn validate(&self) -> Result<()> {
+        ensure!(self.health > 0, "entity health must be positive");
+        ensure!(
+            !self.motion_model.name.trim().is_empty(),
+            "entity requires one motion_model"
+        );
+        ensure!(
+            self.position_m
+                .iter()
+                .chain(self.velocity_mps.iter())
+                .chain(self.position_stddev_m.iter())
+                .all(|value| value.is_finite())
+                && [
+                    self.heading_deg,
+                    self.heading_stddev_deg,
+                    self.roll_deg,
+                    self.pitch_deg
+                ]
+                .iter()
+                .all(|value| value.is_finite()),
+            "entity position, velocity, attitude and spreads must be finite"
+        );
+        ensure!(
+            self.position_stddev_m.iter().all(|value| *value >= 0.0)
+                && self.heading_stddev_deg >= 0.0,
+            "spawn spreads must be nonnegative"
+        );
+        if let Some(spawn) = &self.spawn {
+            ensure!(
+                spawn.rate_hz.is_finite() && spawn.rate_hz > 0.0 && spawn.batch_size > 0,
+                "spawn requires finite rate_hz > 0 and batch_size > 0"
+            );
+            ensure!(spawn.start_s.is_finite(), "spawn start_s must be finite");
+            ensure!(
+                spawn.time_stddev_s.is_finite() && spawn.time_stddev_s >= 0.0,
+                "spawn time_stddev_s must be finite and nonnegative"
+            );
+        }
+        Ok(())
+    }
+}

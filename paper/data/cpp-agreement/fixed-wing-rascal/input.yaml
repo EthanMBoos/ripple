@@ -1,0 +1,73 @@
+# FixedWing6DOF as the Rascal 110 RC plane (the built-in `rascal` airframe,
+# from ArduPilot's JSBSim Rascal), compared with SCRIMMAGE. The airframe's
+# tables and the terms SCRIMMAGE's equations lack are set off here, so the
+# comparison checks the shared equations with the Rascal's numbers; the
+# JSBSim check (reference/jsbsim_check.py) covers the terms. Without the
+# tables there is no stall, so keep to moderate-angle flight around 20 m/s;
+# thrust_max 25 N has no source in the JSBSim model. See
+# book/src/guides/ardupilot.md.
+#
+# Aircraft: PID from a level start, PID recovering from a roll/pitch upset, and
+# a hands-off glide (all gains zero, so zero throttle and neutral surfaces).
+# The PID aircraft keep attitude limits of 45 and 60 degrees, wider than the
+# Rascal profile's 20 and 45.
+format_version: 1
+name: fixed-wing-6dof-rascal
+
+run:
+  end_s: 60
+  dt_s: 0.01
+  seed: 12345
+
+networks: {LocalNetwork: {}, GlobalNetwork: {}}
+metrics: {SimpleCollisionMetrics: {}}
+
+templates:
+  rascal:
+    visual_model: sphere
+    velocity_mps: [20, 0, 0]
+    heading_deg: 0
+    autonomy:
+      Straight:
+        speed_mps: 20
+    controller:
+      AircraftPIDController:
+        airframe: rascal
+        max_pitch_deg: 45
+        max_roll_deg: 60
+    motion_model:
+      FixedWing6DOF:
+        airframe: rascal
+        # SCRIMMAGE has none of these; off, so the two fly the same equations.
+        aero_reference_frd_m: [0, 0, 0]
+        c_pitch_alpha_dot: 0
+        c_yaw_0: 0
+        lift_table: []
+        drag_table: []
+        sideslip_drag_table: []
+        aileron_power_mach_table: []
+        elevator_power_mach_table: []
+
+entities:
+  level:
+    template: rascal
+    team: 1
+    position_m: [0, 0, 200]
+  upset:
+    template: rascal
+    team: 2
+    position_m: [0, 300, 200]
+    roll_deg: 60
+    pitch_deg: 30
+  glide:
+    template: rascal
+    team: 3
+    position_m: [0, 600, 200]
+    controller:
+      AircraftPIDController:
+        airframe: rascal
+        heading_pid: {kp: 0, ki: 0, kd: 0, integrate_within_deg: 0}
+        altitude_pid: {kp: 0, ki: 0, kd: 0, integrate_within_m: 0}
+        speed_pid: {kp: 0, ki: 0, kd: 0, integrate_within_mps: 0}
+        pitch_pid: {kp: 0, ki: 0, kd: 0, integrate_within_deg: 0}
+        roll_pid: {kp: 0, ki: 0, kd: 0, integrate_within_deg: 0}
